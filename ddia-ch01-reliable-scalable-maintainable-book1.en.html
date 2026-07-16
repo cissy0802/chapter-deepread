@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>DDIA Ch 1 · Reliable, Scalable, Maintainable — Books Deep-Read Book 1</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">BOOKS DEEP-READ · DDIA · CH 1</p>
+<h1>Reliable, Scalable, and Maintainable Applications</h1>
+<p class="sub">Designing Data-Intensive Applications · Ch 1 · Martin Kleppmann · 2017</p>
+<p class="langbar"><a href="ddia-ch01-reliable-scalable-maintainable-book1.html">中文 →</a></p>
+
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>Every app you use — a shop, a chat, a video site — runs on a system that <strong>stores and retrieves data</strong>. Chapter 1 of DDIA (<em>Designing Data-Intensive Applications</em>) doesn't teach any one technology. It asks a more basic question first: <strong>what makes a data system "good"?</strong> The author offers three yardsticks — <strong>reliable, scalable, maintainable</strong> — and the whole book revolves around them.</p>
+
+<h2>An analogy first</h2>
+<p>Think of a data system as a <strong>restaurant</strong>. <strong>Reliable</strong>: "even if a cook calls in sick or one stove breaks, guests still get fed." <strong>Scalable</strong>: "we handle 10 tables today and don't fall apart when we go viral and 100 turn up next month." <strong>Maintainable</strong>: "the kitchen flow is clean, so onboarding a new hire or adding a dish isn't a nightmare." This chapter turns those three fuzzy senses of "good" into things you can measure and argue about.</p>
+
+<h2>"Is the system fast?" is the wrong question</h2>
+<p>Most people measure speed by the <strong>average</strong>: 100 ms on average sounds fine. But averages <strong>lie</strong> — if 99 of 100 requests are quick and one stalls for 5 seconds, the average still looks great, yet the person waiting 5 seconds is often your most important customer (lots of data, heavy request).</p>
+<p>This chapter teaches a better question: <strong>line up 100 requests fastest-to-slowest and look at the 50th, 95th, 99th</strong>. The 99th (called "p99") captures "the experience of the unluckiest slice" — and reputation usually rides on that, not the average.</p>
+
+<h2>It also separates "fault" from "failure"</h2>
+<p>A part breaking is a <strong>fault</strong>; the whole system going dark for users is a <strong>failure</strong>. The trick to a good system isn't "parts never break" (impossible) — it's <strong>making sure one broken part doesn't drag down the whole</strong> by keeping spares that take over. Netflix even keeps a "trouble monkey" (Chaos Monkey) that randomly kills live machines, forcing engineers to build systems where "losing one box is a non-event."</p>
+
+<h2>What does it give you?</h2>
+<p>After this chapter you hold a <strong>shared vocabulary for judgment</strong>: for reliability, talk about "keeping faults from becoming failures"; for speed, talk p95/p99 instead of averages; for scale, first ask "where exactly is the load growing?" Everything later — replication, partitioning, transactions — is really <strong>trade-offs</strong> among these three yardsticks. There's no best, only best-fit.</p>
+
+<h2>Remember this</h2>
+<div class="tl">
+<p>Whether a data system is good comes down to three yardsticks: <strong>reliable</strong> (a broken part doesn't stop the whole), <strong>scalable</strong> (it copes when load grows), <strong>maintainable</strong> (easy to change and run). And stop fooling yourself with the "average" — watch the experience of "the slowest slice" (p99).</p>
+</div>
+
+<p class="switch-hint">Want the mechanisms, notation and diagrams? <a data-mode="deep">→ switch to Deep</a></p>
+</div>
+
+<div class="mode mode-deep" hidden>
+
+<h2>In one sentence</h2>
+<p class="lead">DDIA Chapter 1 teaches no specific technology; it erects the book's <strong>thinking framework</strong>: the quality of a "data-intensive" system rests on three words — <strong>reliability, scalability, maintainability</strong>. It turns those fuzzy notions into measurable, tradeable engineering metrics — above all, discussing performance via <strong>response-time percentiles</strong> rather than averages — setting the yardsticks for every trade-off in the next 11 chapters.</p>
+
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Data-intensive</strong>: an app whose bottleneck is the <em>amount, complexity, and rate of change</em> of data rather than raw CPU; the opposite is "compute-intensive."</li>
+<li><strong>Building blocks of a data system</strong>: databases (store), caches (keep recent read results to go faster), search indexes (find by keyword fast), stream/batch processing — modern apps are these stitched together.</li>
+<li><strong>Throughput</strong>: how much work per unit time (e.g. requests per second); what batch processing cares about most.</li>
+<li><strong>Response time</strong>: the total time a client sees, from sending a request to receiving the response (includes queueing, network).</li>
+<li><strong>Latency</strong>: the time a request spends <em>waiting to be serviced</em> — a part of response time; don't conflate the two.</li>
+<li><strong>Percentile</strong>: sort a set of numbers ascending; the value at position p% is the p-th percentile. <code>p50</code> is the median.</li>
+<li><strong>Redundancy</strong>: keeping a spare (extra disks, machines, replicas) so a break still has a backup.</li>
+</ul>
+</div>
+
+<h2>Where it sits</h2>
+<p>Author Martin Kleppmann (a Cambridge researcher, ex-LinkedIn engineer). This chapter opens Part I, "Foundations of Data Systems," and is the <strong>through-line for the whole book</strong>: it doesn't follow from a specific technology — it sets the yardsticks first. Every later chapter — replication, partitioning, transactions, consensus, batch/stream — is a concrete trade-off among these three. In effect, <strong>this chapter is the coordinate system for understanding every trade-off that follows.</strong></p>
+
+<h2>The problem it tackles</h2>
+<p>Engineers casually say a system must be <strong>highly available, high-performance, scalable</strong> — but those words are slippery: how reliable counts as reliable? Is "fast" the average, or is the slowest also fast? Scale <em>what</em>? Without a shared, quantified vocabulary, teams talk past each other and decide by gut. This chapter's job is to <strong>break the three slogans into concepts you can measure, discuss, and trade off</strong> — so that when you later debate "single-leader vs leaderless replication," everyone shares a basis for judgment.</p>
+
+<h2>Core content, in depth</h2>
+
+<h3>Reliability: keep a "fault" from becoming a "failure"</h3>
+<p>The definition is plain: <strong>the system keeps working correctly even when things go wrong</strong>. The key is separating two words: a <em>fault</em> is a single component deviating from its spec (a disk dies, a process crashes, the network hiccups); a <em>failure</em> is the system as a whole stopping service. <strong>Faults are nearly unavoidable, but you can keep them from escalating into failures</strong> — that's being <em>fault-tolerant</em>.</p>
+
+<figure>
+<svg viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs>
+<marker id="ag" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker>
+<marker id="av" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"/></marker>
+</defs>
+<text x="20" y="26" fill="#5b9df9" font-size="13" font-weight="700">1) Fault contained by the tolerance boundary → system stays up</text>
+<rect x="30" y="40" width="300" height="62" rx="8" fill="none" stroke="rgba(91,157,249,0.5)" stroke-dasharray="5 4"/>
+<text x="180" y="55" fill="#7c8593" font-size="10.5" text-anchor="middle" font-family="monospace">fault-tolerance boundary (redundancy / isolation)</text>
+<rect x="46" y="62" width="72" height="30" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="82" y="82" fill="#b9c0ca" font-size="11" text-anchor="middle">node A</text>
+<rect x="144" y="62" width="72" height="30" rx="6" fill="rgba(155,108,245,0.22)" stroke="#9b6cf5" stroke-width="2"/><text x="180" y="82" fill="#e7ebf1" font-size="11" text-anchor="middle">node B ✕</text>
+<rect x="242" y="62" width="72" height="30" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="278" y="82" fill="#b9c0ca" font-size="11" text-anchor="middle">node C</text>
+<line x1="330" y1="72" x2="398" y2="72" stroke="#7c8593" marker-end="url(#ag)"/>
+<rect x="404" y="55" width="200" height="34" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"/><text x="504" y="76" fill="#e7ebf1" font-size="11.5" text-anchor="middle">whole system: still serving</text>
+<text x="20" y="146" fill="#e8794b" font-size="13" font-weight="700">2) Fault spreads past the boundary → escalates to failure</text>
+<rect x="30" y="160" width="300" height="62" rx="8" fill="none" stroke="rgba(120,120,130,0.4)" stroke-dasharray="5 4"/>
+<text x="180" y="175" fill="#7c8593" font-size="10.5" text-anchor="middle" font-family="monospace">no tolerance / breached (no redundancy · tight coupling)</text>
+<rect x="46" y="182" width="72" height="30" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="82" y="202" fill="#b9c0ca" font-size="11" text-anchor="middle">node A</text>
+<rect x="144" y="182" width="72" height="30" rx="6" fill="rgba(224,107,107,0.22)" stroke="#e06b6b" stroke-width="2"/><text x="180" y="202" fill="#e7ebf1" font-size="11" text-anchor="middle">node B ✕</text>
+<rect x="242" y="182" width="72" height="30" rx="6" fill="rgba(224,107,107,0.14)" stroke="#e06b6b"/><text x="278" y="202" fill="#b9c0ca" font-size="11" text-anchor="middle">node C ✕</text>
+<line x1="330" y1="197" x2="398" y2="197" stroke="#e06b6b" marker-end="url(#av)"/>
+<rect x="404" y="180" width="200" height="34" rx="6" fill="rgba(224,107,107,0.14)" stroke="#e06b6b"/><text x="504" y="201" fill="#e7ebf1" font-size="11.5" text-anchor="middle">whole system: down / failed</text>
+</svg>
+<figcaption>Fig 1 · Fault ≠ failure: the goal of fault tolerance is to contain a single-point fault inside the boundary, so it never spreads into a system-wide failure.</figcaption>
+</figure>
+
+<p>The author sorts faults into three kinds. <strong>Hardware faults</strong>: a disk's mean time to failure is ~10–50 years, so with many machines something breaks almost daily — the classic answer is <em>redundancy</em> (RAID, dual power, hot spares), with the trend shifting toward software-level tolerance. <strong>Software faults</strong> are more insidious, because they're often <strong>correlated, mass outbreaks</strong> of systematic errors (all nodes crash on the same trigger; one leap-second bug takes out a fleet). <strong>Human faults</strong> — configuration errors are the number-one cause of outages. The remedy isn't demanding "no mistakes," but <strong>designing for tolerance</strong>: decoupling, fast rollback, thorough monitoring, and — like Netflix's <em>Chaos Monkey</em> — deliberately injecting faults into production to flush out fragility.</p>
+
+<h3>Scalability: quantify "load" first, then "performance"</h3>
+<p>Scalability isn't a yes/no label; it must answer concretely: <strong>as load grows, by what means does the system keep its performance?</strong> Two steps.</p>
+<p>Step one, <strong>describe the load</strong> with a few <em>load parameters</em> — requests per second, read/write ratio, concurrent users, cache hit rate. The book's classic example is Twitter's home timeline: the real load parameter isn't "tweet rate" but <strong>the distribution of followers per user</strong> — a celebrity's single tweet must reach tens of millions, so <em>fan-out</em> is where the difficulty lives.</p>
+
+<figure>
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="af" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<line x1="320" y1="20" x2="320" y2="284" stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4"/>
+<text x="160" y="26" fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle">fan-out on write</text>
+<rect x="118" y="42" width="86" height="28" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"/><text x="161" y="61" fill="#e7ebf1" font-size="11" text-anchor="middle">post 1 tweet</text>
+<rect x="24" y="122" width="84" height="28" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/><text x="66" y="141" fill="#b9c0ca" font-size="10" text-anchor="middle">A's inbox</text>
+<rect x="120" y="122" width="84" height="28" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/><text x="162" y="141" fill="#b9c0ca" font-size="10" text-anchor="middle">B's inbox</text>
+<rect x="216" y="122" width="84" height="28" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/><text x="258" y="141" fill="#b9c0ca" font-size="10" text-anchor="middle">C's inbox</text>
+<line x1="150" y1="70" x2="70" y2="120" stroke="#7c8593" marker-end="url(#af)"/>
+<line x1="161" y1="70" x2="162" y2="120" stroke="#7c8593" marker-end="url(#af)"/>
+<line x1="172" y1="70" x2="254" y2="120" stroke="#7c8593" marker-end="url(#af)"/>
+<text x="160" y="182" fill="#7c8593" font-size="10.5" text-anchor="middle">on read: just read your own inbox</text>
+<rect x="96" y="196" width="128" height="28" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"/><text x="160" y="215" fill="#e7ebf1" font-size="11" text-anchor="middle">timeline opens fast</text>
+<line x1="160" y1="150" x2="160" y2="194" stroke="#7c8593" marker-end="url(#af)"/>
+<text x="160" y="256" fill="#9b6cf5" font-size="11.5" text-anchor="middle" font-family="monospace">heavy write · light read</text>
+<text x="160" y="274" fill="#7c8593" font-size="10" text-anchor="middle">good for ordinary users</text>
+<text x="480" y="26" fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle">fan-out on read</text>
+<rect x="437" y="42" width="86" height="28" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"/><text x="480" y="61" fill="#e7ebf1" font-size="11" text-anchor="middle">post 1 tweet</text>
+<rect x="410" y="96" width="140" height="26" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/><text x="480" y="114" fill="#b9c0ca" font-size="10" text-anchor="middle">write author's box once</text>
+<line x1="480" y1="70" x2="480" y2="94" stroke="#7c8593" marker-end="url(#af)"/>
+<rect x="352" y="156" width="72" height="26" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="388" y="174" fill="#b9c0ca" font-size="10" text-anchor="middle">followee 1</text>
+<rect x="444" y="156" width="72" height="26" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="480" y="174" fill="#b9c0ca" font-size="10" text-anchor="middle">followee 2</text>
+<rect x="536" y="156" width="72" height="26" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="572" y="174" fill="#b9c0ca" font-size="10" text-anchor="middle">followee 3</text>
+<rect x="416" y="214" width="128" height="28" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"/><text x="480" y="233" fill="#e7ebf1" font-size="10.5" text-anchor="middle">query on read → merge</text>
+<line x1="388" y1="182" x2="470" y2="212" stroke="#7c8593" marker-end="url(#af)"/>
+<line x1="480" y1="182" x2="480" y2="212" stroke="#7c8593" marker-end="url(#af)"/>
+<line x1="572" y1="182" x2="490" y2="212" stroke="#7c8593" marker-end="url(#af)"/>
+<text x="480" y="266" fill="#9b6cf5" font-size="11.5" text-anchor="middle" font-family="monospace">light write · heavy read</text>
+<text x="480" y="284" fill="#7c8593" font-size="10" text-anchor="middle">good for celebrities</text>
+</svg>
+<figcaption>Fig 2 · Two fan-out strategies for a timeline: fan-out on write (fast read, heavy write) vs fan-out on read (light write, heavy read). Twitter actually mixes them — ordinary users on the left, mega-celebrities on the right.</figcaption>
+</figure>
+
+<p>Step two, <strong>describe performance</strong> — and here is the chapter's most important lesson: <strong>don't use the average, use percentiles</strong>. Response time isn't a single number but a <strong>distribution</strong> — most requests fast, a few slow. The average is skewed by a few extremes and hides <em>who</em> is suffering. The right move is percentiles: <code>p50</code> (median, half of users are faster), <code>p95</code>, <code>p99</code>, <code>p99.9</code>. <strong>The tail (p99 and beyond) often matters most</strong>, because the slowest requests tend to come from the users with the most data — the most valuable ones. Amazon sets service goals on <code>p99.9</code>, not the average.</p>
+
+<figure>
+<svg viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="ax" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<rect x="360" y="40" width="245" height="150" fill="rgba(155,108,245,0.06)"/>
+<path d="M60,190 C110,190 132,58 168,60 C214,63 250,150 306,168 C388,184 476,188 600,189 L600,190 L60,190 Z" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="1.6"/>
+<line x1="50" y1="190" x2="618" y2="190" stroke="#7c8593" marker-end="url(#ax)"/>
+<text x="612" y="208" fill="#7c8593" font-size="10.5" text-anchor="end">response time (slower →)</text>
+<line x1="168" y1="60" x2="168" y2="190" stroke="#5b9df9" stroke-dasharray="3 3"/>
+<line x1="306" y1="168" x2="306" y2="190" stroke="#7c8593" stroke-dasharray="3 3"/>
+<line x1="410" y1="185" x2="410" y2="190" stroke="#9b6cf5" stroke-dasharray="3 3"/>
+<line x1="520" y1="188" x2="520" y2="190" stroke="#9b6cf5" stroke-dasharray="3 3"/>
+<text x="168" y="214" fill="#5b9df9" font-size="10.5" text-anchor="middle" font-family="monospace">p50 median</text>
+<text x="306" y="214" fill="#b9c0ca" font-size="10.5" text-anchor="middle" font-family="monospace">p95</text>
+<text x="410" y="214" fill="#9b6cf5" font-size="10.5" text-anchor="middle" font-family="monospace">p99</text>
+<text x="520" y="214" fill="#9b6cf5" font-size="10.5" text-anchor="middle" font-family="monospace">p99.9</text>
+<text x="482" y="34" fill="#9b6cf5" font-size="11" text-anchor="middle">long tail: the slow few</text>
+<text x="482" y="50" fill="#7c8593" font-size="9.5" text-anchor="middle">(often the most valuable)</text>
+<text x="150" y="110" fill="#7c8593" font-size="10" text-anchor="end">most requests</text>
+</svg>
+<figcaption>Fig 3 · Response time is a right-skewed distribution: the average is dragged by the long tail. Only p50/p95/p99/p99.9 reveal the real experience of "the slowest slice."</figcaption>
+</figure>
+
+<p>Why are tail latencies stubborn? First, <strong>queueing delay</strong> often dominates the tail: a server can handle only so many requests in parallel, so one slow request stalls everyone queued behind it (<em>head-of-line blocking</em>). Second, <strong>tail latency amplification</strong>: if a page fans out to several backends in parallel and must wait for the slowest, then even a 1% slow rate per backend inflates the page-level "slow" fraction. So measure on the <strong>client side</strong>, by percentile, continuously — not just server-side averages.</p>
+
+<h3>Maintainability: operability, simplicity, evolvability</h3>
+<p>Most software cost isn't in building but in <strong>long-term upkeep</strong>. The author splits it into three: <strong>operability</strong> — make it easy for ops to keep the system running well (good monitoring, docs, automation); <strong>simplicity</strong> — manage complexity, using good <em>abstractions</em> to remove <em>accidental complexity</em> (complexity from the implementation, not inherent to the problem), so the system never rots into a <em>big ball of mud</em>; <strong>evolvability</strong> — make it easy to change as requirements shift. Together they decide whether a system can be kept alive, long-term, without pain.</p>
+
+<h2>Key trade-offs &amp; choices</h2>
+<ul>
+<li><strong>Scale up vs scale out</strong>: scaling up (a bigger machine) is simple but hits a ceiling and gets expensive; scaling out (many commodity machines in a <em>shared-nothing</em> architecture) grows further but brings all the distributed headaches (Part II is entirely about this). In practice you mix both. <strong>There's no magic scaling sauce — architecture is always tailored to the app's specific load.</strong></li>
+<li><strong>Average vs percentile</strong>: the average is cheap but lies; percentiles (especially p99/p99.9) cost a bit more to compute but reflect the worst experience honestly. Insist on the tail when evaluating choices.</li>
+<li><strong>Fan-out on write vs on read</strong> (Fig 2): the former reads fast / writes heavy (good for ordinary users), the latter writes light / reads heavy (good for celebrities); Twitter's answer is a <strong>hybrid split by load parameter</strong>.</li>
+<li><strong>The cost of reliability</strong>: tolerance costs redundancy (replicas, extra datacenters); not every system deserves equal reliability — sometimes you trade reliability for lower cost (e.g. an offline analytics job you can just re-run).</li>
+</ul>
+
+<h2>Why it matters / in real systems</h2>
+<p>Countless backend engineers treat this chapter as the common bedrock for interviews and architecture because it hands you a <strong>cross-technology vocabulary for judgment</strong>: whether you use PostgreSQL, Cassandra, Kafka, or something homegrown, reliability reduces to "did the tolerance boundary contain the fault," performance to "what's p99, where does the tail come from," scale to "what's the load parameter, how do we add machines." <strong>Percentile latency (p99/p99.9) is now the standard language of SLAs and monitoring dashboards</strong> everywhere; chaos engineering spread from Netflix into common practice. Every later chapter's technology can be judged back against these three yardsticks.</p>
+
+<h2>Pitfalls &amp; debates</h2>
+<ul>
+<li>Conflating <strong>latency</strong> and <strong>response time</strong>: response time is the total a client sees (queueing, network, retries); latency is only the "waiting to be serviced" part. Be explicit about which in an SLA.</li>
+<li>Deciding on the <strong>average</strong>: the mean is insensitive to the tail and is almost always the wrong metric — yet obsessing solely over p99.9 can over-invest for a tiny minority; weigh it against the business.</li>
+<li>Thinking "scalable = buy a bigger machine": true scalability is the <strong>ability to cope with a specific growth in load</strong>, tightly bound to architecture, with no universal answer.</li>
+<li><strong>Dated in places</strong>: written in 2017, before cloud-native elasticity, serverless, and mature observability (distributed tracing) advanced further; but the "three yardsticks + percentiles" framework hasn't aged.</li>
+<li>"Reliability" is not "zero faults": chasing zero faults is neither realistic nor economic — the goal is <strong>controlled tolerance</strong>.</li>
+</ul>
+
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① One line: the book's through-line — use <strong>reliable / scalable / maintainable</strong> as three yardsticks to turn "is this system good?" into measurable, tradeable engineering questions.</p>
+<p>② Reliability: separate <strong>fault</strong> (a component breaks) from <strong>failure</strong> (the whole stops); aim for tolerance — don't let faults escalate; faults are hardware / software / human, with human config errors the most common.</p>
+<p>③ Scalability in two steps: describe load with <strong>load parameters</strong> (in the Twitter case, follower distribution / fan-out), then describe performance.</p>
+<p>④ The core lesson on measuring performance: <strong>use percentiles, not averages</strong> — p50/p95/p99/p99.9; the tail matters most because the slowest users are often the most valuable.</p>
+<p>⑤ Tail latency is stubborn due to <strong>queueing / head-of-line blocking</strong> and <strong>tail amplification</strong>; measure client-side, by percentile, continuously.</p>
+<p>⑥ Ways to scale: up (bigger machine, has a ceiling) vs out (shared-nothing, grows big but adds distributed pain); <strong>no magic scaling sauce</strong>.</p>
+<p>⑦ Maintainability = operability + simplicity (kill accidental complexity, avoid the big ball of mud) + evolvability.</p>
+<p>⑧ Significance: it provides a <strong>cross-technology vocabulary</strong> — the coordinate system for every later trade-off in replication / partitioning / transactions / consensus.</p>
+</div>
+</div>
+<footer>Books Deep-Read · reading this page ≈ the core of this chapter; for full case studies and depth, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
