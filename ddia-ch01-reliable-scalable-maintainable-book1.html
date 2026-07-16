@@ -38,6 +38,11 @@ table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11p
 table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
 table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
 table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
 footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
 </style></head><body>
 <div class="container">
@@ -227,7 +232,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <tr><th><code>p99.99</code></th><td>每 <code>1 万</code> 个最慢的 1 个</td><td>亚马逊认为再往这优化<strong>不划算</strong>——收益递减、成本陡增</td></tr>
 </tbody></table></div>
 
-<p>尾延迟为什么难缠？一是<strong>排队延迟</strong>常主导尾部：服务器能并行处理的请求数有限，一个慢请求会把后面排队的都拖慢（<em>队头阻塞 head-of-line blocking</em>）。二是<strong>尾延迟放大（tail latency amplification）</strong>：若一个页面要并行调用多个后端、必须等最慢的那个才能返回，那么后端只要有一点慢请求，页面级的「慢」就会被放大。<strong>算个具体量级</strong>：一次用户请求并行访问 <code>100</code> 个后端、每个各有 <code>1%</code> 的概率变慢，则整页被至少一个慢调用拖慢的概率高达 <code>1 − 0.99¹⁰⁰ ≈ 63%</code>——单个后端看着很健康，页面级尾部却已惨不忍睹。所以度量要在<strong>客户端侧</strong>、按百分位持续观测，而不是只看服务端平均。</p>
+<p>尾延迟为什么难缠？一是<strong>排队延迟</strong>常主导尾部：服务器能并行处理的请求数有限，一个慢请求会把后面排队的都拖慢（<em>队头阻塞 head-of-line blocking</em>）。二是<strong>尾延迟放大（tail latency amplification）</strong>：若一个页面要并行调用多个后端、必须等最慢的那个才能返回，那么后端只要有一点慢请求，页面级的「慢」就会被放大。<strong>算个具体量级</strong>：一次用户请求并行访问 <code>100</code> 个后端、每个各有 <code>1%</code> 的概率变慢，则整页被至少一个慢调用拖慢的概率高达 <code>1 − 0.99¹⁰⁰ ≈ 63%</code>——单个后端看着很健康，页面级尾部却已惨不忍睹（这正是 Google 的 Jeff Dean 与 Luiz Barroso 在《The Tail at Scale》里量化的现象）。所以度量要在<strong>客户端侧</strong>、按百分位持续观测，而不是只看服务端平均。</p>
 
 <h3>可维护性：可运维、简单、可演化</h3>
 <p>软件成本的大头不在开发、在<strong>长期维护</strong>。作者拆成三条：<strong>可运维性（operability）</strong>——让运维容易把系统跑好（好的监控、文档、自动化）；<strong>简单性（simplicity）</strong>——管住复杂度，用好的<em>抽象（abstraction）</em>消除<em>偶发复杂度（accidental complexity，指并非问题本身固有、而是实现方式带来的复杂度）</em>，别让系统烂成一团「<em>大泥球（big ball of mud）</em>」；<strong>可演化性（evolvability）</strong>——让需求变化时容易改。三者共同决定一套系统能不能被人长期、低痛地养着。</p>
@@ -252,6 +257,16 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 
 <h2>为什么重要 / 落到真实系统</h2>
 <p>这一章之所以被无数后端工程师奉为「面试与架构的通用底本」，是因为它给了一套<strong>跨技术的评判语言</strong>：无论你用 PostgreSQL、Cassandra、Kafka 还是自研系统，谈可靠都能落到「故障是否被容错边界挡住」，谈性能都能落到「p99 是多少、尾延迟从哪来」，谈扩展都能落到「负载参数是什么、怎么加机器」。<strong>百分位延迟（p99/p99.9）今天已是各大公司 SLA 与监控面板的标准语言</strong>；混沌工程（Chaos Engineering）也从 Netflix 扩散成一门通行实践。后面每一章的技术，都可以放回这三把尺子上评判。</p>
+
+<div class="ev">
+<div class="evh">大厂实证 · 这些主张不是书里说的，是公司自己公开说的</div>
+<ul>
+<li><strong>Amazon</strong> 用 <code>p99.9</code>（而非平均）定内部服务的 SLA，理由是「最慢的请求往往来自数据最多、最有价值的客户」——<strong>验证了本章「看尾部、别看平均」</strong>。<span class="src">Dynamo 论文, SOSP 2007</span></li>
+<li><strong>Google</strong> 量化了尾延迟放大：一个请求扇出到成百上千台机器，只要每台有小概率慢，整体就大概率慢；并提出对冲请求（hedged requests）等对策——<strong>验证了尾延迟是规模化系统的核心难题</strong>。<span class="src">J. Dean &amp; L. Barroso《The Tail at Scale》, CACM 2013</span></li>
+<li><strong>Netflix</strong> 用 Chaos Monkey 在<strong>生产环境</strong>随机杀实例，把「坏一台没人慌」逼成默认能力——<strong>用实践证明主动注入故障能换来真正的容错</strong>。<span class="src">Netflix Tech Blog「Simian Army」, 2011 起</span></li>
+<li><strong>Twitter</strong> 公开过首页时间线的扇出架构与量级，最终落到<strong>混合方案</strong>（普通用户写时扇出、大 V 读时合并）——本章用的那些 Twitter 数字正源于此。<span class="src">R. Krikorian「Timelines at Scale」, QCon 2012</span></li>
+</ul>
+</div>
 
 <h2>易错点与争议</h2>
 <ul>

@@ -38,6 +38,11 @@ table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11p
 table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
 table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
 table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
 footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
 </style></head><body>
 <div class="container">
@@ -227,7 +232,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <tr><th><code>p99.99</code></th><td>Slowest 1 in <code>10,000</code></td><td>Amazon judged optimizing this far <strong>not worth it</strong> — diminishing returns, steep cost</td></tr>
 </tbody></table></div>
 
-<p>Why are tail latencies stubborn? First, <strong>queueing delay</strong> often dominates the tail: a server can handle only so many requests in parallel, so one slow request stalls everyone queued behind it (<em>head-of-line blocking</em>). Second, <strong>tail latency amplification</strong>: if a page fans out to several backends in parallel and must wait for the slowest, even a small slow rate per backend gets magnified at the page level. <strong>Put a number on it</strong>: if one user request hits <code>100</code> backends in parallel and each has a <code>1%</code> chance of being slow, the odds the whole page is dragged by at least one slow call reach <code>1 − 0.99¹⁰⁰ ≈ 63%</code> — each backend looks healthy, yet the page-level tail is grim. So measure on the <strong>client side</strong>, by percentile, continuously — not just server-side averages.</p>
+<p>Why are tail latencies stubborn? First, <strong>queueing delay</strong> often dominates the tail: a server can handle only so many requests in parallel, so one slow request stalls everyone queued behind it (<em>head-of-line blocking</em>). Second, <strong>tail latency amplification</strong>: if a page fans out to several backends in parallel and must wait for the slowest, even a small slow rate per backend gets magnified at the page level. <strong>Put a number on it</strong>: if one user request hits <code>100</code> backends in parallel and each has a <code>1%</code> chance of being slow, the odds the whole page is dragged by at least one slow call reach <code>1 − 0.99¹⁰⁰ ≈ 63%</code> — each backend looks healthy, yet the page-level tail is grim (exactly the effect Google's Jeff Dean and Luiz Barroso quantified in <em>The Tail at Scale</em>). So measure on the <strong>client side</strong>, by percentile, continuously — not just server-side averages.</p>
 
 <h3>Maintainability: operability, simplicity, evolvability</h3>
 <p>Most software cost isn't in building but in <strong>long-term upkeep</strong>. The author splits it into three: <strong>operability</strong> — make it easy for ops to keep the system running well (good monitoring, docs, automation); <strong>simplicity</strong> — manage complexity, using good <em>abstractions</em> to remove <em>accidental complexity</em> (complexity from the implementation, not inherent to the problem), so the system never rots into a <em>big ball of mud</em>; <strong>evolvability</strong> — make it easy to change as requirements shift. Together they decide whether a system can be kept alive, long-term, without pain.</p>
@@ -252,6 +257,16 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 
 <h2>Why it matters / in real systems</h2>
 <p>Countless backend engineers treat this chapter as the common bedrock for interviews and architecture because it hands you a <strong>cross-technology vocabulary for judgment</strong>: whether you use PostgreSQL, Cassandra, Kafka, or something homegrown, reliability reduces to "did the tolerance boundary contain the fault," performance to "what's p99, where does the tail come from," scale to "what's the load parameter, how do we add machines." <strong>Percentile latency (p99/p99.9) is now the standard language of SLAs and monitoring dashboards</strong> everywhere; chaos engineering spread from Netflix into common practice. Every later chapter's technology can be judged back against these three yardsticks.</p>
+
+<div class="ev">
+<div class="evh">Field evidence · these claims aren't the book's — the companies stated them publicly</div>
+<ul>
+<li><strong>Amazon</strong> sets internal-service SLAs on <code>p99.9</code> (not the average), reasoning that the slowest requests tend to come from the customers with the most data — the most valuable ones — <strong>validating this chapter's "watch the tail, not the average."</strong> <span class="src">Dynamo paper, SOSP 2007</span></li>
+<li><strong>Google</strong> quantified tail-latency amplification — a request fanning out to hundreds or thousands of machines is likely slow if each has even a small chance of being slow — and proposed hedged requests as a remedy, <strong>validating the tail as the core problem of systems at scale.</strong> <span class="src">J. Dean &amp; L. Barroso, "The Tail at Scale," CACM 2013</span></li>
+<li><strong>Netflix</strong> runs Chaos Monkey to kill instances at random <strong>in production</strong>, forcing "losing one box is a non-event" to become the default — <strong>proving in practice that injecting faults buys real fault tolerance.</strong> <span class="src">Netflix Tech Blog, "The Simian Army," 2011</span></li>
+<li><strong>Twitter</strong> publicly described its home-timeline fan-out architecture and magnitudes, ultimately landing on a <strong>hybrid</strong> (ordinary users fan-out-on-write, celebrities fan-out-on-read) — the very Twitter numbers this chapter uses come from there. <span class="src">R. Krikorian, "Timelines at Scale," QCon 2012</span></li>
+</ul>
+</div>
 
 <h2>Pitfalls &amp; debates</h2>
 <ul>
