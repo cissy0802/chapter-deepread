@@ -77,3 +77,16 @@
 每次运行开头，先扫 `TOPICS.md` 章节清单：凡是 **slug 没有对应页**（`ls *-book*.html` 去 `-bookN` 后缀比对）**且** index 里没有对应灰色行的章，按清单顺序补一条灰色占位行 `<div class="entry todo">…</div>`（无 href、`todo` 类）。`index.en.html` 用章的真实英文标题 + 简述（勿泄漏中文），`index.html` 用清单中文裁成本仓 zh 风格。**两个 index 都要补。** 新增整本书时，同步补该书的 `.group` + `.group.sub` 标题行。
 
 这样 BigCat 往清单里加的新书 / 新章，下次运行就会自动作为灰色条目出现；等真正写它时再按 slug **原地**转成链接（勿另 append）。
+
+## 新页面必带共享脚本（免触发 inject-comments 机器人提交）
+
+生成任何 `*.html`（含 `.en.html`）时，在 `</body>` 前直接写入这 4 行，勿遗漏：
+
+```html
+<script src="https://cissy0802.github.io/comments.js" defer></script>
+<script src="https://cissy0802.github.io/search.js" defer></script>
+<script src="https://cissy0802.github.io/index-button.js" defer></script>
+<script src="https://cissy0802.github.io/i18n-tts.js" defer></script>
+```
+
+这样 CI 的 inject-comments 不会再对新页面追加自动提交。
