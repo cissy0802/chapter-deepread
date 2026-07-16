@@ -55,7 +55,7 @@
 - 文件名 `{slug}-book{N}.html` + `{slug}-book{N}.en.html`，放仓库根目录。
 - 发布前更新 `index.html`（把对应灰色占位行原地转链接，见下）+ `index.en.html`（同步转 `.en` 链接）。
 - **index 条目的 `.title` 是「简介」不是「摘要」——一句话、一个钩子，只点出这一章那一两个核心想法 / 权衡，`Ch 标题 — 一个 clause` 到句号即止（对标样例第 1 章「Ch1 可靠·可扩展·可维护 — 先立三把尺子，用负载参数和响应时间百分位把『系统好不好』量化成可谈的东西」的分量，中文 ≤ 约 50 字、英文一行）。别把整章的问题、机制、权衡、影响全塞进 index——那些留给正文八节。宁短勿长。
-- **不要**手动在内容页里加 `comments.js` / `search.js` / `index-button.js` / `i18n-tts.js`（GitHub Action 自动注入，含右上角中英切换药丸 + TTS 朗读）；也别硬写 `← Hub`。（index 页可硬写这四个脚本，与姊妹站一致。）
+- **不要**手动在内容页里加 `comments.js` / `search.js` / `index-button.js` / `i18n-tts.js` / `lightbox.js`（GitHub Action 自动注入，含右上角中英切换药丸 + TTS 朗读 + 图片/内联 SVG 点开放大）；也别硬写 `← Hub`。（index 页可硬写这些脚本，与姊妹站一致。）**图只管照常写 `<figure><svg>…</svg><figcaption>`，注入的 `lightbox.js` 会自动让每张图可点开、滚轮缩放、拖拽平移——不用你加任何 class 或 onclick。**
 - **TTS 走浏览器 Web Speech，不做 Azure 烘焙**：`i18n-tts.js` 没有 mp3 时会自动回退成读 `h1/h2/h3/p` 的浏览器语音——所以**别加 `data-tts` 属性、别建 `audio/` 目录、别恢复 bake-tts**。朗读效果由浏览器语音决定，够用即可。
 - 用 `./publish.sh` 发布：自动 add/commit/push 到 `main`，并校验体量、index 引用、div 平衡、重复编号、TOPICS 未被改、无硬写四脚本等。
 - git：`user.name=BigCat` / `user.email=chengchen0802@gmail.com`。
