@@ -31,6 +31,13 @@ figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;fon
 .switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
 .switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
 .tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
 footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
 </style></head><body>
 <div class="container">
@@ -126,9 +133,18 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 
 <p>The author sorts faults into three kinds. <strong>Hardware faults</strong>: a disk's mean time to failure is ~10–50 years, so with many machines something breaks almost daily — the classic answer is <em>redundancy</em> (RAID, dual power, hot spares), with the trend shifting toward software-level tolerance. <strong>Software faults</strong> are more insidious, because they're often <strong>correlated, mass outbreaks</strong> of systematic errors (all nodes crash on the same trigger; one leap-second bug takes out a fleet). <strong>Human faults</strong> — configuration errors are the number-one cause of outages. The remedy isn't demanding "no mistakes," but <strong>designing for tolerance</strong>: decoupling, fast rollback, thorough monitoring, and — like Netflix's <em>Chaos Monkey</em> — deliberately injecting faults into production to flush out fragility.</p>
 
+<p class="tcap">Table 1 · The three fault classes — character and countermeasures (DDIA's taxonomy)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Fault type</th><th>Typical examples &amp; magnitude</th><th>Correlated?</th><th>Main countermeasures</th></tr></thead>
+<tbody>
+<tr><th>Hardware</th><td>Disk failure, memory errors, power loss. Disk MTTF ~<code>10–50</code> yrs → a <code>10,000</code>-disk cluster loses <strong>~1 disk/day on average</strong></td><td>Mostly independent</td><td>Redundancy (RAID, dual power, hot spares); trend toward software-level tolerance</td></tr>
+<tr><th>Software</th><td>All nodes crash on the same trigger; one leap-second bug fells a fleet; cascading failures</td><td><strong>Highly correlated, mass outbreaks</strong></td><td>Decouple, rate-limit, isolate; thorough testing &amp; monitoring; self-healing processes</td></tr>
+<tr><th>Human</th><td>Configuration errors — <strong>the #1 cause of outages at large internet services</strong></td><td>Correlated (one slip hits many places)</td><td>Design for tolerance: decoupling, fast rollback, staged rollouts, monitoring, drills</td></tr>
+</tbody></table></div>
+
 <h3>Scalability: quantify "load" first, then "performance"</h3>
 <p>Scalability isn't a yes/no label; it must answer concretely: <strong>as load grows, by what means does the system keep its performance?</strong> Two steps.</p>
-<p>Step one, <strong>describe the load</strong> with a few <em>load parameters</em> — requests per second, read/write ratio, concurrent users, cache hit rate. The book's classic example is Twitter's home timeline: the real load parameter isn't "tweet rate" but <strong>the distribution of followers per user</strong> — a celebrity's single tweet must reach tens of millions, so <em>fan-out</em> is where the difficulty lives.</p>
+<p>Step one, <strong>describe the load</strong> with a few <em>load parameters</em> — requests per second, read/write ratio, concurrent users, cache hit rate. The book's classic example is Twitter's home timeline: the real load parameter isn't "tweet rate" but <strong>the distribution of followers per user</strong> — a celebrity's single tweet must reach tens of millions, so <em>fan-out</em> is where the difficulty lives. DDIA's cited figures make the point: posting tweets runs ~<code>4.6k</code> req/s on average and <code>12k+</code> at peak, while home-timeline reads hit <code>300k</code> req/s — a <strong>read:write ratio of ~65:1</strong>, the pressure on the read side, and every tweet must fan out to all of the author's followers.</p>
 
 <figure>
 <svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
@@ -164,6 +180,18 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <figcaption>Fig 2 · Two fan-out strategies for a timeline: fan-out on write (fast read, heavy write) vs fan-out on read (light write, heavy read). Twitter actually mixes them — ordinary users on the left, mega-celebrities on the right.</figcaption>
 </figure>
 
+<p class="tcap">Table 2 · Twitter home timeline: magnitude of the two fan-out strategies (figures as cited by DDIA, ~2012 Twitter)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>fan-out on write</th><th>fan-out on read</th></tr></thead>
+<tbody>
+<tr><th>Post one tweet</th><td>Write into <strong>every follower's</strong> inbox cache</td><td>Write the author's box once</td></tr>
+<tr><th>Read timeline</th><td><strong>Read your own inbox — fastest</strong></td><td>Query all followees, merge &amp; sort — slower</td></tr>
+<tr><th>Write amplification</th><td>1 tweet × ~<code>75</code> followers avg ≈ <strong>345k writes/s</strong> (4.6k×75)</td><td>None</td></tr>
+<tr><th>A celebrity's tweet</th><td><strong>30M+ writes</strong>, and must land promptly</td><td>1 write; cost pushed to read</td></tr>
+<tr><th>Best for</th><td>Ordinary users with few followers</td><td>Mega-celebrities followed by millions</td></tr>
+</tbody></table></div>
+<p>Twitter's final answer is a <strong>hybrid</strong>: the vast majority go fan-out-on-write, a tiny number of mega-celebrities go fan-out-on-read and get merged in at read time — <strong>routing by the load parameter (follower distribution) itself</strong>. A live demonstration that scalability has no universal answer, only per-load tailoring.</p>
+
 <p>Step two, <strong>describe performance</strong> — and here is the chapter's most important lesson: <strong>don't use the average, use percentiles</strong>. Response time isn't a single number but a <strong>distribution</strong> — most requests fast, a few slow. The average is skewed by a few extremes and hides <em>who</em> is suffering. The right move is percentiles: <code>p50</code> (median, half of users are faster), <code>p95</code>, <code>p99</code>, <code>p99.9</code>. <strong>The tail (p99 and beyond) often matters most</strong>, because the slowest requests tend to come from the users with the most data — the most valuable ones. Amazon sets service goals on <code>p99.9</code>, not the average.</p>
 
 <figure>
@@ -188,14 +216,35 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <figcaption>Fig 3 · Response time is a right-skewed distribution: the average is dragged by the long tail. Only p50/p95/p99/p99.9 reveal the real experience of "the slowest slice."</figcaption>
 </figure>
 
-<p>Why are tail latencies stubborn? First, <strong>queueing delay</strong> often dominates the tail: a server can handle only so many requests in parallel, so one slow request stalls everyone queued behind it (<em>head-of-line blocking</em>). Second, <strong>tail latency amplification</strong>: if a page fans out to several backends in parallel and must wait for the slowest, then even a 1% slow rate per backend inflates the page-level "slow" fraction. So measure on the <strong>client side</strong>, by percentile, continuously — not just server-side averages.</p>
+<p class="tcap">Table 3 · How to read response-time percentiles, and what they cost</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Percentile</th><th>Meaning</th><th>Typical use / cost</th></tr></thead>
+<tbody>
+<tr><th><code>p50</code> median</th><td>Half of users are faster</td><td>The "typical" experience</td></tr>
+<tr><th><code>p95</code></th><td>Slowest 1 in <code>20</code> requests</td><td>Common SLA target</td></tr>
+<tr><th><code>p99</code></th><td>Slowest 1 in <code>100</code></td><td>Where the watched tail starts</td></tr>
+<tr><th><code>p99.9</code></th><td>Slowest 1 in <code>1,000</code> — often the users with the most data, the <strong>most valuable</strong></td><td>Amazon sets internal SLAs on it</td></tr>
+<tr><th><code>p99.99</code></th><td>Slowest 1 in <code>10,000</code></td><td>Amazon judged optimizing this far <strong>not worth it</strong> — diminishing returns, steep cost</td></tr>
+</tbody></table></div>
+
+<p>Why are tail latencies stubborn? First, <strong>queueing delay</strong> often dominates the tail: a server can handle only so many requests in parallel, so one slow request stalls everyone queued behind it (<em>head-of-line blocking</em>). Second, <strong>tail latency amplification</strong>: if a page fans out to several backends in parallel and must wait for the slowest, even a small slow rate per backend gets magnified at the page level. <strong>Put a number on it</strong>: if one user request hits <code>100</code> backends in parallel and each has a <code>1%</code> chance of being slow, the odds the whole page is dragged by at least one slow call reach <code>1 − 0.99¹⁰⁰ ≈ 63%</code> — each backend looks healthy, yet the page-level tail is grim. So measure on the <strong>client side</strong>, by percentile, continuously — not just server-side averages.</p>
 
 <h3>Maintainability: operability, simplicity, evolvability</h3>
 <p>Most software cost isn't in building but in <strong>long-term upkeep</strong>. The author splits it into three: <strong>operability</strong> — make it easy for ops to keep the system running well (good monitoring, docs, automation); <strong>simplicity</strong> — manage complexity, using good <em>abstractions</em> to remove <em>accidental complexity</em> (complexity from the implementation, not inherent to the problem), so the system never rots into a <em>big ball of mud</em>; <strong>evolvability</strong> — make it easy to change as requirements shift. Together they decide whether a system can be kept alive, long-term, without pain.</p>
 
 <h2>Key trade-offs &amp; choices</h2>
+<p class="tcap">Table 4 · Scale up vs scale out</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Scale up</th><th>Scale out</th></tr></thead>
+<tbody>
+<tr><th>Approach</th><td>A stronger single machine (more CPU / RAM, faster disks)</td><td>Many commodity machines in a <em>shared-nothing</em> cluster</td></tr>
+<tr><th>Ceiling</th><td><strong>A hard ceiling</strong> — even the biggest box has a limit</td><td>Near-linear; scales to very large sizes</td></tr>
+<tr><th>Cost curve</th><td>High-end machines <strong>cost super-linearly</strong></td><td>Commodity boxes in bulk; low unit cost</td></tr>
+<tr><th>Complexity</th><td>Low — the app barely changes</td><td>High — brings replication / partitioning / consistency, the whole distributed problem set (Part II)</td></tr>
+<tr><th>Best for</th><td>Non-extreme load, keeping it simple</td><td>Large load / high availability, willing to take on distributed complexity</td></tr>
+</tbody></table></div>
+<p>In practice you often <strong>mix both</strong>: a few strong machines are frequently simpler and cheaper than a swarm of small ones. <strong>There's no magic scaling sauce — architecture is always tailored to the app's specific load.</strong></p>
 <ul>
-<li><strong>Scale up vs scale out</strong>: scaling up (a bigger machine) is simple but hits a ceiling and gets expensive; scaling out (many commodity machines in a <em>shared-nothing</em> architecture) grows further but brings all the distributed headaches (Part II is entirely about this). In practice you mix both. <strong>There's no magic scaling sauce — architecture is always tailored to the app's specific load.</strong></li>
 <li><strong>Average vs percentile</strong>: the average is cheap but lies; percentiles (especially p99/p99.9) cost a bit more to compute but reflect the worst experience honestly. Insist on the tail when evaluating choices.</li>
 <li><strong>Fan-out on write vs on read</strong> (Fig 2): the former reads fast / writes heavy (good for ordinary users), the latter writes light / reads heavy (good for celebrities); Twitter's answer is a <strong>hybrid split by load parameter</strong>.</li>
 <li><strong>The cost of reliability</strong>: tolerance costs redundancy (replicas, extra datacenters); not every system deserves equal reliability — sometimes you trade reliability for lower cost (e.g. an offline analytics job you can just re-run).</li>

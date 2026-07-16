@@ -31,6 +31,13 @@ figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;fon
 .switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
 .switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
 .tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
 footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
 </style></head><body>
 <div class="container">
@@ -126,9 +133,18 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 
 <p>作者把故障分三类。<strong>硬件故障</strong>：磁盘平均无故障时间约 10–50 年，机器一多，几乎每天都有盘坏——传统解法是加<em>冗余</em>（RAID、双电源、热备），趋势是往软件层容错靠。<strong>软件故障</strong>更阴险，因为常是<strong>相关联的、成批爆发</strong>的系统性错误（某个触发条件下所有节点同时崩、一次闰秒 bug 放倒一整片）。<strong>人为故障</strong>——配置错误是线上事故的头号原因。对策不是苛求「别出错」，而是<strong>在设计上容错</strong>：解耦、快速回滚、充分监控，以及像 Netflix 的 <em>Chaos Monkey</em> 那样主动往生产环境注入故障，逼出脆弱点。</p>
 
+<p class="tcap">表 1 · 三类故障的性格与对策（DDIA 分类）</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>故障类型</th><th>典型例子与量级</th><th>是否相关</th><th>主要对策</th></tr></thead>
+<tbody>
+<tr><th>硬件故障</th><td>磁盘损坏、内存出错、断电。磁盘 MTTF 约 <code>10–50</code> 年 → 一个 <code>1 万</code> 块盘的集群<strong>平均每天坏 ~1 块</strong></td><td>大多相互独立</td><td>冗余（RAID、双电源、多机热备）；趋势转向软件层容错</td></tr>
+<tr><th>软件故障</th><td>某触发条件下所有节点同时崩、一次闰秒 bug 放倒一整片、级联失效</td><td><strong>高度相关、成批爆发</strong></td><td>解耦、限流、隔离；充分测试与监控；进程可自愈</td></tr>
+<tr><th>人为故障</th><td>配置错误——<strong>大型互联网服务停机的头号原因</strong></td><td>相关（一次误操作波及多处）</td><td>设计上容错：解耦、快速回滚、灰度发布、充分监控、演练</td></tr>
+</tbody></table></div>
+
 <h3>可扩展性：先量化「负载」，再量化「性能」</h3>
 <p>可扩展性不是一个「有 / 没有」的标签，而是要具体回答：<strong>当负载增长时，系统靠什么手段维持性能？</strong>分两步走。</p>
-<p>第一步<strong>描述负载</strong>：用几个<em>负载参数（load parameters）</em>刻画压力——每秒请求数、读写比、同时在线用户、缓存命中率。书里的经典例子是 Twitter 首页时间线：真正的负载参数不是「发推速率」，而是<strong>每个用户的粉丝数分布</strong>——名人一条推要推送给几千万人，「<em>扇出（fan-out）</em>」才是难点所在。</p>
+<p>第一步<strong>描述负载</strong>：用几个<em>负载参数（load parameters）</em>刻画压力——每秒请求数、读写比、同时在线用户、缓存命中率。书里的经典例子是 Twitter 首页时间线：真正的负载参数不是「发推速率」，而是<strong>每个用户的粉丝数分布</strong>——名人一条推要推送给几千万人，「<em>扇出（fan-out）</em>」才是难点所在。DDIA 引的实测量级很能说明问题：发推平均 <code>4.6k</code> 请求/秒、峰值 <code>12k+</code>，而首页时间线读取高达 <code>300k</code> 请求/秒——<strong>读写比约 65:1</strong>，压力压在读侧，且每条推都要扇出给作者的所有粉丝。</p>
 
 <figure>
 <svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
@@ -164,6 +180,18 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <figcaption>图 2 · Twitter 时间线的两种扇出：写时扇出（读快写重）vs 读时合并（写轻读重）。Twitter 实际是二者混合——普通用户走左、超大 V 走右。</figcaption>
 </figure>
 
+<p class="tcap">表 2 · Twitter 首页时间线：两种扇出的量级对比（数字为 DDIA 所引 2012 年前后 Twitter 实测）</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>写时扇出 fan-out on write</th><th>读时合并 fan-out on read</th></tr></thead>
+<tbody>
+<tr><th>发一条推</th><td>写入<strong>每个粉丝</strong>的收件箱缓存</td><td>只写作者自己一次</td></tr>
+<tr><th>读时间线</th><td><strong>直接读自己收件箱，最快</strong></td><td>现查所有关注对象、合并排序，较慢</td></tr>
+<tr><th>写放大</th><td>一条推 × 平均 <code>75</code> 粉丝 ≈ <strong>34.5 万次写/秒</strong>（4.6k×75）</td><td>无写放大</td></tr>
+<tr><th>名人一条推</th><td><strong>3000 万+ 次写入</strong>，还得及时送达</td><td>1 次写入，代价转嫁到读</td></tr>
+<tr><th>适用</th><td>粉丝不多的普通用户</td><td>被千万人关注的大 V</td></tr>
+</tbody></table></div>
+<p>Twitter 的最终答案是<strong>混合</strong>：绝大多数用户走写时扇出，极少数超大 V 走读时合并、在读时把两条来源拼起来——<strong>用负载参数（粉丝数分布）本身来分流</strong>。这正是「可扩展性没有通用答案、只能针对具体负载定制」的活样板。</p>
+
 <p>第二步<strong>描述性能</strong>，这里有本章最重要的一课：<strong>别用平均值，用百分位</strong>。响应时间不是一个数、而是一个<strong>分布</strong>——大多数请求快、少数很慢。平均值会被少数极端值带偏，也掩盖了「谁在受苦」。正确姿势是看<em>百分位</em>：<code>p50</code>（中位数，一半用户比它快）、<code>p95</code>、<code>p99</code>、<code>p99.9</code>。<strong>尾部（p99 及以后）常常最要紧</strong>——因为请求最慢的用户，往往正是数据最多、最有价值的那批。亚马逊就用 <code>p99.9</code> 而非平均来定服务目标。</p>
 
 <figure>
@@ -188,14 +216,35 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <figcaption>图 3 · 响应时间是一个右偏分布：平均值被长尾带偏，只有 p50/p95/p99/p99.9 才看得清「最慢那批人」的真实体验。</figcaption>
 </figure>
 
-<p>尾延迟为什么难缠？一是<strong>排队延迟</strong>常主导尾部：服务器能并行处理的请求数有限，一个慢请求会把后面排队的都拖慢（<em>队头阻塞 head-of-line blocking</em>）。二是<strong>尾延迟放大（tail latency amplification）</strong>：若一个页面要并行调用多个后端、必须等最慢的那个才能返回，那么后端只要有 1% 的慢请求，页面级的「慢」比例会被放得更大。所以度量要在<strong>客户端侧</strong>、按百分位持续观测，而不是只看服务端平均。</p>
+<p class="tcap">表 3 · 响应时间百分位怎么读、代价几何</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>百分位</th><th>含义</th><th>典型用途 / 代价</th></tr></thead>
+<tbody>
+<tr><th><code>p50</code> 中位数</th><td>一半用户比它快</td><td>「典型」体验</td></tr>
+<tr><th><code>p95</code></th><td>每 <code>20</code> 个请求最慢的 1 个</td><td>常见 SLA 目标</td></tr>
+<tr><th><code>p99</code></th><td>每 <code>100</code> 个最慢的 1 个</td><td>重点盯的尾部起点</td></tr>
+<tr><th><code>p99.9</code></th><td>每 <code>1000</code> 个最慢的 1 个，常是数据最多、<strong>最有价值</strong>的用户</td><td>亚马逊用它定内部服务 SLA</td></tr>
+<tr><th><code>p99.99</code></th><td>每 <code>1 万</code> 个最慢的 1 个</td><td>亚马逊认为再往这优化<strong>不划算</strong>——收益递减、成本陡增</td></tr>
+</tbody></table></div>
+
+<p>尾延迟为什么难缠？一是<strong>排队延迟</strong>常主导尾部：服务器能并行处理的请求数有限，一个慢请求会把后面排队的都拖慢（<em>队头阻塞 head-of-line blocking</em>）。二是<strong>尾延迟放大（tail latency amplification）</strong>：若一个页面要并行调用多个后端、必须等最慢的那个才能返回，那么后端只要有一点慢请求，页面级的「慢」就会被放大。<strong>算个具体量级</strong>：一次用户请求并行访问 <code>100</code> 个后端、每个各有 <code>1%</code> 的概率变慢，则整页被至少一个慢调用拖慢的概率高达 <code>1 − 0.99¹⁰⁰ ≈ 63%</code>——单个后端看着很健康，页面级尾部却已惨不忍睹。所以度量要在<strong>客户端侧</strong>、按百分位持续观测，而不是只看服务端平均。</p>
 
 <h3>可维护性：可运维、简单、可演化</h3>
 <p>软件成本的大头不在开发、在<strong>长期维护</strong>。作者拆成三条：<strong>可运维性（operability）</strong>——让运维容易把系统跑好（好的监控、文档、自动化）；<strong>简单性（simplicity）</strong>——管住复杂度，用好的<em>抽象（abstraction）</em>消除<em>偶发复杂度（accidental complexity，指并非问题本身固有、而是实现方式带来的复杂度）</em>，别让系统烂成一团「<em>大泥球（big ball of mud）</em>」；<strong>可演化性（evolvability）</strong>——让需求变化时容易改。三者共同决定一套系统能不能被人长期、低痛地养着。</p>
 
 <h2>关键权衡与选型</h2>
+<p class="tcap">表 4 · 纵向扩展 vs 横向扩展</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>纵向 scale up</th><th>横向 scale out</th></tr></thead>
+<tbody>
+<tr><th>做法</th><td>换更强的单机（更多 CPU / 内存、更快的盘）</td><td>一堆普通机器组成<em>无共享 shared-nothing</em> 集群</td></tr>
+<tr><th>扩展上限</th><td><strong>有硬天花板</strong>——单机再强也有极限</td><td>近乎线性可扩，能到极大规模</td></tr>
+<tr><th>成本曲线</th><td>高端机器<strong>价格超线性上涨</strong></td><td>普通机器堆量，单位成本低</td></tr>
+<tr><th>复杂度</th><td>低——应用几乎不用改</td><td>高——引入复制 / 分区 / 一致性等分布式全部难题（Part II）</td></tr>
+<tr><th>适用</th><td>负载不极端、图省事</td><td>负载大 / 要高可用，愿承担分布式复杂度</td></tr>
+</tbody></table></div>
+<p>现实里常<strong>两者混用</strong>：几台够强的机器往往比大量小机器更简单、也更划算。<strong>没有万能的扩展魔法——架构永远是针对具体应用的负载特征定制的。</strong></p>
 <ul>
-<li><strong>纵向 vs 横向扩展</strong>：纵向（scale up，换更强的机器）简单但有天花板、且贵；横向（scale out，用一堆普通机器组成<em>无共享 shared-nothing</em> 架构）能扩得更大，但引入分布式的全部麻烦（Part II 整整在讲这个）。现实里常两者混用。<strong>没有万能的扩展魔法——架构永远是针对具体应用的负载特征定制的。</strong></li>
 <li><strong>平均值 vs 百分位</strong>：平均值好算但会骗人；百分位（尤其 p99/p99.9）算起来贵一点，却真实反映最差体验。做选型评测时坚持看尾部。</li>
 <li><strong>写时扇出 vs 读时合并</strong>（图 2）：前者读快写重、适合普通用户，后者写轻读重、适合大 V；Twitter 的答案是<strong>按负载参数分而治之</strong>的混合方案。</li>
 <li><strong>可靠性的成本</strong>：容错要花冗余（多副本、多机房）成本；不是所有系统都值得同等可靠——有时可以牺牲可靠性换低成本（如可以重算的离线分析任务）。</li>
