@@ -70,6 +70,8 @@
 
 **index 按书 → Part 分组显示**：两个 index 的 `.list` 里，条目按书成簇、簇内按 Part 分小组，每本书前一行 `<div class="group">书名<span class="tag">— 作者 · 年份</span></div>`，每个 Part 前一行 `<div class="group sub">Part 名</div>` 小标题。**原地转链接天然保持分组**（灰行本就在对的组里），不用动 group 标题。`<!-- entries -->` 标记在首本书 Part I 组内（已发布章之后）——仅当某章在 index 里找不到灰色占位行时才 fallback append 到该标记前，且要 append 进它所属的书 / Part 组，别破坏分组。新增一本书时，中英两版同步加 `.group`（书名）+ 若干 `.group.sub`（Part）标题。
 
+**书架折叠**：两个 index 底部各有一段内联 `<script>`（+ head 里 `.book-toggle` 的 `<style>`）——点书名 `.group` 可折叠/展开该书章节，选择记在 localStorage。它在运行时自动接管所有 `.list > .group:not(.sub)`，所以你**照常加 `.group`/`.group.sub`/`.entry` 即可，新书自动可折叠**；只是别删掉这段 `<script>`/`<style>`。
+
 **两个 index 页尾各有一段内联「书架折叠」`<style>`/`<script>`**（点书名 `.group` 折叠该书章节、`localStorage` 记选择）——**别删、别改**。它在运行时自动接管所有 `.list>.group:not(.sub)` 书名行，所以你照常加 `.group`/`.group.sub`/`.entry` 即可，新书自动获得折叠，无需为它加任何 class 或 onclick。
 
 **TOPICS 顺序 = 写作优先级；index 分组顺序 = 展示顺序。** routine **永远从 `TOPICS.md` 顶部往下取第一个未做 slug** 来决定下一章写什么——只认 TOPICS。index 只是「书架 + 路线图」展示。
