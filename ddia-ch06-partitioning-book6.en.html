@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>DDIA Ch.6 · Partitioning — Deep Read Book 6</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">Deep Read · DDIA · Chapter 6</p>
+<h1>Partitioning: When One Dataset Is Too Big for One Machine</h1>
+<p class="sub">Designing Data-Intensive Applications · Ch 6 · Martin Kleppmann · 2017</p>
+<p class="langbar"><a href="ddia-ch06-partitioning-book6.html">中文 →</a></p>
+
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The last chapter was about <strong>keeping several copies of the same data</strong> (replication). This chapter tackles a different wall: <strong>the data itself is too big</strong>—too big for any single machine's disk, and too busy for its CPU. A social network's billions of messages, an online store's hundreds of millions of products—no one server can hold or serve all of it. The fix is blunt: <strong>chop the giant pile into many small chunks and give each chunk to one machine</strong>. That chopping-and-spreading act is called <em>partitioning</em> (also known as sharding).</p>
+
+<h2>A picture first</h2>
+<p>Imagine a huge library, far too many books for one shelf. You have two ways to split them. <strong>One: by the first letter of the title</strong>—A through F on shelf 1, G through M on shelf 2, and so on. <strong>Two: give every book a scrambled "code number"</strong>—the same title always gets the same code—and drop it on the shelf its code points to. The first makes "find all the D books" easy (they're together); the second makes every shelf equally full so none gets crowded. Databases split data with exactly these two moves.</p>
+
+<h2>Why the old world was hard</h2>
+<p>Not splitting is a dead end: one machine <strong>can't store</strong> that much, and <strong>can't keep up</strong> with that many requests. But the moment you split, a new problem appears—<strong>an uneven split causes traffic jams</strong>. If all the popular requests happen to land on the same shelf (a celebrity posts, and tens of millions arrive at once), that one machine gets crushed while the others sit idle. This "one cell overloaded, the rest empty" situation is the enemy the whole chapter keeps fighting.</p>
+
+<h2>Three real problems once you've split</h2>
+<p><strong>1. How do you split it evenly?</strong> Splitting by first letter is simple and lets you grab a range in order—but it invites hot spots (everyone wants the newest thing). Splitting by scrambled code is the most even—but you lose the ability to "grab a range in order" (neighbors got flung to opposite ends). <strong>Each has its sweet spot and its sting.</strong></p>
+<p><strong>2. When you add a new shelf, how do you move the books?</strong> When the library expands, you can't tear down and re-sort everything—that means closing for days. The smart move is to <strong>shift only a small fraction of books from each old shelf</strong> to the new one; move as little as possible.</p>
+<p><strong>3. To find one book, how do you know which shelf it's on?</strong> You need a "front desk" or a "directory" that tells you which machine owns the data you want. And when shelves shift, that directory has to stay current.</p>
+
+<h2>So is this the same as "keeping copies"?</h2>
+<p>No—but they're a <strong>golden pairing</strong>. Replication is "the same content, copied onto several machines" (survive failure, stay close, spread reads). Partitioning is "chop the whole big dataset into different chunks, each machine owns one chunk" (so it fits and keeps up). Real systems almost always do <strong>both at once</strong>: chop into many chunks, then keep three copies of each chunk on different machines—so it fits <em>and</em> it can survive failures.</p>
+
+<h2>Remember this one line</h2>
+<div class="tl">
+<p>Partitioning = <strong>chop a dataset too big for one machine into many small chunks, each owned by one machine</strong>, so you can scale. Two ways to chop: <strong>in order</strong> (easy to grab ranges, but jam-prone) or <strong>by scrambled code</strong> (most even, but no range grabs). The real difficulty is <strong>keeping any one chunk from getting crushed (hot spots), moving little data when you add machines, and always knowing where each record lives</strong>. It's usually used together with last chapter's replication.</p>
+</div>
+
+<p class="switch-hint">Want the actual mechanisms, secondary indexes, rebalancing strategies, and diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+
+<div class="mode mode-deep" hidden>
+
+<h2>In one sentence</h2>
+<p class="lead">Partitioning (a.k.a. sharding) means <strong>splitting a large dataset into non-overlapping chunks—partitions—each living on one node</strong>, so that storage and query load spread across many machines. It is the core mechanism for <em>scaling</em> data. The whole chapter's tension sits in four questions: <strong>how to split evenly (key-range vs hash), how to stop any one partition from being crushed (hot spots / skew), what to do about secondary indexes (local vs global), and how to re-spread partitions—moving as little data as possible—when nodes are added or removed (rebalancing)</strong>.</p>
+
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Partition / shard (verb: sharding)</strong>: one small chunk a large dataset is split into; each record belongs to exactly one. Names vary—MongoDB / Elasticsearch call it a shard, HBase a region, Bigtable a tablet, Cassandra a vnode.</li>
+<li><strong>Node</strong>: one machine (or process) in the cluster. A single node usually owns several partitions.</li>
+<li><strong>Key / primary key</strong>: a record's unique identifier. Partitioning uses it to decide which chunk the record goes to.</li>
+<li><strong>Secondary index</strong>: an index for finding records by some field <em>other</em> than the primary key (color, author, date). "Find all red cars" relies on it.</li>
+<li><strong>Hash function</strong>: scrambles any input into a number that looks random and spreads out evenly; the same input always yields the same result.</li>
+<li><strong>Hot spot / skew</strong>: uneven load—one partition or one key gets hit disproportionately hard and becomes the bottleneck.</li>
+<li><strong>Rebalancing</strong>: reassigning partitions to even out load when nodes are added or removed.</li>
+<li><strong>Range scan</strong>: reading a contiguous stretch of keys in order, e.g. "all orders from Jan 1 to Jan 31."</li>
+<li><strong>Replication</strong>: Chapter 5's idea—keeping multiple copies of the same data. Partitioning is normally layered on top of it.</li>
+</ul>
+</div>
+
+<h2>Where it sits</h2>
+<p>This is the second chapter of <strong>Part II, "Distributed Data,"</strong> right after Chapter 5 on <em>replication</em>. The two are complementary ways to scale horizontally, and they usually stack: <strong>replication puts whole copies of the data in several places; partitioning slices the dataset and puts each slice in one place.</strong> Real systems almost always "partition first, then replicate each partition a few times" (see Figure 3). Partitioning also opens the next layer of difficulty: an operation that spans several partitions needs cross-partition consistency and coordination—which is exactly what Chapter 7 (<em>transactions</em>) and Chapter 9 (<em>consistency and consensus</em>) pick up. Think of this chapter as swapping Chapter 5's "many replicas" problem for a "many shards" one.</p>
+
+<h2>What this chapter is solving</h2>
+<p>Replication answers "what if a node dies" and "what if there are too many reads," but it does <strong>nothing</strong> about the data being too big—every replica still stores the <strong>full</strong> dataset. Picture a social app: <strong>a billion users, tens of TB of data, write peaks of hundreds of thousands per second</strong>. At that scale two walls hit at once: <strong>one disk can't hold tens of TB</strong>, and <strong>one machine's CPU / memory / disk I/O can't absorb hundreds of thousands of writes per second</strong>. Adding replicas doesn't help—each replica must store everything and swallow every write.</p>
+<p>The way out is to <strong>split</strong>: each node stores only <code>1/N</code> of the data and handles only the requests that land on its chunk, so adding machines can scale you out roughly linearly. But splitting introduces problems the single-machine era never had, and this chapter solves each: <strong>1. By what rule do you split, so both data and load spread evenly with no hot spots? 2. How do secondary indexes (non-primary-key queries) work on split data? 3. When the cluster grows or shrinks, how do you re-spread partitions—moving as little data as possible, without downtime?</strong> Split badly, and scaling out buys you not performance but <strong>one crushed partition dragging down the whole system</strong>.</p>
+
+<h2>The core, explained</h2>
+
+<h3>1. The goal of partitioning: spread load, dodge hot spots</h3>
+<p>Partitioning's only enemy is <strong>skew</strong>: data or requests piling disproportionately on some partitions, which then become <em>hot spots</em>—the very thing scaling out was meant to avoid. The dumbest scheme, "assign at random," spreads perfectly evenly, but <strong>then you don't know where anything is and must ask every partition on every read</strong>—unusable. So a real scheme has to balance "spreads evenly" against "findable," which gives us the two mainstream ways to split below.</p>
+
+<h3>2. Partitioning by key range</h3>
+<p><strong>What it is</strong>: divide keys into contiguous ranges, each partition owning one range—like a printed encyclopedia split by letter (A–C in one volume, D–F in another). Boundaries can be chosen by hand or picked automatically by the database (to keep each range's data volume roughly equal). Within a partition keys are <strong>stored in sorted order</strong> (with LSM-trees / SSTables), so <strong>range scans are very efficient</strong>: "all readings from one sensor on one day" is just a contiguous sweep of a single partition. <strong>Used by</strong>: Bigtable, HBase, RethinkDB, early MongoDB.</p>
+<p><strong>Its fatal weakness is hot spots</strong>: if the key has a <strong>rising trend</strong>—the classic case being a timestamp key—then <strong>every new write slams into the "today" partition</strong> while yesterday's sits idle and today's gets crushed. DDIA's fix is to <strong>prefix the key to spread it out</strong>: change the key from "timestamp" to "sensor-name + timestamp," so writes fan out by sensor name first; the cost is that querying "all sensors over a time window" now means scanning a stretch per sensor and merging.</p>
+
+<h3>3. Partitioning by hash of key</h3>
+<p><strong>What it is</strong>: run the key through a hash function to get an evenly spread number, then partition by ranges of that hash value. A good hash turns "skewed keys" into "uniform hash values"—even a mass of very similar keys lands evenly across partitions once hashed. <strong>Used by</strong>: Cassandra, MongoDB (hashed sharding), Voldemort.</p>
+<p><strong>The cost is losing range queries</strong>: neighboring keys (like consecutive timestamps) get scattered across partitions, so "grab a contiguous range" must ask every partition. <strong>Cassandra's compromise is a classic</strong>: a <em>compound primary key</em>—the first column (the partition key) is hashed to pick the partition, while the remaining columns are <strong>stored in sorted order within that partition and support range scans</strong>. So "all of one user's posts sorted by time" ranges efficiently inside a single partition, but across users it can't. This is the general "hash by A, then keep sorted by B within each A" pattern.</p>
+<p class="tcap">Aside: the often-cited <strong>consistent hashing</strong> was introduced by Karger et al. in 1997 for CDN / web caching, arranging hash values on a ring to minimize data movement when nodes join or leave. DDIA specifically warns that what databases call "hash partitioning" is usually <strong>not</strong> consistent hashing in that paper's strict sense—the term is used loosely, so don't get tangled up in it.</p>
+
+<figure>
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<text x="160" y="26" fill="#5b9df9" font-size="12" text-anchor="middle" font-weight="700">1 · By key range</text>
+<rect x="34" y="44" width="252" height="30" rx="6" fill="rgba(91,157,249,0.08)" stroke="rgba(91,157,249,0.3)"/>
+<text x="160" y="63" fill="#8fbaff" font-size="10" text-anchor="middle" font-family="monospace">keys sorted · a → z</text>
+<rect x="40" y="92" width="76" height="42" rx="7" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"/><text x="78" y="110" fill="#e7ebf1" font-size="10.5" text-anchor="middle">Part 1</text><text x="78" y="125" fill="#8fbaff" font-size="9" text-anchor="middle" font-family="monospace">a–h</text>
+<rect x="122" y="92" width="76" height="42" rx="7" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"/><text x="160" y="110" fill="#e7ebf1" font-size="10.5" text-anchor="middle">Part 2</text><text x="160" y="125" fill="#8fbaff" font-size="9" text-anchor="middle" font-family="monospace">i–p</text>
+<rect x="204" y="92" width="76" height="42" rx="7" fill="rgba(224,107,107,0.16)" stroke="#e06b6b"/><text x="242" y="110" fill="#e7ebf1" font-size="10.5" text-anchor="middle">Part 3</text><text x="242" y="125" fill="#f0b0b0" font-size="9" text-anchor="middle" font-family="monospace">q–z</text>
+<text x="160" y="160" fill="#6cc79b" font-size="9.5" text-anchor="middle" font-family="monospace">✓ range scans efficient</text>
+<text x="160" y="176" fill="#e06b6b" font-size="9.5" text-anchor="middle" font-family="monospace">✗ rising key → new writes all hit Part 3</text>
+<line x1="320" y1="30" x2="320" y2="200" stroke="rgba(91,157,249,0.2)" stroke-dasharray="4 4"/>
+<text x="480" y="26" fill="#9b6cf5" font-size="12" text-anchor="middle" font-weight="700">2 · By hash</text>
+<rect x="354" y="44" width="252" height="30" rx="6" fill="rgba(155,108,245,0.08)" stroke="rgba(155,108,245,0.3)"/>
+<text x="480" y="63" fill="#cbb8f0" font-size="10" text-anchor="middle" font-family="monospace">key → hash(key) → scatter</text>
+<rect x="360" y="92" width="76" height="42" rx="7" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"/><text x="398" y="110" fill="#e7ebf1" font-size="10.5" text-anchor="middle">Part 1</text><text x="398" y="125" fill="#cbb8f0" font-size="9" text-anchor="middle" font-family="monospace">hash 0–5k</text>
+<rect x="442" y="92" width="76" height="42" rx="7" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"/><text x="480" y="110" fill="#e7ebf1" font-size="10.5" text-anchor="middle">Part 2</text><text x="480" y="125" fill="#cbb8f0" font-size="9" text-anchor="middle" font-family="monospace">5k–10k</text>
+<rect x="524" y="92" width="76" height="42" rx="7" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"/><text x="562" y="110" fill="#e7ebf1" font-size="10.5" text-anchor="middle">Part 3</text><text x="562" y="125" fill="#cbb8f0" font-size="9" text-anchor="middle" font-family="monospace">10k–15k</text>
+<text x="480" y="160" fill="#6cc79b" font-size="9.5" text-anchor="middle" font-family="monospace">✓ even spread · no write hot spot</text>
+<text x="480" y="176" fill="#e06b6b" font-size="9.5" text-anchor="middle" font-family="monospace">✗ neighbors scattered → no range query</text>
+<rect x="60" y="212" width="520" height="66" rx="8" fill="rgba(91,157,249,0.05)" stroke="rgba(91,157,249,0.2)"/>
+<text x="320" y="234" fill="#8fbaff" font-size="10.5" text-anchor="middle" font-weight="700">Cassandra compromise: compound key (partition key, clustering key)</text>
+<text x="320" y="252" fill="#b9c0ca" font-size="9.5" text-anchor="middle" font-family="monospace">partition key → hashed to pick partition (even)</text>
+<text x="320" y="268" fill="#b9c0ca" font-size="9.5" text-anchor="middle" font-family="monospace">clustering key → sorted within partition (range scan) · best of both, but only within one partition</text>
+</svg>
+<figcaption>Figure 1 · The trade-off of the two splits: key-range favors range scans but invites write hot spots; hashing spreads evenly but loses range queries. Cassandra's compound key takes half of each.</figcaption>
+</figure>
+
+<h3>4. Hot spots: hashing can't save a "celebrity key"</h3>
+<p>Hashing spreads out <strong>different keys</strong>; but reality often has <strong>one key</strong> hammered relentlessly—a celebrity account posts, tens of millions read and write <strong>the same record</strong>. That record's key hashes to just <strong>one</strong> partition, so that machine gets crushed anyway and hashing does nothing. DDIA is frank: <strong>most systems today can't automatically compensate for such a "hot key"</strong>—the application must step in. The common move is <strong>salting</strong> the hot key: append a small random number (say 0–99), artificially splitting one hot record into 100 keys scattered across 100 partitions to share the writes. The cost is that <strong>reads must fetch all 100 and merge them</strong>, and you have to remember which keys were split—a workaround with real bookkeeping.</p>
+
+<h3>5. Partitioning and secondary indexes: local vs global</h3>
+<p>So far we've split by the <strong>primary key</strong>. But real queries often ask "all red cars" or "all posts by Zhang San"—that's the job of a <em>secondary index</em>. The snag: <strong>a secondary index doesn't cleanly follow the partitions the way the primary key does</strong>, because "red cars" may be scattered across every partition. DDIA offers two approaches—the pair most likely to be tested and most easily confused:</p>
+<p><strong>Approach A · Local (document-partitioned) index</strong>: each partition <strong>indexes only its own data</strong>, minding its own business. <strong>Writes are simple</strong>—changing a record touches only the one partition it lives on (data and its index sit together). But <strong>reads by secondary index are expensive</strong>: because "red cars" are spread across all partitions, you must <strong>send the query to every partition and merge the results</strong>—this is <em>scatter / gather</em>, whose read latency is held hostage by the slowest partition, so tail latency is easily amplified. <strong>Used by</strong>: MongoDB, Cassandra, Elasticsearch, SolrCloud, Riak, VoltDB.</p>
+<p><strong>Approach B · Global (term-partitioned) index</strong>: partition <strong>the index itself</strong>, but not by which partition a document lives in—by the <strong>indexed value (the term)</strong>. For example, "all index entries for color=red" sit together in index partition 1, "color=blue" in index partition 2. <strong>Reads are fast</strong>: finding red cars asks only the one index partition "holding the red term," not all of them. <strong>But writes get complex</strong>: changing one record may touch several index partitions at once (its color, price, and brand terms each live in different partitions), so a single write becomes a <strong>distributed write across partitions</strong>—which is why global-index updates in practice are often <strong>asynchronous</strong>, meaning the index may lag briefly right after a write. <strong>Used by</strong>: DynamoDB's global secondary indexes (GSI).</p>
+
+<figure>
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="b1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"/></marker><marker id="b2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"/></marker></defs>
+<text x="160" y="24" fill="#5b9df9" font-size="12" text-anchor="middle" font-weight="700">A · Local (document-partitioned)</text>
+<rect x="30" y="40" width="120" height="52" rx="7" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"/><text x="90" y="60" fill="#e7ebf1" font-size="10" text-anchor="middle">Partition 1</text><text x="90" y="76" fill="#8fbaff" font-size="8.5" text-anchor="middle" font-family="monospace">data + own index</text>
+<rect x="170" y="40" width="120" height="52" rx="7" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"/><text x="230" y="60" fill="#e7ebf1" font-size="10" text-anchor="middle">Partition 2</text><text x="230" y="76" fill="#8fbaff" font-size="8.5" text-anchor="middle" font-family="monospace">data + own index</text>
+<rect x="100" y="150" width="120" height="30" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="160" y="169" fill="#b9c0ca" font-size="10" text-anchor="middle">read: color=red</text>
+<line x1="140" y1="150" x2="95" y2="94" stroke="#5b9df9" marker-end="url(#b1)"/>
+<line x1="180" y1="150" x2="225" y2="94" stroke="#5b9df9" marker-end="url(#b1)"/>
+<text x="160" y="205" fill="#e06b6b" font-size="9" text-anchor="middle" font-family="monospace">read must ask every partition</text>
+<text x="160" y="220" fill="#e06b6b" font-size="9" text-anchor="middle" font-family="monospace">(scatter/gather)</text>
+<text x="160" y="240" fill="#6cc79b" font-size="9" text-anchor="middle" font-family="monospace">✓ write touches one partition</text>
+<line x1="320" y1="30" x2="320" y2="250" stroke="rgba(91,157,249,0.2)" stroke-dasharray="4 4"/>
+<text x="480" y="24" fill="#9b6cf5" font-size="12" text-anchor="middle" font-weight="700">B · Global (term-partitioned)</text>
+<rect x="350" y="40" width="120" height="52" rx="7" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"/><text x="410" y="60" fill="#e7ebf1" font-size="10" text-anchor="middle">Index part. X</text><text x="410" y="76" fill="#cbb8f0" font-size="8.5" text-anchor="middle" font-family="monospace">all "red" terms here</text>
+<rect x="490" y="40" width="120" height="52" rx="7" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"/><text x="550" y="60" fill="#e7ebf1" font-size="10" text-anchor="middle">Index part. Y</text><text x="550" y="76" fill="#cbb8f0" font-size="8.5" text-anchor="middle" font-family="monospace">all "blue" terms here</text>
+<rect x="360" y="150" width="120" height="30" rx="6" fill="rgba(155,108,245,0.08)" stroke="#7c8593"/><text x="420" y="169" fill="#b9c0ca" font-size="10" text-anchor="middle">read: color=red</text>
+<line x1="420" y1="150" x2="410" y2="94" stroke="#9b6cf5" marker-end="url(#b2)"/>
+<text x="480" y="205" fill="#6cc79b" font-size="9" text-anchor="middle" font-family="monospace">✓ read asks one index partition</text>
+<text x="480" y="225" fill="#e06b6b" font-size="9" text-anchor="middle" font-family="monospace">✗ one write may hit many index parts</text>
+<text x="480" y="240" fill="#e06b6b" font-size="9" text-anchor="middle" font-family="monospace">(usually async)</text>
+</svg>
+<figcaption>Figure 2 · Two roads for secondary indexes: local is write-cheap but read needs scatter/gather; global is read-efficient but write spans partitions (usually async). In a phrase—put the cost on reads or on writes.</figcaption>
+</figure>
+
+<h2>Key trade-offs and how to choose</h2>
+<p>Every design point in this chapter is a trade-off, and they are independent and freely mixed (split method × index method × rebalancing strategy). The three tables below lay out "which to pick when."</p>
+
+<p class="tcap">Table 1 · Key-range vs hash partitioning</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>By key range</th><th>By hash</th></tr></thead>
+<tbody>
+<tr><th>Evenness</th><td>Depends on key distribution, <strong>skew-prone</strong></td><td><strong>Naturally even</strong> (a good hash flattens skewed keys)</td></tr>
+<tr><th>Range queries</th><td><strong>Efficient</strong> (sorted within partition, sweep a stretch)</td><td><strong>Poor</strong> (neighbors scattered, must ask all)</td></tr>
+<tr><th>Write hot spots</th><td>Rising keys (timestamps) <strong>all slam the last partition</strong></td><td>No hot spot across keys; but <strong>a single hot key still crushes one partition</strong></td></tr>
+<tr><th>Typical use</th><td>Time series / range scans (sensors, log windows)</td><td>Point lookups, want evenness (user profiles, KV)</td></tr>
+<tr><th>Systems</th><td>HBase, Bigtable, RethinkDB</td><td>Cassandra, MongoDB (hashed), DynamoDB</td></tr>
+</tbody></table></div>
+
+<p class="tcap">Table 2 · Local (document-partitioned) vs global (term-partitioned) index</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Local index</th><th>Global index</th></tr></thead>
+<tbody>
+<tr><th>Index split by</th><td>Follows the document's partition</td><td>By the <strong>indexed value (term)</strong>, split separately</td></tr>
+<tr><th>Write</th><td><strong>Simple</strong>: touches one partition</td><td><strong>Complex</strong>: may span partitions, often async</td></tr>
+<tr><th>Read by 2nd index</th><td><strong>Expensive</strong>: scatter/gather across all</td><td><strong>Fast</strong>: only the partition holding the term</td></tr>
+<tr><th>Consistency</th><td>In sync with primary data</td><td>When async, <strong>may briefly read a stale index</strong></td></tr>
+<tr><th>Systems</th><td>MongoDB, Elasticsearch, Cassandra, Riak</td><td>DynamoDB global secondary index (GSI)</td></tr>
+</tbody></table></div>
+
+<p class="tcap">Table 3 · Four rebalancing strategies (how to re-spread partitions when nodes change)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Strategy</th><th>How it works</th><th>Cost / pitfall</th></tr></thead>
+<tbody>
+<tr><th>hash mod N</th><td>partition = <code>hash(key) % node count</code></td><td><strong>Never use it</strong>: change the node count and <code>N</code> changes, so <strong>almost every key must move</strong></td></tr>
+<tr><th>Fixed number of partitions</th><td>Create <strong>far more partitions than nodes</strong> up front (e.g. 1000 partitions for 10 nodes); each node owns a batch; adding a node <strong>steals a few whole partitions</strong> from each existing node</td><td>Only whole partitions move, no re-hashing; but the partition count is <strong>fixed at setup</strong> and hard to change—too high wastes overhead, too low caps how far you can scale</td></tr>
+<tr><th>Dynamic partitioning</th><td>Partition count adapts to data volume: a partition over a threshold <strong>splits</strong>, a shrunk one <strong>merges</strong> (like a B-tree)</td><td>Adapts to volume; but an empty DB starts with one partition, so early on <strong>all load hits one node</strong> (pre-splitting helps)</td></tr>
+<tr><th>Proportional to nodes</th><td>A <strong>fixed number</strong> of partitions per node; a new node randomly splits existing partitions and grabs half</td><td>Partition count grows with nodes; random splits may not divide evenly</td></tr>
+</tbody></table></div>
+<p>Three practical rules of thumb: <strong>1. Don't use <code>hash mod N</code></strong>—it's the textbook anti-pattern for rebalancing, moving everything the moment you add a node. <strong>2. Have "more partitions than nodes" but not too many</strong>: in the fixed-count scheme a partition is the smallest unit of movement, so too few caps scaling while too many piles up per-partition metadata / overhead. <strong>3. Keep a human gate on rebalancing</strong>—fully automatic rebalancing plus automatic failure detection is dangerous: a node that's merely slow gets misjudged as "dead," triggering rebalancing → moving data adds load → more nodes look dead → a cascading avalanche. A "click to confirm" step blocks most such incidents.</p>
+
+<h3>Request routing: knowing where each record lives</h3>
+<p>One question remains after splitting: when a client wants to read a key, <strong>how does it know which node to connect to</strong>? (And partitions move around under rebalancing, so this mapping changes.) DDIA lists three approaches: <strong>1. Let the client contact any node</strong>, which either serves the request or forwards it to the right node; <strong>2. Add a routing tier</strong> that all requests hit first and that forwards by the partition mapping (it doesn't handle data itself); <strong>3. Let clients know the partition mapping</strong> and connect directly. The hard part is the same in all three—<strong>when the partition-to-node mapping changes, who learns of it, and how is the decision-maker told</strong>. Many systems rely on a separate coordination service (like <strong>ZooKeeper</strong>) to hold this cluster metadata and notify subscribers on change (HBase, SolrCloud, older Kafka do this); Cassandra and Riak instead use a <em>gossip protocol</em> among nodes and need no external coordinator; MongoDB uses dedicated config servers plus a mongos routing process.</p>
+
+<h2>Why it matters / in real systems</h2>
+<p>Partitioning is the <strong>foundation of every data system too big for one machine</strong>. Setting a shard key in MongoDB, a partition key in Cassandra, partition counts for a Kafka topic, a partition key in DynamoDB—all are choices within this chapter's framework: <strong>range or hash, local or global index, will the partition key cause hot spots</strong>. The high-frequency interview questions—"how do you choose Kafka partition counts," "what's the difference between Cassandra's partition key and clustering key," "how do you avoid a hot partition / hot key," "what is consistent hashing and how does it differ from modulo," "how do secondary queries work after sharding"—are all answered here. Choosing the wrong partition key is about the most common and least fixable architectural mistake in distributed databases: it dictates how data spreads, where hot spots form, and whether range queries work—and <strong>once you're live with data loaded, re-choosing the partition key usually means a massive migration</strong>.</p>
+
+<div class="ev">
+<div class="evh">FROM THE FIELD · claims from the companies' / projects' own public materials</div>
+<ul>
+<li><strong>Amazon DynamoDB</strong> uses a <strong>hash of the partition key</strong> to decide which physical partition data lands on, and publishes a per-partition <strong>throughput ceiling</strong> (about 3000 read capacity units / 1000 write capacity units per second)—exceed it and you have a "hot partition." Its official best practices explicitly teach choosing a <strong>high-cardinality, evenly accessed</strong> partition key and using <strong>write sharding (appending a random suffix to a hot key)</strong> to spread hot spots, while <strong>adaptive capacity</strong> automatically tilts capacity toward busy partitions. This is the industrial realization of the chapter's "hot keys must be salted."<span class="src">Source: AWS DynamoDB Developer Guide · Best Practices for Designing and Using Partition Keys / Adaptive Capacity</span></li>
+<li><strong>Discord</strong>, storing <strong>trillions of messages</strong>, uses <code>(channel_id, bucket)</code> as a compound partition key—<code>bucket</code> being a static time window (about 10 days)—which both groups a channel's messages by time and <strong>keeps a busy channel's messages from blowing out a single partition</strong>; a textbook case of "compound key + bucketing" against hot spots and unbounded partitions. They later moved storage from Cassandra to <strong>ScyllaDB</strong> to tame tail latency.<span class="src">Source: Discord Engineering, "How Discord Stores Trillions of Messages" (2023)</span></li>
+<li><strong>Instagram</strong> early on used <strong>logical sharding on Postgres</strong>: thousands of logical shards mapped onto a handful of physical machines, with the <strong>shard number encoded directly into the 64-bit ID</strong>—so any record's ID reveals which shard it's on, and whole logical shards can migrate to new machines without changing IDs.<span class="src">Source: Instagram Engineering, "Sharding &amp; IDs at Instagram" (2012)</span></li>
+<li><strong>Google Bigtable</strong> splits a table into <em>tablets</em> by <strong>row-key range</strong> (range partitioning), with tablets splitting automatically as data grows—the prototype for this chapter's "key-range + dynamic partitioning"; its open-source implementation <strong>HBase</strong> brought this region-splitting mechanism to the masses.<span class="src">Source: Bigtable: A Distributed Storage System for Structured Data, OSDI 2006</span></li>
+</ul>
+</div>
+
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>Treating partitioning as replication, or thinking it's either/or</strong>: the two are orthogonal and usually stacked—partition first, then replicate each partition a few times (see Figure 3). "We sharded, so we don't need replication" is a common misconception.</li>
+<li><strong>Believing hashing kills all hot spots</strong>: hashing spreads out <strong>different keys</strong>; <strong>the same hot key</strong> (a celebrity, a viral item, a global counter) still hashes to one partition and crushes it. Hot keys need application-level salting / splitting; the database usually won't do it for you.</li>
+<li><strong>Using a rising value like a timestamp as the key (under range partitioning)</strong>: all new writes slam one trailing partition, and write throughput chokes on that single machine. Switch to hashing, or prefix the key with something high-cardinality.</li>
+<li><strong>Casually using <code>hash mod N</code> for partitioning</strong>: it looks simple but moves nearly all data on scale-out. Use rebalancing-friendly schemes like fixed-count or dynamic partitioning.</li>
+<li><strong>Underestimating how irreversible the partition key is</strong>: it dictates hot spots, range ability, and scalability, and is <strong>extremely hard to change</strong> once live—the single most deliberation-worthy, stress-test-worthy decision in distributed data modeling.</li>
+<li><strong>The trap of fully automatic rebalancing</strong>: stacked with automatic failure detection, one misjudgment can trigger a "move data → slower → more misjudgments" cascade; production commonly keeps a human confirmation gate.</li>
+<li><strong>"Consistent hashing" is a misnomer here</strong>: DDIA explicitly cautions that hash partitioning in databases is usually not Karger's strict consistent hashing—don't let the term confuse you.</li>
+</ul>
+
+<figure>
+<svg viewBox="0 0 640 240" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="c1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<text x="320" y="24" fill="#8fbaff" font-size="12" text-anchor="middle" font-weight="700">Partitioning × replication: orthogonal, stacked</text>
+<text x="70" y="52" fill="#7c8593" font-size="10" text-anchor="middle" font-family="monospace">dataset</text>
+<rect x="30" y="60" width="80" height="120" rx="8" fill="rgba(91,157,249,0.06)" stroke="rgba(91,157,249,0.3)"/>
+<rect x="42" y="72" width="56" height="30" rx="5" fill="rgba(91,157,249,0.18)" stroke="#5b9df9"/><text x="70" y="91" fill="#e7ebf1" font-size="10" text-anchor="middle">Part A</text>
+<rect x="42" y="108" width="56" height="30" rx="5" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"/><text x="70" y="127" fill="#e7ebf1" font-size="10" text-anchor="middle">Part B</text>
+<rect x="42" y="144" width="56" height="30" rx="5" fill="rgba(108,199,155,0.18)" stroke="#6cc79b"/><text x="70" y="163" fill="#e7ebf1" font-size="10" text-anchor="middle">Part C</text>
+<line x1="110" y1="120" x2="180" y2="120" stroke="#7c8593" marker-end="url(#c1)"/>
+<text x="145" y="112" fill="#7c8593" font-size="8.5" text-anchor="middle" font-family="monospace">3 copies each</text>
+<g>
+<text x="290" y="52" fill="#7c8593" font-size="10" text-anchor="middle" font-family="monospace">Node 1</text>
+<rect x="240" y="60" width="100" height="120" rx="8" fill="rgba(255,255,255,0.02)" stroke="rgba(91,157,249,0.2)"/>
+<rect x="252" y="72" width="76" height="26" rx="4" fill="rgba(91,157,249,0.28)" stroke="#5b9df9"/><text x="290" y="89" fill="#e7ebf1" font-size="9" text-anchor="middle">A · leader</text>
+<rect x="252" y="104" width="76" height="26" rx="4" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"/><text x="290" y="121" fill="#cbb8f0" font-size="9" text-anchor="middle">B · replica</text>
+<rect x="252" y="136" width="76" height="26" rx="4" fill="rgba(108,199,155,0.14)" stroke="#6cc79b"/><text x="290" y="153" fill="#a9e0c4" font-size="9" text-anchor="middle">C · replica</text>
+</g>
+<g>
+<text x="405" y="52" fill="#7c8593" font-size="10" text-anchor="middle" font-family="monospace">Node 2</text>
+<rect x="355" y="60" width="100" height="120" rx="8" fill="rgba(255,255,255,0.02)" stroke="rgba(91,157,249,0.2)"/>
+<rect x="367" y="72" width="76" height="26" rx="4" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"/><text x="405" y="89" fill="#8fbaff" font-size="9" text-anchor="middle">A · replica</text>
+<rect x="367" y="104" width="76" height="26" rx="4" fill="rgba(155,108,245,0.28)" stroke="#9b6cf5"/><text x="405" y="121" fill="#e7ebf1" font-size="9" text-anchor="middle">B · leader</text>
+<rect x="367" y="136" width="76" height="26" rx="4" fill="rgba(108,199,155,0.14)" stroke="#6cc79b"/><text x="405" y="153" fill="#a9e0c4" font-size="9" text-anchor="middle">C · replica</text>
+</g>
+<g>
+<text x="520" y="52" fill="#7c8593" font-size="10" text-anchor="middle" font-family="monospace">Node 3</text>
+<rect x="470" y="60" width="100" height="120" rx="8" fill="rgba(255,255,255,0.02)" stroke="rgba(91,157,249,0.2)"/>
+<rect x="482" y="72" width="76" height="26" rx="4" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"/><text x="520" y="89" fill="#8fbaff" font-size="9" text-anchor="middle">A · replica</text>
+<rect x="482" y="104" width="76" height="26" rx="4" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"/><text x="520" y="121" fill="#cbb8f0" font-size="9" text-anchor="middle">B · replica</text>
+<rect x="482" y="136" width="76" height="26" rx="4" fill="rgba(108,199,155,0.28)" stroke="#6cc79b"/><text x="520" y="153" fill="#e7ebf1" font-size="9" text-anchor="middle">C · leader</text>
+</g>
+<text x="405" y="206" fill="#7c8593" font-size="9.5" text-anchor="middle" font-family="monospace">each partition's 3 copies spread over different nodes: it fits (partition) and survives failure (replicate)</text>
+</svg>
+<figcaption>Figure 3 · Partitioning and replication, orthogonal and stacked: the data is first split into partitions A/B/C, then each partition is replicated 3× with leaders spread over different nodes—scaling and fault tolerance at once.</figcaption>
+</figure>
+
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① Partitioning = split a dataset too big for one machine into <strong>non-overlapping chunks</strong>, one node each, to <strong>scale out</strong> storage and throughput; orthogonal to replication, usually stacked.</p>
+<p>② Two splits: <strong>by key range</strong> (sorted, great for range scans, but rising keys cause write hot spots) and <strong>by hash</strong> (even spread, but loses range queries); Cassandra's <strong>compound key</strong> takes half of each.</p>
+<p>③ Hashing spreads <strong>different keys</strong>; it can't stop a <strong>single hot key</strong>—celebrities / viral items need application-level <strong>salting</strong>, at the cost of merging on read plus bookkeeping.</p>
+<p>④ Secondary indexes, two roads: <strong>local</strong> (write-cheap, read needs scatter/gather across all partitions) and <strong>global</strong> (read-efficient, write spans partitions and is often async)—essentially, put the cost on reads or on writes.</p>
+<p>⑤ Rebalancing: <strong><code>hash mod N</code> is off-limits</strong> (moves everything); use <strong>fixed partition count</strong> / <strong>dynamic partitioning</strong> / <strong>proportional to nodes</strong>, moving only whole partitions.</p>
+<p>⑥ Fully automatic rebalancing plus automatic failure detection <strong>invites cascading failures</strong>; production usually keeps a human confirmation gate.</p>
+<p>⑦ Request routing must answer "which node holds the key": via a <strong>coordination service like ZooKeeper</strong> or via <strong>gossip</strong> between nodes; the mapping changes with rebalancing.</p>
+<p>⑧ <strong>The partition key is the hardest decision to change</strong>: it locks in hot spots, range ability, and scalability—getting it wrong usually means a massive migration, so stress-test before going live.</p>
+</div>
+</div>
+<footer>Deep Read · Finish this page ≈ you've got the chapter's core; for full cases and depth, go read the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
