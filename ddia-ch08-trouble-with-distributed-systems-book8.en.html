@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>DDIA Ch.8 · The Trouble with Distributed Systems — Book Deep-Read Book 8</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">Book Deep-Read · DDIA · Chapter 8</p>
+<h1>The Trouble with Distributed Systems</h1>
+<p class="sub">Designing Data-Intensive Applications · Ch 8 · Martin Kleppmann · 2017</p>
+<p class="langbar"><a href="ddia-ch08-trouble-with-distributed-systems-book8.html">中文 →</a></p>
+
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The earlier chapters sold you on spreading data across many machines. This one is the <strong>bad news</strong>: the moment your system is many machines talking over a network, a whole zoo of problems appears that simply didn't exist on a single computer. DDIA (<em>Designing Data-Intensive Applications</em>) Chapter 8 lays those traps out <strong>one by one to scare you</strong>—not to stop you, but to cure you of the fantasy that a pile of machines behaves like one big, obedient machine.</p>
+
+<h2>An analogy first</h2>
+<p>Picture you and some colleagues in different cities who can <strong>only reach each other by mailing letters</strong>. You send a letter asking "did you do it?"—and then… silence. Now what? Did the letter not arrive? Did they fall ill? Did they reply but the reply got lost? Or are they doing it slowly and just haven't answered yet? <strong>You genuinely cannot tell.</strong> One computer shouting across the network at another feels exactly like this: silence has many explanations, and you must keep getting things right without being able to tell them apart.</p>
+
+<h2>Why the old world was actually easier</h2>
+<p>A single computer has one redeeming habit: it either works, or it <strong>crashes completely</strong> (freeze, blue screen)—and a total crash is obvious, so you just reboot. It rarely goes "half-dead." But a crowd of computers produces <strong>partial failure</strong>: some machines are fine, some aren't, some links work and some don't—<strong>and you often can't tell which is which</strong>. That "can't tell who's broken" uncertainty is the real torment of distributed systems.</p>
+
+<h2>Three things you must never trust</h2>
+<p>This chapter teaches you to be permanently suspicious of three things. <strong>① The network</strong>—letters get lost, arrive late, arrive out of order; your only tool is "wait a while, and if no reply, assume it's gone," but <em>how long to wait</em> is pure guesswork. <strong>② Clocks</strong>—every machine's watch runs slightly differently, like a room full of people with unsynchronized watches, so you <strong>cannot use "whose watch shows a later time" to decide who acted last</strong>, or you'll mis-judge and lose data. <strong>③ Sudden pauses</strong>—a machine can freeze for seconds with no warning (like someone dozing off mid-sentence), then wake up thinking nothing happened and carry on doing what it should have stopped doing.</p>
+<p>The mindset is a single line: <strong>assume anything that can go wrong will, then design it so the result is still correct even when it does</strong>. One classic trick is "<strong>take a number</strong>": hand each operation a ticket number that only ever increases; if you wake from your nap still clutching an old number, the counter sees it's stale and refuses to serve you—so the damage never happens.</p>
+
+<h2>What to take away</h2>
+<p>The reason distributed systems pile on all this seemingly fussy machinery—majority votes, timeouts, retries, reject-the-old-ticket—is that <strong>the network, the clocks, and the other machines can none of them be fully trusted</strong>. The honest cost: all this defensive plumbing makes a distributed system <strong>far slower and more complex than a single machine</strong>—that's the tuition you pay for not being able to trust anything.</p>
+
+<h2>Remember this</h2>
+<div class="tl">
+<p>With many machines, the worst trouble isn't "one of them broke"—it's <strong>"you can't even tell whether one broke."</strong> The network will lie to you, the clocks will lie to you, machines will nod off—treat them all as untrustworthy, and design so that even when they fail, nothing goes haywire. That's the distributed way.</p>
+</div>
+
+<p class="switch-hint">Want the actual mechanisms, notation, and diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+
+<div class="mode mode-deep" hidden>
+
+<h2>In one sentence</h2>
+<p class="lead">This chapter is the book's <strong>cold shower</strong>: it systematically catalogs everything that can go wrong in a distributed system—<strong>partial failure, unreliable networks, unreliable clocks, unannounced process pauses</strong>—and teaches a <strong>systematic pessimism</strong>: assume anything that can break will break, then design the system to stay correct anyway. It offers no solutions, only a hard look at the traps, setting up the next chapter on consensus: <strong>only once you see why distributed systems are this hard can you ask what we can still guarantee.</strong></p>
+
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Node</strong>: one machine / process in a distributed system, talking to other nodes over the network.</li>
+<li><strong>Shared-nothing</strong>: each machine has its own CPU, memory, disk; nodes exchange information <strong>only over the network</strong>—the premise behind every trouble in this chapter.</li>
+<li><strong>Partial failure</strong>: part of the system (some nodes / links) is broken while the rest runs, and you often can't tell exactly where—a phenomenon unique to distributed systems.</li>
+<li><strong>Timeout</strong>: after waiting some period with no reply, assume the other side is dead—almost the only tool for deciding "is a node dead?", but essentially a guess.</li>
+<li><strong>Clock drift</strong>: quartz clocks run slightly fast or slow, so over time they diverge from real time.</li>
+<li><strong>NTP</strong>: the Network Time Protocol, which periodically syncs a machine's clock to a time server; but the sync itself is subject to network delay and is imprecise.</li>
+<li><strong>Pause / GC pause</strong>: a process forced to halt for a while (most commonly a "stop-the-world" garbage collection, also VM migration or paging), during which it looks dead to others while being oblivious itself.</li>
+<li><strong>Fencing token</strong>: a <strong>monotonically increasing</strong> number issued by a lock service; the resource accepts only the newest number and rejects older ones, stopping a "just-woke-up stale lock holder" from writing.</li>
+<li><strong>Byzantine fault</strong>: a node that doesn't merely die or slow down but sends <strong>wrong / lying</strong> messages (faulty or compromised).</li>
+<li><strong>Quorum / majority</strong>: "truth" is defined by a vote of the majority, trusting no single node's say-so.</li>
+</ul>
+</div>
+
+<h2>Where it sits</h2>
+<p>This chapter is in Part II, "Distributed Data," right after replication (Ch 5), partitioning (Ch 6), and transactions (Ch 7). Those chapters quietly assumed networks, clocks, and machines were roughly trustworthy; this one <strong>punctures those assumptions one at a time</strong>. It is Part II's "problem" chapter—all trouble, no answers; <strong>the very next chapter, "Consistency and Consensus" (Ch 9), is the "solution" chapter</strong>: given all this uncertainty, what <em>can</em> we still reliably guarantee? Only after absorbing Ch 8's pessimism do you earn Ch 9's optimism.</p>
+
+<h2>What problem it tackles</h2>
+<p>A single computer has a property we take for granted: <strong>determinism</strong>—same input, same output; and when hardware fails, it usually <strong>crashes wholesale</strong> (all-correct or all-stopped), which you notice immediately and fix by rebooting—rarely "half working." Distributed systems shatter that comfort: <strong>partial failure</strong> is the norm—a node is down, a link is severed, a machine has slowed to a crawl, yet the system as a whole keeps running. Worse is the <strong>nondeterminism</strong>: you send a request and get no reply, and you <strong>simply can't distinguish</strong> whether the request never arrived, the peer crashed, the reply was lost, or the peer is merely slow. The task of this chapter isn't to "fix one fault"—it's to force a new worldview: <strong>stop treating a crowd of machines as one reliable big computer; assume every part can fail in the worst possible way, and build a reliable system on top of that.</strong></p>
+
+<h2>The core content, explained</h2>
+
+<h3>1. Partial failure and nondeterminism: the source of all trouble</h3>
+<p>Put a single machine and a distributed system side by side and it's clear: the single machine is like a <strong>reliable processor</strong>—same op, same result forever, and it fails cleanly. A distributed system is a <em>shared-nothing</em> crowd talking over a network—which introduces <strong>partial failure</strong>: some parts break, some stay fine, <strong>and you often can't tell where the boundary is</strong>. That "can't tell who broke" <strong>nondeterminism</strong> is the core engineering difficulty. Accepting it is the starting point for everything in this chapter: rather than dreaming of components that never fail, <strong>build a correct whole out of components that do fail</strong>.</p>
+
+<h3>2. Unreliable networks: silence has many explanations</h3>
+<p>Shared-nothing systems can communicate only through an <em>asynchronous packet network</em>—"asynchronous" meaning the network <strong>makes no promise about delivery time</strong>: packets may be lost, delayed, reordered, or duplicated. The most painful case: after you send a request you <strong>get no reply</strong>—maybe ① the request was lost, ② the peer crashed, ③ the reply was lost, or ④ the peer is just slow. <strong>All four look identical from the sender's side</strong>; you can't tell them apart (see Figure 1).</p>
+
+<figure>
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker>
+<marker id="a1r" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#e06b6b"/></marker></defs>
+<rect x="40" y="120" width="90" height="44" rx="8" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"/><text x="85" y="140" fill="#e7ebf1" font-size="12" text-anchor="middle">Client</text><text x="85" y="156" fill="#7c8593" font-size="9.5" text-anchor="middle">sends request</text>
+<rect x="510" y="120" width="90" height="44" rx="8" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"/><text x="555" y="140" fill="#e7ebf1" font-size="12" text-anchor="middle">Server</text><text x="555" y="156" fill="#7c8593" font-size="9.5" text-anchor="middle">?</text>
+<line x1="130" y1="132" x2="504" y2="132" stroke="#7c8593" stroke-dasharray="4 4" marker-end="url(#a1)"/>
+<text x="320" y="124" fill="#b9c0ca" font-size="10.5" text-anchor="middle">request →</text>
+<line x1="504" y1="152" x2="136" y2="152" stroke="#e06b6b" stroke-dasharray="4 4" marker-end="url(#a1r)"/>
+<text x="320" y="172" fill="#e06b6b" font-size="10.5" text-anchor="middle">reply ← (never arrives?)</text>
+<text x="320" y="34" fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle">No reply: four possibilities look identical</text>
+<rect x="60" y="210" width="118" height="56" rx="6" fill="rgba(224,107,107,0.1)" stroke="#7c8593"/><text x="119" y="232" fill="#b9c0ca" font-size="10.5" text-anchor="middle">① request</text><text x="119" y="248" fill="#b9c0ca" font-size="10.5" text-anchor="middle">lost</text>
+<rect x="192" y="210" width="118" height="56" rx="6" fill="rgba(224,107,107,0.1)" stroke="#7c8593"/><text x="251" y="232" fill="#b9c0ca" font-size="10.5" text-anchor="middle">② peer</text><text x="251" y="248" fill="#b9c0ca" font-size="10.5" text-anchor="middle">crashed</text>
+<rect x="324" y="210" width="118" height="56" rx="6" fill="rgba(224,107,107,0.1)" stroke="#7c8593"/><text x="383" y="232" fill="#b9c0ca" font-size="10.5" text-anchor="middle">③ reply</text><text x="383" y="248" fill="#b9c0ca" font-size="10.5" text-anchor="middle">lost</text>
+<rect x="456" y="210" width="118" height="56" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"/><text x="515" y="232" fill="#e7ebf1" font-size="10.5" text-anchor="middle">④ peer just slow</text><text x="515" y="248" fill="#7c8593" font-size="9.5" text-anchor="middle">reply still coming</text>
+</svg>
+<figcaption>Figure 1 · On an async network, "no reply" has four explanations the sender cannot tell apart—which is why a "timeout" is only a guess, and never perfect.</figcaption>
+</figure>
+
+<p>The only usable tool is the <strong>timeout</strong>: wait a while, and if no reply, assume the peer is dead. But timeouts cut both ways—too <strong>short</strong>, and you misjudge a merely-slow healthy node as dead, triggering needless failover (or executing an action twice); too <strong>long</strong>, and even a real crash leaves you waiting ages before you react. Since async network delay has <strong>no upper bound</strong> in theory, <strong>no perfect failure detector exists</strong>. The bulk of delay often comes from <em>queueing</em>: at network switches, the OS, the VM, and the receiving process, packets pile up when things are busy. DDIA's stance is blunt: a network's reliability must be <strong>measured</strong>, not assumed—even inside a single data center.</p>
+
+<h3>2. Unreliable clocks: don't order causes by the wall clock</h3>
+<p>Every machine has its own quartz clock, which <em>drifts</em>. Machines resync periodically via NTP, but that sync is subject to network delay and is only so precise. DDIA's numbers make it vivid: Google budgets <code>200 ppm</code> (parts per million) of drift for its servers—about <code>~6 ms</code> even if you resync every <code>30</code> seconds, and up to <code>~17 seconds</code> if NTP fails for a whole day. A tiny error—yet enough to get "who came first" wrong.</p>
+<p>The key is to tell apart two kinds of clock. <strong>① The time-of-day clock</strong> returns "what time is it now," gets nudged forward and back by NTP, and can even <strong>jump backward</strong> (leap seconds, manual adjustment)—so it must <strong>never</strong> be used to measure intervals or order events. <strong>② The monotonic clock</strong> only guarantees "always moving forward," good for "how long has elapsed," but its absolute value is meaningless and not comparable across machines. The most dangerous misuse is stamping writes with a time-of-day clock and resolving conflicts by <em>last-write-wins (LWW)</em>: if two machines' clocks are out of sync, a write that <strong>physically happened later</strong> may carry a smaller timestamp, be judged "older," and be <strong>silently discarded</strong> (see Figure 2)—and data vanishes without a sound.</p>
+
+<figure>
+<svg viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<line x1="70" y1="70" x2="600" y2="70" stroke="#7c8593" marker-end="url(#a2)"/>
+<text x="70" y="52" fill="#b9c0ca" font-size="10.5">real-time axis →</text>
+<circle cx="220" cy="70" r="5" fill="#5b9df9"/><text x="220" y="44" fill="#8fbaff" font-size="10.5" text-anchor="middle">write A (earlier)</text>
+<circle cx="400" cy="70" r="5" fill="#9b6cf5"/><text x="400" y="44" fill="#c9adff" font-size="10.5" text-anchor="middle">write B (later)</text>
+<rect x="150" y="110" width="150" height="40" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"/><text x="225" y="127" fill="#e7ebf1" font-size="10.5" text-anchor="middle">node X clock: fast</text><text x="225" y="143" fill="#8fbaff" font-size="11" text-anchor="middle" font-family="monospace">ts = 12:00:05</text>
+<rect x="330" y="110" width="150" height="40" rx="6" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"/><text x="405" y="127" fill="#e7ebf1" font-size="10.5" text-anchor="middle">node Y clock: slow</text><text x="405" y="143" fill="#c9adff" font-size="11" text-anchor="middle" font-family="monospace">ts = 12:00:03</text>
+<line x1="220" y1="76" x2="225" y2="108" stroke="#7c8593" stroke-dasharray="3 3"/>
+<line x1="400" y1="76" x2="405" y2="108" stroke="#7c8593" stroke-dasharray="3 3"/>
+<rect x="150" y="180" width="330" height="50" rx="8" fill="rgba(224,107,107,0.1)" stroke="#e06b6b"/>
+<text x="315" y="200" fill="#e7ebf1" font-size="11.5" text-anchor="middle">LWW compares ts: 05 &gt; 03 → keep A, drop B</text>
+<text x="315" y="218" fill="#e06b6b" font-size="10.5" text-anchor="middle">but B actually happened later — the newer write is lost ✕</text>
+</svg>
+<figcaption>Figure 2 · Unsynced clocks + last-write-wins (LWW): the physically-later write B carries a smaller timestamp, is judged "old," and is discarded—silent data loss.</figcaption>
+</figure>
+
+<p>The honest approach is to admit a clock carries a <strong>confidence interval</strong>—"it's about X, ±e." Google's Spanner takes this to its logical end: its <em>TrueTime</em> API returns a time <strong>interval</strong> rather than a point, and when committing a transaction it <strong>deliberately waits out</strong> that uncertainty (commit wait), yielding a trustworthy global ordering.</p>
+
+<h3>3. Process pauses: the lock holder may be dozing</h3>
+<p>Even if the network and clocks behave, a node can <strong>pause at any moment with no warning</strong>: most commonly a <em>stop-the-world garbage collection</em>—the whole process freezes for tens of milliseconds to seconds, and in extreme cases (large heaps) minutes; or a VM suspended for migration, a laptop lid closed, OS paging thrash. The killer detail: <strong>the paused process has no idea it stopped</strong>—it was fine before freezing, and after thawing it just carries on, oblivious that the world has moved.</p>
+<p>The classic wreck: a node takes a lease from the lock service and becomes leader; just as it's about to write shared storage, it <strong>pauses for 15 seconds in GC</strong>; meanwhile its lease has long expired and the system elected a new leader. When it thaws, it <strong>still believes it's the leader</strong> and writes with stale authority—<strong>split-brain: two "leaders" corrupt the data at once</strong>. The fix is a <strong>fencing token</strong>: every grant carries a <strong>monotonically increasing</strong> number, and storage accepts only writes whose number is <strong>larger than the last one</strong>, rejecting smaller ones. The just-woken stale leader clutches an old number, and its write is blocked (see Figure 3)—the system no longer trusts "I think I'm the leader," only the number on the token.</p>
+
+<figure>
+<svg viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a3" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<rect x="245" y="18" width="150" height="34" rx="7" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"/><text x="320" y="39" fill="#e7ebf1" font-size="11.5" text-anchor="middle">Lock service (issues tokens)</text>
+<rect x="30" y="110" width="150" height="46" rx="8" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/><text x="105" y="130" fill="#b9c0ca" font-size="11" text-anchor="middle">Client A</text><text x="105" y="147" fill="#7c8593" font-size="9" text-anchor="middle">got token 33, then GC-paused</text>
+<rect x="460" y="110" width="150" height="46" rx="8" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"/><text x="535" y="130" fill="#e7ebf1" font-size="11" text-anchor="middle">Client B</text><text x="535" y="147" fill="#7c8593" font-size="9" text-anchor="middle">takes over, gets token 34</text>
+<line x1="290" y1="52" x2="150" y2="108" stroke="#7c8593" marker-end="url(#a3)"/><text x="188" y="82" fill="#9b6cf5" font-size="10.5" font-family="monospace">token=33</text>
+<line x1="352" y1="52" x2="500" y2="108" stroke="#7c8593" marker-end="url(#a3)"/><text x="452" y="82" fill="#9b6cf5" font-size="10.5" font-family="monospace">token=34</text>
+<rect x="228" y="200" width="184" height="46" rx="8" fill="rgba(155,108,245,0.1)" stroke="#9b6cf5"/><text x="320" y="220" fill="#e7ebf1" font-size="11" text-anchor="middle">Storage: accepts higher only</text><text x="320" y="237" fill="#7c8593" font-size="9.5" text-anchor="middle">has already seen 34</text>
+<line x1="150" y1="156" x2="268" y2="198" stroke="#e06b6b" stroke-dasharray="4 4" marker-end="url(#a3)"/><text x="150" y="188" fill="#e06b6b" font-size="10" font-family="monospace">write(token 33) ✕ rejected</text>
+<line x1="520" y1="156" x2="392" y2="198" stroke="#5b9df9" marker-end="url(#a3)"/><text x="505" y="188" fill="#8fbaff" font-size="10" font-family="monospace">write(token 34) ✓</text>
+</svg>
+<figcaption>Figure 3 · Fencing tokens: the GC-woken stale leader (token 33) tries to write, but storage has already seen the larger 34 and rejects the old number—stopping split-brain without trusting "I think I'm the leader."</figcaption>
+</figure>
+
+<h2>Key trade-offs and choices</h2>
+<p>The soul of this chapter: there's no free determinism in a distributed system—it's trade-offs all the way down. Start with the two most consequential dials—<strong>timeout length</strong> and <strong>whether to defend against Byzantine faults</strong>.</p>
+
+<p class="tcap">Table 1 · Timeout too short vs too long: both wrong, pick the tolerable wrong</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Timeout too short</th><th>Timeout too long</th></tr></thead>
+<tbody>
+<tr><th>Consequence</th><td>Misjudges a merely-slow <strong>healthy node as dead</strong></td><td>Even a real crash leaves you <strong>waiting a long time</strong> to detect and fail over</td></tr>
+<tr><th>Knock-on risk</th><td>Needless failover; an action may be <strong>executed twice</strong>; the failover itself adds load and can <strong>cascade</strong></td><td>Users keep suffering during the outage; recovery time (RTO) grows</td></tr>
+<tr><th>Root cause</th><td colspan="2" style="text-align:center">Async network delay is <strong>unbounded</strong> → <strong>no perfect failure detector</strong>, only a choice between two errors</td></tr>
+</tbody></table></div>
+
+<p class="tcap">Table 2 · Two fault assumptions: defending against "lying nodes" costs worlds apart</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Non-Byzantine (crash / omission)</th><th>Byzantine (may lie / act arbitrarily)</th></tr></thead>
+<tbody>
+<tr><th>Assumption</th><td>Nodes may <strong>crash, slow down, drop messages</strong>, but if they speak they <strong>tell the truth</strong></td><td>Nodes may send <strong>wrong / contradictory / malicious</strong> messages (faulty or compromised)</td></tr>
+<tr><th>Cost</th><td>Protocols are simpler, cheaper (Paxos / Raft live here)</td><td>Needs BFT protocols, typically <code>&gt; 2/3</code> honest nodes; <strong>expensive and slow</strong></td></tr>
+<tr><th>Fits</th><td>Controlled data centers—<strong>the default for most systems</strong></td><td>Aerospace, mutually-distrusting parties, blockchains—adversarial settings</td></tr>
+</tbody></table></div>
+
+<p>One level up sits the choice of which <strong>system model</strong> to reason with—it fixes how bad your algorithm assumes the world can be.</p>
+<p class="tcap">Table 3 · System models: pinning down "how unreliable is the world"</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Timing assumption</th><th>Meaning</th><th>Realism</th></tr></thead>
+<tbody>
+<tr><th>Synchronous</th><td>Network delay and process pauses have a <strong>known upper bound</strong></td><td>Too optimistic; almost never holds in reality</td></tr>
+<tr><th>Partially synchronous</th><td>Bounded <strong>most of the time</strong>, occasionally exceeds it</td><td><strong>Closest to real systems</strong>; most algorithms target this</td></tr>
+<tr><th>Asynchronous</th><td><strong>No timing assumptions</strong> at all—can't even use a clock</td><td>Most conservative; algorithms proven correct here are the sturdiest</td></tr>
+</tbody></table></div>
+<p>Also distinguish two kinds of correctness property: <strong>safety</strong>—"nothing bad ever happens" (e.g., a token is never mistaken, no wrong result is returned), which must hold <strong>at all times</strong>; and <strong>liveness</strong>—"something good eventually happens" (e.g., a request <strong>eventually</strong> gets a reply), which is allowed the qualifier "eventually." The common engineering trade-off: <strong>sacrifice liveness (wait longer, be temporarily unavailable) before violating safety (never return a wrong result)</strong>—and GitHub's outage below is exactly that choice in the flesh.</p>
+
+<h2>Why it matters / grounding in real systems</h2>
+<p>This chapter is distributed engineers' mandatory disillusionment course because nearly every large-scale production incident maps onto its checklist: <strong>clocks gone wrong, network partitions, process pauses, failure-detection misfires</strong>. It gives a shared language for debugging and design: "is the leader down?" becomes "is this a real crash or a network partition / GC pause?"; "whose write wins?" becomes "don't trust the wall clock—use a fencing token / version number"; "do we fail over?" becomes "what's the timeout, and could it mis-fire and cascade?" In real systems, ZooKeeper / etcd guard critical state with consensus plus fencing tokens, Spanner <strong>quantifies and waits out</strong> clock uncertainty with TrueTime, and Jepsen deliberately <strong>hammers</strong> databases under network partitions to expose consistency promises they can't keep.</p>
+
+<div class="ev">
+<div class="evh">Industry evidence · these traps aren't the book's invention—companies publicly owned up to them</div>
+<ul>
+<li><strong>Cloudflare</strong> (New Year 2017): a <strong>leap second</strong> made a "difference between two times" compute a <strong>negative</strong> number and then panic, affecting ~<code>0.2%</code> of DNS queries—<strong>a live confirmation of "time can jump backward; never assume the clock is monotonic."</strong> The fix was a single character (turning "== 0" into "&lt;= 0"). <span class="src"><a href="https://blog.cloudflare.com/how-and-why-the-leap-second-affected-cloudflare-dns/" target="_blank" rel="noopener">Cloudflare Blog, "How and why the leap second affected Cloudflare DNS," 2017 ↗</a></span></li>
+<li><strong>GitHub</strong> (2018-10-21): just <code>43 seconds</code> of connectivity loss between East and West coasts triggered Orchestrator's automatic failover, the primary diverged across sites, and it snowballed into <strong>24+ hours</strong> of degraded service—<strong>a confirmation of the "network partition + automatic failover" cascade.</strong> GitHub stated plainly it would <strong>prioritize data integrity over availability</strong>—safety over liveness, in the real world. <span class="src"><a href="https://github.blog/news-insights/company-news/oct21-post-incident-analysis/" target="_blank" rel="noopener">The GitHub Blog, "October 21 post-incident analysis," 2018 ↗</a></span></li>
+<li><strong>Google Spanner</strong>: using GPS and atomic clocks it squeezes clock uncertainty to typically <code>&lt;10 ms</code>; <em>TrueTime</em> returns a time <strong>interval</strong> and "waits out" that uncertainty at commit, enabling globally externally-consistent transactions—<strong>turning "put a confidence interval on the clock" into a shipping product.</strong> <span class="src"><a href="https://research.google/pubs/spanner-googles-globally-distributed-database-2/" target="_blank" rel="noopener">Corbett et al., "Spanner," OSDI 2012 ↗</a></span></li>
+<li><strong>Jepsen</strong> (Kyle Kingsbury): purpose-built to test distributed databases under <strong>network partitions, process pauses, and clock jumps</strong>, it has repeatedly caught systems that "claim strong consistency but measurably lose data / violate invariants"—<strong>empirically proving the traps in this chapter really bite,</strong> and it has become the de-facto reality check for consistency claims. <span class="src"><a href="https://jepsen.io/" target="_blank" rel="noopener">Jepsen · Distributed Systems Safety Research ↗</a></span></li>
+</ul>
+</div>
+
+<h2>Pitfalls and controversies</h2>
+<ul>
+<li><strong>"The network is reliable"</strong>—the first of the Fallacies of Distributed Computing (summarized by Peter Deutsch and others). The rest ("latency is zero, bandwidth is infinite, topology doesn't change, there is one administrator," and so on) all bite back at scale.</li>
+<li><strong>Ordering causes by the wall clock / doing LWW</strong>: unsynced clocks let a "newer write" be <strong>silently discarded</strong> as old (Figure 2). Cross-node ordering needs <em>logical clocks / version numbers</em>, not physical timestamps.</li>
+<li><strong>"No reply = the peer is dead"</strong>: it may just be a network partition or GC pause, and it may <strong>come back to life</strong> later. Failing over on that basis invites split-brain—always back it with a fencing token.</li>
+<li><strong>Trusting timeouts to detect failure accurately</strong>: async delay is unbounded, so <strong>no perfect failure detector exists</strong>; every timeout trades "misjudging a healthy node" against "reacting slowly."</li>
+<li><strong>The Byzantine debate</strong>: defaulting to <strong>not</strong> defending against Byzantine faults in a data center is reasonable (expensive, controlled environment), but that breaks down with mutually-distrusting parties, blockchains, or ultra-high-reliability settings—where you can't skimp.</li>
+<li><strong>Dated in places</strong>: the book is from 2017; observability (distributed tracing), chaos engineering, and Spanner-style global consistency have matured since—but the underlying verdict, "trust neither network, clock, nor pause," holds up.</li>
+</ul>
+
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① In one line: the essential difficulty of distributed systems is <strong>partial failure + nondeterminism</strong>—not "one of them broke," but "you can't even tell whether one broke."</p>
+<p>② Don't treat a crowd of machines as one reliable big computer; <strong>build a correct whole out of failing parts</strong> through systematic pessimism.</p>
+<p>③ Network untrustworthy: async delay is unbounded, "no reply" has four indistinguishable explanations; <strong>the timeout is the only tool, but it's a guess and there's no perfect failure detector</strong>.</p>
+<p>④ Clocks untrustworthy: separate the <strong>time-of-day clock</strong> (can jump—never order with it) from the <strong>monotonic clock</strong> (intervals only); LWW on timestamps causes <strong>silent data loss</strong>; the fix is a confidence interval (Spanner TrueTime).</p>
+<p>⑤ Processes pause with no warning (GC / migration / paging): <strong>the lock holder may be dozing</strong> and wake up still thinking it's the leader → split-brain.</p>
+<p>⑥ <strong>Fencing tokens</strong> (monotonically increasing numbers; storage accepts only larger) block the just-woken stale leader—trust the token, not "I think I'm the leader."</p>
+<p>⑦ Key trade-offs: timeouts are wrong either way—pick the tolerable wrong; data centers default to <strong>no Byzantine defense</strong>; reason with the <strong>partially-synchronous model</strong>; <strong>safety before liveness</strong>.</p>
+<p>⑧ Why it matters: a shared language for debugging and design, and the target-setup for Ch 9 "Consensus"—see the trouble clearly before asking what can still be guaranteed.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Finish this page ≈ grasp the chapter's core; for full case studies and depth, go to the book itself.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
