@@ -162,7 +162,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <figcaption>图 2 · 多主复制的核心难题——写冲突：两个数据中心的主库并发改同一条记录，同步到一起时必须有一套收敛规则。</figcaption>
 </figure>
 <p><strong>冲突怎么收敛？</strong>几条路：<strong>避免冲突</strong>——保证同一条记录的写永远路由到同一个主库（最省事，但主库要迁移时失效）；<strong>最后写入者胜（LWW，last-write-wins）</strong>——给每次写打个时间戳 / ID，留大的——实现简单但<strong>会静默丢数据</strong>；<strong>合并</strong>——如把两版拼起来（协同编辑走这条）；<strong>留着冲突、交给应用或用户</strong>裁决。<em>复制拓扑</em>也有讲究：全连接（all-to-all）最稳但消息可能乱序到达、破坏因果，得靠<em>版本向量（version vectors）</em>还原「谁先谁后」；环形 / 星形则单点断链就阻塞。</p>
-<h3 data-tts="6873223b312920d0">③ 无主复制：没有主库，靠「人多」把关</h3>
+<h3 data-tts="87c5d749fa51aa0c">③ 无主复制：没有主库，靠「人多」把关</h3>
 <p><strong>是什么</strong>：干脆<strong>取消主库</strong>，客户端（或一个协调节点）把每次写<strong>同时发给多个副本</strong>、每次读也<strong>同时问多个副本</strong>。亚马逊 Dynamo 带火了这一路，Cassandra、Riak、Voldemort 都是。</p>
 <p><strong>quorum（法定人数）机制——本节的数学，但只有一行</strong>：设副本共 <code>n</code> 台，一次写要得到 <code>w</code> 台确认才算成功，一次读要问 <code>r</code> 台。只要<strong><code>w + r &gt; n</code></strong>，读的这 <code>r</code> 台里就<strong>至少有一台</strong>与写的那 <code>w</code> 台重叠——那台一定有最新值，读方比较各副本的版本号取新的即可。白话说：<strong>「写过的人」和「问到的人」保证有交集，所以你总能碰上一个知情者。</strong>典型配置 <code>n=3, w=2, r=2</code>：任意一台副本挂了，写和读都还能凑齐、系统照转。</p>
 <figure>
@@ -207,7 +207,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <tr><th>代表系统</th><td>PostgreSQL、MySQL、MongoDB、Kafka</td><td>BDR / Tungsten、CouchDB、日历同步</td><td>Cassandra、Riak、DynamoDB</td></tr>
 </tbody></table></div>
 <p>两条实操心法：<strong>① 默认从单主起步</strong>——它最简单、心智负担最低，能满足绝大多数「读多写少 + 单区域」的业务；只有当跨地域低延迟写、离线、或极端写可用成为硬需求时，才为多主 / 无主的复杂度买单。<strong>② 同步 / 异步不是全局开关</strong>——半同步（保一台从库同步）常是「丢数据风险」与「写延迟」之间的甜点。</p>
-<h2 data-tts="ef1c29fdce2c1a7d">为什么重要 / 落到真实系统</h2>
+<h2 data-tts="d6c2068bbbf7e51b">为什么重要 / 落到真实系统</h2>
 <p>复制是<strong>几乎所有生产数据库的默认底座</strong>：你用 PostgreSQL 的流复制做只读副本、用 MySQL 主从扛读、用 Kafka 的多副本保证消息不丢、用 Cassandra 的可调一致性做跨机房写——本质都在本章这三种模型里选点。面试里「主从复制怎么做读写分离」「异步复制会不会丢数据 / 怎么保证读到自己刚写的」「Cassandra 的 <code>w+r&gt;n</code> 是什么意思」几乎必考，答案全在这一章。</p>
 <div class="ev">
 <div class="evh">大厂实证 · 这些主张来自公司 / 项目自己的公开材料</div>
@@ -218,7 +218,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>PostgreSQL</strong> 的流复制（WAL 传送）支持<strong>同步 / 异步 standby</strong> 切换，官方文档直言异步下主库故障<strong>可能丢失尚未送达 standby 的已提交事务</strong>——正是本章「异步复制会丢写」的权威印证。<span class="src"><a href="https://www.postgresql.org/docs/current/warm-standby.html" rel="noopener" target="_blank">PostgreSQL Docs · Log-Shipping Standby Servers ↗</a></span></li>
 </ul>
 </div>
-<h2 data-tts="40275ef7b9b0221e">易错点与争议</h2>
+<h2 data-tts="41f4bb2966dc0d8b">易错点与争议</h2>
 <ul>
 <li><strong>把「最终一致」当「马上一致」</strong>：异步复制下读从库随时可能拿到旧值。做读写分离时，用户「读自己刚写的」那条路径要特意读主库或够新的副本。</li>
 <li><strong>迷信 <code>w+r&gt;n</code> 就等于强一致</strong>：它只保证读写集有交集，<strong>并不等于线性一致</strong>——并发写、部分写失败、宽松 quorum 都能让你读到旧值。要强一致得靠共识（第 9 章）。</li>
@@ -226,7 +226,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>自动故障转移是把双刃剑</strong>：切太敏感会因抖动误切、甚至脑裂；切太迟又拖长故障。GitHub 曾因跨机房网络分区触发 MySQL 故障转移、把落后的副本提为主库，酿成一次广为人知的长时间数据不一致事故——failover 该自动还是人工，业界至今无定论。</li>
 <li><strong>时代坐标</strong>：本书 2017 年成书。此后 Raft 让共识工程化、云数据库（Aurora、Spanner、CockroachDB、DynamoDB 全球表）把这些权衡产品化，但「单主 / 多主 / 无主 + 复制滞后」这套心智模型至今是理解它们的底图。</li>
 </ul>
-<h2 data-tts="65e0c52b715956b7">要点</h2>
+<h2 data-tts="50c5725859198f66">要点</h2>
 <div class="tl">
 <p>① 复制 = 同一份数据放多台机器，换来<strong>容错 / 低延迟 / 读扩展</strong>；难点不在存副本，在<strong>持续同步修改</strong>。</p>
 <p>② 三种架构：<strong>单主</strong>（一处可写、最常用）、<strong>多主</strong>（多处可写、跨地域 / 离线）、<strong>无主</strong>（无单点、quorum 把关）。</p>

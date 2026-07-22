@@ -54,7 +54,10 @@ MAX_CHARS_PER_CALL = 3000
 # and diagrams are for the eye — the narration should carry the prose around
 # them. Used instead of .get_text() when collecting narration.
 _SKIP_TEXT_PARENTS = ("pre", "code", "svg", "style", "script", "figure")
-_READABLE_CODE = _re_mod.compile(r"^[\w .,-]{1,24}$")
+# Read short code that is a name or a relation (model_version, w + r > n);
+# skip anything with call/index syntax — "now()" and "hash(key) % N" only
+# add noise when spoken.
+_READABLE_CODE = _re_mod.compile(r"^[\w .,+\-*/^<>=%≥≤]{1,24}$")
 
 
 def _in_diagram(s) -> bool:
@@ -117,6 +120,7 @@ def normalize_for_tts(text: str) -> str:
     text = _re.sub(r"\s*×\s*", " 乘以 ", text)
     text = _re.sub(r"\s*÷\s*", " 除以 ", text)
     text = _re.sub(r"\s*±\s*", " 正负 ", text)
+    text = _re.sub(r"(?<=[\w\)])\s*\+\s*(?=[\w\(])", " 加 ", text)
     # `=` gets spoken as "等于" only when surrounded by spaces or between
     # obviously numeric/short-word contexts; leave "A=B" style alone since
     # it's often used as inline labelling in Chinese copy.
