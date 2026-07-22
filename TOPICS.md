@@ -167,4 +167,75 @@ Google 亲笔：**把整座数据中心当成一台计算机来设计**（wareho
 ### Part III. 安全与未来
 - **Ch10 安全与隐私** — Security and Privacy — 数据工程师的安全责任（slug: `dataeng-ch10-security-and-privacy`）
 
+## A Philosophy of Software Design · John Ousterhout · 2nd ed 2021
+
+短小精深的**软件设计品味**课。一条主线：**复杂度是敌人**，而复杂度来自依赖与晦涩；对策是「深模块」——简单接口包住复杂实现。全书每章一个可直接上手的判据。（精读核心设计章。）
+
+- **Ch1 引论：一切都是复杂度** — Introduction: It's All About Complexity — 软件设计的根本目标就是压住复杂度（slug: `aposd-ch01-its-all-about-complexity`）
+- **Ch2 复杂度的本质** — The Nature of Complexity — 复杂度的三种症状：变更放大、认知负担、未知的未知（slug: `aposd-ch02-nature-of-complexity`）
+- **Ch3 光能跑还不够** — Working Code Isn't Enough — 战术编程 vs 战略编程：为什么「先能跑」会复利式还债（slug: `aposd-ch03-working-code-isnt-enough`）
+- **Ch4 模块要「深」** — Modules Should Be Deep — 全书最核心的比喻：接口要小、实现可以厚，浅模块是复杂度之源（slug: `aposd-ch04-modules-should-be-deep`）
+- **Ch5 信息隐藏与泄漏** — Information Hiding and Leakage — 什么该藏、什么算泄漏，为什么「时序分解」是常见陷阱（slug: `aposd-ch05-information-hiding`）
+- **Ch6 通用模块更深** — General-Purpose Modules are Deeper — 略微通用的接口反而更简单、更好用（slug: `aposd-ch06-general-purpose-modules`）
+- **Ch7 不同层，不同抽象** — Different Layer, Different Abstraction — 直通方法（pass-through）与装饰器泛滥是层次设计失败的信号（slug: `aposd-ch07-different-layer-different-abstraction`）
+- **Ch8 把复杂度向下沉** — Pull Complexity Downward — 宁可模块内部难写，也别让调用方难用（slug: `aposd-ch08-pull-complexity-downward`）
+- **Ch9 合还是分** — Better Together or Better Apart? — 何时该合并、何时该拆分：判据不是行数（slug: `aposd-ch09-better-together-or-apart`）
+- **Ch10 把错误定义掉** — Define Errors Out of Existence — 最反直觉的一招：让异常情况在语义上不存在，而不是到处 try/catch（slug: `aposd-ch10-define-errors-out-of-existence`）
+- **Ch11 设计两次** — Design it Twice — 第一版方案几乎从不是最好的，逼自己出第二套（slug: `aposd-ch11-design-it-twice`）
+- **Ch13 注释写「不明显」的东西** — Comments Should Describe Things That Aren't Obvious — 好注释补充代码说不出的信息，而非复述代码（slug: `aposd-ch13-comments-non-obvious`）
+- **Ch14 命名** — Choosing Names — 名字是最小单位的抽象，含糊的名字预示设计有问题（slug: `aposd-ch14-choosing-names`）
+- **Ch18 代码应当一目了然** — Code Should be Obvious — 「显而易见」是读者判定的，不是作者（slug: `aposd-ch18-code-should-be-obvious`）
+- **Ch20 为性能而设计** — Designing for Performance — 简洁与快通常同向；何时才该为性能牺牲清晰（slug: `aposd-ch20-designing-for-performance`）
+
+## Software Engineering at Google · Titus Winters, Tom Manshreck, Hyrum Wright · 2020
+
+Google 二十年工程实践的公开总结。**核心命题：软件工程 = 编程 × 时间 × 规模**——代码要活很多年、被很多人改，一切实践（测试、评审、依赖、大规模变更）都是为这个命题服务。（精读技术与流程核心章，略去纯文化 / 管理章。）
+
+### Part I. 论题
+- **Ch1 何谓软件工程** — What Is Software Engineering? — 编程是写代码，工程是让代码在时间与规模下still 可维护；Hyrum 定律（slug: `swegoogle-ch01-what-is-software-engineering`）
+### Part III. 流程
+- **Ch8 风格指南与规则** — Style Guides and Rules — 规则为什么存在、怎么定、怎么自动执行（slug: `swegoogle-ch08-style-guides-and-rules`）
+- **Ch9 代码评审** — Code Review — Google 的评审流程与它真正带来的收益（不只是找 bug）（slug: `swegoogle-ch09-code-review`）
+- **Ch10 文档** — Documentation — 把文档当代码来维护（slug: `swegoogle-ch10-documentation`）
+- **Ch11 测试总览** — Testing Overview — 为什么写测试、测试规模分类与收益模型（slug: `swegoogle-ch11-testing-overview`）
+- **Ch12 单元测试** — Unit Testing — 可维护的单测：测行为不测实现（slug: `swegoogle-ch12-unit-testing`）
+- **Ch13 测试替身** — Test Doubles — mock / stub / fake 的取舍与滥用代价（slug: `swegoogle-ch13-test-doubles`）
+- **Ch14 更大范围的测试** — Larger Testing — 集成 / 端到端测试怎么做才不脆（slug: `swegoogle-ch14-larger-testing`）
+- **Ch15 废弃** — Deprecation — 怎么体面地下线一个被广泛依赖的系统（slug: `swegoogle-ch15-deprecation`）
+### Part IV. 工具
+- **Ch16 版本控制与分支管理** — Version Control and Branch Management — 为什么 Google 选单体仓 + 主干开发（slug: `swegoogle-ch16-version-control`）
+- **Ch18 构建系统与构建哲学** — Build Systems and Build Philosophy — 基于制品的构建、可复现与远端缓存（Bazel 之道）（slug: `swegoogle-ch18-build-systems`）
+- **Ch20 静态分析** — Static Analysis — 让静态分析在开发流里真正被接受的条件（slug: `swegoogle-ch20-static-analysis`）
+- **Ch21 依赖管理** — Dependency Management — 菱形依赖、语义化版本的局限、活在 HEAD（slug: `swegoogle-ch21-dependency-management`）
+- **Ch22 大规模变更** — Large-Scale Changes — 怎么在几百万文件上安全地做一次全局改动（slug: `swegoogle-ch22-large-scale-changes`）
+- **Ch23 持续集成** — Continuous Integration — CI 在超大规模下的形态与取舍（slug: `swegoogle-ch23-continuous-integration`）
+- **Ch24 持续交付** — Continuous Delivery — 小步、频繁、可回滚：把发布做成非事件（slug: `swegoogle-ch24-continuous-delivery`）
+- **Ch25 计算即服务** — Compute as a Service — 从 Borg 到托管计算：把机器当抽象资源（slug: `swegoogle-ch25-compute-as-a-service`）
+
+## Fundamentals of Software Architecture · Mark Richards & Neal Ford · 2020
+
+架构师的系统性入门。**核心：架构没有最佳实践，只有权衡**——先把「架构特征」（可扩展 / 可用 / 弹性…）定义清楚、可度量，再据此挑架构风格。（精读基础与架构风格核心章，略去纯职业软技能章。）
+
+- **Ch1 引论** — Introduction — 架构到底是什么、架构师做什么，为什么没有标准定义（slug: `fosa-ch01-introduction`）
+### Part I. 基础
+- **Ch2 架构思维** — Architectural Thinking — 架构与设计的边界、广度胜过深度、权衡思维（slug: `fosa-ch02-architectural-thinking`）
+- **Ch3 模块化** — Modularity — 内聚与耦合怎么量：连接度、抽象度、与主序列的距离（slug: `fosa-ch03-modularity`）
+- **Ch4 架构特征定义** — Architecture Characteristics Defined — 「-ility」们到底指什么，隐式 vs 显式特征（slug: `fosa-ch04-architecture-characteristics-defined`）
+- **Ch5 识别架构特征** — Identifying Architectural Characteristics — 从领域关切与需求里把关键特征挖出来（最多挑几个）（slug: `fosa-ch05-identifying-characteristics`）
+- **Ch6 度量与治理架构特征** — Measuring and Governing Architecture Characteristics — 让特征可测量、用适应度函数持续守护（slug: `fosa-ch06-measuring-and-governing`）
+- **Ch7 架构特征的作用域** — Scope of Architecture Characteristics — 架构量子：特征的边界不等于整个系统（slug: `fosa-ch07-scope-of-characteristics`）
+- **Ch8 组件化思维** — Component-Based Thinking — 组件怎么划分、粒度多大、与领域怎么对齐（slug: `fosa-ch08-component-based-thinking`）
+### Part II. 架构风格
+- **Ch10 分层架构** — Layered Architecture Style — 最常见的单体分层：优点、隔离层与「污水池」反模式（slug: `fosa-ch10-layered-architecture`）
+- **Ch11 管道架构** — Pipeline Architecture Style — 管道与过滤器：ETL 与数据处理的经典骨架（slug: `fosa-ch11-pipeline-architecture`）
+- **Ch12 微内核架构** — Microkernel Architecture Style — 核心系统 + 插件：产品型软件的常用形态（slug: `fosa-ch12-microkernel-architecture`）
+- **Ch13 基于服务的架构** — Service-Based Architecture Style — 粗粒度服务 + 共享库：微服务的务实折中（slug: `fosa-ch13-service-based-architecture`）
+- **Ch14 事件驱动架构** — Event-Driven Architecture Style — 中介 vs 代理拓扑、异步的威力与代价（slug: `fosa-ch14-event-driven-architecture`）
+- **Ch15 空间架构** — Space-Based Architecture Style — 用内存网格去掉数据库瓶颈，应对极端并发（slug: `fosa-ch15-space-based-architecture`）
+- **Ch17 微服务架构** — Microservices Architecture — 边界上下文、粒度陷阱、数据隔离与通信（slug: `fosa-ch17-microservices-architecture`）
+- **Ch18 如何选择架构风格** — Choosing the Appropriate Architecture Style — 按架构特征反推风格的决策路径（slug: `fosa-ch18-choosing-architecture-style`）
+### Part III. 技术
+- **Ch19 架构决策** — Architecture Decisions — ADR：把决策与理由固化下来，反模式「掩耳盗铃」（slug: `fosa-ch19-architecture-decisions`）
+- **Ch20 分析架构风险** — Analyzing Architecture Risk — 风险矩阵、风险风暴与持续评估（slug: `fosa-ch20-analyzing-architecture-risk`）
+
 <!-- 下一本书从这里另起：## 书名 · 作者 · 年份 —— routine 只读不改本文件 -->
