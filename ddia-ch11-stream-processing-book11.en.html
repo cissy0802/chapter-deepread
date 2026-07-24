@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>DDIA Ch.11 · Stream Processing — Deep Read Book 11</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">Deep Read · DDIA · Chapter 11</p>
+<h1>Stream Processing</h1>
+<p class="sub">Designing Data-Intensive Applications · Ch 11 · Martin Kleppmann · 2017</p>
+<p class="langbar"><a href="ddia-ch11-stream-processing-book11.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What's this chapter about?</h2>
+<p>The "purchase alert" that pops the instant you tap your card, the little car sliding across your ride-hailing map, the viewer count ticking up in a live stream—none of these can "wait until tonight to compute." Last chapter's <strong>batch processing</strong> is like washing one big tub of laundry: you collect a full load before running it, so what you see is always "yesterday's world." This chapter is about a different kind of work: <strong>process each piece of data the moment it arrives</strong>, so the result always hugs "right now." That's <strong>stream processing</strong>.</p>
+<h2>An analogy first</h2>
+<p>Picture every thing that happens—a click, a payment, a sensor reading—as a little <strong>sticky note you write once and never change</strong>: "at this time, this person did this." Stream processing is <strong>standing next to a conveyor belt of these notes as they keep flying in</strong>, reading each one as it comes, updating the books and firing whatever alert is due on the spot—rather than waiting for a whole sack to pile up before opening it.</p>
+<h2>Why the old world was hard</h2>
+<p>Batch processing has one incurable flaw: <strong>it's always waiting</strong>—waiting for a batch to fill, waiting for the whole batch to finish—so what you get is always the stale books from hours ago. But plenty of things in real life can't wait: fraud must be blocked <strong>on the spot</strong>, flash-sale inventory watched <strong>live</strong>, an outage flagged <strong>this instant</strong>. You can't recompute an entire day's data from scratch just to glance at the present moment.</p>
+<h2>The core mechanism, intuitively</h2>
+<p>Two plain ideas hold up stream processing. <strong>First, a never-deleted ledger.</strong> Don't toss each sticky note after reading it—<em>pin them one after another onto a long conveyor belt and never tear them off</em>; whoever wants to read brings their own bookmark, notes where they've reached, and can rewind the bookmark to re-read anytime (this is exactly what Kafka does). <strong>Second, the ledger and the balance are the same thing.</strong> Your bank balance is nothing but <em>the sum of every transaction replayed from the start</em>; conversely, as long as you keep every transaction, the balance at any moment can be recomputed. <strong>"Store every change, not just the latest state"—that small pivot is the soul of the chapter.</strong></p>
+<h2>What it buys you / how to choose</h2>
+<p>With this replayable ledger, a change in one place can fan out to everyone who needs it <strong>within seconds</strong>: the moment the database changes, the search index, cache, and reports update live; fraud detection finishes deciding before your finger leaves the screen. Use streaming when you need it "on demand right now"; leave "run tonight, out by morning" work to batch. <strong>One honest cost</strong>: the moment you chase real-time, "time" itself gets slippery—a message sent from the subway may arrive minutes late; out-of-order and late events mean "what exactly happened this minute" never has a hard deadline, only a rough line you draw while admitting a few will slip through.</p>
+<h2>Remember this one line</h2>
+<div class="tl">
+<p>Stream processing = <strong>process each item as it arrives</strong>, keeping results glued to the present, for the sake of "on demand right now." Two pillars: <strong>a never-deleted, replayable ledger</strong> (Kafka), and <strong>"store every change, not just the latest state"</strong>—the balance is just the sum of the ledger. The cost: real-time makes "time" slippery; out-of-order and late events have no hard deadline.</p>
+</div>
+<p class="switch-hint">Want CDC, stream-table duality, windows &amp; watermarks, exactly-once, and diagrams? <a data-mode="deep">→ Switch to Deep mode</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">This chapter is about <strong>stream processing</strong>: treat data as a <strong>never-ending, unbounded stream of events</strong>, process each event as it arrives, and keep derived results (indexes, caches, live metrics, alerts) continuously close to "now." It shares last chapter's worldview—<em>immutable data + derivation</em>—only swapping "one bounded batch" for "an unbounded continuous stream." Two pillars hold up the whole chapter: <strong>the log-based message broker (e.g. Kafka)</strong>—a durable, ordered, replayable event log; and <strong>event sourcing / stream-table duality</strong>—taking "every change" rather than "the latest state" as the source of truth. One counterintuitive line: <strong>you'd think the hard part of streaming is "going fast"—it's actually <em>time</em>: the mismatch between event time and processing time is the real deep water of this chapter.</strong></p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Event</strong>: a small record <em>written once and never changed</em>, stating "something happened at some moment," e.g. <code>(user A, 12:03, clicked item X)</code>. Streaming is all about moving events around.</li>
+<li><strong>Stream / event stream</strong>: an endless series of events produced over time; unlike batch's "bounded data," a stream is <strong>unbounded</strong>—it's never "fully read."</li>
+<li><strong>Producer / consumer</strong>: the side that writes events is the producer (a.k.a. publisher); the side that reads and processes them is the consumer (a.k.a. subscriber).</li>
+<li><strong>Message broker</strong>: a server sitting between producer and consumer that reliably hands events from one to the other and smooths out bursts.</li>
+<li><strong>Offset</strong>: the sequence number of each event in a log; a consumer uses it as a "bookmark" to remember how far it has read, and can rewind to <em>replay</em> history.</li>
+<li><strong>Change data capture (CDC)</strong>: turning every insert/update/delete in a database into a real-time event stream so other systems can follow along.</li>
+<li><strong>Event sourcing</strong>: instead of storing "current state," store <em>every event that led to that state</em>; current state is computed by replaying those events.</li>
+<li><strong>Materialized view</strong>: the result of a query precomputed and stored, kept up to date as the source changes—something streaming is naturally good at maintaining.</li>
+<li><strong>Event time vs processing time</strong>: the moment an event <em>actually happened</em> vs the moment it was <em>processed</em>; network delay and reordering often make them disagree.</li>
+<li><strong>Window</strong>: slicing an unbounded stream into time segments (e.g. "each minute") so you can compute aggregates like "how many in this minute."</li>
+<li><strong>Watermark</strong>: a heuristic line meaning "I believe events before time T have mostly arrived," used to decide when a window may close and emit its result.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This chapter is the second piece of Part III, "Derived Data," right after batch processing (Ch10). Ch10 handles <strong>bounded, static batches</strong>; this chapter turns to <strong>unbounded, real-time streams</strong>. The two aren't rivals but two faces of one worldview—both treat data as immutable input and derive results from it; the only difference is "batch vs stream." It builds on Ch10's batch processing and cashes in setups from Ch5 (replication logs) and Ch7 (transactions &amp; exactly-once); it leads into the final Ch12, where the author reorganizes the whole data system around streams. It maps to the real-world Kafka / Flink / Spark Streaming ecosystem, real-time warehouses, and fraud and monitoring pipelines.</p>
+<h2>What problem does it solve?</h2>
+<p>Suppose you're building fraud detection for e-commerce: <code>50,000</code> transactions pour in per second, and between the user tapping "pay" and the bank replying—<strong>under 200 milliseconds</strong>—you must judge whether this one is fraudulent. Suppose Ops also wants a live dashboard showing this-minute GMV and per-city order heat. What these have in common: <strong>the value of the result decays fast with time</strong>. "Run tonight, out by morning" batch is useless here—by the time you finish, the money's stolen and the sale is over.</p>
+<p>Yet you can't just shrink batch's "recompute all data from scratch every hour" down to "every second"—that would crush your machines and database. The real problem is three interlocking challenges: <strong>①</strong> how to deliver an endless flow of events <em>reliably and in order</em> from producer to processor, and, after the processor crashes and restarts, <em>resume from where it left off—or even replay history</em>; <strong>②</strong> how to propagate a change in one place (one row edited) <em>in real time and correctly</em> to every derived system (search, cache, reports) so they don't contradict each other; <strong>③</strong> how to give a trustworthy aggregate over "one time window" in a world where events arrive <em>out of order and late</em>. <strong>Solve none of these and you're stuck with either hours of latency or a pile of fragile real-time scripts that drop messages and never reconcile.</strong></p>
+<h2>The core, explained</h2>
+<h3>1. Events &amp; messaging: from "gone once consumed" to "a replayable ledger"</h3>
+<p>Streaming starts with <strong>how to get events from producer to consumer</strong>. The naïve way—have consumers poll a database for new data—is clumsy. Dedicated <strong>message brokers</strong> emerged, historically in two schools; understanding their difference is the key to why Kafka matters:</p>
+<ul>
+<li><strong>Traditional message queues (AMQP / JMS style, e.g. RabbitMQ, ActiveMQ)</strong>: like <em>shipping a parcel</em>—a message is delivered to a consumer, who signs for it (ack), and then <strong>the broker deletes it</strong>. To scale throughput, multiple consumers often <em>share</em> a queue (load balancing). The catch: once consumed, a message is gone—<strong>no replay</strong>; and under concurrent consumption, processing order easily scrambles. It excels at "task dispatch" (each message need only be handled once by some worker, e.g. send an email).</li>
+<li><strong>Log-based brokers (e.g. Kafka, Kinesis)</strong>: like a newspaper's <em>bound archive</em>—all events are <strong>append-only, pinned in order onto one durable log, and not deleted after being read</strong> (retained by time / capacity, e.g. 7 days). Each consumer keeps its own <strong>offset</strong> as a bookmark. This grants two killer features: <strong>①replayable</strong>—rewind the offset to re-read history (debug, backfill a newly added downstream, rerun after fixing a bug); <strong>②ordered</strong>—strictly ordered within a partition. To scale, the log is <strong>partitioned</strong> by key—ordered within each partition, parallel across partitions—exactly the Ch6 partitioning playbook.</li>
+</ul>
+<p><strong>The point of the log-based broker: it has both a database's durability and a message queue's low latency</strong>—fusing "delivering messages" and "storing data" into one thing. That's the technical bedrock that lets a "stream" serve as a <em>trustworthy source of truth</em>. The cost: one partition can only be read in order by a single consumer, so when you want 100 consumers to share one batch of messages in parallel and don't care about order, a traditional queue is actually more flexible.</p>
+<figure>
+<svg viewBox="0 0 640 300" font-family="-apple-system,sans-serif" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerWidth="8" markerHeight="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="a2" markerWidth="8" markerHeight="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text x="20" y="20" fill="#5b9df9" font-size="12" font-weight="700">Producer</text>
+<text x="196" y="20" fill="#5b9df9" font-size="12" font-weight="700">Log (append-only, kept after read)</text>
+<text x="540" y="20" fill="#5b9df9" font-size="12" font-weight="700">Consumers</text>
+<rect x="20" y="120" width="86" height="40" rx="6" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"></rect><text x="63" y="144" fill="#e7ebf1" font-size="11" text-anchor="middle">producer</text>
+<g>
+<rect x="180" y="120" width="40" height="40" rx="4" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="200" y="145" fill="#b9c0ca" font-size="11" text-anchor="middle">0</text>
+<rect x="222" y="120" width="40" height="40" rx="4" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="242" y="145" fill="#b9c0ca" font-size="11" text-anchor="middle">1</text>
+<rect x="264" y="120" width="40" height="40" rx="4" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="284" y="145" fill="#b9c0ca" font-size="11" text-anchor="middle">2</text>
+<rect x="306" y="120" width="40" height="40" rx="4" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="326" y="145" fill="#b9c0ca" font-size="11" text-anchor="middle">3</text>
+<rect x="348" y="120" width="40" height="40" rx="4" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect><text x="368" y="145" fill="#e7ebf1" font-size="11" text-anchor="middle">4</text>
+<rect x="390" y="120" width="40" height="40" rx="4" fill="rgba(120,120,130,0.1)" stroke="#7c8593" stroke-dasharray="3 2"></rect><text x="410" y="145" fill="#7c8593" font-size="11" text-anchor="middle">5…</text>
+</g>
+<text x="300" y="180" fill="#7c8593" font-size="9" text-anchor="middle" font-family="monospace">offset 0,1,2,3,4 … grows forever, never rewinds</text>
+<line x1="106" y1="140" x2="178" y2="140" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="470" y="60" width="150" height="34" rx="6" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"></rect><text x="545" y="82" fill="#e7ebf1" font-size="10.5" text-anchor="middle">Group A · offset=2</text>
+<rect x="470" y="128" width="150" height="34" rx="6" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"></rect><text x="545" y="150" fill="#e7ebf1" font-size="10.5" text-anchor="middle">Group B · offset=4</text>
+<rect x="470" y="210" width="150" height="34" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-dasharray="4 3"></rect><text x="545" y="226" fill="#e7ebf1" font-size="10.5" text-anchor="middle">New downstream · offset=0</text><text x="545" y="240" fill="#8fbaff" font-size="9" text-anchor="middle" font-family="monospace">rewind → replay history</text>
+<line x1="284" y1="120" x2="468" y2="80" stroke="#9b6cf5" marker-end="url(#a2)"></line>
+<line x1="368" y1="120" x2="468" y2="140" stroke="#9b6cf5" marker-end="url(#a2)"></line>
+<line x1="200" y1="160" x2="468" y2="222" stroke="#5b9df9" stroke-dasharray="4 3" marker-end="url(#a2)"></line>
+</svg>
+<figcaption>Fig 1 · Log-based broker (Kafka): events are appended to an ordered log and kept after reading; each consumer group carries its own offset bookmark, independently, and can rewind to "replay" history—something a "sign-and-delete" queue cannot do.</figcaption>
+</figure>
+<h3>2. Databases &amp; streams: change data capture (CDC) and event sourcing</h3>
+<p>Wiring the "stream" abstraction to a database unlocks the chapter's most useful class of applications: <strong>keeping all systems in sync</strong>. In practice you almost never use just one database—beyond the primary there's a search engine (Elasticsearch), cache (Redis), warehouse, feature store, all of which must track the primary. The old way is application-level <em>dual writes</em> (update the DB, then manually update search), but dual writes easily <strong>fail to reconcile</strong> under concurrency or partial failure. The cleaner way is to turn database changes <strong>into a stream</strong>:</p>
+<p><strong>Change data capture (CDC)</strong>: every insert/update/delete on the primary is captured as an event (typically by reading its replication log / WAL) and pushed onto a stream. Every downstream subscribes and applies it in order, ending up <strong>eventually identical to the primary</strong>—essentially generalizing Ch5's leader–follower replication across heterogeneous systems. Tools like Debezium do exactly this.</p>
+<p><strong>Event sourcing</strong>: a more radical step—<strong>don't treat "current state" as the source of truth; treat "every event that led to the state" as the source of truth</strong>. A shopping cart stores not "2 items now" but the immutable event chain <code>add X</code>, <code>add Y</code>, <code>remove X</code>; current state is computed by <em>replay</em>. Benefits: <strong>full audit</strong> (every step traced, accountable), <strong>time-travel to any moment</strong>, and <strong>many different views derived from one event stream</strong> (the same order events can drive inventory, revenue, and recommendations).</p>
+<h3>3. Stream-table duality: turning the database inside out</h3>
+<p>Behind CDC and event sourcing is one deep observation the author calls <strong>the duality of streams and tables</strong>:</p>
+<ul>
+<li><strong>A table is a "snapshot" of a stream</strong>: a database table's <em>current contents</em> equal the result of <strong>replaying and summing</strong> all its change events (changelog) since creation. Your bank balance is the sum of all transactions.</li>
+<li><strong>A stream is a table's "changelog"</strong>: conversely, keep recording every change to a table and you get a stream; subscribe to it, apply each change, and any downstream can maintain a copy consistent with the source.</li>
+</ul>
+<p>This is no word game but an architectural worldview: <strong>turning the database inside out</strong>—a traditional database hides the "changelog" internally and exposes only "current state"; streaming reverses it, <strong>promoting the changelog itself to a first-class citizen (right there in Kafka) and demoting "current state" to a rebuildable, multiply-copied materialized view</strong>. Search indexes, caches, and reports all become "different projections of one source-of-truth log"—inherently consistent, rebuildable from the log when broken. This is Kleppmann's famous "turning the database inside out," and the intellectual core of the final Ch12.</p>
+<figure>
+<svg viewBox="0 0 640 250" font-family="-apple-system,sans-serif" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b1" markerWidth="8" markerHeight="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+<marker id="b2" markerWidth="8" markerHeight="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker></defs>
+<text x="20" y="22" fill="#9b6cf5" font-size="12" font-weight="700">Stream (changelog · every change)</text>
+<rect x="20" y="40" width="120" height="30" rx="5" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5"></rect><text x="80" y="59" fill="#e7ebf1" font-size="10" text-anchor="middle" font-family="monospace">+X (+1)</text>
+<rect x="150" y="40" width="120" height="30" rx="5" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5"></rect><text x="210" y="59" fill="#e7ebf1" font-size="10" text-anchor="middle" font-family="monospace">+Y (+1)</text>
+<rect x="280" y="40" width="120" height="30" rx="5" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5"></rect><text x="340" y="59" fill="#e7ebf1" font-size="10" text-anchor="middle" font-family="monospace">-X (-1)</text>
+<rect x="410" y="40" width="120" height="30" rx="5" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5"></rect><text x="470" y="59" fill="#e7ebf1" font-size="10" text-anchor="middle" font-family="monospace">+Z (+1)</text>
+<line x1="140" y1="55" x2="148" y2="55" stroke="#9b6cf5"></line><line x1="270" y1="55" x2="278" y2="55" stroke="#9b6cf5"></line><line x1="400" y1="55" x2="408" y2="55" stroke="#9b6cf5"></line>
+<line x1="275" y1="78" x2="275" y2="128" stroke="#5b9df9" marker-end="url(#b2)"></line>
+<text x="368" y="108" fill="#8fbaff" font-size="10" text-anchor="middle" font-family="monospace">replay + sum → snapshot</text>
+<rect x="180" y="134" width="200" height="56" rx="8" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"></rect>
+<text x="280" y="156" fill="#5b9df9" font-size="11" font-weight="700" text-anchor="middle">Table (current state · snapshot)</text>
+<text x="280" y="177" fill="#e7ebf1" font-size="10.5" text-anchor="middle" font-family="monospace">cart = { Y, Z }</text>
+<path d="M 385 150 Q 470 150 470 78" fill="none" stroke="#9b6cf5" stroke-dasharray="4 3" marker-end="url(#b1)"></path>
+<text x="300" y="228" fill="#7c8593" font-size="9.5" text-anchor="middle">each table change emits a new event → stream ⇄ table, two sides of one coin</text>
+</svg>
+<figcaption>Fig 2 · Stream-table duality: replay and sum the immutable chain "add X / add Y / remove X / add Z" and you get the current cart {Y, Z} (table = snapshot of stream); conversely each table change emits an event (stream = table's changelog). Two sides of one coin.</figcaption>
+</figure>
+<h3>4. The trouble with time: event time vs processing time, windows &amp; watermarks</h3>
+<p>This is the acknowledged brain-bender—and the true test—of the chapter. In batch, "time" isn't a problem (all data is there, compute freely); in streaming, the moment you want "how many transactions in the past minute," you hit a philosophical knot: <strong>which "minute"?</strong></p>
+<ul>
+<li><strong>Event time</strong>: when the event <em>actually happened</em> (the second the user tapped pay on their phone).</li>
+<li><strong>Processing time</strong>: when the event <em>was processed</em> by the server.</li>
+</ul>
+<p>The two often disagree: a user places an order in the subway, has no signal, and <code>5</code> minutes later—leaving the station—their phone finally sends the event. By processing time, it's wrongly counted into the window 5 minutes later. Processing time is simple but <em>distorted by system load and network jitter</em>; event time is "correct" but hits a deadlock: <strong>you can never be sure all events of a given window have arrived</strong>—a straggler could always be on the way.</p>
+<p>The remedy is the <strong>watermark</strong>: the system maintains a heuristic line, "events before event time T have, I believe, mostly arrived," and once the watermark passes a window's end boundary, it <em>emits that window's result</em>. What about late events arriving afterward? Three attitudes: <strong>drop</strong> them outright (and count/alert), issue a <strong>correction</strong> (retract the old result and re-emit), or allow a <strong>grace period</strong> and drop only stragglers beyond it. There's no free lunch here—wait longer to miss fewer and you sacrifice latency; emit sooner and you tolerate the occasional straggler.</p>
+<p>Cutting windows has its own varieties, four common ones: <strong>tumbling</strong>—end-to-end, non-overlapping ("each whole minute"); <strong>hopping</strong>—fixed length but sliding by a smaller step, so they overlap ("every minute, count the past 5 minutes"); <strong>sliding</strong>—at any instant look "back N minutes"; <strong>session</strong>—no fixed length, cut by "a user's burst of activity, broken only after some minutes of silence."</p>
+<figure>
+<svg viewBox="0 0 640 260" font-family="-apple-system,sans-serif" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="c1" markerWidth="8" markerHeight="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line x1="40" y1="150" x2="610" y2="150" stroke="#7c8593" marker-end="url(#c1)"></line>
+<text x="600" y="170" fill="#7c8593" font-size="10" text-anchor="end" font-family="monospace">time →</text>
+<line x1="200" y1="60" x2="200" y2="158" stroke="#5b9df9" stroke-dasharray="3 3"></line>
+<line x1="400" y1="60" x2="400" y2="158" stroke="#5b9df9" stroke-dasharray="3 3"></line>
+<text x="120" y="52" fill="#5b9df9" font-size="10" text-anchor="middle">window [10:00,10:01)</text>
+<text x="300" y="52" fill="#5b9df9" font-size="10" text-anchor="middle">window [10:01,10:02)</text>
+<circle cx="90" cy="150" r="5" fill="#8fbaff"></circle>
+<circle cx="140" cy="150" r="5" fill="#8fbaff"></circle>
+<circle cx="175" cy="150" r="5" fill="#8fbaff"></circle>
+<circle cx="250" cy="150" r="5" fill="#8fbaff"></circle>
+<circle cx="330" cy="150" r="5" fill="#8fbaff"></circle>
+<circle cx="370" cy="150" r="5" fill="#8fbaff"></circle>
+<line x1="470" y1="80" x2="470" y2="158" stroke="#9b6cf5" stroke-width="1.5"></line>
+<text x="470" y="74" fill="#9b6cf5" font-size="10" text-anchor="middle" font-weight="700">watermark</text>
+<text x="470" y="200" fill="#9b6cf5" font-size="9" text-anchor="middle">"before 10:02 mostly arrived"</text>
+<text x="470" y="214" fill="#7c8593" font-size="9" text-anchor="middle">→ window closes, emits</text>
+<circle cx="150" cy="110" r="5" fill="#ff9b6c"></circle>
+<path d="M 520 110 Q 340 90 158 110" fill="none" stroke="#ff9b6c" stroke-dasharray="4 3" marker-end="url(#c1)"></path>
+<circle cx="520" cy="110" r="5" fill="#ff9b6c"></circle>
+<text x="548" y="106" fill="#ff9b6c" font-size="9.5">late event</text>
+<text x="360" y="96" fill="#ff9b6c" font-size="9" text-anchor="middle">event time in window 1, arrives after watermark</text>
+</svg>
+<figcaption>Fig 3 · The trouble with time: blue dots are on-time events, landing in the window their "event time" belongs to. The orange event's event time belongs to window 1, but delay makes it arrive after the watermark—by which point window 1 has already closed. The watermark is the "how long to wait" trade-off: wait longer, miss fewer; wait less, emit sooner.</figcaption>
+</figure>
+<h3>5. Joins on streams &amp; fault tolerance: three joins and exactly-once</h3>
+<p>As in batch, streams often need <strong>joins</strong>, but because data is "in motion," the shapes are subtler—three kinds: <strong>①stream-stream join (windowed)</strong>—pair two streams within a time window, e.g. match "search events" with "click events" for click-through rate; the hard part is both sides move, so you must buffer a window of state waiting for the other; <strong>②stream-table join (enrichment)</strong>—use a (slowly changing) table to enrich each event in a stream, e.g. attach a user profile to each click; implementations often turn the table into a stream via CDC too, maintaining a local copy; <strong>③table-table join (maintaining a materialized view)</strong>—merge two changelog streams into a continuously updated joined view.</p>
+<p><strong>Fault tolerance and exactly-once</strong> is streaming's ultimate exam. A failed batch job just reruns the whole batch (input's still there); a stream is unbounded, never "finishes"—so after a crash-restart, how do you guarantee "each event's effect takes hold exactly once, no dupes, no drops"? Three mainstream routes: <strong>①microbatching (Spark Streaming)</strong>—slice the stream into one-second mini-batches and degrade to batch for fault tolerance; simple, but latency is bounded by batch length; <strong>②checkpoint + idempotence (Flink)</strong>—periodically snapshot operator state; on crash, roll back to the last checkpoint and replay, with idempotent output, achieving "effectively-once"; <strong>③atomic commit</strong>—bind "advance read progress" and "write result" into one transaction that succeeds or fails together (e.g. Kafka transactions). Note: exactly-once means <em>"the external effect takes hold exactly once,"</em> not "physically processed only once"—underneath it's still usually replay + dedup / idempotence.</p>
+<h2>Key trade-offs &amp; choices</h2>
+<p>Streaming choices trade off <strong>replayability, ordering, real-timeness, and correctness cost</strong>. Three tables pull out the most-tested, most-useful comparisons.</p>
+<p class="tcap">Table 1 · Traditional message queue vs log-based broker (Kafka)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Traditional queue (AMQP/JMS)</th><th>Log-based broker (Kafka)</th></tr></thead>
+<tbody>
+<tr><th>After consume</th><td>ack then <strong>delete</strong>, one-shot</td><td><strong>append-only, kept after read</strong>, retained by time/capacity</td></tr>
+<tr><th>Replay?</th><td>No—gone once consumed</td><td><strong>Yes</strong>—rewind offset to re-read history</td></tr>
+<tr><th>Ordering</th><td>Easily scrambled under concurrency</td><td><strong>Strict order</strong> within a partition</td></tr>
+<tr><th>Scaling</th><td>Consumers share one queue (load balance)</td><td><strong>Partition</strong> by key; one consumer per partition, parallel across</td></tr>
+<tr><th>Best at</th><td>Task dispatch (handle once, e.g. send email)</td><td>Event streams / data sync / replay &amp; many downstreams</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · Event time vs processing time (and late-event handling)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>By processing time</th><th>By event time</th></tr></thead>
+<tbody>
+<tr><th>Meaning</th><td>When the event <strong>was processed</strong></td><td>When the event <strong>actually happened</strong></td></tr>
+<tr><th>Difficulty</th><td>Simple, no waiting</td><td>Hard—needs watermarks + buffered state</td></tr>
+<tr><th>Correctness</th><td><strong>Distorted</strong> by load / network jitter</td><td><strong>Semantically correct</strong>, reflects real business moment</td></tr>
+<tr><th>Late events</th><td>Miscounted into a later window</td><td>Arrive past watermark → <strong>drop / correct / grace period</strong></td></tr>
+<tr><th>When to pick</th><td>Coarse monitoring of "system throughput rhythm"</td><td>Books of "real business moment" (billing, fraud, analytics)</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 3 · Choosing among the three stream joins</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Type</th><th>What it does</th><th>Typical use</th><th>Difficulty / cost</th></tr></thead>
+<tbody>
+<tr><th>Stream-stream<br/>(windowed)</th><td>Pair two streams within a time window</td><td>Search × click events for CTR</td><td>Both sides move; must buffer the whole window's state</td></tr>
+<tr><th>Stream-table<br/>(enrichment)</th><td>Enrich each stream event with a table</td><td>Attach user profile to a click</td><td>Needs a local table copy (often synced via CDC)</td></tr>
+<tr><th>Table-table<br/>(materialized view)</th><td>Merge two changelogs into a live joined view</td><td>Maintain a "user+order" joined view over time</td><td>Large state; table changes must propagate promptly</td></tr>
+</tbody></table></div>
+<h2>Why it matters / in real systems</h2>
+<p>Stream processing is the skeleton of today's <strong>real-time data stack</strong>. <strong>Apache Kafka</strong> (open-sourced by LinkedIn in 2011) elevated "the log" into infrastructure and became a de facto standard for event streams; atop it grew <strong>Kafka Streams, Apache Flink, Spark Streaming, Storm, Samza</strong>. CDC tools (Debezium) wire legacy databases into streams; real-time warehouses, real-time fraud detection, recommendation features, monitoring alerts, and IoT telemetry are all, at heart, this chapter's ideas. The author's "turning the database inside out" (unbundling / stream-table duality) directly frames Ch12's direction. In interviews, "why can Kafka be both durable and low-latency," "how is exactly-once actually implemented," and "event time vs processing time and watermarks" are high-frequency questions for data / backend roles—the answers are all here.</p>
+<div class="ev">
+<div class="evh">INDUSTRY EVIDENCE · claims from the companies' / authors' own published articles &amp; papers</div>
+<ul>
+<li><strong>LinkedIn (Jay Kreps, author of Kafka)</strong> argues in <em>The Log</em> that a <strong>durable, ordered, replayable log</strong> should be the unifying substrate for data integration—"you can't fully understand databases, replication, consensus, or almost any distributed system without understanding logs." This is the intellectual source of this chapter's "log-based broker" and stream-table duality. <span class="src"><a href="https://engineering.linkedin.com/distributed-systems/log-what-every-software-engineer-should-know-about-real-time-datas-unifying" rel="noopener" target="_blank">J. Kreps, "The Log," LinkedIn Engineering 2013 ↗</a></span></li>
+<li><strong>Google</strong>, in <em>The Dataflow Model</em>, gives the authoritative solution to streaming's "time" problem: cleanly separate <strong>event time from processing time</strong>, and use <strong>windows + watermarks + triggers</strong> to tune the trade-off among correctness, latency, and cost—directly spawning the time semantics of Apache Beam / Flink and underpinning this chapter's section 4. <span class="src"><a href="https://research.google/pubs/the-dataflow-model-a-practical-approach-to-balancing-correctness-latency-and-cost-in-massive-scale-unbounded-out-of-order-data-processing/" rel="noopener" target="_blank">Akidau et al., "The Dataflow Model," VLDB 2015 ↗</a></span></li>
+<li><strong>Jay Kreps rethinks the Lambda architecture</strong>: in <em>Questioning the Lambda Architecture</em> he argues that rather than maintaining two code paths, batch and stream (Lambda), you can use <strong>just one replayable stream</strong> and replace the batch layer with "replay history to recompute" (later called the Kappa architecture)—confirming this chapter's point that batch and stream can unify over one immutable log. <span class="src"><a href="https://www.oreilly.com/radar/questioning-the-lambda-architecture/" rel="noopener" target="_blank">J. Kreps, "Questioning the Lambda Architecture," O'Reilly 2014 ↗</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls &amp; debates</h2>
+<ul>
+<li><strong>Reading exactly-once as "physically processed once"</strong>: the biggest misconception. It means <em>"the effect on the external world takes hold exactly once,"</em> still typically implemented via replay + idempotence / transactional dedup—a message may be processed many times, only the effect isn't duplicated.</li>
+<li><strong>Blindly using processing time</strong>: windowing by processing time for convenience means "per-minute metrics" get distorted by system load / consumer lag. Real business semantics (billing, fraud) demand event time + watermarks.</li>
+<li><strong>Believing late events can be "never dropped"</strong>: with event time there's always a "how long to wait before closing" trade-off—wait as long as you like and a later straggler can still appear. Engineering can only pick a watermark policy and accept occasional drops / after-the-fact corrections; there's no having both.</li>
+<li><strong>Dual writes instead of CDC</strong>: writing to the database and search index at once from the app looks direct but easily fails to reconcile under concurrency / partial failure. Using CDC to turn "one change" into a stream propagated one-way is the reliable approach.</li>
+<li><strong>The Lambda debate</strong>: running both batch + stream (Lambda) was once popular but drew criticism for <strong>maintaining two sets of logic whose results often disagree</strong>; Kappa (stream + replay only) is cleaner but demands maturity and manageable cost for "recomputing very long history." The trade-off remains live, not one-sided.</li>
+<li><strong>Dated in places</strong>: written in 2017, since when Flink's event-time semantics, Kafka's exactly-once transactions, and "unified batch &amp; stream" (Flink, lakehouse Iceberg / Delta / Hudi) have matured greatly; but the worldview of "an immutable event log + derived views" remains the bedrock of real-time systems.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① One line: stream processing = treat data as an <strong>unbounded event stream</strong>, process each as it arrives, keeping derived results close to now—for "on demand right now."</p>
+<p>② Two faces of one coin with batch: same "immutable input + derivation," differing only in <strong>one bounded batch vs an unbounded stream</strong>.</p>
+<p>③ Pillar one: <strong>the log-based broker (Kafka)</strong>—append-only, ordered, kept after read, <strong>replayable via the offset bookmark</strong>; it has durability and replay a "sign-and-delete" queue lacks.</p>
+<p>④ Pillar two: <strong>CDC + event sourcing</strong>—take "every change" not "latest state" as source of truth; one stream keeps search/cache/warehouse eventually consistent with the primary, replacing fragile dual writes.</p>
+<p>⑤ Soul: <strong>stream-table duality</strong>—a table is a snapshot of a stream (replay + sum), a stream is a table's changelog; "turn the database inside out," making state a view rebuildable from the log.</p>
+<p>⑥ Hardest is <strong>time</strong>: event time vs processing time; use <strong>windows + watermarks</strong> to decide when a window closes; late events can only be dropped / corrected / graced—no having both.</p>
+<p>⑦ Three joins (stream-stream windowed, stream-table enrichment, table-table view); <strong>exactly-once</strong> means "effect exactly once," via microbatch / checkpoint+idempotence / atomic commit.</p>
+<p>⑧ In practice: Kafka → Flink / Spark Streaming / Kafka Streams, powering real-time warehouses, fraud, monitoring; Kreps's "The Log" and Google's Dataflow Model are the sources, leading straight into the final Ch12.</p>
+</div>
+</div>
+<footer>Deep Read · Finish this page ≈ you've got the chapter's core; for full cases and depth, go back to the book itself.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
