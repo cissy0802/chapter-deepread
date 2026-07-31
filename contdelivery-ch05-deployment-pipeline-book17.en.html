@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Continuous Delivery Ch 5 · Anatomy of the Deployment Pipeline — Books Deep-Read Book 17</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">BOOKS DEEP-READ · CONTINUOUS DELIVERY · CH 5</p>
+<h1>Anatomy of the Deployment Pipeline</h1>
+<p class="sub">Continuous Delivery · Ch 5 · Jez Humble &amp; David Farley · 2010</p>
+<p class="langbar"><a href="contdelivery-ch05-deployment-pipeline-book17.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The apps on your phone update every couple of weeks. Between a programmer changing one line of code and that line actually running on your phone, there is a road. Chapter 5 of <em>Continuous Delivery</em> is about what that road should look like. The authors call it the <strong>deployment pipeline</strong>, and it is the heart of the whole book.</p>
+<h2>An analogy</h2>
+<p>Think of a <strong>quality-control line in a factory</strong>. One code change is one item coming off the line, and it has to pass a series of inspection stations. <strong>The early stations are fast and cheap</strong> — a quick look, a weigh-in, done in minutes. <strong>The later ones are slow and expensive</strong> — open it up, run the full battery, wait half a day. If any station shows a red light, that item stops right there and is not allowed to move on.</p>
+<p>Here is the counterintuitive part: the point of this line is <strong>not</strong> to prove a version is good enough to ship. It is to prove, as early and as cheaply as possible, that a version is <strong>not</strong> good enough. That is why the fastest, crudest checks go first — bad news is cheapest when it arrives early.</p>
+<h2>Why the old way was so painful</h2>
+<p>Releases used to happen on "release day": save up three months of changes, pick a Friday night, put a roomful of people in front of a forty-page instruction sheet, and type commands by hand. One mistyped step and you were rolling back until dawn. Worse, the machines used for testing looked nothing like the machines serving real customers, so "it passed in the test environment" proved very little. Nobody dared release often, so changes piled up, and bigger piles made every release riskier still.</p>
+<h2>Three rules that straighten this out</h2>
+<p><strong>One: assemble it only once.</strong> The box that passed inspection is the box that ships — you never rebuild a fresh one halfway down the line. It sounds obvious, but the old habit was to recompile and repackage at every environment, which means the version that actually went live was never the one anybody tested.</p>
+<p><strong>Two: every station uses the same motions.</strong> Installing onto a test machine and installing onto a live machine use the same automated script; the only difference is the label on the box — the settings for that particular environment. And right after installing, the system checks itself: did it actually come up? Is everything it needs actually reachable?</p>
+<p><strong>Three: a red light stops the line.</strong> When a station goes red, the item stops and the whole team fixes the light before doing anything else. No routing around it, no "we'll get to it later."</p>
+<h2>What you get</h2>
+<p>Put the three together and releasing stops being a fire drill and becomes a button. At any moment you can see exactly where a version is, what it is stuck on, and whether it could go live. This is how companies like Amazon and Etsy came to ship dozens or hundreds of times a day — they paved the road first.</p>
+<p><strong>It does cost something</strong>: the line itself has to be built and maintained, and at the start it feels slower and noisier than the old way, with red lights going off constantly. The payoff only shows up once you are releasing often.</p>
+<h2>Remember this</h2>
+<div class="tl">
+<p>Turn "code change to live" into one fixed, automated line: <strong>assemble once</strong>, <strong>same motions at every station</strong>, <strong>red light stops the line</strong>. Its job is not to prove you are right — it is to <strong>catch the versions that are wrong as early and as cheaply as possible</strong>. After which releasing is no longer an event; it is a button.</p>
+</div>
+<p class="switch-hint">Want the stages, the time budgets and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">The deployment pipeline is <strong>an automated model of your entire path from commit to production</strong>: every commit produces a <em>release candidate</em> that travels through a fixed series of gates, fast and cheap at the front, production-like and expensive at the back. The mental inversion that makes the chapter click is this — <strong>the pipeline's job is not to prove a candidate is fit to release, but to disprove unfit candidates as early and as cheaply as possible</strong>. This is the core chapter of the book; everything after it adds parts to this machine.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Version control</strong>: the single authoritative store for code and configuration (e.g. Git). Each change is a <em>commit</em> with a unique revision id.</li>
+<li><strong>Build</strong>: compiling and packaging source into something runnable. The output is a <strong>binary artifact</strong> — a jar, a package, a container image.</li>
+<li><strong>Artifact repository</strong>: where build outputs are stored, each tagged with the commit it came from, so later stages can fetch the exact same one.</li>
+<li><strong>Unit test vs acceptance test</strong>: the first checks a small piece of logic (milliseconds, thousands of them); the second walks a whole business scenario from the user's point of view (minutes, far slower).</li>
+<li><strong>Smoke test</strong>: a tiny set of checks run immediately after deploying — is the service up? Is the database reachable? It answers only "is this thing alive?"</li>
+<li><strong>Environment</strong>: the machines and configuration an application runs on (dev / test / staging / production). <em>Production-like</em> means built to resemble production as closely as you can afford.</li>
+<li><strong>Deploy vs release</strong>: deploying puts a version onto some machines; releasing lets real users reach it. The two can be separated (the subject of Ch 10).</li>
+<li><strong>Rollback</strong>: reverting to the last known-good version after a bad release.</li>
+<li><strong>Cycle time</strong>: how long it takes from committing a change to that change running in production — the chapter's headline metric.</li>
+<li><strong>Value stream map</strong>: a drawing of every step from idea to delivery, annotated with how long each step takes and how long work waits between steps.</li>
+<li><strong>Stop the line</strong>: the Toyota discipline of halting production to fix a defect rather than letting defective work flow downstream.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This chapter opens Part II and is the hinge of the whole book. It assembles the three foundations from Part I — configuration management (Ch 2: everything in version control), continuous integration (Ch 3: merge daily, stop the line when it goes red) and a testing strategy (Ch 4: the four quadrants) — into one end-to-end conveyor belt. Downstream, Ch 7 expands the commit stage, Ch 8 automated acceptance testing, Ch 10 deploying and releasing, Ch 11 environments, Ch 12 data and Ch 13 components and dependencies. In today's terms it is what Jenkins, GitLab CI, GitHub Actions, Argo CD and Spinnaker implement — <strong>the word "pipeline" entered the industry's vocabulary from right here.</strong></p>
+<h2>The problem it solves</h2>
+<p>The chapter starts by making you draw a <strong>value stream map</strong>: lay out every step a change goes through from "we decided to do it" to "customers have it", and annotate both the working time in each step and the waiting time between steps. Almost every team reaches the same conclusion — <strong>most of the elapsed time is not work, it is waiting</strong>: waiting for a build that is testable, waiting for a free test environment, waiting for ops to schedule you, waiting for the release window. The time actually spent compiling and testing is a rounding error.</p>
+<p>Behind that waiting sit four concrete diseases:</p>
+<ul>
+<li><strong>Nobody knows the current state.</strong> "Did last Wednesday's change go out?" — you have to ask around. The record of what was built, deployed and tested lives in email, chat and one person's memory.</li>
+<li><strong>What was tested is not what ships.</strong> Rebuild at every environment and the compiler patch level, dependency resolution, build flags or a mutable <code>SNAPSHOT</code> dependency can all drift underneath you. <strong>The package that actually goes live was never tested.</strong></li>
+<li><strong>Feedback is far too slow.</strong> Defects surface weeks after they were introduced, by which time the author has lost all context and the cost of locating them has multiplied.</li>
+<li><strong>Releasing is a high-risk event.</strong> Typed by hand from a document, performed once per release, never rehearsed — so every release is a first attempt.</li>
+</ul>
+<p>What happens if you skip all this? A brutally concrete number: in August 2012 the market maker Knight Capital copied a new build <strong>by hand</strong> onto eight production servers and missed one. Dead code left behind on that box was woken up by a flag the new version reused, and in <strong>45 minutes the firm lost roughly $460 million</strong>; it was acquired shortly after. The SEC's later order is blunt about the cause: the deployment was neither automated nor verified for consistency across the fleet. That is the class of problem this chapter exists to remove.</p>
+<h2>The core content, properly</h2>
+<h3>What a deployment pipeline is: one road, four kinds of gate</h3>
+<p>The definition is plain: <strong>a deployment pipeline is an automated implementation of your application's build, deploy, test and release process</strong>. Every commit automatically creates a release candidate; that candidate must pass every gate in order to reach production, and failing any one gate eliminates it.</p>
+<p>The ordering of the gates follows an explicit economics: <strong>fast and crude first, slow and realistic later</strong>. The early stages spend a few minutes eliminating the bulk of ordinary mistakes so that the scarce, expensive later stages are only spent on candidates worth the money.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 372" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="p1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="p2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#e8794b"></path></marker>
+</defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="16" y="22">One commit = one release candidate = one road to production</text>
+<rect fill="rgba(155,108,245,0.18)" height="46" rx="7" stroke="#9b6cf5" width="112" x="8" y="44"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="64" y="63">Version control</text>
+<text fill="#b9c0ca" font-size="9" text-anchor="middle" x="64" y="78">triggers on commit</text>
+<line marker-end="url(#p1)" stroke="#7c8593" x1="122" x2="138" y1="67" y2="67"></line>
+<rect fill="rgba(91,157,249,0.16)" height="46" rx="7" stroke="#5b9df9" stroke-width="1.6" width="310" x="140" y="44"></rect>
+<text fill="#e7ebf1" font-size="11.5" x="152" y="63">1 · Commit stage</text>
+<text fill="#b9c0ca" font-size="9.5" x="152" y="80">compile · unit tests · static analysis · package</text>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" x="460" y="62">Target &lt; 5 min</text>
+<text fill="#7c8593" font-size="9" x="460" y="76">10 min ceiling · fully automated</text>
+<line marker-end="url(#p1)" stroke="#7c8593" x1="295" x2="295" y1="90" y2="114"></line>
+<rect fill="rgba(91,157,249,0.11)" height="46" rx="7" stroke="#7c8593" width="310" x="140" y="116"></rect>
+<text fill="#e7ebf1" font-size="11.5" x="152" y="135">2 · Automated acceptance tests</text>
+<text fill="#b9c0ca" font-size="9.5" x="152" y="152">production-like environment · business scenarios</text>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" x="460" y="134">Tens of min to hours</text>
+<text fill="#7c8593" font-size="9" x="460" y="148">parallelized across a grid</text>
+<line marker-end="url(#p1)" stroke="#7c8593" x1="295" x2="295" y1="162" y2="186"></line>
+<rect fill="rgba(91,157,249,0.08)" height="46" rx="7" stroke="#7c8593" width="310" x="140" y="188"></rect>
+<text fill="#e7ebf1" font-size="11.5" x="152" y="207">3 · Capacity / exploratory / UAT</text>
+<text fill="#b9c0ca" font-size="9.5" x="152" y="224">non-functional checks · humans judge usability</text>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" x="460" y="206">Hours to days</text>
+<text fill="#7c8593" font-size="9" x="460" y="220">pulled on demand by people</text>
+<line marker-end="url(#p1)" stroke="#7c8593" x1="295" x2="295" y1="234" y2="258"></line>
+<rect fill="rgba(155,108,245,0.16)" height="46" rx="7" stroke="#9b6cf5" stroke-width="1.6" width="310" x="140" y="260"></rect>
+<text fill="#e7ebf1" font-size="11.5" x="152" y="279">4 · Release to production</text>
+<text fill="#b9c0ca" font-size="9.5" x="152" y="296">same deploy script · one button · rollback ready</text>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" x="460" y="278">Minutes</text>
+<text fill="#7c8593" font-size="9" x="460" y="292">a person clicks (or fully auto)</text>
+<path d="M140,139 L74,139 L74,92" fill="none" marker-end="url(#p2)" stroke="#e8794b" stroke-dasharray="4 3"></path>
+<line stroke="#e8794b" stroke-dasharray="4 3" x1="16" x2="40" y1="332" y2="332"></line>
+<text fill="#b9c0ca" font-size="10" x="48" y="336">Any stage red → that candidate is out, the team is told, fixing it comes first</text>
+<rect fill="rgba(91,157,249,0.14)" height="10" rx="3" stroke="#5b9df9" width="24" x="16" y="349"></rect>
+<text fill="#b9c0ca" font-size="10" x="48" y="358">The one binary produced by stage 1 is reused as-is by 2, 3 and 4 — never rebuilt</text>
+</svg>
+<figcaption>Fig 1 · The deployment pipeline: more production-like, slower and costlier the further down you go; one artifact travels the whole way, and any failed gate stops the line.</figcaption>
+</figure>
+<p class="tcap">Table 1 · The four kinds of stage: what runs, how long, what it catches, what it costs</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Stage</th><th>Trigger</th><th>Typical duration</th><th>What it catches</th><th>Cost / risk</th></tr></thead>
+<tbody>
+<tr><th>Commit stage</th><td>Every commit, automatic</td><td><strong>Target &lt; 5 min, ceiling 10 min</strong></td><td>Compile failures, unit-test regressions, obvious code problems</td><td>Overload it and it overruns; developers stop waiting for the result and CI becomes theatre</td></tr>
+<tr><th>Automated acceptance tests</th><td>Automatic once the commit stage passes</td><td>Tens of minutes to hours</td><td>Business-functionality regressions, integration problems</td><td>Slow and brittle; worthless if the environment is nothing like production</td></tr>
+<tr><th>Capacity / non-functional</th><td>Automatic or on demand</td><td>Hours</td><td>Performance and capacity regressions, resource leaks</td><td>Expensive environment, noisy results, needs a baseline</td></tr>
+<tr><th>Exploratory testing / UAT</th><td><strong>Pulled on demand</strong> by people, from candidates that already passed earlier gates</td><td>Days</td><td>Usability problems, scenarios nobody thought of</td><td>Degenerates into a sign-off queue — the single biggest bottleneck</td></tr>
+<tr><th>Release to production</th><td>Button press (or fully automatic)</td><td>Minutes</td><td>— backed by smoke tests and rollback</td><td>Data migrations are often irreversible; rollback is not a universal escape</td></tr>
+</tbody></table></div>
+<h3>Rule 1: only build your binaries once</h3>
+<p>This is the single most important — and most frequently violated — rule in the chapter. <strong>The artifact is built once, in the commit stage, stored in an artifact repository, and every later stage uses that same package</strong>, with configuration injected per environment.</p>
+<p>Why? Because the moment each environment builds its own, you can no longer claim that what was tested is what ships. A compiler point release, a differently resolved dependency, an environment variable on the build agent, a mutable dependency someone republished between builds — any of these quietly invalidates hours of testing. <strong>You tested package A and shipped package B, believing they were the same thing.</strong></p>
+<p>Two supporting details: the artifact must be <strong>traceable back to a commit</strong> (name it with the revision id so an incident can be traced all the way back), and <strong>configuration must not live inside the package</strong> — one package plus per-environment configuration runs anywhere, which is exactly what Ch 2's configuration management buys you.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 272" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="320" x2="320" y1="14" y2="262"></line>
+<text fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle" x="158" y="24">1 · Build once (right)</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="6" stroke="#7c8593" width="140" x="88" y="36"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="158" y="53">source · commit a3f9c1</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="158" x2="158" y1="62" y2="80"></line>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="6" stroke="#5b9df9" width="140" x="88" y="82"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="158" y="99">build (exactly once)</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="158" x2="158" y1="108" y2="126"></line>
+<rect fill="rgba(155,108,245,0.24)" height="30" rx="6" stroke="#9b6cf5" stroke-width="2" width="156" x="80" y="128"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="158" y="147">artifact app-a3f9c1</text>
+<line marker-end="url(#b1)" stroke="#9b6cf5" x1="120" x2="60" y1="158" y2="196"></line>
+<line marker-end="url(#b1)" stroke="#9b6cf5" x1="158" x2="158" y1="158" y2="196"></line>
+<line marker-end="url(#b1)" stroke="#9b6cf5" x1="196" x2="256" y1="158" y2="196"></line>
+<rect fill="rgba(91,157,249,0.08)" height="24" rx="5" stroke="#7c8593" width="70" x="22" y="198"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="57" y="214">test</text>
+<rect fill="rgba(91,157,249,0.08)" height="24" rx="5" stroke="#7c8593" width="70" x="123" y="198"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="158" y="214">staging</text>
+<rect fill="rgba(91,157,249,0.08)" height="24" rx="5" stroke="#7c8593" width="70" x="224" y="198"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="259" y="214">production</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10.5" text-anchor="middle" x="158" y="246">tested = shipped</text>
+<text fill="#7c8593" font-size="9" text-anchor="middle" x="158" y="262">only the injected configuration differs</text>
+<text fill="#e8794b" font-size="12" font-weight="700" text-anchor="middle" x="480" y="24">2 · Rebuild per environment (wrong)</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="6" stroke="#7c8593" width="140" x="410" y="36"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="480" y="53">source · commit a3f9c1</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="450" x2="392" y1="62" y2="80"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="480" x2="480" y1="62" y2="80"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="510" x2="568" y1="62" y2="80"></line>
+<rect fill="rgba(91,157,249,0.1)" height="24" rx="5" stroke="#7c8593" width="72" x="346" y="82"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="382" y="98">build #1</text>
+<rect fill="rgba(91,157,249,0.1)" height="24" rx="5" stroke="#7c8593" width="72" x="444" y="82"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="480" y="98">build #2</text>
+<rect fill="rgba(91,157,249,0.1)" height="24" rx="5" stroke="#7c8593" width="72" x="542" y="82"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="578" y="98">build #3</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="382" x2="382" y1="106" y2="126"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="480" x2="480" y1="106" y2="126"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="578" x2="578" y1="106" y2="126"></line>
+<rect fill="rgba(224,107,107,0.12)" height="28" rx="5" stroke="#e06b6b" width="72" x="346" y="128"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="382" y="146">artifact a</text>
+<rect fill="rgba(224,107,107,0.18)" height="28" rx="5" stroke="#e06b6b" width="72" x="444" y="128"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="480" y="146">artifact b</text>
+<rect fill="rgba(224,107,107,0.26)" height="28" rx="5" stroke="#e06b6b" stroke-width="2" width="72" x="542" y="128"></rect><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="578" y="146">artifact c</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="382" x2="382" y1="158" y2="196"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="480" x2="480" y1="158" y2="196"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="578" x2="578" y1="158" y2="196"></line>
+<rect fill="rgba(91,157,249,0.08)" height="24" rx="5" stroke="#7c8593" width="70" x="347" y="198"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="382" y="214">test</text>
+<rect fill="rgba(91,157,249,0.08)" height="24" rx="5" stroke="#7c8593" width="70" x="445" y="198"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="480" y="214">staging</text>
+<rect fill="rgba(224,107,107,0.14)" height="24" rx="5" stroke="#e06b6b" width="70" x="543" y="198"></rect><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="578" y="214">production</text>
+<text fill="#e8794b" font-family="monospace" font-size="10.5" text-anchor="middle" x="480" y="246">what ships was never tested</text>
+<text fill="#7c8593" font-size="9" text-anchor="middle" x="480" y="262">compiler, dependencies and flags can all drift</text>
+</svg>
+<figcaption>Fig 2 · Build once vs rebuild per environment: on the right, three artifacts from one source revision are not the same thing — which is what makes the testing meaningless.</figcaption>
+</figure>
+<h3>Rule 2: deploy the same way to every environment</h3>
+<p>Developer machines, test, staging, production — <strong>all of them are deployed by the same script</strong>, differing only in the configuration passed in. The reasoning is very practical: if production has its own separate deployment path that only runs on release day, then it is <strong>the one part of the whole system that has never been rehearsed</strong> — and it happens to be the riskiest part. Do it the other way and the same script runs dozens of times a day against test environments, so by the time you point it at production it is the best-exercised code in the pipeline.</p>
+<p>The companion rule is to <strong>smoke-test every deployment</strong>: within seconds, verify that the service started, the database is reachable, the message queue is connected and external dependencies answer. It tests no business logic; it answers one question — <strong>is this thing alive?</strong> The one Knight Capital server that got missed is exactly what any half-decent deployment verification would have caught on the spot.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="c1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="320" x2="320" y1="14" y2="240"></line>
+<text fill="#e8794b" font-size="12" font-weight="700" text-anchor="middle" x="158" y="24">1 · By hand, from the runbook</text>
+<rect fill="rgba(255,255,255,0.03)" height="26" rx="5" stroke="#7c8593" stroke-dasharray="4 3" width="210" x="53" y="38"></rect>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="158" y="55">40-page runbook · typed by a human</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="158" x2="158" y1="64" y2="82"></line>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="38" x="30" y="86"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="49" y="103">✓ 1</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="38" x="76" y="86"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="95" y="103">✓ 2</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="38" x="122" y="86"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="141" y="103">✓ 3</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="38" x="168" y="86"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="187" y="103">✓ 4</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="38" x="30" y="120"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="49" y="137">✓ 5</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="38" x="76" y="120"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="95" y="137">✓ 6</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="38" x="122" y="120"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="141" y="137">✓ 7</text>
+<rect fill="rgba(224,107,107,0.3)" height="26" rx="4" stroke="#e06b6b" stroke-width="2" width="38" x="168" y="120"></rect><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="187" y="137">✕ 8</text>
+<text fill="#e8794b" font-size="10" text-anchor="middle" x="158" y="176">host 8 missed — old code still there</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="158" y="200">nothing checks that all 8 are identical</text>
+<text fill="#e06b6b" font-family="monospace" font-size="10.5" text-anchor="middle" x="158" y="226">one inconsistency = one outage</text>
+<text fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle" x="480" y="24">2 · One script + smoke tests</text>
+<rect fill="rgba(155,108,245,0.18)" height="26" rx="5" stroke="#9b6cf5" width="200" x="380" y="38"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="480" y="55">same deploy script + env config</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="480" x2="480" y1="64" y2="82"></line>
+<rect fill="rgba(91,157,249,0.14)" height="26" rx="4" stroke="#5b9df9" width="38" x="352" y="86"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="371" y="103">✓ 1</text>
+<rect fill="rgba(91,157,249,0.14)" height="26" rx="4" stroke="#5b9df9" width="38" x="398" y="86"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="417" y="103">✓ 2</text>
+<rect fill="rgba(91,157,249,0.14)" height="26" rx="4" stroke="#5b9df9" width="38" x="444" y="86"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="463" y="103">✓ 3</text>
+<rect fill="rgba(91,157,249,0.14)" height="26" rx="4" stroke="#5b9df9" width="38" x="490" y="86"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="509" y="103">✓ 4</text>
+<rect fill="rgba(91,157,249,0.14)" height="26" rx="4" stroke="#5b9df9" width="38" x="536" y="86"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="555" y="103">✓ 5</text>
+<rect fill="rgba(91,157,249,0.14)" height="26" rx="4" stroke="#5b9df9" width="38" x="398" y="120"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="417" y="137">✓ 6</text>
+<rect fill="rgba(91,157,249,0.14)" height="26" rx="4" stroke="#5b9df9" width="38" x="444" y="120"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="463" y="137">✓ 7</text>
+<rect fill="rgba(91,157,249,0.14)" height="26" rx="4" stroke="#5b9df9" width="38" x="490" y="120"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="509" y="137">✓ 8</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="480" x2="480" y1="148" y2="164"></line>
+<rect fill="rgba(91,157,249,0.16)" height="26" rx="5" stroke="#5b9df9" width="216" x="372" y="166"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="480" y="183">smoke test: all up? deps reachable?</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10.5" text-anchor="middle" x="480" y="212">any host fails → deploy fails</text>
+<text fill="#7c8593" font-size="9" text-anchor="middle" x="480" y="230">the same script runs dozens of times a day</text>
+</svg>
+<figcaption>Fig 3 · Manual deployment vs one script plus smoke tests: humans miss a host, scripts do not — and the smoke test is the last chance to notice on the spot.</figcaption>
+</figure>
+<h3>Rule 3: deploy into a copy of production, and propagate changes instantly</h3>
+<p>What your acceptance tests run on determines what their verdict is worth. <strong>The closer the environment is to production, the more trustworthy the result</strong> — same operating system and patch level, same middleware configuration, same network topology, data shaped as much like production as you can manage. The book is candid that this was expensive in 2010 and recommends virtualization to bring the cost down; containers and infrastructure-as-code have since made it an order of magnitude cheaper, which removes the excuse.</p>
+<p>"Propagate instantly" means each stage <strong>automatically</strong> triggers the next, rather than waiting for someone to click or for a nightly scheduled job. The hidden cost of scheduled builds is arithmetic: twenty commits accumulate overnight, and when the build goes red you first have to work out whose change did it — <strong>later feedback means dearer diagnosis</strong>. When a downstream stage genuinely cannot keep up with commit rate, the right answer is to have it pick up the latest available candidate rather than queue up and run every one.</p>
+<h3>Rule 4: if any part of the pipeline fails, stop the line</h3>
+<p>This inherits directly from the continuous-integration discipline of Ch 3 and extends it across the whole pipeline: <strong>when the pipeline is red, getting it green is the team's top priority</strong> — not "work around it and revisit later". The reason is not moral purity but arithmetic: if you keep committing on top of a red pipeline, subsequent commits stack on an unknown state, and a few hours later you are not debugging one defect but a tangle of them.</p>
+<h3>What the pipeline actually gives you</h3>
+<p>Put those rules together and you get three things that were scarce in the old world. <strong>Visibility</strong>: everyone, testers and ops included, can see on one screen which stage each candidate reached and what it is stuck on. <strong>Traceability</strong>: every artifact in production can be traced back to the commit it came from and the tests it passed. <strong>Delivery on demand</strong>: releasing becomes picking a candidate that already cleared every gate and pressing a button.</p>
+<p>The metric that goes with it is <strong>cycle time</strong>: how long from commit to running in production. The authors call it explicitly <strong>the most important measurement</strong>, because it aggregates automation coverage, test speed, environment availability and organizational friction all at once — any of them degrading shows up there first. (Eight years later, DORA's <em>Accelerate</em> made it one of the four key metrics.)</p>
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 2 · Build strategy: build once vs rebuild at each stage</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Build once (what the chapter argues for)</th><th>Rebuild per environment</th></tr></thead>
+<tbody>
+<tr><th>Test validity</th><td><strong>What was tested is what ships</strong></td><td>The artifact that ships was never tested</td></tr>
+<tr><th>Time</th><td>Built once; later stages just fetch the package</td><td>Minutes to tens of minutes repeated at each stage</td></tr>
+<tr><th>Configuration</th><td>Externalized and injected per environment (Ch 2)</td><td>Usually baked into the package, forcing a rebuild per environment</td></tr>
+<tr><th>Traceability</th><td>Artifact named by revision, traceable to a commit</td><td>One commit yields several different outputs — hard to reason about</td></tr>
+<tr><th>Cost</th><td>You must run an artifact repository and pull configuration out of the code</td><td>Looks easier; really just defers the risk to release day</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 3 · Who opens the last door: continuous delivery vs continuous deployment</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Continuous delivery (the book's position)</th><th>Continuous deployment</th></tr></thead>
+<tbody>
+<tr><th>Who triggers production</th><td>Once all gates pass, <strong>a human presses the button</strong></td><td>Once all gates pass, it <strong>goes live automatically</strong></td></tr>
+<tr><th>Central claim</th><td>The software is <strong>always releasable</strong>; whether to release is a business call</td><td>If it can ship, it ships — batch size driven to a minimum</td></tr>
+<tr><th>Prerequisites</th><td>Automated deployment, production-like environments, working rollback</td><td>All of that plus deep test coverage, production monitoring, automatic rollback, canaries</td></tr>
+<tr><th>Fits</th><td>Regulated industries, client and embedded software, business-driven release rhythms</td><td>High-frequency web services (Amazon, Etsy and the like)</td></tr>
+<tr><th>Cost</th><td>Batches still accumulate in front of the button, and older batches are riskier</td><td>Defects reach users directly; monitoring and fast rollback are the only safety net</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 4 · Environment fidelity: the more production-like, the more expensive</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Option</th><th>Fidelity</th><th>Cost</th><th>Where it belongs</th></tr></thead>
+<tbody>
+<tr><th>Identical to production</th><td>High: same topology, configuration and data shape</td><td>High</td><td>Capacity testing and the final gate before release</td></tr>
+<tr><th>Scaled-down replica</th><td>Medium: fewer nodes, same topology and configuration</td><td>Medium</td><td><strong>The best value for most automated acceptance tests</strong></td></tr>
+<tr><th>Shared test environment</th><td>Low: teams contend for it and pollute each other's state</td><td>Low</td><td>Fast feedback only — never draw conclusions from it</td></tr>
+<tr><th>Developer workstation</th><td>Lowest</td><td>Lowest</td><td>Self-checks before pushing a commit</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 5 · What belongs in the commit stage: spending a 10-minute budget</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Belongs in the commit stage</th><th>Does not belong there</th></tr></thead>
+<tbody>
+<tr><td>Compiling and packaging a deployable artifact</td><td>End-to-end tests needing a real database or external service</td></tr>
+<tr><td>The full unit-test suite (millisecond-scale, no external dependencies)</td><td>Cross-browser UI tests, performance and capacity tests</td></tr>
+<tr><td>Static analysis (obvious defects, complexity, duplication)</td><td>Anything requiring a human in the loop</td></tr>
+<tr><td>A handful of the most critical smoke-level integration checks</td><td><strong>Anything that pushes the total past 10 minutes</strong></td></tr>
+</tbody></table></div>
+<p>All of these tables express one judgement: <strong>the earlier the gate, the faster it must be; the later the gate, the more realistic it must be</strong>. Push slow things forward and developers stop waiting for results, which hollows out CI. Push necessary checks backward and defects surface hours late. When choosing, ask one question: <strong>how much earlier does this check find a problem, and how many minutes does it cost every time?</strong></p>
+<h2>Why it matters / real systems</h2>
+<p>Every CI/CD tool you use is an implementation of this chapter: Jenkins Pipelines, GitLab CI stages, GitHub Actions workflows, the multi-stage rollouts of Argo CD and Spinnaker. The vocabulary — stage, gate, artifact, promotion — comes from here. Artifact repositories (Nexus, Artifactory, container registries) exist because of "build only once", and a large part of why container images became the industry default is that they make "the same artifact everywhere" a physical fact rather than a promise.</p>
+<p>It is also a high-frequency interview and design-review topic. Asked "how is your CI/CD set up?", the answer that scores is not a list of tools but four numbers and facts: <strong>how many minutes is your commit stage? How many times is the artifact built? Is the deploy script the same for every environment? When it goes red, who owns it and how fast is it green again?</strong></p>
+<div class="ev">
+<div class="evh">EVIDENCE FROM INDUSTRY · not the book's claims — these companies said it themselves</div>
+<ul>
+<li><strong>Amazon</strong> published its own numbers at Velocity 2011: on an average weekday, <strong>a production deployment every 11.6 seconds</strong>, with peaks above a thousand deployments in a single hour — <strong>evidence that once releasing is a pipeline, it really does become a non-event</strong>. <span class="src"><a href="https://www.youtube.com/watch?v=dxk8b9rSKOo" rel="noopener" target="_blank">J. Jenkins, "Velocity Culture", O'Reilly Velocity 2011 ↗</a></span></li>
+<li><strong>AWS</strong> later wrote up its internal practice in full: one artifact moves through beta and gamma pre-production environments, then rolls out to Regions and Availability Zones in <strong>waves</strong>, with bake time between them and <strong>automatic rollback</strong> when metrics look wrong — <strong>this chapter's staged gates, continued at cloud scale</strong>. <span class="src"><a href="https://aws.amazon.com/builders-library/automating-safe-hands-off-deployments/" rel="noopener" target="_blank">C. Liguori, "Automating safe, hands-off deployments", Amazon Builders' Library ↗</a></span></li>
+<li><strong>Netflix</strong> open-sourced Spinnaker, its continuous delivery platform, turning "a pipeline is a sequence of composable stages" into a product, with canaries, red/black (blue-green) deployments and one-click rollback built in — <strong>the chapter's model, productized</strong>. <span class="src"><a href="https://netflixtechblog.com/global-continuous-delivery-with-spinnaker-2a6896c23ba7" rel="noopener" target="_blank">Netflix TechBlog, "Global Continuous Delivery with Spinnaker", 2015 ↗</a></span></li>
+<li><strong>Etsy</strong> coined the "quantum of deployment": <strong>what is the smallest number of steps, people and ceremony required to get new code running on your servers?</strong> — <strong>the chapter's goal restated as a number a team can drive down week by week</strong>. <span class="src"><a href="https://www.etsy.com/codeascraft/quantum-of-deployment" rel="noopener" target="_blank">Etsy Code as Craft, "Quantum of Deployment", 2010 ↗</a></span></li>
+<li><strong>The counter-example · Knight Capital</strong>: in August 2012 a new build was copied <strong>by hand</strong> onto eight production servers and one was missed; dead code left on that host was woken by a reused flag, and <strong>over $460 million</strong> was lost in 45 minutes. The SEC's 2013 order points straight at the absence of automated, verified deployment; the firm paid a $12 million penalty — <strong>that is the price tag on "same script everywhere" and "smoke-test every deployment"</strong>. <span class="src"><a href="https://www.sec.gov/files/litigation/admin/2013/34-70694.pdf" rel="noopener" target="_blank">SEC Administrative Proceeding 34-70694, 2013 ↗</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>Mistaking the pipeline for "a bunch of jobs on a CI server".</strong> The chapter is about <strong>modelling your release process</strong> — how stages are cut, what each gate rejects, who may trigger what, what happens on failure. Tools merely host that model; a configured Jenkins is not a deployment pipeline.</li>
+<li><strong>Commit-stage creep.</strong> The classic death: every escaped bug adds another test suite to the commit stage, and ten minutes drifts to forty. Past that point developers stop waiting and commit in parallel, which makes red lights hard to attribute — <strong>the commit stage's duration is a budget you actively defend, not an outcome you observe</strong>.</li>
+<li><strong>"Green means shippable" is an illusion.</strong> A pipeline can disprove, not prove. Database migrations (Ch 12), component dependencies (Ch 13), capacity and progressive rollout (Ch 10) all have pitfalls outside it.</li>
+<li><strong>Treating manual sign-off as a quality gate.</strong> The value of a manual stage is exploratory testing, not repeated regression. Once it degenerates into "waiting for someone to nod", it is just a queue — precisely what this chapter argues against.</li>
+<li><strong>Its era shows.</strong> The book predates containers, Kubernetes, cloud-native infrastructure and GitOps. "Deploy into a copy of production" needed a business case in 2010 and is nearly free now. Conversely, in a microservices world one system has dozens of pipelines, and <strong>fan-in/fan-out and cross-service version combinations</strong> became a hard problem the book only touches in Ch 13. GitOps — driving deployment from a declarative desired state — is the significant later evolution of this line of thinking.</li>
+<li><strong>The debate: should everyone go all the way to continuous deployment?</strong> The book argues for always <em>releasable</em>, not always <em>released</em>. Human gates have legitimate justifications in finance, healthcare, embedded and client software — but be suspicious when "our industry is special" is covering for "our automation is not good enough".</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1 · In one line: the deployment pipeline is an automated implementation of the whole path from commit to production, where <strong>every commit produces a release candidate</strong> travelling one road through one set of gates.</p>
+<p>2 · The mental inversion: the pipeline exists <strong>not to prove a candidate is shippable but to disprove it as early and cheaply as possible</strong> — hence fast, crude checks first.</p>
+<p>3 · The gradient of stages: commit stage (<strong>target 5 minutes, ceiling 10</strong>) → automated acceptance tests (tens of minutes to hours) → capacity / exploratory / UAT (pulled on demand) → release to production (a button).</p>
+<p>4 · Rule 1, <strong>build only once</strong>: build in the commit stage, store in an artifact repository, reuse verbatim downstream — otherwise what was tested is not what ships.</p>
+<p>5 · Rule 2, <strong>deploy the same way everywhere</strong>: only configuration differs. Production must not be the one path in the system that was never rehearsed.</p>
+<p>6 · Rule 3, <strong>smoke-test every deployment</strong> and run acceptance tests <strong>in a copy of production</strong> — a verdict from an unrealistic environment is worth very little.</p>
+<p>7 · Rule 4, <strong>propagate changes instantly and stop the line when red</strong>: scheduled builds double the cost of diagnosis, and committing onto red turns one defect into a tangle.</p>
+<p>8 · The pipeline buys visibility, traceability and delivery on demand; <strong>the headline metric is cycle time</strong>, later canonized as one of DORA's four key metrics.</p>
+<p>9 · Real systems: Jenkins, GitLab CI, GitHub Actions, Argo CD and Spinnaker all implement it; artifact repositories and container images are what make "build once" physically true.</p>
+<p>10 · The counter-example: Knight Capital's hand-deployment missed one host and lost over $460 million in 45 minutes — every rule in this chapter carries a price tag.</p>
+</div>
+</div>
+<footer>Books Deep-Read · reading this page ≈ getting the core of the chapter; go to the book itself for the full cases and depth.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>持续交付 第 5 章 · 部署流水线剖析 — 专业书籍精读 Book 17</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · 持续交付 · 第 5 章</p>
+<h1>部署流水线剖析</h1>
+<p class="sub">Continuous Delivery · Ch 5 · Jez Humble &amp; David Farley · 2010</p>
+<p class="langbar"><a href="contdelivery-ch05-deployment-pipeline-book17.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你手机里的 App 隔三差五就更新一次。从某个程序员改完一行代码，到这行代码真的跑在你手机上，中间要走一段路。《持续交付》第 5 章讲的就是<strong>这段路该长什么样</strong>——作者管它叫<strong>部署流水线</strong>，这也是整本书的心脏。</p>
+<h2>打个比方</h2>
+<p>把它想成<strong>工厂的质检流水线</strong>：一次代码改动就是一件刚下线的货，它得依次经过几个检验工位。<strong>越靠前的工位越快越便宜</strong>（瞄一眼外观、称个重，几分钟搞定）；<strong>越靠后的越慢越贵</strong>（拆开做全套检测，得等大半天）。任何一个工位亮红灯，这件货当场停住，绝不许往下走。</p>
+<p>这里有个反直觉的地方：这条流水线的目的<strong>不是证明「这版能发」，而是尽早、尽便宜地证明「这版不能发」</strong>。所以最快最糙的检查排在最前面——坏消息越早知道越省钱。</p>
+<h2>旧世界为什么难</h2>
+<p>从前发新版本靠「发布日」：攒上三个月的改动，挑个周五半夜，一屋子人照着一份几十页的操作手册手工敲命令，敲错一步就通宵回滚。更糟的是，测试用的那台机器和真正对外的机器长得根本不一样，所以「测试环境测过了」根本不算数。于是没人敢发版，越不敢发就攒得越多，越多就越容易出事——恶性循环。</p>
+<h2>它靠三条规矩把这事掰直</h2>
+<p><strong>第一，只装配一次。</strong>检验合格的那一箱，就是最后发出去的那一箱，中途绝不重新做一箱。听着像废话，可老做法恰恰是每换一个环境就重新编译打包一次——结果上线的那个版本，其实谁也没测过。</p>
+<p><strong>第二，每一站用同样的动作。</strong>装到测试机上和装到线上机器上，用的是同一套自动脚本，区别只在「贴的标签」（各环境的配置）不同。装完还要立刻做一次自检：真的起来了吗？该连的东西都连上了吗？</p>
+<p><strong>第三，红灯就停线。</strong>哪一站亮红灯，这批货立刻停住，全组先把灯修绿再干别的——不许绕过去，也不许「先记着回头再说」。</p>
+<h2>带来了什么</h2>
+<p>三条合起来，发版就从「一场大型事故演习」变成「按个按钮」。而且任何时刻你都能一眼看到：这个版本走到哪一站了、卡在哪、能不能上线。亚马逊、Etsy 这些公司之所以敢一天上线几十上百次，靠的就是把这条路修好了。</p>
+<p><strong>当然它有代价</strong>：这条流水线本身要人搭、要人养，刚开始你会觉得更慢更烦、红灯还老响，好处得等到发布次数多起来才显出来。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>把「从改代码到上线」修成一条固定的自动流水线：<strong>只装配一次</strong>、<strong>每站动作相同</strong>、<strong>红灯就停线</strong>。它不为证明你行，而是<strong>让不行的版本尽早、尽便宜地被拦下来</strong>——于是发布不再是大事，而是一个按钮。</p>
+</div>
+<p class="switch-hint">想进到具体阶段划分、时间量级和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">部署流水线（deployment pipeline）是把「从提交到上线」的整个发布流程<strong>建模成一条自动化的、每次变更都走同一条路的传送带</strong>：每次提交产出一个<em>候选版本（release candidate）</em>，它依次穿过若干道关卡，越靠前越快越便宜、越靠后越像生产越慢越贵。关键的心态反转是——<strong>流水线的任务不是证明这个版本能发，而是尽早、尽便宜地把不能发的版本证伪</strong>。这一章是全书的核心，后面所有章节都是在给这条流水线补零件。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>版本控制（version control）</strong>：存放代码与配置的唯一权威库（如 Git），每次改动记一次<em>提交（commit）</em>，每次提交有唯一编号。</li>
+<li><strong>构建（build）</strong>：把源码编译、打包成能运行的东西；产物叫<strong>二进制制品（binary / artifact）</strong>，如一个 jar 包、一个容器镜像。</li>
+<li><strong>制品库（artifact repository）</strong>：存放构建产物的仓库，每个制品带着「它来自哪次提交」的标记，供后面各阶段取用。</li>
+<li><strong>单元测试 / 验收测试</strong>：前者测一小块代码逻辑对不对（秒级、成千上万个）；后者从用户视角测一整条业务流程走不走得通（分钟级、慢得多）。</li>
+<li><strong>冒烟测试（smoke test）</strong>：部署完立刻跑的一组极简检查——服务起来了吗？数据库连上了吗？只回答「这套东西是不是活的」。</li>
+<li><strong>环境（environment）</strong>：跑应用的那一套机器与配置（开发 / 测试 / 预发 / 生产）。<em>类生产环境（production-like）</em>指尽量和生产同构的那种。</li>
+<li><strong>部署（deploy）vs 发布（release）</strong>：把新版本装到某套机器上叫部署；让真实用户开始用它叫发布。两者可以分开（本书 Ch10 的主题）。</li>
+<li><strong>回滚（rollback）</strong>：上线出问题后退回上一个已知可用的版本。</li>
+<li><strong>周期时间（cycle time）</strong>：从「决定做一个改动 / 提交这个改动」到「它真正跑在生产上」所花的时间——本章认定的头号指标。</li>
+<li><strong>价值流图（value stream map）</strong>：把一件事从想法到交付的每一步画出来，标注每步耗时与步间等待，用来看清时间到底花在哪。</li>
+<li><strong>停线（stop the line）</strong>：源自丰田生产线——出问题就把整条线停下来先修，而不是让次品继续往下流。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>本章是 Part II「部署流水线」的开篇，也是全书的<strong>枢纽</strong>：它把 Part I 打下的三块地基——配置管理（Ch2：一切进版本控制）、持续集成（Ch3：每天并回主干、红了停线）、测试策略（Ch4：四象限）——组装成一条端到端的传送带。往下，Ch7 展开提交阶段、Ch8 展开自动化验收测试、Ch10 展开部署与发布、Ch11 讲环境、Ch12 讲数据、Ch13 讲组件与依赖，全都是在给这条流水线补零件。现实中对应的是你每天打交道的 Jenkins、GitLab CI、GitHub Actions、Argo CD、Spinnaker——<strong>「流水线（pipeline）」这个词能成为行业通用语，出处就在这一章。</strong></p>
+<h2>这章要解决什么</h2>
+<p>作者在开篇让你先画一张<strong>价值流图</strong>：把一个改动从「决定要做」到「用户用上」的每一步摊开，标上每步实际干活的时间和步与步之间的等待时间。几乎所有团队画完都是同一个结论——<strong>绝大部分时间不是在干活，是在等</strong>：等一个「能测的版本」、等测试环境空出来、等运维排期、等发布窗口。真正写代码、跑测试的时间只占零头。</p>
+<p>等待的背后是四个具体的病：</p>
+<ul>
+<li><strong>没人知道现在处于什么状态。</strong>「上周三那个改动上线了吗？」——得挨个问人。构建、部署、测试的记录散在邮件、聊天和某个人的脑子里。</li>
+<li><strong>测过的东西和上线的东西不是同一个。</strong>每换一个环境就重新编译打包一次，编译器版本、依赖、构建参数都可能悄悄变了；<strong>真正上线的那个包，其实从没被测过</strong>。</li>
+<li><strong>反馈太慢。</strong>缺陷从引入到被发现动辄数周，那时改动它的人早已忘了上下文，定位成本翻好几倍。</li>
+<li><strong>发布是高风险事件。</strong>手工照文档敲命令、只在发布日做一次、没人练过——于是每次发布都是第一次。</li>
+</ul>
+<p>不解决会怎样？看一个真实到残酷的量级：2012 年 8 月，做市商 Knight Capital 把一版新代码<strong>手工</strong>拷到 8 台生产服务器，漏了 1 台；那台机器上残留的一段废弃老代码被新版本复用的开关唤醒，<strong>45 分钟内产生约 4.6 亿美元损失</strong>，公司随即被收购。SEC 后来的裁定书把原因写得很直白：部署没有自动化、没有校验各台机器是否一致。这一章要解决的，正是这类问题。</p>
+<h2>核心内容，讲透</h2>
+<h3>什么是部署流水线：一条路，四类关卡</h3>
+<p>定义很朴素：<strong>部署流水线是应用「构建 → 部署 → 测试 → 发布」全过程的自动化实现</strong>。每一次提交都自动创建一个候选版本，它必须顺次通过所有关卡才能到达生产；任一关卡失败，这个候选版本就此出局。</p>
+<p>关卡的排布遵循一条明确的经济学：<strong>快而糙的在前，慢而真的在后</strong>。前面的阶段用几分钟排除掉大多数低级错误，把宝贵的、昂贵的后段资源留给真正值得跑的候选版本。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 372" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="p1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="p2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#e8794b"></path></marker>
+</defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="16" y="22">一次提交 = 一个候选版本，只有一条路通向生产</text>
+<rect fill="rgba(155,108,245,0.18)" height="42" rx="7" stroke="#9b6cf5" width="96" x="14" y="44"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="62" y="62">版本控制</text>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="62" y="77">每次提交触发</text>
+<line marker-end="url(#p1)" stroke="#7c8593" x1="110" x2="126" y1="65" y2="65"></line>
+<rect fill="rgba(91,157,249,0.16)" height="46" rx="7" stroke="#5b9df9" stroke-width="1.6" width="330" x="128" y="44"></rect>
+<text fill="#e7ebf1" font-size="11.5" x="142" y="63">① 提交阶段</text>
+<text fill="#b9c0ca" font-size="10" x="142" y="80">编译 · 单元测试 · 静态分析 · 打包成制品</text>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" x="468" y="62">目标 &lt; 5 分钟</text>
+<text fill="#7c8593" font-size="9.5" x="468" y="76">上限 10 分钟 · 全自动</text>
+<line marker-end="url(#p1)" stroke="#7c8593" x1="293" x2="293" y1="90" y2="114"></line>
+<rect fill="rgba(91,157,249,0.11)" height="46" rx="7" stroke="#7c8593" width="330" x="128" y="116"></rect>
+<text fill="#e7ebf1" font-size="11.5" x="142" y="135">② 自动化验收测试</text>
+<text fill="#b9c0ca" font-size="10" x="142" y="152">类生产环境 · 面向业务的端到端场景</text>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" x="468" y="134">数十分钟 ~ 数小时</text>
+<text fill="#7c8593" font-size="9.5" x="468" y="148">并行到构建网格</text>
+<line marker-end="url(#p1)" stroke="#7c8593" x1="293" x2="293" y1="162" y2="186"></line>
+<rect fill="rgba(91,157,249,0.08)" height="46" rx="7" stroke="#7c8593" width="330" x="128" y="188"></rect>
+<text fill="#e7ebf1" font-size="11.5" x="142" y="207">③ 容量测试 / 手工探索测试 / UAT</text>
+<text fill="#b9c0ca" font-size="10" x="142" y="224">非功能验证 · 人来判断好不好用</text>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" x="468" y="206">小时 ~ 天级</text>
+<text fill="#7c8593" font-size="9.5" x="468" y="220">按需自助拉取版本</text>
+<line marker-end="url(#p1)" stroke="#7c8593" x1="293" x2="293" y1="234" y2="258"></line>
+<rect fill="rgba(155,108,245,0.16)" height="46" rx="7" stroke="#9b6cf5" stroke-width="1.6" width="330" x="128" y="260"></rect>
+<text fill="#e7ebf1" font-size="11.5" x="142" y="279">④ 生产发布</text>
+<text fill="#b9c0ca" font-size="10" x="142" y="296">同一套部署脚本 · 一个按钮 · 可回滚</text>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" x="468" y="278">分钟级</text>
+<text fill="#7c8593" font-size="9.5" x="468" y="292">人来按（或全自动）</text>
+<path d="M128,139 L70,139 L70,92" fill="none" marker-end="url(#p2)" stroke="#e8794b" stroke-dasharray="4 3"></path>
+<line stroke="#e8794b" stroke-dasharray="4 3" x1="16" x2="40" y1="332" y2="332"></line>
+<text fill="#b9c0ca" font-size="10" x="48" y="336">任一阶段亮红灯 → 该版本立刻出局，反馈回团队，全组先修</text>
+<rect fill="rgba(91,157,249,0.14)" height="10" rx="3" stroke="#5b9df9" width="24" x="16" y="349"></rect>
+<text fill="#b9c0ca" font-size="10" x="48" y="358">①产出的同一个二进制制品，被②③④原样复用——绝不重新构建</text>
+</svg>
+<figcaption>图 1 · 部署流水线全景：越往下越像生产、越慢越贵；同一个制品一路向下，任一关卡失败即停线。</figcaption>
+</figure>
+<p class="tcap">表 1 · 四类阶段：跑什么、多久、拦住什么、代价在哪</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>阶段</th><th>怎么触发</th><th>典型耗时</th><th>拦住什么</th><th>代价 / 风险</th></tr></thead>
+<tbody>
+<tr><th>提交阶段</th><td>每次提交，自动</td><td><strong>目标 &lt; 5 分钟，上限 10 分钟</strong></td><td>编译失败、单元测试回归、明显的代码问题</td><td>一旦塞太多东西而超时，开发就不再等结果，CI 名存实亡</td></tr>
+<tr><th>自动化验收测试</th><td>提交阶段通过后自动</td><td>数十分钟 ~ 数小时</td><td>业务功能回归、组件间集成问题</td><td>慢且脆；环境不像生产就等于白测</td></tr>
+<tr><th>容量 / 非功能测试</th><td>自动或按需</td><td>小时级</td><td>性能与容量退化、资源泄漏</td><td>环境成本高，结果噪声大、需要基线</td></tr>
+<tr><th>手工探索测试 / UAT</th><td><strong>人按需自助拉取</strong>某个已通过前面关卡的版本</td><td>天级</td><td>可用性问题、没人想到过的场景</td><td>一旦退化成「签字排队」就变成最大瓶颈</td></tr>
+<tr><th>生产发布</th><td>按按钮（或全自动）</td><td>分钟级</td><td>—— 靠冒烟测试与回滚兜底</td><td>数据迁移往往不可逆，回滚不是万能的</td></tr>
+</tbody></table></div>
+<h3>规矩一：二进制只构建一次</h3>
+<p>这是本章最该记住的一条，也是最常被违反的一条。<strong>制品在提交阶段构建一次，存进制品库，之后每个阶段都取用同一个包</strong>，只有配置随环境注入。</p>
+<p>为什么？因为一旦每个环境各自重新构建，你就无法保证「测过的」和「上线的」是同一个东西——编译器小版本、依赖解析结果、构建机上的环境变量、某个 <code>SNAPSHOT</code> 依赖在两次构建之间被人改了……任何一点漂移，都会让前面几小时的测试失去意义。<strong>你测的是包 A，上线的是包 B，而你以为它们一样。</strong></p>
+<p>配套的两个细节：制品要能<strong>追溯到那次提交</strong>（用版本控制的修订号命名，出了事能一路查回去）；<strong>配置不进包</strong>（同一个包配上不同环境的配置文件 / 环境变量，就能跑在任何环境上——这正是 Ch2 配置管理的用武之地）。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 272" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="320" x2="320" y1="14" y2="262"></line>
+<text fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle" x="158" y="24">① 只构建一次（对）</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="6" stroke="#7c8593" width="130" x="93" y="36"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="158" y="53">源码 · 提交 a3f9c1</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="158" x2="158" y1="62" y2="80"></line>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="6" stroke="#5b9df9" width="130" x="93" y="82"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="158" y="99">构建（仅此一次）</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="158" x2="158" y1="108" y2="126"></line>
+<rect fill="rgba(155,108,245,0.24)" height="30" rx="6" stroke="#9b6cf5" stroke-width="2" width="150" x="83" y="128"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="158" y="147">制品 app-a3f9c1</text>
+<line marker-end="url(#b1)" stroke="#9b6cf5" x1="120" x2="60" y1="158" y2="196"></line>
+<line marker-end="url(#b1)" stroke="#9b6cf5" x1="158" x2="158" y1="158" y2="196"></line>
+<line marker-end="url(#b1)" stroke="#9b6cf5" x1="196" x2="256" y1="158" y2="196"></line>
+<rect fill="rgba(91,157,249,0.08)" height="24" rx="5" stroke="#7c8593" width="66" x="24" y="198"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="57" y="214">测试环境</text>
+<rect fill="rgba(91,157,249,0.08)" height="24" rx="5" stroke="#7c8593" width="66" x="125" y="198"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="158" y="214">预发环境</text>
+<rect fill="rgba(91,157,249,0.08)" height="24" rx="5" stroke="#7c8593" width="66" x="226" y="198"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="259" y="214">生产环境</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10.5" text-anchor="middle" x="158" y="246">测过的 = 上线的</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="158" y="262">差异只有注入的配置</text>
+<text fill="#e8794b" font-size="12" font-weight="700" text-anchor="middle" x="480" y="24">② 每个环境各自构建（错）</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="6" stroke="#7c8593" width="130" x="415" y="36"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="480" y="53">源码 · 提交 a3f9c1</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="450" x2="392" y1="62" y2="80"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="480" x2="480" y1="62" y2="80"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="510" x2="568" y1="62" y2="80"></line>
+<rect fill="rgba(91,157,249,0.1)" height="24" rx="5" stroke="#7c8593" width="72" x="346" y="82"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="382" y="98">构建 #1</text>
+<rect fill="rgba(91,157,249,0.1)" height="24" rx="5" stroke="#7c8593" width="72" x="444" y="82"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="480" y="98">构建 #2</text>
+<rect fill="rgba(91,157,249,0.1)" height="24" rx="5" stroke="#7c8593" width="72" x="542" y="82"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="578" y="98">构建 #3</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="382" x2="382" y1="106" y2="126"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="480" x2="480" y1="106" y2="126"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="578" x2="578" y1="106" y2="126"></line>
+<rect fill="rgba(224,107,107,0.12)" height="28" rx="5" stroke="#e06b6b" width="72" x="346" y="128"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="382" y="146">制品 a</text>
+<rect fill="rgba(224,107,107,0.18)" height="28" rx="5" stroke="#e06b6b" width="72" x="444" y="128"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="480" y="146">制品 b</text>
+<rect fill="rgba(224,107,107,0.26)" height="28" rx="5" stroke="#e06b6b" stroke-width="2" width="72" x="542" y="128"></rect><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="578" y="146">制品 c</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="382" x2="382" y1="158" y2="196"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="480" x2="480" y1="158" y2="196"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="578" x2="578" y1="158" y2="196"></line>
+<rect fill="rgba(91,157,249,0.08)" height="24" rx="5" stroke="#7c8593" width="66" x="349" y="198"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="382" y="214">测试环境</text>
+<rect fill="rgba(91,157,249,0.08)" height="24" rx="5" stroke="#7c8593" width="66" x="447" y="198"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="480" y="214">预发环境</text>
+<rect fill="rgba(224,107,107,0.14)" height="24" rx="5" stroke="#e06b6b" width="66" x="545" y="198"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="578" y="214">生产环境</text>
+<text fill="#e8794b" font-family="monospace" font-size="10.5" text-anchor="middle" x="480" y="246">上线的那个，从没被测过</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="480" y="262">编译器 / 依赖 / 参数都可能悄悄漂移</text>
+</svg>
+<figcaption>图 2 · 只构建一次 vs 每环境重建：右边三个制品来自同一份源码，却不是同一个东西——测试因此失去意义。</figcaption>
+</figure>
+<h3>规矩二：用同一套方式部署到每一个环境</h3>
+<p>开发机、测试环境、预发、生产，<strong>用的必须是同一套部署脚本</strong>，区别只在传入的配置。理由很实在：如果生产部署走的是一条「只在发布日才跑一次」的独立路径，那它就是全系统里<strong>唯一没被反复演练过</strong>的环节——而它偏偏是风险最高的那个。反过来，同一套脚本每天在测试环境跑几十遍，等到用它上生产时，它已经是这条流水线上被验证得最充分的一段代码。</p>
+<p>紧跟着的一条是<strong>部署完立刻跑冒烟测试</strong>：几十秒钟内验证「服务起来了、数据库连上了、消息队列通了、外部依赖能调」。它不测业务逻辑，只回答一个问题——<strong>这套东西是活的吗？</strong>Knight Capital 那 8 台机器漏掉的 1 台，正是任何一个像样的部署校验都能当场发现的。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="c1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="320" x2="320" y1="14" y2="240"></line>
+<text fill="#e8794b" font-size="12" font-weight="700" text-anchor="middle" x="158" y="24">① 照文档手工敲</text>
+<rect fill="rgba(255,255,255,0.03)" height="26" rx="5" stroke="#7c8593" stroke-dasharray="4 3" width="180" x="68" y="38"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="158" y="55">40 页操作手册 · 人肉执行</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="158" x2="158" y1="64" y2="82"></line>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="38" x="30" y="86"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="49" y="103">✓ 1</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="38" x="76" y="86"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="95" y="103">✓ 2</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="38" x="122" y="86"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="141" y="103">✓ 3</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="38" x="168" y="86"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="187" y="103">✓ 4</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="38" x="30" y="120"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="49" y="137">✓ 5</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="38" x="76" y="120"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="95" y="137">✓ 6</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="38" x="122" y="120"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="141" y="137">✓ 7</text>
+<rect fill="rgba(224,107,107,0.3)" height="26" rx="4" stroke="#e06b6b" stroke-width="2" width="38" x="168" y="120"></rect><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="187" y="137">✕ 8</text>
+<text fill="#e8794b" font-size="10.5" text-anchor="middle" x="158" y="176">第 8 台漏了：旧代码还在，没人知道</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="158" y="200">没有自动校验「8 台是不是一模一样」</text>
+<text fill="#e06b6b" font-family="monospace" font-size="10.5" text-anchor="middle" x="158" y="226">一次不一致 = 一次事故</text>
+<text fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle" x="480" y="24">② 同一套脚本 + 冒烟测试</text>
+<rect fill="rgba(155,108,245,0.18)" height="26" rx="5" stroke="#9b6cf5" width="180" x="390" y="38"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="480" y="55">同一部署脚本 + 本环境配置</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="480" x2="480" y1="64" y2="82"></line>
+<rect fill="rgba(91,157,249,0.14)" height="26" rx="4" stroke="#5b9df9" width="38" x="352" y="86"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="371" y="103">✓ 1</text>
+<rect fill="rgba(91,157,249,0.14)" height="26" rx="4" stroke="#5b9df9" width="38" x="398" y="86"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="417" y="103">✓ 2</text>
+<rect fill="rgba(91,157,249,0.14)" height="26" rx="4" stroke="#5b9df9" width="38" x="444" y="86"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="463" y="103">✓ 3</text>
+<rect fill="rgba(91,157,249,0.14)" height="26" rx="4" stroke="#5b9df9" width="38" x="490" y="86"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="509" y="103">✓ 4</text>
+<rect fill="rgba(91,157,249,0.14)" height="26" rx="4" stroke="#5b9df9" width="38" x="536" y="86"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="555" y="103">✓ 5</text>
+<rect fill="rgba(91,157,249,0.14)" height="26" rx="4" stroke="#5b9df9" width="38" x="398" y="120"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="417" y="137">✓ 6</text>
+<rect fill="rgba(91,157,249,0.14)" height="26" rx="4" stroke="#5b9df9" width="38" x="444" y="120"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="463" y="137">✓ 7</text>
+<rect fill="rgba(91,157,249,0.14)" height="26" rx="4" stroke="#5b9df9" width="38" x="490" y="120"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="509" y="137">✓ 8</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="480" x2="480" y1="148" y2="164"></line>
+<rect fill="rgba(91,157,249,0.16)" height="26" rx="5" stroke="#5b9df9" width="200" x="380" y="166"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="480" y="183">冒烟测试：都起来了吗？依赖通吗？</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10.5" text-anchor="middle" x="480" y="212">任一台没过 → 部署判失败</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="480" y="230">同一套脚本每天跑几十遍，早被练熟</text>
+</svg>
+<figcaption>图 3 · 手工部署 vs 自动化部署 + 冒烟测试：漏掉一台机器这种事，人会犯，脚本不会；而冒烟测试是最后一道当场发现它的机会。</figcaption>
+</figure>
+<h3>规矩三：部署到生产的副本，并让变更即刻传播</h3>
+<p>验收测试跑在什么环境上，决定了它的结论值多少钱。<strong>测试环境越像生产，测试结论越可信</strong>——相同的操作系统与补丁版本、相同的中间件配置、相同的网络拓扑、尽量相同的数据形态。书里坦承这在 2010 年很贵，建议用虚拟化把成本压下来；今天容器与基础设施即代码（IaC）让这件事便宜了一个数量级，反而没了借口。</p>
+<p>「即刻传播」是说：一个阶段通过后，<strong>自动</strong>触发下一个阶段，而不是等人手工点、等夜里的定时任务。定时构建（比如每晚一次）的隐性代价是：一晚上攒了 20 个提交，红了之后你得先花时间找出是谁的锅——<strong>反馈越晚，定位成本越高</strong>。而当后段阶段实在慢到跟不上提交速度时，正确做法是让它「取最新的可用版本」继续跑，而不是排队把每个版本都跑一遍。</p>
+<h3>规矩四：任一环节失败就停线</h3>
+<p>这条直接继承自 Ch3 的持续集成纪律，并把它扩展到整条流水线：<strong>流水线红了，全组第一优先级是把它修绿</strong>，而不是「先绕过去、回头再说」。原因不是道德洁癖，而是数学：一旦允许带着红灯继续提交，后面的提交会叠在一个未知状态之上，几个小时后你面对的就不是一个缺陷、而是一团互相纠缠的缺陷。</p>
+<h3>流水线到底给了你什么</h3>
+<p>把上面几条串起来，你得到的是三样在旧世界里稀缺的东西：<strong>可见性</strong>——每个版本走到哪一站、卡在什么问题上，全团队（包括测试和运维）一屏看清；<strong>可追溯性</strong>——生产上跑的每一个制品，都能一路查回它来自哪次提交、过了哪些测试；<strong>按需交付的能力</strong>——发布变成从一个已通过所有关卡的候选版本里挑一个、按下按钮。</p>
+<p>与之配套的头号指标是<strong>周期时间（cycle time）</strong>：从提交到它跑在生产上要多久。作者明确说这是<strong>最重要的度量</strong>——因为它同时反映了流水线的自动化程度、测试速度、环境可用性和组织摩擦，任何一处退化都会在它身上显形。（八年后 DORA 的《Accelerate》把它正式列为四大指标之一。）</p>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 2 · 构建策略：只构建一次 vs 每阶段重新构建</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>只构建一次（本章主张）</th><th>每个环境重新构建</th></tr></thead>
+<tbody>
+<tr><th>测试有效性</th><td><strong>测过的就是上线的</strong></td><td>上线的那个制品从未被测过</td></tr>
+<tr><th>耗时</th><td>构建一次，后续阶段直接取包</td><td>每阶段重复几分钟到几十分钟</td></tr>
+<tr><th>配置怎么办</th><td>配置外置、按环境注入（Ch2）</td><td>常把配置编进包里 → 每环境必须重编</td></tr>
+<tr><th>出事能否追溯</th><td>制品名带修订号，一路查回提交</td><td>同一提交对应多个不同产物，难定位</td></tr>
+<tr><th>代价</th><td>要建制品库，要把配置从代码里拆出来</td><td>看似省事，实则把风险推到上线那一刻</td></tr>
+</tbody></table></div>
+<p class="tcap">表 3 · 生产那道门放不放人：持续交付 vs 持续部署</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>持续交付（本书立场）</th><th>持续部署</th></tr></thead>
+<tbody>
+<tr><th>上生产由谁触发</th><td>全部关卡通过后，<strong>由人按按钮</strong></td><td>全部关卡通过后<strong>自动上线</strong></td></tr>
+<tr><th>核心主张</th><td>软件<strong>随时可发布</strong>（发不发是生意决定）</td><td>能发就发，把批量压到最小</td></tr>
+<tr><th>前提条件</th><td>自动化部署 + 类生产环境 + 可回滚</td><td>再加：极强的测试覆盖、生产监控、自动回滚、灰度</td></tr>
+<tr><th>适合</th><td>受监管行业、客户端 / 嵌入式、发布有业务节奏</td><td>高频 Web 服务（Amazon、Etsy 一类）</td></tr>
+<tr><th>代价</th><td>按钮前仍会积压批量，攒得越久风险越大</td><td>缺陷直达用户，全靠监控与秒级回滚兜底</td></tr>
+</tbody></table></div>
+<p class="tcap">表 4 · 测试环境保真度：越像生产越贵</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>方案</th><th>保真度</th><th>成本</th><th>放在流水线哪一段</th></tr></thead>
+<tbody>
+<tr><th>与生产同构</th><td>高：同拓扑、同配置、同数据形态</td><td>高</td><td>容量测试、上线前最后一关</td></tr>
+<tr><th>等比缩小</th><td>中：节点数少，但拓扑与配置一致</td><td>中</td><td><strong>大多数自动化验收测试的性价比之选</strong></td></tr>
+<tr><th>共享测试环境</th><td>低：多团队抢用，状态互相污染</td><td>低</td><td>只适合快速反馈，别拿它下结论</td></tr>
+<tr><th>开发者本机</th><td>最低</td><td>最低</td><td>提交阶段前的自测</td></tr>
+</tbody></table></div>
+<p class="tcap">表 5 · 提交阶段该塞什么：10 分钟预算怎么花</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>该放进提交阶段</th><th>不该放进提交阶段</th></tr></thead>
+<tbody>
+<tr><td>编译、打包成可部署制品</td><td>需要真实数据库 / 外部服务的端到端测试</td></tr>
+<tr><td>全部单元测试（毫秒级、无外部依赖）</td><td>跨浏览器 UI 测试、性能与容量测试</td></tr>
+<tr><td>静态分析（明显缺陷、复杂度、重复度）</td><td>需要人参与的检查</td></tr>
+<tr><td>少量最关键的冒烟级集成检查</td><td><strong>任何会把总时长顶过 10 分钟的东西</strong></td></tr>
+</tbody></table></div>
+<p>三张表背后是同一个判断：<strong>关卡越靠前越要快，越靠后越要真</strong>。把慢东西往前塞，开发就不再等结果、CI 退化成摆设；把该测的往后拖，缺陷就带着几小时的滞后被发现。选型时先问一句：<strong>这个检查平均能提前多久发现问题、每次要花多少分钟？</strong></p>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>今天你用的每一个 CI/CD 工具，本质上都是这一章的具体实现：Jenkins 的 Pipeline、GitLab CI 的 stages、GitHub Actions 的 workflow、Argo CD 与 Spinnaker 的多阶段发布——「阶段」「关卡」「制品」「晋级（promotion）」这套词汇全都出自这里。制品库（Nexus、Artifactory、容器镜像仓库）的存在理由，就是「只构建一次」；容器镜像之所以成为行业默认，很大程度也是因为它把「同一个制品跑在所有环境」变成了物理事实。</p>
+<p>面试与架构评审里，这一章是高频考点。被问到「你们的 CI/CD 怎么设计的」，一个能拿分的答法不是罗列工具，而是回答四件事：<strong>提交阶段几分钟？制品构建几次？各环境部署脚本是不是同一套？红了之后谁负责、多久修好？</strong></p>
+<div class="ev">
+<div class="evh">大厂实证 · 这些主张不是书里说的，是公司自己公开说的</div>
+<ul>
+<li><strong>Amazon</strong> 在 Velocity 2011 上公开自家数字：工作日<strong>平均每 11.6 秒一次生产部署</strong>，单小时峰值超过 1,000 次——<strong>证明了把发布做成流水线之后，「发布」真的能退化成非事件</strong>。<span class="src"><a href="https://www.youtube.com/watch?v=dxk8b9rSKOo" rel="noopener" target="_blank">J. Jenkins「Velocity Culture」, O'Reilly Velocity 2011 ↗</a></span></li>
+<li><strong>AWS</strong> 后来把内部做法完整写了出来：一个制品依次过 beta / gamma 预生产环境，再按「波次」分批推向各 Region 与可用区，每批之间留观察时间（bake time），指标异常即<strong>自动回滚</strong>——<strong>本章的阶段化关卡在云规模下的直接延续</strong>。<span class="src"><a href="https://aws.amazon.com/builders-library/automating-safe-hands-off-deployments/" rel="noopener" target="_blank">C. Liguori「Automating safe, hands-off deployments」, Amazon Builders' Library ↗</a></span></li>
+<li><strong>Netflix</strong> 开源了自家的持续交付平台 Spinnaker，把「流水线由若干可编排的阶段组成」做成产品形态，内置金丝雀、红黑（即蓝绿）发布与一键回滚——<strong>把本章的模型工程化成了通用平台</strong>。<span class="src"><a href="https://netflixtechblog.com/global-continuous-delivery-with-spinnaker-2a6896c23ba7" rel="noopener" target="_blank">Netflix TechBlog「Global Continuous Delivery with Spinnaker」, 2015 ↗</a></span></li>
+<li><strong>Etsy</strong> 提出「部署量子（quantum of deployment）」这个提法：<strong>把新代码跑起来所需的步骤数、人数与仪式感，最小能压到多少？</strong>——<strong>把本章的目标变成了一个可以逐周下降的具体指标</strong>。<span class="src"><a href="https://www.etsy.com/codeascraft/quantum-of-deployment" rel="noopener" target="_blank">Etsy Code as Craft「Quantum of Deployment」, 2010 ↗</a></span></li>
+<li><strong>反面 · Knight Capital</strong>：2012 年 8 月，新代码被<strong>手工</strong>拷到 8 台生产服务器却漏了 1 台，残留的废弃代码被复用的开关唤醒，45 分钟内造成<strong>逾 4.6 亿美元</strong>损失；SEC 2013 年的裁定书直指其部署缺乏自动化与一致性校验，罚款 1,200 万美元——<strong>本章「同一套脚本部署 + 冒烟测试」那两条，价钱就是这么标出来的</strong>。<span class="src"><a href="https://www.sec.gov/files/litigation/admin/2013/34-70694.pdf" rel="noopener" target="_blank">SEC 行政裁定 34-70694, 2013 ↗</a></span></li>
+</ul>
+</div>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>把流水线当成「CI 服务器上的一串 job」。</strong>本章讲的是<strong>给整个发布流程建模</strong>——阶段怎么划、关卡拦什么、谁能触发、失败怎么办。工具只是承载它的地方；配好了 Jenkins 不等于有了部署流水线。</li>
+<li><strong>提交阶段膨胀。</strong>最常见的死法：每次有人漏掉一个 bug，就往提交阶段加一组测试，10 分钟慢慢变成 40 分钟。超过阈值后开发不再等结果、开始并行提交，红灯归属变得难以追查——<strong>提交阶段的时长是要主动守的预算，不是自然涌现的结果</strong>。</li>
+<li><strong>「绿了就等于能上线」是错觉。</strong>流水线能证伪，不能证真。数据库迁移（Ch12）、组件依赖（Ch13）、容量与灰度（Ch10）都在流水线之外还有自己的坑。</li>
+<li><strong>把手工签字当质量门。</strong>手工阶段的价值在探索性测试，不在重复回归；一旦退化成「等某人点头」，它就只是排队，本章反对的正是这个。</li>
+<li><strong>时代局限。</strong>本书 2010 年成书，早于容器、Kubernetes、云原生与 GitOps。「部署到生产的副本」当年昂贵到需要专门论证，如今几乎是免费的；反过来，微服务时代一个系统有几十条流水线，<strong>扇入扇出与跨服务版本组合</strong>成了本书只在 Ch13 略有触及的新难题。GitOps（用声明式的期望状态驱动部署）是这条思路后来的重要演进。</li>
+<li><strong>争议：是否人人都该走到持续部署。</strong>本书主张的是「随时<em>可</em>发布」，而非「必须自动发」。金融、医疗、嵌入式与客户端软件里，人工关卡有其正当理由；但要警惕用「我们行业特殊」来掩盖「我们没把自动化做好」。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 一句话：部署流水线是「从提交到上线」全过程的自动化实现，<strong>每次提交产出一个候选版本</strong>，走同一条路、过同一批关卡。</p>
+<p>② 心态反转：流水线的目的<strong>不是证明能发，而是尽早、尽便宜地证伪</strong>——所以快而糙的检查排在最前。</p>
+<p>③ 阶段梯度：提交阶段（<strong>目标 5 分钟、上限 10 分钟</strong>）→ 自动化验收测试（数十分钟至数小时）→ 容量 / 手工 / UAT（按需拉取）→ 生产发布（按按钮）。</p>
+<p>④ 规矩一 <strong>只构建一次</strong>：制品在提交阶段构建一次、存进制品库、后续阶段原样复用；否则「测过的」和「上线的」不是同一个东西。</p>
+<p>⑤ 规矩二 <strong>同一套方式部署到每个环境</strong>：差异只在配置；生产部署路径不该是全系统里唯一没被反复演练过的那段。</p>
+<p>⑥ 规矩三 <strong>部署完立刻冒烟测试</strong>，并<strong>部署到生产的副本</strong>上做验收测试——环境不像生产，测试结论就不值钱。</p>
+<p>⑦ 规矩四 <strong>变更即刻传播 + 红了停线</strong>：定时构建让定位成本翻倍；带着红灯提交会把一个缺陷变成一团缺陷。</p>
+<p>⑧ 流水线给你可见性、可追溯性与按需发布能力；<strong>头号指标是周期时间（cycle time）</strong>——后来成了 DORA 四大指标之一。</p>
+<p>⑨ 真实系统：Jenkins / GitLab CI / GitHub Actions / Argo CD / Spinnaker 都是它的实现；制品库与容器镜像是「只构建一次」的物理保障。</p>
+<p>⑩ 反面教材：Knight Capital 手工部署漏掉 1 台机器，45 分钟损失逾 4.6 亿美元——这一章的每条规矩都是有标价的。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
