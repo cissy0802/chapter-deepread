@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Continuous Delivery Ch 13 · Managing Components and Dependencies — Book Deep Read 23</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">BOOK DEEP READ · CONTINUOUS DELIVERY · CH 13</p>
+<h1>Managing Components and Dependencies</h1>
+<p class="sub">Continuous Delivery · Ch 13 · Jez Humble &amp; David Farley · 2010</p>
+<p class="langbar"><a href="contdelivery-ch13-components-and-dependencies-book23.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The apps on your phone ship a new version most weeks. But they are not written by one person — they are written by dozens or hundreds of people <strong>all editing the same pile of code at the same time</strong>. Chapter 13 of <em>Continuous Delivery</em> asks the obvious question: while everyone is mid-surgery, how do you keep the thing <strong>ready to ship every single day</strong>? The answer has two halves — how to finish a big renovation without closing down, and what to do when the codebase grows too big for one build.</p>
+<h2>An analogy</h2>
+<p>Picture replacing the entire kitchen of a restaurant <strong>that stays open for business every day</strong>. You cannot hang a "Closed for renovation — back in three months" sign; the customers would be gone. That is the whole chapter: how to swap the kitchen while still serving lunch, and — when the kitchen grows too big for one crew — how to split it into separate stalls without losing track of whether a full table's order still comes out together.</p>
+<h2>Why the old way hurt</h2>
+<p>The old way was to <strong>go into seclusion</strong>: send a team off to work on it alone, and bring the work back three months later. It sounds reasonable and it is a disaster. Everyone else kept editing too, so by the time you come back the two versions no longer line up. Just reconciling them takes several late nights, and when it is done nobody will swear the thing still runs. <strong>The longer you stay apart, the worse the reunion — and it does not get twice as bad, it gets many times worse.</strong></p>
+<h2>Trick one: build a serving hatch first</h2>
+<p>If ripping the kitchen out and putting a new one back is what hurts, then <strong>don't rip it out</strong>. Instead, build a <strong>serving hatch</strong> in front of the old kitchen: from now on the dining room orders through the hatch and never cares who is cooking behind it. Once the hatch is up, you can <strong>calmly assemble the new kitchen behind it</strong> while the restaurant stays open and the old kitchen keeps cooking. When the new one can produce every dish, you connect the hatch to it; after a while, once you are sure, you tear the old kitchen out.</p>
+<p>The beauty of it: at no point is the place ever <strong>"closed for renovation."</strong> After every small step, you can open the doors again tomorrow.</p>
+<h2>Trick two: separate stalls, and the "wrong screws" problem</h2>
+<p>When the kitchen is too big for one crew, split it into stalls that stock and cook for themselves. The benefit is concrete: changing one stall's menu no longer disturbs the whole restaurant.</p>
+<p>The cost is that <strong>nobody is watching whether a full table's order comes out complete anymore</strong>. Worse is the wrong-screws problem: stall A's recipe calls for version 2.0 of a particular sauce, stall B's calls for 1.0 — and there is only room for one jar on the shelf. That is what programmers grumble about as <strong>dependency hell</strong>. The chapter's rule is blunt: <strong>the recipe must name the exact version of the sauce</strong>, never "whatever the newest jar is" — otherwise a dish you could cook today mysteriously fails tomorrow, and you changed nothing. Then you add a <strong>pass counter</strong> whose only job is to check that this particular set of stalls, at these particular versions, really does produce one complete table.</p>
+<h2>The cost you cannot dodge</h2>
+<p>Once you split into stalls, <strong>the total hours the kitchen spends working usually goes up, not down</strong>. What you bought is "changing one stall does not disturb the rest," and somebody still has to pay for all that extra checking. Which is why the chapter keeps saying: don't split until you truly have to.</p>
+<h2>Remember this</h2>
+<div class="tl">
+<p>To keep software that people edit daily <strong>always ready to ship</strong>: don't go into seclusion for a big renovation — build a serving hatch and swap things out in place. Only split into stalls once the kitchen is genuinely too big, and when you do, <strong>pin the exact version of every part</strong> and add a gate whose sole job is checking that this combination of versions actually works together.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the notation and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You would assume applications get split into components for "clean architecture" or "reuse." The chapter's primary reason is far more practical: <strong>to get builds and feedback back under ten minutes</strong>. And it puts the cost on the table in the same breath — the moment you split, you lose the most valuable property continuous delivery has: <strong>one commit, one full verification</strong>. The whole back half of the chapter is about buying that property back with a <strong>dependency graph, an artifact repository, and one integration pipeline</strong>.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Component</strong> — a reasonably large-scale code structure inside an application, with a well-defined API, that could in principle be swapped wholesale for another implementation. Bigger than a class, lighter than an independently deployed service.</li>
+<li><strong>Dependency</strong> — code your code needs in order to compile or to run. Needed at compile time it is a <strong>build-time dependency</strong>; needed only when running, a <strong>runtime dependency</strong>.</li>
+<li><strong>Artifact / binary</strong> — the file that comes out of compiling and packaging source: a JAR, DLL, gem, wheel, container image.</li>
+<li><strong>Artifact repository</strong> — a store dedicated to those binaries, addressable by version: Nexus, Artifactory, and today container registries too.</li>
+<li><strong>Dependency graph</strong> — the graph of what depends on what; build order runs along it from the leaves inward.</li>
+<li><strong>DAG (directed acyclic graph)</strong> — a graph with no path that loops back on itself.</li>
+<li><strong>Trunk / mainline</strong> — the single line in version control that everybody merges into.</li>
+<li><strong>Commit stage</strong> — the pipeline's first gate from Chapter 7: compile, unit tests, static analysis, with a budget of a trustworthy red or green inside ten minutes.</li>
+<li><strong>Abstraction layer</strong> — an interface sitting between callers and an implementation, so callers know only the interface and not what is behind it.</li>
+<li><strong>SemVer</strong> — the <code>2.4.1</code> version convention, whose three parts signal breaking changes / new features / fixes.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This chapter belongs to Part III, "The Delivery Ecosystem," after Chapter 11 on infrastructure and Chapter 12 on data. It is where the book pushes "always releasable" <strong>down into the structure of the code itself</strong>. It follows from Chapter 3 (continuous integration: trunk must stay buildable at all times) and Chapter 7 (the ten-minute commit stage budget), and leads into Chapter 14 on version control and branching. The real-world questions it maps onto: monorepo or many repos, how to pin versions in Maven / Gradle / npm, and who exactly verifies a combination of microservice versions.</p>
+<h2>What problem it solves</h2>
+<p>Compress everything continuous delivery argues for into one line and you get <strong>"trunk is always releasable."</strong> By Chapter 13 that line has run into two walls.</p>
+<p>The first wall is the <strong>large-scale change</strong>. Replacing an ORM, swapping a payment gateway, moving from home-grown auth to OAuth — work like this runs two or three weeks, sometimes months, and the code sits half-finished throughout. The traditional move is a feature branch in seclusion, merged at the end. But <strong>merge pain grows superlinearly with how long the branch lives</strong>: a one-week branch merges in fifteen minutes; a three-month branch takes several people several days, and afterwards nobody will vouch that it runs. That is the release-day hell of Chapter 1, moved into the code.</p>
+<p>The second wall is <strong>build duration</strong>. Chapter 7 budgets ten minutes for the commit stage, because past ten minutes people start batching up their commits and continuous integration quietly dies. But codebases grow: a few hundred thousand lines with a few thousand tests routinely goes from an eight-minute build to a forty-minute one within a year or two. At that point a developer gets three or four trustworthy answers per day and the whole discipline of Chapter 3 collapses.</p>
+<p>What happens if you ignore both? They lead to the same place: <strong>trunk stops being releasable</strong> — either because a long-lived branch is permanently "nearly done," or because a build nobody will wait for teaches everyone to route around the pipeline.</p>
+<h2>The core, properly explained</h2>
+<h3>1. Before splitting anything: treat "always releasable" as a hard constraint</h3>
+<p>The chapter does not open with a decomposition strategy. It opens with three ways to protect releasability <strong>without touching the structure at all</strong>.</p>
+<p><strong>① Hide new functionality until it is finished.</strong> The code can merge to trunk and ship with every release — you simply do not wire up the entry point. As far as users are concerned it is code that can never be reached. "The feature isn't done" stops being a reason not to release.</p>
+<p><strong>② Make all changes incrementally.</strong> Break one large change into a series of small ones, with a hard test: <strong>stopping and releasing after any one of them must be safe</strong>. If that is not true, you have not really broken it up yet.</p>
+<p><strong>③ Branch by abstraction.</strong> The most useful trick in the chapter. The name comes from Paul Hammant, and one of this book's authors, Jez Humble, later wrote it up in his own right.</p>
+<h3>2. Branch by abstraction: "branching" on trunk</h3>
+<p>To replace a large part of a system without creating a version-control branch, five steps: <strong>①</strong> introduce an abstraction layer over the part being replaced; <strong>②</strong> change the rest of the system to depend only on that abstraction (usually the most laborious step, and the most valuable); <strong>③</strong> write the new implementation beneath the abstraction, alongside the old one; <strong>④</strong> point the abstraction at the new implementation, ramping by user or by traffic if you want; <strong>⑤</strong> once you are confident, delete the old implementation — scaffolding comes down when it is done, and often the abstraction goes with it.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 344" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="b1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="b2" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text fill="#7c8593" font-family="monospace" font-size="10" x="16" y="14">start</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="76" x="44" y="19"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="82" y="39">callers</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="122" x2="260" y1="34" y2="34"></line>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="88" x="264" y="19"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="308" y="39">old impl</text>
+<text fill="#7c8593" font-size="10.5" x="474" y="38">depend on it directly</text>
+<text fill="#5b9df9" font-family="monospace" font-size="10" x="16" y="76">1</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="76" x="44" y="81"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="82" y="101">callers</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="122" x2="146" y1="96" y2="96"></line>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="6" stroke="#5b9df9" stroke-width="1.8" width="88" x="150" y="81"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="194" y="101">abstraction</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="240" x2="260" y1="96" y2="96"></line>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="88" x="264" y="81"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="308" y="101">old impl</text>
+<text fill="#7c8593" font-size="10.5" x="474" y="100">insert a layer</text>
+<text fill="#5b9df9" font-family="monospace" font-size="10" x="16" y="138">2</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="76" x="44" y="143"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="82" y="163">callers</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="122" x2="146" y1="158" y2="158"></line>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="6" stroke="#5b9df9" stroke-width="1.8" width="88" x="150" y="143"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="194" y="163">abstraction</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="240" x2="260" y1="158" y2="158"></line>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="88" x="264" y="143"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="308" y="163">old impl</text>
+<path d="M240,150 C300,120 334,120 376,146" fill="none" marker-end="url(#b2)" stroke="#9b6cf5" stroke-dasharray="4 3"></path>
+<rect fill="rgba(155,108,245,0.14)" height="30" rx="6" stroke="#9b6cf5" stroke-dasharray="4 3" width="88" x="380" y="143"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="424" y="163">new impl</text>
+<text fill="#7c8593" font-size="10.5" x="486" y="156">both live;</text>
+<text fill="#7c8593" font-size="10.5" x="486" y="172">trunk still ships</text>
+<text fill="#5b9df9" font-family="monospace" font-size="10" x="16" y="200">3</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="76" x="44" y="205"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="82" y="225">callers</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="122" x2="146" y1="220" y2="220"></line>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="6" stroke="#5b9df9" stroke-width="1.8" width="88" x="150" y="205"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="194" y="225">abstraction</text>
+<line marker-end="url(#b2)" stroke="#9b6cf5" x1="240" x2="376" y1="220" y2="220"></line>
+<rect fill="rgba(155,108,245,0.22)" height="30" rx="6" stroke="#9b6cf5" stroke-width="1.8" width="88" x="380" y="205"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="424" y="225">new impl</text>
+<text fill="#7c8593" font-size="10.5" x="486" y="224">switch over (ramp)</text>
+<text fill="#5b9df9" font-family="monospace" font-size="10" x="16" y="262">4</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="76" x="44" y="267"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="82" y="287">callers</text>
+<line marker-end="url(#b2)" stroke="#9b6cf5" x1="122" x2="376" y1="282" y2="282"></line>
+<rect fill="rgba(155,108,245,0.22)" height="30" rx="6" stroke="#9b6cf5" stroke-width="1.8" width="88" x="380" y="267"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="424" y="287">new impl</text>
+<text fill="#7c8593" font-size="10.5" x="486" y="286">delete old + scaffold</text>
+<text fill="#5b9df9" font-size="11" text-anchor="middle" x="320" y="324">One trunk throughout — releasable after every single step</text>
+</svg>
+<figcaption>Fig 1 · The five steps of branch by abstraction: the "branch" moves out of version control and into the code, where the abstraction layer carries both implementations and trunk stays releasable.</figcaption>
+</figure>
+<p>The counterintuitive part: <strong>the act of branching has been moved out of version control and into the code</strong>. The repository holds one trunk and everybody integrates every day; the coexistence of two implementations is carried by an abstraction layer that compiles, tests and ships. Unlike a long-lived branch, its merge risk is smeared across every commit rather than saved up for one bad week.</p>
+<p>The costs are real too. During the transition the codebase carries two implementations, which is harder to read and doubles some test surface. And if the abstraction covers only <strong>part</strong> of the old implementation's usage, the remaining call sites are back doors around the layer — and the whole scheme fails on switchover day.</p>
+<h3>3. Dependencies and dependency hell</h3>
+<p>Dependencies come in two flavours: <strong>build-time</strong> (needed to compile — a utility library) and <strong>runtime</strong> (needed only when running — a database driver). Almost all of the trouble is about versions.</p>
+<p>The disease the book names is <strong>dependency hell</strong> — DLL hell on Windows, JAR hell in the Java world. Its classic shape is the <strong>diamond dependency</strong>: your application uses components A and B; A requires version <code>1.0</code> of some library and B requires <code>2.0</code> of the same one, while the class loader (or DLL loader) at runtime <strong>can only hold one</strong>. When the two versions are not API-compatible there is no clean answer — somebody has to give way, by downgrading, by adapting the code, or by isolating the loading.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 256" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="d1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="d2" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#e06b6b"></path></marker>
+</defs>
+<rect fill="rgba(91,157,249,0.14)" height="32" rx="6" stroke="#5b9df9" width="160" x="240" y="16"></rect><text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="320" y="37">your application</text>
+<line marker-end="url(#d1)" stroke="#7c8593" x1="285" x2="180" y1="48" y2="96"></line>
+<line marker-end="url(#d1)" stroke="#7c8593" x1="355" x2="460" y1="48" y2="96"></line>
+<rect fill="rgba(91,157,249,0.08)" height="42" rx="6" stroke="#7c8593" width="170" x="85" y="100"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="170" y="117">component A (orders)</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle" x="170" y="133">needs payments 1.0</text>
+<rect fill="rgba(91,157,249,0.08)" height="42" rx="6" stroke="#7c8593" width="170" x="385" y="100"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="470" y="117">component B (billing)</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle" x="470" y="133">needs payments 2.0</text>
+<line marker-end="url(#d2)" stroke="#e06b6b" x1="180" x2="285" y1="142" y2="184"></line>
+<line marker-end="url(#d2)" stroke="#e06b6b" x1="460" x2="355" y1="142" y2="184"></line>
+<rect fill="rgba(224,107,107,0.16)" height="42" rx="6" stroke="#e06b6b" stroke-width="1.8" width="190" x="225" y="188"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="320" y="205">payments library</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="320" y="221">only one copy at runtime</text>
+<text fill="#e06b6b" font-size="10.5" x="434" y="212">1.0 and 2.0 incompatible</text>
+<text fill="#7c8593" font-size="10.5" x="434" y="228">someone must give way</text>
+</svg>
+<figcaption>Fig 2 · The diamond dependency: two paths demand different versions of the same library, and runtime holds only one — the most common shape of dependency hell.</figcaption>
+</figure>
+<p>The remedy is to <strong>manage your libraries</strong>. The book accepts two routes: check the binaries straight into a <code>lib/</code> directory in version control (simple, absolutely reproducible, at the price of a bloated repository and entirely manual upgrades), or use <strong>declarative dependencies plus an artifact repository</strong> (the Maven / Ivy approach: easy upgrades, at the price of state living outside version control). Whichever you pick, one rule in this chapter is not negotiable: <strong>pin your versions, and never use dynamic ones like "give me the latest."</strong> This is not fastidiousness — dynamic versions make builds <strong>irreproducible</strong>: the same source is green today and red tomorrow while you changed nothing, and the cost of diagnosing that is brutal.</p>
+<h3>4. Components: when to split, and what the pipeline becomes</h3>
+<p>The book's definition of a component is roughly: a <strong>reasonably large-scale code structure with a well-defined API that could in principle be swapped for another implementation</strong>. Bigger than a class, lighter than an independently deployed service.</p>
+<p>Its list of good reasons to split is deliberately short: builds and tests take too long; different parts change at <strong>very different rates</strong> (a reporting module untouched for a year need not rebuild alongside a checkout module that changes three times a week); you genuinely need reuse across products; the team is large enough to need clear ownership boundaries; some part must be deployed or scaled independently. <strong>The book explicitly rejects splitting to make the architecture look nicer</strong>, and its stance is: live with one pipeline until it stops working, then split off only the pieces you truly need.</p>
+<p>After the split, the pipeline changes shape: <strong>each component gets its own pipeline</strong>, publishing versioned binaries into an artifact repository; downstream components build against upstream artifacts pulled from it; and an <strong>integration pipeline</strong> picks one specific set of versions (say A-12, B-7, C-3), assembles them and runs acceptance tests. One hard constraint applies: <strong>the dependency graph must be acyclic</strong>.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 274" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="c1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="11.5" font-weight="700" x="16" y="16">1 · one pipeline per component</text>
+<text fill="#5b9df9" font-size="11.5" font-weight="700" x="440" y="16">2 · integration pipeline</text>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="6" stroke="#7c8593" width="66" x="16" y="30"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="49" y="49">comp A</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="84" x2="106" y1="44" y2="44"></line>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="6" stroke="#7c8593" width="100" x="110" y="30"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="160" y="49">build + unit test</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="212" x2="228" y1="44" y2="44"></line>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="6" stroke="#7c8593" width="82" x="230" y="30"></rect><text fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle" x="271" y="49">artifact A-12</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="314" x2="334" y1="44" y2="44"></line>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="6" stroke="#7c8593" width="66" x="16" y="90"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="49" y="109">comp B</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="84" x2="106" y1="104" y2="104"></line>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="6" stroke="#7c8593" width="100" x="110" y="90"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="160" y="109">build + unit test</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="212" x2="228" y1="104" y2="104"></line>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="6" stroke="#7c8593" width="82" x="230" y="90"></rect><text fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle" x="271" y="109">artifact B-7</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="314" x2="334" y1="104" y2="104"></line>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="6" stroke="#7c8593" width="66" x="16" y="150"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="49" y="169">comp C</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="84" x2="106" y1="164" y2="164"></line>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="6" stroke="#7c8593" width="100" x="110" y="150"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="160" y="169">build + unit test</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="212" x2="228" y1="164" y2="164"></line>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="6" stroke="#7c8593" width="82" x="230" y="150"></rect><text fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle" x="271" y="169">artifact C-3</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="314" x2="334" y1="164" y2="164"></line>
+<rect fill="rgba(155,108,245,0.12)" height="160" rx="8" stroke="#9b6cf5" width="76" x="336" y="24"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="374" y="96">artifact</text>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="374" y="112">repository</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="374" y="130">by version</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="414" x2="440" y1="104" y2="104"></line>
+<rect fill="rgba(91,157,249,0.1)" height="40" rx="6" stroke="#7c8593" width="180" x="444" y="30"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="534" y="47">assemble a chosen set</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle" x="534" y="63">A-12 + B-7 + C-3</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="534" x2="534" y1="72" y2="90"></line>
+<rect fill="rgba(91,157,249,0.1)" height="30" rx="6" stroke="#7c8593" width="180" x="444" y="92"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="534" y="112">integration / acceptance</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="534" x2="534" y1="124" y2="142"></line>
+<rect fill="rgba(91,157,249,0.2)" height="30" rx="6" stroke="#5b9df9" stroke-width="1.8" width="180" x="444" y="144"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="534" y="164">this set is releasable</text>
+<text fill="#7c8593" font-size="10.5" x="16" y="212">e.g. component C depends on A and B — the graph must stay acyclic (DAG)</text>
+<text fill="#7c8593" font-size="10.5" x="16" y="234">upstream going green can trigger downstream; a verified set is promoted as a whole</text>
+<text fill="#9b6cf5" font-size="10.5" x="16" y="256">the cost: no more "one commit, one full verification" — the integration pipeline buys it back</text>
+</svg>
+<figcaption>Fig 3 · The shape of a componentized pipeline: components publish artifacts, and one integration pipeline assembles a chosen set of versions, verifies it, and promotes it as a unit.</figcaption>
+</figure>
+<p>Triggering is a genuine problem here. Trigger every downstream the instant an upstream goes green, and a graph of a few dozen components turns one change into a <strong>build storm</strong>. Never trigger automatically, and a breaking change hides until the day somebody upgrades by hand — by which point dozens of changes have piled up and nobody can say which one broke it.</p>
+<h3>5. Cautious optimism: dependency edges that back themselves out</h3>
+<p>The chapter's answer to that dilemma is <strong>cautious optimism</strong>: stop treating "pinned" and "always latest" as a binary choice, and give <strong>every edge</strong> of the dependency graph one of three states.</p>
+<ul>
+<li><strong>Static</strong> — pinned to a version; new upstream releases change nothing until a human upgrades it.</li>
+<li><strong>Fluid</strong> — always takes the newest upstream version that passed its pipeline.</li>
+<li><strong>Guarded</strong> — fluid by default, but when a new version turns the downstream red, the edge automatically falls back to the <strong>last known good version</strong> and freezes there until someone fixes it.</li>
+</ul>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 196" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="e1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="e2" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker>
+<marker id="e3" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<line stroke="rgba(120,120,130,0.3)" x1="216" x2="216" y1="14" y2="182"></line>
+<line stroke="rgba(120,120,130,0.3)" x1="428" x2="428" y1="14" y2="182"></line>
+<text fill="#7c8593" font-size="12" font-weight="700" text-anchor="middle" x="108" y="26">STATIC</text>
+<rect fill="rgba(91,157,249,0.08)" height="26" rx="6" stroke="#7c8593" width="72" x="20" y="40"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="56" y="58">upstream</text>
+<line marker-end="url(#e1)" stroke="#7c8593" x1="94" x2="118" y1="53" y2="53"></line>
+<rect fill="rgba(91,157,249,0.08)" height="26" rx="6" stroke="#7c8593" width="76" x="120" y="40"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="158" y="58">downstream</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle" x="108" y="86">pinned v1.2</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="108" y="110">new releases ignored</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="108" y="128">slow to upgrade;</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="108" y="146">breakage surfaces late</text>
+<text fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle" x="322" y="26">FLUID</text>
+<rect fill="rgba(91,157,249,0.08)" height="26" rx="6" stroke="#7c8593" width="72" x="234" y="40"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="270" y="58">upstream</text>
+<line marker-end="url(#e2)" stroke="#5b9df9" x1="308" x2="332" y1="53" y2="53"></line>
+<rect fill="rgba(91,157,249,0.08)" height="26" rx="6" stroke="#7c8593" width="76" x="334" y="40"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="372" y="58">downstream</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle" x="322" y="86">always latest green</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="322" y="110">zero integration lag,</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="322" y="128">breakage surfaces today;</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="322" y="146">upstream red, downstream red</text>
+<text fill="#9b6cf5" font-size="12" font-weight="700" text-anchor="middle" x="534" y="26">GUARDED</text>
+<rect fill="rgba(91,157,249,0.08)" height="26" rx="6" stroke="#7c8593" width="72" x="446" y="40"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="482" y="58">upstream</text>
+<line marker-end="url(#e3)" stroke="#9b6cf5" stroke-dasharray="4 3" x1="520" x2="544" y1="53" y2="53"></line>
+<rect fill="rgba(155,108,245,0.18)" height="26" rx="6" stroke="#9b6cf5" stroke-width="1.8" width="76" x="546" y="40"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="584" y="58">downstream</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle" x="534" y="86">fluid, rolls back on red</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="534" y="110">new version breaks it →</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="534" y="128">falls back to last known good</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="534" y="146">and freezes until fixed</text>
+<text fill="#9b6cf5" font-size="10.5" text-anchor="middle" x="320" y="180">cautious optimism: enjoy fluid's zero lag, fall back automatically to the last set that worked</text>
+</svg>
+<figcaption>Fig 4 · The three states of a dependency edge. "Guarded" is the chapter's neatest idea: it turns pinned-versus-latest from a binary choice into a switch that heals itself.</figcaption>
+</figure>
+<p>One honest caveat: this mechanism <strong>rarely exists off the shelf</strong>. In 2010 you largely had to build it into your own build tooling, and today it is still mostly assembled from custom logic on a CI platform — it is better remembered as a <strong>design idea</strong> than as a switch you can flip.</p>
+<h3>6. Circular dependencies and the artifact repository</h3>
+<p><strong>Circular dependencies</strong> — A depends on B, and B depends back on A — are, in the book's words, probably the nastiest dependency problem. Most build tools simply refuse them. If you truly must get out of one in the short term, there is the <strong>build ladder</strong>: build B against the old A, then build the new A against that B, climbing one rung at a time. But the book is blunt that this is a stopgap, and the right fix is to <strong>refactor the cycle away</strong> — usually by extracting whatever both sides depend on into a third component.</p>
+<p>The <strong>artifact repository</strong> is where Chapter 5's "build your binaries only once" lands in a componentized world. What it must do: hold every binary the pipelines produce, retrieve them by version, remember <strong>which commit each artifact came from</strong>, and — when an artifact is promoted from test to production — <strong>re-label it rather than rebuild it</strong>. Conversely, binaries <strong>do not belong in version control</strong>: they can be regenerated from source, and repositories were not designed for large files.</p>
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 1 · Three ways to make a large-scale change</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>long-lived feature branch</th><th>branch by abstraction</th><th>hide the feature / toggle</th></tr></thead>
+<tbody>
+<tr><th>Fits when</th><td>the change would break trunk and the team accepts a stall</td><td><strong>replacing an existing large part</strong> (ORM, gateway)</td><td><strong>adding</strong> something not yet finished</td></tr>
+<tr><th>Trunk releasable</th><td>not on the branch; trunk drifts away from it</td><td><strong>after every step</strong></td><td><strong>always</strong> — the entry point is not wired up</td></tr>
+<tr><th>Merge risk</th><td><strong>grows superlinearly with branch age</strong>; three months often costs several people several days</td><td>smeared across commits, near zero</td><td>none</td></tr>
+<tr><th>Cost</th><td>merge hell; integration problems all detonate at once</td><td>two implementations during transition; the layer must cover <strong>every</strong> call site and be removed afterwards</td><td>toggles accumulate as debt; needs a cleanup discipline</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · Managing library dependencies</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>How</th><th>Upside</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>Binaries in version control</th><td>JARs / DLLs committed into <code>lib/</code></td><td>absolutely reproducible; check out and build, no external state</td><td>bloated repository; upgrades entirely manual; poor fit for many dependencies</td></tr>
+<tr><th>Declarative deps + artifact repository</th><td>Maven / Ivy coordinates resolved from Nexus / Artifactory</td><td>easy upgrades; transitive dependencies resolved for you</td><td>state outside version control; repository down means no build</td></tr>
+<tr><th>Pinned versions</th><td>write <code>1.2.3</code></td><td><strong>reproducible builds</strong> — the same source always yields the same result</td><td>security fixes and upstream improvements lag; needs a deliberate upgrade habit</td></tr>
+<tr><th>Dynamic versions</th><td>write <code>LATEST</code> / <code>^1.2</code></td><td>follows upstream by itself</td><td><strong>the chapter rejects this</strong>: irreproducible builds, green today and red tomorrow with no change of yours</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 3 · Version strategies across components (the chapter's central table)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>build everything at once</th><th>static pinning</th><th>fluid</th><th>cautious optimism</th></tr></thead>
+<tbody>
+<tr><th>How it works</th><td>every component built from latest trunk source in one build</td><td>each edge pinned; humans upgrade</td><td>each edge always takes the newest green upstream</td><td>fluid by default; a failing edge rolls back and freezes</td></tr>
+<tr><th>Integration lag</th><td><strong>zero</strong></td><td>large — sometimes weeks between upgrades</td><td>zero</td><td>near zero</td></tr>
+<tr><th>Breaking change surfaces</th><td>at commit time</td><td><strong>on upgrade day</strong>, with dozens of changes piled up</td><td>the same day</td><td>the same day, without blocking everyone else</td></tr>
+<tr><th>Build cost</th><td><strong>highest</strong> — full builds, viable only with incremental builds and remote caching</td><td>low</td><td>medium; upstream churn can cause build storms</td><td>medium</td></tr>
+<tr><th>Seen in practice</th><td>Google / Meta / Microsoft monorepos</td><td>the npm and Maven ecosystems plus lockfiles</td><td>small graphs with high team trust</td><td>ahead of its tooling — <strong>little off-the-shelf support</strong></td></tr>
+</tbody></table></div>
+<p class="tcap">Table 4 · Should this become a component?</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Signal</th><th>Split?</th><th>Reasoning / cost</th></tr></thead>
+<tbody>
+<tr><th>Commit stage exceeds ten minutes</th><td><strong>Yes</strong></td><td>the chapter's <strong>primary reason</strong>: slow feedback destroys the discipline of CI outright</td></tr>
+<tr><th>Parts change at very different rates</th><td>Yes</td><td>a module untouched for a year need not rebuild with one that changes three times a week</td></tr>
+<tr><th>Genuine reuse across products</th><td>Yes</td><td>reuse needs a stable API and an independent version line</td></tr>
+<tr><th>A part must deploy or scale independently</th><td>Yes</td><td>this is the road to microservices, and it costs you the full distributed-systems bill</td></tr>
+<tr><th>"The architecture would look cleaner"</th><td><strong>No</strong></td><td>explicitly rejected; modularity comes from packages and interfaces without paying for extra pipelines</td></tr>
+<tr><th>The team is only a few people</th><td><strong>No</strong></td><td>five components means five pipelines and version coordination, for no matching benefit</td></tr>
+</tbody></table></div>
+<h2>Why it matters / in real systems</h2>
+<p>The loudest argument in the industry today — <strong>monorepo versus many repos</strong> — is just Table 3 in modern dress: one end says "every component builds from the latest source and is verified together," the other says "every edge is pinned and each part evolves on its own." This chapter costed out both ends in 2010, before either word existed.</p>
+<p>Three things do need updating. First, <strong>incremental builds and remote caching</strong> in Bazel and Gradle have <strong>partly removed</strong> the chapter's primary reason to split — you can now plausibly keep one enormous repository and still get feedback inside ten minutes. Second, the <strong>lockfile ecosystem</strong> (<code>package-lock.json</code>, <code>Gemfile.lock</code>, <code>go.sum</code>) is the industrialized answer to pinning, and bots like Dependabot and Renovate are the industrialized answer to fluidity; together they land remarkably close to cautious optimism. Third, <strong>microservices</strong> pushed components all the way to independently deployed units, which turns this chapter's dependency-graph problem into a service-contract problem — consumer-driven contract testing does exactly the job of the integration pipeline.</p>
+<div class="ev">
+<div class="evh">EVIDENCE FROM INDUSTRY · NOT THE BOOK'S CLAIMS, BUT THE COMPANIES' OWN</div>
+<ul>
+<li><strong>Google</strong> published what "build everything at once" looks like at the limit: a single repository of roughly <code>2 billion</code> lines of code and <code>86 TB</code> of content, taking about <code>40,000</code> commits a day on its in-house Piper system. One of the headline reasons they give is <strong>simplified dependency management</strong> — with everyone on one version, the diamond problem disappears at the source. <span class="src"><a href="https://cacm.acm.org/research/why-google-stores-billions-of-lines-of-code-in-a-single-repository/" rel="noopener" target="_blank">R. Potvin &amp; J. Levenberg, "Why Google Stores Billions of Lines of Code in a Single Repository," CACM 2016 ↗</a></span></li>
+<li><strong>Microsoft</strong> published the bill for that road when it moved Windows into Git: about <code>300 GB</code> and <code>3.5 million</code> files, with roughly <code>8,421</code> pull requests and <code>1,760</code> official builds a day — large enough that they had to build a virtual file system (GVFS) before Git could cope. <strong>Building it all together is not free.</strong> <span class="src"><a href="https://devblogs.microsoft.com/bharry/the-largest-git-repo-on-the-planet/" rel="noopener" target="_blank">Brian Harry, "The largest Git repo on the planet," Microsoft DevBlogs 2017 ↗</a></span></li>
+<li><strong>npm</strong> wrote its own postmortem of the 2016 left-pad incident: after an eleven-line package was unpublished, npm saw <strong>hundreds of failures per minute</strong> and builds broke across the ecosystem. npm conceded it "dropped the ball in not protecting developers from a disruption caused by unrestricted unpublishing" — <strong>a textbook counter-example to leaving your dependencies out of your own hands.</strong> <span class="src"><a href="https://blog.npmjs.org/post/141577284765/kik-left-pad-and-npm" rel="noopener" target="_blank">npm Blog, "kik, left-pad, and npm," 2016 ↗</a></span></li>
+<li><strong>Jez Humble, one of this book's own authors</strong>, later wrote up branch by abstraction on his site as the standard way to make large-scale changes without long-lived branches — the technique has been re-validated well outside the book, and is now a pillar of trunk-based development. <span class="src"><a href="https://continuousdelivery.com/2011/05/make-large-scale-changes-incrementally-with-branch-by-abstraction/" rel="noopener" target="_blank">J. Humble, "Make Large Scale Changes Incrementally with Branch By Abstraction," continuousdelivery.com 2011 ↗</a></span> · <span class="src"><a href="https://paulhammant.com/blog/branch_by_abstraction.html" rel="noopener" target="_blank">Paul Hammant's original write-up ↗</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and open arguments</h2>
+<ul>
+<li><strong>Reading branch by abstraction as "just add an interface."</strong> The interface is not the point; <strong>routing every call site through it</strong> is. Any call site you miss is a back door around the layer that blows up on switchover day. And the layer is <strong>temporary scaffolding</strong> — leave it standing and in a few years it is a hollow shell nobody dares touch.</li>
+<li><strong>Believing componentization makes builds faster.</strong> After a split, <strong>total build time across all components usually goes up</strong>; what shrinks is the critical path. You are buying "one change need not verify everything" and paying by deferring integration risk.</li>
+<li><strong>Splitting too early.</strong> The chapter's position is unambiguous: live with one pipeline first. Five components in a small team means five times the version-coordination cost for no benefit.</li>
+<li><strong>The lure of dynamic versions.</strong> <code>LATEST</code> and <code>^1.2</code> look convenient and make builds irreproducible. But pinning everything has its own cost — security fixes lag. The modern answer is <strong>lockfiles for reproducibility plus upgrade bots to stay current</strong>, a combination the 2010 book did not have.</li>
+<li><strong>Cautious optimism is expensive to implement.</strong> Lovely concept, almost no off-the-shelf tooling; most teams fall back to "pin, then upgrade in batches." Honestly, this section's value is mostly as a frame for thinking.</li>
+<li><strong>Period limits.</strong> The book is from 2010: no Docker, no Bazel remote caching, no mature lockfile ecosystem, and "artifact repository" mainly meant Nexus or Artifactory — whereas today the most important one is the container registry. More fundamentally, <strong>"builds are too slow," the chapter's primary reason to split, has been meaningfully weakened by modern build tooling</strong>, so its criteria deserve recalibration.</li>
+<li><strong>Still unsettled.</strong> Monorepo versus many repos has no agreed answer. The chapter lays out both, but its tone clearly leans toward "don't split unless you must" — a lean that Google's practice supports at enormous scale and that holds for small teams too, though not necessarily for product lines that need independent release cadences.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① In one line: this chapter pushes "trunk is always releasable" down into <strong>code structure</strong> — first how to make big changes without restructuring, then how to buy back "one commit, one full verification" when you must split.</p>
+<p>② Two walls: the <strong>large-scale change</strong> (merge pain grows superlinearly with branch age) and <strong>build duration</strong> (past ten minutes, CI dies quietly).</p>
+<p>③ Three moves that need no restructuring: <strong>hide unfinished functionality, make every change incremental, branch by abstraction</strong>.</p>
+<p>④ <strong>Branch by abstraction, five steps</strong>: add the layer → route the rest through it → build the new implementation beneath → switch over → delete the old one and the scaffolding. It moves "branching" out of version control and into code.</p>
+<p>⑤ <strong>Dependency hell</strong>'s classic shape is the diamond: two paths demand different versions of one library while runtime holds one. The iron rule is <strong>pin your versions</strong> — dynamic versions make builds irreproducible.</p>
+<p>⑥ A <strong>component</strong> is a reasonably large structure with a well-defined API that could be swapped wholesale. Split for slow builds, differing change rates, reuse, independent deployment; <strong>"cleaner architecture" is not a reason</strong>, and not splitting is the default.</p>
+<p>⑦ The resulting shape: <strong>one pipeline per component → artifact repository → one integration pipeline that verifies a version set</strong>; the graph must be acyclic, and a build ladder is only a stopgap for cycles that should be refactored away.</p>
+<p>⑧ <strong>Cautious optimism</strong>: edges are static, fluid or guarded; a guarded edge rolls back to the last known good version when upstream breaks it — a binary choice turned into a self-healing switch.</p>
+<p>⑨ The artifact repository is where "build binaries only once" lands: store them, retrieve by version, trace back to a commit, and <strong>re-label rather than rebuild</strong> on promotion. Binaries stay out of version control.</p>
+<p>⑩ Modern mapping: monorepo versus many repos is Table 3 today; lockfiles plus upgrade bots ≈ cautious optimism; microservices turn the dependency graph into a contract problem.</p>
+</div>
+</div>
+<footer>Book Deep Read · Finish this page and you have the chapter's core; go to the book itself for the full cases and the long tail.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
