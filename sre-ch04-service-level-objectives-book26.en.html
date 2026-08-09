@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>SRE Ch 4 · Service Level Objectives — Book Deep-Read Book 26</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">BOOK DEEP-READ · SRE · CHAPTER 4</p>
+<h1>Service Level Objectives: pick the right thing to measure, then argue about the nines</h1>
+<p class="sub">Site Reliability Engineering · Ch 4 · Google (Chris Jones, John Wilkes, Niall Murphy, Cody Smith) · 2016</p>
+<p class="langbar"><a href="sre-ch04-service-level-objectives-book26.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>Whenever you order food, hail a ride or open a video app, you carry a private line in your head: <strong>what counts as "fine" and what counts as "unacceptable."</strong> The companies behind those services need that line written down too — otherwise "how are we doing today?" is settled by whoever talks loudest. Chapter 4 of Google's <em>SRE</em> book is about <strong>turning that line into a number everyone accepts.</strong></p>
+<h2>An analogy first</h2>
+<p>A takeout shop wants to promise "fast delivery." That sentence is useless until it is split into three separate things: <strong>what you measure</strong> (minutes from order to doorbell), <strong>where you draw the line</strong> (95% of orders inside 30 minutes this month), and <strong>what you owe if you miss</strong> (a coupon). The book calls these SLI, SLO and SLA, and they get blurred together constantly. The trick to telling them apart is simple: <em>ask "what happens if we miss it?" — only the one with a stated penalty is a contract.</em></p>
+<h2>Now the strange part</h2>
+<p>The hardest of the three is the first one: <strong>what to measure</strong>. Plenty of teams have dashboards glowing green while users write one-star reviews. The reason is mundane: <strong>they measure "did the server answer," while users care about "did I get what I came for."</strong> Google published one such comparison: for the same search service, counting "the server returned a normal response" gave a respectable 99.7%; counting "the user actually saw results within five seconds" left about 80%.</p>
+<h2>The core idea: reason backwards from the user</h2>
+<p>This chapter flips the order: <strong>first ask what users care about, then find a way to measure it</strong> — rather than surveying the metrics you already collect and picking a flattering one. Two more traps come with it.</p>
+<p><strong>First, don't look only at the average.</strong> "Average delivery: 25 minutes" can mean half the orders arrive in 15 and half in 35 — and the half that leaves bad reviews has been averaged away. Line the orders up fastest to slowest and <strong>look at the miserable tail</strong>. <strong>Second, write the number out in full.</strong> "95% of orders within 30 minutes" isn't enough; you have to say <em>95% over what period</em>, and <em>which end the clock stops at</em> — when the courier taps "delivered," or when you actually open the door. Leave that unwritten and two departments will each compute their own "we hit it."</p>
+<h2>The most counterintuitive part: being too good is also a problem</h2>
+<p>Promise 30 minutes, deliver in 12 for years, and that sounds like pure upside. But over time <strong>everyone reorganizes their life around 12 minutes</strong> and nobody keeps a buffer; the day traffic makes it 28 minutes — still within the promise — lunch collapses for the whole building. An internal Google component that half the company depended on hit exactly this: it was so steady that everyone assumed it could never break, so nobody wrote a fallback. The fix was blunt: <strong>when it runs too well, deliberately take it down for a while.</strong> The honest cost: <strong>almost all the effort sits up front</strong> — translating "what users care about" into a number that is both measurable and agreed on is usually harder than watching it afterwards.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p>Don't open with an argument about how many nines. First work out <strong>what users actually care about</strong>, turn it into a number that states where it is measured and over what window, watch <strong>the worst-off sliver</strong> rather than the average, and pick a target <strong>few enough that you dare settle an argument with it</strong>. Too bad needs fixing — and <strong>too good needs people reminded that you can break.</strong></p>
+</div>
+<p class="switch-hint">Want the mechanisms, numbers and diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">You think setting an SLO means choosing how many nines. That is the last step, and the cheapest one. The real work comes before it: <strong>find out what users care about, translate it into something measurable (an SLI), nail down where it is measured and over what window, then pick a target that is just good enough — and that you would actually cite to win a prioritization argument.</strong> An SLA is that target written into a contract with a penalty attached; SRE owns the first two steps and hands the third to business and legal. <strong>Choose the wrong indicator and every nine after it is self-deception.</strong></p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>SLI (Service Level Indicator)</strong>: a carefully defined quantitative measure of one aspect of the service level — request latency, error rate, throughput.</li>
+<li><strong>SLO (Service Level Objective)</strong>: a target value or range for an SLI, e.g. "p99 latency &lt; 100 ms." Set by the team, internal.</li>
+<li><strong>SLA (Service Level Agreement)</strong>: an SLO written into a contract <strong>with consequences for missing it</strong> (usually a refund). External, legally binding.</li>
+<li><strong>Availability</strong>: the fraction of time the service works. This book usually computes it as <strong>successful requests ÷ total requests</strong>. <strong>Durability</strong> is the probability that stored data is still readable much later — specific to storage systems.</li>
+<li><strong>Percentile (e.g. <code>p99</code>)</strong>: line up requests by duration; the 99th-percentile value tells you how bad it is for the worst-off users. <code>p50</code> is the median.</li>
+<li><strong>Aggregation window</strong>: the span of time collapsed into a single number, e.g. "averaged over 1 minute." Change the window and the same data supports a different conclusion.</li>
+<li><strong>Black-box monitoring</strong>: probing the service from outside like a real user would, looking only at whether it responded correctly.</li>
+<li><strong>Error budget</strong>: <code>1 − SLO</code>, the allowance for being broken, spendable on release velocity (covered in Ch3).</li>
+<li><strong>Chubby</strong>: Google's internal distributed lock service, which nearly every large service relies on for leader election and coordination.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This chapter follows Ch3 "Embracing Risk" inside Part II, "Principles." Ch3 argued that a reliability target must be below <code>100%</code> and handed you the error budget, but left a gap: <strong>how do you pick the actual number, and what do you measure?</strong> This chapter fills it. Downstream, Ch6 "Monitoring Distributed Systems" makes alerting SLO-driven. Real-world match: any team that has to answer "is our service good enough," "can we ship this," or "what should we promise externally."</p>
+<h2>What problem it solves</h2>
+<p><strong>Ailment one: the three words get used interchangeably.</strong> An engineer's "SLA" usually means an internal target, a salesperson's means a contract clause, and the dashboard labelled "SLA" is really plotting an SLI. The vocabulary doesn't line up, so the discussion never converges. The book's test is one sentence: <em>ask what happens if it isn't met — if there is no explicit consequence, you are almost certainly looking at an SLO, not an SLA.</em> <strong>Ailment two: measuring the wrong thing.</strong> You measure "did the server return 200"; users care about "did I get a result within a tolerable time." Those agree in normal operation and diverge violently during an incident.</p>
+<p><strong>Ailment three: with no shared referee, priority is decided by volume.</strong> Developers are measured on what they ship, SRE on nothing breaking; the same event pulls the two in opposite directions. Hence the book's sharp self-test: <em>if you can never win a conversation about priorities by quoting a particular SLO, it is probably not worth having that SLO.</em></p>
+<p><strong>What happens if you don't fix it?</strong> Take a checkout endpoint serving <code>20 million</code> calls a day. A success-rate SLO of <code>99.9%</code> allows roughly <code>20,000</code> failures a day; <code>99.99%</code> leaves <code>2,000</code> — one three-minute burst of errors eats the whole thing. One extra decimal place flips the answer to "should we ship this?" — and <strong>if that number was never seriously chosen, the answer comes from the most senior person in the room instead.</strong></p>
+<h2>The core content, properly</h2>
+<h3>1. Three words, separated by one question: is there a consequence?</h3>
+<p><strong>The SLI is the measurement</strong> — note the phrase "carefully defined"; section 3 is entirely about it. <strong>The SLO is the line</strong>, structured either as <code>SLI ≤ target</code> or <code>lower bound ≤ SLI ≤ upper bound</code>. <strong>The SLA is the contract</strong>: an SLO plus what happens when it is missed, usually a refund or penalty. The book is explicit about ownership: <strong>SRE typically does not write SLAs</strong> (they are tied to business and product decisions), but SRE assesses how hard those SLOs are to meet and is responsible for <strong>not triggering the penalty clause</strong>. A concrete contrast: Google Search has no public SLA, only internal SLOs; the products sold to enterprises do have real SLAs.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="e1a" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="24">1 · What you measure → where you draw the line → what you owe</text>
+<rect fill="rgba(91,157,249,0.08)" height="60" rx="8" stroke="#7c8593" width="176" x="24" y="38"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="112" y="62">SLI · indicator</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="112" y="82">e.g. p99 request latency</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="112" y="116">chosen by SRE + users</text>
+<line marker-end="url(#e1a)" stroke="#7c8593" x1="202" x2="228" y1="68" y2="68"></line>
+<rect fill="rgba(91,157,249,0.14)" height="60" rx="8" stroke="#5b9df9" width="176" x="232" y="38"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="320" y="62">SLO · objective</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="320" y="82">e.g. p99 &lt; 300 ms</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="320" y="116">set by SRE + product</text>
+<line marker-end="url(#e1a)" stroke="#7c8593" x1="410" x2="436" y1="68" y2="68"></line>
+<rect fill="rgba(155,108,245,0.18)" height="60" rx="8" stroke="#9b6cf5" width="176" x="440" y="38"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="528" y="62">SLA · contract</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="528" y="82">e.g. bill credit if missed</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="528" y="116">set by business + legal</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="152">2 · Safety margin: the internal target must be stricter than the promise</text>
+<rect fill="rgba(91,157,249,0.10)" height="54" width="210" x="120" y="178"></rect>
+<line stroke="rgba(120,120,130,0.45)" x1="60" x2="615" y1="232" y2="232"></line>
+<line stroke="#9b6cf5" stroke-dasharray="4 3" x1="120" x2="120" y1="172" y2="232"></line>
+<line stroke="#5b9df9" stroke-dasharray="4 3" x1="330" x2="330" y1="172" y2="232"></line>
+<line stroke="#7c8593" stroke-dasharray="4 3" x1="560" x2="560" y1="172" y2="232"></line>
+<text fill="#8fbaff" font-size="9.5" text-anchor="middle" x="225" y="204">chronic problems absorbed here</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="445" y="204">headroom for releases</text>
+<text fill="#9b6cf5" font-family="monospace" font-size="10" text-anchor="middle" x="120" y="250">public SLA 99.9%</text>
+<text fill="#5b9df9" font-family="monospace" font-size="10" text-anchor="middle" x="330" y="250">internal SLO 99.95%</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="560" y="250">measured 99.99%</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="end" x="615" y="272">availability →</text>
+</svg>
+<figcaption>Fig 1 · Top: who owns each layer. Bottom: the public promise needs a safety margin, with the internal target stricter than the contract.</figcaption>
+</figure>
+<p class="tcap">Table 1 · Three words, one question: what happens if it is missed?</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>SLI · indicator</th><th>SLO · objective</th><th>SLA · contract</th></tr></thead>
+<tbody>
+<tr><th>What it is</th><td>A measurable quantity</td><td>A line drawn on that quantity</td><td>The line + <strong>a consequence</strong></td></tr>
+<tr><th>Example</th><td>Successful-request ratio over 5 min</td><td>≥ <code>99.9%</code> over a 28-day window</td><td>Below <code>99.9%</code> → <code>10%</code> bill credit</td></tr>
+<tr><th>Who decides</th><td>SRE together with users</td><td>SRE together with product</td><td><strong>Business and legal</strong>; SRE only assesses risk</td></tr>
+<tr><th>If missed</th><td>N/A — it is just a number</td><td>Freeze releases, reprioritise; <strong>stricter</strong> than the SLA</td><td><strong>You pay</strong>; <strong>looser</strong> than the SLO, and advertise conservatively</td></tr>
+</tbody></table></div>
+<h3>2. Choosing indicators: start from what users care about</h3>
+<p>The most-skipped warning in the chapter: <strong>start from what is easy to measure and you will end up with a pile of useless SLOs.</strong> The right order is to find out what users care about and then approximate it — what they care about is often hard to measure, so you settle for a proxy, but <strong>"finding a proxy for the user's experience" and "picking one of the metrics you already have" are different activities.</strong> Quantity matters too: too many indicators and none is really watched; too few and large parts of the system go unexamined — the answer is a handful (Table 2). One boundary is worth pulling out: <strong>everyone cares about correctness, but it is a property of the data, not of the infrastructure</strong>, so it is usually not SRE's to guarantee.</p>
+<p class="tcap">Table 2 · Default indicators by system type</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>System type</th><th>Core SLIs</th><th>The question being answered</th></tr></thead>
+<tbody>
+<tr><th>User-facing serving</th><td>Availability, latency, throughput</td><td>Could we respond? How long did it take? How many could we handle?</td></tr>
+<tr><th>Storage</th><td>Latency, availability, <strong>durability</strong></td><td>How long to read/write? Can we access it on demand? <strong>Is the data still there?</strong></td></tr>
+<tr><th>Big data / pipelines</th><td>Throughput, end-to-end latency</td><td>How much data processed? How long from ingestion to completion? (per-stage targets where needed)</td></tr>
+<tr><th>Everything</th><td>Correctness</td><td>Is the answer right — <strong>everyone cares, but it is a property of the data, not usually SRE's to meet</strong></td></tr>
+</tbody></table></div>
+<h3>3. Where you measure and how you aggregate — this is where the devils live</h3>
+<p><strong>First, where.</strong> Most indicators are naturally collected server-side, but the book warns that <strong>server-side-only measurement misses an entire class of problems that hurt users without showing up in server metrics</strong> — when page JavaScript stalls, every backend request is a clean <code>200</code> with a beautiful latency while the user stares at a blank page. There, "how long until the page becomes usable" is the better proxy.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 260" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="e2a" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="24">Same request, different measurement point → different "availability"</text>
+<text fill="#9b6cf5" font-size="10.5" text-anchor="middle" x="83" y="56">client-side</text>
+<text fill="#5b9df9" font-size="10.5" text-anchor="middle" x="246" y="56">edge</text>
+<text fill="#5b9df9" font-size="10.5" text-anchor="middle" x="412" y="56">server-side</text>
+<rect fill="rgba(155,108,245,0.18)" height="36" rx="7" stroke="#9b6cf5" width="118" x="24" y="70"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="83" y="93">browser / app</text>
+<rect fill="rgba(91,157,249,0.10)" height="36" rx="7" stroke="#7c8593" width="112" x="190" y="70"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="246" y="93">load balancer</text>
+<rect fill="rgba(91,157,249,0.14)" height="36" rx="7" stroke="#5b9df9" width="112" x="356" y="70"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="412" y="93">backend</text>
+<rect fill="rgba(91,157,249,0.08)" height="36" rx="7" stroke="#7c8593" width="94" x="522" y="70"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="569" y="93">storage</text>
+<line marker-end="url(#e2a)" stroke="#7c8593" x1="144" x2="186" y1="88" y2="88"></line>
+<line marker-end="url(#e2a)" stroke="#7c8593" x1="304" x2="352" y1="88" y2="88"></line>
+<line marker-end="url(#e2a)" stroke="#7c8593" x1="470" x2="518" y1="88" y2="88"></line>
+<text fill="#8fbaff" font-size="9.5" text-anchor="middle" x="83" y="132">closest to real experience</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="83" y="150">costly to instrument, noisy</text>
+<text fill="#8fbaff" font-size="9.5" text-anchor="middle" x="246" y="132">complete and cheap</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="246" y="150">blind to the browser</text>
+<text fill="#8fbaff" font-size="9.5" text-anchor="middle" x="412" y="132">fine-grained, easy to debug</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="412" y="150">200 OK is not a result</text>
+<rect fill="rgba(155,108,245,0.08)" height="52" rx="8" stroke="#9b6cf5" stroke-dasharray="5 4" width="592" x="24" y="186"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="320" y="208">Published by Google CRE: counting server-side 200 OK, availability was 99.7%</text>
+<text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="320" y="228">counting users who actually got results within 5 seconds, only 80%</text>
+</svg>
+<figcaption>Fig 2 · The measurement point decides which truth you see. Server-side metrics are cheap, complete and easy to debug — and furthest from the user.</figcaption>
+</figure>
+<p><strong>Then aggregation, with two traps.</strong> The first is the <em>window</em>: one system serving <code>200</code> requests/s on even seconds and <code>0</code> on odd ones has exactly the same per-minute average as one serving a steady <code>100</code>/s, <strong>yet its instantaneous load is twice as large</strong> — stretch the window and the spike disappears. The second is the <em>average</em>: it hides the fact that most requests are fast while a long tail is very much slower. Hence the principle: <strong>most metrics are better thought of as distributions than as averages.</strong> A high-order percentile (<code>p99</code>, <code>p99.9</code>) gives you a plausible worst case; the median describes the typical case; <strong>the higher the variance, the more the typical experience is shaped by the tail</strong>. The book also cites the finding that people generally prefer a slightly slower system to one with high variance in response time.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 270" xmlns="http://www.w3.org/2000/svg">
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="322" x2="322" y1="16" y2="256"></line>
+<text fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle" x="160" y="26">Same mean, different experience</text>
+<path d="M30,170 C70,170 92,54 118,54 C146,54 168,170 230,170 L230,170 L30,170 Z" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="1.5"></path>
+<path d="M30,170 C60,170 78,96 104,96 C132,96 150,150 200,162 C240,170 268,169 300,170 L300,170 L30,170 Z" fill="rgba(155,108,245,0.13)" stroke="#9b6cf5" stroke-width="1.5"></path>
+<line stroke="rgba(120,120,130,0.45)" x1="24" x2="306" y1="170" y2="170"></line>
+<line stroke="#7c8593" stroke-dasharray="3 3" x1="126" x2="126" y1="50" y2="170"></line>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="126" y="188">both curves share this mean</text>
+<text fill="#5b9df9" font-size="10" x="232" y="46">A · steady</text>
+<text fill="#9b6cf5" font-size="10" x="232" y="64">B · long tail</text>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="160" y="216">Report the mean and A and B look identical;</text>
+<text fill="#8fbaff" font-size="10" text-anchor="middle" x="160" y="234">but B has users waiting tens of times longer.</text>
+<text fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle" x="482" y="26">Several percentiles pin the whole curve</text>
+<path d="M348,170 C378,170 396,60 424,60 C452,60 466,140 512,160 C556,172 590,169 616,170 L616,170 L348,170 Z" fill="rgba(91,157,249,0.13)" stroke="#5b9df9" stroke-width="1.5"></path>
+<line stroke="rgba(120,120,130,0.45)" x1="342" x2="620" y1="170" y2="170"></line>
+<line stroke="#9b6cf5" stroke-dasharray="3 3" x1="424" x2="424" y1="60" y2="170"></line>
+<line stroke="#9b6cf5" stroke-dasharray="3 3" x1="500" x2="500" y1="152" y2="170"></line>
+<line stroke="#9b6cf5" stroke-dasharray="3 3" x1="572" x2="572" y1="168" y2="170"></line>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" text-anchor="middle" x="424" y="188">p90 &lt; 1 ms</text>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" text-anchor="middle" x="500" y="206">p99 &lt; 10 ms</text>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" text-anchor="middle" x="572" y="224">p99.9 &lt; 100 ms</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="482" y="248">(the book's Get RPC example: three targets shape it)</text>
+</svg>
+<figcaption>Fig 3 · Left: two distributions with the same mean; the tail has been averaged away. Right: only several percentiles together constrain the shape of the curve.</figcaption>
+</figure>
+<p><strong>Finally, standardise.</strong> The book recommends turning SLI definitions into <strong>templates</strong>: aggregation interval ("averaged over 1 minute"), aggregation region ("all the tasks in a cluster"), measurement frequency ("every 10 seconds"), which requests count ("HTTP GETs from black-box probes"), how the data is acquired, and how latency is defined ("time to last byte"). <strong>Those fussy conventions are exactly what decide whether two teams can reconcile their numbers</strong> — "time to first byte" and "time to last byte" can differ by an order of magnitude on a streaming response.</p>
+<h3>4. What a usable SLO looks like</h3>
+<p>A usable SLO nails down the <strong>percentile, the aggregation window and the measurement point</strong> (the book's model wording is the last row of Table 3). If the shape of the curve matters, write several targets (<code>90%</code> / <code>1 ms</code>, <code>99%</code> / <code>10 ms</code>, <code>99.9%</code> / <code>100 ms</code>). If your load splits into classes, <strong>define one objective per class</strong>: bulk clients care about throughput (<code>95%</code> of Set calls under <code>1 s</code>), interactive clients about latency (<code>99%</code> of small Set calls under <code>10 ms</code>) — <strong>cram both audiences into one SLO and you usually satisfy neither.</strong> One hard constraint carries over from Ch3: <strong>insisting that an SLO be met 100% of the time is neither realistic nor desirable</strong>; allow an error budget and track its burn daily.</p>
+<h3>5. Turning an SLO into action: a four-step control loop</h3>
+<p>An SLO drives a loop: <strong>(1) measure the SLI → (2) compare it to the SLO and decide whether action is needed → (3) work out what would meet the target → (4) do it.</strong> The book's example: latency is climbing and will miss the SLO in a few hours, so you test the hypothesis that the servers are CPU-bound, then add servers to spread the load. <strong>Without the SLO you know neither whether to act nor when.</strong> This is the upstream of Ch6's rule — alerts should fire because an SLO is about to be missed, not because one machine hit 80% CPU.</p>
+<h3>6. Managing expectations: keep a margin, and don't overachieve</h3>
+<p><strong>Publishing an SLO sets expectations.</strong> Tactic one is a <em>safety margin</em>: run against a tighter internal SLO than the one you advertise, so chronic problems can be handled before they become externally visible. Tactic two is deeply counterintuitive: <strong>don't overachieve</strong> — <strong>users build on the reality of what you offer, not on what you say you'll supply.</strong> Which brings the chapter's most famous story: Google's distributed lock service <strong>Chubby</strong> ran far above its SLO for years, so reliably that dependent services simply assumed it was always up and nobody wrote a fallback path; when it did wobble, a crowd of unrelated services failed with it. SRE's answer was <strong>planned outages</strong>: when quarterly availability exceeds the target, deliberately take the system down to bring it back toward the target line, <strong>surfacing unreasonable dependencies early instead of letting them accumulate until a real outage.</strong></p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 280" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="24">Being too good is a risk too</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" x="14" y="48">measured</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" x="14" y="62">availability</text>
+<line stroke="rgba(120,120,130,0.45)" x1="76" x2="76" y1="40" y2="234"></line>
+<line stroke="rgba(120,120,130,0.45)" x1="76" x2="618" y1="234" y2="234"></line>
+<rect fill="rgba(232,121,75,0.10)" height="78" width="254" x="86" y="80"></rect>
+<line stroke="#5b9df9" stroke-dasharray="5 4" x1="76" x2="618" y1="158" y2="158"></line>
+<polyline fill="none" points="86,80 340,80 352,80 362,152 382,96 424,96 434,152 454,100 494,100 504,152 524,102 566,102 576,152 596,104 612,104" stroke="#9b6cf5" stroke-width="1.9"></polyline>
+<line stroke="#7c8593" stroke-dasharray="4 3" x1="346" x2="346" y1="40" y2="234"></line>
+<text fill="#e8794b" font-size="10.5" text-anchor="middle" x="213" y="70">1 · Actual stays far above the promise</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="213" y="120">hundreds of services assume it never fails</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="213" y="140">→ nobody writes a fallback path</text>
+<text fill="#9b6cf5" font-size="10.5" x="352" y="60">2 · SRE steps in: planned outages</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="482" y="200">pull availability back toward the target line,</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="482" y="218">forcing bad dependencies into the open</text>
+<text fill="#5b9df9" font-family="monospace" font-size="9.5" x="82" y="174">SLO target line</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="end" x="616" y="254">time →</text>
+</svg>
+<figcaption>Fig 4 · The Chubby lesson: availability far above the SLO teaches downstream systems to treat you as infrastructure that never fails.</figcaption>
+</figure>
+<h2>Key trade-offs</h2>
+<p>The trade-offs here are not about which technology to use, but about <strong>where the line goes, how precisely it is written, and who defends it</strong>.</p>
+<p class="tcap">Table 3 · Four ways to write the same latency SLO, from useless to usable</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Wording</th><th>What's wrong</th><th>Consequence</th></tr></thead>
+<tbody>
+<tr><th>"Latency should be low"</th><td>No quantity, no line</td><td>The argument never ends; nobody can rule on compliance</td></tr>
+<tr><th>"Average latency &lt; 100 ms"</th><td>Uses the mean</td><td>The tail is averaged away: <strong>the target is met while a slice of users waits seconds</strong></td></tr>
+<tr><th>"p99 &lt; 100 ms"</th><td>No <strong>window</strong>, no <strong>measurement point</strong></td><td>Two teams each compute "we met it" — over a minute or a day? at the client or the server?</td></tr>
+<tr><th><strong>"99% of Get calls (averaged over 1 minute) complete in under 100 ms, measured across all backend servers"</strong></td><td>—</td><td><strong>Actionable, arguable, alertable</strong>; add p90 / p99.9 if the shape matters</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 4 · The book's five rules for choosing targets, and the cost of breaking each</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Rule</th><th>The book's reasoning</th><th>Typical outcome if ignored</th></tr></thead>
+<tbody>
+<tr><th>Don't pick a target based on current performance</th><td>Copying today's numbers assumes today's architecture is right</td><td>You lock yourself into a system that <strong>requires heroics</strong> to sustain and can't improve without a redesign</td></tr>
+<tr><th>Keep it simple</th><td>Complicated aggregations obscure changes and are hard to reason about</td><td>Nobody can explain why the target broke; step (3) of the loop stalls</td></tr>
+<tr><th>Avoid absolutes</th><td>"Infinitely scalable, always available" is unrealistic and expensive</td><td>The target is decoration from day one</td></tr>
+<tr><th>Have as few SLOs as possible</th><td>Just enough for good coverage — <strong>and you must be able to defend them</strong></td><td>Dozens of SLOs, none ever quoted in a prioritization meeting — <strong>so none should exist</strong></td></tr>
+<tr><th>Perfection can wait</th><td>Refine and tighten as you learn the system</td><td>Set it too strict, miss it, relax it — <strong>a target that has been relaxed has no authority left</strong></td></tr>
+</tbody></table></div>
+<p><strong>Tight or loose?</strong> Too tight: the error budget is empty every week, release freezes go from exception to norm, alert fatigue follows and the team learns to ignore alerts — worse than having no SLO at all. Too loose: users are already leaving one-star reviews while the dashboard stays green. The workable compromise is to <strong>set a defensible line at a user-perceptible threshold, then write down when and by how much it will be tightened</strong>.</p>
+<p><strong>Where to measure, and whether to offer an SLA?</strong> Server-side is cheap, complete and quick to debug but furthest from the user; client-side is closest to real experience at the cost of instrumentation and noise. Most teams end up <strong>mixed</strong>: the primary SLO sits server-side so it can be measured reliably, with a small set of client metrics used for calibration — a lasting divergence between the two means the primary is measuring the wrong thing. As for SLAs, <strong>the broader the audience, the harder it becomes to change or withdraw an unwise one</strong>, so advertise conservatively and pin down how things are counted: Google Compute Engine's SLA defines Downtime as an interruption of <strong>one or more consecutive minutes</strong> — partial minutes don't count at all.</p>
+<h2>Why it matters / in real systems</h2>
+<p>This chapter turned reliability from an adjective into <strong>an engineering contract you can hand over</strong>. The SLO objects and error-budget burn-rate alerts you find today in Prometheus, Grafana and Cloud Monitoring are essentially its productisation — <strong>"can we ship this?" went from being a meeting to being a query.</strong> It also rewrote the right answer in interviews: asked "what's your SLO," replying <code>99.9%</code> is a fail. The passing answer is a chain — <strong>which indicator, measured at which layer, aggregated over which window, why that number, and what concretely happens when it breaks</strong>. That last one is the tell: if you can't name a consequence, it's still decoration.</p>
+<div class="ev">
+<div class="evh">EVIDENCE FROM INDUSTRY · NOT THE BOOK'S CLAIMS, THE COMPANIES' OWN</div>
+<ul>
+<li><strong>Google's CRE team</strong> published a bruising comparison: for the same service, counting server-side <code>200 OK</code> responses gave <code>99.7%</code> availability; counting "users who actually got results within 5 seconds" left about <code>80%</code> (18% slower, 1% timed out, 1% errored) — <strong>confirming that the wrong measurement point makes an SLO self-deception</strong>. <span class="src"><a href="https://cloud.google.com/blog/products/gcp/available-or-not-that-is-the-question-cre-life-lessons" rel="noopener" target="_blank">AJ Ross &amp; Matt Brown, Google Cloud, "CRE life lessons: Available or not?", 2017 ↗</a></span></li>
+<li><strong>Google Cloud</strong> states it plainly: because availability shouldn't be much better than the SLO, "the availability SLO in the SLA is normally a looser objective than the internal availability SLO," with the worked example of <code>99.9%</code> externally over one month against <code>99.95%</code> internally — <strong>confirming both the safety margin and "don't overachieve"</strong>. <span class="src"><a href="https://cloud.google.com/blog/products/devops-sre/sre-fundamentals-slis-slas-and-slos" rel="noopener" target="_blank">Google Cloud, "SRE fundamentals: SLIs, SLAs and SLOs", 2018 ↗</a></span></li>
+<li><strong>The public Compute Engine SLA</strong> is a physical specimen of "SLO plus consequence": <code>≥ 99.99%</code> monthly uptime for instances in multiple zones, <code>≥ 99.9%</code> for a single instance, with <code>10%</code> / <code>25%</code> / <code>100%</code> bill credits by tier when missed — and Downtime defined as one or more consecutive minutes. <span class="src"><a href="https://cloud.google.com/compute/sla" rel="noopener" target="_blank">Google Compute Engine Service Level Agreement ↗</a></span></li>
+<li><strong>A public disagreement</strong>: an SRE at Google Cloud advised in 2020 that "when choosing an SLO, it's best to start from historical trends and assume if enough people are happy with the service now, you're probably doing OK" — in visible tension with the book's rule <strong>don't pick a target based on current performance</strong>. Both positions have merit; it's worth knowing they don't agree. <span class="src"><a href="https://cloud.google.com/blog/products/management-tools/practical-guide-to-setting-slos" rel="noopener" target="_blank">Cindy Quach, Google Cloud, "A practical guide to setting SLOs", 2020 ↗</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and disputes</h2>
+<ul>
+<li><strong>Saying "SLA" when you mean "SLO."</strong> The most common slip and the most costly — one more decimal place promised externally can be a contract that pays out.</li>
+<li><strong>Reporting the mean.</strong> Averages are insensitive to the tail and are almost always the wrong measure. But watching only <code>p99.9</code> has a cost too: high-order percentiles are statistically noisy and swing wildly on low-traffic services, producing false alerts.</li>
+<li><strong>Too many SLOs, too finely drawn.</strong> Dozens of targets nobody can defend is equivalent to none. Self-test: in the last six months, which SLO actually changed a plan?</li>
+<li><strong>"Don't use current performance" vs "start from historical trends"</strong> (above). The book fears being locked into the status quo; Google's own later practical guide fears setting a number nobody believes. A reasonable middle: <strong>let history set the starting point, let user needs set the destination, and write the tightening schedule down.</strong></li>
+<li><strong>"Don't overachieve" doesn't transfer blindly.</strong> Chubby is internal infrastructure whose dependents are colleagues, which is what makes planned outages viable; doing this to <strong>paying external customers</strong> is close to suicidal. The external equivalent is dependency governance through architecture review and failure drills.</li>
+<li><strong>Period limitation</strong>: in 2016 SLOs largely lived in spreadsheets; multi-window burn-rate alerting, SLO-as-code and managed SLO dashboards became standard only afterwards (<em>The Site Reliability Workbook</em>, 2018, supplies that implementation layer). This chapter is the methodological skeleton, not a tooling guide.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>1 · The work happens <strong>before</strong> the nines — find out what users care about, translate it into a measurable SLI, and pin down where it is measured and how it is aggregated.</p>
+<p>2 · The test for the three words: ask what happens if it is missed. <strong>No explicit consequence means SLO; a payout means SLA.</strong> SRE owns SLI and SLO; the SLA belongs to business and legal.</p>
+<p>3 · Choose indicators from the user inward, not from what you can already measure, and keep them <strong>few and sharp</strong>. Serving systems: availability, latency, throughput; storage adds <strong>durability</strong>; pipelines: throughput and end-to-end latency. Correctness is a property of the data and usually not SRE's to meet.</p>
+<p>4 · The measurement point decides the truth: server-side-only measurement misses problems that hurt users invisibly (<code>99.7%</code> vs <code>80%</code>).</p>
+<p>5 · Two aggregation traps: the <strong>window</strong> flattens spikes, the <strong>average</strong> flattens the tail. Treat metrics as <strong>distributions</strong> and use percentiles.</p>
+<p>6 · A usable SLO reads: "99% of Get calls (averaged over 1 minute) complete in under 100 ms, measured across all backend servers." Add percentiles to constrain shape, split by workload class, and never demand 100%.</p>
+<p>7 · Five rules: <strong>don't copy current performance, keep it simple, avoid absolutes, have as few as possible, perfection can wait</strong>. Self-test: could quoting it win a prioritization argument?</p>
+<p>8 · SLOs drive a four-step loop — measure, compare, decide, act — and alerts should fire on an SLO about to break. Two expectation tactics: <strong>keep the internal target stricter than the public promise</strong>, and <strong>don't overachieve</strong> — Chubby was so reliable it was treated as infallible, and planned outages were what pulled expectations back to the line.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Read this page and you have the chapter's core; go to the original for full case studies.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
