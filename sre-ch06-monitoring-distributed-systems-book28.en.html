@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>SRE Ch 6 · Monitoring Distributed Systems — Chapter Deep Read Book 28</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">CHAPTER DEEP READ · SRE · CH 6</p>
+<h1>Monitoring Distributed Systems: if the response is mechanical, it should never wake a human</h1>
+<p class="sub">Site Reliability Engineering · Ch 6 · Google (Rob Ewaschuk) · 2016</p>
+<p class="langbar"><a href="sre-ch06-monitoring-distributed-systems-book28.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>Your payment fails at 2 a.m. and by morning it works again — somewhere in between, a person almost certainly got woken up by a phone. This chapter is about <strong>when that phone should ring</strong>: which numbers a live service ought to watch, what counts as "broken," and what is worth pulling a human out of bed for.</p>
+
+<h2>An analogy first</h2>
+<p>Think of the smoke detectors in your house. How many do you want? One goes off when the kitchen is actually on fire, and you believe it. Install twenty of them, tuned to be maximally sensitive, and they scream every time you fry an onion or take a hot shower — <strong>and within a month you will have pulled every battery out.</strong> On the day there is a real fire, nobody is listening. That is the outcome this chapter spends every page trying to prevent: <strong>an alarm nobody trusts is worse than no alarm at all.</strong></p>
+
+<h2>The strange part</h2>
+<p>Most people assume the goal here is "make it smarter" — ideally a system that works out on its own what broke and why, so humans just wait for the verdict. Google says they <strong>tried that and deliberately walked away</strong>. The reason is mundane: the cleverer the system, the more tangled its insides, and when something really breaks you first have to spend half an hour working out <strong>why it is saying what it's saying</strong> — and you only had five minutes. What they picked instead sounds almost unambitious: <strong>dumb and fast</strong>.</p>
+
+<h2>The core idea: watch four things</h2>
+<p>A service can emit thousands of numbers, but only four are worth watching all the time — the same four that tell you how a restaurant is doing: <strong>how long the food takes</strong>, <strong>how many people walked in</strong>, <strong>how many plates went out wrong</strong>, and <strong>how much room the kitchen has left</strong>. The first three tell you how things are right now. The fourth is the only one that warns you <strong>in advance</strong> — a kitchen about to seize up still gives you time to add hands; once the food genuinely stops coming out, you're already late.</p>
+<p>And here is the trap almost everyone falls into: <strong>when you time how long the food takes, count the wrong orders separately.</strong> Because a collapsed kitchen refuses orders very quickly — "sorry, can't do it" takes two seconds. Mix those in and the number will cheerfully report that <strong>service is faster than ever</strong>. Everything looks wonderful; the restaurant has fallen over.</p>
+
+<h2>The second idea: the bar for waking someone</h2>
+<p>Knowing something is off and waking a person are two different acts. The bar this chapter sets is close to severe: <strong>anything allowed to pull a human out of bed must clear all three — genuinely urgent, genuinely something to be done, and genuinely requiring a human's judgement.</strong> That last one bites hardest: if everything you do after being woken is follow a sheet of paper and click a few times, then <strong>this should never have woken you — a machine should be doing the clicking</strong>. People get woken because a brain is needed, not a pair of hands.</p>
+<p>Follow that bar and things sort themselves into three tiers: needs someone <em>now</em> — ring the phone; needs a person but not tonight — open a ticket and handle it within days; needs nobody — write it to a log, where it sits until the day something breaks and it becomes the only record of what actually happened.</p>
+<p>The honest cost: this approach means that in the first minutes of an outage you will <strong>know that something is broken without being able to say what</strong> — so none of the detailed internal numbers can go away. They just aren't allowed to phone anyone.</p>
+
+<h2>One line to remember</h2>
+<div class="tl">
+<p>Four things are enough: <strong>how slow, how busy, how wrong, how full</strong> — and only the last one warns you early. The bar for waking a human is <strong>urgent, actionable, and needing judgement</strong>; anything you'd answer by clicking through a checklist belongs to a machine. Once there are too many alarms, people stop believing them — and that is worse than having none.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the numbers and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">You'd expect a chapter on monitoring to be about <em>collecting more</em>. It is almost entirely about <strong>subtraction</strong>: Google explicitly gave up on monitoring that tries to learn thresholds and infer root causes, demanding instead that it be <strong>simple, fast and predictable</strong>; it elevates <strong>four golden signals</strong> — latency, traffic, errors, saturation — as the minimum sufficient set; and it puts a near-brutal bar on paging: <strong>every page must be urgent, actionable and require human judgement — and the moment its response is mechanical, it belongs to a machine, not to a sleeping engineer.</strong></p>
+
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Monitoring</strong>: collecting, processing, aggregating and displaying real-time quantitative data about a system (request counts, error counts, processing times, server liveness) — and alerting on it.</li>
+<li><strong>White-box monitoring</strong>: based on what the system exposes from the <strong>inside</strong> — logs, exported counters, runtime statistics. It sees the organs. <strong>Black-box monitoring</strong>: probing <strong>from outside</strong> like a user would, seeing only the result.</li>
+<li><strong>Page</strong>: a notification that wakes a human immediately (phone, SMS, on-call app). <strong>Ticket</strong>: needs a human, but not tonight. <strong>Logging</strong>: nobody reads it routinely; it exists for forensics.</li>
+<li><strong>Symptom vs cause</strong>: the symptom is <em>what</em> is broken (what a user perceives); the cause is <em>why</em> (the internal mechanics).</li>
+<li><strong>Latency</strong>: how long a request takes to serve. <strong>Traffic</strong>: how much demand is arriving. <strong>Saturation</strong>: how "full" the system is — how much headroom is left in its most constrained resource.</li>
+<li><strong>Percentile</strong>: line the values up smallest to largest and take the one at position p%; <code>p99</code> is "the slowest one out of a hundred requests." <strong>Histogram</strong>: counting observations into buckets, which gives you a <strong>distribution</strong> rather than a single average.</li>
+<li><strong>SLO (service level objective)</strong>: the subject of Chapter 4 — the reliability target you set for a service (e.g. "99.9% of requests succeed within 1 second, measured monthly").</li>
+<li><strong>Alert fatigue</strong>: so many noisy alerts that the on-call engineer starts reflexively dismissing them — including the real one.</li>
+</ul>
+</div>
+
+<h2>Where it sits</h2>
+<p>Written by Rob Ewaschuk, this chapter grew out of an internal Google document of his, <em>My Philosophy on Alerting</em>, that circulated widely before the book existed. It <strong>closes Part II, "Principles"</strong>: Chapter 3 taught you to price reliability with an error budget, Chapter 4 to write that target down as an SLO, Chapter 5 to cut toil away — and this one answers <strong>what you should actually watch, and when a human deserves to be woken</strong>. It sets up Part III's practices: the on-call chapter and the troubleshooting chapter both assume your alerts are already clean. In the real world it maps onto every team's Prometheus/Grafana dashboards and PagerDuty rotation.</p>
+
+<h2>The problem it solves</h2>
+<p>"More monitoring can't hurt" is one of the most expensive wrong sentences in the industry. A service can easily export ten thousand metrics, every one of them can carry a threshold alert, and each addition makes the team feel slightly safer. The actual result: <strong>the on-call phone fires a dozen times a night, and twelve of those need nobody to do anything.</strong> Three months later the on-call engineer has built the muscle memory of glance-dismiss-sleep — and the one real alert, sitting in that pile, gets dismissed too. That is what this chapter is for: <strong>not "how do I monitor more," but "how do I make every wake-up worth it."</strong></p>
+<p>It also guards the other flank — finding out you're down only when users complain. But the book's judgement is blunt: <strong>over-monitoring is a harder problem to solve than under-monitoring</strong>, because what you have to repair is a person's trust in the system, and that takes far longer to rebuild than to destroy. The staffing figure the book gives says something too: on a typical SRE team of ten or so, one or two people's time goes into building and maintaining monitoring.</p>
+
+<h2>The core, properly explained</h2>
+
+<h3>1. Start with "why monitor" — five uses, and only one costs sleep</h3>
+<p>The chapter opens by laying the uses out: analysing long-term trends, comparing over time or between experiment groups, <strong>alerting</strong>, building dashboards, and conducting ad hoc retrospective analysis. Of those five, <strong>only alerting consumes human sleep</strong> — and that distinction is the chapter's foundation. Dashboards can be as elaborate as you like, metrics as numerous, logs as long-lived: none of it disturbs anyone. <strong>But the moment a rule is wired to a pager it starts spending money, and the currency is the on-call engineer's attention.</strong> The companion principle is one people routinely forget: <strong>monitoring should never require a human to interpret it.</strong> Software does the interpreting; people are notified only when they need to <strong>take action</strong>. A system that needs someone watching a graph to decide whether a wobble counts is already a design failure.</p>
+
+<figure>
+<svg viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="m1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<rect x="18" y="96" width="120" height="46" rx="8" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"/>
+<text x="78" y="115" font-size="12" fill="#e7ebf1" text-anchor="middle">A signal goes bad</text>
+<text x="78" y="132" font-size="10" fill="#b9c0ca" text-anchor="middle">Ask: is a user hurting?</text>
+
+<line x1="140" y1="110" x2="222" y2="48" stroke="#7c8593" marker-end="url(#m1)"/>
+<line x1="140" y1="119" x2="222" y2="119" stroke="#7c8593" marker-end="url(#m1)"/>
+<line x1="140" y1="128" x2="222" y2="192" stroke="#7c8593" marker-end="url(#m1)"/>
+
+<rect x="228" y="26" width="392" height="46" rx="8" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="244" y="45" font-size="12.5" font-weight="700" fill="#8fbaff">PAGE · wake a human now</text>
+<text x="244" y="62" font-size="10.5" fill="#b9c0ca">Bar: urgent + actionable + needs judgement (all three)</text>
+
+<rect x="228" y="96" width="392" height="46" rx="8" fill="rgba(91,157,249,0.07)" stroke="#7c8593"/>
+<text x="244" y="115" font-size="12.5" font-weight="700" fill="#cdd3db">TICKET · handle within days</text>
+<text x="244" y="132" font-size="10.5" fill="#b9c0ca">A human is needed, but tonight changes nothing</text>
+
+<rect x="228" y="166" width="392" height="46" rx="8" fill="rgba(91,157,249,0.04)" stroke="rgba(120,120,130,0.5)"/>
+<text x="244" y="185" font-size="12.5" font-weight="700" fill="#9aa2ad">LOG · nobody reads it routinely</text>
+<text x="244" y="202" font-size="10.5" fill="#7c8593">On the bad day, it is the only record of what happened</text>
+
+<text x="78" y="176" font-size="10.5" fill="#9b6cf5" text-anchor="middle" font-family="monospace">Response is</text>
+<text x="78" y="194" font-size="10.5" fill="#9b6cf5" text-anchor="middle" font-family="monospace">mechanical? →</text>
+<text x="78" y="211" font-size="10.5" fill="#9b6cf5" text-anchor="middle" font-family="monospace">automate, don't page</text>
+</svg>
+<figcaption>Fig 1 · Monitoring has exactly three useful outputs. Moving up a tier is paid for in human sleep, so the top bar must be the highest.</figcaption>
+</figure>
+
+<h3>2. Symptoms or causes: alert on what broke, dashboard on why</h3>
+<p>The chapter splits the question monitoring answers in two: the <em>symptom</em> — what is broken; and the <em>cause</em> — why. The book's examples are refreshingly concrete: the symptom is "I'm serving HTTP 500s and 404s," the cause might be "database servers are refusing connections"; the symptom can even be "users in Antarctica aren't receiving their animated cat GIFs," with the cause being a CDN that has blacklisted a range of client IPs.</p>
+<p>The conclusion is that <strong>alerts should only fire on symptoms</strong>: a symptom is a user actually suffering, whereas the cause is one of a hundred possibilities and you will frequently guess wrong. Causes live in <strong>dashboards and white-box metrics</strong> — the things you dig through <em>after</em> a symptom has summoned you. And there's an elegant observation here: <strong>in a layered system, one person's symptom is another's cause.</strong> "The database is slow" is a symptom to the DBA and a cause to the frontend that calls it. So symptom and cause aren't absolute labels — they are <strong>relative to the layer you own</strong>.</p>
+
+<h3>3. Black-box and white-box: one wakes people, one explains</h3>
+<p><em>White-box monitoring</em> reads what the system exports from inside: counters from HTTP handlers, logs, runtime statistics. Its unique power is <strong>seeing masked problems and imminent ones</strong> — requests that succeeded only on retry, where the user felt nothing but the retry rate has gone up tenfold; a disk that isn't full yet but will be in four hours at the current rate.</p>
+<p><em>Black-box monitoring</em> probes from outside as a user would, and is <strong>symptom-oriented</strong>: what it reports is always <strong>actively happening</strong> rather than "might be about to." That makes it naturally suited to paging — when it fires, someone really is hurting right now.</p>
+<p>Hence Google's stance: <strong>paging leans heavily on black-box monitoring plus a small number of symptom-oriented white-box rules; the bulk of white-box data goes to dashboards and debugging.</strong> Put the other way round — if most of your pages are wired to internal white-box metrics (CPU is high, a queue is long, a process restarted), you are mostly being woken to handle things no user has noticed.</p>
+
+<figure>
+<svg viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="m2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker>
+<marker id="m2b" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"/></marker></defs>
+
+<rect x="28" y="72" width="580" height="96" rx="10" fill="none" stroke="rgba(91,157,249,0.35)" stroke-dasharray="5 4"/>
+<text x="318" y="90" font-size="10.5" fill="#7c8593" text-anchor="middle" font-family="monospace">inside your system</text>
+
+<rect x="56" y="104" width="94" height="40" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="103" y="128" font-size="11" fill="#b9c0ca" text-anchor="middle">edge / LB</text>
+<rect x="196" y="104" width="94" height="40" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="243" y="128" font-size="11" fill="#b9c0ca" text-anchor="middle">service A</text>
+<rect x="336" y="104" width="94" height="40" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="383" y="128" font-size="11" fill="#b9c0ca" text-anchor="middle">service B</text>
+<rect x="476" y="104" width="94" height="40" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="523" y="128" font-size="11" fill="#b9c0ca" text-anchor="middle">database</text>
+
+<line x1="150" y1="124" x2="190" y2="124" stroke="#7c8593" marker-end="url(#m2)"/>
+<line x1="290" y1="124" x2="330" y2="124" stroke="#7c8593" marker-end="url(#m2)"/>
+<line x1="430" y1="124" x2="470" y2="124" stroke="#7c8593" marker-end="url(#m2)"/>
+
+<text x="103" y="184" font-size="10" fill="#8fbaff" text-anchor="middle" font-family="monospace">white-box</text>
+<text x="243" y="184" font-size="10" fill="#8fbaff" text-anchor="middle" font-family="monospace">white-box</text>
+<text x="383" y="184" font-size="10" fill="#8fbaff" text-anchor="middle" font-family="monospace">white-box</text>
+<text x="523" y="184" font-size="10" fill="#8fbaff" text-anchor="middle" font-family="monospace">white-box</text>
+<line x1="103" y1="146" x2="103" y2="172" stroke="#5b9df9" stroke-dasharray="3 3"/>
+<line x1="243" y1="146" x2="243" y2="172" stroke="#5b9df9" stroke-dasharray="3 3"/>
+<line x1="383" y1="146" x2="383" y2="172" stroke="#5b9df9" stroke-dasharray="3 3"/>
+<line x1="523" y1="146" x2="523" y2="172" stroke="#5b9df9" stroke-dasharray="3 3"/>
+<text x="318" y="207" font-size="10.5" fill="#7c8593" text-anchor="middle">Sees the organs: failures masked by retries, a disk that fills in 4h → dashboards and debugging</text>
+<text x="318" y="226" font-size="10.5" fill="#7c8593" text-anchor="middle">Cost: most "something is off inside" does not mean a user is hurting — wire it to a pager and it is noise</text>
+
+<rect x="196" y="18" width="248" height="36" rx="8" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="320" y="41" font-size="11.5" fill="#e7ebf1" text-anchor="middle">black-box probe: request as a user</text>
+<line x1="270" y1="56" x2="240" y2="98" stroke="#9b6cf5" marker-end="url(#m2b)"/>
+<text x="466" y="41" font-size="10.5" fill="#9b6cf5" font-family="monospace">fires = someone hurts NOW</text>
+<text x="466" y="58" font-size="10" fill="#7c8593" font-family="monospace">→ suited to paging</text>
+</svg>
+<figcaption>Fig 2 · Black-box sees results from outside; white-box sees mechanism from inside. Google's split: page from black-box, diagnose from white-box.</figcaption>
+</figure>
+
+<h3>4. The four golden signals (the chapter's headline)</h3>
+<p>The most-quoted passage in the book: <strong>if you can only measure four metrics of your user-facing system, measure these</strong> — latency, traffic, errors, saturation. The promise is direct: <strong>measure all four and page a human when one is problematic (or, for saturation, nearly so), and your service will be at least decently covered by monitoring.</strong></p>
+<p><strong>Latency</strong>: how long it takes to serve a request. This holds the chapter's most counterintuitive rule: <strong>track the latency of successful and failed requests separately</strong>. A service that has lost its database connection returns <code>HTTP 500</code> <strong>extremely fast</strong> — a few milliseconds to say "I can't." Blend them together and during the worst minutes of an outage your dashboard's average latency will <strong>improve</strong>. The book adds a line that gets quoted constantly: <strong>a slow error is even worse than a fast error</strong> — so failed-request latency deserves watching in its own right.</p>
+<p><strong>Traffic</strong>: a measure of how much demand is being placed on the system, in units that fit the business. For a web service it's usually HTTP requests per second, broken down by the nature of the request (static assets versus dynamic endpoints differ in cost by an order of magnitude); for an audio streaming system it's network I/O rate or concurrent sessions; for a key-value store, transactions and retrievals per second.</p>
+<p><strong>Errors</strong>: the rate of failing requests, in three flavours — <strong>explicit</strong> (an <code>HTTP 500</code>), <strong>implicit</strong> (an <code>HTTP 200</code> carrying the wrong content), and <strong>by policy</strong> (if you committed to one-second responses, a request that succeeds in 1.2 seconds is by definition an error). Implicit errors are the hardest to catch — usually only end-to-end content checks find them — and they are exactly the kind that damage user trust most.</p>
+<p><strong>Saturation</strong>: how "full" the service is, emphasising <strong>the most constrained resource</strong>. It is the only one of the four with a predictive character, and it comes with three points: ① <strong>many systems degrade before utilisation reaches 100%</strong>, so you want a utilisation target rather than waiting for full; ② <strong>rising latency is often a leading indicator of saturation</strong> — measuring <code>p99</code> latency over a small window (say one minute) can flag saturation well before the resource genuinely runs out; ③ it should also answer predictions like "at this rate your database will fill its hard drive in four hours."</p>
+
+<figure>
+<svg viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="m3" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<rect x="250" y="96" width="150" height="66" rx="9" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="2"/>
+<text x="325" y="126" font-size="12.5" fill="#e7ebf1" text-anchor="middle">your service</text>
+<text x="325" y="146" font-size="10" fill="#7c8593" text-anchor="middle" font-family="monospace">a request passes through</text>
+
+<line x1="118" y1="129" x2="244" y2="129" stroke="#7c8593" marker-end="url(#m3)"/>
+<line x1="406" y1="129" x2="530" y2="129" stroke="#7c8593" marker-end="url(#m3)"/>
+
+<rect x="16" y="108" width="100" height="42" rx="7" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"/>
+<text x="66" y="126" font-size="11.5" font-weight="700" fill="#e7ebf1" text-anchor="middle">② TRAFFIC</text>
+<text x="66" y="142" font-size="9.5" fill="#b9c0ca" text-anchor="middle">demand arriving</text>
+
+<rect x="534" y="108" width="100" height="42" rx="7" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"/>
+<text x="584" y="126" font-size="11.5" font-weight="700" fill="#e7ebf1" text-anchor="middle">③ ERRORS</text>
+<text x="584" y="142" font-size="9.5" fill="#b9c0ca" text-anchor="middle">explicit/implicit/policy</text>
+
+<rect x="238" y="24" width="174" height="42" rx="7" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"/>
+<text x="325" y="42" font-size="11.5" font-weight="700" fill="#e7ebf1" text-anchor="middle">① LATENCY</text>
+<text x="325" y="58" font-size="9.5" fill="#b9c0ca" text-anchor="middle">success and failure counted apart</text>
+<line x1="325" y1="68" x2="325" y2="92" stroke="#9b6cf5" stroke-dasharray="3 3"/>
+
+<rect x="238" y="196" width="174" height="42" rx="7" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"/>
+<text x="325" y="214" font-size="11.5" font-weight="700" fill="#e7ebf1" text-anchor="middle">④ SATURATION</text>
+<text x="325" y="230" font-size="9.5" fill="#b9c0ca" text-anchor="middle">headroom in the tightest resource</text>
+<line x1="325" y1="166" x2="325" y2="192" stroke="#9b6cf5" stroke-dasharray="3 3"/>
+
+<text x="66" y="196" font-size="10" fill="#7c8593" text-anchor="middle" font-family="monospace">①②③ say</text>
+<text x="66" y="213" font-size="10" fill="#7c8593" text-anchor="middle" font-family="monospace">"how it is now"</text>
+<text x="584" y="196" font-size="10" fill="#8fbaff" text-anchor="middle" font-family="monospace">④ is the only</text>
+<text x="584" y="213" font-size="10" fill="#8fbaff" text-anchor="middle" font-family="monospace">early warning</text>
+</svg>
+<figcaption>Fig 3 · Where the four golden signals sit on the request path. Three are present tense; saturation is the only leading indicator.</figcaption>
+</figure>
+
+<h3>5. Tails and resolution: why you bucket, and how often to sample</h3>
+<p>The chapter gives the <strong>tail</strong> its own section, because confusing "an average of 100 ms" with "99% of requests at 10 ms and 1% stuck at 5 seconds" is the classic statistical mistake — the averages can match while the user experience could not be further apart. <strong>An average is a lie told by a bimodal distribution.</strong></p>
+<p>The fix isn't computing a few more percentiles; it's <strong>changing how you collect</strong>. Don't compute an average server-side and report it — <strong>bucket requests by how long they took</strong>: <code>0–10ms</code>, <code>10–30ms</code>, <code>30–100ms</code>, <code>100–300ms</code>… with roughly exponentially growing boundaries. Now what you ship is a <strong>distribution</strong>: any percentile can be derived afterwards, and buckets from many machines can simply be added together. This is exactly where the <code>histogram</code> in today's Prometheus comes from.</p>
+<p><strong>Resolution</strong> is the other trade-off: sampling more densely gives a fuller signal, but the cost of collecting, transferring, storing and querying rises with it. The chapter is refreshingly concrete — <strong>for a web service targeting <code>99.9%</code> annual uptime (no more than about nine hours of aggregate downtime a year), probing for a success status more than once or twice a minute is probably unnecessarily frequent; and checking hard-drive fullness more than once every one to two minutes is probably unnecessary too.</strong> Beyond that you are burning money.</p>
+<p>But the opposite failure is just as real: <strong>a per-minute CPU number hides the truth</strong> — the multi-second spikes that drive high tail latency simply vanish in a one-minute average. The book's answer is neat: <strong>sample at high frequency inside the server, aggregate in place, report infrequently</strong> — record CPU utilisation once a second, increment a bucket at <code>5%</code> granularity, and ship the whole bucketed distribution once a minute. <strong>You get per-second resolution while paying per-minute transfer and storage costs.</strong></p>
+
+<figure>
+<svg viewBox="0 0 640 230" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<text x="150" y="20" font-size="12" font-weight="700" fill="#5b9df9" text-anchor="middle">Service A: everyone is fine</text>
+<line x1="40" y1="150" x2="290" y2="150" stroke="#7c8593"/>
+<rect x="48" y="88" width="26" height="62" fill="rgba(91,157,249,0.35)" stroke="#5b9df9"/>
+<rect x="80" y="62" width="26" height="88" fill="rgba(91,157,249,0.35)" stroke="#5b9df9"/>
+<rect x="112" y="96" width="26" height="54" fill="rgba(91,157,249,0.35)" stroke="#5b9df9"/>
+<rect x="144" y="126" width="26" height="24" fill="rgba(91,157,249,0.35)" stroke="#5b9df9"/>
+<rect x="176" y="140" width="26" height="10" fill="rgba(91,157,249,0.35)" stroke="#5b9df9"/>
+<rect x="208" y="146" width="26" height="4" fill="rgba(91,157,249,0.35)" stroke="#5b9df9"/>
+<rect x="240" y="148" width="26" height="2" fill="rgba(91,157,249,0.35)" stroke="#5b9df9"/>
+<text x="150" y="172" font-size="10" fill="#7c8593" text-anchor="middle" font-family="monospace">latency buckets (exponential edges) →</text>
+<text x="150" y="196" font-size="11" fill="#8fbaff" text-anchor="middle">mean ≈ 100ms</text>
+<text x="150" y="214" font-size="10.5" fill="#b9c0ca" text-anchor="middle">the slowest 1% is only slightly slower</text>
+
+<line x1="320" y1="14" x2="320" y2="216" stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4"/>
+
+<text x="480" y="20" font-size="12" font-weight="700" fill="#9b6cf5" text-anchor="middle">Service B: 1% are in hell</text>
+<line x1="360" y1="150" x2="616" y2="150" stroke="#7c8593"/>
+<rect x="368" y="56" width="26" height="94" fill="rgba(91,157,249,0.35)" stroke="#5b9df9"/>
+<rect x="400" y="70" width="26" height="80" fill="rgba(91,157,249,0.35)" stroke="#5b9df9"/>
+<rect x="432" y="132" width="26" height="18" fill="rgba(91,157,249,0.35)" stroke="#5b9df9"/>
+<rect x="464" y="144" width="26" height="6" fill="rgba(91,157,249,0.35)" stroke="#5b9df9"/>
+<rect x="496" y="147" width="26" height="3" fill="rgba(91,157,249,0.35)" stroke="#5b9df9"/>
+<rect x="528" y="146" width="26" height="4" fill="rgba(91,157,249,0.35)" stroke="#5b9df9"/>
+<rect x="560" y="118" width="26" height="32" fill="rgba(155,108,245,0.45)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="573" y="110" font-size="10" fill="#9b6cf5" text-anchor="middle" font-family="monospace">stuck 5s</text>
+<text x="480" y="172" font-size="10" fill="#7c8593" text-anchor="middle" font-family="monospace">latency buckets (exponential edges) →</text>
+<text x="480" y="196" font-size="11" fill="#8fbaff" text-anchor="middle">mean ≈ 100ms (identical)</text>
+<text x="480" y="214" font-size="10.5" fill="#b9c0ca" text-anchor="middle">but 1% of users are furious</text>
+</svg>
+<figcaption>Fig 4 · One average, two completely different services. Only bucketing requests by latency and shipping the distribution reveals the tail on the right.</figcaption>
+</figure>
+
+<h3>6. As simple as possible, no simpler</h3>
+<p>The chapter lands on a value judgement: <strong>a monitoring system should be as simple as possible, but no simpler</strong>. The pressure comes from every direction — catch ever rarer anomalies, add more signal sources, let it infer causes for you — and pile enough of that on and the monitoring system itself becomes a complex system that needs a dedicated owner and that nobody dares touch during an incident. The book's three subtraction tests are genuinely usable:</p>
+<ul>
+<li><strong>The rules that catch real incidents most often should be as simple, predictable and reliable as possible</strong> — they're your workhorses; no cleverness.</li>
+<li><strong>Data collection, aggregation and alerting configuration that is exercised less than once a quarter should be a candidate for removal</strong> — it isn't helping you, and it is quietly rotting (nobody has verified it still works).</li>
+<li><strong>Signals that are collected but not exposed in any prebaked dashboard nor used by any alert are candidates for removal too.</strong></li>
+</ul>
+<p>This also explains Google's apparently unambitious choice: they <strong>deliberately avoided</strong> "magic" monitoring that tries to learn thresholds and infer causality automatically. The reason is practical — when something actually breaks, you'd first have to debug <strong>the magic system's own reasoning</strong>, and an incident gives you no time for that. Their experience is that <strong>simple, fast monitoring plus good tools for post hoc analysis</strong> beats a clever system nobody can follow.</p>
+
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 1 · Black-box vs white-box: which one, when</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Black-box</th><th>White-box</th></tr></thead>
+<tbody>
+<tr><th>Vantage</th><td>Outside the system, probing as a user does</td><td>Counters, logs and statistics exported from inside</td></tr>
+<tr><th>Answers</th><td><strong>What is broken</strong> (symptom)</td><td><strong>Why it is broken</strong> (cause), and what is about to break</td></tr>
+<tr><th>Tense</th><td>Only reports problems <strong>happening right now</strong></td><td>Sees failures masked by retries; predicts ("disk full in 4h")</td></tr>
+<tr><th>Wire to a pager?</th><td><strong>Yes — the mainstay of paging</strong></td><td>Only a few symptom-oriented rules; the rest goes to dashboards</td></tr>
+<tr><th>Cost</th><td>Tells you it broke, not where; the probe itself can misfire</td><td>Most "something is off inside" is invisible to users — a noise source if paged</td></tr>
+</tbody></table></div>
+
+<p class="tcap">Table 2 · The four golden signals: what to measure, and where it goes wrong</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Signal</th><th>What it measures</th><th>Typical instrumentation</th><th>Most common mistake</th></tr></thead>
+<tbody>
+<tr><th>Latency</th><td>Time to serve a request</td><td>Bucketed histogram → <code>p50</code>/<code>p95</code>/<code>p99</code>; success and failure <strong>separately</strong></td><td><strong>Blending failures in</strong>: fast <code>500</code>s during a crash make average latency look <em>better</em></td></tr>
+<tr><th>Traffic</th><td>Demand placed on the system</td><td>Requests/sec split static vs dynamic; streaming → network I/O or concurrent sessions; KV store → transactions and retrievals/sec</td><td>One blanket QPS number hiding request types whose cost differs by an order of magnitude</td></tr>
+<tr><th>Errors</th><td>Rate of failing requests</td><td>Explicit (<code>500</code>) / implicit (<code>200</code> with wrong content) / by policy (promised 1s, 1.2s counts as an error)</td><td>Counting only explicit errors; <strong>implicit ones hurt trust most and hide best</strong></td></tr>
+<tr><th>Saturation</th><td>Headroom in the most constrained resource</td><td>Utilisation and headroom for memory / I/O / CPU; short-window <code>p99</code> latency as a leading indicator; "full in N hours" projections</td><td>Waiting for <code>100%</code> — <strong>most systems degrade well before they are full</strong></td></tr>
+</tbody></table></div>
+
+<p class="tcap">Table 3 · Which tier should a rule output to</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Output</th><th>Test</th><th>Response time</th><th>Examples</th></tr></thead>
+<tbody>
+<tr><th>Page</th><td>Urgent + actionable + <strong>requires human judgement</strong> (all three)</td><td>Immediately</td><td>User-facing error rate breaching the SLO; service unreachable</td></tr>
+<tr><th>Ticket</th><td>A human is needed, but tonight changes nothing</td><td>Within days</td><td>A replica running short on capacity; a certificate expiring in three weeks</td></tr>
+<tr><th>Logging</th><td>Nobody needs to look at it</td><td>Forensics only</td><td>Per-request detail; internal state kept for debugging</td></tr>
+<tr><th><strong>Nothing</strong></th><td>The response is mechanical and scriptable</td><td>—</td><td><strong>Automate it, don't page</strong> — people are woken because a brain is needed, not a pair of hands</td></tr>
+</tbody></table></div>
+
+<p>The chapter also supplies a checklist for "should this alert exist at all," worth pinning to a wall:</p>
+<ul>
+<li>Does this rule detect an <strong>otherwise undetected</strong> condition that is urgent, actionable and <strong>actively or imminently user-visible</strong>?</li>
+<li>Will I ever be able to <strong>ignore this alert knowing it's benign</strong>? Can I exclude that situation from the rule itself?</li>
+<li>Does it <strong>definitely</strong> indicate that users are being negatively affected — and are there cases (drained traffic, test deployments) that should be filtered out?</li>
+<li><strong>What can I do</strong> in response? Must it happen now or could it wait until morning? Can the action be <strong>safely automated</strong>?</li>
+<li>Is <strong>someone else already being paged</strong> for this? If so, at least one of the pages is redundant.</li>
+</ul>
+<p>The accompanying sentiment is equally blunt: <strong>pages should be urgent, important, actionable and intelligent</strong>, and each one should ideally concern a <strong>novel problem</strong> rather than the fortieth recurrence of an old one. Err on the side of deleting a noisy alert — <strong>over-monitoring is a harder problem to solve than under-monitoring.</strong></p>
+
+<h2>Why it matters / in real systems</h2>
+<p>This is probably the most externally influential chapter in the whole book: <strong>the four golden signals have become the industry's shared vocabulary for monitoring.</strong> Open a Grafana service dashboard template, Kubernetes' default monitoring, the metrics a service mesh like Istio generates for free, or a Datadog / New Relic service overview, and the skeleton is some variant of these four; the <code>histogram</code> being a first-class citizen in Prometheus descends directly from this chapter's "ship distributions, not averages." It has also grown two widely used dialects: <strong>RED</strong> (Rate, Errors, Duration) is the four signals trimmed for <strong>request-driven services</strong>, dropping saturation; <strong>USE</strong> (Utilisation, Saturation, Errors) is the <strong>resource-side</strong> dual. The common pairing in practice is <strong>RED for services, USE for machines</strong> — which together cover the four golden signals completely.</p>
+<p>In interviews this chapter is the source of the standard answers on monitoring and observability: <em>should alerts fire on symptoms or causes?</em> (symptoms — causes are one of a hundred and you'll guess wrong) <em>why isn't average latency enough?</em> (an average is a lie told by a bimodal distribution; look at the distribution and the tail) <em>why separate success and failure latency?</em> (failures return fast, so blending them makes an outage look like a performance win). Answer those three cleanly and you've read the chapter properly.</p>
+
+<div class="ev">
+<div class="evh">EVIDENCE FROM THE FIELD · not the book theorising, but what companies published themselves</div>
+<ul>
+<li><strong>Google (the Bigtable over-alerting disaster)</strong>: problems in the lower layers of the storage stack meant the slowest sliver of requests kept tripping alerts — so many that diagnosing them individually was infeasible. The team's fix was counterintuitive: <strong>temporarily dial the SLO back to 75th-percentile request latency and turn email alerts off entirely</strong>, buying enough breathing room to fix the real causes in Bigtable and the storage stack beneath it. Google's own conclusion: <strong>over-monitoring is a harder problem to solve than under-monitoring.</strong><span class="src"><a href="https://sre.google/sre-book/monitoring-distributed-systems/" rel="noopener" target="_blank">SRE Book, Ch 6 "Monitoring Distributed Systems", 2016 ↗</a></span></li>
+<li><strong>Google (the Gmail Workqueue argument)</strong>: early Gmail ran on Workqueue, a system built for batch processing, whose scheduler carried bugs that were hard to fix properly. Tasks being descheduled fired alerts — but Gmail had thousands of tasks, each serving a fraction of a percent of users. SRE built a tool to poke the scheduler in exactly the right way. Which raises the tension the chapter records honestly: <strong>does automating a mechanical response free engineers to fix the real cause, or does it bury the cause so it never gets prioritised?</strong><span class="src"><a href="https://sre.google/sre-book/monitoring-distributed-systems/" rel="noopener" target="_blank">SRE Book, Ch 6, "The Long Run" ↗</a></span></li>
+<li><strong>Google corrects itself two years later</strong>: <em>The SRE Workbook</em> (2018) states plainly that single-threshold alerting cannot be both fast to detect and free of false positives, and proposes <strong>multiwindow, multi-burn-rate</strong> alerting — for a monthly <code>99.9%</code> SLO, page on a <strong>1-hour window at a <code>14.4×</code> burn rate</strong> (about <code>2%</code> of the error budget consumed in an hour), and raise a slower alert on a <strong>6-hour window at <code>6×</code></strong> (about <code>5%</code> in six hours). <strong>This is the most authoritative upgrade to the threshold-alerting model this chapter describes.</strong><span class="src"><a href="https://sre.google/workbook/alerting-on-slos/" rel="noopener" target="_blank">The SRE Workbook, "Alerting on SLOs", 2018 ↗</a></span></li>
+<li><strong>Grafana Labs / Tom Wilkie</strong>: the RED method states openly that it derives from Google's four golden signals, and <strong>deliberately drops saturation</strong> for request-driven microservices, keeping only Rate, Errors and Duration — on the grounds that saturation is better covered by resource-side methods such as USE.<span class="src"><a href="https://grafana.com/blog/the-red-method-how-to-instrument-your-services/" rel="noopener" target="_blank">Grafana Labs, "The RED Method: How to Instrument Your Services" ↗</a></span></li>
+<li><strong>Brendan Gregg (the USE method)</strong>: distils "for every resource, check utilisation, saturation and errors" into a systematic performance checklist that complements this chapter's service-side signals.<span class="src"><a href="https://cacm.acm.org/practice/thinking-methodically-about-performance/" rel="noopener" target="_blank">B. Gregg, "Thinking Methodically about Performance", ACM Queue / CACM 2012 ↗</a></span></li>
+</ul>
+</div>
+
+<h2>Pitfalls and disputes</h2>
+<ul>
+<li><strong>Reading "four golden signals" as "four metrics are all you need"</strong>: it is a <strong>minimum sufficient set, not a complete one</strong>. The four signals exist to <strong>wake people</strong>; troubleshooting still needs plenty of white-box data. Cut down to four and you'll be blind during an incident.</li>
+<li><strong>Black-box only</strong>: it reports only what is broken right now — it cannot see failures masked by retries and cannot predict what is about to break. An entire class of "this is about to go wrong" signals disappears.</li>
+<li><strong>Muddled latency accounting</strong>: blending failed requests into latency manufactures a fake "latency improved" during a major outage. For the same reason, never average the <code>p99</code> across machines — <strong>percentiles are not additive</strong>; add the per-machine bucket counts first, then compute the percentile. (Which is precisely the benefit of shipping distributions rather than single values.)</li>
+<li><strong>"Automate the mechanical response" has its own cost</strong>: automating a band-aid genuinely frees the on-call engineer, but it can also ensure the underlying cause never reaches the top of anyone's list — exactly the Gmail Workqueue argument. The chapter records it honestly as a <strong>tension between short-run and long-run availability</strong> and does not pretend there is one answer.</li>
+<li><strong>Its era shows (the most important caveat)</strong>: written in 2016, in the Borgmon age, the chapter is mostly about <strong>pre-aggregated metrics plus static thresholds</strong>. Two things have changed since. Google itself replaced most static thresholds with <strong>SLO burn-rate alerting</strong> (above). And the <strong>observability</strong> camp — built on distributed tracing and high-cardinality events, with OpenTelemetry as the de facto standard — offers the strongest counterargument to this chapter: <strong>pre-aggregated metrics can only answer questions you thought to ask in advance</strong>, whereas modern microservice failures are mostly "unknown unknowns" that demand raw events you can slice arbitrarily after the fact. Cross-service attribution, a whole dimension this chapter barely touches, is exactly the gap tracing fills.</li>
+<li>In fairness, though: <strong>the chapter's values have not aged</strong>. "Alert on symptoms, not causes," "every page must earn itself," and "the monitoring system must be simple enough to trust mid-incident" hold just as well across metrics, logs and traces. The tooling changed; the tests didn't.</li>
+</ul>
+
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① In one line: this chapter is about <strong>subtraction</strong> — not how to monitor more, but how to make <strong>every wake-up worth it</strong>.</p>
+<p>② Monitoring has five uses (trends, comparison, alerting, dashboards, retrospective analysis) and <strong>only alerting costs human sleep</strong>; monitoring should never require a human to interpret it.</p>
+<p>③ <strong>Alert on symptoms, dashboard the causes</strong>; in a layered system one person's symptom is another's cause. <strong>Black-box wakes people</strong> (it fires only when someone is really hurting); <strong>white-box explains and predicts</strong>.</p>
+<p>④ <strong>The four golden signals</strong>: latency, traffic, errors, saturation. Measure all four, page when one goes bad, and coverage is at least decent. <strong>Saturation is the only leading indicator</strong>, and most systems degrade before <code>100%</code>.</p>
+<p>⑤ The most counterintuitive rule: <strong>count success and failure latency separately</strong> — failures return fast, so blending them makes a serious outage look like a performance win; and a slow error is worse than a fast one.</p>
+<p>⑥ <strong>Ship distributions, not averages</strong>: bucket by latency with roughly exponential edges, derive percentiles afterwards, and add buckets across machines.</p>
+<p>⑦ <strong>Resolution is a cost trade-off</strong>: for a <code>99.9%</code> service, probing status once or twice a minute suffices; but CPU needs <strong>per-second internal sampling, <code>5%</code>-granularity buckets, reported once a minute</strong> to get high resolution cheaply.</p>
+<p>⑧ <strong>Three subtraction tests</strong>: workhorse rules stay simple and predictable; configuration exercised less than quarterly should go; signals on no dashboard and in no alert should go. Google deliberately avoided "magic" root-cause inference — during an incident you have no time to debug it.</p>
+<p>⑨ <strong>The bar for waking a human</strong>: urgent + actionable + requires judgement. <strong>If the response is mechanical, give it to a machine.</strong> Err on the side of deleting noisy alerts — <strong>over-monitoring is a harder problem to solve than under-monitoring.</strong></p>
+</div>
+</div>
+
+<footer>Chapter Deep Read · Reading this page ≈ getting the core of the chapter; for the full case studies and detail, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
