@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>SRE Ch 8 · Release Engineering — Chapter Deep Read Book 29</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">Chapter Deep Read · SRE · Ch 8</p>
+<h1>Release Engineering: Shipping Fast Is the Result — Reproducibility Is the Foundation</h1>
+<p class="sub">Site Reliability Engineering · Ch 8 · Dinah McNutt · Google · 2016</p>
+<p class="langbar"><a href="sre-ch08-release-engineering-book29.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The app on your phone was 3.2.1 yesterday and is 3.2.2 today. Between an engineer typing the last line of code and that new version actually running on your phone sits a whole sequence of moves: compile, package, test, roll out in stages. Chapter 8 of Google's SRE book is about that stretch of road — and it takes a firm position: <strong>this should not be odd-job work that whoever is free picks up. It is a discipline, with dedicated engineers, stated principles and purpose-built tooling</strong>, called release engineering.</p>
+<h2>An analogy first</h2>
+<p>Think of releasing software as <strong>running a pharmaceutical plant</strong>. Writing code is developing the formula; releasing is turning that formula into actual pills. What such a plant cares about most is never «how much did we produce today». It is three other things: the same formula, on any production line, months apart, must yield <strong>identical</strong> pills; every batch must be <strong>traceable</strong> — who made it, from which raw materials, on which day; and if something goes wrong you must be able to <strong>recall exactly that batch</strong> rather than shut the whole plant. Software releases want precisely those same three things.</p>
+<h2>Why the old way was hard</h2>
+<p>The old way: on release day, the person who knows the machine best logs in and types out a procedure they keep in their head. That hurts in three places. <strong>Move to another machine and you can no longer produce the same thing</strong> — their laptop happened to have a library nobody else had, hence «but it works on mine». <strong>Ship twice a year and each release carries thousands of changes</strong>, so when something breaks nobody knows which change did it. And <strong>going back to the previous version means building it all over again</strong> — tens of minutes at best, and what comes out may not even match what was there before.</p>
+<h2>The core idea: four rules</h2>
+<p>① <strong>Self-service.</strong> The central team builds tools rather than guarding a gate; every team ships on its own schedule. Otherwise that central team becomes the queue the whole company waits in.</p>
+<p>② <strong>Small steps, often.</strong> The more often you ship, the fewer changes ride along each time; when something breaks there are only a handful of suspects, and you spot the culprit at a glance.</p>
+<p>③ <strong>A sealed kitchen that brings its own ingredients.</strong> When compiling, nothing «already lying around on this machine» may be used — every tool and ingredient is pinned to an exact version and stored alongside the source. So the same source, on this machine today and that machine three months from now, bakes the identical loaf. The payoff is concrete: when production is on fire you can go back to the version from three months ago and add just that one fix, instead of dragging along everything everyone else changed since.</p>
+<p>④ <strong>Turnstiles and a ledger.</strong> Who may change code, who may approve a release, who may push to production — all of it enforced by the tools, with every step recorded automatically.</p>
+<h2>And half the potholes are in the instruction sheet</h2>
+<p>What actually takes production down is often not the program itself but the <strong>configuration</strong> — the flags, the parameters, the addresses. This chapter's advice: <strong>treat configuration as goods too</strong> — package it, version it, and be able to roll it back on its own. Shipping config bundled with the program is the least effort, but then flipping one flag means re-releasing the whole program; letting the program read config from somewhere outside at runtime is the most flexible, but then nobody can say for sure which version is actually in effect right now.</p>
+<h2>Remember this one thing</h2>
+<div class="tl">
+<p>Release engineering is not after «ship fast» — it is after <strong>shipping something you can reproduce, trace, and roll back on its own</strong>: the same source builds the same program on any machine, configuration and program each carry their own version number, and every approval leaves a record. Speed is what naturally follows once those hold. One honest cost: this takes real up-front investment in people and tooling, so a small team copying Google's exact setup is a poor trade — what travels is the principles, not the headcount.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the branching model and the diagrams? <a data-mode="deep">→ switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">SRE Chapter 8 promotes «releasing» from a one-off act at the end of a project to an engineering discipline with <strong>its own job function, explicit principles and dedicated tooling</strong>. Its four philosophies — <strong>self-service, high velocity, hermetic builds, enforcement of policies</strong> — all point at one goal: make the path from source to production <strong>reproducible, auditable and independently reversible</strong>. The counterintuitive lesson is that the foundation is not how fast you ship, but whether the same source builds the same binary on any machine at any time — and that the most underrated element in outages is <strong>how configuration gets shipped</strong>.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Release engineering</strong>: designing and automating the path that turns source code into a running production service — building, packaging, testing, deploying and rolling back.</li>
+<li><strong>Build / artifact</strong>: compiling and linking source into something runnable; the output itself is the artifact, or binary.</li>
+<li><strong>Mainline (trunk)</strong>: the single line everyone commits to, always sitting at its latest state (head).</li>
+<li><strong>Release branch</strong>: a copy taken from the mainline at one point in time, used to freeze the contents of one release.</li>
+<li><strong>Cherry-pick</strong>: taking exactly one commit from the mainline onto the release branch, without the other changes around it.</li>
+<li><strong>Hermetic build</strong>: a build insensitive to what is installed on the build machine — toolchain and dependencies pinned to known versions, the process self-contained.</li>
+<li><strong>Package / package manager</strong>: a versioned, distributable unit holding binaries, data and config; the package manager builds, signs and distributes it.</li>
+<li><strong>Label</strong>: a <em>movable</em> nameplate stuck on a package version, such as <code>dev</code> / <code>canary</code> / <code>production</code>.</li>
+<li><strong>Canary</strong>: pushing a new version to a small slice of machines or traffic first and watching before going wide; the whole staged spread is a <strong>rollout</strong>.</li>
+<li><strong>ACL (access control list)</strong>: a list of who may perform which operation, which the tooling enforces.</li>
+<li><strong>Config skew</strong>: the binary was built from a frozen branch revision but the configuration is read from mainline head — the two no longer agree, and behaviour drifts from expectation.</li>
+<li><strong>Borg</strong>: Google's cluster manager (the ancestor of Kubernetes' ideas), scheduling jobs across tens of thousands of machines.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The author, Dinah McNutt, is a Google release engineer; the chapter sits in Part II, «Principles», following Chapter 7 on the evolution of automation at Google and leading into Chapter 9 on simplicity. It meshes directly with Chapter 3 («Embracing Risk») and Chapter 4 (SLOs): <strong>the error budget decides whether you dare ship, release engineering decides whether you can ship safely</strong>. Its real-world counterparts are CI/CD pipelines, Bazel, container registries, Spinnaker / Argo, and later on software supply-chain security.</p>
+<h2>What problem the chapter solves</h2>
+<p>In most companies «releasing» looks like this: at the end of the project, whoever knows the environment best follows a half-written procedure to upload a package, edit a few configs and restart. That works while the team is small and collapses once it is not. Google's scale gives a reference point: their 2016 published figures were <strong>over 2 billion lines of code in a single repository and roughly 40,000 commits per working day</strong> (Potvin &amp; Levenberg, CACM 2016). At that size, manual releasing cannot even enumerate which commits are shipping today.</p>
+<p>It collapses in four places, each answered by one part of the chapter:</p>
+<ul>
+<li><strong>Not reproducible</strong> — the build's output depends on what is installed on the build machine. Six months later you cannot reconstruct a production version to chase an old bug.</li>
+<li><strong>Not auditable</strong> — who approved this push, which commits are actually inside this binary: unanswerable. Postmortems and compliance reviews both stall here.</li>
+<li><strong>Not independently reversible</strong> — config and binary are welded together, so changing one timeout means re-running the whole build-and-test chain, tens of minutes at best; and every minute of an incident window is expensive.</li>
+<li><strong>Not scalable</strong> — every team queues behind one central release group, and release cadence is capped by those few people's capacity.</li>
+</ul>
+<p>The cost of not fixing it is quantified in this book's own introduction: <strong>SRE has found that roughly 70% of outages are due to changes in a live system</strong>. The release path is itself the number-one risk surface for reliability.</p>
+<h2>The core content, explained</h2>
+<h3>1. First, establish a job function: the release engineer</h3>
+<p>The chapter opens by asserting that <strong>release engineering is a distinct engineering discipline, not somebody's side task</strong>. Google's release engineers understand source control, compilers and build configuration languages, automated build tooling, package managers and installers — and they sit with product developers and SREs <strong>at the start of a project</strong> to settle how this service will be built, shipped, rolled back and configured. The counterintuitive part is right there: most teams treat releasing as cleanup after development, whereas this chapter's position is that <strong>how you release is an architectural decision</strong>. <em>Release engineering is not an afterthought</em> — budgeting for it at the beginning is far cheaper than retrofitting a grown system.</p>
+<h3>2. The four philosophies</h3>
+<p>These four are the chapter's skeleton, and they interlock: drop one and the other three leak.</p>
+<p><strong>① Self-service.</strong> The central release team builds tools and defines best practices; it does <strong>not</strong> press everyone's release button. The reasoning is plain: at a scale of thousands of services, any central step requiring a human becomes a queue.</p>
+<p><strong>② High velocity.</strong> User-facing software should ship frequently, ideally as <em>Push on Green</em> — <strong>if all tests pass, that build goes out</strong>. Some Google teams build hourly and then select a build to deploy. The real payoff of frequent releases is not that features arrive sooner, but that <strong>adjacent versions differ by very little</strong>: the suspect set shrinks from thousands of commits to dozens, which makes both diagnosis and rollback cheap.</p>
+<p><strong>③ Hermetic builds.</strong> The build is insensitive to what the build machine has installed — compilers, libraries and toolchain are pinned to specific versions and kept under version control, and the process is self-contained. The benefit lands in two scenarios: <strong>reproduction</strong> (take a month-old revision and build a binary byte-identical to what was in production) and <strong>hot-fixing</strong> (return to that revision and cherry-pick one patch, without carrying a month of everyone else's changes into production).</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 660 262" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="h1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="h2" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker>
+</defs>
+<text fill="#e8794b" font-size="12" font-weight="700" x="16" y="24">① Non-hermetic: output depends on what the build machine has installed</text>
+<rect fill="rgba(155,108,245,0.18)" height="34" rx="6" stroke="#9b6cf5" width="112" x="16" y="52"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="72" y="73">source rev#1234</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="196" x="150" y="38"></rect>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="248" y="57">build machine A · gcc 9 / libssl 1.1</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="196" x="150" y="82"></rect>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="248" y="101">build machine B · gcc 11 / libssl 3.0</text>
+<line marker-end="url(#h1)" stroke="#7c8593" x1="128" x2="146" y1="64" y2="54"></line>
+<line marker-end="url(#h1)" stroke="#7c8593" x1="128" x2="146" y1="74" y2="95"></line>
+<rect fill="rgba(224,107,107,0.14)" height="30" rx="6" stroke="#e06b6b" width="90" x="376" y="38"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="421" y="57">binary X</text>
+<rect fill="rgba(224,107,107,0.14)" height="30" rx="6" stroke="#e06b6b" width="90" x="376" y="82"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="421" y="101">binary Y</text>
+<line marker-end="url(#h1)" stroke="#7c8593" x1="346" x2="372" y1="53" y2="53"></line>
+<line marker-end="url(#h1)" stroke="#7c8593" x1="346" x2="372" y1="97" y2="97"></line>
+<text fill="#e06b6b" font-family="monospace" font-size="12.5" font-weight="700" text-anchor="middle" x="560" y="62">X ≠ Y</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="560" y="82">not reproducible</text>
+<text fill="#5b9df9" font-size="12" font-weight="700" x="16" y="152">② Hermetic: toolchain and dependencies pinned in version control</text>
+<rect fill="rgba(155,108,245,0.18)" height="44" rx="6" stroke="#9b6cf5" width="112" x="16" y="178"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="72" y="196">source rev#1234</text>
+<text fill="#cbd2da" font-size="9.5" text-anchor="middle" x="72" y="212">+ pinned toolchain</text>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="6" stroke="#7c8593" width="196" x="150" y="170"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="248" y="188">any build machine A</text>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="6" stroke="#7c8593" width="196" x="150" y="206"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="248" y="224">any build machine B</text>
+<line marker-end="url(#h1)" stroke="#7c8593" x1="128" x2="146" y1="192" y2="184"></line>
+<line marker-end="url(#h1)" stroke="#7c8593" x1="128" x2="146" y1="208" y2="220"></line>
+<rect fill="rgba(91,157,249,0.16)" height="32" rx="6" stroke="#5b9df9" stroke-width="2" width="118" x="376" y="186"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="435" y="206">the same binary X</text>
+<line marker-end="url(#h2)" stroke="#5b9df9" x1="346" x2="372" y1="184" y2="196"></line>
+<line marker-end="url(#h2)" stroke="#5b9df9" x1="346" x2="372" y1="220" y2="208"></line>
+<text fill="#5b9df9" font-family="monospace" font-size="10" text-anchor="middle" x="570" y="196">reproducible</text>
+<text fill="#5b9df9" font-family="monospace" font-size="10" text-anchor="middle" x="570" y="214">hot-fixable</text>
+</svg>
+<figcaption>Fig 1 · Hermetic builds: once the toolchain and dependencies are pinned in version control, one source revision yields the same binary on any machine at any time — the precondition for «go back to the version from three months ago».</figcaption>
+</figure>
+<p><strong>④ Enforcement of policies and procedures.</strong> «Who may do what» stops being a verbal agreement and becomes a <em>gated operation</em> in the tooling: approving a source change, creating a release branch, approving a cherry-pick, pushing a version to production, editing the build configuration — each behind an ACL. The by-product matters just as much: an <strong>automatically generated audit trail</strong>, so every release can answer which commits it contains, who approved it and when it went out.</p>
+<h3>3. From commit to binary: mainline plus a one-way release branch</h3>
+<p>The branching model has just two rules. <strong>All code is committed to the head of the mainline</strong> — that is trunk-based development. And <strong>releases are not cut from the mainline directly; a release branch is taken at a specific revision, and changes on that branch are never merged back</strong> — to fix a bug you fix it on the mainline first, then cherry-pick that commit onto the branch.</p>
+<p>Why build it this way? Releasing straight from mainline head means the contents of your release keep moving — by the time the build runs, dozens of other people's commits have landed. Branching <strong>freezes the release contents</strong> at one definite revision, and the one-way cherry-pick guarantees that <strong>fixing one bug brings in exactly that one fix</strong>. This is also where hermetic builds pay off: rebuilding on the branch produces a binary byte-identical to the original.</p>
+<p>Testing happens twice: <strong>continuous integration runs unit tests against the mainline on every submit</strong>, catching broken builds fast; and at release time <strong>all unit tests are re-run at the branch revision</strong> — that pass is not only about finding bugs, but about producing an audit record bound to this specific release.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 660 292" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="p1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="p2" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="16" y="24">mainline · everyone commits to head</text>
+<line stroke="#7c8593" stroke-width="1.5" x1="20" x2="636" y1="58" y2="58"></line>
+<circle cx="70" cy="58" fill="#7c8593" r="4.5"></circle>
+<circle cx="130" cy="58" fill="#7c8593" r="4.5"></circle>
+<circle cx="190" cy="58" fill="#5b9df9" r="6.5"></circle>
+<circle cx="250" cy="58" fill="#7c8593" r="4.5"></circle>
+<circle cx="310" cy="58" fill="#9b6cf5" r="6"></circle>
+<circle cx="370" cy="58" fill="#7c8593" r="4.5"></circle>
+<circle cx="430" cy="58" fill="#7c8593" r="4.5"></circle>
+<circle cx="490" cy="58" fill="#7c8593" r="4.5"></circle>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" text-anchor="middle" x="190" y="44">rev#1234</text>
+<text fill="#c9a0f5" font-family="monospace" font-size="9.5" text-anchor="middle" x="310" y="44">bug fix</text>
+<line marker-end="url(#p2)" stroke="#9b6cf5" x1="190" x2="190" y1="65" y2="100"></line>
+<line stroke="#9b6cf5" stroke-width="2" x1="190" x2="570" y1="104" y2="104"></line>
+<circle cx="190" cy="104" fill="#9b6cf5" r="5"></circle>
+<circle cx="400" cy="104" fill="#9b6cf5" r="5"></circle>
+<path d="M310,65 C348,72 366,96 396,103" fill="none" marker-end="url(#p2)" stroke="#9b6cf5" stroke-dasharray="4 3"></path>
+<text fill="#9b6cf5" font-size="10" x="198" y="122">release branch · contents frozen here</text>
+<text fill="#7c8593" font-size="10" x="412" y="90">cherry-pick only this one</text>
+<text fill="#7c8593" font-size="10" x="412" y="122">one-way: never merged back</text>
+<rect fill="none" height="88" rx="8" stroke="rgba(91,157,249,0.45)" stroke-dasharray="5 4" width="400" x="20" y="182"></rect>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="220" y="200">Rapid · blueprint-driven, jobs run on Borg</text>
+<rect fill="rgba(91,157,249,0.1)" height="44" rx="6" stroke="#7c8593" width="114" x="34" y="212"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="91" y="230">hermetic build</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="91" y="246">Blaze / Bazel</text>
+<rect fill="rgba(91,157,249,0.1)" height="44" rx="6" stroke="#7c8593" width="114" x="160" y="212"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="217" y="230">rerun all tests</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="217" y="246">at the branch rev</text>
+<rect fill="rgba(91,157,249,0.1)" height="44" rx="6" stroke="#7c8593" width="114" x="286" y="212"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="343" y="230">MPM package</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="343" y="246">signed + labeled</text>
+<line marker-end="url(#p1)" stroke="#7c8593" x1="148" x2="158" y1="234" y2="234"></line>
+<line marker-end="url(#p1)" stroke="#7c8593" x1="274" x2="284" y1="234" y2="234"></line>
+<line marker-end="url(#p1)" stroke="#7c8593" x1="420" x2="450" y1="226" y2="226"></line>
+<rect fill="rgba(91,157,249,0.16)" height="52" rx="6" stroke="#5b9df9" stroke-width="2" width="182" x="454" y="200"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="545" y="220">Sisyphus rollout</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="545" y="238">canary → phased → full</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="220" y="278">produces a trustworthy artifact</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="545" y="278">decides how fast it spreads</text>
+</svg>
+<figcaption>Fig 2 · From commit to production: trunk-based development plus a one-way release branch (cherry-picks in, never merged back); Rapid produces a trustworthy artifact, Sisyphus decides the pace at which it spreads.</figcaption>
+</figure>
+<h3>4. Packaging and labels: making «which version is in production» a query</h3>
+<p>Build outputs are packaged by Google's package manager, <strong>MPM (Midas Package Manager)</strong>: binaries, data files and necessary config in one versioned unit, uniquely identified by <strong>name + version + build ID</strong> and <strong>signed</strong> to prove provenance. The key design is the <strong>label</strong>: nameplates such as <code>dev</code>, <code>canary</code> and <code>production</code> can be attached to a package version, and <strong>labels can be moved</strong>. So «which version is production running» stops being something a human remembers and becomes a single query, while releasing and rolling back reduce to <strong>moving a label to a different package version</strong> — no rebuild required. Insisting on image digests rather than <code>latest</code> in Kubernetes today is the same idea in modern dress.</p>
+<h3>5. Rapid and Sisyphus: producing a release ≠ spreading it</h3>
+<p><strong>Rapid</strong> is Google's automated release system: a <em>blueprint</em> describes the project's build targets, test targets and deployment method, and Rapid then automatically creates the release branch, runs the hermetic build, runs tests in parallel, produces and signs MPM packages and applies labels — with the work itself running as jobs on Borg.</p>
+<p><strong>Sisyphus</strong> is a general-purpose rollout automation framework developed by SRE: a rollout is defined as a sequence of tasks, expressing anything from «push everywhere at once» to «phase across clusters, bake between batches, canary first». The division of labour is clean — <strong>Rapid produces a trustworthy, labelled artifact; Sisyphus decides the pace and order in which it reaches production</strong>. That separation is itself portable advice: <em>the correctness of the artifact</em> and <em>risk control during the spread</em> are two different problems, and they do not belong in one script.</p>
+<h3>6. Configuration management: the section most often skipped, and most often the cause</h3>
+<p>The chapter says it plainly: configuration management is a notoriously subtle source of instability. The difficulty is that configuration and binaries have <strong>mismatched lifecycles</strong> — the binary is frozen on a release branch while the config wants to change at any moment. The book lists four schemes, which are really four points along a <strong>coupling</strong> axis.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 700 212" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="c1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="13" y="22">Configuration vs binary: the coupling spectrum</text>
+<rect fill="rgba(91,157,249,0.08)" height="52" rx="6" stroke="#7c8593" width="158" x="13" y="40"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="92" y="63">same package</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="92" y="80">config ships with binary</text>
+<rect fill="rgba(91,157,249,0.18)" height="52" rx="6" stroke="#5b9df9" stroke-width="2" width="158" x="189" y="40"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="268" y="63">separate config package</text>
+<text fill="#8fbaff" font-size="9.5" text-anchor="middle" x="268" y="80">own version · own rollback</text>
+<rect fill="rgba(91,157,249,0.08)" height="52" rx="6" stroke="#7c8593" width="158" x="365" y="40"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="444" y="63">config at mainline head</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="444" y="80">picked up at build time</text>
+<rect fill="rgba(91,157,249,0.08)" height="52" rx="6" stroke="#7c8593" width="158" x="541" y="40"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="620" y="63">external store</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="620" y="80">read at runtime</text>
+<line stroke="#7c8593" stroke-dasharray="3 3" x1="92" x2="92" y1="92" y2="114"></line>
+<line stroke="#5b9df9" stroke-dasharray="3 3" x1="268" x2="268" y1="92" y2="114"></line>
+<line stroke="#7c8593" stroke-dasharray="3 3" x1="444" x2="444" y1="92" y2="114"></line>
+<line stroke="#7c8593" stroke-dasharray="3 3" x1="620" x2="620" y1="92" y2="114"></line>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="13" x2="688" y1="116" y2="116"></line>
+<text fill="#7c8593" font-family="monospace" font-size="10" x="13" y="136">tightest coupling · hardest to get wrong</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="end" x="688" y="136">most flexible · easiest to skew</text>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="92" y="166">changing one flag</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="92" y="182">means a full re-release</text>
+<text fill="#8fbaff" font-size="10" text-anchor="middle" x="268" y="166">recommended here</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="268" y="182">cost: a second release path</text>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="444" y="166">config skew risk</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="444" y="182">branch binary × head config</text>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="620" y="166">outside the release flow</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="620" y="182">which one is live now?</text>
+</svg>
+<figcaption>Fig 3 · How configuration ships is a choice of coupling: further left is harder to get wrong but more rigid; further right is more flexible but makes «which version is actually live» harder to answer.</figcaption>
+</figure>
+<p>The concrete costs of all four are in Table 1 below. The one point worth stating here: the chapter's recommendation is to <strong>package configuration separately</strong> — applying the same hermetic, versioned discipline to config, so binary and configuration each carry a version, ship independently, and <strong>roll back independently</strong>. Helm charts, Kustomize and GitOps all descend from this idea.</p>
+<h2>Key trade-offs and how to choose</h2>
+<p class="tcap">Table 1 · The four places configuration can live (the chapter's own taxonomy)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Scheme</th><th>Re-release the binary to change config?</th><th>Independent rollback?</th><th>Main cost</th><th>Fits</th></tr></thead>
+<tbody>
+<tr><th>Config at mainline head</th><td>No</td><td>Possible, but version pairing is fuzzy</td><td><strong>Config skew</strong>: branch binary against head config</td><td>The earliest approach; weak binary/config coupling</td></tr>
+<tr><th>Same package as binary</th><td><strong>Yes</strong>, the full pipeline</td><td>Only together with the binary</td><td>Inflexible; flipping one flag is expensive</td><td>Few config files that rarely change</td></tr>
+<tr><th>Separate config package</th><td>No</td><td><strong>Yes, with explicit versions</strong></td><td>A second release path to maintain</td><td><strong>The chapter's recommended default</strong>; today's Helm / GitOps</td></tr>
+<tr><th>External store, read at runtime</th><td>No, and it takes effect immediately</td><td>Depends on that store's own versioning</td><td>Escapes the release flow's versioning and audit</td><td>Rate limits, feature flags — config that must be dynamic</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · Release cadence: what each gear actually costs</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Push on Green</th><th>Release train (fixed cadence)</th><th>Big release (quarterly / half-yearly)</th></tr></thead>
+<tbody>
+<tr><th>Changes per version</th><td>A few to a few dozen commits</td><td>Hundreds</td><td><strong>Thousands</strong></td></tr>
+<tr><th>Diagnosis when it breaks</th><td><strong>Tiny suspect set</strong></td><td>Bisect; hours</td><td>Needle in a haystack; days</td></tr>
+<tr><th>Rollback granularity</th><td>One version ≈ a few commits</td><td>One version = a week of features</td><td>Effectively irreversible; fix forward</td></tr>
+<tr><th>Prerequisites</th><td><strong>Tests strong enough to be the only gate</strong> + canary + fast rollback</td><td>Reasonably complete regression suite</td><td>Manual acceptance + release windows</td></tr>
+<tr><th>Fits</th><td>Server-side systems you can canary and revert</td><td>Mobile apps needing store review</td><td>Shrink-wrapped software, embedded firmware</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 3 · Branching: why Google picked mainline plus a one-way release branch</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Ship straight from mainline head</th><th>Mainline + one-way release branch (Google)</th><th>Long-lived branches merged both ways (GitFlow-style)</th></tr></thead>
+<tbody>
+<tr><th>Release contents</th><td>Moving until the build runs</td><td><strong>Frozen at a definite revision</strong></td><td>Whatever got merged; hard to state</td></tr>
+<tr><th>Unrelated changes riding along</th><td>High</td><td><strong>Low: one cherry-picked fix at a time</strong></td><td>High: a merge drags in whole histories</td></tr>
+<tr><th>Hot-fix cost</th><td>Low, but ships other people's work too</td><td>Low: branch rev plus one patch</td><td>High: resolve merge conflicts first</td></tr>
+<tr><th>Branch upkeep</th><td>None</td><td>Low (branches short-lived and one-way)</td><td><strong>High, and it climbs with branch age</strong></td></tr>
+<tr><th>Prerequisites</th><td>Very strong CI and canarying</td><td>Hermetic builds, or you cannot rebuild the same binary</td><td>None in particular</td></tr>
+</tbody></table></div>
+<p><strong>How should a small team cut this down?</strong> <strong>Hermetic builds</strong> and <strong>independently versioned configuration</strong> have the best return and are worth doing at any size (a pinned base image plus dependency lockfiles gets you most of the way). <strong>Self-service</strong> is satisfied for free while headcount is low. <strong>Enforcement</strong> can start from a single minimal rule: production deploys require one code review and leave a record of who approved. What should not be copied is the org chart — a dedicated release engineering team is the answer at a scale of thousands of services.</p>
+<h2>Why it matters / in real systems</h2>
+<p>The value of this chapter is that it states the <strong>criteria</strong> underneath every CI/CD practice in use today. Use it as a checklist against your own pipeline: can you take a three-month-old commit and reproduce the binary that was running then (hermetic builds)? Can you say in one sentence which artifact production is running, which commits are in it and who approved it (labels + audit)? Does changing one timeout require re-releasing the whole program (config packages)? Is the release button held by a central team or by each team (self-service)?</p>
+<p>All four internal tools have public counterparts now: <strong>Blaze → Bazel</strong>, <strong>MPM packages + labels → container images + digests + registries</strong>, <strong>Rapid → GitHub Actions / Cloud Build and similar pipelines</strong>, <strong>Sisyphus → Spinnaker and Argo Rollouts</strong>. In an interview, answering «how do you release» with «builds are reproducible, config is versioned separately, producing and spreading are separate steps, and every step has an ACL and an audit trail» already lands at this chapter's level.</p>
+<div class="ev">
+<div class="evh">FROM THE COMPANIES THEMSELVES — PUBLIC, VERIFIABLE CLAIMS</div>
+<ul>
+<li><strong>Google (the chapter's own author)</strong>: Dinah McNutt presented the same four principles publicly at USENIX LISA15 — <strong>evidence that this is not an idealised book description but a practice described in the open for years</strong>. <span class="src"><a href="https://www.usenix.org/conference/lisa15/conference-program/presentation/mcnutt" rel="noopener" target="_blank">D. McNutt, «Release Engineering Best Practices at Google», USENIX LISA15 ↗</a></span></li>
+<li><strong>Google (evidence of scale)</strong>: over <code>2 billion</code> lines of code in one repository and roughly <code>40,000</code> commits per working day — <strong>at that size, trunk-based development plus self-service releasing is not a preference but the only shape that holds</strong>. <span class="src"><a href="https://cacm.acm.org/research/why-google-stores-billions-of-lines-of-code-in-a-single-repository/" rel="noopener" target="_blank">R. Potvin &amp; J. Levenberg, CACM, 2016 ↗</a></span></li>
+<li><strong>Meta / Facebook (evidence for velocity)</strong>: in 2017 they described moving facebook.com, from April 2016, off cherry-picking changes onto a <strong>quasi-continuous push from master</strong>; they also left an honest caveat — tens to hundreds of commits are still <strong>batched and pushed every few hours</strong>, not one push per commit. <span class="src"><a href="https://engineering.fb.com/2017/08/31/web/rapid-release-at-massive-scale/" rel="noopener" target="_blank">C. Rossi, «Rapid release at massive scale», Engineering at Meta, 2017 ↗</a></span></li>
+<li><strong>Google (what enforcement became)</strong>: the SLSA framework, introduced in 2021, is explicitly derived from the internal Binary Authorization for Borg and motivated by supply-chain attacks such as SolarWinds and Codecov, where <strong>the build step itself was poisoned</strong>; its core demands are <strong>provenance plus hermetic, reproducible builds</strong> — this chapter's principles reframed five years later as a security boundary. <span class="src"><a href="https://security.googleblog.com/2021/06/introducing-slsa-end-to-end-framework.html" rel="noopener" target="_blank">K. Lewandowski &amp; M. Lodato, Google Security Blog, 2021 ↗</a></span></li>
+<li><strong>Bazel (something you can copy directly)</strong>: the open-source descendant of Blaze; its documentation defines hermeticity as always returning the same output for the same source and configuration, and gives concrete tactics — sandboxing, pinned toolchains, building inside a container. <span class="src"><a href="https://bazel.build/basics/hermeticity" rel="noopener" target="_blank">Bazel documentation, «Hermeticity» ↗</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>Equating release engineering with «install a CI/CD tool»</strong>: the substance of the chapter is the role and the principles; tools merely carry them. You can buy Jenkins and still have no ACLs on releasing, no versioned config and no hermetic builds — none of the four principles landed.</li>
+<li><strong>Reading Push on Green as «ship without testing»</strong>: it is the opposite. It presupposes a test suite strong enough to be the only gate, plus canarying and fast rollback. A team with weak tests that copies it merely pushes failures to production faster.</li>
+<li><strong>Mistaking Google's release branch for GitFlow</strong>: Google's branches are <strong>one-way and short-lived</strong> — cherry-picks come in, nothing merges back. Long-lived branches merged both ways are exactly what this chapter avoids: they drag in unrelated changes, and merge cost climbs steeply with branch age.</li>
+<li><strong>Assuming config changes are safer than code changes</strong>: config changes often <strong>bypass</strong> the review, testing and staged-rollout path that code goes through, which makes them riskier — precisely why the chapter pulls configuration into packaging and versioning.</li>
+<li><strong>Debate: a dedicated release engineer vs «you build it, you run it»</strong>. Amazon's model and Google's release engineering job function do not actually conflict — Google's release engineers build <strong>the platform and the rules</strong>, while the release button stays with each team. But a dedicated headcount is unrealistic for a small company, and the chapter says as much itself: this is not just for Googlers. <strong>What transfers is the principles, not the org chart.</strong></li>
+<li><strong>Dated in places</strong>: written in 2016 around internal, proprietary tools, which makes it easy to dismiss as irrelevant; and it barely touches <strong>software supply-chain security</strong> (SolarWinds was 2020). Hermetic builds being promoted from «convenient for reproduction» to «defence against a poisoned build step» is the most important sequel to this chapter.</li>
+<li><strong>The real cost of hermeticity</strong>: converting an existing project to Bazel is far from free, and many teams settle for containerised builds (a pinned base image plus lockfiles) to get «hermetic enough». That is pragmatic, but it is <strong>not equivalent</strong> — container images themselves are not necessarily byte-for-byte reproducible.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① In one sentence: release engineering is a <strong>discipline of its own</strong>, aimed at making the path from source to production reproducible, auditable and independently reversible — speed is the result, not the goal.</p>
+<p>② Four principles: <strong>self-service</strong> (the centre builds tools, not gates), <strong>high velocity</strong> (Push on Green, shrinking the delta per version), <strong>hermetic builds</strong> (independent of the build machine), <strong>enforcement</strong> (gated operations plus an automatic audit trail).</p>
+<p>③ Branching: <strong>trunk-based development plus a release branch cut at a revision</strong>, never merged back, fixed by <strong>one-way cherry-picks</strong> — freezing release contents without dragging in unrelated changes.</p>
+<p>④ Two rounds of testing: CI against the mainline on every submit; <strong>all unit tests re-run at the branch revision</strong> at release time, generating an audit record.</p>
+<p>⑤ Packaging: packages are uniquely identified by name + version + build ID and signed; <strong>movable labels</strong> turn «which version is in production» into a query, and rollback into moving a label.</p>
+<p>⑥ <strong>Rapid produces, Sisyphus spreads</strong> — artifact correctness and rollout risk control are separate problems.</p>
+<p>⑦ Configuration is the subtle number-one source of instability; the four schemes are points on a coupling axis, and a <strong>separate config package</strong> is the recommended default.</p>
+<p>⑧ <strong>Release engineering is not an afterthought</strong>: budgeting at the start beats retrofitting later. Today's counterparts are Bazel, image digests, GitHub Actions, Spinnaker / Argo, and the supply-chain layer that SLSA added on top.</p>
+</div>
+</div>
+<footer>Chapter Deep Read · Finish this page and you have the chapter's core; go to the book itself for the full cases and depth.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
