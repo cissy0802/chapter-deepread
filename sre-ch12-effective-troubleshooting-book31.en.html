@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>SRE Ch.12 · Effective Troubleshooting — Chapter Deep Read Book 31</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">CHAPTER DEEP READ · SRE · CHAPTER 12</p>
+<h1>Effective Troubleshooting: stop the bleeding, then solve the case</h1>
+<p class="sub">Site Reliability Engineering · Ch 12 · Chris Jones · Google · 2016</p>
+<p class="langbar"><a href="sre-ch12-effective-troubleshooting-book31.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>A site won't load, an app spins forever, a payment hangs — somebody has to go find the fault. You probably assume that job runs on talent: some people just have the touch and can glance at a log and know. Chapter 12 of Google's SRE book says otherwise: <strong>it is not talent, it is a craft, and a craft can be taught</strong>. The chapter breaks "how experts find faults" into steps anyone can follow.</p>
+<h2>An analogy first</h2>
+<p>Think of an <strong>emergency room</strong>. A patient comes in, and the doctor's first move is not to work out the diagnosis — it is to <strong>stop the bleeding</strong>. The cause can wait; the patient cannot. Only once things are stable come the blood tests and the scans (metrics and logs), then the reasoning, then trying a treatment and watching the response, then the write-up.</p>
+<p>The most valuable line in the chapter hides in that ordering: <strong>step one is not finding the cause, it is stopping the bleeding</strong>. Spend forty minutes nailing the culprit and your users hurt for forty minutes — solving the case does not shorten their pain by a second.</p>
+<h2>Why the old world is hard</h2>
+<p>It is hard because people guess. The book names the common guesses: <strong>staring at a metric that has nothing to do with this</strong>; <strong>mistaking coincidence for cause</strong> — two lines rise together on a dashboard, so one must have caused the other (the more things you monitor, the more pairs of lines happen to look alike); and <strong>clinging to whatever caused last time's outage</strong>.</p>
+<h2>The core ideas</h2>
+<p>① <strong>Stopping the bleeding and solving the case are two jobs, and they can run at once</strong>. Shift traffic to the machines that still work, switch off a non-essential feature, degrade the slow thing — none of that requires knowing the cause. One condition though: <strong>don't wipe the scene</strong>. The most common way to stop the bleeding is a restart, and a restart usually burns the only evidence, so the same failure comes back next month.</p>
+<p>② <strong>Halve it, don't walk it</strong>. A request passes seven or eight stages: gateway, frontend, auth, business logic, cache, database, storage. <strong>Probe the one in the middle</strong>: if the middle looks healthy, the fault is downstream; if the middle is already wrong, it is upstream. Each cut removes half, so seven or eight stages collapse in about three cuts. This is the line between investigating and guessing.</p>
+<p>③ <strong>A broken system is usually still busy — just busy with the wrong thing</strong>. So don't ask the big question "why did it break". Ask three smaller ones: <em>what is it doing? where is the effort going? why there?</em> The book's example: a database cluster slows down; ask where the CPU is going and it turns out to be sorting log entries; ask where inside the sorting and it is matching a badly written pattern against filenames. Four layers separate the symptom from the culprit — unreachable by guessing, inevitable by asking, layer by layer, where the effort goes.</p>
+<p>④ <strong>The cheapest question: what touched it last?</strong> Systems have momentum — a thing that was running fine does not break on its own. Reading the change log usually beats reading the code.</p>
+<h2>A true story</h2>
+<p>In July 2019 Cloudflare shipped a new firewall rule containing a badly written pattern, which pinned CPU on machines worldwide and knocked out a large slice of the web. The timeline is this chapter in miniature: trouble at 13:42, <strong>understood only at 14:02</strong>, and the moment they understood it they <strong>killed that whole rule set globally with one switch</strong>; traffic was back by 14:09. Fixing the rule itself and turning it back on came more than forty minutes later.</p>
+<h2>Remember this one line</h2>
+<div class="tl">
+<p>Troubleshooting is a craft, not a gift: <strong>stop the bleeding before solving the case</strong> (without wiping the evidence), <strong>cut from the middle</strong> instead of walking from the front, ask <strong>"what is it busy with, where is the effort going"</strong> rather than staring at "why did it break", and always look first at <strong>what touched it last</strong>. One honest cost: all of this rests on being able to see inside the system — logs, metrics, request paths all have to be paid for in advance. If nobody paid, the prettiest method still leaves you guessing on the day it matters.</p>
+</div>
+<p class="switch-hint">Want the full process diagram, comparison tables and real cases? <a data-mode="deep">→ switch to the deep read</a></p>
+</div>
+
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">Chapter 12 of the SRE book dismantles a popular myth: <strong>troubleshooting is not innate intuition but a craft that can be decomposed and taught</strong>. It is the product of two things — a generic <strong>hypothetico-deductive process</strong> (problem report → triage → examine → diagnose → test/treat → cure) multiplied by <strong>concrete knowledge of this particular system</strong>. Without the process you guess; without the system knowledge you cannot even form a testable hypothesis. The most counterintuitive lesson is the ordering: <strong>step one is not finding the cause, it is stopping the bleeding</strong> — <em>"you aren't helping your users if the system dies while you're root-causing."</em></p>
+
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>SRE (site reliability engineering)</strong>: doing operations with software-engineering methods — writing code to automate operational work, and owning the service's reliability.</li>
+<li><strong>Troubleshooting</strong>: getting from "the system is behaving wrongly" to "this specific thing caused it".</li>
+<li><strong>Hypothetico-deductive method</strong>: a scientific method — propose a possible cause from your observations, design a test that could falsify it, look at the result, revise, repeat.</li>
+<li><strong>Symptom vs cause</strong>: the symptom is what you can see (high latency, HTTP 500s); the cause is what produces it. One symptom typically has dozens of candidate causes.</li>
+<li><strong>Triage</strong>: a word borrowed from emergency medicine. Here it means the emergency action that makes the system work as well as it can right now — a different job from finding the cause.</li>
+<li><strong>Telemetry / white-box metrics</strong>: the operational numbers a program exports about itself — request counts, error counts, queue depth, latency distributions.</li>
+<li><strong>RPC (remote procedure call)</strong>: one service calling a method on another; it looks like a local call but goes over the network.</li>
+<li><strong>Distributed tracing</strong>: tag each user request with an ID and stitch together every service and RPC it passes through, so you can see which hop the time went to. Google's implementation is Dapper.</li>
+<li><strong>Profiling</strong>: sampling a running program to find which functions its CPU or memory actually goes to.</li>
+<li><strong>Bisection</strong>: a search that halves the candidate set each step. About <code>log₂n</code> steps for <code>n</code> candidates — roughly 7 for 100.</li>
+<li><strong>Regex backtracking</strong>: some regular-expression engines, on a failed match, back up and retry another split; in the worst case the cost explodes with input length. RE2 is an implementation that does not backtrack.</li>
+<li><strong>SLO / error budget</strong>: the reliability target (say "99.9% of requests succeed this month") and the amount of failure it leaves room for. See chapters 3 and 4.</li>
+<li><strong>MTTR (mean time to repair)</strong>: how long it takes to get from failure to recovery. Troubleshooting efficiency lands directly here.</li>
+<li><strong>Postmortem</strong>: the written analysis after an outage — what happened, how it was located, how it was fixed, how to prevent a repeat. See chapter 15.</li>
+</ul>
+</div>
+
+<h2>Where it sits</h2>
+<p>Written by Chris Jones. This is the core skills chapter of <strong>Part III, "Practices"</strong>: it follows chapter 6 on monitoring (symptom-based alerts are what <em>deliver</em> the problem to you) and chapter 11 on being on-call (who picks it up), and it sets up chapter 13 on emergency response, chapter 14 on incident management and chapter 15 on postmortem culture. It is also the direct beneficiary of chapter 9 on simplicity — <em>you cannot debug beyond the system you still understand</em>. In practice it maps to playbooks, incident command, observability platform choices, and the most common interview prompt of all: "error rate just jumped to 3% — how do you investigate?"</p>
+
+<h2>What the chapter is solving</h2>
+<p>The chapter opens on a diagnosis of its own: <strong>troubleshooting is widely treated as a gift</strong> — some have it, some don't. The illusion is understandable, because for people who do it daily the process has become so ingrained it is hard to articulate. The cost of treating it as a gift is concrete: <strong>it never gets taught, practised or written down</strong>, so the team's ability is tied to a few veterans and leaves when they do.</p>
+<p>The second problem is that distributed systems invalidate the old instincts. Single-machine debugging means finding the broken box or process; but when one request fans out to tens or hundreds of RPCs, often <strong>no machine is broken at all</strong> — one hop got 300 ms slower, then came timeouts, retries and queueing, surfacing at the edge as "the site is slow". You are not looking for a broken part; you are looking for <strong>a bad segment on a path</strong>.</p>
+<p>What happens if you don't solve it? Bill it to the SLO. A monthly availability target of <code>99.9%</code> allows roughly <strong>43 minutes</strong> of unavailability for the whole month (the accounting of chapters 3 and 4). Which means <strong>time-to-diagnose is not a soft metric; it is the denominator of availability</strong> — for the same incident, 30 minutes versus 5 minutes to locate burns most of the month's error budget in the difference.</p>
+<p>The chapter also teaches what <em>not</em> to do first, listing four hallmarks of <strong>ineffective troubleshooting</strong>: <strong>①</strong> looking at symptoms that aren't relevant, or misunderstanding what a metric means, and chasing a wild goose; <strong>②</strong> not understanding how to change the system, its inputs or its environment safely, so hypotheses <strong>cannot be tested</strong>; <strong>③</strong> coming up with wildly improbable theories, or latching on to the cause of a past outage; <strong>④</strong> hunting <strong>spurious correlations</strong> — coincidences, or pairs that share a third cause. The fourth gets worse automatically with scale: a service exporting a few thousand metrics yields millions of pairs, and <em>some of those curves will match perfectly by chance</em>. One more number from the book's introduction belongs here: <strong>roughly 70% of outages are due to changes in a live system</strong> — bad news, and also the best first lead you will get.</p>
+<figure>
+<svg viewBox="0 0 640 240" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="t1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="t1p" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<rect x="76" y="12" width="252" height="48" rx="8" fill="rgba(155,108,245,0.07)" stroke="#9b6cf5" stroke-dasharray="5 4"></rect>
+<text x="202" y="32" font-size="10.5" fill="#c9a8f5" text-anchor="middle">Stop the bleeding: divert / shed / degrade</text>
+<text x="202" y="50" font-size="10.5" fill="#9b6cf5" text-anchor="middle">runs alongside diagnosis; preserve the logs</text>
+<line x1="164" y1="60" x2="164" y2="80" stroke="#9b6cf5" marker-end="url(#t1p)"></line>
+<rect x="20" y="84" width="80" height="32" rx="6" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
+<text x="60" y="104" font-size="9.5" fill="#b9c0ca" text-anchor="middle">Problem report</text>
+<line x1="102" y1="100" x2="120" y2="100" stroke="#7c8593" marker-end="url(#t1)"></line>
+<rect x="124" y="84" width="80" height="32" rx="6" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="164" y="104" font-size="10.5" fill="#e7ebf1" text-anchor="middle">Triage</text>
+<line x1="206" y1="100" x2="224" y2="100" stroke="#7c8593" marker-end="url(#t1)"></line>
+<rect x="228" y="84" width="80" height="32" rx="6" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
+<text x="268" y="104" font-size="10.5" fill="#b9c0ca" text-anchor="middle">Examine</text>
+<line x1="310" y1="100" x2="328" y2="100" stroke="#7c8593" marker-end="url(#t1)"></line>
+<rect x="332" y="84" width="80" height="32" rx="6" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
+<text x="372" y="104" font-size="10.5" fill="#b9c0ca" text-anchor="middle">Diagnose</text>
+<line x1="414" y1="100" x2="432" y2="100" stroke="#7c8593" marker-end="url(#t1)"></line>
+<rect x="436" y="84" width="80" height="32" rx="6" fill="rgba(91,157,249,0.18)" stroke="#5b9df9" stroke-width="2"></rect>
+<text x="476" y="104" font-size="9.5" fill="#e7ebf1" text-anchor="middle">Test / treat</text>
+<line x1="518" y1="100" x2="536" y2="100" stroke="#7c8593" marker-end="url(#t1)"></line>
+<rect x="540" y="84" width="80" height="32" rx="6" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
+<text x="580" y="104" font-size="10.5" fill="#b9c0ca" text-anchor="middle">Cure</text>
+<text x="580" y="136" font-size="9.5" fill="#7c8593" text-anchor="middle">↓ postmortem</text>
+<path d="M476,116 L476,158 L268,158 L268,122" fill="none" stroke="#5b9df9" stroke-dasharray="4 4" marker-end="url(#t1)"></path>
+<text x="372" y="176" font-size="10.5" fill="#8fbaff" text-anchor="middle">hypothesis falsified / new observation → back to Examine</text>
+<text x="20" y="204" font-size="10.5" fill="#7c8593">The loop = hypothesise → design a test that could falsify it → observe → revise</text>
+<text x="20" y="224" font-size="10.5" fill="#e06b6b">Four ways it goes wrong: wrong symptom · untestable · last time's cause · spurious correlation</text>
+</svg>
+<figcaption>Fig. 1 · The chapter's loop. Triage is a branch that runs <strong>in parallel</strong> with diagnosis, not a prerequisite for it; a falsified test sends you back to Examine for another hypothesis.</figcaption>
+</figure>
+
+<h2>The core material</h2>
+
+<h3>1. Theory: troubleshooting = generic process × system knowledge</h3>
+<p>The chapter defines troubleshooting as <strong>an application of the hypothetico-deductive method</strong>: given observations about a system and a theory of how it ought to behave, you repeatedly <em>hypothesise possible causes and try to test them</em>. Both inputs are required. You can work with only the generic process, but you will usually be <strong>far less efficient than someone who knows the system</strong>; with only system knowledge and no process, people follow intuition — and intuition is exactly what breeds the four failure modes above.</p>
+<p>This is also why the skill <em>looks</em> innate: a veteran's system knowledge is tacit and their process is internalised, so an onlooker only sees "they spotted it instantly". The chapter's whole job is to put both on the table — the process as Fig. 1, the system knowledge as playbooks and as the closing demand that observability be designed in.</p>
+
+<h3>2. Triage: stop the bleeding, but don't wipe the scene</h3>
+<p>This is the section to memorise. The book says it plainly: <strong>"Stopping the bleeding should be your first priority; you aren't helping your users if the system dies while you're root-causing."</strong> The goal of triage is defined just as plainly — <strong>make the system work as well as it can under the circumstances</strong>. The means are emergency measures that need no diagnosis: <strong>divert</strong> traffic away from a broken cluster, deliberately <strong>drop</strong> some load to protect the rest, <strong>degrade</strong> responses to cached or simplified results.</p>
+<p>These two jobs should never be serialised: in a mature system a cross-cluster traffic shift is a <strong>minutes-long</strong> operation, while tracking down an intermittent memory leak can take <strong>hours</strong>. Making users wait for the second is pure waste.</p>
+<p>But the chapter immediately adds the constraint most often forgotten: <strong>"An emphasis on rapid triage doesn't preclude taking steps to preserve evidence of what's going wrong, such as logs, to help with subsequent root-cause analysis."</strong> The practical sting is that <strong>the most common way to stop the bleeding — restart, replace, reprovision — is also the most effective way to destroy evidence</strong>: in-memory state, the stack at the time, logs that only appear during the failure, all gone. That is how the same outage returns monthly and is "solved" by a restart every time. The countermeasures are cheap: <strong>keep one instance pulled out of traffic but not killed</strong>, grab a dump before restarting, archive that window's logs separately.</p>
+
+<h3>3. Examine: you can only see what you instrumented</h3>
+<p>Examining means <strong>looking at each component's own behaviour</strong> to judge whether the whole is healthy. The chapter's toolkit has three layers:</p>
+<ul>
+<li><strong>Metrics</strong>: white-box counters and latency distributions a program exports about itself. They answer "which component is unhappy", but only at component granularity.</li>
+<li><strong>Logs</strong>: the workhorse of reactive debugging. The chapter stresses one engineering detail — <strong>verbosity must be adjustable at runtime</strong>, or you either drown in logs every day or have nothing on the day it matters.</li>
+<li><strong>Distributed tracing</strong>: Google's Dapper, which solves what metrics cannot. <em>When one request fans out to tens or hundreds of RPCs, aggregate metrics can only say "overall p99 got worse", never "it got worse at hop three".</em> Sampling keeps the overhead low enough to leave it on in production permanently.</li>
+</ul>
+<figure>
+<svg viewBox="0 0 640 254" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<text x="16" y="22" font-size="11.5" font-weight="700" fill="#7c8593">① Aggregate metrics only: you know it got worse, not where</text>
+<rect x="16" y="32" width="150" height="22" rx="4" fill="rgba(91,157,249,0.18)" stroke="#5b9df9"></rect>
+<text x="91" y="47" font-size="10" fill="#e7ebf1" text-anchor="middle">yesterday p99 = 120ms</text>
+<text x="178" y="47" font-size="12" fill="#7c8593">→</text>
+<rect x="200" y="32" width="170" height="22" rx="4" fill="rgba(224,107,107,0.18)" stroke="#e06b6b"></rect>
+<text x="285" y="47" font-size="10" fill="#e7ebf1" text-anchor="middle">today p99 = 480ms</text>
+<text x="386" y="47" font-size="10.5" fill="#e06b6b">suspects: every hop</text>
+<text x="16" y="86" font-size="11.5" font-weight="700" fill="#5b9df9">② One request's trace waterfall: hop 3 has nowhere to hide</text>
+<text x="16" y="112" font-size="10.5" fill="#b9c0ca">frontend (total)</text>
+<rect x="136" y="100" width="432" height="16" rx="3" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="574" y="112" font-size="10" fill="#8fbaff">480ms</text>
+<text x="16" y="136" font-size="10.5" fill="#b9c0ca">├ auth</text>
+<rect x="142" y="124" width="14" height="16" rx="3" fill="rgba(91,157,249,0.30)" stroke="#5b9df9"></rect>
+<text x="164" y="136" font-size="10" fill="#8fbaff">8ms</text>
+<text x="16" y="160" font-size="10.5" fill="#b9c0ca">├ catalog svc</text>
+<rect x="170" y="148" width="369" height="16" rx="3" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="545" y="160" font-size="10" fill="#8fbaff">410ms</text>
+<text x="16" y="184" font-size="10.5" fill="#e7ebf1">└ db query</text>
+<rect x="196" y="172" width="333" height="16" rx="3" fill="rgba(224,107,107,0.24)" stroke="#e06b6b" stroke-width="2"></rect>
+<text x="535" y="184" font-size="10" fill="#e06b6b" font-weight="700">370ms ⚠</text>
+<text x="16" y="214" font-size="10.5" fill="#b9c0ca">Same incident: metrics hand you the number 480; the trace splits it into 8 + 410, then 370 inside.</text>
+<text x="16" y="234" font-size="10.5" fill="#7c8593">The suspect set shrinks from "the whole path" to "this one query" — that is what tracing buys.</text>
+</svg>
+<figcaption>Fig. 2 · Aggregate metrics vs distributed tracing: one tells you it got worse, the other tells you which hop and by how many milliseconds.</figcaption>
+</figure>
+
+<h3>4. Diagnose, blade one: simplify and reduce</h3>
+<p>The first move is to <strong>shrink the search space</strong>. On a path built from chained components, do not start at the first one and walk — <strong>cut in the middle</strong>: if input and output look right at that point, the fault is downstream; if it is already wrong there, the fault is upstream. Each cut removes half, so <code>n</code> stages converge in roughly <code>log₂n</code> cuts — <strong>about 3 for 7 hops, about 7 for 100 candidate builds</strong>. The same blade works along the time axis: bisect 100 commits to find the one that introduced a regression.</p>
+<figure>
+<svg viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="t2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text x="12" y="20" font-size="11.5" font-weight="700" fill="#9b6cf5">Cut one goes in the middle, not at the front</text>
+<line x1="320" y1="24" x2="320" y2="40" stroke="#9b6cf5" marker-end="url(#t2)"></line>
+<text x="332" y="20" font-size="10.5" fill="#9b6cf5">← probe here</text>
+<rect x="12" y="44" width="76" height="30" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="50" y="63" font-size="10" fill="#b9c0ca" text-anchor="middle">load bal.</text>
+<rect x="102" y="44" width="76" height="30" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="140" y="63" font-size="10" fill="#b9c0ca" text-anchor="middle">frontend</text>
+<rect x="192" y="44" width="76" height="30" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="230" y="63" font-size="10" fill="#b9c0ca" text-anchor="middle">auth</text>
+<rect x="282" y="44" width="76" height="30" rx="5" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="320" y="63" font-size="10" fill="#e7ebf1" text-anchor="middle">business</text>
+<rect x="372" y="44" width="76" height="30" rx="5" fill="rgba(224,107,107,0.08)" stroke="#e06b6b"></rect>
+<text x="410" y="63" font-size="10" fill="#b9c0ca" text-anchor="middle">cache</text>
+<rect x="462" y="44" width="76" height="30" rx="5" fill="rgba(224,107,107,0.08)" stroke="#e06b6b"></rect>
+<text x="500" y="63" font-size="10" fill="#b9c0ca" text-anchor="middle">database</text>
+<rect x="552" y="44" width="76" height="30" rx="5" fill="rgba(224,107,107,0.08)" stroke="#e06b6b"></rect>
+<text x="590" y="63" font-size="10" fill="#b9c0ca" text-anchor="middle">storage</text>
+<path d="M12,84 L12,92 L358,92 L358,84" fill="none" stroke="#5b9df9"></path>
+<text x="185" y="110" font-size="10.5" fill="#5b9df9" text-anchor="middle">probe came back clean → 4 hops cleared at once</text>
+<path d="M372,84 L372,92 L628,92 L628,84" fill="none" stroke="#e06b6b"></path>
+<text x="500" y="110" font-size="10.5" fill="#e06b6b" text-anchor="middle">3 suspects left</text>
+<text x="12" y="140" font-size="11" fill="#9b6cf5" font-weight="700">Cut two: probe the middle of the remaining three (database) → located in two cuts</text>
+<text x="12" y="162" font-size="10.5" fill="#b9c0ca">Cuts ≈ log₂n: about 3 for 7 hops; about 7 to find the regressing commit among 100.</text>
+<text x="12" y="184" font-size="10.5" fill="#7c8593">Precondition: every hop must be probeable on its own — the cash value of observable interfaces.</text>
+</svg>
+<figcaption>Fig. 3 · Bisection is the line between investigating and guessing: one cut halves the suspects, at the price of every hop being independently probeable.</figcaption>
+</figure>
+
+<h3>5. Diagnose, blade two: ask what, where and why</h3>
+<p>The second blade rests on an observation: <strong>a malfunctioning system is often still trying to do something — just not the thing you want</strong>. So drop the oversized question "why did it break" and ask three small ones: <em>what is it doing? where are its resources going, or where is its output going? why there?</em> Each answer takes you one layer down. The chapter's example demonstrates the drill cleanly:</p>
+<figure>
+<svg viewBox="0 0 640 288" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="t3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker></defs>
+<rect x="20" y="20" width="380" height="38" rx="7" fill="rgba(224,107,107,0.14)" stroke="#e06b6b"></rect>
+<text x="210" y="44" font-size="10" fill="#e7ebf1" text-anchor="middle">Symptom: Spanner cluster is slow, RPCs timing out</text>
+<line x1="210" y1="58" x2="210" y2="78" stroke="#5b9df9" marker-end="url(#t3)"></line>
+<text x="224" y="74" font-size="9.5" fill="#8fbaff">what is it doing?</text>
+<rect x="40" y="82" width="340" height="38" rx="7" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
+<text x="210" y="106" font-size="10" fill="#b9c0ca" text-anchor="middle">server tasks use all their CPU, can't keep up</text>
+<line x1="210" y1="120" x2="210" y2="140" stroke="#5b9df9" marker-end="url(#t3)"></line>
+<text x="224" y="136" font-size="9.5" fill="#8fbaff">where does the CPU go?</text>
+<rect x="60" y="144" width="300" height="38" rx="7" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
+<text x="210" y="168" font-size="10" fill="#b9c0ca" text-anchor="middle">profile: sorting log entries kept on disk</text>
+<line x1="210" y1="182" x2="210" y2="202" stroke="#5b9df9" marker-end="url(#t3)"></line>
+<text x="224" y="198" font-size="9.5" fill="#8fbaff">where inside the sorting?</text>
+<rect x="80" y="206" width="260" height="38" rx="7" fill="rgba(91,157,249,0.20)" stroke="#5b9df9" stroke-width="2"></rect>
+<text x="210" y="230" font-size="10" fill="#e7ebf1" text-anchor="middle">a regex evaluated against log file paths</text>
+<text x="420" y="38" font-size="11" font-weight="700" fill="#9b6cf5">Treatment</text>
+<text x="420" y="62" font-size="10" fill="#b9c0ca">· rewrite the regex to avoid</text>
+<text x="428" y="79" font-size="10" fill="#b9c0ca">backtracking</text>
+<text x="420" y="100" font-size="10" fill="#b9c0ca">· grep the codebase for the</text>
+<text x="428" y="117" font-size="10" fill="#b9c0ca">same pattern</text>
+<text x="420" y="138" font-size="10" fill="#b9c0ca">· consider RE2: no backtracking,</text>
+<text x="428" y="155" font-size="10" fill="#b9c0ca">linear in input size</text>
+<line x1="420" y1="172" x2="616" y2="172" stroke="rgba(91,157,249,0.25)"></line>
+<text x="420" y="194" font-size="10" fill="#8fbaff" font-weight="700">Four layers separate symptom</text>
+<text x="420" y="211" font-size="10" fill="#b9c0ca">from cause: unreachable by</text>
+<text x="420" y="228" font-size="10" fill="#b9c0ca">guessing, inevitable by asking.</text>
+<text x="20" y="268" font-size="10" fill="#7c8593">The same root cause keeps recurring in the field: Cloudflare's 2019 global outage was also a backtracking regex.</text>
+</svg>
+<figcaption>Fig. 4 · The chapter's Spanner example: four layers from "the cluster is slow" to "one regex", each crossed by asking a single small question.</figcaption>
+</figure>
+
+<h3>6. Diagnose, blade three: what touched it last</h3>
+<p>The third blade is the cheapest and the most often skipped. The chapter puts it in physical terms: <strong>systems have inertia — a working computer system tends to remain in motion until acted upon by an external force</strong>, such as a configuration change or a shift in the kind of load being served. So <strong>the most recent change</strong> is always suspect number one, and a rollback is <strong>the fastest hypothesis test you own</strong>: if reverting fixes it, that was basically it.</p>
+<p>For the blade to be usable there is a precondition: <strong>every layer needs change logging</strong> — from the binary version, configuration, experiments and flags of the servers handling user traffic, down to the packages installed on individual machines in the cluster. Without that record, "what changed recently" degenerates into oral archaeology in a chat channel.</p>
+
+<h3>7. Test and treat: move one variable at a time</h3>
+<p>Once you have a hypothesis you have to test it. The chapter's list of considerations is all scar tissue:</p>
+<ul>
+<li><strong>An ideal test makes the alternatives mutually exclusive</strong> — one cut rules a group in and a group out, rather than leaving both still possible.</li>
+<li><strong>Test the obvious things first, ordered by likelihood weighed against risk.</strong> "Restart the primary and see" may be the most informative move available, and it is also the riskiest and least reversible, so it goes last.</li>
+<li><strong>Confounding factors will lie to you</strong>: it got better after you changed A — or the traffic peak simply passed at that moment.</li>
+<li><strong>Active tests have side effects that change later results.</strong> The chapter's own examples: turning on verbose logging can make a latency problem worse; giving a process more CPUs makes it faster but also more likely to hit data races.</li>
+<li><strong>Some tests are suggestive, not definitive</strong> — races and deadlocks resist reliable reproduction, so one clean run does not clear them.</li>
+<li><strong>Write down the ideas you had, the tests you ran and what you saw.</strong> The longer an incident drags and the more people it pulls in, the more this record is worth: it is the only real handoff artifact, and it stops the second responder from repeating the first responder's tests.</li>
+</ul>
+<p>Inverted, the point lands harder: <strong>the most expensive thing in a long investigation is usually not running the tests, it is forgetting which ones you already ran</strong>.</p>
+
+<h3>8. Cure, and why negative results are magic</h3>
+<p>Proving causality strictly requires a controlled experiment, which production rarely permits, so in practice we often settle for <strong>correlation plus a plausible mechanism</strong> — the chapter is candid about that. Two things raise your confidence: <strong>reproduce</strong> it in a test environment, and <strong>write the chain down</strong> — a postmortem covering what went wrong, how you tracked it down, how you fixed it and how to prevent a repeat (the chapter's own aside: <em>ideally the system is alive at this point</em>).</p>
+<p>The chapter also devotes a section to something routinely thrown away: <strong>negative results are magic</strong> — "we tried X; it is not the cause / it did not get faster". The argument has four parts: <strong>①</strong> a negative result is <strong>a conclusion, not a failure</strong>, and one clean negative can settle the hardest design arguments; <strong>②</strong> the tools and methods built for the experiment usually outlive the experiment; <strong>③</strong> if you don't publish, the next person — quite possibly you in three months — walks into the same pit; <strong>④</strong> therefore, <strong>do publish negative results</strong>. The section targets a real industry bias: nobody wants to write up "we tried this and it didn't work".</p>
+
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 1 · Triage vs diagnosis: two jobs, two clocks</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Triage · stop the bleeding</th><th>Diagnosis · solve the case</th></tr></thead>
+<tbody>
+<tr><th>Goal</th><td>Make the system <strong>work as well as it can right now</strong></td><td>Find out what caused it</td></tr>
+<tr><th>Typical moves</th><td>Divert traffic / shed load / degrade / roll back</td><td>Metrics, logs, traces, profiles, bisection</td></tr>
+<tr><th>Needs the cause?</th><td><strong>No</strong></td><td>The cause is its output</td></tr>
+<tr><th>Timescale</th><td>Minutes — a cluster shift is often one command</td><td>Tens of minutes to hours, and unpredictable</td></tr>
+<tr><th>Main cost</th><td>May <strong>destroy evidence</strong>; degraded UX meanwhile</td><td>Users keep absorbing the failure throughout</td></tr>
+<tr><th>How to order them</th><td colspan="2"><strong>In parallel, never in series.</strong> Stop the bleeding while keeping one instance out of traffic but un-restarted, with dumps and logs captured — then investigate.</td></tr>
+</tbody></table></div>
+
+<p class="tcap">Table 2 · Four diagnostic blades: when to reach for which</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Technique</th><th>Best at</th><th>Precondition</th><th>Where it fails</th></tr></thead>
+<tbody>
+<tr><th>Bisection</th><td>"One hop on the path is broken"; a regression from some commit</td><td>Each hop is <strong>independently probeable</strong>; the fault reproduces</td><td>Intermittent faults — your one probe lands on a good moment</td></tr>
+<tr><th>What / where / why</th><td>Resource exhaustion (CPU, memory, handles, connections)</td><td>Profiles and layered timing data exist</td><td>A system that is <strong>doing nothing at all</strong> — not busy wrongly, just stuck</td></tr>
+<tr><th>What touched it last</th><td>Roughly <strong>70%</strong> of outages — the ones trailing a change</td><td><strong>Change logs</strong> at every layer (versions, config, flags, packages)</td><td>The other 30%: load-mix shifts, expired certs, hitting a capacity wall, upstream behaviour changes</td></tr>
+<tr><th>Service-specific tools</th><td>State that generic tools simply cannot see</td><td>Someone invests in building them ahead of time</td><td>Only the author can drive them; <strong>not in the playbook means not existing</strong></td></tr>
+</tbody></table></div>
+
+<p class="tcap">Table 3 · Ways of examining: what each answers, and its blind spot</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Instrument</th><th>Answers</th><th>Steady-state cost</th><th>Blind spot</th></tr></thead>
+<tbody>
+<tr><th>White-box metrics</th><td>Which <strong>component</strong> is unhappy, and since when</td><td>Low; can run at full rate permanently</td><td>Component granularity only; <strong>more metrics, more spurious correlation</strong></td></tr>
+<tr><th>Text logs</th><td>What <strong>specifically</strong> happened at that moment</td><td>Medium; verbose logging drags the system</td><td>Anything uninstrumented is dark; hard to aggregate at volume</td></tr>
+<tr><th>Distributed tracing</th><td><strong>Which hop</strong> a request's time went to</td><td>Low (kept down by sampling)</td><td>Low sampling rates miss rare bad requests</td></tr>
+<tr><th>Profiling</th><td><strong>Which function</strong> the CPU or memory goes to</td><td>Mostly on demand</td><td>Shows what is busy, not what is waiting</td></tr>
+</tbody></table></div>
+
+<p class="tcap">Table 4 · Ordering your tests when checking a hypothesis (lowest risk first)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Kind</th><th>Example</th><th>Information</th><th>Risk / side effects</th></tr></thead>
+<tbody>
+<tr><th>Read-only observation</th><td>Read dashboards, check the change log, open one trace</td><td>Medium</td><td>Near zero — <strong>always exhaust this tier first</strong></td></tr>
+<tr><th>Off-path reproduction</th><td>Replay requests in a test environment, load one isolated replica</td><td>High</td><td>Low; but it may <strong>refuse to reproduce</strong> (environment mismatch)</td></tr>
+<tr><th>Reversible production change</th><td>Roll back a version, flip off a flag, retune one machine</td><td><strong>Very high</strong> (if the rollback fixes it, that was it)</td><td>Medium; do it on <strong>a small slice of traffic</strong> first</td></tr>
+<tr><th>Invasive action</th><td>Enable verbose logging, take a heap dump, restart the primary</td><td>High</td><td><strong>Changes later results</strong>: verbose logging worsens latency, a restart erases the scene</td></tr>
+</tbody></table></div>
+
+<h2>Why it matters / in real systems</h2>
+<p>Nearly every one of the chapter's criteria shows up, positively or negatively, in public incident write-ups. Day to day: <strong>on call</strong>, ask "can we divert, can we degrade" before "why"; in <strong>postmortems</strong>, check whether stopping the bleeding also wiped the evidence; in <strong>observability choices</strong>, first confirm you can split a request's latency by hop; in <strong>interviews</strong>, the model answer to "error rate jumped to 3%, what now" is exactly this order — mitigate, check recent changes, bisect the path, then drill on where the effort goes.</p>
+<div class="ev">
+<div class="evh">EVIDENCE FROM THE FIELD · not the book's claims — the companies' own words</div>
+<ul>
+<li><strong>Cloudflare</strong> (global outage of 2019-07-02, official write-up): a newly deployed WAF rule contained a regex that backtracked catastrophically, pinning <strong>CPU at 100% across the global fleet</strong>; at its worst traffic dropped 82%. The timeline is this chapter exactly: trouble at 13:42 → at 14:02 they understood it and issued a <strong>"global kill"</strong> on the WAF Managed Rulesets, which in their own words <em>"instantly dropped CPU back to normal and restored traffic"</em> (recovered 14:09) → only at 14:52, after reviewing the offending pull request, rolling back the specific rules and testing, did they re-enable it. <strong>Mitigate first, fix the cause second, 43 minutes apart</strong> — and the root cause is the same species as the chapter's Spanner example.<span class="src"><a href="https://blog.cloudflare.com/cloudflare-outage/" rel="noopener" target="_blank">Details of the Cloudflare outage on July 2, 2019 ↗</a></span></li>
+<li><strong>Amazon (AWS)</strong> (S3 disruption of 2017-02-28, official summary): the outage that took half the internet offline <strong>began inside a troubleshooting session</strong> — the S3 team was debugging a billing-system slowdown when an authorized member ran a command meant to remove a small number of servers, <strong>one input was entered incorrectly, and far more servers were removed than intended</strong>, hitting the index and placement subsystems. AWS's other sentence deserves a wall poster: <em>"While this is an operation that we have relied on to maintain our systems since the launch of S3, we have not completely restarted the index subsystem or the placement subsystem in our larger regions <strong>for many years</strong>."</em> The restarts took far longer than expected. <strong>One document, two of the chapter's lessons: active tests have side effects, and an unexercised recovery path is not a recovery path.</strong><span class="src"><a href="https://aws.amazon.com/message/41926/" rel="noopener" target="_blank">Summary of the Amazon S3 Service Disruption in the Northern Virginia (US-EAST-1) Region ↗</a></span></li>
+<li><strong>Google · Dapper</strong>: the tracing system behind this chapter's Examine section and its case study. Its design goal was to stitch every RPC of a request across all services into one chain while <strong>staying on in production permanently</strong>, with sampling keeping the overhead acceptable. OpenTelemetry, Jaeger and Zipkin all descend from this line.<span class="src"><a href="https://research.google/pubs/dapper-a-large-scale-distributed-systems-tracing-infrastructure/" rel="noopener" target="_blank">Dapper, a Large-Scale Distributed Systems Tracing Infrastructure, Google Technical Report, 2010 ↗</a></span></li>
+<li><strong>The chapter's own case study (Google App Engine)</strong>: developers first saw rising latency in aggregate metrics, then noticed it correlated with datastore <code>merge_join</code> calls — which <strong>often indicate suboptimal indexing</strong>; they then used Dapper to trace individual requests <strong>from the frontend reverse proxy through to the app's response</strong>, examining the RPCs issued by each server along the way. Methodologically that is Fig. 2: descending from "the whole thing got worse" to "this hop got worse".<span class="src"><a href="https://sre.google/sre-book/effective-troubleshooting/" rel="noopener" target="_blank">SRE Book Ch.12 Effective Troubleshooting (free online) ↗</a></span></li>
+<li><strong>GitLab</strong> (database incident of 2017-01-31, official postmortem): a late-night troubleshooting session ended with a production data directory being deleted, after which <strong>several backup and replication paths turned out not to work as assumed</strong> (<code>pg_dump</code> had been failing silently for a long time because of a version mismatch). Recovery came from a staging snapshot, losing roughly six hours of data. GitLab <strong>live-streamed the recovery and published the postmortem</strong> — an expensive demonstration of this chapter's "do publish negative results".<span class="src"><a href="https://about.gitlab.com/blog/postmortem-of-database-outage-of-january-31/" rel="noopener" target="_blank">Postmortem of database outage of January 31 ↗</a></span></li>
+<li><strong>Later research (SNAFUcatchers STELLA report, 2017 — Woods / Cook / Allspaw)</strong>: this resilience-engineering study of real incidents at several companies argues that failures in complex systems usually have <strong>no single root cause</strong>, and that a substantial share of response effort goes into <strong>coordination and communication</strong> rather than technical diagnosis — the half Fig. 1 does not draw. Incidentally, this chapter's second epigraph comes from one of the report's authors, John Allspaw.<span class="src"><a href="https://snafucatchers.github.io/" rel="noopener" target="_blank">STELLA: Report from the SNAFUcatchers Workshop on Coping with Complexity ↗</a></span></li>
+</ul>
+</div>
+
+<h2>Pitfalls and open questions</h2>
+<ul>
+<li><strong>Collapsing triage and diagnosis into one job.</strong> The classic failure posture: spend 40 minutes finding the root cause while users hurt for 40 minutes. The chapter's ordering is firm — <strong>if you can divert, divert</strong>, and discuss causes afterwards.</li>
+<li><strong>The opposite error: triage without diagnosis.</strong> "A restart fixes it" is both the fastest mitigation and the most thorough evidence destruction. That is how an outage returns on schedule every month and gets "solved" by a restart every time. <strong>Keep one untouched instance</strong> while you mitigate — cheap, and enormously valuable.</li>
+<li><strong>Treating "what touched it last" as the whole answer.</strong> Roughly 70% follow a change, which means <strong>30% do not</strong>: the load mix shifted, a certificate expired, capacity crept up to a wall, a dependency quietly changed behaviour, time and leap seconds. There is no change log for those — only the first two blades.</li>
+<li><strong>Correlation isn't causation, and scale actively manufactures coincidence.</strong> The chapter says so directly: as systems grow and more metrics are monitored, events that correlate purely by chance become inevitable. When two curves rise together, first ask whether a third thing moved them both.</li>
+<li><strong>"Root cause" is itself contested.</strong> Written in 2016, the chapter uses a fairly plain single-root-cause frame. Resilience engineering has since argued that failures in complex systems are confluences of conditions, and that hunting one "root" closes an investigation prematurely and steers attention toward people. That does not invalidate the process here, but it warns that <strong>"found it" is not the same as "finished"</strong>.</li>
+<li><strong>Misreading negative results as "we got nowhere".</strong> The chapter means <strong>conclusive</strong> negatives — something definitely ruled out, some hypothesis definitely falsified. "Looked all day, no leads" is not a negative result; it is not having started.</li>
+<li><strong>Dated in its tooling, current in its criteria.</strong> Observability in 2016 meant white-box metrics, text logs and Dapper-style tracing; high-cardinality events, eBPF, continuous profiling and automated cause suggestions have since changed the cost structure. <strong>A whole generation of tools turned over and not one of the four blades was replaced</strong> — they constrain a human's search strategy, not a toolchain. The "it can be taught" claim comes with its own discount, too: the chapter concedes that system-specific knowledge is required, and that is exactly the part that walks out the door with people, which is why playbooks and disaster exercises are this chapter's unstated precondition. <strong>Teach the process without the knowledge and you have taught guessing.</strong></li>
+</ul>
+
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① In one line: <strong>troubleshooting is not a gift but a decomposable, teachable craft</strong> = a generic hypothetico-deductive process × concrete knowledge of this system. Neither half works alone.</p>
+<p>② The process is a loop: <strong>problem report → triage → examine → diagnose → test/treat → cure</strong>, and a falsified hypothesis sends you back to Examine for another.</p>
+<p>③ The ordering to memorise: <strong>stop the bleeding first</strong> — "you aren't helping your users if the system dies while you're root-causing." Triage and diagnosis run <strong>in parallel</strong>, never in series.</p>
+<p>④ But <strong>fast triage does not license destroying evidence</strong>: a restart is the best mitigation and the best evidence shredder, so keep one instance out of traffic and un-restarted, and capture dumps and logs first.</p>
+<p>⑤ Learn the four hallmarks of <strong>ineffective troubleshooting</strong>: wrong symptom or misread metric, untestable hypotheses, clinging to last time's cause, and chasing <strong>spurious correlations</strong> (more metrics, more coincidences).</p>
+<p>⑥ Four diagnostic blades: <strong>bisection</strong> (<code>log₂n</code> cuts — about 3 for 7 hops), <strong>what / where / why</strong> (Spanner → CPU → log sorting → a backtracking regex, four layers deep), <strong>what touched it last</strong> (~70% of outages trail a change; rollback is the fastest hypothesis test), and <strong>service-specific tools</strong>.</p>
+<p>⑦ Make alternatives <strong>mutually exclusive</strong>, order tests by likelihood against risk, watch for side effects of active tests (verbose logging worsens the very latency you are chasing), and <strong>write down what you tried</strong> — the priciest overhead is forgetting what you already ruled out.</p>
+<p>⑧ In practice you often settle for "correlation plus a plausible mechanism"; and <strong>negative results are magic</strong>: they are conclusions rather than failures, the tools outlive the experiment, and not publishing means someone (probably you, in three months) repeats it — so publish.</p>
+<p>⑨ Examining has three layers: <strong>metrics</strong> say which component, <strong>logs</strong> say what happened at that moment, <strong>traces</strong> say which hop the time went to. And the chapter's closing claim is the most valuable of all: <strong>how easy an outage is to debug was decided on design day</strong> — build observability into every component and keep the interfaces between them clear and observable, and that beats any after-the-fact technique.</p>
+</div>
+</div>
+
+<footer>Chapter Deep Read · Reading this page ≈ getting the chapter's core; for the full cases and extensions, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
