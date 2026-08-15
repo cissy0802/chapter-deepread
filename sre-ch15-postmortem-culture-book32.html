@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>SRE 第 15 章 · 事后复盘文化 — 专业书籍精读 Book 32</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.src,.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.src a,.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.src a:hover,.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · SRE · 第 15 章</p>
+<h1>事后复盘：不追人，追那条让人踩空的路</h1>
+<p class="sub">Site Reliability Engineering · Ch 15 · John Lunney &amp; Sue Lueder · Google · 2016</p>
+<p class="langbar"><a href="sre-ch15-postmortem-culture-book32.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>网站崩了，两个小时后修好了。然后呢？大多数公司的答案是「然后就没有然后了」——大家松一口气，各回各的活；三个月后同一个毛病原样再来。Google 这本书的第 15 章讲的就是<strong>那个「然后」该怎么做</strong>：把这次事故写下来、讲清楚、变成一串必须做完的改动。这份文档叫<strong>复盘</strong>。</p>
+<h2>先打个比方</h2>
+<p>民航业有个老规矩：<strong>空难之后调查飞机，不调查飞行员</strong>。不是因为飞行员没犯错——很多时候他确实按错了钮。而是因为调查组真正想知道的是：<em>那个钮为什么长得跟旁边那个一模一样？为什么手册写的和座舱里显示的不一致？为什么那个错误的动作，在他眼里看起来是对的？</em>找出这些，下一个飞行员就不会再按错。如果结论是「飞行员失职」，钮还在那儿，下一个人照样按。</p>
+<p>整章最值钱的一句就是这个道理的技术版：<strong>你没法「修好」人，但你可以修系统和流程</strong>。</p>
+<h2>旧世界为什么难</h2>
+<p>难在一件很人性的事：<strong>一旦开始追人，大家就不说了</strong>。</p>
+<p>你要的信息偏偏只在当事人脑子里——他当时看到了什么、为什么那一步在当时是合理的。没有任何监控能替他说出来。可只要他知道说出来会被记一笔，他就只讲那些瞒不住的部分；下一次，小毛病他干脆不报了。于是你的事故记录本上全是大事故，看起来风平浪静，其实<strong>小问题在暗处一直攒着</strong>。</p>
+<h2>这章的核心点子</h2>
+<p>① <strong>先把「谁干的」这个问题从会议室里删掉</strong>。前提是一句假设：参与这件事的每个人，都是本着好意、用他当时手上的信息做了他认为对的事。于是问题从「谁做错了」换成「<strong>为什么当时那个选择看起来是对的</strong>」。这不是对人温柔，是一门交易：你放弃追究一个名字，换来那部分只有他知道的信息。</p>
+<p>② <strong>什么情况必须写，要提前说好</strong>：用户感觉到的故障超过多久、丢了任何数据、值班的人半夜爬起来手工干预过、修了太久、以及——<strong>监控没报出来、是用户先发现的</strong>。为什么要提前？因为等出了事再讨论「这算不算大事」，答案会随当天谁在场、谁不高兴而变。</p>
+<p>③ <strong>产出不是文档，是一串待办</strong>。复盘写得再动人，如果没有几条「改哪个系统、谁改、什么时候改完」，它就只是一篇作文。而且写完必须有人认真看——书里的原话很不客气：<em>一份没被评审过的复盘，跟从没存在过一样。</em></p>
+<p>④ <strong>老复盘是最好的教材</strong>。Google 的做法有点好玩：把几个月甚至几年前的旧复盘翻出来，叫上当年的当事人、旁观者和新人一起读；还有一种叫「灾难轮盘」的排练——挑一份旧复盘，让新人扮演当时的角色，把那场事故从头演一遍。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>事故的学费已经交了，<strong>复盘是唯一能把它换成东西的动作</strong>：不追人、只追「为什么当时那么做是合理的」，因为你要的信息只在当事人嘴里；提前说好什么情况必须写，写完必须有人看，而真正的产出是<strong>一串被跟到关掉的改动</strong>。诚实说一句代价：无指责很容易做成表演——嘴上不追责，年底考评照样记着这一笔；只要人能闻出这个味道，整套东西就白搭。</p>
+</div>
+<p class="switch-hint">想进到完整流程、对比表和真实公司的公开复盘？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">SRE 第 15 章要立的规矩只有一条：<strong>事故的学费已经付过了，复盘（postmortem）是唯一能把它换成资产的动作</strong>。而这个动作成不成，取决于一个反直觉的设计——<strong>把「谁做错了」这个问题从流程里彻底删掉</strong>。删它不是出于对人温柔，是因为你最需要的那部分信息只存在当事人脑子里：他当时看到了什么、为什么那个选择在当时看起来是对的。你一开始追人，这部分信息就永远拿不到了。本章的原话是：<em>「你没法『修好』人，但你可以修系统和流程，让人在设计和维护复杂系统时更容易做出正确的选择。」</em>还有一句更硬的判据：<strong>一份没被评审过的复盘，跟从没存在过一样。</strong></p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>SRE（site reliability engineering，站点可靠性工程）</strong>：用软件工程的方法做运维——写代码把运维自动化掉，并对服务可靠性负责。</li>
+<li><strong>事故（incident）</strong>：一次让服务偏离正常状态、需要人介入处置的事件——宕机、数据丢失、大面积变慢。</li>
+<li><strong>复盘（postmortem）</strong>：事故之后写的书面记录，说清发生了什么、影响多大、怎么止住的、根因是什么、接下来做什么防止再来。中文也叫「事后分析」「故障复盘」。</li>
+<li><strong>无指责（blameless）</strong>：写复盘时不把矛头指向任何个人或团队，默认所有人都是好意、且用当时手上的信息做了他认为对的事。</li>
+<li><strong>根因（root cause）</strong>：产生这次故障的那个（或那些）底层原因，区别于「症状」（你看到的现象）。</li>
+<li><strong>行动项（action item）</strong>：复盘产出的待办，形如「改哪个系统 / 谁负责 / 什么时候做完」，通常直接建成一张有优先级的 bug 单。</li>
+<li><strong>事后偏见（hindsight bias）</strong>：人在知道结局之后回看，会觉得当时的线索「明明很明显」——写复盘的人天然带着它，因为他已经知道答案了。</li>
+<li><strong>第二故事（second story）</strong>：只讲「谁按错了钮」是第一故事；讲清「当时的条件让这个动作看起来合理」才是第二故事。出自安全科学，被 Etsy 引进软件业。</li>
+<li><strong>值班（on-call）</strong>：轮流承担「出事随时被叫起来」的责任，见第 11 章。</li>
+<li><strong>SLO / 错误预算（error budget）</strong>：给可靠性定的目标（如「一个月内 99.9% 的请求成功」），以及它留出的、可以花掉的出错额度。见第 3、4 章。</li>
+<li><strong>琐务（toil）</strong>：重复的、手工的、随规模线性增长且没有长期价值的运维工作，见第 5 章。</li>
+<li><strong>Wheel of Misfortune（灾难轮盘）</strong>：Google 的一种排练：挑一份旧复盘，让工程师按当时的角色把整场事故重演一遍，见第 28 章。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>作者 John Lunney 与 Sue Lueder。本章在 SRE 书 <strong>Part III「实践」</strong>里紧接着事故处置那一串：上承第 12 章「有效排障」（怎么把毛病找出来）、第 13 章「紧急响应」与第 14 章「事故管理」（事故当中怎么组织人），而本章管的是<strong>事故结束之后的那 48 小时</strong>。它同时是第 3 章「拥抱风险」的还款通道——错误预算被烧掉的那一截，只有靠复盘产出的行动项才换得回来。落到现实里，各家的名字不同（incident review、post-incident review / PIR、correction of errors / COE），做的是同一件事；它也对应一道几乎必问的面试题：<em>「讲一次你参与过的线上事故，后来你们改了什么。」</em></p>
+<h2>这章要解决什么</h2>
+<p>本章的题词就是整章的经济学：<em>「失败的代价是教育。」（The cost of failure is education. —— Devin Carraway）</em>翻译成工程语言：<strong>事故已经把钱花掉了</strong>——用户疼过了、错误预算烧掉了、几个人的周末没了。这笔支出唯一可能的回报，是你从中学到点什么并落地。<strong>不写复盘，等于交了学费不去上课。</strong></p>
+<p>把账算给 SLO 看最直白：一条 <code>99.9%</code> 的月度可用性目标，整月只允许约 <strong>43 分钟</strong>不可用（第 3、4 章的口径）。一次 30 分钟的事故就吃掉七成；同一类事故一个季度回来三次，全年余额基本就没了。所以「防止它再来」不是道德要求，是<strong>预算算术</strong>。</p>
+<p>本章要治的病有三个。<strong>一是教训不落地</strong>：修好了、群里说声「好了」，教训留在两三个人脑子里，其中一个半年后换了组，同类事故原样重演。<strong>二是指责导致的瞒报</strong>——这是本章最坚决的主张：把指责从复盘里拿掉，<em>能让人有底气毫无顾虑地把问题捅上去</em>；反过来，<strong>弥漫着指责的空气会造就一种把事故扫到地毯底下的文化，而这让组织承担的风险更大</strong>。<strong>三是没有判据</strong>：没人事先规定什么情况必须写，实际结果就是「大到瞒不住才写」，于是事故库里只剩 P0，看着风平浪静。</p>
+<figure>
+<svg viewBox="0 0 640 330" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="a1r" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#e06b6b"></path></marker>
+<marker id="a1b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker></defs>
+<text x="12" y="18" font-size="11.5" font-weight="700" fill="#8fbaff">同一次事故，组织有三条去向</text>
+<text x="12" y="44" font-size="11" font-weight="700" fill="#7c8593">① 什么都不写</text>
+<rect x="12" y="52" width="176" height="38" rx="6" fill="rgba(91,157,249,0.06)" stroke="#7c8593"></rect>
+<text x="100" y="76" font-size="10.5" fill="#b9c0ca" text-anchor="middle">教训留在当事人脑子里</text>
+<line x1="190" y1="71" x2="212" y2="71" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="216" y="52" width="176" height="38" rx="6" fill="rgba(91,157,249,0.06)" stroke="#7c8593"></rect>
+<text x="304" y="76" font-size="10.5" fill="#b9c0ca" text-anchor="middle">半年后他换组 / 离职</text>
+<line x1="394" y1="71" x2="416" y2="71" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="420" y="52" width="208" height="38" rx="6" fill="rgba(91,157,249,0.06)" stroke="#7c8593"></rect>
+<text x="524" y="76" font-size="10.5" fill="#b9c0ca" text-anchor="middle">同类事故原样重演一次</text>
+<text x="12" y="128" font-size="11" font-weight="700" fill="#e06b6b">② 写成追责报告：到底谁的锅</text>
+<rect x="12" y="136" width="176" height="46" rx="6" fill="rgba(224,107,107,0.10)" stroke="#e06b6b"></rect>
+<text x="100" y="155" font-size="10.5" fill="#b9c0ca" text-anchor="middle">当事人只写安全的部分</text>
+<text x="100" y="172" font-size="10.5" fill="#b9c0ca" text-anchor="middle">下次小事故干脆不报</text>
+<line x1="190" y1="159" x2="212" y2="159" stroke="#e06b6b" marker-end="url(#a1r)"></line>
+<rect x="216" y="136" width="176" height="46" rx="6" fill="rgba(224,107,107,0.10)" stroke="#e06b6b"></rect>
+<text x="304" y="155" font-size="10.5" fill="#b9c0ca" text-anchor="middle">事故库里只剩 P0</text>
+<text x="304" y="172" font-size="10.5" fill="#b9c0ca" text-anchor="middle">看起来风平浪静</text>
+<line x1="394" y1="159" x2="416" y2="159" stroke="#e06b6b" marker-end="url(#a1r)"></line>
+<rect x="420" y="136" width="208" height="46" rx="6" fill="rgba(224,107,107,0.16)" stroke="#e06b6b" stroke-width="2"></rect>
+<text x="524" y="155" font-size="10.5" fill="#e7ebf1" text-anchor="middle">小问题在暗处一直累积</text>
+<text x="524" y="172" font-size="10.5" fill="#e06b6b" text-anchor="middle">组织承担的风险反而更大</text>
+<text x="12" y="220" font-size="11" font-weight="700" fill="#5b9df9">③ 无指责复盘：为什么当时那么做是合理的</text>
+<rect x="12" y="228" width="176" height="46" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="100" y="247" font-size="10.5" fill="#e7ebf1" text-anchor="middle">拿到只有当事人知道</text>
+<text x="100" y="264" font-size="10.5" fill="#e7ebf1" text-anchor="middle">的那段信息</text>
+<line x1="190" y1="251" x2="212" y2="251" stroke="#5b9df9" marker-end="url(#a1b)"></line>
+<rect x="216" y="228" width="176" height="46" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="304" y="247" font-size="10.5" fill="#e7ebf1" text-anchor="middle">行动项：改什么 / 谁改</text>
+<text x="304" y="264" font-size="10.5" fill="#e7ebf1" text-anchor="middle">/ 什么时候改完</text>
+<line x1="394" y1="251" x2="416" y2="251" stroke="#5b9df9" marker-end="url(#a1b)"></line>
+<rect x="420" y="228" width="208" height="46" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="524" y="247" font-size="10.5" fill="#e7ebf1" text-anchor="middle">系统变了：</text>
+<text x="524" y="264" font-size="10.5" fill="#e7ebf1" text-anchor="middle">同一条路下次走不通</text>
+<text x="12" y="302" font-size="10.5" fill="#7c8593">② 最坏：它不但没换来教训，还让你以后看不见小事故——你的事故数据从此是幸存者偏差。</text>
+<text x="12" y="322" font-size="10.5" fill="#8fbaff">③ 的产出不是一篇文档，是一组能改变系统的行动项。</text>
+</svg>
+<figcaption>图 1 · 事故之后的三条路：不写 → 复发；写成追责报告 → 瞒报；无指责复盘 → 换来信息与行动项。</figcaption>
+</figure>
+<h2>核心内容，讲透</h2>
+<h3>一、复盘是什么：一份带产出义务的文档</h3>
+<p>本章给的定义是<strong>五件东西的合集</strong>：一次事故的书面记录，包含<strong>它的影响、为缓解或解决它所采取的动作、根因，以及为防止它再次发生的后续行动</strong>。五样里前四样都是「回顾」，只有最后一样是「未来」——而全章的重量正压在最后一样上。</p>
+<p>三个主要目标的排序也很讲究：<strong>①</strong> 确保事故被记录下来；<strong>②</strong> 确保所有促成它的根因都被弄明白；<strong>③</strong> <em>尤其是</em>，确保有效的预防措施被真正落实，以降低它再次发生的概率与影响。那个「尤其是」不是修辞——它意味着一份写得漂亮、时间线精确、却没产出任何行动项的复盘，<strong>在本章的判据下是失败的</strong>。所以判断一个团队的复盘文化是真是假，最快的办法不是读文档，是<strong>去看那些行动项有没有被关掉</strong>：每条都该有负责人、有合理优先级、直接落成缺陷跟踪系统里的一张单子，否则「以后我们会注意」会大量出现，而它不改变任何东西。</p>
+<p>还有一个容易被忽略的判据：<strong>复盘的读者不是你的主管，是六个月后那个不认识你的值班工程师。</strong>他会在凌晨三点搜到这份文档，因为他遇到了很像的症状。为他写，时间线和术语解释就自然会写对。</p>
+<h3>二、什么时候必须写：判据要事先写死</h3>
+<p>本章明确要求：<strong>复盘的触发判据要在事故发生之前就商定好、公之于众</strong>。它给的常见判据清单是——</p>
+<figure>
+<svg viewBox="0 0 640 258" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker></defs>
+<text x="12" y="18" font-size="11.5" font-weight="700" fill="#8fbaff">本章列出的常见触发判据（阈值由你自己定，但必须事先定）</text>
+<rect x="12" y="30" width="290" height="28" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="24" y="49" font-size="10.5" fill="#b9c0ca">用户可见的宕机或降级，超过某个阈值</text>
+<rect x="12" y="64" width="290" height="28" rx="5" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"></rect>
+<text x="24" y="83" font-size="10.5" fill="#e7ebf1">任何形式的数据丢失（没有阈值）</text>
+<rect x="12" y="98" width="290" height="28" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="24" y="117" font-size="10.5" fill="#b9c0ca">值班工程师人工介入过（回滚、切流量…）</text>
+<rect x="12" y="132" width="290" height="28" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="24" y="151" font-size="10.5" fill="#b9c0ca">解决耗时超过某个阈值</text>
+<rect x="12" y="166" width="290" height="28" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="24" y="185" font-size="10.5" fill="#b9c0ca">监控没报出来，靠人先发现</text>
+<line x1="304" y1="44" x2="392" y2="105" stroke="#5b9df9" marker-end="url(#a2)"></line>
+<line x1="304" y1="78" x2="392" y2="108" stroke="#5b9df9" marker-end="url(#a2)"></line>
+<line x1="304" y1="112" x2="392" y2="112" stroke="#5b9df9" marker-end="url(#a2)"></line>
+<line x1="304" y1="146" x2="392" y2="116" stroke="#5b9df9" marker-end="url(#a2)"></line>
+<line x1="304" y1="180" x2="392" y2="119" stroke="#5b9df9" marker-end="url(#a2)"></line>
+<rect x="398" y="88" width="230" height="48" rx="8" fill="rgba(91,157,249,0.20)" stroke="#5b9df9" stroke-width="2"></rect>
+<text x="513" y="108" font-size="11" font-weight="700" fill="#e7ebf1" text-anchor="middle">命中任意一条</text>
+<text x="513" y="126" font-size="11" font-weight="700" fill="#e7ebf1" text-anchor="middle">→ 必须写一份复盘</text>
+<text x="398" y="160" font-size="10.5" fill="#8fbaff">另外：任何利益相关方都可以</text>
+<text x="398" y="178" font-size="10.5" fill="#8fbaff">直接要求为某次事件写复盘。</text>
+<text x="12" y="220" font-size="10.5" fill="#7c8593">为什么必须事先定：等出了事再讨论「这算不算大事」，答案会随当天谁在场、谁不高兴而变。</text>
+<text x="12" y="240" font-size="10.5" fill="#7c8593">最后一条最反直觉——监控没报出来本身就是故障，哪怕用户什么都没感觉到。</text>
+</svg>
+<figcaption>图 2 · 触发判据事先写死，复盘才不会变成「大到瞒不住才写」。</figcaption>
+</figure>
+<p>清单里最容易被跳过的是最后一条：<strong>监控没报出来、靠人工发现</strong>。它意味着这次事故是用户先告诉你的——即便影响很小、几分钟就好了，<strong>你的监控有个洞</strong>本身就值得一份复盘（呼应第 6 章）。同理，「值班工程师人工介入过」的隐含意思是：<em>需要人半夜爬起来敲命令，本身就是一个待修的缺陷</em>。</p>
+<p>本章还配了一句用来对冲判据压力的话：<strong>写复盘不是惩罚，而是全公司的一次学习机会。</strong>如果团队把「要写复盘了」听成「要挨罚了」，判据越严格、瞒报越严重——这两件事必须一起立。</p>
+<h3>三、无指责到底是什么，以及不是什么</h3>
+<p>本章对「无指责」的定义是一句可操作的假设：<strong>一份无指责地写成的复盘，假定所有卷入事故的人都是本着好意、并且用他们当时掌握的信息做了正确的事。</strong>请注意这句话里的时态——「他们<em>当时</em>掌握的信息」。这是整个机制的支点：读复盘的人已经知道结局，天然带着<strong>事后偏见</strong>，会觉得线索「明明很明显」；而当事人在那一刻并不知道。</p>
+<p>于是提问方式必须换。不问「你为什么按了那个钮」，问「<strong>为什么按那个钮在当时看起来是对的</strong>」；不问「谁改的配置」，问「<strong>什么条件让这次改动看起来是安全的</strong>」。本章把这类调查描述为：从分配责任，转向<strong>调查是什么系统性的原因让某个人或某个团队掌握了不完整或不正确的信息</strong>——只有转过来，有效的预防方案才做得出来。</p>
+<p>这套东西不是软件业发明的。本章明说它<strong>源自医疗与航空业</strong>：在那些行业里失误会死人，所以它们培育出一种氛围，把每一次「失误」都当成加固系统的机会。落到最有名的一句结论就是：<em>「你没法『修好』人，但你可以修系统和流程，让人在设计和维护复杂系统时更容易做出正确的选择。」</em>本章还给了正反措辞的对照：同一个技术判断（这个后端烂到每周出问题、该重写），可以写成情绪化的抱怨兼暗指某人无能，也可以写成面向未来的主张（重写确实能止住这些告警，而且维护手册长到没人学得完，未来值班的人会感谢我们）——<strong>只有第二种写法能被别人接着往下推</strong>。</p>
+<figure>
+<svg viewBox="0 0 640 268" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect x="40" y="12" width="560" height="34" rx="7" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
+<text x="320" y="34" font-size="10.5" fill="#e7ebf1" text-anchor="middle">同一份事实：14:07 一次配置推送把 40% 的线上流量打到了一个空集群</text>
+<line x1="180" y1="48" x2="180" y2="70" stroke="#7c8593" marker-end="url(#a3)"></line>
+<line x1="460" y1="48" x2="460" y2="70" stroke="#7c8593" marker-end="url(#a3)"></line>
+<rect x="16" y="74" width="300" height="40" rx="6" fill="rgba(224,107,107,0.12)" stroke="#e06b6b"></rect>
+<text x="166" y="90" font-size="10.5" font-weight="700" fill="#e06b6b" text-anchor="middle">指责式提问</text>
+<text x="166" y="107" font-size="10.5" fill="#e7ebf1" text-anchor="middle">谁推的？他为什么不按流程走？</text>
+<rect x="324" y="74" width="300" height="40" rx="6" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"></rect>
+<text x="474" y="90" font-size="10.5" font-weight="700" fill="#8fbaff" text-anchor="middle">无指责提问</text>
+<text x="474" y="107" font-size="10.5" fill="#e7ebf1" text-anchor="middle">这次推送当时为什么看起来是安全的？</text>
+<text x="16" y="140" font-size="10.5" fill="#b9c0ca">你拿到：</text>
+<text x="30" y="160" font-size="10.5" fill="#b9c0ca">· 一个名字</text>
+<text x="30" y="180" font-size="10.5" fill="#b9c0ca">· 一句「以后会更小心」</text>
+<text x="30" y="200" font-size="10.5" fill="#e06b6b">· 下次他不再主动上报小事故</text>
+<text x="324" y="140" font-size="10.5" fill="#b9c0ca">你拿到：</text>
+<text x="338" y="160" font-size="10.5" fill="#b9c0ca">· 推送前的预检只查语法，不查目标集群是否有实例</text>
+<text x="338" y="180" font-size="10.5" fill="#b9c0ca">· 值班手册写的命令和工具的默认值早已不一致</text>
+<text x="338" y="200" font-size="10.5" fill="#8fbaff">· 行动项：预检加一条目标集群健康检查（有人、有期限）</text>
+<line x1="16" y1="218" x2="624" y2="218" stroke="rgba(91,157,249,0.25)"></line>
+<text x="16" y="240" font-size="10.5" fill="#8fbaff">同一份事实，两种问法，拿到的信息量差一个数量级——而右边那三条，只有当事人说得出来。</text>
+<text x="16" y="260" font-size="10.5" fill="#7c8593">左边并非「更严格」：它换来的那个名字，修不好任何一个还留在系统里的坑。</text>
+</svg>
+<figcaption>图 3 · 提问方式决定产出：追人得到一个名字，追条件得到能改的东西。</figcaption>
+</figure>
+<h3>四、瞒报：指责的代价是可以量化的</h3>
+<p>上一节是价值观，这一节是机制。本章讲得非常直接：<strong>把指责从复盘里拿掉，能让人有底气毫无顾虑地把问题往上捅</strong>；反过来，<strong>一种弥漫着指责的空气，冒的风险是造就一种把事故和问题扫到地毯底下的文化，而这会让组织承担更大的风险</strong>。</p>
+<p>为什么这条比听上去更严重？因为它污染的不是士气，是<strong>数据</strong>。可靠性工程的所有决策都建立在「我们知道自己出过什么事」之上：错误预算怎么花、下季度修哪块、告警加在哪。一旦小事故不再被上报，你的事故库就只剩下瞒不住的那些——<strong>这是一份幸存者偏差的样本</strong>。你会得出「系统很稳」的结论，而真实情况只是没人说。这也是为什么「无指责」必须写成制度而不是态度：<strong>态度会随着人换、随着考评变，制度不会。</strong></p>
+<h3>五、复盘不是一个人的作业：协作与评审</h3>
+<p>本章强调复盘从头到尾是<strong>协作产物</strong>，并点名几个关键能力：<strong>实时协作</strong>（多人同时编辑，事故刚结束、信息还热着就一起补）、<strong>开放的评论与批注</strong>（任何人都能就某一行提问）、<strong>邮件通知</strong>（相关方不用主动来捞）。听着像工具功能，但它们决定了<strong>一份复盘能不能在信息蒸发之前被写完</strong>。</p>
+<p>写完之后是评审，由<strong>没有直接卷入这次事故的资深工程师</strong>把关，逐条检查：关键的事故数据有没有为了以后被完整记录下来？影响评估做全了吗？根因挖得够深吗？行动计划是否恰当、由此产生的缺陷单优先级是否合理？结果有没有分享给相关方？</p>
+<p>并且立了一条措辞毫不客气的最佳实践：<strong>没有一份复盘可以不被评审</strong>——<em>一份没被评审过的复盘，跟从没存在过一样。</em>理由很实在：写作是私人的，评审才是把这份知识<strong>并入组织</strong>的那一步。</p>
+<figure>
+<svg viewBox="0 0 640 244" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a4" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect x="8" y="20" width="112" height="46" rx="6" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
+<text x="64" y="40" font-size="11" font-weight="700" fill="#e7ebf1" text-anchor="middle">起草</text>
+<text x="64" y="57" font-size="9.5" fill="#b9c0ca" text-anchor="middle">多人实时协作</text>
+<line x1="122" y1="43" x2="134" y2="43" stroke="#7c8593" marker-end="url(#a4)"></line>
+<rect x="136" y="20" width="112" height="46" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="192" y="40" font-size="11" font-weight="700" fill="#e7ebf1" text-anchor="middle">评审</text>
+<text x="192" y="57" font-size="9.5" fill="#b9c0ca" text-anchor="middle">资深工程师过一遍</text>
+<line x1="250" y1="43" x2="262" y2="43" stroke="#7c8593" marker-end="url(#a4)"></line>
+<rect x="264" y="20" width="112" height="46" rx="6" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
+<text x="320" y="40" font-size="11" font-weight="700" fill="#e7ebf1" text-anchor="middle">广播</text>
+<text x="320" y="57" font-size="9.5" fill="#b9c0ca" text-anchor="middle">相关方必须读到</text>
+<line x1="378" y1="43" x2="390" y2="43" stroke="#7c8593" marker-end="url(#a4)"></line>
+<rect x="392" y="20" width="112" height="46" rx="6" fill="rgba(91,157,249,0.20)" stroke="#5b9df9" stroke-width="2"></rect>
+<text x="448" y="40" font-size="11" font-weight="700" fill="#e7ebf1" text-anchor="middle">行动项</text>
+<text x="448" y="57" font-size="9.5" fill="#b9c0ca" text-anchor="middle">有人 · 有期限 · 跟到关</text>
+<line x1="506" y1="43" x2="518" y2="43" stroke="#7c8593" marker-end="url(#a4)"></line>
+<rect x="520" y="20" width="112" height="46" rx="6" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
+<text x="576" y="40" font-size="11" font-weight="700" fill="#e7ebf1" text-anchor="middle">沉淀</text>
+<text x="576" y="57" font-size="9.5" fill="#b9c0ca" text-anchor="middle">变成教材与演练</text>
+<line x1="8" y1="84" x2="632" y2="84" stroke="rgba(91,157,249,0.25)"></line>
+<text x="8" y="106" font-size="10.5" font-weight="700" fill="#9b6cf5">评审时逐条问的五件事</text>
+<text x="8" y="128" font-size="10.5" fill="#b9c0ca">· 关键的事故数据都留下来了吗</text>
+<text x="8" y="148" font-size="10.5" fill="#b9c0ca">· 影响评估做全了吗</text>
+<text x="8" y="168" font-size="10.5" fill="#b9c0ca">· 根因挖得够深吗</text>
+<text x="8" y="188" font-size="10.5" fill="#b9c0ca">· 行动计划恰当吗，缺陷单优先级合理吗</text>
+<text x="8" y="208" font-size="10.5" fill="#b9c0ca">· 结果分享给相关方了吗</text>
+<text x="336" y="106" font-size="10.5" font-weight="700" fill="#5b9df9">两条硬判据</text>
+<text x="336" y="128" font-size="10.5" fill="#e7ebf1">· 没被评审的复盘 = 从没写过</text>
+<text x="336" y="148" font-size="10.5" fill="#e7ebf1">· 行动项没关掉 = 只是一篇作文</text>
+<text x="336" y="176" font-size="10.5" font-weight="700" fill="#5b9df9">沉淀的两种玩法</text>
+<text x="336" y="198" font-size="10.5" fill="#b9c0ca">· 复盘读书会：翻出几个月甚至几年</text>
+<text x="350" y="216" font-size="10.5" fill="#b9c0ca">前的老复盘，当事人和新人一起读</text>
+<text x="336" y="236" font-size="10.5" fill="#b9c0ca">· Wheel of Misfortune：按角色重演</text>
+</svg>
+<figcaption>图 4 · 复盘的生命周期：起草只是第一步，评审、广播、行动项关闭、沉淀成教材才构成完整闭环。</figcaption>
+</figure>
+<h3>六、让它变成文化：四种具体做法 + 度量</h3>
+<p>本章清楚地知道，光有流程没用——它花了一整节讲<strong>怎么把复盘从制度变成习惯</strong>，给的都是具体到可以照抄的做法：</p>
+<ul>
+<li><strong>月度精选复盘</strong>：把当月写得最好的一份放进内部通讯，让全公司读到。</li>
+<li><strong>公司内部的复盘小组</strong>：一个持续讨论内部与外部复盘、最佳实践的地方。</li>
+<li><strong>复盘读书会</strong>：定期把一份有意思或影响大的复盘搬上桌（配上点心），当事人、旁观者和新同事一起聊：当时发生了什么、教了我们什么、后来怎么样了。本章特意点出：<em>被拿来读的那份，常常是几个月甚至几年前的</em>——这正是它的价值，老复盘是组织记忆的载体。</li>
+<li><strong>Wheel of Misfortune（灾难轮盘）</strong>：拿一份旧复盘按角色重演，新 SRE 扮演当时的人。它把「读过」升级成「练过」。</li>
+</ul>
+<p>还有一条最佳实践值得单独拎出来：<strong>当着大家的面奖励那些做对了事的人</strong>——尤其是主动承认自己失误的人。这是无指责文化最便宜也最有效的燃料。此外本章主张这件事应该被<strong>度量</strong>而非凭感觉：既看写了多少份、行动项关闭得怎么样，也直接收集工程师的反馈，看他们<em>是否真的觉得这里的复盘是无指责的</em>——因为这套东西唯一会失效的方式，就是大家嘴上认同、心里不信。</p>
+<h3>七、收尾：把写复盘的摩擦降下来</h3>
+<p>本章结尾谈持续改进，方向是<strong>工具化</strong>：统一模板、把事故数据（时间线、监控图、告警记录）尽可能自动填进去。逻辑很朴素——<strong>摩擦越大，写的人越少</strong>；一份要从零手工拼三小时的文档，注定只有大事故才会有人写。Google 也把模板和一份完整的示例复盘（附录 D，一次服务过载事故）公开了出来，可以直接拿去改。</p>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 1 · 追人 vs 追条件：同一次事故，两种问法各买到什么</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>指责式（谁的锅）</th><th>无指责式（为什么当时是合理的）</th></tr></thead>
+<tbody>
+<tr><th>核心问题</th><td>谁做了这件事、他为什么违规</td><td>什么条件让这个动作在当时<strong>看起来是对的</strong></td></tr>
+<tr><th>拿到的产出</th><td>一个名字 + 一句「以后会更小心」</td><td>一组只有当事人知道的条件 → <strong>可改的行动项</strong></td></tr>
+<tr><th>对下一次的影响</th><td>坑还在，换个人照样踩</td><td>路被堵上了，同一条走不通</td></tr>
+<tr><th>对上报的影响</th><td><strong>小事故不再上报</strong>，事故数据变成幸存者偏差</td><td>人有底气把问题往上捅</td></tr>
+<tr><th>看起来的好处</th><td>「严格」「有交代」，对外好写</td><td>像是「没人负责」——需要向管理层解释</td></tr>
+<tr><th>真实代价</th><td>组织风险被推到暗处继续累积</td><td>做成表演就一文不值；见 §7 的「无指责 ≠ 无问责」</td></tr>
+</tbody></table></div>
+<p class="tcap">表 2 · 什么时候必须写：判据、阈值示例、跳过的代价（阈值是示例，本章只说「某个阈值」，具体数字由你的 SLO 决定）</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>触发判据</th><th>阈值示例</th><th>跳过它的代价</th></tr></thead>
+<tbody>
+<tr><th>用户可见的宕机 / 降级</th><td>影响 &gt; 1% 请求且持续 &gt; 5 分钟；或吃掉 &gt; 10% 月度错误预算</td><td>预算被慢慢啃光，年底才发现没得花</td></tr>
+<tr><th>任何形式的数据丢失</th><td><strong>无阈值——丢一条也写</strong></td><td>数据问题几乎必然复发，且第二次通常更大</td></tr>
+<tr><th>值班工程师人工介入</th><td>回滚、切流量、手工重启等任何一次人工动作</td><td>「需要人半夜起来敲命令」这个缺陷永远不会被修（琐务，见第 5 章）</td></tr>
+<tr><th>解决耗时过长</th><td>从告警到恢复 &gt; 60 分钟</td><td>MTTR 长的真实原因（手册过期、权限缺失、找不到人）没人去查</td></tr>
+<tr><th>监控没报出来</th><td>由用户 / 客服 / 人工巡检先发现</td><td><strong>监控的洞留着</strong>，下一次同类问题依然靠用户告诉你</td></tr>
+<tr><th>任何利益相关方要求</th><td>不需要理由</td><td>把「值不值得写」的判断权收拢到少数人手里</td></tr>
+</tbody></table></div>
+<p class="tcap">表 3 · 复盘的四种失败模式：怎么认出来、怎么治</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>失败模式</th><th>症状</th><th>解药</th></tr></thead>
+<tbody>
+<tr><th>作文式</th><td>时间线精美、行动项一条没有，或全是「以后要注意」</td><td>每条行动项必须落成<strong>有 owner、有优先级的缺陷单</strong>；定期查关闭率</td></tr>
+<tr><th>追人式</th><td>文档里出现具体人名的过失、评审时氛围紧张</td><td>把提问模板换成「为什么当时看起来是对的」；当众奖励主动认错的人</td></tr>
+<tr><th>只在大事故写</th><td>事故库里只有 P0，小问题查无实据</td><td><strong>事先写死触发判据</strong>（表 2），尤其是「监控没报出来」那条</td></tr>
+<tr><th>写完没人看</th><td>文档躺在某个目录里，半年后没人搜得到</td><td>强制评审 + 广播给相关方；靠读书会与角色扮演把老复盘反复用起来</td></tr>
+</tbody></table></div>
+<p class="tcap">表 4 · 行动项分三类：一份复盘里最好三类都有</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>类型</th><th>目标</th><th>典型例子</th><th>见效速度 / 成本</th></tr></thead>
+<tbody>
+<tr><th>防再发</th><td>让同样的原因不再产生同样的结果</td><td>推送前预检加目标集群健康检查；给危险命令加二次确认</td><td>见效慢、价值最高；常需改代码</td></tr>
+<tr><th>减影响</th><td>它再发生时，伤害小一个量级</td><td>加降级开关、限流、把爆炸半径切成分区</td><td>中等成本；对<strong>还没想到的故障</strong>同样有效</td></tr>
+<tr><th>缩短发现与恢复</th><td>把 MTTR 压下去</td><td>补一条症状告警、更新值班手册、把回滚做成一条命令</td><td><strong>最便宜、最快见效</strong>；常常是当周就能做完的那几条</td></tr>
+</tbody></table></div>
+<p>选型建议一句话：<strong>如果时间只够做一类，先做第三类。</strong>「防再发」经常要等一个季度的排期，而「补一条告警、把回滚做成一条命令」通常当周就能落地，并且对<strong>下一次完全不同的事故</strong>也管用。</p>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>这一章在日常里的落点非常密集：<strong>值班交接</strong>时先看有没有未关闭的行动项；<strong>事故评审会</strong>的第一句话该是「我们不找人，我们找条件」；<strong>面试</strong>里被问到「讲一次你搞砸的事故」，标准答卷不是自责，而是——影响多大、当时为什么那个判断是合理的、后来改了什么、那条改动有没有被验证过。工程之外还有一个很实际的用途：<strong>对外的公开复盘已经是大厂事故公关的默认形态</strong>，写得好坏直接影响客户信任。</p>
+<div class="ev">
+<div class="evh">大厂实证 · 这些不是书里说的，是当事方自己公开写的</div>
+<ul>
+<li><strong>Etsy · John Allspaw</strong>（2012，工程博客《Blameless PostMortems and a Just Culture》）：软件业「无指责」的源头文本，比这本 SRE 书早四年。核心主张是去找<strong>「第二故事」</strong>——不停在「谁按错了」，而要还原当时的条件为什么让那个动作看起来合理；并把犯了错的工程师当成<strong>最有资格教育组织的人</strong>。Etsy 后来还公开了《Debriefing Facilitation Guide》，把复盘会怎么主持写成了操作手册。<span class="src"><a href="https://www.etsy.com/codeascraft/blameless-postmortems" rel="noopener" target="_blank">Etsy Code as Craft · Blameless PostMortems and a Just Culture ↗</a> · <a href="https://www.etsy.com/codeascraft/debriefing-facilitation-guide/" rel="noopener" target="_blank">Debriefing Facilitation Guide ↗</a></span></li>
+<li><strong>Google Cloud</strong>（2019-06-02 全球网络中断，官方公开说明）：Google 自己把这次事故的影响量化到了非常具体的粒度——<strong>YouTube 在一小时内观看量下降约 2.5%，Google Cloud Storage 流量下降约 30%，约 1% 的活跃 Gmail 用户受影响</strong>（Google 特意补了一句：1% 听起来小，但那是数百万人）。这正是本章「影响评估要做全」的公开样本：只给百分比会掩盖绝对量，所以两者都给。<span class="src"><a href="https://cloud.google.com/blog/topics/inside-google-cloud/an-update-on-sundays-service-disruption" rel="noopener" target="_blank">Google Cloud Blog · An update on Sunday's service disruption ↗</a></span></li>
+<li><strong>Atlassian</strong>（2022-04 大规模中断，官方 Post-Incident Review）：一次内部脚本用错了参数，把约 <strong>400 个客户站点</strong>整体删掉，部分客户的恢复<strong>持续了长达 14 天</strong>（4 月 8 日开始陆续恢复，4 月 18 日全部恢复）。Atlassian 事后公开了一份异常详尽的 PIR，其中最印证本章的一条是：删除走的是<strong>标准工作流</strong>，所以内部监控完全没有报警——正对应本章那条最容易被跳过的触发判据「监控没报出来」。<span class="src"><a href="https://www.atlassian.com/blog/atlassian-engineering/post-incident-review-april-2022-outage" rel="noopener" target="_blank">Atlassian Engineering · Post-Incident Review on the April 2022 outage ↗</a></span></li>
+<li><strong>GitLab</strong>（2017-01-31 数据库事故，官方复盘）：一次深夜排障中误删了生产数据目录，最终丢失约 6 小时数据，按 GitLab 自己的估算影响约 <strong>5000 个项目、5000 条评论、700 个新注册账号</strong>。GitLab 把恢复过程<strong>公开直播</strong>并写成复盘公之于众——它是「无指责 + 公开」最激进的一次实践，也印证了本章的判据：那份复盘真正有价值的不是道歉，是后面那串关于备份验证的行动项。<span class="src"><a href="https://about.gitlab.com/blog/postmortem-of-database-outage-of-january-31/" rel="noopener" target="_blank">GitLab · Postmortem of database outage of January 31 ↗</a></span></li>
+<li><strong>DORA / Accelerate 研究</strong>：把本章的文化主张放到了统计学上：用社会学家 Ron Westrum 的组织文化分型（<em>病态 / 官僚 / 生成型</em>）做测量，结论是<strong>高信任、重视信息流动的「生成型」文化能预测软件交付效能与组织绩效</strong>——而 Westrum 的原始研究正来自航空与医疗的事故人因分析，与本章「无指责源自医疗与航空」是同一条根。<span class="src"><a href="https://dora.dev/capabilities/generative-organizational-culture/" rel="noopener" target="_blank">DORA · Capabilities: Generative organizational culture ↗</a></span></li>
+<li><strong>本章自己的公开版本</strong>：SRE 书全文免费，本章与附录 D 的示例复盘（一次服务过载事故的完整文档：影响、时间线、根因、行动项）都可以直接读、直接抄成模板。<span class="src"><a href="https://sre.google/sre-book/postmortem-culture/" rel="noopener" target="_blank">SRE Book Ch.15 Postmortem Culture ↗</a> · <a href="https://sre.google/sre-book/example-postmortem/" rel="noopener" target="_blank">Example Postmortem ↗</a></span></li>
+</ul>
+</div>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>无指责 ≠ 无问责。</strong>最常见也最伤人的误读。本章拿掉的是<strong>指责</strong>（「这是谁的锅」，指向惩罚），不是<strong>问责</strong>（「谁负责让它别再发生」，指向所有权）。行动项必须有名字——只不过那个名字出现在「负责修」的栏里，不是「负责背」的栏里。团队一旦把无指责理解成「出了事没人负责」，管理层就会在下一次大事故时把整套东西掀翻。</li>
+<li><strong>「无指责」做成表演，比不做更糟。</strong>行业内对这个词本身有持续的争论：有人主张改叫「<strong>blame-aware</strong>（觉察指责）」——因为指责是人的本能反应，宣称「我们这里没有指责」往往只是把它压到台面下，年底考评时照样记着这一笔。判据很简单：<strong>看最近一次事故之后，当事人的处境有没有变差。</strong>只要人能闻出味道，制度写得再好也拿不到那部分信息。</li>
+<li><strong>「根因」是单数吗？</strong>本章成书于 2016 年，用的还是较朴素的根因框架（注意它的原文其实用了复数 <em>root cause(s)</em>）。此后韧性工程一派的主张更进一步：复杂系统的事故是多个条件的合流，执着于找出「那个根」容易过早收束调查，也很自然地把注意力引向人。相关地，John Allspaw 在《The Infinite Hows》（2014）里给了一个实用的替换：<strong>连问「为什么」太容易滑向「是谁」</strong>；改问「<strong>怎么会</strong>」（在什么条件下这件事成为可能），拿到的是可操作的运行细节。<span class="src"><a href="https://www.kitchensoap.com/2014/11/14/the-infinite-hows-or-the-dangers-of-the-five-whys/" rel="noopener" target="_blank">Kitchen Soap · The Infinite Hows ↗</a></span></li>
+<li><strong>行动项黑洞。</strong>最普遍的失败不是写得不好，是写完没人做——改进单常年排在业务需求后面，一个季度后自动过期。<strong>对策不在复盘流程里，在第 3 章</strong>：错误预算烧超了就该冻结功能发布、把工程时间挪去还债，这才是让行动项排得进去的那个杠杆。</li>
+<li><strong>事后偏见会渗进文字。</strong>写复盘的人已经知道答案，很难不写出「本应该注意到」这类句子。一个可执行的自查：<strong>给时间线里每个动作补一句「他当时能看到什么」</strong>，凡是你写不出来的，说明你在用上帝视角。</li>
+<li><strong>复盘不是免费的。</strong>一份认真的复盘要花几小时到几人天。所以判据必须是<strong>阈值</strong>而不是「都写」——否则复盘本身就变成第 5 章定义的琐务，最后大家一起敷衍。</li>
+<li><strong>时代局限。</strong>2016 年的重点是「产出一份好文档」；此后事故分析一派（Allspaw 等人的 Learning from Incidents 社群）更强调价值在<strong>过程</strong>——访谈、多视角还原、集体讨论，文档只是副产品。这不否定本章，但提醒你：<strong>如果你的复盘只有一个人闷头写完再发出来，你拿到的可能只是文档，不是学习。</strong></li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 一句话：<strong>事故的学费已经付了，复盘是唯一能把它换成资产的动作</strong>——题词「失败的代价是教育」是整章的经济学。</p>
+<p>② 复盘 = 五件东西：事故记录、影响、缓解 / 解决的动作、根因、<strong>防止再发的后续行动</strong>；三个目标里本章特别强调最后一个（「尤其是」有效的预防措施被落实）。</p>
+<p>③ 判断真假的最快办法：<strong>不读文档，去看行动项有没有被关掉</strong>。没有 owner、没有优先级、没进缺陷系统的行动项等于不存在。</p>
+<p>④ 无指责的定义是一句假设：<strong>所有人都是好意，且用当时手上的信息做了他认为对的事</strong>。所以提问要换成「为什么这在当时看起来是对的」。这套做法源自医疗与航空，落成最该背下来的一句：<strong>「你没法『修好』人，但你可以修系统和流程。」</strong></p>
+<p>⑤ 指责的代价是<strong>瞒报</strong>。它污染的不是士气，是你赖以决策的<strong>事故数据</strong>——只剩 P0 的事故库是一份幸存者偏差样本。</p>
+<p>⑥ <strong>触发判据必须事先写死</strong>：用户可见的宕机 / 降级超阈值、任何数据丢失、值班人工介入、解决耗时超阈值、<strong>监控没报出来</strong>，外加「任何利益相关方都可以要求写」。最后两条最容易被跳过，也最值钱。</p>
+<p>⑦ 复盘是协作产物；写完必须由<strong>没卷进这次事故的资深工程师</strong>按五问评审（数据留了吗 / 影响全吗 / 根因深吗 / 行动计划与优先级对吗 / 分享出去了吗）。<strong>没被评审的复盘跟从没存在过一样。</strong></p>
+<p>⑧ 让它变成文化的具体做法：<strong>月度精选、内部复盘小组、复盘读书会（常读几年前的老复盘）、Wheel of Misfortune 角色扮演演练</strong>，以及当众奖励主动认错的人；并且要<strong>度量</strong>——不只数篇数，还要直接问工程师「你真的觉得这里无指责吗」。最后，<strong>把写复盘的摩擦降下来</strong>（模板 + 自动填入事故数据）：写的人越少，组织记忆越短。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>SRE Ch.15 · Postmortem Culture — Book Deep-Read Book 32</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.src,.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.src a,.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.src a:hover,.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">BOOK DEEP-READ · SRE · CHAPTER 15</p>
+<h1>Postmortems: don't chase the person, chase the path that let them fall</h1>
+<p class="sub">Site Reliability Engineering · Ch 15 · John Lunney &amp; Sue Lueder · Google · 2016</p>
+<p class="langbar"><a href="sre-ch15-postmortem-culture-book32.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The site went down, and two hours later it was back. Then what? At most companies the answer is "then nothing" — everyone exhales and goes back to work, and three months later the exact same thing happens again. Chapter 15 of Google's SRE book is about <strong>that "then what"</strong>: writing the incident down, explaining it properly, and turning it into a list of changes that must actually get made. The document is called a <strong>postmortem</strong>.</p>
+<h2>An analogy first</h2>
+<p>Aviation has an old rule: <strong>after a crash you investigate the aircraft, not the pilot</strong>. Not because pilots never err — often one really did press the wrong switch. But what investigators actually want to know is: <em>why does that switch look identical to the one beside it? Why does the manual disagree with what the cockpit displays? Why did the wrong action look right to him at that moment?</em> Answer those and the next pilot won't press it. Conclude "pilot error" and the switch is still there, waiting for the next person.</p>
+<p>The most valuable line in the chapter is the engineering version of that idea: <strong>you can't "fix" people, but you can fix systems and processes</strong>.</p>
+<h2>Why the old world was hard</h2>
+<p>It's hard for a very human reason: <strong>the moment you start hunting for someone to blame, people stop talking</strong>.</p>
+<p>And the information you need lives only in that person's head — what they could see at the time, and why the step looked reasonable. No monitoring system can say it for them. But once they know that speaking up gets logged against them, they'll only mention the parts that couldn't be hidden. Next time, they simply won't report the small stuff at all. So your incident log fills with big outages and looks reassuringly calm, while <strong>the small problems quietly pile up in the dark</strong>.</p>
+<h2>The core ideas</h2>
+<p>① <strong>Delete the question "who did this?" from the room.</strong> The premise is an assumption: everyone involved acted in good faith and did what looked right given the information they had. So the question changes from "who got it wrong" to "<strong>why did that choice look right at the time?</strong>" This isn't being nice to people; it's a trade. You give up the name, and you get the part of the story only that person knows.</p>
+<p>② <strong>Agree in advance on what forces a postmortem.</strong> How long a user-visible failure has to last, any data loss at all, whether someone on call had to get up at night and intervene by hand, how long the fix took, and — <strong>whether monitoring missed it and a user noticed first</strong>. Why in advance? Because if you argue about "was this a big one?" after the fact, the answer shifts with who's in the room and who's annoyed that day.</p>
+<p>③ <strong>The output isn't a document, it's a to-do list.</strong> However moving the writing is, without a few lines of "change which system, who does it, by when," it's just an essay. And someone has to actually read it — the book is blunt about this: <em>a postmortem that hasn't been reviewed might as well never have existed.</em></p>
+<p>④ <strong>Old postmortems are the best teaching material.</strong> Google's approach is rather fun: dig out a postmortem from months or even years ago and read it together — the people who were there, the bystanders, and the new hires. There's also a rehearsal called the "Wheel of Misfortune": take an old postmortem and re-enact it, with newcomers playing the roles of the people who lived it.</p>
+<h2>Remember one thing</h2>
+<div class="tl">
+<p>The tuition has already been paid, and <strong>the postmortem is the only move that converts it into something</strong>: don't chase the person, chase "why this looked reasonable at the time," because the information you need is only in their mouth; agree beforehand on what must be written up, make sure someone reviews it, and remember the real product is <strong>a set of changes tracked to closed</strong>. One honest cost: blamelessness is easy to fake — no blame in the meeting, but the incident still shows up at review time. If people can smell that, none of the rest works.</p>
+</div>
+<p class="switch-hint">Want the full process, comparison tables and real public postmortems? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">SRE Chapter 15 establishes one rule: <strong>the incident has already been paid for, and the postmortem is the only action that converts that cost into an asset</strong>. Whether it works turns on one counterintuitive design decision — <strong>deleting "who got it wrong" from the process entirely</strong>. Not out of kindness, but because the information you most need exists only in the head of the person involved: what they could see, and why that choice looked right at the time. Start hunting for a name and you never get it. The chapter's own line: <em>"You can't 'fix' people, but you can fix systems and processes to better support people making the right choices when designing and maintaining complex systems."</em> And a harder test: <strong>a postmortem that hasn't been reviewed might as well never have existed.</strong></p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>SRE (site reliability engineering)</strong>: running operations with software-engineering methods — writing code to automate ops away, and owning service reliability.</li>
+<li><strong>Incident</strong>: an event that pushes a service out of its normal state and needs human intervention — an outage, data loss, a broad slowdown.</li>
+<li><strong>Postmortem</strong>: a written record produced after an incident, covering what happened, how big the impact was, how it was stopped, the root cause, and what will be done to prevent a recurrence.</li>
+<li><strong>Blameless</strong>: writing that postmortem without pointing at any individual or team, on the default assumption that everyone acted in good faith with the information they had.</li>
+<li><strong>Root cause</strong>: the underlying reason(s) that produced the failure, as distinct from the symptom (what you observed).</li>
+<li><strong>Action item</strong>: a to-do produced by the postmortem — "change which system / who owns it / by when" — normally filed as a prioritized bug.</li>
+<li><strong>Hindsight bias</strong>: once you know the outcome, the clues look obvious in retrospect. Whoever writes the postmortem carries this bias by construction, because they already know the answer.</li>
+<li><strong>Second story</strong>: "who pressed the wrong button" is the first story; explaining the conditions that made that action look reasonable is the second. It comes from safety science and was brought into software by Etsy.</li>
+<li><strong>On-call</strong>: taking turns being the person who can be woken up when something breaks (Ch. 11).</li>
+<li><strong>SLO / error budget</strong>: the reliability target (e.g. "99.9% of requests succeed over a month") and the allowance for failure it leaves you to spend. See Ch. 3 and 4.</li>
+<li><strong>Toil</strong>: repetitive, manual operational work that scales linearly with the service and carries no lasting value (Ch. 5).</li>
+<li><strong>Wheel of Misfortune</strong>: a Google rehearsal in which an old postmortem is re-enacted, with engineers playing the roles from the incident (Ch. 28).</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Written by John Lunney and Sue Lueder. The chapter sits in <strong>Part III, "Practices,"</strong> right after the incident-handling run: it follows Ch. 12 "Effective Troubleshooting" (how to find the fault), Ch. 13 "Emergency Response" and Ch. 14 "Managing Incidents" (how to organize people during one), and it governs <strong>the 48 hours after the incident ends</strong>. It is also the repayment channel for Ch. 3 "Embracing Risk" — the slice of error budget you burned is only bought back by the action items a postmortem produces. In the field the names differ (incident review, post-incident review / PIR, correction of errors / COE) but the work is the same; it also maps to an interview question you will almost certainly get: <em>"tell me about a production incident you were part of, and what you changed afterwards."</em></p>
+<h2>The problem it solves</h2>
+<p>The chapter's epigraph is its whole economics: <em>"The cost of failure is education." — Devin Carraway</em>. In engineering terms: <strong>the incident has already spent the money</strong> — users hurt, error budget burned, somebody's weekend gone. The only possible return on that spend is learning something and landing it. <strong>Skipping the postmortem is paying tuition and not attending the class.</strong></p>
+<p>Bill it to the SLO and it gets concrete: a <code>99.9%</code> monthly availability target allows roughly <strong>43 minutes</strong> of unavailability for the whole month (the Ch. 3/4 arithmetic). One 30-minute incident eats about 70% of that; the same class of incident returning three times in a quarter clears out the year. So "stop it happening again" is not a moral request, it's <strong>budget arithmetic</strong>.</p>
+<p>Three specific ailments are in scope. <strong>First, lessons that never land</strong>: it's fixed, someone posts "all good" in chat, the lesson lives in two or three heads, one of them changes teams six months later, and the same failure replays. <strong>Second, blame-induced silence</strong> — the chapter's firmest claim: removing blame <em>gives people the confidence to escalate issues without fear</em>; conversely, <strong>an atmosphere of blame risks creating a culture in which incidents and issues get swept under the rug, leaving the organization exposed to greater risk</strong>. <strong>Third, no criteria</strong>: if nobody agreed in advance on what requires a postmortem, the working rule becomes "write one when it's too big to hide," and your incident record ends up containing nothing but P0s.</p>
+<figure>
+<svg viewBox="0 0 640 330" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="a1r" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#e06b6b"></path></marker>
+<marker id="a1b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker></defs>
+<text x="12" y="18" font-size="11.5" font-weight="700" fill="#8fbaff">One incident, three destinations</text>
+<text x="12" y="44" font-size="11" font-weight="700" fill="#7c8593">1 · Write nothing</text>
+<rect x="12" y="52" width="176" height="38" rx="6" fill="rgba(91,157,249,0.06)" stroke="#7c8593"></rect>
+<text x="100" y="76" font-size="10" fill="#b9c0ca" text-anchor="middle">Lesson stays in two heads</text>
+<line x1="190" y1="71" x2="212" y2="71" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="216" y="52" width="176" height="38" rx="6" fill="rgba(91,157,249,0.06)" stroke="#7c8593"></rect>
+<text x="304" y="76" font-size="10" fill="#b9c0ca" text-anchor="middle">One of them changes team</text>
+<line x1="394" y1="71" x2="416" y2="71" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="420" y="52" width="208" height="38" rx="6" fill="rgba(91,157,249,0.06)" stroke="#7c8593"></rect>
+<text x="524" y="76" font-size="10" fill="#b9c0ca" text-anchor="middle">The same failure replays</text>
+<text x="12" y="128" font-size="11" font-weight="700" fill="#e06b6b">2 · Write a blame report: whose fault was it</text>
+<rect x="12" y="136" width="176" height="46" rx="6" fill="rgba(224,107,107,0.10)" stroke="#e06b6b"></rect>
+<text x="100" y="155" font-size="10" fill="#b9c0ca" text-anchor="middle">Only the safe parts get</text>
+<text x="100" y="172" font-size="10" fill="#b9c0ca" text-anchor="middle">written; small ones unreported</text>
+<line x1="190" y1="159" x2="212" y2="159" stroke="#e06b6b" marker-end="url(#a1r)"></line>
+<rect x="216" y="136" width="176" height="46" rx="6" fill="rgba(224,107,107,0.10)" stroke="#e06b6b"></rect>
+<text x="304" y="155" font-size="10" fill="#b9c0ca" text-anchor="middle">Only P0s left in the log</text>
+<text x="304" y="172" font-size="10" fill="#b9c0ca" text-anchor="middle">— it all looks calm</text>
+<line x1="394" y1="159" x2="416" y2="159" stroke="#e06b6b" marker-end="url(#a1r)"></line>
+<rect x="420" y="136" width="208" height="46" rx="6" fill="rgba(224,107,107,0.16)" stroke="#e06b6b" stroke-width="2"></rect>
+<text x="524" y="155" font-size="10" fill="#e7ebf1" text-anchor="middle">Small problems pile up unseen</text>
+<text x="524" y="172" font-size="10" fill="#e06b6b" text-anchor="middle">Org risk is higher, not lower</text>
+<text x="12" y="220" font-size="11" font-weight="700" fill="#5b9df9">3 · Blameless postmortem: why did this look right at the time?</text>
+<rect x="12" y="228" width="176" height="46" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="100" y="247" font-size="10" fill="#e7ebf1" text-anchor="middle">You get the part only</text>
+<text x="100" y="264" font-size="10" fill="#e7ebf1" text-anchor="middle">the responder knew</text>
+<line x1="190" y1="251" x2="212" y2="251" stroke="#5b9df9" marker-end="url(#a1b)"></line>
+<rect x="216" y="228" width="176" height="46" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="304" y="247" font-size="10" fill="#e7ebf1" text-anchor="middle">Action items: what / who</text>
+<text x="304" y="264" font-size="10" fill="#e7ebf1" text-anchor="middle">/ by when</text>
+<line x1="394" y1="251" x2="416" y2="251" stroke="#5b9df9" marker-end="url(#a1b)"></line>
+<rect x="420" y="228" width="208" height="46" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="524" y="247" font-size="10" fill="#e7ebf1" text-anchor="middle">The system changed:</text>
+<text x="524" y="264" font-size="10" fill="#e7ebf1" text-anchor="middle">that path no longer exists</text>
+<text x="12" y="302" font-size="10" fill="#7c8593">Path 2 is the worst: no lesson, and from now on you cannot see small incidents — survivorship bias in your own data.</text>
+<text x="12" y="322" font-size="10" fill="#8fbaff">The product of path 3 is not a document. It is a set of action items that change the system.</text>
+</svg>
+<figcaption>Fig 1 · Three destinations after an incident: write nothing → recurrence; write a blame report → silence; write blamelessly → information and action items.</figcaption>
+</figure>
+<h2>The core content, explained</h2>
+<h3>1. What a postmortem is: a document with an obligation to produce</h3>
+<p>The chapter's definition is a set of five things: a written record of an incident, covering <strong>its impact, the actions taken to mitigate or resolve it, the root cause(s), and the follow-up actions to prevent recurrence</strong>. Four of the five look backwards; only the last looks forwards — and the chapter's weight rests on that last one.</p>
+<p>The ordering of the three stated goals is deliberate too: <strong>(1)</strong> ensure the incident is documented; <strong>(2)</strong> ensure all contributing root causes are well understood; <strong>(3)</strong> <em>and especially</em>, ensure effective preventive actions are put in place to reduce the likelihood and impact of recurrence. That "especially" is not decoration — it means a beautifully written postmortem with an exact timeline and no action items is, by this chapter's test, <strong>a failure</strong>. So the fastest way to judge whether a team's postmortem culture is real is not to read the documents but to <strong>check whether the action items got closed</strong>: each one needs an owner, a sensible priority, and a ticket in the bug tracker. Otherwise you get a lot of "we'll be more careful next time," which changes nothing.</p>
+<p>One more test that's easy to miss: <strong>the reader of your postmortem is not your manager, it's the on-call engineer six months from now who has never met you.</strong> They'll find it at 3 a.m. because they're seeing similar symptoms. Write for them and your timeline and terminology come out right by themselves.</p>
+<h3>2. When one is mandatory: fix the criteria before the incident</h3>
+<p>The chapter is explicit: <strong>postmortem criteria should be agreed upon and published before incidents occur</strong>. Its list of common triggers:</p>
+<figure>
+<svg viewBox="0 0 640 258" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker></defs>
+<text x="12" y="18" font-size="11.5" font-weight="700" fill="#8fbaff">Common triggers (you pick the thresholds — but pick them in advance)</text>
+<rect x="12" y="30" width="290" height="28" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="24" y="49" font-size="10" fill="#b9c0ca">User-visible downtime or degradation past a threshold</text>
+<rect x="12" y="64" width="290" height="28" rx="5" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"></rect>
+<text x="24" y="83" font-size="10" fill="#e7ebf1">Data loss of any kind (no threshold at all)</text>
+<rect x="12" y="98" width="290" height="28" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="24" y="117" font-size="10" fill="#b9c0ca">On-call engineer intervention (rollback, rerouting…)</text>
+<rect x="12" y="132" width="290" height="28" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="24" y="151" font-size="10" fill="#b9c0ca">Resolution time above a threshold</text>
+<rect x="12" y="166" width="290" height="28" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="24" y="185" font-size="10" fill="#b9c0ca">A monitoring failure — a human found it first</text>
+<line x1="304" y1="44" x2="392" y2="105" stroke="#5b9df9" marker-end="url(#a2)"></line>
+<line x1="304" y1="78" x2="392" y2="108" stroke="#5b9df9" marker-end="url(#a2)"></line>
+<line x1="304" y1="112" x2="392" y2="112" stroke="#5b9df9" marker-end="url(#a2)"></line>
+<line x1="304" y1="146" x2="392" y2="116" stroke="#5b9df9" marker-end="url(#a2)"></line>
+<line x1="304" y1="180" x2="392" y2="119" stroke="#5b9df9" marker-end="url(#a2)"></line>
+<rect x="398" y="88" width="230" height="48" rx="8" fill="rgba(91,157,249,0.20)" stroke="#5b9df9" stroke-width="2"></rect>
+<text x="513" y="108" font-size="11" font-weight="700" fill="#e7ebf1" text-anchor="middle">Any one of them fires</text>
+<text x="513" y="126" font-size="11" font-weight="700" fill="#e7ebf1" text-anchor="middle">→ a postmortem is required</text>
+<text x="398" y="160" font-size="10" fill="#8fbaff">Plus: any stakeholder may request</text>
+<text x="398" y="178" font-size="10" fill="#8fbaff">a postmortem for any event.</text>
+<text x="12" y="220" font-size="10" fill="#7c8593">Why in advance: argue "was that a big one?" after the fact and the answer moves with who is in the room.</text>
+<text x="12" y="240" font-size="10" fill="#7c8593">The last trigger is the counterintuitive one — a monitoring gap is an incident even if no user noticed.</text>
+</svg>
+<figcaption>Fig 2 · Fix the triggers in advance and postmortems stop being written only when something is too big to hide.</figcaption>
+</figure>
+<p>The easiest one to skip is the last: <strong>monitoring failed and a human noticed first</strong>. It means the user told you before your systems did — and even if the impact was small and it recovered in minutes, <strong>the hole in your monitoring</strong> is worth a postmortem on its own (echoing Ch. 6). Likewise, "an on-call engineer intervened" implies something sharper: <em>needing a human awake at 3 a.m. typing commands is itself a defect awaiting repair.</em></p>
+<p>The chapter pairs the criteria with a line that offsets the pressure they create: <strong>writing a postmortem is not punishment — it is a learning opportunity for the entire company.</strong> If a team hears "we need a postmortem" as "someone is about to be punished," then the stricter the criteria the worse the under-reporting. The two must be introduced together.</p>
+<h3>3. What blameless means — and what it doesn't</h3>
+<p>The chapter's definition is an operational assumption: <strong>a blamelessly written postmortem assumes that everyone involved in an incident had good intentions and did the right thing with the information they had.</strong> Note the tense — the information they had <em>at the time</em>. That's the pivot of the whole mechanism: whoever reads the postmortem already knows the ending and carries <strong>hindsight bias</strong>, so the clues look obvious; the person in the moment had none of that.</p>
+<p>So the questions have to change. Not "why did you press that button" but "<strong>why did pressing that button look correct at the time?</strong>"; not "who changed the config" but "<strong>what conditions made that change look safe?</strong>" The chapter frames the shift as moving from assigning blame to <strong>investigating the systematic reasons why an individual or team had incomplete or incorrect information</strong> — only then can an effective prevention plan be built.</p>
+<p>None of this was invented by software. The chapter says plainly that it <strong>originated in the healthcare and avionics industries</strong>, where mistakes can be fatal and so every "mistake" is cultivated as a chance to strengthen the system. It condenses into the line worth memorizing: <em>"You can't 'fix' people, but you can fix systems and processes to better support people making the right choices when designing and maintaining complex systems."</em> The chapter also contrasts two ways of writing the same technical judgement (this backend is bad enough that it breaks weekly and should be rewritten): as an exasperated complaint that implies somebody is incompetent, or as a forward-looking case (rewriting it really would stop these pages, the maintenance manual is too long for anyone to fully learn, and future on-callers will thank us) — <strong>only the second version is something a colleague can pick up and act on</strong>.</p>
+<figure>
+<svg viewBox="0 0 640 268" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect x="40" y="12" width="560" height="34" rx="7" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
+<text x="320" y="34" font-size="10" fill="#e7ebf1" text-anchor="middle">Same fact: at 14:07 a config push sent 40% of live traffic to an empty cluster</text>
+<line x1="180" y1="48" x2="180" y2="70" stroke="#7c8593" marker-end="url(#a3)"></line>
+<line x1="460" y1="48" x2="460" y2="70" stroke="#7c8593" marker-end="url(#a3)"></line>
+<rect x="16" y="74" width="300" height="40" rx="6" fill="rgba(224,107,107,0.12)" stroke="#e06b6b"></rect>
+<text x="166" y="90" font-size="10" font-weight="700" fill="#e06b6b" text-anchor="middle">Blaming question</text>
+<text x="166" y="107" font-size="10" fill="#e7ebf1" text-anchor="middle">Who pushed it? Why skip the process?</text>
+<rect x="324" y="74" width="300" height="40" rx="6" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"></rect>
+<text x="474" y="90" font-size="10" font-weight="700" fill="#8fbaff" text-anchor="middle">Blameless question</text>
+<text x="474" y="107" font-size="10" fill="#e7ebf1" text-anchor="middle">Why did this push look safe at the time?</text>
+<text x="16" y="140" font-size="10" fill="#b9c0ca">What you get:</text>
+<text x="30" y="160" font-size="10" fill="#b9c0ca">· a name</text>
+<text x="30" y="180" font-size="10" fill="#b9c0ca">· a promise to be more careful</text>
+<text x="30" y="200" font-size="10" fill="#e06b6b">· one fewer person reporting small incidents</text>
+<text x="324" y="140" font-size="10" fill="#b9c0ca">What you get:</text>
+<text x="338" y="160" font-size="10" fill="#b9c0ca">· the pre-push check validates syntax, not whether</text>
+<text x="348" y="176" font-size="10" fill="#b9c0ca">the target cluster has any instances</text>
+<text x="338" y="196" font-size="10" fill="#b9c0ca">· the runbook and the tool default drifted apart long ago</text>
+<text x="338" y="212" font-size="10" fill="#8fbaff">· action item: add a target-health check (owner, due date)</text>
+<line x1="16" y1="226" x2="624" y2="226" stroke="rgba(91,157,249,0.25)"></line>
+<text x="16" y="246" font-size="10" fill="#8fbaff">Same facts, two questions, an order of magnitude difference — and only the responder can supply the right-hand column.</text>
+<text x="16" y="262" font-size="10" fill="#7c8593">The left column isn't "stricter": the name it buys fixes none of the traps still sitting in the system.</text>
+</svg>
+<figcaption>Fig 3 · The question determines the output: chase a person and you get a name; chase conditions and you get something you can change.</figcaption>
+</figure>
+<h3>4. Under-reporting: the cost of blame is measurable</h3>
+<p>The previous section was values; this one is mechanism. The chapter is direct: <strong>removing blame gives people the confidence to escalate issues without fear</strong>; conversely, <strong>an atmosphere of blame risks creating a culture in which incidents and issues get swept under the rug, leaving the organization exposed to greater risk</strong>.</p>
+<p>Why is that worse than it sounds? Because what it corrupts is not morale, it's <strong>data</strong>. Every reliability decision rests on knowing what has actually gone wrong: how to spend the error budget, what to fix next quarter, where to add alerts. Once small incidents stop being reported, your incident record holds only the ones that couldn't be hidden — <strong>a survivorship-biased sample</strong>. You conclude the system is stable, when in truth nobody is talking. Which is why blamelessness has to be built as a process rather than an attitude: <strong>attitudes change with people and with performance reviews; processes don't.</strong></p>
+<h3>5. Not a solo assignment: collaboration and review</h3>
+<p>The chapter treats postmortems as <strong>collaborative</strong> from end to end and names the capabilities that matter: <strong>real-time collaboration</strong> (several people editing at once, while the information is still warm), <strong>an open commenting and annotation system</strong> (anyone can question any line), and <strong>email notifications</strong> (stakeholders don't have to go looking). These sound like tool features, but they decide <strong>whether a postmortem gets finished before the information evaporates</strong>.</p>
+<p>Then it's reviewed — by <strong>senior engineers who weren't directly involved</strong>, checking a specific set of questions: was the key incident data captured for posterity? are the impact assessments complete? was the root cause dug into deeply enough? is the action plan appropriate, and are the resulting bug fixes at an appropriate priority? was the outcome shared with the relevant stakeholders?</p>
+<p>And it states one best practice bluntly: <strong>no postmortem left unreviewed</strong> — <em>an unreviewed postmortem might as well never have existed.</em> The reasoning is practical: writing is private, and review is the step that merges the knowledge <strong>into the organization</strong>.</p>
+<figure>
+<svg viewBox="0 0 640 244" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a4" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect x="8" y="20" width="112" height="46" rx="6" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
+<text x="64" y="40" font-size="10.5" font-weight="700" fill="#e7ebf1" text-anchor="middle">Draft</text>
+<text x="64" y="57" font-size="9" fill="#b9c0ca" text-anchor="middle">many hands, live</text>
+<line x1="122" y1="43" x2="134" y2="43" stroke="#7c8593" marker-end="url(#a4)"></line>
+<rect x="136" y="20" width="112" height="46" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="192" y="40" font-size="10.5" font-weight="700" fill="#e7ebf1" text-anchor="middle">Review</text>
+<text x="192" y="57" font-size="9" fill="#b9c0ca" text-anchor="middle">uninvolved seniors</text>
+<line x1="250" y1="43" x2="262" y2="43" stroke="#7c8593" marker-end="url(#a4)"></line>
+<rect x="264" y="20" width="112" height="46" rx="6" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
+<text x="320" y="40" font-size="10.5" font-weight="700" fill="#e7ebf1" text-anchor="middle">Broadcast</text>
+<text x="320" y="57" font-size="9" fill="#b9c0ca" text-anchor="middle">stakeholders read it</text>
+<line x1="378" y1="43" x2="390" y2="43" stroke="#7c8593" marker-end="url(#a4)"></line>
+<rect x="392" y="20" width="112" height="46" rx="6" fill="rgba(91,157,249,0.20)" stroke="#5b9df9" stroke-width="2"></rect>
+<text x="448" y="40" font-size="10.5" font-weight="700" fill="#e7ebf1" text-anchor="middle">Action items</text>
+<text x="448" y="57" font-size="9" fill="#b9c0ca" text-anchor="middle">owner · date · closed</text>
+<line x1="506" y1="43" x2="518" y2="43" stroke="#7c8593" marker-end="url(#a4)"></line>
+<rect x="520" y="20" width="112" height="46" rx="6" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
+<text x="576" y="40" font-size="10.5" font-weight="700" fill="#e7ebf1" text-anchor="middle">Reuse</text>
+<text x="576" y="57" font-size="9" fill="#b9c0ca" text-anchor="middle">teaching + drills</text>
+<line x1="8" y1="84" x2="632" y2="84" stroke="rgba(91,157,249,0.25)"></line>
+<text x="8" y="106" font-size="10.5" font-weight="700" fill="#9b6cf5">The five review questions</text>
+<text x="8" y="128" font-size="10" fill="#b9c0ca">· was the key incident data captured for posterity?</text>
+<text x="8" y="148" font-size="10" fill="#b9c0ca">· are the impact assessments complete?</text>
+<text x="8" y="168" font-size="10" fill="#b9c0ca">· was the root cause dug into deeply enough?</text>
+<text x="8" y="188" font-size="10" fill="#b9c0ca">· is the action plan appropriate, bugs at the right priority?</text>
+<text x="8" y="208" font-size="10" fill="#b9c0ca">· was the outcome shared with stakeholders?</text>
+<text x="352" y="106" font-size="10.5" font-weight="700" fill="#5b9df9">Two hard tests</text>
+<text x="352" y="128" font-size="10" fill="#e7ebf1">· unreviewed = never existed</text>
+<text x="352" y="148" font-size="10" fill="#e7ebf1">· action items still open = just an essay</text>
+<text x="352" y="176" font-size="10.5" font-weight="700" fill="#5b9df9">Two ways to reuse it</text>
+<text x="352" y="198" font-size="10" fill="#b9c0ca">· reading clubs: pull up a postmortem from</text>
+<text x="362" y="214" font-size="10" fill="#b9c0ca">months or years ago and read it together</text>
+<text x="352" y="234" font-size="10" fill="#b9c0ca">· Wheel of Misfortune: re-enact it by role</text>
+</svg>
+<figcaption>Fig 4 · The postmortem lifecycle: drafting is only step one — review, broadcast, closing the action items and reuse complete the loop.</figcaption>
+</figure>
+<h3>6. Turning it into culture: four concrete practices, plus measurement</h3>
+<p>The chapter knows process alone isn't enough, and spends a section on <strong>how to make postmortems a habit</strong>, with practices concrete enough to copy:</p>
+<ul>
+<li><strong>Postmortem of the month</strong>: put the month's best-written one in the internal newsletter so the whole company reads it.</li>
+<li><strong>An internal postmortem group</strong>: a standing place to discuss internal and external postmortems, best practices and commentary.</li>
+<li><strong>Postmortem reading clubs</strong>: regularly bring an interesting or impactful postmortem to the table (with refreshments) and talk it through with participants, non-participants and new hires: what happened, what it taught us, what came after. The chapter points out that the one being read is <em>often months or years old</em> — which is exactly the value, since old postmortems are where organizational memory lives.</li>
+<li><strong>Wheel of Misfortune</strong>: re-enact a previous postmortem with a cast of engineers playing the roles as laid out in it. It upgrades "have read" into "have practiced."</li>
+</ul>
+<p>One further best practice deserves its own line: <strong>visibly reward people for doing the right thing</strong> — especially for owning up to their own mistakes. It is the cheapest and most effective fuel a blameless culture has. The chapter also argues the whole thing should be <strong>measured</strong> rather than felt: track how many get written and how the action items are closing, and ask engineers directly whether they <em>genuinely believe the culture here is blameless</em> — because the one way this fails is everyone agreeing out loud and believing none of it.</p>
+<h3>7. Closing: lower the friction of writing one</h3>
+<p>The chapter ends on continuous improvement, and the direction is <strong>tooling</strong>: a common template, and populating the incident data (timelines, monitoring graphs, alert records) automatically wherever possible. The logic is plain — <strong>the more friction, the fewer people write</strong>; a document that takes three hours to assemble by hand will only ever be written for major outages. Google has also published its template and a complete example postmortem (Appendix D, a service overload incident) that you can take and adapt.</p>
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 1 · Chasing the person vs chasing the conditions: what each buys you</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Blaming (whose fault)</th><th>Blameless (why it looked right)</th></tr></thead>
+<tbody>
+<tr><th>Core question</th><td>Who did this, and why did they break process</td><td>What conditions made the action <strong>look correct at the time</strong></td></tr>
+<tr><th>What you get</th><td>A name plus "I'll be more careful"</td><td>Conditions only the responder knew → <strong>changeable action items</strong></td></tr>
+<tr><th>Effect next time</th><td>The trap is still there for the next person</td><td>The path is closed; that route no longer works</td></tr>
+<tr><th>Effect on reporting</th><td><strong>Small incidents stop being reported</strong>; your data becomes survivorship-biased</td><td>People escalate issues without fear</td></tr>
+<tr><th>Apparent upside</th><td>Looks "rigorous" and accountable; easy to report upward</td><td>Looks like "nobody is responsible"; needs explaining to leadership</td></tr>
+<tr><th>Real cost</th><td>Organizational risk keeps accumulating out of sight</td><td>Worthless if performed rather than meant — see §7 on blameless ≠ unaccountable</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · When one is mandatory (thresholds are illustrative — the book says "a threshold"; the numbers come from your SLO)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Trigger</th><th>Example threshold</th><th>Cost of skipping it</th></tr></thead>
+<tbody>
+<tr><th>User-visible downtime / degradation</th><td>&gt; 1% of requests for &gt; 5 minutes; or &gt; 10% of the monthly error budget</td><td>The budget is nibbled away and you notice only at year end</td></tr>
+<tr><th>Data loss of any kind</th><td><strong>No threshold — write one for a single lost row</strong></td><td>Data problems almost always recur, and the second time is bigger</td></tr>
+<tr><th>On-call intervention</th><td>Any manual action: rollback, traffic drain, manual restart</td><td>"A human has to type this at 3 a.m." never gets fixed (toil, Ch. 5)</td></tr>
+<tr><th>Long resolution time</th><td>&gt; 60 minutes from alert to recovery</td><td>The real MTTR drivers (stale runbooks, missing access, nobody reachable) go uninvestigated</td></tr>
+<tr><th>Monitoring failure</th><td>Found by a user, support or a manual check</td><td><strong>The monitoring gap stays open</strong> and users keep being your alerting system</td></tr>
+<tr><th>Any stakeholder asks</th><td>No justification needed</td><td>The judgement of "is this worth writing up" concentrates in a few hands</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 3 · Four ways postmortems fail: how to spot them, how to treat them</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Failure mode</th><th>Symptom</th><th>Treatment</th></tr></thead>
+<tbody>
+<tr><th>The essay</th><td>Immaculate timeline, no action items — or only "we should be careful"</td><td>Every action item becomes a <strong>ticket with an owner and a priority</strong>; audit the close rate</td></tr>
+<tr><th>The manhunt</th><td>Named individual failings in the text; tense review meetings</td><td>Swap the question template to "why did this look right"; reward people publicly for owning mistakes</td></tr>
+<tr><th>Big-incidents-only</th><td>Only P0s in the record; small problems leave no trace</td><td><strong>Fix the triggers in advance</strong> (Table 2), especially the monitoring-failure one</td></tr>
+<tr><th>Written, never read</th><td>The doc sits in a folder; nobody can find it six months later</td><td>Mandatory review plus broadcast; keep old ones in circulation via reading clubs and role play</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 4 · Three kinds of action item — a good postmortem has all three</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Kind</th><th>Goal</th><th>Typical example</th><th>Speed / cost</th></tr></thead>
+<tbody>
+<tr><th>Prevent recurrence</th><td>The same cause can no longer produce the same result</td><td>Add a target-cluster health check before pushes; require confirmation for dangerous commands</td><td>Slowest, highest value; usually needs code changes</td></tr>
+<tr><th>Reduce impact</th><td>If it happens again, it hurts an order of magnitude less</td><td>Degradation switches, rate limits, partitioning the blast radius</td><td>Moderate cost; also helps against <strong>failures you haven't imagined</strong></td></tr>
+<tr><th>Detect and recover faster</th><td>Push MTTR down</td><td>Add a symptom alert, update the runbook, make rollback one command</td><td><strong>Cheapest and fastest</strong>; usually the items you can finish this week</td></tr>
+</tbody></table></div>
+<p>If you only have time for one category, <strong>do the third</strong>. "Prevent recurrence" often waits a quarter for scheduling, while "add an alert, make rollback one command" usually lands within the week — and it helps with <strong>the next, completely different incident</strong> too.</p>
+<h2>Why it matters / in real systems</h2>
+<p>The chapter lands in a lot of daily places: at <strong>on-call handover</strong>, check for unclosed action items first; the opening line of an <strong>incident review</strong> should be "we're not looking for a person, we're looking for conditions"; and in <strong>interviews</strong>, when asked to describe an incident you caused, the strong answer isn't self-flagellation — it's how big the impact was, why the judgement was reasonable at the time, what you changed afterwards, and whether that change was ever verified. Outside engineering it has a very practical use too: <strong>the public postmortem is now the default form of outage communication</strong>, and how well it's written directly affects customer trust.</p>
+<div class="ev">
+<div class="evh">FIELD EVIDENCE · not claims from the book — these are the companies' own published words</div>
+<ul>
+<li><strong>Etsy · John Allspaw</strong> (2012, engineering blog, "Blameless PostMortems and a Just Culture"): the source text for blamelessness in software, four years before this SRE book. Its core argument is to seek the <strong>"second story"</strong> — not stopping at who pressed what, but reconstructing why the conditions made that action look reasonable — and to treat the engineer who made the mistake as <strong>the person best placed to educate the organization</strong>. Etsy later published its <em>Debriefing Facilitation Guide</em>, turning "how to run the meeting" into an operating manual.<span class="src"><a href="https://www.etsy.com/codeascraft/blameless-postmortems" rel="noopener" target="_blank">Etsy Code as Craft · Blameless PostMortems and a Just Culture ↗</a> · <a href="https://www.etsy.com/codeascraft/debriefing-facilitation-guide/" rel="noopener" target="_blank">Debriefing Facilitation Guide ↗</a></span></li>
+<li><strong>Google Cloud</strong> (2 June 2019 global network disruption, official public write-up): Google quantified the impact at an unusually fine grain — <strong>YouTube measured a 2.5% drop in views for one hour, Google Cloud Storage saw a 30% reduction in traffic, and roughly 1% of active Gmail users were affected</strong> (with the note that 1% still means millions of people). It's a public specimen of "make the impact assessment complete": percentages alone hide the absolute numbers, so both are given.<span class="src"><a href="https://cloud.google.com/blog/topics/inside-google-cloud/an-update-on-sundays-service-disruption" rel="noopener" target="_blank">Google Cloud Blog · An update on Sunday's service disruption ↗</a></span></li>
+<li><strong>Atlassian</strong> (April 2022 outage, official Post-Incident Review): an internal script run with the wrong parameters deleted around <strong>400 customer sites</strong>, and recovery for some customers took <strong>up to 14 days</strong> (restores began 8 April; all customers were back by 18 April). Atlassian published an unusually detailed PIR. The part that most directly confirms this chapter: the deletion ran through a <strong>standard workflow</strong>, so internal monitoring never fired — precisely the trigger criterion teams skip most often.<span class="src"><a href="https://www.atlassian.com/blog/atlassian-engineering/post-incident-review-april-2022-outage" rel="noopener" target="_blank">Atlassian Engineering · Post-Incident Review on the April 2022 outage ↗</a></span></li>
+<li><strong>GitLab</strong> (31 January 2017 database incident, official postmortem): during late-night troubleshooting a production data directory was deleted; roughly 6 hours of data was lost, affecting by GitLab's own estimate about <strong>5,000 projects, 5,000 comments and 700 new user accounts</strong>. GitLab <strong>live-streamed the recovery</strong> and published the postmortem — the most radical practice of "blameless and public" on this list, and a confirmation of the chapter's test: the valuable part of that document isn't the apology, it's the string of action items about verifying backups.<span class="src"><a href="https://about.gitlab.com/blog/postmortem-of-database-outage-of-january-31/" rel="noopener" target="_blank">GitLab · Postmortem of database outage of January 31 ↗</a></span></li>
+<li><strong>DORA / Accelerate research</strong>: puts the chapter's cultural claim on statistical footing. Using sociologist Ron Westrum's typology of organizational culture (<em>pathological / bureaucratic / generative</em>), DORA finds that a high-trust, information-sharing <strong>generative culture predicts software delivery performance and organizational performance</strong> — and Westrum's original research came from human-factors analysis of accidents in aviation and healthcare, the same root the chapter cites for blamelessness.<span class="src"><a href="https://dora.dev/capabilities/generative-organizational-culture/" rel="noopener" target="_blank">DORA · Capabilities: Generative organizational culture ↗</a></span></li>
+<li><strong>The chapter's own public version</strong>: the SRE book is free online, and both this chapter and the Appendix D example postmortem (a complete document for a service overload incident: impact, timeline, root cause, action items) can be read and adapted directly into a template.<span class="src"><a href="https://sre.google/sre-book/postmortem-culture/" rel="noopener" target="_blank">SRE Book Ch.15 Postmortem Culture ↗</a> · <a href="https://sre.google/sre-book/example-postmortem/" rel="noopener" target="_blank">Example Postmortem ↗</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and open arguments</h2>
+<ul>
+<li><strong>Blameless ≠ unaccountable.</strong> The most common and most damaging misreading. What the chapter removes is <strong>blame</strong> ("whose fault," pointing at punishment), not <strong>accountability</strong> ("who owns making sure this doesn't happen again," pointing at ownership). Action items must carry names — it's just that the name goes in the "fixes it" column, not the "carries it" column. Once a team hears blamelessness as "nobody is responsible," leadership will tear the whole thing down at the next major outage.</li>
+<li><strong>Performed blamelessness is worse than none.</strong> The word itself is still argued over; some prefer "<strong>blame-aware</strong>" — blame is a human reflex, and declaring "we don't blame here" often just pushes it under the table, where it resurfaces at review time. The test is simple: <strong>after the last incident, did the responder's situation get worse?</strong> If people can smell it, no amount of process gets you that information.</li>
+<li><strong>Is "root cause" singular?</strong> The chapter is from 2016 and uses a fairly plain root-cause frame (though its own wording is the plural <em>root cause(s)</em>). Resilience engineering pushes further: incidents in complex systems are confluences of conditions, and insisting on finding <em>the</em> root tends to close the investigation early and steer attention toward people. Relatedly, John Allspaw's "The Infinite Hows" (2014) offers a practical substitute: <strong>repeated "why" slides too easily into "who"</strong>; asking "<strong>how</strong>" — under what conditions did this become possible — yields operational detail you can act on.<span class="src"><a href="https://www.kitchensoap.com/2014/11/14/the-infinite-hows-or-the-dangers-of-the-five-whys/" rel="noopener" target="_blank">Kitchen Soap · The Infinite Hows ↗</a></span></li>
+<li><strong>The action-item black hole.</strong> The most common failure isn't bad writing, it's that nobody does the work — improvement tickets sit behind feature requests and quietly expire a quarter later. <strong>The fix isn't in the postmortem process, it's in Ch. 3</strong>: when the error budget is overspent, freeze feature releases and move engineering time to repayment. That's the lever that gets action items scheduled.</li>
+<li><strong>Hindsight bias leaks into the prose.</strong> The writer already knows the answer, so phrases like "should have noticed" are hard to avoid. A workable self-check: <strong>after each step in the timeline, add a line saying what that person could see at that moment</strong>. Anywhere you can't write it, you're narrating from a god's-eye view.</li>
+<li><strong>Postmortems aren't free.</strong> A serious one costs hours to person-days. So the criteria must be <strong>thresholds</strong> rather than "always" — otherwise the postmortem itself becomes the toil of Ch. 5 and everybody starts phoning it in.</li>
+<li><strong>Period limitation.</strong> In 2016 the emphasis was on producing a good document. Since then the incident-analysis community (Allspaw and the Learning from Incidents group) has argued the value lies in the <strong>process</strong> — interviews, multiple perspectives, collective discussion — with the document as a by-product. That doesn't refute the chapter, but it's a warning: <strong>if one person writes your postmortem alone and then publishes it, what you have is a document, not learning.</strong></li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① In one line: <strong>the incident has already been paid for, and the postmortem is the only action that converts it into an asset</strong> — the epigraph, "the cost of failure is education," is the chapter's whole economics.</p>
+<p>② A postmortem is five things: the record, the impact, the mitigating/resolving actions, the root cause(s), and <strong>the follow-up actions that prevent recurrence</strong>. Of the three stated goals, the chapter singles out the last ("<em>and especially</em>" that effective preventive actions are put in place).</p>
+<p>③ Fastest way to tell real from theatre: <strong>don't read the documents, check whether the action items closed</strong>. No owner, no priority, no ticket means it doesn't exist.</p>
+<p>④ Blameless is defined as an assumption: <strong>everyone had good intentions and did the right thing with the information they had</strong>. So the question becomes "why did this look right at the time." The practice comes from healthcare and avionics, and condenses into the line worth memorizing: <strong>"You can't 'fix' people, but you can fix systems and processes."</strong></p>
+<p>⑤ The cost of blame is <strong>under-reporting</strong>. It corrupts not morale but the <strong>incident data</strong> you make decisions from — a record containing only P0s is a survivorship-biased sample.</p>
+<p>⑥ <strong>Fix the triggers in advance</strong>: user-visible downtime past a threshold, data loss of any kind, on-call intervention, resolution time past a threshold, <strong>a monitoring failure</strong>, plus "any stakeholder may request one." The last two get skipped most and are worth the most.</p>
+<p>⑦ Postmortems are collaborative, and every one must be reviewed by <strong>senior engineers who weren't involved</strong> against five questions (data captured / impact complete / root cause deep enough / plan and priorities right / shared with stakeholders). <strong>An unreviewed postmortem might as well never have existed.</strong></p>
+<p>⑧ Practices that turn it into culture: <strong>postmortem of the month, an internal postmortem group, reading clubs (often on postmortems years old), and Wheel of Misfortune role play</strong>, plus visibly rewarding people who own their mistakes — and <strong>measure it</strong>, not only by counting documents but by asking engineers whether they truly believe it's blameless. Finally, <strong>lower the friction of writing one</strong> (templates plus auto-populated incident data): fewer writers means shorter organizational memory.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Reading this page ≈ getting the core of the chapter; for full case studies, go to the book itself.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
