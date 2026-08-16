@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>SRE Ch 21 · Handling Overload — Book Deep-Read 33</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+ol{margin:8px 0 8px 1.4em}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.fx{background:rgba(155,108,245,0.07);border:1px solid rgba(155,108,245,0.3);border-radius:8px;padding:10px 16px;margin:14px 0;font-family:"SF Mono",Menlo,monospace;font-size:0.95rem;color:#cdd3db;text-align:center}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">BOOK DEEP-READ · SRE · CHAPTER 21</p>
+<h1>Handling Overload: better to refuse some work than collapse under all of it</h1>
+<p class="sub">Site Reliability Engineering · Ch 21 · Alejandro Forero Cuervo · Google · 2016</p>
+<p class="langbar"><a href="sre-ch21-handling-overload-book33.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You have fought for concert tickets, refreshed a doctor's booking page, hit "buy" the second a sale opened. What happens on the servers in that instant is what this chapter is about: <strong>more people show up than the place can serve</strong>. Chapter 21 of Google's SRE book is not about making systems faster. It asks a more practical question: <strong>once it already cannot keep up, then what?</strong></p>
+<h2>An analogy first</h2>
+<p>Picture a restaurant with 20 tables. Tonight 200 people arrive. The worst thing you can do is <strong>let them all in</strong>. Everyone crowds inside, the waiters run themselves ragged, orders pile into a tangle, and two hours later <strong>not a single table has been served a complete meal</strong>. All 200 people go hungry. The restaurant did not "serve 200 people" — it just <strong>ruined the 20 tables it could have served properly</strong>.</p>
+<h2>Why the old world was hard</h2>
+<p>A system's instinct is to accept everything. Requests come in and queue up, the queue grows, everyone waits longer. Waiting long enough, the caller assumes failure and <strong>hits refresh</strong> — so the same crowd comes back as two crowds, then three. The pressure starts feeding itself, and within tens of seconds you slide from "a bit slow" to "no response at all."</p>
+<p>The frightening part is not slowness. It is that <strong>useful output drops to zero</strong>: the machines run flat out, spending every cycle computing results nobody is waiting for anymore.</p>
+<h2>So what do you do?</h2>
+<p>Four moves, all of them versions of <strong>gracefully doing less</strong>:</p>
+<ul>
+<li><strong>Put a sign on the door.</strong> Full is full — say so, quickly and clearly. The people turned away are unhappy, but the 20 tables inside get a real dinner.</li>
+<li><strong>Switch to the short menu.</strong> When it is busy, serve the cheap, fast version: search only recent content, drop personalization back to one popularity list. Quality slips a notch, but everybody eats.</li>
+<li><strong>Triage.</strong> Like an emergency room, rank requests by urgency. "Take the payment" is life-or-death; "show me last quarter's report" can wait. When you cut, cut the least urgent first.</li>
+<li><strong>Stop guests from mashing the call button.</strong> A customer who hasn't got their food yet and keeps ringing the bell only makes the waiters busier. So this chapter asks <strong>callers to restrain themselves</strong>: if the backend is turning you away, send less, and don't let retries become the second flood.</li>
+</ul>
+<h2>What does that buy you?</h2>
+<p>It turns "no" into a real capability rather than a sign of failure. By admitting the ceiling exists and deliberately taking on less, the system <strong>holds its output steady at that ceiling</strong> when traffic spikes, instead of falling off a cliff at some point. The cost is honest too: <strong>saying no takes staff of its own (somebody has to stand at that door), and the short menu is almost never cooked, so on the night you need it, it may well not come out of the kitchen.</strong></p>
+<h2>Remember one thing</h2>
+<div class="tl">
+<p>The most expensive mistake under overload is <strong>trying to accept everything</strong>. Rather than straining until the whole thing collapses and nobody gets anything, say no earlier and selectively — so that the people you did keep actually walk away with something.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the formula and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">Overload was never about whether you can take it — it is about <strong>what happens in the moment you can't</strong>. This chapter's claim is mildly counterintuitive: <strong>a healthy service must be able to actively refuse some requests</strong>, because accepting everything indiscriminately does not end in "everyone is a bit slower," it ends with <em>goodput</em> collapsing to near zero. Around that claim it gives four separately implementable moves: measure capacity in resources rather than QPS; let the server degrade and shed; classify requests by criticality in advance; and make clients throttle themselves and put three gates on retries.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Overload</strong> — more requests arriving than the service can currently process.</li>
+<li><strong>Throughput / goodput</strong> — throughput is how many requests per second you process; goodput counts only the ones that <strong>succeed and are still wanted</strong>. Under overload the two diverge sharply.</li>
+<li><strong>Load shedding</strong> — when a service sees it cannot cope, it <strong>deliberately drops some requests</strong> (usually returning a fast error) to protect the rest.</li>
+<li><strong>Graceful degradation</strong> — don't drop the request; return a <strong>lower-quality but far cheaper</strong> answer.</li>
+<li><strong>Throttling</strong> — capping requests at some rate or quota and rejecting the excess.</li>
+<li><strong>Quota</strong> — the resource ceiling assigned to one customer or one class of traffic.</li>
+<li><strong>RPC (remote procedure call)</strong> — the standard way one service calls another. Nearly all Google-internal service traffic is RPC, and most mechanisms here live in the RPC framework — so "client" usually means <strong>the calling service</strong>, not a browser.</li>
+<li><strong>Retry and backoff</strong> — resending a failed request is a retry; waiting a bit longer before each attempt is backoff.</li>
+<li><strong>Utilization</strong> — what fraction of a resource is consumed, e.g. CPU utilization.</li>
+<li><strong>Compressible resource</strong> — something like CPU, where running short just makes things slower rather than failing outright. Memory is not: run out and the process dies.</li>
+<li><strong>Cascading failure</strong> — one component buckles, its load moves elsewhere, that crushes the next one, and it spreads (the subject of the next chapter).</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This chapter comes from Part III ("Practices") of the SRE book, written by Alejandro Forero Cuervo. It follows directly on the two load-balancing chapters — <strong>those explain how to spread load evenly so you avoid overload; this one covers what to do when you are overloaded anyway</strong> — and leads into Chapter 22, "Addressing Cascading Failures." This chapter is a single service defending itself; the next one is what the whole system looks like after that defense fails. In the real world it maps onto every flash sale, every viral event, every avalanche triggered by one slow dependency.</p>
+<h2>What problem is it solving?</h2>
+<p>Start with the counterintuitive part: <strong>a service's genuinely dangerous window is not "slow" — it is the thirty seconds after slow.</strong></p>
+<p>Watch what happens with no defenses. A service rated for roughly <code>10k</code> QPS gets pushed to <code>15k</code>. Requests queue; as the queue grows, response time goes from <code>50 ms</code> to seconds. In-flight requests pile up in memory, GC pressure rises and eats CPU in turn. Clients set a 1-second timeout, don't get an answer, and retry — so <strong>real demand of 15k arrives as 30k, then 45k</strong>. And while those retries land, the queue is still faithfully processing requests that timed out long ago and that nobody is waiting for. At that point CPU is pinned, every cycle is spent on results no one wants, and goodput is near zero.</p>
+<p>That is not "not fast enough." It is <strong>structural collapse</strong>: load has started feeding itself. So the problem the chapter takes on is — <strong>when load exceeds capacity, how do you make output flatten at the capacity line instead of falling off a cliff?</strong> It splits the answer in two: the server must be able to do less on purpose, and the client must be willing to send less on purpose. You need both, because a rejected request that immediately comes straight back still costs the server CPU to reject.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="11.5" font-weight="700" x="34" y="28">↑ goodput (useful output)</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="60" x2="618" y1="242" y2="242"></line>
+<line stroke="#7c8593" x1="60" x2="60" y1="36" y2="242"></line>
+<line stroke="rgba(120,120,130,0.45)" stroke-dasharray="4 4" x1="252" x2="252" y1="88" y2="242"></line>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle" x="252" y="260">capacity</text>
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="3 3" x1="60" x2="252" y1="88" y2="88"></line>
+<path d="M60,242 L252,88" fill="none" stroke="#7c8593" stroke-dasharray="5 4" stroke-width="1.4"></path>
+<path d="M252,88 C330,92 470,98 600,104" fill="none" stroke="#5b9df9" stroke-width="2.4"></path>
+<path d="M252,88 C286,96 316,148 372,196 C424,232 510,238 600,239" fill="none" stroke="#e06b6b" stroke-width="2.4"></path>
+<text fill="#5b9df9" font-size="11.5" font-weight="700" x="322" y="76">with shedding: output holds</text>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="604" y="136">(slow decline = rejecting costs CPU too)</text>
+<text fill="#e06b6b" font-size="11.5" font-weight="700" text-anchor="end" x="600" y="204">no defense: goodput collapses</text>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="600" y="222">queue → timeout → retry → more queue</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" transform="rotate(-38 148 172)" x="148" y="172">ideal (serve everything)</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="end" x="616" y="284">offered load →</text>
+</svg>
+<figcaption>Fig 1 · Past the capacity line the two paths diverge completely: a service that sheds pins its output near the ceiling; an undefended one does not get "slower," it collapses.</figcaption>
+</figure>
+<h2>The core, properly explained</h2>
+<h3>Throw out QPS: measure capacity in resources</h3>
+<p>The usual way to state capacity is "this service handles X QPS." The chapter says flatly that this is a <strong>bad ruler</strong>. Request costs can differ by one or two orders of magnitude — a primary-key read of 3 rows and an aggregation that scans 500 shards both count as "1 query" but consume nothing alike. Worse, the traffic mix drifts as features launch and the customer base changes, so the ceiling you measured yesterday no longer holds today.</p>
+<p>Google's approach is to <strong>define capacity directly in resource consumption</strong>, and in the overwhelming majority of cases that means watching <strong>CPU</strong>. Two reasons. First, in a garbage-collected runtime, <strong>memory pressure naturally translates into CPU consumption</strong> (tight memory → more frequent GC → more CPU burned), so watching CPU watches memory for free. Second, the remaining resources can be provisioned generously enough that they are very unlikely to run out before CPU does. CPU also has one crucial property — it is a <em>compressible</em> resource. Running short only makes requests slower; it does not kill the process outright the way exhausting memory does. That is precisely the window a shedding mechanism needs in order to react.</p>
+<p>The concrete signal is <em>executor load average</em>: an exponentially decayed average of the number of active threads in the process, compared against the number of available CPUs, giving a continuous reading of "how full am I right now?"</p>
+<h3>Graceful degradation and shedding: two ways of doing less</h3>
+<p>The server has two roads under overload, and they are qualitatively different. <strong>Graceful degradation</strong> makes the answer cheaper: search only a small in-memory slice of the index instead of the full on-disk one, swap ranking for a simpler algorithm, fall back from personalized recommendations to a static popularity list. The request is still served, just <strong>one notch worse</strong>. <strong>Load shedding</strong> declines to serve at all: return an error (usually <code>503</code> over HTTP) and keep the resources for the requests you can still serve properly.</p>
+<p>On degradation the book offers a notably restrained warning, worth memorizing on its own: <strong>the degraded path is almost never executed, so it is very likely already broken.</strong> On the day you finally switch to it, you discover that code drifted away from the main path months ago, or does not run at all. The counter is: keep the number of modes small, keep the logic simple, and <strong>actually exercise it on a schedule</strong>.</p>
+<h3>Per-customer quotas and client-side adaptive throttling</h3>
+<p>A shared service's capacity has to be divided among many customers, so you start with <strong>per-customer quotas</strong> — allocated as a resource rate (CPU-seconds per second, say) rather than as QPS. The quotas usually <strong>deliberately sum to more than total capacity</strong>, betting that customers won't all max out at once; when they do, the ones over quota get rejected first.</p>
+<p>But there is a problem you cannot design around: <strong>rejecting isn't free</strong>. One furiously retrying customer can consume the server's entire CPU budget generating rejection responses. So the chapter's prettiest move lands on the client: <strong>adaptive throttling</strong>. Each client task keeps two numbers over a sliding 2-minute window: <code>requests</code> (how many the application layer issued) and <code>accepts</code> (how many the backend actually took). Normally the two track each other closely; once the backend starts rejecting, <code>accepts</code> falls behind. The client then <strong>drops a fraction of requests locally, probabilistically, without ever putting them on the wire</strong>:</p>
+<div class="fx">max(0, (requests − K × accepts) / (requests + 1))</div>
+<p>In plain words: <strong>when what you send exceeds what gets accepted by too much, refuse that excess proportion yourself first.</strong> <code>K</code> is typically <code>2</code> — "I may send twice what the backend accepts." Smaller K is more aggressive and self-limits earlier; larger K is more permissive. The <code>+ 1</code> in the denominator merely avoids dividing by zero.</p>
+<p>Two design details are the real substance. First, the probability <strong>never reaches 1</strong>: the client always leaks a trickle of requests through, which is its only way of detecting whether the backend has recovered. When <code>accepts</code> climbs back, the throttle releases itself — nobody has to clear it by hand. Second, <strong>locally rejected requests still count toward <code>requests</code></strong>, so the client cannot fool itself into believing the pressure has gone away.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 280" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect fill="rgba(91,157,249,0.1)" height="36" rx="6" stroke="#7c8593" width="120" x="24" y="44"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="84" y="67">app issues request</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="146" x2="194" y1="62" y2="62"></line>
+<rect fill="rgba(155,108,245,0.12)" height="112" rx="8" stroke="#9b6cf5" stroke-width="1.6" width="192" x="200" y="28"></rect>
+<text fill="#9b6cf5" font-size="11.5" font-weight="700" text-anchor="middle" x="296" y="48">client-side throttler</text>
+<text fill="#b9c0ca" font-family="monospace" font-size="9.5" text-anchor="middle" x="296" y="72">requests: issued, last 2 min</text>
+<text fill="#b9c0ca" font-family="monospace" font-size="9.5" text-anchor="middle" x="296" y="92">accepts: taken, last 2 min</text>
+<text fill="#8fbaff" font-size="10" text-anchor="middle" x="296" y="118">→ local drop probability</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="394" x2="450" y1="62" y2="62"></line>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="422" y="54">pass</text>
+<rect fill="rgba(91,157,249,0.14)" height="36" rx="6" stroke="#5b9df9" width="150" x="455" y="44"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="530" y="67">backend service</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="296" x2="296" y1="142" y2="188"></line>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="start" x="304" y="168">held back</text>
+<rect fill="rgba(224,107,107,0.14)" height="34" rx="6" stroke="#e06b6b" width="180" x="206" y="192"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="296" y="214">rejected locally, never sent</text>
+<path d="M530,82 L530,158 L400,158" fill="none" stroke="#9b6cf5" stroke-dasharray="4 4" marker-end="url(#a2)"></path>
+<text fill="#9b6cf5" font-family="monospace" font-size="10" text-anchor="middle" x="468" y="150">updates accepts</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="320" y="250">requests climbs while accepts does not → drop probability rises.</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="320" y="268">Backend recovers → accepts climbs → the throttle releases itself, no human needed.</text>
+</svg>
+<figcaption>Fig 2 · Adaptive throttling: two counters are enough for a client to read the backend's mood, hold the flood back before it hits the wire, and always leak a trickle through to detect recovery.</figcaption>
+</figure>
+<h3>Criticality: decide what to cut first, in advance</h3>
+<p>Shedding means dropping some requests — but which? The chapter's answer: <strong>don't improvise in the middle of an overload; classify requests up front.</strong> Google's RPC system has four levels, highest to lowest:</p>
+<ul>
+<li><code>CRITICAL_PLUS</code> — failure causes serious, user-visible impact.</li>
+<li><code>CRITICAL</code> — the default for requests issued by production jobs; user-visible impact, but less severe. <strong>Capacity planning must cover the sum of these top two levels.</strong></li>
+<li><code>SHEDDABLE_PLUS</code> — partial unavailability is acceptable; the default for batch jobs, which can retry minutes or hours later.</li>
+<li><code>SHEDDABLE</code> — frequent partial unavailability and occasional full unavailability are both acceptable.</li>
+</ul>
+<p>Two mechanisms make it genuinely usable. First, <strong>criticality propagates down the call chain automatically</strong>: a service that receives a <code>CRITICAL</code> request issues its own downstream requests as <code>CRITICAL</code> by default — no layer has to guess. Second, <strong>quotas are accounted per criticality</strong>: a customer's <code>CRITICAL</code> quota and its <code>SHEDDABLE</code> quota are separate books, so low-value traffic cannot eat the high-value allowance. When shedding, a task always <strong>cuts from the lowest criticality upward</strong>.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 268" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="11.5" font-weight="700" text-anchor="middle" x="130" y="30">load normal</text>
+<text fill="#5b9df9" font-size="11.5" font-weight="700" text-anchor="middle" x="320" y="30">load elevated</text>
+<text fill="#5b9df9" font-size="11.5" font-weight="700" text-anchor="middle" x="510" y="30">severe overload</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="5" stroke="#5b9df9" width="150" x="55" y="46"></rect><text fill="#e7ebf1" font-family="monospace" font-size="9.5" text-anchor="middle" x="130" y="65">CRITICAL_PLUS</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="5" stroke="#5b9df9" width="150" x="55" y="82"></rect><text fill="#e7ebf1" font-family="monospace" font-size="9.5" text-anchor="middle" x="130" y="101">CRITICAL</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="5" stroke="#5b9df9" width="150" x="55" y="118"></rect><text fill="#e7ebf1" font-family="monospace" font-size="9.5" text-anchor="middle" x="130" y="137">SHEDDABLE_PLUS</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="5" stroke="#5b9df9" width="150" x="55" y="154"></rect><text fill="#e7ebf1" font-family="monospace" font-size="9.5" text-anchor="middle" x="130" y="173">SHEDDABLE</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="5" stroke="#5b9df9" width="150" x="245" y="46"></rect><text fill="#e7ebf1" font-family="monospace" font-size="9.5" text-anchor="middle" x="320" y="65">CRITICAL_PLUS</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="5" stroke="#5b9df9" width="150" x="245" y="82"></rect><text fill="#e7ebf1" font-family="monospace" font-size="9.5" text-anchor="middle" x="320" y="101">CRITICAL</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="5" stroke="#5b9df9" width="150" x="245" y="118"></rect><text fill="#e7ebf1" font-family="monospace" font-size="9.5" text-anchor="middle" x="320" y="137">SHEDDABLE_PLUS</text>
+<rect fill="rgba(120,120,130,0.1)" height="30" rx="5" stroke="rgba(224,107,107,0.6)" stroke-dasharray="4 3" width="150" x="245" y="154"></rect><text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="320" y="173">SHEDDABLE ✕</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="5" stroke="#5b9df9" width="150" x="435" y="46"></rect><text fill="#e7ebf1" font-family="monospace" font-size="9.5" text-anchor="middle" x="510" y="65">CRITICAL_PLUS</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="5" stroke="#5b9df9" width="150" x="435" y="82"></rect><text fill="#e7ebf1" font-family="monospace" font-size="9.5" text-anchor="middle" x="510" y="101">CRITICAL</text>
+<rect fill="rgba(120,120,130,0.1)" height="30" rx="5" stroke="rgba(224,107,107,0.6)" stroke-dasharray="4 3" width="150" x="435" y="118"></rect><text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="510" y="137">SHEDDABLE_PLUS ✕</text>
+<rect fill="rgba(120,120,130,0.1)" height="30" rx="5" stroke="rgba(224,107,107,0.6)" stroke-dasharray="4 3" width="150" x="435" y="154"></rect><text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="510" y="173">SHEDDABLE ✕</text>
+<text fill="#5b9df9" font-family="monospace" font-size="10" x="55" y="212">■ served</text>
+<text fill="#e06b6b" font-family="monospace" font-size="10" x="150" y="212">▨ shed</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="320" y="242">Shedding always starts at the lowest criticality and works upward — never at random.</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="320" y="260">Capacity planning must cover the top two; criticality propagates down the RPC chain.</text>
+</svg>
+<figcaption>Fig 3 · Shedding by criticality: as load rises, a task drops whole levels from the bottom up, instead of discarding requests indiscriminately.</figcaption>
+</figure>
+<h3>Retries: the easiest way to finish yourself off</h3>
+<p>The most dangerous positive feedback loop under overload comes from retries. The chapter offers one piece of arithmetic worth internalizing: <strong>three attempts per layer, stacked three layers deep, means the bottom layer receives <code>3³ = 27×</code> the traffic</strong> — and that bottom layer was already failing because it couldn't cope. You think retries are raising your success rate; in fact you are pouring fuel on a machine that is already on fire.</p>
+<p>Three gates push it back down:</p>
+<ol>
+<li><strong>A per-request attempt limit.</strong> At most 3 attempts for the same request; once spent, let the failure propagate up rather than grinding forever in this layer.</li>
+<li><strong>A per-client retry budget.</strong> The client continuously tracks the ratio of retries to requests and <strong>only retries while that ratio is below 10%</strong>. This is the harshest and the most useful of the three — it caps request amplification for the whole system at roughly <strong>1.1×</strong>, so however badly the downstream is doing, the flood cannot rise.</li>
+<li><strong>Let "don't retry" travel upward.</strong> When a backend rejects because it is overloaded, it returns an explicit "<strong>overloaded; don't retry</strong>" marker rather than a generic error. An upstream that sees it stops retrying and passes the failure on. This is exactly what cancels the 27× multiplication — otherwise every layer independently, and helpfully, tries again.</li>
+</ol>
+<p>There is one more rule of judgement: <strong>whether the overload is local or widespread decides whether retrying elsewhere is worth it.</strong> If only a few tasks are overloaded, immediately retrying against a healthy task is right. If a whole datacenter is broadly overloaded, retrying just relocates the problem — the correct move is to let the error bubble all the way up to the caller and let it decide between degrading and giving up.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 240" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a4" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#e06b6b"></path></marker></defs>
+<text fill="#e06b6b" font-size="12" font-weight="700" x="24" y="24">① No defenses: retries multiply at every layer</text>
+<rect fill="rgba(91,157,249,0.1)" height="38" rx="6" stroke="#7c8593" width="110" x="30" y="38"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="85" y="62">user request ×1</text>
+<rect fill="rgba(224,107,107,0.1)" height="38" rx="6" stroke="#e06b6b" width="110" x="185" y="38"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="240" y="62">service A ×3</text>
+<rect fill="rgba(224,107,107,0.16)" height="38" rx="6" stroke="#e06b6b" width="110" x="340" y="38"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="395" y="62">service B ×9</text>
+<rect fill="rgba(224,107,107,0.26)" height="38" rx="6" stroke="#e06b6b" stroke-width="2" width="115" x="495" y="38"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="552" y="62">database ×27</text>
+<line marker-end="url(#a4)" stroke="#e06b6b" x1="142" x2="181" y1="57" y2="57"></line>
+<line marker-end="url(#a4)" stroke="#e06b6b" x1="297" x2="336" y1="57" y2="57"></line>
+<line marker-end="url(#a4)" stroke="#e06b6b" x1="452" x2="491" y1="57" y2="57"></line>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="161" y="94">retry 3×</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="316" y="94">retry 3×</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="471" y="94">retry 3×</text>
+<text fill="#7c8593" font-size="10.5" x="24" y="118">And that database was already failing because it was overloaded.</text>
+<text fill="#5b9df9" font-size="12" font-weight="700" x="24" y="152">② Three gates: amplification back down to ~1.1×</text>
+<rect fill="rgba(91,157,249,0.12)" height="38" rx="6" stroke="#5b9df9" width="185" x="30" y="164"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="122" y="188">max 3 attempts per request</text>
+<rect fill="rgba(91,157,249,0.12)" height="38" rx="6" stroke="#5b9df9" width="185" x="228" y="164"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="320" y="188">retries / requests ≤ 10%</text>
+<rect fill="rgba(91,157,249,0.12)" height="38" rx="6" stroke="#5b9df9" width="185" x="426" y="164"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="518" y="188">backend: “don’t retry”</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="320" y="226">Gate 2 pins total amplification near 1.1×; gate 3 carries “don’t retry” up the chain, cancelling the per-layer multiply.</text>
+</svg>
+<figcaption>Fig 4 · Retry amplification and its three gates: "only 3 retries" looks restrained at every single layer, yet multiplies to 27× — which is why you need a cross-layer signal and a global budget.</figcaption>
+</figure>
+<h3>Don't forget that connections are load too</h3>
+<p>One last thing that is easy to miss: <strong>merely maintaining connections costs money</strong>. Health checks, keepalives, connection setup and teardown can outweigh the actual request handling once the client count gets large. The classic case is a batch job that spins up thousands of workers, each connecting to the same backend — request volume is modest, but connection overhead flattens the backend first. The fix is to funnel such clients <strong>through a small set of proxy tasks</strong>, dropping the backend-facing connection count from "number of workers" to "number of proxies."</p>
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 1 · Which signal tells you "I am overloaded"</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Signal</th><th>Strengths</th><th>Cost / where it breaks</th><th>Who uses it</th></tr></thead>
+<tbody>
+<tr><th>QPS / request count</th><td>Intuitive, cheap to collect, easy to talk about</td><td><strong>Completely distorted the moment request costs differ</strong>; any shift in traffic mix forces a re-measure</td><td>Homogeneous simple services, coarse rate limits</td></tr>
+<tr><th>CPU utilization</th><td>Broad coverage; GC makes memory pressure show up as CPU; CPU is compressible, leaving reaction time</td><td><strong>Fails on IO-bound services</strong> — CPU sits idle while the downstream database is the bottleneck</td><td>This chapter's default (Google)</td></tr>
+<tr><th>Concurrency / queue depth</th><td>Maps directly onto queueing, reacts fast</td><td>Thresholds are hard to pick; a slow downstream naturally inflates concurrency and reads as self-overload</td><td>Netflix concurrency-limits</td></tr>
+<tr><th>Response latency</th><td>Closest to what users feel; sensitive to a slowing downstream</td><td>A <strong>lagging indicator</strong> — by the time it climbs, the queue has usually been building for a while</td><td>Netflix per-endpoint target latency</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · The server's four possible reactions to overload</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Approach</th><th>What users see</th><th>Cost</th><th>When to use it</th></tr></thead>
+<tbody>
+<tr><th>Push through (no defenses)</th><td>Very slow, then blanket timeouts</td><td><strong>goodput collapses to ~0</strong>, and it spreads along the call chain</td><td>Should never be the default behavior</td></tr>
+<tr><th>Graceful degradation</th><td>Lower-quality results (less data, rougher ranking)</td><td>The degraded path is never exercised and <strong>rots easily</strong>; also complicates production debugging</td><td>Read paths that have a natural "cheap answer"</td></tr>
+<tr><th>Load shedding</th><td>Some callers get a clear, fast error; the rest are served normally</td><td>Rejecting still burns CPU; a bad experience for whoever got rejected</td><td>The general backstop — <strong>cheaper the further out you do it</strong></td></tr>
+<tr><th>Autoscaling</th><td>Brief slowdown, then recovery</td><td><strong>Minutes of lag</strong>, useless against second-scale spikes; new instances need warm-up and may worsen downstream load</td><td>Predictable, trend-driven growth</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 3 · What each of the three retry gates actually stops</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Gate</th><th>Rule</th><th>Stops</th><th>Limitation</th></tr></thead>
+<tbody>
+<tr><th>Per-request limit</th><td>At most <code>3</code> attempts for one request</td><td>A single request grinding forever in one layer</td><td>Does nothing about multiplication across layers</td></tr>
+<tr><th>Per-client budget</th><td>retries / requests <code>≤ 10%</code></td><td>Pins total request amplification near <code>1.1×</code></td><td>Requires honest client accounting; <strong>uncontrolled third-party clients ignore it</strong></td></tr>
+<tr><th>"Don't retry" marker</th><td>The backend states it is overloaded; upstreams stop retrying at once</td><td>The cross-layer <code>3ⁿ</code> multiplication</td><td>Every framework on the path must understand the semantics</td></tr>
+</tbody></table></div>
+<h2>Why it matters / in real systems</h2>
+<p>A decade on, this chapter is still the common basis for rate-limiting, circuit-breaking and degradation designs, because it decomposes overload handling into four separately implementable moves: <strong>what to measure, how the server does less, how requests get ranked, and how the client sends less</strong>. The adaptive concurrency filter you see in Envoy/Istio, the breakers and fallbacks in Hystrix/Sentinel, the retry token buckets in every vendor SDK — all of them are re-implementations of this material. The good answer to "what do you do when a service is overloaded?" in an interview is these four layers, not "add machines."</p>
+<div class="ev">
+<div class="evh">EVIDENCE FROM INDUSTRY · NOT THE BOOK'S CLAIMS — THEIR OWN, IN PUBLIC</div>
+<ul>
+<li><strong>Amazon</strong> argues for shedding at <strong>every layer</strong> — load balancer, operating system, service framework, application code — and lands on a claim identical to this chapter's: shedding excess load does reduce availability, but it buys <strong>predictable, consistent performance</strong> for the requests you accept, so those selective sacrifices raise overall availability.<span class="src"><a href="https://aws.amazon.com/builders-library/using-load-shedding-to-avoid-overload/" rel="noopener" target="_blank">D. Yanacek, "Using load shedding to avoid overload," AWS Builders' Library ↗</a></span></li>
+<li><strong>Amazon</strong> implements the retry budget as a <em>token bucket</em>, built into the AWS SDK since 2016, and stresses that backoff must carry <em>jitter</em> — otherwise every client retries in lockstep at the same instant. That last point fills in something this chapter leaves implicit.<span class="src"><a href="https://aws.amazon.com/builders-library/timeouts-retries-and-backoff-with-jitter/" rel="noopener" target="_blank">M. Brooker, "Timeouts, retries, and backoff with jitter," AWS Builders' Library ↗</a></span></li>
+<li><strong>Netflix</strong> (2024) moved prioritized shedding into the <strong>Envoy sidecar</strong>: once requests are ranked, user-initiated traffic can take capacity from non-critical traffic. They also state plainly that for <strong>IO-bound</strong> services CPU is a poor signal, and switch to per-endpoint target latency and concurrency — <strong>confirming the criticality idea while correcting the chapter's "CPU is enough" default</strong>.<span class="src"><a href="https://netflixtechblog.com/enhancing-netflix-reliability-with-service-level-prioritized-load-shedding-e735e6ce8f7d" rel="noopener" target="_blank">Netflix TechBlog, "Enhancing Netflix Reliability with Service-Level Prioritized Load Shedding," 2024 ↗</a></span></li>
+<li><strong>Stripe</strong> <strong>reserves 20% of capacity</strong> for critical APIs: requests that move money (creating a charge) count as high priority, analytics and reporting as low, and the latter are rejected when the critical APIs cannot get their 20% — turning this chapter's abstract four levels into one concrete, memorable number.<span class="src"><a href="https://stripe.com/blog/rate-limiters" rel="noopener" target="_blank">Stripe, "Scaling your API with rate limiters," 2017 ↗</a></span></li>
+<li><strong>The counter-example: Amazon was hit by retries itself.</strong> In the DynamoDB US-East event of 2015-09-20, a brief network disruption made a large number of storage nodes re-request their partition assignments from the metadata service at once; the metadata service could not keep up and nodes took themselves out of service. AWS wrote afterwards that several attempts to add capacity failed, and that at <code>5:06am PDT</code> they <strong>paused requests to the metadata service</strong>, which decreased retry activity and finally relieved the load — <strong>proving the point of the third gate: retries must be interruptible on purpose.</strong><span class="src"><a href="https://aws.amazon.com/message/5467D2/" rel="noopener" target="_blank">AWS, "Summary of the Amazon DynamoDB Service Disruption," 2015 ↗</a></span></li>
+</ul>
+</div>
+<h2>Common mistakes and open arguments</h2>
+<ul>
+<li><strong>Treating shedding as free.</strong> Rejecting a request still means parsing, authenticating and logging it. If the cost of one rejection approaches the cost of serving, shedding won't save you — the answer is to push rejection outward (load balancer, edge proxy). <strong>The earlier you refuse, the cheaper it is.</strong></li>
+<li><strong>CPU is not a universal signal.</strong> For IO-bound services bottlenecked on a downstream database, CPU sits idle while the system is long past overloaded. Netflix's 2024 switch to latency and concurrency exists precisely for this.</li>
+<li><strong>Client throttling assumes cooperative clients.</strong> Adaptive throttling is a product of Google's homogeneous internal world, where every service shares one RPC framework. Facing clients you don't control — a public API, an old app version on someone's phone — you <strong>must</strong> enforce server-side and cannot rely on good behavior.</li>
+<li><strong>An unshared retry budget is no budget.</strong> Each client honors its own 10%, but every layer of the call chain is "another client," so amplification still multiplies. That is exactly why the third gate exists; don't implement only the first two.</li>
+<li><strong>Too many degradation modes.</strong> Every extra mode is another code path that almost never runs. The book is unambiguous: <strong>keep them few, keep them simple, and rehearse them.</strong></li>
+<li><strong>"Autoscaling solves overload."</strong> Scaling is minutes; spikes are seconds. New instances also need warm-up, config pulls and cache fills, which can add downstream pressure at the worst possible moment. Scaling and shedding are complements, not substitutes.</li>
+<li><strong>Its period shows.</strong> Written in 2016, the chapter describes Google's homogeneous internal RPC world. Since then service meshes have pushed these capabilities down into the sidecar, and adaptive concurrency control (deriving limits from latency, borrowing from TCP congestion control) has become the mainstream complement. The <strong>framework</strong> has aged well; the two implementation details — CPU as the signal, and an in-house RPC framework to propagate criticality — need substitutes in a heterogeneous environment.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① In one line: overload isn't about whether you can take it, but whether you can lose only part of it. Undifferentiated pushing through ends with goodput near zero.</p>
+<p>② Don't measure capacity in QPS — request costs vary too much. Measure resources; Google's default is <strong>CPU</strong> (GC turns memory pressure into CPU; CPU is compressible, leaving reaction time), signalled by executor load average.</p>
+<p>③ Two server-side roads: <strong>graceful degradation</strong> (a cheaper answer) and <strong>load shedding</strong> (refusing outright). The degraded path never runs and rots easily, so keep modes few, simple, and rehearsed.</p>
+<p>④ Per-customer quotas are allocated as resource rates and may deliberately oversubscribe; but <strong>rejecting costs CPU too</strong>, so it only closes the loop with client-side throttling.</p>
+<p>⑤ Adaptive throttling: the client tracks <code>requests</code> and <code>accepts</code> over a 2-minute window and drops locally with probability <code>max(0,(requests−K×accepts)/(requests+1))</code>, K typically 2. The probability never reaches 1, so a trickle always leaks through to detect recovery.</p>
+<p>⑥ Four criticality levels (<code>CRITICAL_PLUS</code> / <code>CRITICAL</code> / <code>SHEDDABLE_PLUS</code> / <code>SHEDDABLE</code>), propagated automatically down the RPC chain with per-level quotas; capacity planning covers the top two; shedding cuts from the bottom up.</p>
+<p>⑦ Three retry gates: 3 attempts per request, retries ≤ 10% of requests per client (pinning amplification near 1.1×), and an "overloaded, don't retry" response so the signal travels up — otherwise three layers of three attempts is <strong>27×</strong>.</p>
+<p>⑧ Only local overload justifies retrying against another task; when a whole datacenter is overloaded, retrying just relocates the problem, so let the error bubble up.</p>
+<p>⑨ Connections are load: thousands of batch workers connecting directly can cost more than the requests themselves — funnel them through a small proxy tier.</p>
+<p>⑩ In practice: Amazon sheds at every layer and implements retry budgets as token buckets; Netflix put prioritized shedding in Envoy and switched IO-bound services to latency signals; Stripe reserves 20% of capacity for critical APIs.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Reading this page ≈ getting the core of the chapter; for the full cases and depth, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
