@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>SRE 第 22 章 · 应对级联失效 — 专业书籍精读 Book 34</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+ol{margin:8px 0 8px 1.4em}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.fx{background:rgba(155,108,245,0.07);border:1px solid rgba(155,108,245,0.3);border-radius:8px;padding:10px 16px;margin:14px 0;font-family:"SF Mono",Menlo,monospace;font-size:0.95rem;color:#cdd3db;text-align:center}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · SRE · 第 22 章</p>
+<h1>应对级联失效：失败会自己繁殖，所以修好起因也救不回来</h1>
+<p class="sub">Site Reliability Engineering · Ch 22 · Mike Ulrich · Google · 2016</p>
+<p class="langbar"><a href="sre-ch22-addressing-cascading-failures-book34.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你一定见过这种新闻：某个 App「崩了」上了热搜，几个小时都回不来。奇怪的是事后公布的原因往往小得离谱——改了一行配置、多加了几台机器、开了一个没什么人用的新功能。SRE 书第 22 章讲的就是这件事：<strong>一个小故障，是怎么把整个系统一层一层拖下水的。</strong></p>
+<h2>先打个比方</h2>
+<p>想想大停电。用电高峰，一条高压线路过载跳闸——它原本输送的电流不会凭空消失，会自动转到旁边几条线上。旁边那几条本来也接近满载，多接一份就更容易跳；跳了之后电流再往下一批转……几分钟内，一座城市黑掉。</p>
+<p>最反直觉的是：<strong>把最初跳闸的那条线修好，城市也不会自己亮起来。</strong>此刻全城的空调、冰箱、电梯都停着，你一合闸它们同时启动，冲击比平时大得多，会立刻再把线路顶掉。电力行业为此有一套专门流程，叫黑启动：先点亮一小片，稳住，再点下一片。</p>
+<h2>旧世界为什么难</h2>
+<p>软件系统的塌方是同一个剧本。一台服务器挂了，它的活自动分给剩下的同伴；同伴本来就忙，多接一份就更慢；一慢，用户开始反复刷新，请求量不降反增；自动巡检发现有几台「不吭声」，判定它们坏了，杀掉重启——于是活着的机器更少、每台更忙。</p>
+<p>看出来了吗：<strong>每一步的结果，都成了下一步的原因。</strong>故障不是被外力推着走的，它自己会长。这是这一章唯一真正要你记住的东西。</p>
+<h2>它到底是怎么长起来的</h2>
+<p>三台小发动机在推：</p>
+<ul>
+<li><strong>接不完的活会排队</strong>：等轮到它被处理时，用户早就关掉页面走了。机器满负荷算着的，是一堆没人要的结果。</li>
+<li><strong>越忙越费</strong>：忙起来时占用的内存变多，腾内存本身要花力气，而这份力气是从「干活」里挤出来的——越忙越慢，越慢越忙。</li>
+<li><strong>重启有代价</strong>：机器刚起来时常用的答案一个都不记得，只能一件件重新去后台问。所以重启后那几分钟，它对后台的索取比平时大得多——你以为在救火，其实是在最脆弱的时刻添了一把柴。</li>
+</ul>
+<h2>那该怎么办</h2>
+<p><strong>平时</strong>：给每件活标上「最晚到什么时候还有意义」，过了就扔；别让队排太长；把要紧的和不要紧的分开，忙时先砍不要紧的。<strong>出事时</strong>：先别急着加机器（新机器要预热，很可能更糟），最有效的一招常常也是最难下手的那招——<strong>把流量整个掐掉</strong>，让系统喘匀，再一小份一小份放回来。跟给城市送电一模一样。</p>
+<p>代价也很诚实：<strong>掐流量意味着你要主动制造一段「谁都用不了」的时间，很多团队到了那一刻不敢按下这个按钮，结果把几十分钟拖成了几十小时。</strong></p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>故障本身不可怕，可怕的是<strong>失败会繁殖</strong>。一旦这个循环转起来，修好最初的原因也没用——你必须亲手把它掐停，然后像给城市送电那样，一片一片地把系统重新点亮。</p>
+</div>
+<p class="switch-hint">想进到具体机制、数字和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">级联失效（cascading failure）不是「一次大故障」，而是<strong>一连串小故障，每一次都让下一次更容易发生</strong>。书里的定义只有一句——<em>由正反馈驱动、随时间不断长大的失效</em>——但推论极其反直觉：<strong>回路一旦转起来，把最初的触发原因去掉，系统并不会自己回来。</strong>因为此刻的负载已经不由外部流量决定，而由系统自身的重试、排队、冷缓存和健康检查决定。于是本章教的是两件事：设计期怎么把回路的每一段掐断（队列、截止时间、依赖方向、启动路径），以及回路已经转起来时，运维手上那几个动作分别在打断哪一段。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>级联失效（cascading failure）</strong>：一处失效导致别处更容易失效，连锁扩散、越滚越大的整体故障。</li>
+<li><strong>正反馈（positive feedback）</strong>：结果反过来加强原因的循环。这里指「失败 → 更多负载 → 更多失败」。</li>
+<li><strong>资源耗尽（resource exhaustion）</strong>：CPU、内存、线程、文件描述符等某种资源被用光，导致服务无法正常工作。</li>
+<li><strong>任务 / 实例（task）</strong>：一个服务的一个运行副本（一个进程）。一个服务通常由几十到几千个任务组成。</li>
+<li><strong>集群管理器（cluster manager）</strong>：负责把任务调度到机器上、并在任务不健康时杀掉重建的系统。Google 内部是 Borg，今天的对应物是 Kubernetes。</li>
+<li><strong>健康检查（health check）</strong>：定期问一个任务「你还好吗」。分两种：<strong>进程健康检查</strong>只问「进程还活着吗」，<strong>服务健康检查</strong>问「你还能好好干活吗」。混用这两种是本章反复警告的坑。</li>
+<li><strong>垃圾回收（GC, garbage collection）</strong>：Java、Go 这类语言自动回收不再使用的内存的机制。回收本身要花 CPU。</li>
+<li><strong>线程池与队列（thread pool / queue）</strong>：服务器用固定数量的线程干活，来不及处理的请求先在队列里等。</li>
+<li><strong>文件描述符（file descriptor, FD）</strong>：操作系统给每个打开的文件或网络连接分配的编号，数量有上限。</li>
+<li><strong>截止时间（deadline）与超时（timeout）</strong>：超时是「我最多等你多久」；截止时间是「这件事到某个时刻之后就没意义了」。本章强调用后者。</li>
+<li><strong>截止时间传播（deadline propagation）</strong>：把最上层定下的那个绝对时刻，沿调用链一路传给每一层，而不是每层各自重设一个超时。</li>
+<li><strong>冷缓存（cold cache）</strong>：刚启动、还没存下任何常用结果的缓存。此时几乎每个请求都得去后端取，后端压力陡增。</li>
+<li><strong>脱载（load shedding）与优雅降级（graceful degradation）</strong>：扛不住时主动丢掉一部分请求，或者返回质量更低但便宜得多的结果（上一章的主题）。</li>
+<li><strong>排空（drain）</strong>：把流量从某个实例或某个机房主动挪走，通常是为了维护。它是级联失效最常见的触发条件之一。</li>
+<li><strong>goodput（有效吞吐）</strong>：单位时间里<strong>成功且真的还有人要</strong>的那部分处理量。过载时它和总吞吐会严重背离。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>本章出自 SRE 书 Part III「实践」，作者 Mike Ulrich。它是第 21 章「处理过载」的下半场：<strong>上一章讲单个服务怎么自保（脱载、降级、配额、客户端节流），本章讲自保失败之后，失效怎么在服务之间传播，以及整片系统塌了之后怎么救。</strong>往后接第 23 章「管理关键状态」——那一章讲的共识系统，恰恰是本章最忌讳的那种「所有人都依赖它」的枢纽。对应现实里的每一次「某某崩了」上热搜：AWS Kinesis 2020、Roblox 2021，以及各家因为一次例行发布或一次扩容而引发的雪崩。</p>
+<h2>这章要解决什么</h2>
+<p>先说一句反直觉的：<strong>级联失效几乎从不由「坏事」触发。</strong>触发它的通常是一件例行公事——一次发布、一次扩容、一次机房排空、一次跨过了某条看不见的线的自然增长。</p>
+<p>算一笔账就懂了。5 个任务各跑在 <code>80%</code> CPU 上，看着还有 20% 余量。现在挂掉 1 个（一次滚动更新、一台机器坏了，什么都行），它的负载被均分到剩下 4 个身上，每个变成 <code>80% × 5 / 4 = 100%</code>——<strong>只死了 1 个，剩下的就全部顶在天花板上。</strong>接着延迟涨、客户端超时重试、请求量再涨一截；健康检查收不到及时回应，集群管理器判定又有 2 个「坏了」，杀掉重建；剩下 2 个要扛 <code>80% × 5 / 2 = 200%</code>。</p>
+<p>关键性质出现了：<strong>就算把最初挂掉的那个修好放回来，它一上线就会被 200% 的负载瞬间打死。</strong>系统不会自己走回左边那张图——推着它的已经不是用户流量，而是重试洪水、积压队列和一堆空缓存。</p>
+<figure>
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="c1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text x="110" y="26" fill="#5b9df9" font-size="11.5" font-weight="700" text-anchor="middle">① 稳态</text>
+<text x="320" y="26" fill="#5b9df9" font-size="11.5" font-weight="700" text-anchor="middle">② 死了 1 个</text>
+<text x="530" y="26" fill="#e06b6b" font-size="11.5" font-weight="700" text-anchor="middle">③ 又死 2 个</text>
+<line x1="60" x2="200" y1="192" y2="192" stroke="#7c8593"></line>
+<line x1="270" x2="410" y1="192" y2="192" stroke="#7c8593"></line>
+<line x1="480" x2="620" y1="192" y2="192" stroke="#7c8593"></line>
+<line x1="56" x2="204" y1="112" y2="112" stroke="rgba(224,107,107,0.45)" stroke-dasharray="4 3"></line>
+<line x1="266" x2="414" y1="112" y2="112" stroke="rgba(224,107,107,0.45)" stroke-dasharray="4 3"></line>
+<line x1="476" x2="624" y1="112" y2="112" stroke="rgba(224,107,107,0.45)" stroke-dasharray="4 3"></line>
+<text x="46" y="109" fill="#e06b6b" font-size="9" text-anchor="end" font-family="monospace">100%</text>
+<rect x="64" y="128" width="22" height="64" fill="rgba(91,157,249,0.5)" stroke="#5b9df9"></rect>
+<rect x="94" y="128" width="22" height="64" fill="rgba(91,157,249,0.5)" stroke="#5b9df9"></rect>
+<rect x="124" y="128" width="22" height="64" fill="rgba(91,157,249,0.5)" stroke="#5b9df9"></rect>
+<rect x="154" y="128" width="22" height="64" fill="rgba(91,157,249,0.5)" stroke="#5b9df9"></rect>
+<rect x="184" y="128" width="22" height="64" fill="rgba(91,157,249,0.5)" stroke="#5b9df9"></rect>
+<text x="135" y="212" fill="#b9c0ca" font-size="10.5" text-anchor="middle">5 个任务 · 各 80%</text>
+<text x="135" y="228" fill="#7c8593" font-size="9.5" text-anchor="middle" font-family="monospace">看起来还有 20% 余量</text>
+<rect x="274" y="112" width="22" height="80" fill="rgba(224,107,107,0.4)" stroke="#e06b6b"></rect>
+<rect x="304" y="112" width="22" height="80" fill="rgba(224,107,107,0.4)" stroke="#e06b6b"></rect>
+<rect x="334" y="112" width="22" height="80" fill="rgba(224,107,107,0.4)" stroke="#e06b6b"></rect>
+<rect x="364" y="112" width="22" height="80" fill="rgba(224,107,107,0.4)" stroke="#e06b6b"></rect>
+<rect x="394" y="128" width="22" height="64" fill="none" stroke="rgba(120,120,130,0.5)" stroke-dasharray="3 3"></rect>
+<text x="405" y="206" fill="#7c8593" font-size="12" text-anchor="middle">✕</text>
+<text x="340" y="228" fill="#b9c0ca" font-size="10.5" text-anchor="middle">剩 4 个 · 各 100%</text>
+<text x="340" y="244" fill="#7c8593" font-size="9.5" text-anchor="middle" font-family="monospace">延迟↑ → 超时 → 重试</text>
+<rect x="484" y="72" width="22" height="120" fill="rgba(224,107,107,0.65)" stroke="#e06b6b"></rect>
+<rect x="514" y="72" width="22" height="120" fill="rgba(224,107,107,0.65)" stroke="#e06b6b"></rect>
+<rect x="544" y="128" width="22" height="64" fill="none" stroke="rgba(120,120,130,0.5)" stroke-dasharray="3 3"></rect>
+<rect x="574" y="128" width="22" height="64" fill="none" stroke="rgba(120,120,130,0.5)" stroke-dasharray="3 3"></rect>
+<rect x="604" y="128" width="22" height="64" fill="none" stroke="rgba(120,120,130,0.5)" stroke-dasharray="3 3"></rect>
+<text x="555" y="206" fill="#7c8593" font-size="12" text-anchor="middle">✕</text>
+<text x="585" y="206" fill="#7c8593" font-size="12" text-anchor="middle">✕</text>
+<text x="615" y="206" fill="#7c8593" font-size="12" text-anchor="middle">✕</text>
+<text x="540" y="228" fill="#e06b6b" font-size="10.5" text-anchor="middle">剩 2 个 · 要扛 200%</text>
+<text x="540" y="244" fill="#7c8593" font-size="9.5" text-anchor="middle" font-family="monospace">已经不可能撑住</text>
+<line x1="216" x2="258" y1="160" y2="160" stroke="#7c8593" marker-end="url(#c1)"></line>
+<line x1="426" x2="468" y1="160" y2="160" stroke="#7c8593" marker-end="url(#c1)"></line>
+<text x="320" y="278" fill="#7c8593" font-size="10.5" text-anchor="middle">此时把最初死掉的那个修好放回来也没用：它一上线就会被 200% 的负载瞬间打死。</text>
+<text x="320" y="294" fill="#7c8593" font-size="10.5" text-anchor="middle">回路已经自持——推着系统走的不再是用户流量，而是重试、积压和空缓存。</text>
+</svg>
+<figcaption>图 1 · 负载重分布的死亡螺旋：<code>80%</code> 的利用率不是「还有两成余量」，而是「只经得起死一个」。</figcaption>
+</figure>
+<p>这两条性质决定了它必须单独成章：<strong>一是非线性</strong>——利用率从 50% 走到 80% 是线性变差，越过某条线之后是断崖；<strong>二是自持</strong>——撤掉触发条件不足以恢复，你必须主动打断回路。本章要解决的就是：怎么让回路根本转不起来，以及转起来之后怎么掐停它。</p>
+<h2>核心内容，讲透</h2>
+<h3>① 正反馈：这一章唯一真正的主角</h3>
+<p>本章的定义很短：<strong>由正反馈驱动、随时间不断长大的失效</strong>。最值钱的是「正反馈」三个字，它给了你一个可以随身带走的判据——审设计时问一句：</p>
+<div class="fx">这次失败的<strong>结果</strong>，会不会变成下一次失败的<strong>原因</strong>？</div>
+<p>会，就有回路。上面那笔账里至少藏了三条：失败 → 负载转移 → 更多失败；变慢 → 重试 → 更多负载 → 更慢；进程被杀 → 重启后缓存空 → 后端请求量暴增 → 后端更慢。<strong>普通故障是被外力推着走的，级联失效是自己在长。</strong>这也解释了它为什么总在深夜一次例行发布之后爆发，而不是双十一零点——流量高峰你准备好了，例行发布你没有。</p>
+<h3>② 资源耗尽：四条路，和它们互相点火</h3>
+<p>服务器被推倒的直接原因通常是某种资源见底。本章列了四条主路，洞见在于<strong>它们不是四条平行的路，而是一张互相点火的网</strong>：</p>
+<ul>
+<li><strong>CPU 不够</strong>：所有请求一起变慢 → 在途请求变多 → 队列变长 → 线程被占住 → RPC 错过截止时间 → 重试 → 回到第一步。</li>
+<li><strong>内存不够</strong>：在途请求多了自然吃内存 → 容器被 OOM 杀掉；就算没被杀，GC 频率上升，<strong>而 GC 是要花 CPU 的</strong>——内存压力就这样翻译成了 CPU 压力；同时缓存命中率下降，又逼出更多对后端的调用。</li>
+<li><strong>线程耗尽</strong>：线程全被慢请求占住，新请求直接报错；更糟的是<strong>健康检查也没线程去响应</strong>，于是这个还活着、只是忙不过来的任务被集群管理器当成死的杀掉——你的容量被自动化亲手砍了一刀。</li>
+<li><strong>文件描述符耗尽</strong>：连接建不起来，表现出来同样是健康检查失败。</li>
+</ul>
+<p>所以「哪个资源先见底」往往不重要，重要的是<strong>任何一个见底都会把其余几个一起拖下水</strong>。这也是级联失效的现场总是一团乱麻的原因：OOM、超时、健康检查失败同时发生，很难说谁是因谁是果。</p>
+<figure>
+<svg viewBox="0 0 640 320" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs>
+<marker id="c2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="c2r" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#e06b6b"></path></marker>
+</defs>
+<text x="20" y="20" fill="#5b9df9" font-size="11.5" font-weight="700">正反馈：每一步的结果，都是下一步的原因</text>
+<rect x="36" y="38" width="170" height="40" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="121" y="63" fill="#e7ebf1" font-size="11" text-anchor="middle">① CPU 不够 · 全面变慢</text>
+<rect x="246" y="38" width="180" height="40" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="336" y="63" fill="#b9c0ca" font-size="11" text-anchor="middle">② 在途请求多 · 队列变长</text>
+<rect x="246" y="120" width="180" height="40" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="336" y="145" fill="#b9c0ca" font-size="11" text-anchor="middle">③ 内存涨 · GC 更频繁</text>
+<rect x="36" y="120" width="170" height="40" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="121" y="145" fill="#b9c0ca" font-size="11" text-anchor="middle">④ GC 又吃掉 CPU</text>
+<rect x="456" y="38" width="160" height="40" rx="6" fill="rgba(224,107,107,0.12)" stroke="#e06b6b"></rect>
+<text x="536" y="63" fill="#b9c0ca" font-size="11" text-anchor="middle">⑤ 线程 / FD 耗尽</text>
+<rect x="456" y="120" width="160" height="40" rx="6" fill="rgba(224,107,107,0.12)" stroke="#e06b6b"></rect>
+<text x="536" y="145" fill="#b9c0ca" font-size="11" text-anchor="middle">⑥ 健康检查没人答</text>
+<rect x="456" y="202" width="160" height="40" rx="6" fill="rgba(224,107,107,0.2)" stroke="#e06b6b"></rect>
+<text x="536" y="227" fill="#e7ebf1" font-size="11" text-anchor="middle">⑦ 被判死 · 杀掉重建</text>
+<rect x="246" y="202" width="180" height="40" rx="6" fill="rgba(224,107,107,0.2)" stroke="#e06b6b"></rect>
+<text x="336" y="227" fill="#e7ebf1" font-size="11" text-anchor="middle">⑧ 它的负载转给别人</text>
+<line x1="210" x2="242" y1="58" y2="58" stroke="#7c8593" marker-end="url(#c2)"></line>
+<line x1="336" x2="336" y1="82" y2="116" stroke="#7c8593" marker-end="url(#c2)"></line>
+<line x1="242" x2="212" y1="140" y2="140" stroke="#7c8593" marker-end="url(#c2)"></line>
+<line x1="121" x2="121" y1="116" y2="84" stroke="#7c8593" marker-end="url(#c2)"></line>
+<line x1="430" x2="452" y1="58" y2="58" stroke="#e06b6b" marker-end="url(#c2r)"></line>
+<line x1="536" x2="536" y1="82" y2="116" stroke="#e06b6b" marker-end="url(#c2r)"></line>
+<line x1="536" x2="536" y1="164" y2="198" stroke="#e06b6b" marker-end="url(#c2r)"></line>
+<line x1="452" x2="430" y1="222" y2="222" stroke="#e06b6b" marker-end="url(#c2r)"></line>
+<path d="M242,222 L20,222 L20,58 L32,58" fill="none" stroke="#e06b6b" stroke-dasharray="5 4" marker-end="url(#c2r)"></path>
+<text x="34" y="214" fill="#e06b6b" font-size="10" font-family="monospace">负载转移：把下一台也推过线</text>
+<text x="320" y="272" fill="#7c8593" font-size="10.5" text-anchor="middle">内圈是单机自燃（内存压力经 GC 变成 CPU 压力）；外圈最要命——</text>
+<text x="320" y="290" fill="#7c8593" font-size="10.5" text-anchor="middle">它借健康检查之手，把「一台的问题」变成「所有台的问题」。</text>
+<text x="320" y="310" fill="#7c8593" font-size="10.5" text-anchor="middle">环上任何一处都能起火；一旦转起来，撤掉最初的触发原因也停不下来。</text>
+</svg>
+<figcaption>图 2 · 资源耗尽不是四条平行的路，而是一张互相点火的网；外圈那条虚线是把单机故障放大成集群故障的关键。</figcaption>
+</figure>
+<h3>③ 队列：它不是缓冲区，是延迟放大器</h3>
+<p>大多数「一请求一线程」的服务器，都在线程池前面挂一个队列。先破除一个直觉：<strong>如果到达率和处理时间都稳定，队列根本不该有东西。</strong>队列只在到达率超过处理能力时才增长——而那恰恰是你最不希望它增长的时刻。</p>
+<p>队列的三笔代价都很实：<strong>占内存</strong>（每个排队请求都带着自己的上下文）、<strong>直接推高延迟</strong>（排队时间是白等的），以及最阴的一笔——<strong>制造僵尸请求</strong>：队首那些等了 8 秒的请求，用户早走了，你却还要老老实实把它算完。</p>
+<figure>
+<svg viewBox="0 0 640 276" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="c3" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text x="20" y="22" fill="#e06b6b" font-size="11.5" font-weight="700">FIFO：先服务排最久的 → 端上桌的全是没人要的</text>
+<rect x="60" y="38" width="46" height="32" rx="4" fill="rgba(91,157,249,0.25)" stroke="#5b9df9"></rect>
+<text x="83" y="59" fill="#e7ebf1" font-size="10" text-anchor="middle" font-family="monospace">0.3s</text>
+<rect x="112" y="38" width="46" height="32" rx="4" fill="rgba(224,107,107,0.22)" stroke="#e06b6b"></rect>
+<text x="135" y="59" fill="#b9c0ca" font-size="10" text-anchor="middle" font-family="monospace">1.4s</text>
+<rect x="164" y="38" width="46" height="32" rx="4" fill="rgba(224,107,107,0.22)" stroke="#e06b6b"></rect>
+<text x="187" y="59" fill="#b9c0ca" font-size="10" text-anchor="middle" font-family="monospace">3.1s</text>
+<rect x="216" y="38" width="46" height="32" rx="4" fill="rgba(224,107,107,0.22)" stroke="#e06b6b"></rect>
+<text x="239" y="59" fill="#b9c0ca" font-size="10" text-anchor="middle" font-family="monospace">5.0s</text>
+<rect x="268" y="38" width="46" height="32" rx="4" fill="rgba(224,107,107,0.22)" stroke="#e06b6b"></rect>
+<text x="291" y="59" fill="#b9c0ca" font-size="10" text-anchor="middle" font-family="monospace">6.7s</text>
+<rect x="320" y="38" width="46" height="32" rx="4" fill="rgba(224,107,107,0.35)" stroke="#e06b6b" stroke-width="1.6"></rect>
+<text x="343" y="59" fill="#e7ebf1" font-size="10" text-anchor="middle" font-family="monospace">8.2s</text>
+<line x1="372" x2="444" y1="54" y2="54" stroke="#7c8593" marker-end="url(#c3)"></line>
+<text x="408" y="46" fill="#7c8593" font-size="9.5" text-anchor="middle" font-family="monospace">取最老的</text>
+<rect x="452" y="32" width="130" height="44" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="517" y="59" fill="#e7ebf1" font-size="10.5" text-anchor="middle">服务器 · 截止 1s</text>
+<text x="20" y="94" fill="#7c8593" font-size="10.5">取出来时早已超过截止时间 → 算完也没人收 → CPU 全白花，队列却一直在长。</text>
+<text x="20" y="126" fill="#5b9df9" font-size="11.5" font-weight="700">LIFO：先服务最新的 → 至少这些还有人在等</text>
+<rect x="60" y="142" width="46" height="32" rx="4" fill="rgba(91,157,249,0.35)" stroke="#5b9df9" stroke-width="1.6"></rect>
+<text x="83" y="163" fill="#e7ebf1" font-size="10" text-anchor="middle" font-family="monospace">0.3s</text>
+<rect x="112" y="142" width="46" height="32" rx="4" fill="rgba(224,107,107,0.22)" stroke="#e06b6b"></rect>
+<text x="135" y="163" fill="#b9c0ca" font-size="10" text-anchor="middle" font-family="monospace">1.4s</text>
+<rect x="164" y="142" width="46" height="32" rx="4" fill="rgba(224,107,107,0.22)" stroke="#e06b6b"></rect>
+<text x="187" y="163" fill="#b9c0ca" font-size="10" text-anchor="middle" font-family="monospace">3.1s</text>
+<rect x="216" y="142" width="46" height="32" rx="4" fill="rgba(224,107,107,0.22)" stroke="#e06b6b"></rect>
+<text x="239" y="163" fill="#b9c0ca" font-size="10" text-anchor="middle" font-family="monospace">5.0s</text>
+<rect x="268" y="142" width="46" height="32" rx="4" fill="rgba(224,107,107,0.22)" stroke="#e06b6b"></rect>
+<text x="291" y="163" fill="#b9c0ca" font-size="10" text-anchor="middle" font-family="monospace">6.7s</text>
+<rect x="320" y="142" width="46" height="32" rx="4" fill="rgba(224,107,107,0.22)" stroke="#e06b6b"></rect>
+<text x="343" y="163" fill="#b9c0ca" font-size="10" text-anchor="middle" font-family="monospace">8.2s</text>
+<rect x="452" y="136" width="130" height="44" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="517" y="163" fill="#e7ebf1" font-size="10.5" text-anchor="middle">服务器 · 截止 1s</text>
+<path d="M83,178 L83,206 L436,206 L436,182" fill="none" stroke="#5b9df9" marker-end="url(#c3)"></path>
+<text x="250" y="222" fill="#5b9df9" font-size="9.5" text-anchor="middle" font-family="monospace">取最新的（还在截止时间内）</text>
+<text x="20" y="244" fill="#7c8593" font-size="10.5">新请求立刻被服务 → 这部分结果真的有人收，goodput 保住了。</text>
+<text x="20" y="266" fill="#7c8593" font-size="10.5">代价很实：老请求可能永远排不到。所以 LIFO 必须配排队超时，把过期的直接扔掉。</text>
+</svg>
+<figcaption>图 3 · 同一条队列，取的顺序不同，结果天差地别：FIFO 在过载时把算力优先花在最没价值的请求上。</figcaption>
+</figure>
+<p>本章给的方向是<strong>把队列做小、尽早拒</strong>：队列短，服务器过载时会更早开始拒绝，快速失败反而更健康；队列长虽能吸收突发，代价是延迟被推高、僵尸请求成堆。极端一点的服务甚至几乎不排队，宁可直接失败让上游换一个实例。</p>
+<p>具体怎么做，业界最经典的答案来自 Facebook：用 CoDel（controlled delay）的变体给排队时间设上限——<strong>如果队列在最近 N 毫秒里一直没被清空过（说明存在一条常驻的队伍），就把允许排队的时间压到很小的 M 毫秒；只要最近清空过，就允许排久一点</strong>。人话：<em>允许短暂的突发排队，但绝不允许队伍长期站着不走。</em>再叠上 adaptive LIFO——平时 FIFO 公平服务，队列一开始堆积就切成 LIFO。（出处见下面「大厂实证」。）</p>
+<h3>④ 截止时间：别做没人等的活</h3>
+<p>队列的病根，其实是「没人知道这个请求什么时候就没意义了」。本章的解药是把截止时间当一等公民，三条动作：</p>
+<ol>
+<li><strong>在多个阶段检查截止时间</strong>，尤其是<strong>从队列里取出请求的那一刻</strong>。已经过期的立刻扔掉、返回错误，一个 CPU 周期都别花。这是最便宜、见效最快的一条。</li>
+<li><strong>传播绝对截止时间，而不是每跳各设一个超时。</strong>每层都写「超时 1 秒」看着很克制，四层叠起来就是 4 秒预算——而用户在第 1 秒就走了。正确做法是最上层定一个绝对时刻，沿调用链一路传下去，每层只减掉一点网络传输余量。下游一看「只剩 0.35 秒」，做不完就直接不做。</li>
+<li><strong>取消也要往下传。</strong>上游放弃后若不通知下游，下游会继续为一个没人要的结果消耗资源——过载现场这类僵尸工作可能占掉相当可观的算力。</li>
+</ol>
+<figure>
+<svg viewBox="0 0 640 264" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="c4" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text x="20" y="22" fill="#e06b6b" font-size="11.5" font-weight="700">① 每跳各设 1 秒：总预算被悄悄放大到 4 秒</text>
+<rect x="24" y="34" width="126" height="46" rx="6" fill="rgba(224,107,107,0.12)" stroke="#e06b6b"></rect>
+<text x="87" y="53" fill="#e7ebf1" font-size="10.5" text-anchor="middle">前端</text>
+<text x="87" y="69" fill="#b9c0ca" font-size="9.5" text-anchor="middle" font-family="monospace">超时 1s</text>
+<rect x="176" y="34" width="126" height="46" rx="6" fill="rgba(224,107,107,0.12)" stroke="#e06b6b"></rect>
+<text x="239" y="53" fill="#e7ebf1" font-size="10.5" text-anchor="middle">服务 A</text>
+<text x="239" y="69" fill="#b9c0ca" font-size="9.5" text-anchor="middle" font-family="monospace">超时 1s</text>
+<rect x="328" y="34" width="126" height="46" rx="6" fill="rgba(224,107,107,0.12)" stroke="#e06b6b"></rect>
+<text x="391" y="53" fill="#e7ebf1" font-size="10.5" text-anchor="middle">服务 B</text>
+<text x="391" y="69" fill="#b9c0ca" font-size="9.5" text-anchor="middle" font-family="monospace">超时 1s</text>
+<rect x="480" y="34" width="126" height="46" rx="6" fill="rgba(224,107,107,0.12)" stroke="#e06b6b"></rect>
+<text x="543" y="53" fill="#e7ebf1" font-size="10.5" text-anchor="middle">数据库</text>
+<text x="543" y="69" fill="#b9c0ca" font-size="9.5" text-anchor="middle" font-family="monospace">超时 1s</text>
+<line x1="154" x2="172" y1="57" y2="57" stroke="#7c8593" marker-end="url(#c4)"></line>
+<line x1="306" x2="324" y1="57" y2="57" stroke="#7c8593" marker-end="url(#c4)"></line>
+<line x1="458" x2="476" y1="57" y2="57" stroke="#7c8593" marker-end="url(#c4)"></line>
+<rect x="24" y="90" width="146" height="14" rx="3" fill="rgba(91,157,249,0.4)" stroke="#5b9df9"></rect>
+<rect x="170" y="90" width="436" height="14" rx="3" fill="rgba(224,107,107,0.22)" stroke="#e06b6b" stroke-dasharray="4 3"></rect>
+<text x="97" y="101" fill="#e7ebf1" font-size="9" text-anchor="middle" font-family="monospace">用户还在等</text>
+<text x="388" y="101" fill="#e06b6b" font-size="9" text-anchor="middle" font-family="monospace">用户早走了，链路还在认真干 · 全是僵尸工作</text>
+<text x="20" y="128" fill="#7c8593" font-size="10.5">最坏情况下第 4 秒才收工，而请求在第 1 秒就已经没有意义了。</text>
+<text x="20" y="158" fill="#5b9df9" font-size="11.5" font-weight="700">② 传播绝对截止时间：每一跳都知道自己还剩多少</text>
+<rect x="24" y="170" width="126" height="46" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="87" y="189" fill="#e7ebf1" font-size="10.5" text-anchor="middle">前端</text>
+<text x="87" y="205" fill="#8fbaff" font-size="9.5" text-anchor="middle" font-family="monospace">定死 T+1.00s</text>
+<rect x="176" y="170" width="126" height="46" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="239" y="189" fill="#e7ebf1" font-size="10.5" text-anchor="middle">服务 A</text>
+<text x="239" y="205" fill="#8fbaff" font-size="9.5" text-anchor="middle" font-family="monospace">还剩 0.85s</text>
+<rect x="328" y="170" width="126" height="46" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="391" y="189" fill="#e7ebf1" font-size="10.5" text-anchor="middle">服务 B</text>
+<text x="391" y="205" fill="#8fbaff" font-size="9.5" text-anchor="middle" font-family="monospace">还剩 0.60s</text>
+<rect x="480" y="170" width="126" height="46" rx="6" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"></rect>
+<text x="543" y="189" fill="#e7ebf1" font-size="10.5" text-anchor="middle">数据库</text>
+<text x="543" y="205" fill="#c3a6ff" font-size="9.5" text-anchor="middle" font-family="monospace">还剩 0.35s</text>
+<line x1="154" x2="172" y1="193" y2="193" stroke="#7c8593" marker-end="url(#c4)"></line>
+<line x1="306" x2="324" y1="193" y2="193" stroke="#7c8593" marker-end="url(#c4)"></line>
+<line x1="458" x2="476" y1="193" y2="193" stroke="#7c8593" marker-end="url(#c4)"></line>
+<text x="20" y="240" fill="#7c8593" font-size="10.5">全链路共用同一个绝对时刻，总预算就是 1 秒，不会被层数偷偷放大。</text>
+<text x="20" y="258" fill="#7c8593" font-size="10.5">任何一跳发现「剩余时间已经不够」，当场拒绝——省下的是整条下游链路的算力。</text>
+</svg>
+<figcaption>图 4 · 超时是每层各说各话，截止时间是全链路一个共同的时刻表；只有后者能防住预算被层数相乘。</figcaption>
+</figure>
+<p>这里还藏着一个必须点名的陷阱：<strong>双峰延迟（bimodal latency）——平均值会骗你。</strong>算笔账：一个前端有 10 台 × 100 线程 = <code>1000</code> 个并发槽，正常每请求 <code>100 ms</code>，轻松扛住 <code>1000</code> QPS。现在后端挂了四分之一，打到坏实例上的请求要死等 <code>10 s</code> 超时。落在这条慢路上的只有 10%、也就是 <code>100</code> QPS——但每个都占着线程 10 秒，<code>100 × 10 = 1000</code>，<strong>正好把全部线程占满</strong>。10% 的流量吃掉了 100% 的并发能力。而此刻平均延迟是 <code>0.9 × 0.1 + 0.1 × 10 ≈ 1.1 s</code>，仪表盘上只显示「有点慢」。<strong>所以看百分位，别看均值</strong>——这是第 1 章那把尺子在这里的回声。</p>
+<h3>⑤ 慢启动与冷缓存：稳态很健康，一重启就起不来</h3>
+<p>服务器刚起来的那几分钟和稳态是两种生物：连接还没建立、JIT 还没热、类还没加载完，最要命的是<strong>缓存是空的</strong>。稳态下缓存命中率 90%，<code>10,000</code> QPS 进来只有 <code>1,000</code> QPS 落到后端，后端正是按这个量规划的容量。缓存一空，命中率变 0，后端要面对完整的 <code>10,000</code> QPS——<strong>整整 10 倍</strong>。</p>
+<figure>
+<svg viewBox="0 0 640 234" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="c5" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text x="150" y="24" fill="#5b9df9" font-size="11.5" font-weight="700" text-anchor="middle">稳态 · 缓存是热的</text>
+<text x="470" y="24" fill="#e06b6b" font-size="11.5" font-weight="700" text-anchor="middle">刚重启 · 缓存是空的</text>
+<rect x="60" y="38" width="180" height="34" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="150" y="60" fill="#b9c0ca" font-size="10.5" text-anchor="middle">进来 10,000 QPS</text>
+<line x1="150" x2="150" y1="74" y2="96" stroke="#7c8593" marker-end="url(#c5)"></line>
+<rect x="60" y="100" width="180" height="34" rx="6" fill="rgba(91,157,249,0.2)" stroke="#5b9df9"></rect>
+<text x="150" y="122" fill="#e7ebf1" font-size="10.5" text-anchor="middle">缓存 · 命中率 90%</text>
+<line x1="150" x2="150" y1="136" y2="158" stroke="#7c8593" marker-end="url(#c5)"></line>
+<text x="158" y="153" fill="#7c8593" font-size="9.5" font-family="monospace">穿透 10%</text>
+<rect x="60" y="162" width="180" height="34" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="150" y="184" fill="#e7ebf1" font-size="10.5" text-anchor="middle">后端 1,000 QPS</text>
+<rect x="380" y="38" width="180" height="34" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="470" y="60" fill="#b9c0ca" font-size="10.5" text-anchor="middle">进来 10,000 QPS</text>
+<line x1="470" x2="470" y1="74" y2="96" stroke="#7c8593" marker-end="url(#c5)"></line>
+<rect x="380" y="100" width="180" height="34" rx="6" fill="rgba(120,120,130,0.12)" stroke="#7c8593" stroke-dasharray="4 3"></rect>
+<text x="470" y="122" fill="#7c8593" font-size="10.5" text-anchor="middle">缓存 · 空的，命中率 0</text>
+<line x1="470" x2="470" y1="136" y2="158" stroke="#e06b6b" stroke-width="2" marker-end="url(#c5)"></line>
+<text x="478" y="153" fill="#e06b6b" font-size="9.5" font-family="monospace">穿透 100%</text>
+<rect x="380" y="162" width="180" height="34" rx="6" fill="rgba(224,107,107,0.22)" stroke="#e06b6b" stroke-width="1.6"></rect>
+<text x="470" y="184" fill="#e7ebf1" font-size="10.5" text-anchor="middle">后端 10,000 QPS</text>
+<rect x="570" y="164" width="46" height="30" rx="6" fill="rgba(155,108,245,0.25)" stroke="#9b6cf5"></rect>
+<text x="593" y="184" fill="#e7ebf1" font-size="12" font-weight="700" text-anchor="middle">10×</text>
+<text x="320" y="220" fill="#7c8593" font-size="10.5" text-anchor="middle">后端是按 1,000 QPS 规划的容量。于是「重启一批实例」和「扩容一批实例」这两个最本能的救火动作，</text>
+<text x="320" y="234" fill="#7c8593" font-size="10.5" text-anchor="middle">恰恰会在后端最喘不过气的时候，给它再来一记 10 倍冲击。</text>
+</svg>
+<figcaption>图 5 · 冷缓存放大：稳态的缓存命中率越高，重启时对后端的冲击倍数就越大——90% 命中意味着 10 倍。</figcaption>
+</figure>
+<p>这条推论把两个最本能的救火动作变成了危险动作：<strong>重启</strong>会丢掉缓存；<strong>扩容</strong>拉起的新实例也是冷的，还得先去后端把自己填满——偏偏后端此刻已经在喘。对策是过量配置、主动预热、以及<strong>慢慢放量</strong>：一次放一小批，热了再放下一批。AWS 恢复 Kinesis 时每小时只加几百台服务器，正是这个道理。</p>
+<h3>⑥ 永远向下调用：别让依赖成环</h3>
+<p>本章有一条近乎纪律的建议：<strong>调用永远向下走</strong>——避免同层互调，更要避免依赖成环。跨机房的前端互相代理请求、A 调 B 而 B 又回头调 A，这类结构平时看不出问题，一旦某一侧变慢就是一个完美的正反馈环。</p>
+<p>最容易被忽略的一种环是<strong>监控依赖被监控的对象</strong>：出事时你用来定位问题的遥测、配置、服务发现，若本身跑在正着火的那套基础设施上，你就会在最需要看清的时刻失明。Roblox 2021 年那次 73 小时故障就是活标本——排障用的可观测系统依赖 Consul，而 Consul 正是出事的那一个。</p>
+<h3>⑦ 触发条件与测试：清单在这里</h3>
+<p>本章列出的常见触发条件读起来有点不适：<strong>它们几乎全是好事。</strong>进程更新与新版本发布、有计划的变更（排空、下线、维护）、自然增长跨过某条线、请求结构变化（同样 QPS 但更贵）、资源限额调整、机器故障。所以别指望「不做坏事」能躲开级联失效——<strong>要在设计上让它塌不下去。</strong></p>
+<p>测试方法最重要的只有一句：<strong>压到失败为止，然后继续往上压。</strong>只测到目标容量等于没测——你要看的是过载之后的行为，尤其是<strong>负载降回正常时它能不能自己恢复</strong>（很多服务不能，那正是级联失效的定义）。此外要测大客户（它们的重试行为常常和别人不一样），也要测非关键后端——<strong>把它干掉，确认关键路径真的不受影响</strong>，而不是「我以为不受影响」。</p>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 1 · 队列策略：短队列不是保守，是防线</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>策略</th><th>过载时的行为</th><th>代价</th><th>适用</th></tr></thead>
+<tbody>
+<tr><th>几乎不排队</th><td>线程满就立刻拒绝，上游换一个实例重试</td><td>对突发毫无缓冲，正常抖动也会产生错误</td><td>有健康的上游重试与多实例可选的在线服务</td></tr>
+<tr><th>小队列 + 早拒</th><td>吸收秒级突发，超过就快速失败</td><td>需要上游能正确处理拒绝，否则错误直接见用户</td><td><strong>大多数在线服务的默认选择</strong></td></tr>
+<tr><th>大队列</th><td>吞下一切，延迟一路涨</td><td><strong>最危险</strong>：占内存、制造大批僵尸请求、把故障时间拉得极长</td><td>离线 / 批处理，且必须配积压上限与旁路</td></tr>
+<tr><th>LIFO + 排队超时<br/>（CoDel 式）</th><td>正常 FIFO；一旦出现常驻队列就切 LIFO，并把排队时间压到毫秒级</td><td>老请求可能永远排不到；参数要按服务实测</td><td>请求之间可乱序、且 goodput 比公平更重要时</td></tr>
+</tbody></table></div>
+<p class="tcap">表 2 · 四类资源耗尽：症状、点火路径、防线</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>资源</th><th>典型症状</th><th>它会点着谁</th><th>防线</th></tr></thead>
+<tbody>
+<tr><th>CPU</th><td>全部请求一起变慢，队列变长</td><td>错过截止时间 → 重试 → 更多 CPU</td><td>脱载、按 CPU 定容量（上一章）、缩短队列</td></tr>
+<tr><th>内存</th><td>容器被 OOM 杀掉；GC 频率飙升</td><td><strong>经 GC 变成 CPU 压力</strong>；缓存命中率下降 → 打爆后端</td><td>限制在途请求数与队列长度，而不是只调堆大小</td></tr>
+<tr><th>线程</th><td>新请求直接报错；健康检查没人应答</td><td><strong>被集群管理器判死 → 自动砍掉自己的容量</strong></td><td>给健康检查留独立资源；服务健康检查与进程健康检查分开</td></tr>
+<tr><th>文件描述符</th><td>连接建不起来</td><td>同样表现为健康检查失败，与线程耗尽难以区分</td><td>连接复用；海量客户端经代理汇聚；把上限监控起来</td></tr>
+</tbody></table></div>
+<p class="tcap">表 3 · 现场七招：这一招在打断回路的哪一段</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>动作</th><th>见效速度</th><th>风险</th><th>什么时候用</th></tr></thead>
+<tbody>
+<tr><th>加资源 / 扩容</th><td>慢（分钟级）</td><td><strong>新实例是冷的</strong>，可能反而给后端加压</td><td>确认瓶颈是纯容量、且缓存不敏感时</td></tr>
+<tr><th>停掉健康检查<br/>导致的自杀</th><td>快</td><td>同时失去自动清除真坏实例的能力，属于最后手段</td><td>确认实例是「忙但活着」被误杀时</td></tr>
+<tr><th>重启服务</th><td>快</td><td><strong>丢缓存</strong>；若病根未除，起来就再被打死</td><td>GC 死亡螺旋、死锁、大量无截止时间的在途请求</td></tr>
+<tr><th>掐流量（大红按钮）</th><td>最快，也最彻底</td><td>主动制造一段全量不可用；恢复时必须慢慢放</td><td><strong>回路已自持、其它招都无效时的标准解</strong></td></tr>
+<tr><th>进入降级模式</th><td>快</td><td>降级路径平时不跑，很可能早就坏了</td><td>存在天然「便宜版答案」的读路径</td></tr>
+<tr><th>停掉批处理负载</th><td>快</td><td>几乎没有——这通常是最划算的一招</td><td>过载中混有可延后的离线任务时</td></tr>
+<tr><th>清掉坏流量</th><td>中</td><td>要先定位，误伤会波及正常用户</td><td>存在死亡查询、异常客户端或攻击流量时</td></tr>
+</tbody></table></div>
+<p class="tcap">表 4 · 两种健康检查混用，等于让自动化替你砍容量</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>类型</th><th>问的是什么</th><th>谁在消费它</th><th>混用会怎样</th></tr></thead>
+<tbody>
+<tr><th>进程健康检查</th><td>进程还活着吗</td><td>集群管理器（Borg / Kubernetes）——不健康就<strong>杀掉重建</strong></td><td>把「忙但活着」当成「死了」，在最缺容量的时刻主动减容量</td></tr>
+<tr><th>服务健康检查</th><td>还能好好干活吗</td><td>负载均衡器——不健康就<strong>把流量挪走</strong></td><td>若全部实例同时判不健康，流量无处可去，等于自我 DDoS</td></tr>
+</tbody></table></div>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>这一章十年后仍是每一份严肃复盘的骨架，因为它把「雪崩」从形容词变成了四段可执行的工程：<strong>切断回路</strong>（截止时间、取消传播、队列上限）、<strong>别让重试相乘</strong>（退避、抖动、重试预算）、<strong>把启动路径当一等公民</strong>（冷缓存、预热、慢放量）、<strong>依赖只向下</strong>（不成环、监控不依赖被监控者）。面试被问「服务雪崩怎么防」，这四段就是好答案的骨架，而不是「加机器 + 加重试」。</p>
+<div class="ev">
+<div class="evh">大厂实证 · 这些不是书里说的，是公司自己公开说的</div>
+<ul>
+<li><strong>Facebook</strong> 公开了它对队列的处理：借鉴网络领域的 bufferbloat 研究，用 CoDel（controlled delay）的变体限制排队时间——<strong>如果队列在最近 N 毫秒里一直不曾被清空，就把排队超时压到 M 毫秒；若最近清空过，则允许排到 N 毫秒</strong>，从而「阻止常驻队列的形成，同时仍允许短暂的突发排队」。与之搭配的是 <em>adaptive LIFO</em>：正常时 FIFO，队列开始堆积时切成 LIFO。<span class="src"><a href="https://queue.acm.org/detail.cfm?id=2839461" rel="noopener" target="_blank">Ben Maurer《Fail at Scale: Reliability in the face of rapid change》, ACM Queue 13(8), 2015 ↗</a></span></li>
+<li><strong>Amazon（AWS Kinesis, 2020-11-25）</strong>：教科书级的级联失效。触发条件是一次<strong>小规模扩容</strong>（美西时间 2:44 开始、3:47 完成）。Kinesis 前端机群两两互联、每条连接占一个线程，新增容量后线程数<strong>超过了操作系统配置允许的上限</strong>，缓存构建失败，前端无法把请求路由到后端集群，Cognito、CloudWatch、Lambda、AutoScaling 全被拖累。恢复更能说明问题：前端机群有数千台，<strong>只能以每小时几百台的速度慢慢放回来</strong>，直到当晚 22:23 才完全恢复正常。<span class="src"><a href="https://aws.amazon.com/message/11201" rel="noopener" target="_blank">AWS《Summary of the Amazon Kinesis Event in the Northern Virginia (US-EAST-1) Region》, 2020 ↗</a></span></li>
+<li><strong>Amazon</strong> 在 Builders' Library 里把本章的队列告诫说得更直白：过载与故障会积出<strong>「无法在合理时间内恢复」的积压</strong>，成因是入队速率过高、任务过贵或依赖变慢；对策是优先级分层、旁路（sidelining）与背压（back-pressure），而不是把队列调大。<span class="src"><a href="https://aws.amazon.com/builders-library/avoiding-insurmountable-queue-backlogs/" rel="noopener" target="_blank">D. Yanacek《Avoiding insurmountable queue backlogs》, AWS Builders' Library ↗</a></span></li>
+<li><strong>Roblox（2021-10-28 起，73 小时）</strong>：把本章几乎每一条都踩了一遍。新开的 Consul streaming 特性在极高读写量下把争用压到了<strong>单个 Go channel</strong> 上；关掉它之后集群健康度明显改善，但<strong>用几小时前的快照重建集群后，系统先是看起来稳定、随即再度劣化</strong>——正是「撤掉触发原因也不会自动恢复」的现场证据。恢复被<strong>缓存预热</strong>拖得很长，而排障之所以困难，是因为关键遥测系统自身依赖 Consul。<span class="src"><a href="https://about.roblox.com/newsroom/2022/01/roblox-return-to-service-10-28-10-31-2021" rel="noopener" target="_blank">Roblox《Roblox Return to Service 10/28-10/31 2021》, 2022 ↗</a></span></li>
+<li><strong>Google Cloud（2019-06-02, incident 19009）</strong>：一次本应只影响单个区域少量服务器的配置变更被错误地应用到了相邻的多个区域，使这些区域<strong>无法使用一半以上的网络容量</strong>；美东多个区域丢包持续 <code>3 小时 19 分</code>至 <code>4 小时 25 分</code>，连 Google 自家的 G Suite 与 YouTube 一并受影响。触发条件是一次例行的维护自动化——正好落在本章列的「有计划的变更」这一格里。<span class="src"><a href="https://status.cloud.google.com/incident/cloud-networking/19009" rel="noopener" target="_blank">Google Cloud Status Dashboard, Incident 19009, 2019 ↗</a></span></li>
+</ul>
+</div>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>「修好起因就会自己恢复」</strong>——本章最贵的误解。回路一旦自持，负载来源已换成重试、积压和冷缓存。Roblox 那次从快照重建后的二次劣化就是公开注脚。</li>
+<li><strong>加机器是本能，也常常是错的</strong>：新实例是冷的，起来第一件事就是去后端把自己填满——而后端正是喘不过气的那个。</li>
+<li><strong>重启是双刃剑</strong>：对 GC 死亡螺旋、线程死锁、大量无截止时间的在途请求很有效；对缓存敏感的服务是火上浇油。动手前先确认病根。</li>
+<li><strong>健康检查杀得太狠</strong>：「忙但活着」被判死，等于让自动化在最缺容量的时刻替你砍容量。书里允许临时关掉健康检查，但明说这是<strong>最后手段</strong>——你同时也失去了自动清除真坏实例的能力。</li>
+<li><strong>大红按钮的成本不在技术，在组织</strong>：「全掐 → 缓一缓 → 慢慢放」技术上往往最快，但没人愿意在还剩 30% 可用率时主动把它降到 0。这个授权要平时就写清楚，别指望现场请示。</li>
+<li><strong>只盯平均延迟</strong>：双峰分布下 10% 的慢请求能吃掉 100% 的线程，而均值只从 0.1 秒涨到 1.1 秒。看 <code>p99</code>、看并发槽占用。</li>
+<li><strong>只测到目标容量等于没测</strong>：要压到失败之后继续压，并专门验证「负载降回正常后能不能自己爬回来」。</li>
+<li><strong>时代局限</strong>：本章写于 2016 年的 Google 同构 RPC 世界。此后 service mesh 把截止时间传播、重试预算、熔断下沉到了 sidecar，落地成本大降；但也出现了新问题——<strong>自动扩缩容本身成了新的正反馈源</strong>：延迟一涨就扩容，新实例冷启动打爆后端，后端更慢，于是继续扩容。框架完全成立，只是那份触发条件清单今天要再加一条：<strong>你自己的自动化</strong>。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 定义只有一句：<strong>由正反馈驱动、随时间不断长大的失效</strong>。判据是问「这次失败的结果，会不会变成下次失败的原因」。</p>
+<p>② 最反直觉的推论：<strong>撤掉触发原因不足以恢复</strong>。回路自持后推动系统的是重试、积压和冷缓存，不再是用户流量。</p>
+<p>③ 利用率 80% 不等于「还有两成余量」：5 个任务各 80%，死 1 个剩下的就顶到 100%，再死 2 个要扛 200%——越过线就是断崖。</p>
+<p>④ 资源耗尽的四条路（CPU / 内存 / 线程 / 文件描述符）互相点火：内存压力经 GC 变成 CPU 压力，线程耗尽经健康检查变成<strong>被自动化杀掉</strong>。</p>
+<p>⑤ 队列不是缓冲区，是延迟放大器：稳态下它本该是空的。做小队列、尽早拒；过载时 FIFO 优先服务的恰是最没价值的僵尸请求。</p>
+<p>⑥ 截止时间是最便宜的解药：出队时先检查是否过期；<strong>传播绝对截止时间</strong>而不是每跳各设超时（四层各 1 秒 = 4 秒预算）；取消也要往下传。</p>
+<p>⑦ 平均延迟骗人：10% 的请求慢到 10 秒就能占满全部 1000 个线程，而均值只有约 1.1 秒。看百分位。</p>
+<p>⑧ 冷缓存是重启与扩容的隐藏代价：命中率 90% 意味着空缓存时后端要挨 <strong>10 倍</strong>冲击。对策是过量配置、预热、慢慢放量。</p>
+<p>⑨ 依赖只向下、别成环；尤其别让监控与服务发现依赖正在着火的那套东西——你会在最需要看清时失明。</p>
+<p>⑩ 触发条件几乎全是「好事」（发布、扩容、排空、自然增长），所以要压到失败之后继续压，并验证负载回落后能否自愈；现场七招里，<strong>掐流量再慢慢放</strong>是回路自持时的标准解。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
