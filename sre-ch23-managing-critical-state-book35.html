@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>SRE 第 23 章 · 管理关键状态 — 专业书籍精读 Book 35</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -49,45 +50,36 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </style></head><body>
 <div class="container">
 <p class="top">专业书籍精读 · SRE · 第 23 章</p>
-<h1>管理关键状态：用分布式共识做可靠的状态复制</h1>
+<h1 data-tts="8a6e2b7971254156">管理关键状态：用分布式共识做可靠的状态复制</h1>
 <p class="sub">Site Reliability Engineering · Ch 23 · Google（Laura Nolan 等）· 2016</p>
 <p class="langbar"><a href="sre-ch23-managing-critical-state-book35.en.html">EN →</a></p>
-
 <div class="modebar">
 <button data-mode="pop">科普版</button>
 <button data-mode="deep">精读版</button>
 </div>
-
 <div class="mode mode-pop">
-<h2>这一章讲什么？</h2>
+<h2 data-tts="422c70ce97ce1b03">这一章讲什么？</h2>
 <p>在群里指定一个值班负责人，只要有人认领，事就有人管；但如果<strong>两个人同时以为自己是负责人</strong>，各改各的，那才是灾难。一堆机器天天要干这件事：<strong>谁是主库？这把锁在谁手上？</strong>SRE 第 23 章讲的就是——<strong>一群机器怎么才能可靠地「说好同一件事」</strong>。</p>
-
-<h2>先说个怪事</h2>
+<h2 data-tts="8ed06a3ed0f59156">先说个怪事</h2>
 <p>2018 年 10 月，GitHub 东岸机房和网络枢纽之间断了 <strong>43 秒</strong>。就 43 秒，网站却降级了整整<strong>一天</strong>。那 43 秒里，东岸和西岸的数据库各自收下一批写入；等网通了，两边都有对方没有的数据，谁也不能简单覆盖谁——只能人工对账。<strong>43 秒的「说不上话」，换来 24 小时手工善后。</strong></p>
-
-<h2>旧世界为什么难</h2>
+<h2 data-tts="39c82901d69d20f9">旧世界为什么难</h2>
 <p>土办法是：主机每秒喊一声「我还活着」，备机几秒没听见就自己上位。听着合理，但有个死结——<strong>听不见对方，你分不清是他死了，还是电话线断了。</strong>若只是线断了，你一上位，世上就有了两个「负责人」，这叫<strong>脑裂</strong>。更阴险的是，它平时看着完全正常，<strong>只在你最不希望出问题的那天露馅</strong>。</p>
-
-<h2>靠谱的办法：凡事要过半数点头</h2>
+<h2 data-tts="e6203ccba7409272">靠谱的办法：凡事要过半数点头</h2>
 <p>假设有 5 台机器，任何决定必须凑够 <strong>3 票</strong>才算数。妙就妙在——<strong>世上不可能同时存在两拨各自凑够 3 票的人</strong>：3 加 3 是 6，比 5 还多，两拨人里必定有人被重复算了，而这个人不会替两件互相矛盾的事各投一票。于是「同时冒出两个负责人」从根上被堵死。断网时人少的那侧凑不够票，就<strong>老实停下来</strong>——停一会儿能恢复，数据分叉不能。</p>
 <p>第二个诀窍是<strong>记同一本流水账</strong>：所有机器不各记各的账，而是把每一笔改动<strong>按完全相同的顺序</strong>抄进同一本账。账本和顺序一致，各台机器照着重放，结果就必然一样。</p>
-
-<h2>那该怎么办</h2>
+<h2 data-tts="9382d67dc2427673">那该怎么办</h2>
 <p>这套东西早有人写好并被折磨了二十年——Google 的 Chubby、开源的 ZooKeeper 和 etcd（你用的 Kubernetes 就把集群状态全存在 etcd 里）。本章最实在的一句是：<strong>别自己造。</strong>你以为在写「简单的主从切换」，其实在写一个共识算法，而且大概率写错了。</p>
 <p>代价也说清楚：每个决定都要等过半数机器点头，所以它<strong>天生比单机慢</strong>，机器摆得越远越慢——跨大洲问一趟，光速也要来回一百多毫秒。</p>
-
-<h2>一句话记住</h2>
+<h2 data-tts="12cf4204d0a479a4">一句话记住</h2>
 <div class="tl">
 <p>一群机器要就「谁是老大、现在是什么状态」达成一致，唯一靠谱的办法是<strong>过半数投票 + 记同一本流水账</strong>；心跳加超时那套土办法迟早脑裂。而这种东西，<strong>请用现成的，别自己写</strong>。</p>
 </div>
 <p class="switch-hint">想进到具体机制、时序图和选型表？ <a data-mode="deep">→ 切到精读版</a></p>
 </div>
-
 <div class="mode mode-deep" hidden="">
-<h2>一句话</h2>
+<h2 data-tts="9e7d4a2c30c1e02b">一句话</h2>
 <p class="lead">本章只有一个命题：<strong>只要一组进程需要就某个状态达成一致，你面对的就是「分布式共识（distributed consensus）」问题——没有捷径。</strong>心跳、超时、时间戳这些轻巧的替代品不是绕开了共识，而是<em>实现了一个错的共识</em>，只是错误要等到网络分区那天才显形。</p>
-
-<h2>Glossary · 术语表</h2>
+<h2 data-tts="cb6da03e3299d415">Glossary · 术语表</h2>
 <div class="glossary">
 <ul>
 <li><strong>分布式共识（distributed consensus）</strong>：一组可能宕机、可能互相失联的进程，就某个值（谁是主、下一条日志写什么）达成一致，且定了不反悔。</li>
@@ -102,114 +94,100 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>CAP</strong>：网络分区期间，只能在「保持一致」与「保持可用」之间二选一。</li>
 </ul>
 </div>
-
-<h2>坐标</h2>
+<h2 data-tts="b934896598bcf365">坐标</h2>
 <p>本章在 SRE 书第 IV 部分「管理复杂系统」，作者 Laura Nolan。前两章（Ch21 处理过载、Ch22 级联失效）讲<strong>单个服务怎么别把自己拖垮</strong>；本章抬高一层，讲<strong>多台机器之间的关键状态怎么才不出错</strong>。它是全书最偏理论的一章，正面对应 DDIA 第 9 章；后面的 Ch25、Ch26 都以「状态可靠」为前提。</p>
-
-<h2>这章要解决什么</h2>
+<h2 data-tts="d46678d525bb5246">这章要解决什么</h2>
 <p>本章开篇摆了三个真实（脱敏）的故障案例，共同点是<strong>都在试图绕开共识</strong>：<strong>①脑裂</strong>——主备靠心跳判活，网络拥塞让心跳超时、备机自行上位，可主机根本没死，两台同时写文件，事后人工对账且有数据永久丢失；<strong>②切换必须叫人</strong>——另一套系统为避免脑裂规定主只能人工指定，于是<strong>可用性被人的反应时间钉死</strong>，还背上一堆琐务（toil）；<strong>③自研组成员算法出错</strong>——用 gossip 传成员关系、自研判活，网络异常时集群裂成两个各自认为对方已死的组，双写丢数据。</p>
 <p>作者的诊断毫不留情：<strong>这些系统本来就需要共识，只是作者不承认。</strong>「心跳 + 超时」把一个根本无解的问题——异步网络里「没回话」到底是死了还是慢了——当成了能解的。<strong>代价不是「偶尔多切一次主」，而是数据分叉；一旦分叉，没有任何自动手段能替你决定哪一份才是对的。</strong></p>
 <p>顺带纠正一个常被念歪的经：<em>CAP</em> 说的是<strong>分区期间</strong>只能在一致（C）与可用（A）之间选一个，而非平时就三选二。共识系统选 C——少数派那侧宁可拒绝服务也绝不分叉，等于把「脑裂」这个<strong>不可逆</strong>的后果换成「短暂不可用」这个<strong>可恢复</strong>的后果。</p>
-
-<h2>核心内容，讲透</h2>
-
-<h3>为什么「心跳 + 超时」注定不够</h3>
+<h2 data-tts="0cfa727733263d92">核心内容，讲透</h2>
+<h3 data-tts="9f17c07bea54cd4d">为什么「心跳 + 超时」注定不够</h3>
 <p>根子在于：<strong>异步网络里，「宕机」和「慢」不可区分。</strong>收不到心跳，可能是进程崩了，也可能只是它卡在一次长 GC 或网络拥塞——<strong>没有任何外部观测能把两者分开</strong>。你只能定一个「等多久算死」，而这个阈值无论定多少，都有把活人判死的那天。这就是 1985 年 <strong>FLP 不可能性</strong>说的事：完全异步模型里只要有一个进程可能崩溃，就<strong>不存在</strong>既保证安全、又保证有限时间内出结果的确定性算法。</p>
 <p>真实系统的绕法很明确：<strong>牺牲「一定出结果」，死守「一定安全」</strong>——用超时与随机化（Raft 的随机选举超时就干这个）打破僵局；代价是网络极糟时可能反复选举、迟迟选不出主，<strong>但永远不会同时选出两个主</strong>。土办法恰好把取舍做反了：超时就上位，于是脑裂。</p>
 <figure>
-<svg viewBox="0 0 640 244" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 244" xmlns="http://www.w3.org/2000/svg">
 <defs>
-<marker id="a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="a1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
 </defs>
-<line x1="318" y1="14" x2="318" y2="200" stroke="rgba(120,120,130,0.3)" stroke-dasharray="4 4"></line>
-
-<text x="18" y="24" fill="#e06b6b" font-size="12.5" font-weight="700">① 心跳 + 超时</text>
-<text x="18" y="42" fill="#7c8593" font-size="10">网络一断，两边都以为自己该上位</text>
-<rect x="20" y="56" width="110" height="34" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
-<text x="75" y="77" fill="#b9c0ca" font-size="11" text-anchor="middle">节点 A（原主）</text>
-<rect x="180" y="56" width="110" height="34" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
-<text x="235" y="77" fill="#b9c0ca" font-size="11" text-anchor="middle">节点 B（备）</text>
-<line x1="155" y1="48" x2="155" y2="96" stroke="#e06b6b" stroke-width="1.6" stroke-dasharray="5 4"></line>
-<text x="155" y="110" fill="#e06b6b" font-size="10" text-anchor="middle">网络分区</text>
-<text x="75" y="126" fill="#b9c0ca" font-size="10.5" text-anchor="middle">「B 挂了？」</text>
-<text x="75" y="142" fill="#b9c0ca" font-size="10.5" text-anchor="middle">我继续当主</text>
-<text x="235" y="126" fill="#b9c0ca" font-size="10.5" text-anchor="middle">「A 挂了！」</text>
-<text x="235" y="142" fill="#b9c0ca" font-size="10.5" text-anchor="middle">我上位</text>
-<rect x="22" y="158" width="266" height="38" rx="6" fill="rgba(224,107,107,0.16)" stroke="#e06b6b"></rect>
-<text x="155" y="174" fill="#e7ebf1" font-size="11" text-anchor="middle">两个主同时接受写入</text>
-<text x="155" y="190" fill="#e7ebf1" font-size="11" text-anchor="middle">→ 数据分叉，只能人工对账</text>
-
-<text x="342" y="24" fill="#5b9df9" font-size="12.5" font-weight="700">② 过半数法定人数（5 副本）</text>
-<text x="342" y="42" fill="#7c8593" font-size="10">凑不够 3 票的一侧，自己停下来</text>
-<rect x="346" y="58" width="48" height="30" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect><text x="370" y="78" fill="#b9c0ca" font-size="11" text-anchor="middle">R1</text>
-<rect x="402" y="58" width="48" height="30" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect><text x="426" y="78" fill="#b9c0ca" font-size="11" text-anchor="middle">R2</text>
-<rect x="466" y="58" width="48" height="30" rx="6" fill="rgba(155,108,245,0.22)" stroke="#9b6cf5" stroke-width="2"></rect><text x="490" y="78" fill="#e7ebf1" font-size="11" text-anchor="middle">R3</text>
-<rect x="522" y="58" width="48" height="30" rx="6" fill="rgba(155,108,245,0.22)" stroke="#9b6cf5" stroke-width="2"></rect><text x="546" y="78" fill="#e7ebf1" font-size="11" text-anchor="middle">R4</text>
-<rect x="578" y="58" width="48" height="30" rx="6" fill="rgba(155,108,245,0.22)" stroke="#9b6cf5" stroke-width="2"></rect><text x="602" y="78" fill="#e7ebf1" font-size="11" text-anchor="middle">R5</text>
-<line x1="458" y1="50" x2="458" y2="96" stroke="#e06b6b" stroke-width="1.6" stroke-dasharray="5 4"></line>
-<text x="458" y="110" fill="#e06b6b" font-size="10" text-anchor="middle">网络分区</text>
-<text x="398" y="128" fill="#b9c0ca" font-size="10.5" text-anchor="middle">2 票 &lt; 3</text>
-<text x="398" y="144" fill="#e06b6b" font-size="10.5" text-anchor="middle">拒绝服务</text>
-<text x="546" y="128" fill="#b9c0ca" font-size="10.5" text-anchor="middle">3 票 ≥ 3</text>
-<text x="546" y="144" fill="#8fbaff" font-size="10.5" text-anchor="middle">继续当主</text>
-<rect x="346" y="158" width="280" height="38" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect>
-<text x="486" y="174" fill="#e7ebf1" font-size="11" text-anchor="middle">任何时刻只有一侧能凑够多数</text>
-<text x="486" y="190" fill="#e7ebf1" font-size="11" text-anchor="middle">→ 永不双主，数据不分叉</text>
-
-<text x="320" y="224" fill="#9b6cf5" font-family="monospace" font-size="10.5" text-anchor="middle">3 + 3 = 6 &gt; 5：任意两个多数派必定重叠 —— 脑裂在数学上被堵死</text>
+<line stroke="rgba(120,120,130,0.3)" stroke-dasharray="4 4" x1="318" x2="318" y1="14" y2="200"></line>
+<text fill="#e06b6b" font-size="12.5" font-weight="700" x="18" y="24">① 心跳 + 超时</text>
+<text fill="#7c8593" font-size="10" x="18" y="42">网络一断，两边都以为自己该上位</text>
+<rect fill="rgba(91,157,249,0.1)" height="34" rx="6" stroke="#7c8593" width="110" x="20" y="56"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="75" y="77">节点 A（原主）</text>
+<rect fill="rgba(91,157,249,0.1)" height="34" rx="6" stroke="#7c8593" width="110" x="180" y="56"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="235" y="77">节点 B（备）</text>
+<line stroke="#e06b6b" stroke-dasharray="5 4" stroke-width="1.6" x1="155" x2="155" y1="48" y2="96"></line>
+<text fill="#e06b6b" font-size="10" text-anchor="middle" x="155" y="110">网络分区</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="75" y="126">「B 挂了？」</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="75" y="142">我继续当主</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="235" y="126">「A 挂了！」</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="235" y="142">我上位</text>
+<rect fill="rgba(224,107,107,0.16)" height="38" rx="6" stroke="#e06b6b" width="266" x="22" y="158"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="155" y="174">两个主同时接受写入</text>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="155" y="190">→ 数据分叉，只能人工对账</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="342" y="24">② 过半数法定人数（5 副本）</text>
+<text fill="#7c8593" font-size="10" x="342" y="42">凑不够 3 票的一侧，自己停下来</text>
+<rect fill="rgba(91,157,249,0.1)" height="30" rx="6" stroke="#7c8593" width="48" x="346" y="58"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="370" y="78">R1</text>
+<rect fill="rgba(91,157,249,0.1)" height="30" rx="6" stroke="#7c8593" width="48" x="402" y="58"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="426" y="78">R2</text>
+<rect fill="rgba(155,108,245,0.22)" height="30" rx="6" stroke="#9b6cf5" stroke-width="2" width="48" x="466" y="58"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="490" y="78">R3</text>
+<rect fill="rgba(155,108,245,0.22)" height="30" rx="6" stroke="#9b6cf5" stroke-width="2" width="48" x="522" y="58"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="546" y="78">R4</text>
+<rect fill="rgba(155,108,245,0.22)" height="30" rx="6" stroke="#9b6cf5" stroke-width="2" width="48" x="578" y="58"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="602" y="78">R5</text>
+<line stroke="#e06b6b" stroke-dasharray="5 4" stroke-width="1.6" x1="458" x2="458" y1="50" y2="96"></line>
+<text fill="#e06b6b" font-size="10" text-anchor="middle" x="458" y="110">网络分区</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="398" y="128">2 票 &lt; 3</text>
+<text fill="#e06b6b" font-size="10.5" text-anchor="middle" x="398" y="144">拒绝服务</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="546" y="128">3 票 ≥ 3</text>
+<text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="546" y="144">继续当主</text>
+<rect fill="rgba(91,157,249,0.12)" height="38" rx="6" stroke="#5b9df9" width="280" x="346" y="158"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="486" y="174">任何时刻只有一侧能凑够多数</text>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="486" y="190">→ 永不双主，数据不分叉</text>
+<text fill="#9b6cf5" font-family="monospace" font-size="10.5" text-anchor="middle" x="320" y="224">3 + 3 = 6 &gt; 5：任意两个多数派必定重叠 —— 脑裂在数学上被堵死</text>
 </svg>
 <figcaption>图 1 · 心跳加超时把「一定出结果」放在了「一定安全」前面，于是分区时双主；过半数法定人数反过来，宁可停服也不分叉。</figcaption>
 </figure>
-<h3>共识的两根支柱：过半数，与同一本日志</h3>
+<h3 data-tts="682c1ede28462866">共识的两根支柱：过半数，与同一本日志</h3>
 <p><strong>支柱一：法定人数相交（quorum intersection）。</strong>任意两个「过半数」集合必定至少有一个共同成员。5 副本里任何两个 3 人组都必然重叠，而那个重叠的副本记得自己已为上一届投过票，就会拒绝给冲突的新决定投票——<strong>两个互不相交的多数派在数学上不存在</strong>，脑裂被从根上堵死。这也解释了为什么偏爱奇数：6 副本的多数派是 4，容错力和 5 副本一样，却白多一台机器、多摊一份延迟。</p>
 <p><strong>支柱二：复制状态机（RSM）。</strong>共识的产出不是「投票选出一个值」这么单薄，而是<strong>一份所有副本内容与顺序都一致的操作日志</strong>；每个副本按同序执行同样的确定性操作，状态必然一致。本章说得直白：<strong>共识是构建块，复制状态机才是你真正想要的东西</strong>——数据库、锁服务、配置存储、消息队列，都是同一个 RSM 换了个接口。</p>
 <figure>
-<svg viewBox="0 0 640 246" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 246" xmlns="http://www.w3.org/2000/svg">
 <defs>
-<marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="a2" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
 </defs>
-<rect x="295" y="10" width="140" height="28" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
-<text x="365" y="29" fill="#b9c0ca" font-size="11" text-anchor="middle">客户端写请求</text>
-<line x1="365" y1="38" x2="365" y2="58" stroke="#7c8593" marker-end="url(#a2)"></line>
-
-<text x="8" y="82" fill="#8fbaff" font-family="monospace" font-size="10.5">共识层</text>
-<rect x="100" y="60" width="530" height="34" rx="8" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5"></rect>
-<text x="365" y="82" fill="#e7ebf1" font-size="11.5" text-anchor="middle">决定「第 i 条日志写什么」——需过半数副本同意</text>
-
-<line x1="185" y1="94" x2="185" y2="118" stroke="#7c8593" marker-end="url(#a2)"></line>
-<line x1="365" y1="94" x2="365" y2="118" stroke="#7c8593" marker-end="url(#a2)"></line>
-<line x1="545" y1="94" x2="545" y2="118" stroke="#7c8593" marker-end="url(#a2)"></line>
-
-<text x="8" y="141" fill="#8fbaff" font-family="monospace" font-size="10.5">复制日志</text>
-<rect x="100" y="120" width="170" height="32" rx="6" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"></rect>
-<text x="185" y="141" fill="#b9c0ca" font-size="11" text-anchor="middle">① ② ③ ④</text>
-<rect x="280" y="120" width="170" height="32" rx="6" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"></rect>
-<text x="365" y="141" fill="#b9c0ca" font-size="11" text-anchor="middle">① ② ③ ④</text>
-<rect x="460" y="120" width="170" height="32" rx="6" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"></rect>
-<text x="545" y="141" fill="#b9c0ca" font-size="11" text-anchor="middle">① ② ③ ④</text>
-
-<line x1="185" y1="152" x2="185" y2="176" stroke="#7c8593" marker-end="url(#a2)"></line>
-<line x1="365" y1="152" x2="365" y2="176" stroke="#7c8593" marker-end="url(#a2)"></line>
-<line x1="545" y1="152" x2="545" y2="176" stroke="#7c8593" marker-end="url(#a2)"></line>
-
-<text x="8" y="200" fill="#8fbaff" font-family="monospace" font-size="10.5">状态机</text>
-<rect x="100" y="178" width="170" height="34" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
-<text x="185" y="200" fill="#b9c0ca" font-size="11" text-anchor="middle">副本 1</text>
-<rect x="280" y="178" width="170" height="34" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
-<text x="365" y="200" fill="#b9c0ca" font-size="11" text-anchor="middle">副本 2</text>
-<rect x="460" y="178" width="170" height="34" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
-<text x="545" y="200" fill="#b9c0ca" font-size="11" text-anchor="middle">副本 3</text>
-
-<text x="365" y="232" fill="#9b6cf5" font-family="monospace" font-size="10.5" text-anchor="middle">同样的操作 · 同样的顺序 · 确定性执行 → 状态必然相同</text>
+<rect fill="rgba(91,157,249,0.1)" height="28" rx="6" stroke="#7c8593" width="140" x="295" y="10"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="365" y="29">客户端写请求</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="365" x2="365" y1="38" y2="58"></line>
+<text fill="#8fbaff" font-family="monospace" font-size="10.5" x="8" y="82">共识层</text>
+<rect fill="rgba(155,108,245,0.12)" height="34" rx="8" stroke="#9b6cf5" width="530" x="100" y="60"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="365" y="82">决定「第 i 条日志写什么」——需过半数副本同意</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="185" x2="185" y1="94" y2="118"></line>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="365" x2="365" y1="94" y2="118"></line>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="545" x2="545" y1="94" y2="118"></line>
+<text fill="#8fbaff" font-family="monospace" font-size="10.5" x="8" y="141">复制日志</text>
+<rect fill="rgba(91,157,249,0.1)" height="32" rx="6" stroke="#5b9df9" width="170" x="100" y="120"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="185" y="141">① ② ③ ④</text>
+<rect fill="rgba(91,157,249,0.1)" height="32" rx="6" stroke="#5b9df9" width="170" x="280" y="120"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="365" y="141">① ② ③ ④</text>
+<rect fill="rgba(91,157,249,0.1)" height="32" rx="6" stroke="#5b9df9" width="170" x="460" y="120"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="545" y="141">① ② ③ ④</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="185" x2="185" y1="152" y2="176"></line>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="365" x2="365" y1="152" y2="176"></line>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="545" x2="545" y1="152" y2="176"></line>
+<text fill="#8fbaff" font-family="monospace" font-size="10.5" x="8" y="200">状态机</text>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="6" stroke="#7c8593" width="170" x="100" y="178"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="185" y="200">副本 1</text>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="6" stroke="#7c8593" width="170" x="280" y="178"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="365" y="200">副本 2</text>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="6" stroke="#7c8593" width="170" x="460" y="178"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="545" y="200">副本 3</text>
+<text fill="#9b6cf5" font-family="monospace" font-size="10.5" text-anchor="middle" x="365" y="232">同样的操作 · 同样的顺序 · 确定性执行 → 状态必然相同</text>
 </svg>
 <figcaption>图 2 · 共识 → 复制日志 → 状态机：共识只负责「第 i 条写什么」，一致的状态是按序重放同一本日志自然得到的结果。</figcaption>
 </figure>
-<h3>Paxos / Multi-Paxos / Raft，白话版</h3>
+<h3 data-tts="0d55da30a7607223">Paxos / Multi-Paxos / Raft，白话版</h3>
 <p>Paxos（Leslie Lamport）的骨架是两轮：<strong>① 抢提案号</strong>——候选者带一个全局递增的编号问过半数副本「我能提案吗」，答应的副本承诺<em>此后不再接受更小的编号</em>，并把已知的最新「已接受值」告诉他；<strong>② 提案落定</strong>——候选者提出值，但若第一轮收到过任何已接受值，它<strong>必须沿用那个值</strong>，过半数接受即定案。「必须沿用旧值」就是共识不会前后打脸的<strong>全部秘密</strong>：新多数派一定与旧多数派重叠，所以看得见旧决定，也就推翻不了它。</p>
 <p><strong>Multi-Paxos</strong> 是实用版：每条日志都跑满两轮太贵，于是推举一个<em>稳定领导者（stable leader）</em>一次性拿下第一轮，之后每条只需一轮，把一次写入压到 <strong>1 个网络往返 + 1 次 fsync</strong>。<strong>Raft</strong>（2014）把同一件事重组成「领导者选举 + 日志复制 + 安全性」，并把<em>可理解性</em>当设计目标——它不比 Paxos 更快或更安全，但工程师读得懂、写得对，<strong>这本身就是可靠性</strong>；etcd、Consul、TiKV、Kafka 的 KRaft 都走 Raft，<strong>Zab</strong> 则是 ZooKeeper 的变体。</p>
 <p>还有一条常被忽略的量级差异：这些算法只防<em>宕机故障</em>（节点会死但不会撒谎），容忍 <code>f</code> 个故障需 <code>2f + 1</code> 个副本；要防<em>拜占庭故障（Byzantine，节点还会发矛盾消息骗人）</em>则陡增到 <code>3f + 1</code>。数据中心内部几乎都只做前者。</p>
-
-<h3>共识落地的五种形态</h3>
+<h3 data-tts="dea5c9cdcf7671aa">共识落地的五种形态</h3>
 <ul>
 <li><strong>① 可靠复制状态机</strong>——最本质的形态，下面四种都是它的特例。</li>
 <li><strong>② 复制数据 / 配置存储</strong>——放配置、元数据、服务发现表。它是给<strong>低容量、高价值</strong>数据用的：Chubby 论文的自我定位原话就是「粗粒度锁 + 低容量的可靠存储」，别拿它存业务数据。</li>
@@ -219,98 +197,86 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </ul>
 <p><strong>那个致命细节：分布式锁必须是租约，而且必须带递增序号。</strong>持锁者可能被长 GC、虚拟机挂起或网络问题冻住而毫不知情；等它醒来，锁早已过期、被别人拿走，可它还以为持着。解法是让锁服务发一个单调递增的序号（sequencer / fencing token），<strong>下游存储必须校验、拒绝旧序号的写入</strong>。<strong>光有锁不等于正确性</strong>——这是本章最值得贴在墙上的一条。</p>
 <figure>
-<svg viewBox="0 0 640 254" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 254" xmlns="http://www.w3.org/2000/svg">
 <defs>
-<marker id="a3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
-<marker id="a3r" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#e06b6b"></path></marker>
+<marker id="a3" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="a3r" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#e06b6b"></path></marker>
 </defs>
-<line x1="96" y1="44" x2="624" y2="44" stroke="rgba(120,120,130,0.28)"></line>
-<line x1="96" y1="104" x2="624" y2="104" stroke="rgba(120,120,130,0.28)"></line>
-<line x1="96" y1="156" x2="624" y2="156" stroke="rgba(120,120,130,0.28)"></line>
-<line x1="96" y1="212" x2="624" y2="212" stroke="rgba(120,120,130,0.28)"></line>
-<text x="8" y="48" fill="#8fbaff" font-family="monospace" font-size="10">锁服务</text>
-<text x="8" y="108" fill="#8fbaff" font-family="monospace" font-size="10">客户端 A</text>
-<text x="8" y="160" fill="#8fbaff" font-family="monospace" font-size="10">客户端 B</text>
-<text x="8" y="216" fill="#8fbaff" font-family="monospace" font-size="10">存储</text>
-
-<rect x="112" y="32" width="80" height="24" rx="5" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5"></rect>
-<text x="152" y="48" fill="#e7ebf1" font-size="10.5" text-anchor="middle">发 token 33</text>
-<line x1="152" y1="56" x2="152" y2="90" stroke="#7c8593" marker-end="url(#a3)"></line>
-<rect x="150" y="92" width="106" height="24" rx="5" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
-<text x="203" y="108" fill="#e7ebf1" font-size="10.5" text-anchor="middle">A 持锁（33）</text>
-<rect x="258" y="92" width="104" height="24" rx="5" fill="rgba(224,107,107,0.16)" stroke="#e06b6b" stroke-dasharray="4 3"></rect>
-<text x="310" y="108" fill="#e7ebf1" font-size="10.5" text-anchor="middle">GC 停顿</text>
-
-<line x1="330" y1="22" x2="330" y2="230" stroke="#e8794b" stroke-width="1.4" stroke-dasharray="5 4"></line>
-<text x="330" y="16" fill="#e8794b" font-size="10" text-anchor="middle">租约到期</text>
-
-<rect x="338" y="32" width="80" height="24" rx="5" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5"></rect>
-<text x="378" y="48" fill="#e7ebf1" font-size="10.5" text-anchor="middle">发 token 34</text>
-<line x1="378" y1="56" x2="378" y2="142" stroke="#7c8593" marker-end="url(#a3)"></line>
-<rect x="376" y="144" width="112" height="24" rx="5" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
-<text x="432" y="160" fill="#e7ebf1" font-size="10.5" text-anchor="middle">B 持锁（34）</text>
-<line x1="436" y1="168" x2="436" y2="198" stroke="#7c8593" marker-end="url(#a3)"></line>
-<rect x="386" y="200" width="100" height="24" rx="5" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
-<text x="436" y="216" fill="#8fbaff" font-size="10.5" text-anchor="middle">接受 34</text>
-
-<rect x="506" y="92" width="90" height="24" rx="5" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
-<text x="551" y="108" fill="#b9c0ca" font-size="10.5" text-anchor="middle">A 醒来</text>
-<line x1="551" y1="116" x2="551" y2="196" stroke="#e06b6b" marker-end="url(#a3r)"></line>
-<text x="558" y="146" fill="#e06b6b" font-size="10">带旧 33 去写</text>
-<rect x="500" y="200" width="124" height="24" rx="5" fill="rgba(224,107,107,0.16)" stroke="#e06b6b"></rect>
-<text x="562" y="216" fill="#e7ebf1" font-size="10.5" text-anchor="middle">拒绝：33 &lt; 34</text>
-
-<text x="320" y="246" fill="#9b6cf5" font-family="monospace" font-size="10.5" text-anchor="middle">锁本身不保证正确性 —— 下游校验递增序号（fencing token）才保证</text>
+<line stroke="rgba(120,120,130,0.28)" x1="96" x2="624" y1="44" y2="44"></line>
+<line stroke="rgba(120,120,130,0.28)" x1="96" x2="624" y1="104" y2="104"></line>
+<line stroke="rgba(120,120,130,0.28)" x1="96" x2="624" y1="156" y2="156"></line>
+<line stroke="rgba(120,120,130,0.28)" x1="96" x2="624" y1="212" y2="212"></line>
+<text fill="#8fbaff" font-family="monospace" font-size="10" x="8" y="48">锁服务</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" x="8" y="108">客户端 A</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" x="8" y="160">客户端 B</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" x="8" y="216">存储</text>
+<rect fill="rgba(155,108,245,0.2)" height="24" rx="5" stroke="#9b6cf5" width="80" x="112" y="32"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="152" y="48">发 token 33</text>
+<line marker-end="url(#a3)" stroke="#7c8593" x1="152" x2="152" y1="56" y2="90"></line>
+<rect fill="rgba(91,157,249,0.14)" height="24" rx="5" stroke="#5b9df9" width="106" x="150" y="92"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="203" y="108">A 持锁（33）</text>
+<rect fill="rgba(224,107,107,0.16)" height="24" rx="5" stroke="#e06b6b" stroke-dasharray="4 3" width="104" x="258" y="92"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="310" y="108">GC 停顿</text>
+<line stroke="#e8794b" stroke-dasharray="5 4" stroke-width="1.4" x1="330" x2="330" y1="22" y2="230"></line>
+<text fill="#e8794b" font-size="10" text-anchor="middle" x="330" y="16">租约到期</text>
+<rect fill="rgba(155,108,245,0.2)" height="24" rx="5" stroke="#9b6cf5" width="80" x="338" y="32"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="378" y="48">发 token 34</text>
+<line marker-end="url(#a3)" stroke="#7c8593" x1="378" x2="378" y1="56" y2="142"></line>
+<rect fill="rgba(91,157,249,0.14)" height="24" rx="5" stroke="#5b9df9" width="112" x="376" y="144"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="432" y="160">B 持锁（34）</text>
+<line marker-end="url(#a3)" stroke="#7c8593" x1="436" x2="436" y1="168" y2="198"></line>
+<rect fill="rgba(91,157,249,0.14)" height="24" rx="5" stroke="#5b9df9" width="100" x="386" y="200"></rect>
+<text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="436" y="216">接受 34</text>
+<rect fill="rgba(255,255,255,0.03)" height="24" rx="5" stroke="#7c8593" width="90" x="506" y="92"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="551" y="108">A 醒来</text>
+<line marker-end="url(#a3r)" stroke="#e06b6b" x1="551" x2="551" y1="116" y2="196"></line>
+<text fill="#e06b6b" font-size="10" x="558" y="146">带旧 33 去写</text>
+<rect fill="rgba(224,107,107,0.16)" height="24" rx="5" stroke="#e06b6b" width="124" x="500" y="200"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="562" y="216">拒绝：33 &lt; 34</text>
+<text fill="#9b6cf5" font-family="monospace" font-size="10.5" text-anchor="middle" x="320" y="246">锁本身不保证正确性 —— 下游校验递增序号（fencing token）才保证</text>
 </svg>
 <figcaption>图 3 · 分布式锁的正确姿势：租约会过期，持锁者未必知道；只有让存储层拒绝旧序号，才挡得住「醒过来的僵尸写入」。</figcaption>
 </figure>
-<h3>「共识太慢」是个迷思</h3>
+<h3 data-tts="7a005b920fb99a2f">「共识太慢」是个迷思</h3>
 <p>本章专门反驳一句流传甚广的话：<em>共识太慢、吞吐太低，扛不住正经业务</em>。它确实比单机贵，但<strong>贵在两个可预测的地方</strong>：<strong>网络往返</strong>——一次提交至少要等过半数副本回话，写延迟下限就是到「第 3 快的副本」（5 副本时）的往返时间，同机房 RTT 通常<strong>亚毫秒</strong>、同地域跨机房<strong>几毫秒</strong>、跨大陆<strong>几十毫秒</strong>、跨洋<strong>一百多毫秒</strong>，这是光速定的；<strong>磁盘落盘</strong>——日志得 <code>fsync</code> 才敢确认，机械盘一次通常<strong>几毫秒</strong>，SSD / NVMe 可压到<strong>亚毫秒</strong>。</p>
 <figure>
-<svg viewBox="0 0 640 244" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 244" xmlns="http://www.w3.org/2000/svg">
 <defs>
-<marker id="a4" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
-<marker id="a4b" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
-<marker id="a4s" markerWidth="8" markerHeight="8" refX="0" refY="3" orient="auto"><path d="M6,0 L0,3 L6,6 Z" fill="#9b6cf5"></path></marker>
+<marker id="a4" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="a4b" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+<marker id="a4s" markerheight="8" markerwidth="8" orient="auto" refx="0" refy="3"><path d="M6,0 L0,3 L6,6 Z" fill="#9b6cf5"></path></marker>
 </defs>
-<line x1="84" y1="46" x2="624" y2="46" stroke="rgba(120,120,130,0.28)"></line>
-<line x1="84" y1="108" x2="624" y2="108" stroke="rgba(120,120,130,0.28)"></line>
-<line x1="84" y1="176" x2="624" y2="176" stroke="rgba(120,120,130,0.28)"></line>
-<text x="8" y="50" fill="#8fbaff" font-family="monospace" font-size="10">客户端</text>
-<text x="8" y="112" fill="#8fbaff" font-family="monospace" font-size="10">领导者</text>
-<text x="8" y="180" fill="#8fbaff" font-family="monospace" font-size="10">其余副本</text>
-
-<text x="92" y="32" fill="#b9c0ca" font-size="10">① 写请求</text>
-<line x1="105" y1="46" x2="163" y2="102" stroke="#7c8593" marker-end="url(#a4)"></line>
-<rect x="168" y="96" width="58" height="24" rx="5" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5"></rect>
-<text x="197" y="112" fill="#e7ebf1" font-family="monospace" font-size="10" text-anchor="middle">fsync</text>
-
-<text x="248" y="146" fill="#b9c0ca" font-size="10" text-anchor="end">② 领导者广播条目</text>
-<line x1="232" y1="112" x2="296" y2="170" stroke="#7c8593" marker-end="url(#a4)"></line>
-<rect x="302" y="164" width="58" height="24" rx="5" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5"></rect>
-<text x="331" y="180" fill="#e7ebf1" font-family="monospace" font-size="10" text-anchor="middle">fsync</text>
-
-<text x="414" y="146" fill="#b9c0ca" font-size="10">③ 过半数确认</text>
-<line x1="366" y1="172" x2="430" y2="114" stroke="#7c8593" marker-end="url(#a4)"></line>
-<text x="508" y="70" fill="#b9c0ca" font-size="10">④ 提交 → 回复客户端</text>
-<line x1="438" y1="102" x2="500" y2="50" stroke="#7c8593" marker-end="url(#a4)"></line>
-
-<text x="440" y="198" fill="#7c8593" font-size="10">最慢的副本不拖累进度</text>
-<line x1="232" y1="212" x2="438" y2="212" stroke="#9b6cf5" marker-end="url(#a4b)" marker-start="url(#a4s)"></line>
-<text x="335" y="230" fill="#9b6cf5" font-family="monospace" font-size="10.5" text-anchor="middle">② → ③ = 1 个网络往返</text>
-<text x="460" y="230" fill="#7c8593" font-family="monospace" font-size="10.5">写延迟 ≈ RTT + fsync</text>
+<line stroke="rgba(120,120,130,0.28)" x1="84" x2="624" y1="46" y2="46"></line>
+<line stroke="rgba(120,120,130,0.28)" x1="84" x2="624" y1="108" y2="108"></line>
+<line stroke="rgba(120,120,130,0.28)" x1="84" x2="624" y1="176" y2="176"></line>
+<text fill="#8fbaff" font-family="monospace" font-size="10" x="8" y="50">客户端</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" x="8" y="112">领导者</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" x="8" y="180">其余副本</text>
+<text fill="#b9c0ca" font-size="10" x="92" y="32">① 写请求</text>
+<line marker-end="url(#a4)" stroke="#7c8593" x1="105" x2="163" y1="46" y2="102"></line>
+<rect fill="rgba(155,108,245,0.2)" height="24" rx="5" stroke="#9b6cf5" width="58" x="168" y="96"></rect>
+<text fill="#e7ebf1" font-family="monospace" font-size="10" text-anchor="middle" x="197" y="112">fsync</text>
+<text fill="#b9c0ca" font-size="10" text-anchor="end" x="248" y="146">② 领导者广播条目</text>
+<line marker-end="url(#a4)" stroke="#7c8593" x1="232" x2="296" y1="112" y2="170"></line>
+<rect fill="rgba(155,108,245,0.2)" height="24" rx="5" stroke="#9b6cf5" width="58" x="302" y="164"></rect>
+<text fill="#e7ebf1" font-family="monospace" font-size="10" text-anchor="middle" x="331" y="180">fsync</text>
+<text fill="#b9c0ca" font-size="10" x="414" y="146">③ 过半数确认</text>
+<line marker-end="url(#a4)" stroke="#7c8593" x1="366" x2="430" y1="172" y2="114"></line>
+<text fill="#b9c0ca" font-size="10" x="508" y="70">④ 提交 → 回复客户端</text>
+<line marker-end="url(#a4)" stroke="#7c8593" x1="438" x2="500" y1="102" y2="50"></line>
+<text fill="#7c8593" font-size="10" x="440" y="198">最慢的副本不拖累进度</text>
+<line marker-end="url(#a4b)" marker-start="url(#a4s)" stroke="#9b6cf5" x1="232" x2="438" y1="212" y2="212"></line>
+<text fill="#9b6cf5" font-family="monospace" font-size="10.5" text-anchor="middle" x="335" y="230">② → ③ = 1 个网络往返</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" x="460" y="230">写延迟 ≈ RTT + fsync</text>
 </svg>
 <figcaption>图 4 · 稳定领导者下的一次写入：代价集中在「一个网络往返」和「一次落盘」两处，且只等过半数、不等最慢的那台。</figcaption>
 </figure>
 <p>优化手段也就那么几招：<strong>稳定领导者</strong>省掉第一阶段；<strong>批处理</strong>把多条提案合并成一次落盘一次广播，吞吐涨、单条延迟略增；<strong>流水线</strong>不等上一条确认就发下一条但严格保序，在高带宽高延迟链路上收益最大；<strong>Fast Paxos</strong> 让客户端直接发给所有副本、省掉绕经领导者那一跳，代价是更大的法定人数；<strong>法定人数租约（quorum lease）</strong>让部分副本对部分数据持读租约，从而<strong>本地直接读还保持强一致</strong>；最后，领导者本身是吞吐瓶颈，那就<strong>按分片切成多个共识组</strong>——Spanner 就是每个 tablet 一个 Paxos 状态机。</p>
-
-<h3>部署与监控：几个副本、摆在哪、盯什么</h3>
+<h3 data-tts="66c66698a6e657b7">部署与监控：几个副本、摆在哪、盯什么</h3>
 <p><strong>几个。</strong><code>n</code> 个副本容忍 <code>(n-1)/2</code> 个故障。Google 的默认是 <strong>5</strong>，理由非常实际——<strong>要能在一台副本做计划内维护的同时，仍扛得住另一台意外挂掉</strong>；3 副本做不到，维护期间等于零冗余。再往上容错涨得慢、延迟与成本涨得快。</p>
 <p><strong>摆在哪。</strong>铁律是<strong>多数派不能落在同一个故障域里</strong>：5 副本分 3 个机房（2 + 2 + 1）能扛住任一机房整体失联，全塞进一个机房则机房一挂全完；但分得越开写延迟越高。<strong>领导者</strong>应靠近写请求最密处。GitHub 那次事故的另一半教训正在此：把自动提主放到跨大陆，等于允许系统在最坏时刻做出一个延迟与一致性都很糟的决定。</p>
 <p><strong>盯什么。</strong>健康副本数、<strong>是否有领导者与领导者变更频率</strong>、日志序号与各副本落后程度、提案与接受数、吞吐与延迟分布、RTT 与 fsync 等待。经验判据：<strong>领导者频繁抖动、或某个副本持续落后</strong>，通常比「整体延迟略高」更早预示故障——它说明系统已在反复重选，只是还没塌。</p>
-
-<h2>关键权衡与选型</h2>
-
+<h2 data-tts="d01a942560910b21">关键权衡与选型</h2>
 <p class="tcap">表 1 · 自研「心跳 + 超时」 vs 用现成共识系统</p>
 <div class="tblwrap"><table class="cmp">
 <thead><tr><th></th><th>自研心跳 + 超时</th><th>现成共识系统（Chubby / ZooKeeper / etcd）</th></tr></thead>
@@ -321,7 +287,6 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <tr><th>成员变更</th><td>自研里<strong>最容易写错</strong>的部分</td><td>算法内建、已被大规模验证</td></tr>
 <tr><th>运维成本</th><td>看着是零，实为隐性债务</td><td>要多养一个有状态集群</td></tr>
 </tbody></table></div>
-
 <p class="tcap">表 2 · 副本数与摆放：容错、延迟、代价</p>
 <div class="tblwrap"><table class="cmp">
 <thead><tr><th>配置</th><th>容忍故障</th><th>写延迟量级</th><th>评价</th></tr></thead>
@@ -333,7 +298,6 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <tr><th>同地域 3 机房</th><td>任一机房失联</td><td>几毫秒 + fsync</td><td>通常是最佳折中</td></tr>
 <tr><th>跨大陆 / 跨洋</th><td>区域级灾难</td><td><strong>几十至一百多毫秒</strong></td><td>写延迟被光速钉死，交互模型要重设计</td></tr>
 </tbody></table></div>
-
 <p class="tcap">表 3 · 你想干的事 → 该用哪种形态</p>
 <div class="tblwrap"><table class="cmp">
 <thead><tr><th>需求</th><th>正确形态</th><th>常见错法</th></tr></thead>
@@ -344,10 +308,8 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <tr><th>任务只执行一次</th><td>共识之上的队列，或唯一 ID 注册表 + 幂等</td><td>靠「应该不会重复吧」</td></tr>
 <tr><th>跨机房强一致状态</th><td>跨故障域摆放的共识组</td><td>用时间戳比大小做冲突裁决</td></tr>
 </tbody></table></div>
-
-<h2>为什么重要 / 落到真实系统</h2>
+<h2 data-tts="59e2d248de0b7782">为什么重要 / 落到真实系统</h2>
 <p>这一章对应一道几乎必考的架构题：<strong>「你怎么实现高可用的主从切换？」</strong>标准答案不是「心跳加虚 IP」，而是<strong>把选主交给一个共识系统，并在下游做序号校验（fencing）</strong>。今天你身边的系统几乎都是它的实例：<strong>Kubernetes</strong> 把全部集群状态放在 etcd（Raft）；<strong>ZooKeeper</strong>（Zab）长期充当 HBase、早期 Kafka 的协调层；<strong>CockroachDB</strong>、<strong>TiKV</strong> 把「每个数据分片一个独立 Raft 组」做成标配；<strong>Spanner</strong> 每个 tablet 一个 Paxos 组。</p>
-
 <div class="ev">
 <div class="evh">大厂实证 · 这些主张不是书里说的，是公司自己公开说的</div>
 <ul>
@@ -358,8 +320,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>GitHub · 2018-10-21 复盘</strong>（反面）：东岸主数据中心与网络枢纽<strong>失联 43 秒</strong>，基于 Raft 的 Orchestrator 由西岸与公有云节点凑成法定人数、把主库切到西岸；网络恢复后两侧各持有对方没有的写入，服务降级持续 <strong>24 小时 11 分钟</strong>。<strong>共识算法没错，错在把「跨大陆自动提主」当默认</strong>——GitHub 的整改方向之一正是不再允许跨区域自动提升主库。<span class="src"><a href="https://github.blog/news-insights/company-news/oct21-post-incident-analysis/" rel="noopener" target="_blank">GitHub Blog「October 21 post-incident analysis」, 2018 ↗</a></span></li>
 </ul>
 </div>
-
-<h2>易错点与争议</h2>
+<h2 data-tts="4d8cb01978c17437">易错点与争议</h2>
 <ul>
 <li><strong>把锁当正确性保证。</strong>没有 fencing token 的分布式锁，在长 GC、虚拟机挂起面前就是纸糊的（图 3）。</li>
 <li><strong>共识系统会变成全局单点依赖。</strong>因为太好用，无数系统把「它永远在」写进隐含假设。Google 的对策是<strong>主动给 Chubby 安排计划内停机</strong>——正是 SRE 书反复讲的那句：<em>过高的实际可用性会诱导别人依赖你承诺之外的东西</em>。</li>
@@ -368,8 +329,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>Raft 不比 Paxos「更正确」。</strong>两者安全性属性一样，Raft 赢在可理解性和对<strong>成员变更</strong>的完整描述——而成员变更恰是共识实现里最容易写错的部分，这也是「别自研」最强的理由。</li>
 <li><strong>时代局限。</strong>本章 2016 年成书时 Raft 生态刚起步；此后 etcd 随 Kubernetes 普及、Kafka 用 KRaft 去掉了 ZooKeeper。但核心判断——<strong>需要共识就用现成的</strong>——只被进一步印证。</li>
 </ul>
-
-<h2>要点</h2>
+<h2 data-tts="9fb063173852d60a">要点</h2>
 <div class="tl">
 <p>① <strong>只要一组进程要就状态达成一致，你面对的就是分布式共识</strong>；「心跳 + 超时」不是绕开它，而是实现了一个错的它。</p>
 <p>② 根因：异步网络里<strong>「宕机」与「慢」不可区分</strong>；FLP 说明没法同时保证安全与「一定出结果」，真实系统<strong>牺牲后者、死守前者</strong>。</p>
@@ -381,7 +341,6 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <p>⑧ 最实在的一句：<strong>别自研共识。</strong>用 Chubby / ZooKeeper / etcd / Consul，把力气花在副本数、摆放位置和 fencing 上。</p>
 </div>
 </div>
-
 <footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
 </div>
 <script>
