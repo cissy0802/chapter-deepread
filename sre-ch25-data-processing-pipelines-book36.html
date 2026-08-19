@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>SRE 第 25 章 · 数据处理管线 — 专业书籍精读 Book 36</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · SRE · 第 25 章</p>
+<h1>数据处理管线</h1>
+<p class="sub">Site Reliability Engineering · Ch 25 · Google · 2016</p>
+<p class="langbar"><a href="sre-ch25-data-processing-pipelines-book36.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你手机里的「猜你喜欢」、月底的账单、搜索结果的排序，都不是你点开的那一刻才算出来的。半夜里有一条<strong>流水线</strong>，正把海量原始记录加工成这些成品。Google SRE 这本书的第 25 章讲的就是：<strong>这条流水线为什么老出事，以及该怎么改</strong>。</p>
+<h2>打个比方</h2>
+<p>把它想成一家<strong>中央厨房</strong>：每天凌晨三点闹钟一响，全体开工，把当天的食材洗、切、炒、装盒，天亮前送出去。听着井井有条，可规模一大，麻烦就全来了。</p>
+<h2>半夜开工的四种翻车</h2>
+<p><strong>一口锅拖住全场。</strong>活儿分给一百个厨师，九十九个十分钟做完，剩下那个分到的是一整头牛，要三小时。因为下一道工序必须等所有人都好，整条线就干等这一个——而且<strong>再招一百个厨师也没用</strong>，问题不是人手少，是活儿分得不均。</p>
+<p><strong>开工瞬间挤爆仓库。</strong>闹钟一响，一千个厨师同时冲向仓库，把门口堵死。不光自己进不去，隔壁餐厅也被堵在了外面。</p>
+<p><strong>偶尔撞车。</strong>楼上还有另一条流水线，一个每三小时开工、一个每四小时。大多数时候错开，但每隔十二小时会撞在同一刻，那一次准出事——事后去查，两条线单看都很正常。</p>
+<p><strong>看不出死活。</strong>远远望着后厨灯亮着、有人影在动，你根本分不清是在炒菜还是在发呆。等你知道出事了，通常是外面的客人先发现菜没来。</p>
+<h2>Google 的解法：别按闹钟开工</h2>
+<p>换个活法：<strong>流水线不再定点开工收工，而是一直开着</strong>。活儿一到就有人接，中间摆一张<strong>派工台</strong>，记着每件活儿归谁、做到哪一步。这样高峰被摊平了，仓库不再被瞬间挤爆；也终于看得出「活儿到底卡在哪一步」。</p>
+<h2>号码牌是怎么防止上错菜的</h2>
+<p>还有个细节很妙。厨师领活儿时，顺手领一块<strong>号码牌</strong>。假如他中途失联了半分钟，派工台以为他不行了，把这道菜改派给了别人——等他回过神端着菜要交，号码牌已经作废，<strong>派工台不收</strong>。这样同一道菜不会被端上桌两次。派工台自己也在好几个厂区各放一份，一个厂区停电，另一份接着派工。</p>
+<p>代价也得说清楚：这套「一直开着 + 号码牌」比「一个闹钟加一段脚本」复杂得多；如果活儿本来就不大、每天跑一次也够用，老办法反而更省心。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>数据流水线的敌人往往不是数据太多，而是<strong>「按点开工」这件事本身</strong>——它必然带来空转的谷、挤爆的峰，和看不出死活的中间态。规模大到一定程度，就该让流水线一直开着，并给每件活儿发一块号码牌。</p>
+</div>
+<p class="switch-hint">想进到具体机制、示意图和选型对比表？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">你以为数据管线（pipeline）的敌人是数据量，其实是<strong>「按点开工」这件事本身</strong>。本章说：用定时器触发的<strong>周期性管线（periodic pipeline）</strong>在小规模下又简单又好用，可一旦数据变大、阶段变多、还挤在共享集群上跑，它会沿着<strong>四个可预测的方向</strong>烂掉——卡住的分片、启动瞬间的惊群、多条管线周期错拍撞出的尖峰、以及「跑到一半根本看不出死活」。Google 的答案不是把批作业调优到极致，而是<strong>换范式</strong>：把管线改造成一直在跑、且有正确性保证的任务系统。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>管线（pipeline）</strong>：一串「读数据 → 变换 → 写出去」的处理步骤，把原始数据加工成可用的派生数据（报表、索引、特征）。</li>
+<li><strong>批处理（batch processing）</strong>：一次性吃进一大坨固定数据、算完就结束；对面是「流处理」，把数据当永不结束的事件流持续处理。</li>
+<li><strong>MapReduce</strong>：Google 2004 年提出的批处理框架，把活儿切成很多块并行算（map）、再汇总（reduce），让「读—变换—写」能扩展到成千上万台机器。</li>
+<li><strong>阶段（stage）</strong>：管线里的一步；多个阶段首尾相接就是「链式多阶段管线」。</li>
+<li><strong>分片 / 工作块（chunk）</strong>：一个阶段的活儿切开分给多台机器时，每台负责的那一份。<strong>worker</strong> 则是真正干活的进程，领一块、算完交回。跑得特别慢、拖住整批的那个 worker 叫<strong>落后者（straggler）</strong>。</li>
+<li><strong>cron</strong>：Unix 上的定时器，「每天 3:00 执行某命令」；周期管线的经典触发方式。</li>
+<li><strong>共享集群</strong>：多个团队、多个作业挤在同一批机器上跑，CPU、网络与存储都是公用的。</li>
+<li><strong>幂等（idempotent）</strong>：同一操作做一次和做很多次结果一样；分布式里靠它对付「不确定有没有成功、干脆重试」。</li>
+<li><strong>分布式共识（consensus）</strong>：一组机器就「谁是主、状态是什么」达成一致的算法（Paxos、Raft），是选主与关键状态复制的标准工具。</li>
+<li><strong>DAG</strong>：有向无环图；把管线画成「谁依赖谁」的箭头图，是 Airflow 这类调度器的基本模型。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>本章作者 Dan Dennison，属《SRE》全书 Part III「实践」中围绕数据可靠性的一组。<strong>上承 Ch24《分布式周期任务调度》</strong>——那章讲怎么把 cron 本身在分布式环境下做对；本章讲的是更扎心的一层：<strong>就算 cron 做对了，「周期」这个范式本身仍然会在规模下失效</strong>。<strong>下启 Ch26《数据完整性》</strong>。现实对应：MapReduce / Hadoop / Spark 批作业、Airflow / Luigi / Argo 这类 DAG 调度器，以及 Flink / Beam / Dataflow 这类持续处理引擎。</p>
+<h2>这章要解决什么</h2>
+<p>经典的管线模式朴素得像一句话：<strong>读进来、变换、写出去</strong>（也就是 ETL）。MapReduce 之后这个模式获得了横向扩展能力，于是成了默认范式——写个批作业，配个 cron，每天凌晨跑一次。</p>
+<p>给个具体的锚：一条给推荐系统算特征的管线，<strong>每天跑一次、输入约 10 TB 日志、串了 8 个阶段</strong>，跑在和在线服务共用的集群上。数据小的时候它无懈可击。可当<strong>规模、深度、共用集群</strong>同时上来，账单就开始还了：交付时间从「凌晨 4 点前一定好」滑成「说不准」，下游报表和模型训练全跟着漂；管线的启动峰值还会把共享存储打穿，殃及同集群里跟它毫无关系的在线服务。</p>
+<p>不解决的代价不是「慢一点」，而是<strong>你再也无法对数据的新鲜度做出任何承诺</strong>——而承诺（SLO）正是这本书前四章的全部内容。</p>
+<h2>核心内容，讲透</h2>
+<h3>一、简单管线怎么长成一条会塌的链</h3>
+<p>单阶段管线（读→变换→写）很稳。但真实业务要多步：清洗 → 关联 → 聚合 → 排序 → 打分 → 导出……于是它变成<strong>链式多阶段管线</strong>，而每两个阶段之间是一道<em>关卡（barrier）</em>：<strong>上一阶段的所有分片全部完成，下一阶段才能开始</strong>。</p>
+<p>这就是脆弱性的根。深度为 8，意味着 8 次「全员齐步走」；链上任何一块拖后腿，整条链就停在那儿——<strong>管线总时长等于「每阶段中最慢那一块」之和，跟平均值没关系</strong>。「盯尾部别盯平均」在这里升级成了架构层面的硬约束：<strong>深度越大，被尾部咬到的次数越多</strong>。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 215" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="p1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="24">① 简单管线：读进来 → 变换 → 写出去</text>
+<rect fill="rgba(91,157,249,0.08)" height="32" rx="6" stroke="#7c8593" width="96" x="30" y="38"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="78" y="58">原始数据</text>
+<line marker-end="url(#p1)" stroke="#7c8593" x1="128" x2="174" y1="54" y2="54"></line>
+<rect fill="rgba(155,108,245,0.2)" height="32" rx="6" stroke="#9b6cf5" width="84" x="180" y="38"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="222" y="58">变换</text>
+<line marker-end="url(#p1)" stroke="#7c8593" x1="266" x2="312" y1="54" y2="54"></line>
+<rect fill="rgba(91,157,249,0.08)" height="32" rx="6" stroke="#7c8593" width="96" x="318" y="38"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="366" y="58">派生结果</text>
+<text fill="#7c8593" font-size="10.5" x="430" y="58">数据小的时候，无懈可击</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="104">② 现实：链式多阶段管线 —— 阶段之间是「全员齐步走」的关卡</text>
+<line stroke="rgba(155,108,245,0.55)" stroke-dasharray="4 4" x1="104" x2="104" y1="112" y2="166"></line>
+<line stroke="rgba(155,108,245,0.55)" stroke-dasharray="4 4" x1="176" x2="176" y1="112" y2="166"></line>
+<line stroke="rgba(155,108,245,0.55)" stroke-dasharray="4 4" x1="248" x2="248" y1="112" y2="166"></line>
+<line stroke="rgba(155,108,245,0.55)" stroke-dasharray="4 4" x1="320" x2="320" y1="112" y2="166"></line>
+<line stroke="rgba(155,108,245,0.55)" stroke-dasharray="4 4" x1="392" x2="392" y1="112" y2="166"></line>
+<line stroke="rgba(155,108,245,0.55)" stroke-dasharray="4 4" x1="464" x2="464" y1="112" y2="166"></line>
+<line stroke="rgba(155,108,245,0.55)" stroke-dasharray="4 4" x1="536" x2="536" y1="112" y2="166"></line>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" width="52" x="42" y="122"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="68" y="143">阶段 1</text>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" width="52" x="114" y="122"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="140" y="143">阶段 2</text>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" width="52" x="186" y="122"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="212" y="143">阶段 3</text>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" width="52" x="258" y="122"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="284" y="143">阶段 4</text>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" width="52" x="330" y="122"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="356" y="143">阶段 5</text>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" width="52" x="402" y="122"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="428" y="143">阶段 6</text>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" width="52" x="474" y="122"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="500" y="143">阶段 7</text>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" width="52" x="546" y="122"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="572" y="143">阶段 8</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="320" y="186">虚线 = 关卡：上一阶段所有分片全完成，下一阶段才开始</text>
+<text fill="#9b6cf5" font-size="10.5" text-anchor="middle" x="320" y="205">深度 8 ⇒ 8 次齐步走；任何一块拖后腿，整条链停在那儿</text>
+</svg>
+<figcaption>图 1 · 简单管线（上）在数据小的时候很稳；真实业务把它拉成链式多阶段（下），每道虚线都是一次「全员齐步走」——这是全部脆弱性的根。</figcaption>
+</figure>
+<h3>二、Hanging chunk：加机器治不好的那种慢</h3>
+<p>一个阶段的活儿被切成很多<em>块（chunk）</em>分给 worker，理想情况下每块差不多大。现实是<strong>数据倾斜</strong>：按用户 ID 切，某个超级大号一个人占了一整块；按国家切，美国那块是冰岛那块的上千倍。</p>
+<p>后果就是本章说的 <strong>hanging chunk</strong>（卡住的块）：七个分片十几分钟跑完，剩下那个跑了三小时；绝大多数 worker 在空转，关卡在等那一块。<strong>最常见的误判是「加机器」</strong>——倾斜是<em>数据分布</em>问题，不是<em>容量</em>问题；机器翻倍，那一块还是三小时。管用的只有三类：<strong>重新分片</strong>（让切分依据匹配数据分布，如热键加盐、大块二次切分）、<strong>冗余执行</strong>（对落后的块同时再跑一份，谁先完算谁的——这正是 MapReduce 论文里的 <em>backup tasks</em>），以及<strong>换范式</strong>（不再要求全员齐步走）。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 262" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="24">Hanging chunk：整条管线的时长 = 最慢那一块</text>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="76" y="50">分片 1</text><rect fill="rgba(91,157,249,0.35)" height="16" rx="3" width="130" x="86" y="38"></rect>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="76" y="73">分片 2</text><rect fill="rgba(91,157,249,0.35)" height="16" rx="3" width="116" x="86" y="61"></rect>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="76" y="96">分片 3</text><rect fill="rgba(91,157,249,0.35)" height="16" rx="3" width="138" x="86" y="84"></rect>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="76" y="119">分片 4</text><rect fill="rgba(91,157,249,0.35)" height="16" rx="3" width="124" x="86" y="107"></rect>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="76" y="142">分片 5</text><rect fill="rgba(91,157,249,0.35)" height="16" rx="3" width="108" x="86" y="130"></rect>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="76" y="165">分片 6</text><rect fill="rgba(224,107,107,0.4)" height="16" rx="3" stroke="#e06b6b" width="452" x="86" y="153"></rect>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="76" y="188">分片 7</text><rect fill="rgba(91,157,249,0.35)" height="16" rx="3" width="120" x="86" y="176"></rect>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="76" y="211">分片 8</text><rect fill="rgba(91,157,249,0.35)" height="16" rx="3" width="134" x="86" y="199"></rect>
+<text fill="#7c8593" font-size="10.5" x="238" y="96">其余 worker 早已完成 · 全在空转</text>
+<text fill="#e7ebf1" font-size="10.5" x="100" y="165">分片 6：数据倾斜 → 跑了 3 小时</text>
+<line stroke="#9b6cf5" stroke-dasharray="5 4" x1="546" x2="546" y1="32" y2="222"></line>
+<text fill="#9b6cf5" font-size="10" x="554" y="112">关卡在</text>
+<text fill="#9b6cf5" font-size="10" x="554" y="128">等这里</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="320" y="246">加一倍机器也没用：倾斜是数据分布问题，不是容量问题</text>
+</svg>
+<figcaption>图 2 · Hanging chunk：七个分片十几分钟跑完，一个因数据倾斜跑了三小时；关卡只能等它，其余 worker 全在空转。</figcaption>
+</figure>
+<h3>三、惊群：管线自己把自己 DoS 了</h3>
+<p>周期管线的资源曲线是一个<strong>方波</strong>：定时器一响，几千个 worker 同时启动、同时去读同一批输入、同时打向同一个存储服务。<strong>瞬时峰值可以是均值的几十倍</strong>，而共享集群的容量通常是按均值规划的。</p>
+<p>结果是一次<strong>自伤式的拒绝服务</strong>（本章称之为 <em>thundering herd</em>，惊群）：管线把共享存储或网络打穿，先害了自己（超时、重试、雪崩），再害了同集群里跟它毫无关系的服务；而且它<strong>周期性复发</strong>——昨天刚调好的容量，今天数据涨 20% 就又炸一次。基本对策是给启动加<strong>抖动（jitter）</strong>与<strong>限速爬坡</strong>，别让所有 worker 在同一秒进场；但要认清这只是削平峰顶，<strong>方波本身还在</strong>。</p>
+<h3>四、摩尔纹负载：最难查的那种故障</h3>
+<p>更阴的是这个。共享集群上不止你一条管线。管线 A 每 3 小时跑一次，管线 B 每 4 小时跑一次，各自都在容量之内、各自都健康。<strong>但每 12 小时它们会撞在同一刻</strong>——那一刻的叠加负载谁也没规划过。</p>
+<p>本章把这种模式叫<strong>摩尔纹负载（moiré load pattern）</strong>，取自两张网格叠放时浮出的第三种纹路：平时看不见，撞上就爆，而且<strong>周期长、难复现、难归因</strong>——你翻日志会看到「上周二 03:00 那次莫名其妙的超时」，两周后又来一次，中间一切正常。它真正可怕的地方在于<strong>不是任何一条管线的错</strong>：每条单看都完全健康。这是典型的「只有站在集群层面才能看见」的故障，也是把管线丢进共享集群的隐性代价。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 252" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="24">摩尔纹负载：两条各自健康的管线，每 12 小时撞一次</text>
+<text fill="#7c8593" font-size="10.5" x="20" y="48">管线 A · 每 3 小时跑一次</text>
+<rect fill="#5b9df9" height="22" opacity="0.75" width="7" x="46.5" y="54"></rect>
+<rect fill="#5b9df9" height="22" opacity="0.75" width="7" x="115.5" y="54"></rect>
+<rect fill="#5b9df9" height="22" opacity="0.75" width="7" x="184.5" y="54"></rect>
+<rect fill="#5b9df9" height="22" opacity="0.75" width="7" x="253.5" y="54"></rect>
+<rect fill="#5b9df9" height="22" opacity="0.75" width="7" x="322.5" y="54"></rect>
+<rect fill="#5b9df9" height="22" opacity="0.75" width="7" x="391.5" y="54"></rect>
+<rect fill="#5b9df9" height="22" opacity="0.75" width="7" x="460.5" y="54"></rect>
+<rect fill="#5b9df9" height="22" opacity="0.75" width="7" x="529.5" y="54"></rect>
+<text fill="#7c8593" font-size="10.5" x="20" y="108">管线 B · 每 4 小时跑一次</text>
+<rect fill="#9b6cf5" height="22" opacity="0.75" width="7" x="46.5" y="114"></rect>
+<rect fill="#9b6cf5" height="22" opacity="0.75" width="7" x="138.5" y="114"></rect>
+<rect fill="#9b6cf5" height="22" opacity="0.75" width="7" x="230.5" y="114"></rect>
+<rect fill="#9b6cf5" height="22" opacity="0.75" width="7" x="322.5" y="114"></rect>
+<rect fill="#9b6cf5" height="22" opacity="0.75" width="7" x="414.5" y="114"></rect>
+<rect fill="#9b6cf5" height="22" opacity="0.75" width="7" x="506.5" y="114"></rect>
+<rect fill="#9b6cf5" height="22" opacity="0.75" width="7" x="598.5" y="114"></rect>
+<text fill="#7c8593" font-size="10.5" x="20" y="166">叠加后 · 共享集群的实际负载</text>
+<rect fill="rgba(224,107,107,0.85)" height="48" stroke="#e06b6b" width="9" x="45.5" y="174"></rect>
+<rect fill="rgba(143,186,255,0.55)" height="22" width="7" x="115.5" y="200"></rect>
+<rect fill="rgba(143,186,255,0.55)" height="22" width="7" x="138.5" y="200"></rect>
+<rect fill="rgba(143,186,255,0.55)" height="22" width="7" x="184.5" y="200"></rect>
+<rect fill="rgba(143,186,255,0.55)" height="22" width="7" x="230.5" y="200"></rect>
+<rect fill="rgba(143,186,255,0.55)" height="22" width="7" x="253.5" y="200"></rect>
+<rect fill="rgba(224,107,107,0.85)" height="48" stroke="#e06b6b" width="9" x="321.5" y="174"></rect>
+<rect fill="rgba(143,186,255,0.55)" height="22" width="7" x="391.5" y="200"></rect>
+<rect fill="rgba(143,186,255,0.55)" height="22" width="7" x="414.5" y="200"></rect>
+<rect fill="rgba(143,186,255,0.55)" height="22" width="7" x="460.5" y="200"></rect>
+<rect fill="rgba(143,186,255,0.55)" height="22" width="7" x="506.5" y="200"></rect>
+<rect fill="rgba(143,186,255,0.55)" height="22" width="7" x="529.5" y="200"></rect>
+<rect fill="rgba(224,107,107,0.85)" height="48" stroke="#e06b6b" width="9" x="597.5" y="174"></rect>
+<text fill="#e06b6b" font-size="10" x="340" y="186">← 每 12 小时一次巨峰，谁也没规划过</text>
+<line stroke="#7c8593" x1="40" x2="624" y1="222" y2="222"></line>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="50" y="238">0h</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="188" y="238">6h</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="326" y="238">12h</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="464" y="238">18h</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="602" y="238">24h</text>
+</svg>
+<figcaption>图 3 · 摩尔纹负载：管线 A 每 3 小时、管线 B 每 4 小时，各自都在容量之内，但每 12 小时叠加出一次没人规划过的巨峰。</figcaption>
+</figure>
+<h3>五、监控盲区：「作业还在跑」不是健康信号</h3>
+<p>周期管线跑到一半时你手里有什么信号？进程活着、CPU 在动——这些<strong>统统无法区分「正在干活」和「卡在某个 hanging chunk 上」</strong>。等你发现不对，往往是下游先发现数据没来。</p>
+<p>本章的判断是：周期范式<strong>天生难监控</strong>，因为每次运行都是一次性的，没有「正常速率」这个参照系。想做好只能自己造指标：<strong>每阶段完成率随时间的斜率</strong>、<strong>本次运行相对历史同期的偏差</strong>，以及最关键的<strong>数据新鲜度（data freshness，产出落后当前时刻多久）</strong>——这才是用户真正在乎、也真正该拿来定 SLO 的那个量。</p>
+<h3>六、Google Workflow：把范式换成「一直在跑」</h3>
+<p>Google 的解法是一套叫 <strong>Workflow</strong> 的内部系统（未开源），核心一句话：<strong>不再按点开工</strong>。管线常驻运行，活儿到了就有 worker 接。本章用 <strong>MVC</strong> 类比它的结构：</p>
+<ul>
+<li><strong>Task Master = Model</strong>：一个中心组件，<strong>持有全部任务状态</strong>——哪些活儿存在、归谁、做到哪一步。系统里唯一的权威真相。</li>
+<li><strong>workers = Controller</strong>：无状态，向 Task Master 领活儿、干活、提交结果；随时可以死、可以扩缩容。</li>
+<li><strong>配置 = View</strong>：管线的阶段定义与拓扑，使用者面对的那一层。</li>
+</ul>
+<p>阶段化执行依然存在（每阶段的产出是下阶段的输入），但<strong>它变成了 Task Master 里的一条条任务记录，而不再是一次批作业的起止边界</strong>。峰谷因此被抹平，延迟从「等到下一次开工」变成「几乎连续」。</p>
+<h3>七、正确性怎么保证：唯一 token 就是那块号码牌</h3>
+<p>常驻运行带来一个绕不开的问题：<strong>worker 只是「看起来死了」怎么办？</strong>它可能只是网络卡了 30 秒。如果 Task Master 已把它的活儿改派给别人，而它随后复活并提交结果，同一份产出就会被写两次——这就是<em>脑裂（split-brain）</em>。</p>
+<p>Workflow 的做法是<strong>协作锁 + 唯一 token</strong>：每块活儿派发时带一个唯一序号（token）；worker 提交时必须出示它，<strong>Task Master 校验它是否仍是当前有效的那个</strong>——被改派掉的僵尸 worker 拿的是过期 token，提交直接拒收。所有产出<strong>必须经 Task Master 提交</strong>，没有旁路可走。</p>
+<p>这套东西的精神和数据库的<strong>乐观锁</strong>一模一样：不必阻止故障发生，只需保证<strong>过期的写入进不来</strong>。配合「每阶段产出在 Task Master 里有唯一归属」，管线就能在任意 worker 崩溃、重启、假死时仍然产出<strong>恰好一份</strong>正确结果。</p>
+<h3>八、业务连续性：把权威状态自己也复制掉</h3>
+<p>Task Master 成了唯一真相，也就成了<strong>唯一的单点</strong>。本章的收尾正是这个：用<strong>分布式共识</strong>把 Task Master 自己复制到多个集群，选一个为主、其余为备，某个集群整体故障时自动切换。书里给的实操建议很朴素——<strong>至少在两个集群各放一份，再加第三方做仲裁</strong>（避免只有两副本时的平票）。这也正是本书 Ch23《管理关键状态》的直接应用：<strong>关键状态请交给现成的共识实现，别自己用心跳加超时凑一个。</strong></p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 302" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="p4" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="24">Google Workflow：常驻任务系统 + 用唯一 token 挡住僵尸 worker</text>
+<text fill="#7c8593" font-size="10" x="24" y="52">workers（Controller · 无状态）</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="112" x="24" y="62"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="80" y="82">worker 1</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="112" x="24" y="106"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="80" y="126">worker 2</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="112" x="24" y="150"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="80" y="170">worker 3</text>
+<rect fill="rgba(91,157,249,0.14)" height="96" rx="8" stroke="#5b9df9" stroke-width="2" width="224" x="208" y="70"></rect>
+<text fill="#e7ebf1" font-size="13.5" font-weight="700" text-anchor="middle" x="320" y="99">Task Master</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="320" y="121">唯一权威的任务状态（Model）</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="320" y="140">每块活儿：归谁 · 做到哪步</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="320" y="158">· 当前有效 token</text>
+<line marker-end="url(#p4)" stroke="#7c8593" x1="206" x2="142" y1="100" y2="82"></line>
+<text fill="#5b9df9" font-size="12" text-anchor="middle" x="176" y="80">①</text>
+<line marker-end="url(#p4)" stroke="#7c8593" x1="140" x2="204" y1="162" y2="148"></line>
+<text fill="#5b9df9" font-size="12" text-anchor="middle" x="176" y="172">②</text>
+<rect fill="rgba(155,108,245,0.14)" height="44" rx="6" stroke="#9b6cf5" width="150" x="468" y="98"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="543" y="117">阶段产出</text>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="543" y="134">→ 下一阶段的输入</text>
+<line marker-end="url(#p4)" stroke="#7c8593" x1="434" x2="464" y1="120" y2="120"></line>
+<text fill="#5b9df9" font-size="12" text-anchor="middle" x="449" y="110">③</text>
+<rect fill="none" height="84" rx="8" stroke="rgba(91,157,249,0.4)" stroke-dasharray="5 4" width="360" x="140" y="192"></rect>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="320" y="212">Task Master 自己跨集群做共识选主</text>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" width="104" x="152" y="222"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="204" y="243">集群 A · 主</text>
+<rect fill="rgba(91,157,249,0.06)" height="34" rx="6" stroke="#7c8593" width="104" x="268" y="222"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="320" y="243">集群 B · 备</text>
+<rect fill="rgba(91,157,249,0.06)" height="34" rx="6" stroke="#7c8593" width="104" x="384" y="222"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="436" y="243">集群 C · 仲裁</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="320" y="292">任一集群整体故障，管线不中断</text>
+</svg>
+<figcaption>图 4 · Workflow：① 派活儿时连发一个唯一 token；② 提交时出示 token，过期的（已被改派）直接拒收；③ 校验通过才成为下一阶段的输入。Task Master 自身跨集群共识选主。</figcaption>
+</figure>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 1 · 周期批处理 vs 持续处理：换范式换掉了什么</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>周期管线（定时器 + 批作业）</th><th>持续管线（Workflow / 流式）</th></tr></thead>
+<tbody>
+<tr><th>产出延迟</th><td>一个周期起步（小时 ~ 天级）</td><td><strong>接近连续</strong>（秒 ~ 分钟级）</td></tr>
+<tr><th>资源曲线</th><td>方波：谷里空转、峰上惊群</td><td>平直，利用率高</td></tr>
+<tr><th>容量规划</th><td>必须<strong>按峰值买</strong>，其余时间闲置</td><td>按均值买即可</td></tr>
+<tr><th>可监控性</th><td>差：一次性运行，没有稳态基线可比</td><td>好：有连续的速率与积压（backlog）指标</td></tr>
+<tr><th>正确性成本</th><td><strong>低</strong>：出错整批重跑就行</td><td><strong>高</strong>：要 token / 幂等 / 关卡一整套机制</td></tr>
+<tr><th>运维复杂度</th><td>低：一个定时器 + 一个作业</td><td>高：常驻服务、状态、选主全都要养</td></tr>
+<tr><th>适用</th><td>数据量稳、深度浅、每天一次够用</td><td>数据大、深度深、对新鲜度有 SLO</td></tr>
+</tbody></table></div>
+<p class="tcap">表 2 · 周期管线的四种病：症状 → 根因 → 该做什么 / 别做什么</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>病</th><th>症状</th><th>根因</th><th>该做什么</th><th>别做什么</th></tr></thead>
+<tbody>
+<tr><th>Hanging chunk</th><td>绝大多数 worker 空转，关卡卡在一块上</td><td>数据倾斜，切分依据与分布不匹配</td><td>重新分片（热键加盐、二次切分）；对落后块<strong>冗余执行</strong></td><td><strong>加机器</strong>——倾斜不是容量问题</td></tr>
+<tr><th>惊群</th><td>启动瞬间共享存储 / 网络超时，殃及邻居</td><td>方波负载，峰值远高于均值</td><td>启动抖动 + 限速爬坡；规模够大就换持续范式</td><td>只调大超时和重试——会放大雪崩</td></tr>
+<tr><th>摩尔纹</th><td>罕见、周期性、无法复现的巨峰</td><td>多条管线的周期偶尔对齐</td><td>在<strong>集群层面</strong>看总负载；错开周期或做全局准入</td><td>逐条管线去查——单看每条都健康</td></tr>
+<tr><th>监控盲区</th><td>「还在跑」，其实早已卡死</td><td>一次性运行，没有稳态基线</td><td>以<strong>数据新鲜度</strong>与阶段完成速率做 SLI</td><td>拿「进程存活 / CPU 忙」当健康信号</td></tr>
+</tbody></table></div>
+<p class="tcap">表 3 · Task Master（权威状态）该部署成什么形态</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>形态</th><th>能挡住什么 / 挡不住什么</th><th>适用</th></tr></thead>
+<tbody>
+<tr><th>单集群单实例</th><td>最简单；进程或集群一挂，管线全停</td><td>实验性 / 可随时重跑的低价值管线</td></tr>
+<tr><th>单集群 + 热备</th><td>挡住进程崩溃，<strong>挡不住整集群故障</strong></td><td>一般业务管线</td></tr>
+<tr><th>≥2 集群 + 仲裁（共识选主）</th><td>抗整集群故障；代价是跨区延迟、更复杂的运维与更长的选主时间</td><td>对连续性有硬要求的核心管线</td></tr>
+</tbody></table></div>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>这一章值得单独读，是因为它把「批处理管线为什么难养」讲成了<strong>可预测的四种失效模式</strong>，而不是玄学。今天你用 <strong>Airflow / Luigi / Argo / Dagster</strong> 编排 DAG，本质仍是周期范式，这四种病一个不落——最经典的 Airflow 事故就是几百个 DAG 被排到同一分钟触发、把元数据库和执行器一起打爆，教科书级的惊群。而 <strong>Flink / Beam / Google Dataflow / Kafka Streams</strong> 是持续范式的开源化身，Beam 的模型直接来自 Google 的 MillWheel 与 Dataflow 两篇论文。</p>
+<p>更值得记住的是<strong>机制的同构</strong>：Workflow 的「Task Master + 唯一 token」，与 Flink 的「JobManager + checkpoint barrier」、Kafka 事务生产者的「producer epoch 挡住僵尸生产者」是同一种思想——<strong>把权威状态收拢到一处，再用一个会过期的凭据把掉队者挡在门外</strong>。</p>
+<div class="ev">
+<div class="evh">大厂实证 · 这些主张不是书里说的，是公司自己公开说的</div>
+<ul>
+<li><strong>Google</strong> 在 MapReduce 论文里实测：关掉 backup task 机制后，同一个排序作业耗时 <strong>1283 秒、增加 44%</strong>，尾部有一条「几乎没有写活动」的长尾——<strong>坐实了落后者 / hanging chunk 是真问题，且冗余执行确实治得了</strong>。<span class="src"><a href="https://research.google.com/archive/mapreduce-osdi04.pdf" rel="noopener" target="_blank">Dean &amp; Ghemawat《MapReduce》, OSDI 2004, §5.4 ↗</a></span></li>
+<li><strong>Google</strong> 的 MillWheel 是持续流处理框架，用逻辑时间（低水位）把乱序数据管住，并在框架层<strong>透明地保证幂等与恰好一次投递</strong>——证明「持续范式也能有强正确性保证」，而不必靠整批重跑兜底。<span class="src"><a href="https://research.google/pubs/millwheel-fault-tolerant-stream-processing-at-internet-scale/" rel="noopener" target="_blank">Akidau 等《MillWheel》, VLDB 2013 ↗</a></span></li>
+<li><strong>Google</strong> 的 Dataflow 模型进一步主张：不必再为「正确性靠批、低延迟靠流」维护两套系统，用一套模型在正确性、延迟与成本之间调档即可——<strong>本章「从周期转向持续」的正统延长线</strong>，后来长成了 Apache Beam。<span class="src"><a href="https://research.google/pubs/the-dataflow-model-a-practical-approach-to-balancing-correctness-latency-and-cost-in-massive-scale-unbounded-out-of-order-data-processing/" rel="noopener" target="_blank">Akidau 等《The Dataflow Model》, VLDB 2015 ↗</a></span></li>
+<li><strong>Airbnb</strong> 于 2015 年开源 Airflow，把管线写成可编程的 DAG、集中调度与可视化，成了业界采用最广的答案——<strong>但它仍是按时钟触发的周期调度</strong>，本章诊断的四种病它一样得治。<span class="src"><a href="https://medium.com/airbnb-engineering/airflow-a-workflow-management-platform-46318b977fd8" rel="noopener" target="_blank">Airbnb Engineering「Airflow: a workflow management platform」, 2015 ↗</a></span></li>
+<li><strong>Netflix</strong> 2024 年开源的 Maestro 编排器，公开数据是<strong>日均约 50 万个 job、繁忙日可达 200 万</strong>，并刻意支持有环工作流而不止 DAG——说明本章成书近十年后，管线编排的规模与形态仍在往「更连续、更灵活」演进。<span class="src"><a href="https://netflixtechblog.com/maestro-netflixs-workflow-orchestrator-ee13a06f9c78" rel="noopener" target="_blank">Netflix TechBlog「Maestro: Netflix's Workflow Orchestrator」, 2024 ↗</a></span></li>
+</ul>
+</div>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>把「作业还在跑」当健康信号</strong>——本章最想纠正的习惯。唯一有意义的 SLI 是<strong>数据新鲜度</strong>：产出落后当前时刻多久。</li>
+<li><strong>以为加机器能治 hanging chunk</strong>：倾斜是数据分布问题，不是容量问题。先看切分依据，再谈扩容。</li>
+<li><strong>以为持续范式免疫一切</strong>：它抹平了峰谷，却换来乱序、水位线、状态管理、背压一整套新问题，而且<strong>常驻服务的运维成本远高于一个定时器</strong>。小管线上持续范式是过度工程。</li>
+<li><strong>「恰好一次」的措辞争议</strong>：有网络在，严格的「恰好一次投递」做不到；工程上做到的是「恰好一次的<strong>效果</strong>」——幂等写入 + 去重 + 会过期的凭据。本章的保证属于后者，别当物理定律。</li>
+<li><strong>Workflow 从未开源</strong>，本章对它的描述偏架构、少实现细节。思想（集中权威状态 + token 围栏 + 共识选主）可以借，代码没法照抄，落地通常拿 Flink / Beam / 自研调度器去逼近。</li>
+<li><strong>时代局限与边界</strong>：本章成书于 2016 年。此后 Beam / Flink 让统一批流成为主流，Airflow 2.x 与 Dagster 引入<strong>按数据资产触发</strong>（data-aware scheduling）而非纯按时钟触发，正是对「别拿时钟当触发器」的直接回应。但别过度解读：本章没说周期管线该淘汰，只说<strong>它的失效模式是可预测的</strong>——规模到了就该换，没到就别折腾。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 管线的敌人不是数据量，是<strong>「按点开工」这个范式本身</strong>；规模一大，它的失效方式是可预测的。</p>
+<p>② 结构上的根：真实管线是<strong>链式多阶段</strong>，阶段之间是「全员齐步走」的<strong>关卡</strong>；总时长 = 每阶段最慢那块之和，跟平均值无关。</p>
+<p>③ <strong>Hanging chunk</strong>：倾斜导致某一块拖住全场、其余 worker 空转；<strong>加机器治不好</strong>，要重新分片或对落后块冗余执行（backup task）。</p>
+<p>④ <strong>惊群</strong>：定时器一响几千 worker 同时进场，峰值远高于均值，打穿共享存储还殃及邻居；抖动与限速只能削峰，方波仍在。</p>
+<p>⑤ <strong>摩尔纹负载</strong>：两条各自健康的管线周期偶尔对齐（3 小时与 4 小时每 12 小时撞一次），撞出没人规划过的巨峰；难复现、难归因，且不是任何单条管线的错。</p>
+<p>⑥ <strong>监控盲区</strong>：一次性运行没有稳态基线，「进程活着」区分不了干活与卡死；该测<strong>数据新鲜度</strong>与阶段完成速率。</p>
+<p>⑦ <strong>Google Workflow</strong> 换范式：常驻运行，<strong>Task Master 持有唯一权威状态（Model）、workers 无状态（Controller）、配置是 View</strong>。</p>
+<p>⑧ 正确性靠<strong>协作锁 + 唯一 token</strong>：产出必经 Task Master 提交并校验 token，僵尸 worker 的过期提交被拒——同乐观锁，也同 Kafka 的 producer epoch。</p>
+<p>⑨ 权威状态本身是单点，用<strong>分布式共识跨集群选主</strong>保连续性；书里的建议是至少两集群 + 一个仲裁方。落地映射：Airflow / Argo / Dagster 属周期范式（四种病照得），Flink / Beam / Dataflow 属持续范式。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

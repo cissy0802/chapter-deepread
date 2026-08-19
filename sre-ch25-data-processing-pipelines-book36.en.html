@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>SRE Ch 25 · Data Processing Pipelines — Chapter Deepread Book 36</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">CHAPTER DEEPREAD · SRE · CH 25</p>
+<h1>Data Processing Pipelines</h1>
+<p class="sub">Site Reliability Engineering · Ch 25 · Google · 2016</p>
+<p class="langbar"><a href="sre-ch25-data-processing-pipelines-book36.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The "recommended for you" row on your phone, your end-of-month statement, the ordering of your search results — none of that is computed the instant you open the app. Somewhere, overnight, a <strong>production line</strong> is grinding mountains of raw records into those finished goods. Chapter 25 of Google's SRE book is about <strong>why that line keeps breaking, and what to do about it</strong>.</p>
+<h2>An analogy</h2>
+<p>Picture a <strong>central kitchen</strong>. At three in the morning an alarm goes off, everyone clocks in at once, and the day's ingredients get washed, chopped, cooked and boxed before dawn. Sounds orderly. Then it grows, and every kind of trouble arrives.</p>
+<h2>Four ways the 3 a.m. shift goes wrong</h2>
+<p><strong>One pot holds up the whole floor.</strong> The work is split between a hundred cooks. Ninety-nine finish in ten minutes; the last one was handed an entire cow and needs three hours. Because the next step can't start until everybody is done, the whole line just waits — and <strong>hiring another hundred cooks changes nothing</strong>. The problem isn't too few hands, it's work that was divided unevenly.</p>
+<p><strong>The storeroom gets mobbed at the bell.</strong> The alarm rings and a thousand cooks charge the storeroom at the same instant, jamming the door. They can't get in — and neither can the restaurant next door, which had nothing to do with any of this.</p>
+<p><strong>Occasional collisions.</strong> There's a second line upstairs. One starts every three hours, the other every four. Mostly they miss each other, but every twelve hours they land on the same moment, and that's the time something breaks. Afterwards you investigate and each line, examined on its own, looks perfectly fine.</p>
+<p><strong>You can't tell alive from stuck.</strong> From across the room the kitchen lights are on and figures are moving. You genuinely cannot tell whether they are cooking or standing around. By the time you find out, it's usually the customers who noticed first that no food arrived.</p>
+<h2>Google's answer: stop clocking in on a schedule</h2>
+<p>Change the arrangement: <strong>the line never opens and closes — it simply stays on</strong>. Work arrives, someone picks it up. In the middle sits a <strong>dispatch desk</strong> that records who has which job and how far along it is. The peaks flatten out, the storeroom stops getting mobbed, and for the first time you can see exactly which step a job is stuck on.</p>
+<h2>What the numbered ticket is for</h2>
+<p>One detail is especially neat. When a cook takes a job, they also take a <strong>numbered ticket</strong>. Suppose they drop out of contact for half a minute; the dispatch desk assumes they're gone and hands that dish to someone else. When the first cook comes back and tries to hand in the plate, their ticket is void and <strong>the desk refuses it</strong>. So the same dish never reaches a table twice. The desk itself is duplicated across several sites, too — one site loses power, another keeps dispatching.</p>
+<p>The honest cost: "always on plus numbered tickets" is far more machinery than "an alarm clock and a script." If your job is modest and running it once a day is genuinely enough, the old way is less trouble.</p>
+<h2>One thing to remember</h2>
+<div class="tl">
+<p>The enemy of a data pipeline is usually not the volume of data but <strong>the act of clocking in on a schedule</strong> — which inevitably produces idle troughs, crushing peaks, and a middle where you can't tell alive from stuck. Past a certain size, leave the line running, and give every job a numbered ticket.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the diagrams and the trade-off tables? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think the enemy of a pipeline is data volume; it is really <strong>the periodic schedule itself</strong>. This chapter argues that the <strong>periodic pipeline</strong> — a batch job fired by a timer — is simple and effective at small scale, but once the data grows, the chain deepens, and it all has to run on a shared cluster, it rots in <strong>four predictable directions</strong>: a hanging chunk, a thundering herd at start-up, moiré spikes where independent schedules collide, and a running job you cannot tell apart from a stuck one. Google's answer was not to tune the batch job harder but to <strong>change the paradigm</strong>: turn the pipeline into an always-on task system with real correctness guarantees.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Pipeline</strong>: a chain of "read data → transform → write it out" steps that turns raw input into usable derived data — reports, indexes, ML features.</li>
+<li><strong>Batch processing</strong>: swallowing one large fixed body of data, computing, and finishing. Its opposite is stream processing, which treats data as a never-ending flow of events.</li>
+<li><strong>MapReduce</strong>: Google's 2004 batch framework that splits work into many parallel chunks (map) and then aggregates (reduce), letting "read–transform–write" scale to thousands of machines.</li>
+<li><strong>Stage</strong>: one step of a pipeline; several stages joined end to end make a chained multi-stage pipeline.</li>
+<li><strong>Chunk / shard</strong>: when a stage's work is split across machines, the slice each machine owns. A <strong>worker</strong> is the process that does the work — takes a chunk, computes, hands it back. A worker that runs far slower and holds up the whole batch is a <strong>straggler</strong>.</li>
+<li><strong>cron</strong>: the Unix timer ("run this command at 3:00 every day"); the classic trigger for a periodic pipeline.</li>
+<li><strong>Shared cluster</strong>: many teams and many jobs packed onto the same machines, with CPU, network and storage all in common.</li>
+<li><strong>Idempotent</strong>: doing the operation once and doing it many times give the same result — how distributed systems cope with "not sure whether that succeeded, just retry."</li>
+<li><strong>Distributed consensus</strong>: algorithms (Paxos, Raft) by which a group of machines agree on who leads and what the state is; the standard tool for leader election and replicating critical state.</li>
+<li><strong>DAG</strong>: directed acyclic graph — drawing a pipeline as arrows of "what depends on what," the basic model of schedulers like Airflow.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Written by Dan Dennison, this chapter belongs to the data-reliability cluster in Part III (Practices). <strong>It follows Ch 24, "Distributed Periodic Scheduling with Cron"</strong> — that chapter is about getting cron itself right in a distributed world; this one makes the more uncomfortable point that <strong>even a correct cron does not save the periodic paradigm at scale</strong>. <strong>It leads into Ch 26, "Data Integrity."</strong> Real-world counterparts: MapReduce / Hadoop / Spark batch jobs, DAG schedulers like Airflow, Luigi and Argo, and continuous engines like Flink, Beam and Dataflow.</p>
+<h2>The problem it addresses</h2>
+<p>The classic pipeline pattern is almost a single sentence: <strong>read it in, transform it, write it out</strong> — ETL. MapReduce gave that pattern horizontal scale, and so it became the default: write a batch job, attach a cron entry, run it once a night.</p>
+<p>An anchor to make this concrete: a pipeline computing recommender features, <strong>run once a day over roughly 10 TB of logs, chained across 8 stages</strong>, on a cluster shared with online serving. While the data is small it is flawless. But once <strong>scale, depth and shared tenancy</strong> arrive together, the bill comes due: delivery slides from "definitely done by 4 a.m." to "no promises," and every downstream report and model retrain drifts with it; and the pipeline's start-up peak punches through shared storage, taking out online services that have nothing to do with it.</p>
+<p>The cost of not fixing this isn't "a bit slower." It is that <strong>you can no longer make any promise about the freshness of the data</strong> — and promises (SLOs) are what the first four chapters of this book are entirely about.</p>
+<h2>The core content, properly</h2>
+<h3>1. How a simple pipeline grows into a chain that collapses</h3>
+<p>A single-stage pipeline (read → transform → write) is stable. But real work needs steps: clean → join → aggregate → sort → score → export. So it becomes a <strong>chained multi-stage pipeline</strong>, and between every pair of stages sits a <em>barrier</em>: <strong>every shard of the previous stage must finish before the next stage may begin</strong>.</p>
+<p>That is the root of the fragility. Depth 8 means eight rounds of lockstep; one slow shard anywhere on the chain stalls the whole thing — <strong>total runtime is the sum of "the slowest shard in each stage," and has nothing to do with the average</strong>. "Watch the tail, not the mean" is promoted here from a measurement habit to an architectural constraint: <strong>the deeper the chain, the more times the tail gets to bite you</strong>.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 215" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="p1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="24">1. Simple pipeline: read → transform → write</text>
+<rect fill="rgba(91,157,249,0.08)" height="32" rx="6" stroke="#7c8593" width="96" x="30" y="38"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="78" y="58">Raw data</text>
+<line marker-end="url(#p1)" stroke="#7c8593" x1="128" x2="174" y1="54" y2="54"></line>
+<rect fill="rgba(155,108,245,0.2)" height="32" rx="6" stroke="#9b6cf5" width="84" x="180" y="38"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="222" y="58">Transform</text>
+<line marker-end="url(#p1)" stroke="#7c8593" x1="266" x2="312" y1="54" y2="54"></line>
+<rect fill="rgba(91,157,249,0.08)" height="32" rx="6" stroke="#7c8593" width="96" x="318" y="38"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="366" y="58">Derived output</text>
+<text fill="#7c8593" font-size="10.5" x="430" y="58">Flawless while data is small</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="104">2. Reality: a chained multi-stage pipeline</text>
+<line stroke="rgba(155,108,245,0.55)" stroke-dasharray="4 4" x1="104" x2="104" y1="112" y2="166"></line>
+<line stroke="rgba(155,108,245,0.55)" stroke-dasharray="4 4" x1="176" x2="176" y1="112" y2="166"></line>
+<line stroke="rgba(155,108,245,0.55)" stroke-dasharray="4 4" x1="248" x2="248" y1="112" y2="166"></line>
+<line stroke="rgba(155,108,245,0.55)" stroke-dasharray="4 4" x1="320" x2="320" y1="112" y2="166"></line>
+<line stroke="rgba(155,108,245,0.55)" stroke-dasharray="4 4" x1="392" x2="392" y1="112" y2="166"></line>
+<line stroke="rgba(155,108,245,0.55)" stroke-dasharray="4 4" x1="464" x2="464" y1="112" y2="166"></line>
+<line stroke="rgba(155,108,245,0.55)" stroke-dasharray="4 4" x1="536" x2="536" y1="112" y2="166"></line>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" width="52" x="42" y="122"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="68" y="143">Stage 1</text>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" width="52" x="114" y="122"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="140" y="143">Stage 2</text>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" width="52" x="186" y="122"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="212" y="143">Stage 3</text>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" width="52" x="258" y="122"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="284" y="143">Stage 4</text>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" width="52" x="330" y="122"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="356" y="143">Stage 5</text>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" width="52" x="402" y="122"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="428" y="143">Stage 6</text>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" width="52" x="474" y="122"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="500" y="143">Stage 7</text>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" width="52" x="546" y="122"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="572" y="143">Stage 8</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="320" y="186">dashed = barrier: every shard must finish before the next stage starts</text>
+<text fill="#9b6cf5" font-size="10.5" text-anchor="middle" x="320" y="205">depth 8 ⇒ 8 rounds of lockstep; one slow shard stalls the chain</text>
+</svg>
+<figcaption>Fig 1 · A simple pipeline (top) is stable while the data is small; real workloads stretch it into a chain (bottom), where each dashed line is another round of lockstep — the root of every fragility below.</figcaption>
+</figure>
+<h3>2. The hanging chunk: the kind of slow that machines don't fix</h3>
+<p>A stage's work is cut into <em>chunks</em> and handed to workers, ideally in equal sizes. Reality is <strong>data skew</strong>: shard by user ID and one whale occupies an entire chunk; shard by country and the US chunk is a thousand times the Iceland chunk.</p>
+<p>The result is what the chapter calls a <strong>hanging chunk</strong>: seven shards finish in a dozen minutes and the eighth runs for three hours, while nearly every worker idles and the barrier waits on that one. <strong>The most common misdiagnosis is "add machines"</strong> — skew is a problem of <em>data distribution</em>, not <em>capacity</em>; double the fleet and that chunk still takes three hours. Only three things work: <strong>re-sharding</strong> (make the split match the distribution — salt hot keys, sub-split fat chunks), <strong>redundant execution</strong> (run a second copy of a lagging chunk and take whichever finishes first — precisely the <em>backup tasks</em> of the MapReduce paper), and <strong>changing the paradigm</strong> so lockstep is no longer required.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 262" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="24">Hanging chunk: total runtime = the slowest single shard</text>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="76" y="50">Shard 1</text><rect fill="rgba(91,157,249,0.35)" height="16" rx="3" width="130" x="86" y="38"></rect>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="76" y="73">Shard 2</text><rect fill="rgba(91,157,249,0.35)" height="16" rx="3" width="116" x="86" y="61"></rect>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="76" y="96">Shard 3</text><rect fill="rgba(91,157,249,0.35)" height="16" rx="3" width="138" x="86" y="84"></rect>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="76" y="119">Shard 4</text><rect fill="rgba(91,157,249,0.35)" height="16" rx="3" width="124" x="86" y="107"></rect>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="76" y="142">Shard 5</text><rect fill="rgba(91,157,249,0.35)" height="16" rx="3" width="108" x="86" y="130"></rect>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="76" y="165">Shard 6</text><rect fill="rgba(224,107,107,0.4)" height="16" rx="3" stroke="#e06b6b" width="452" x="86" y="153"></rect>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="76" y="188">Shard 7</text><rect fill="rgba(91,157,249,0.35)" height="16" rx="3" width="120" x="86" y="176"></rect>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="76" y="211">Shard 8</text><rect fill="rgba(91,157,249,0.35)" height="16" rx="3" width="134" x="86" y="199"></rect>
+<text fill="#7c8593" font-size="10.5" x="238" y="96">every other worker finished long ago · idling</text>
+<text fill="#e7ebf1" font-size="10.5" x="100" y="165">Shard 6: data skew → 3 hours</text>
+<line stroke="#9b6cf5" stroke-dasharray="5 4" x1="546" x2="546" y1="32" y2="222"></line>
+<text fill="#9b6cf5" font-size="10" x="554" y="112">barrier</text>
+<text fill="#9b6cf5" font-size="10" x="554" y="128">waits here</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="320" y="246">Doubling the fleet won't help: skew is a distribution problem, not a capacity one</text>
+</svg>
+<figcaption>Fig 2 · Hanging chunk: seven shards finish in minutes, one runs three hours because of skew. The barrier can only wait, while every other worker idles.</figcaption>
+</figure>
+<h3>3. The thundering herd: the pipeline DoSes itself</h3>
+<p>A periodic pipeline's resource curve is a <strong>square wave</strong>: the timer fires, thousands of workers start at once, read the same input at once, and hit the same storage service at once. <strong>The instantaneous peak can be tens of times the mean</strong>, while a shared cluster is usually provisioned for the mean.</p>
+<p>What follows is a <strong>self-inflicted denial of service</strong> — the chapter's <em>thundering herd</em>. The pipeline punches through shared storage or the network, hurting itself first (timeouts, retries, cascading failure) and then hurting unrelated services on the same cluster. Worse, it <strong>recurs on a schedule</strong>: the capacity you tuned yesterday blows up again today when the data grows 20%. The basic countermeasures are <strong>start-up jitter</strong> and <strong>rate-limited ramp-up</strong> — don't let every worker through the door in the same second — but be clear that this only shaves the peak. <strong>The square wave is still there.</strong></p>
+<h3>4. Moiré load: the failure that's hardest to chase</h3>
+<p>This one is nastier. Yours is not the only pipeline on the shared cluster. Pipeline A runs every 3 hours, pipeline B every 4; each is comfortably within capacity and each is healthy. <strong>But every 12 hours they land on the same instant</strong>, and nobody ever provisioned for that sum.</p>
+<p>The chapter calls this the <strong>moiré load pattern</strong>, after the third pattern that surfaces when two grids overlap: invisible most of the time, explosive on contact, and <strong>long-period, hard to reproduce, hard to attribute</strong>. You go through the logs and find "that inexplicable timeout at 03:00 last Tuesday," then another two weeks later, with everything normal in between. The genuinely frightening part is that <strong>it is nobody's fault in particular</strong>: each pipeline, examined alone, is perfectly healthy. This is the archetypal failure visible only at cluster level — and the hidden price of putting pipelines on shared infrastructure.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 252" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="24">Moiré load: two individually healthy pipelines collide every 12h</text>
+<text fill="#7c8593" font-size="10.5" x="20" y="48">Pipeline A · every 3 hours</text>
+<rect fill="#5b9df9" height="22" opacity="0.75" width="7" x="46.5" y="54"></rect>
+<rect fill="#5b9df9" height="22" opacity="0.75" width="7" x="115.5" y="54"></rect>
+<rect fill="#5b9df9" height="22" opacity="0.75" width="7" x="184.5" y="54"></rect>
+<rect fill="#5b9df9" height="22" opacity="0.75" width="7" x="253.5" y="54"></rect>
+<rect fill="#5b9df9" height="22" opacity="0.75" width="7" x="322.5" y="54"></rect>
+<rect fill="#5b9df9" height="22" opacity="0.75" width="7" x="391.5" y="54"></rect>
+<rect fill="#5b9df9" height="22" opacity="0.75" width="7" x="460.5" y="54"></rect>
+<rect fill="#5b9df9" height="22" opacity="0.75" width="7" x="529.5" y="54"></rect>
+<text fill="#7c8593" font-size="10.5" x="20" y="108">Pipeline B · every 4 hours</text>
+<rect fill="#9b6cf5" height="22" opacity="0.75" width="7" x="46.5" y="114"></rect>
+<rect fill="#9b6cf5" height="22" opacity="0.75" width="7" x="138.5" y="114"></rect>
+<rect fill="#9b6cf5" height="22" opacity="0.75" width="7" x="230.5" y="114"></rect>
+<rect fill="#9b6cf5" height="22" opacity="0.75" width="7" x="322.5" y="114"></rect>
+<rect fill="#9b6cf5" height="22" opacity="0.75" width="7" x="414.5" y="114"></rect>
+<rect fill="#9b6cf5" height="22" opacity="0.75" width="7" x="506.5" y="114"></rect>
+<rect fill="#9b6cf5" height="22" opacity="0.75" width="7" x="598.5" y="114"></rect>
+<text fill="#7c8593" font-size="10.5" x="20" y="166">Combined · actual load on the shared cluster</text>
+<rect fill="rgba(224,107,107,0.85)" height="48" stroke="#e06b6b" width="9" x="45.5" y="174"></rect>
+<rect fill="rgba(143,186,255,0.55)" height="22" width="7" x="115.5" y="200"></rect>
+<rect fill="rgba(143,186,255,0.55)" height="22" width="7" x="138.5" y="200"></rect>
+<rect fill="rgba(143,186,255,0.55)" height="22" width="7" x="184.5" y="200"></rect>
+<rect fill="rgba(143,186,255,0.55)" height="22" width="7" x="230.5" y="200"></rect>
+<rect fill="rgba(143,186,255,0.55)" height="22" width="7" x="253.5" y="200"></rect>
+<rect fill="rgba(224,107,107,0.85)" height="48" stroke="#e06b6b" width="9" x="321.5" y="174"></rect>
+<rect fill="rgba(143,186,255,0.55)" height="22" width="7" x="391.5" y="200"></rect>
+<rect fill="rgba(143,186,255,0.55)" height="22" width="7" x="414.5" y="200"></rect>
+<rect fill="rgba(143,186,255,0.55)" height="22" width="7" x="460.5" y="200"></rect>
+<rect fill="rgba(143,186,255,0.55)" height="22" width="7" x="506.5" y="200"></rect>
+<rect fill="rgba(143,186,255,0.55)" height="22" width="7" x="529.5" y="200"></rect>
+<rect fill="rgba(224,107,107,0.85)" height="48" stroke="#e06b6b" width="9" x="597.5" y="174"></rect>
+<text fill="#e06b6b" font-size="10" x="340" y="188">← a giant spike every 12h nobody provisioned for</text>
+<line stroke="#7c8593" x1="40" x2="624" y1="222" y2="222"></line>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="50" y="238">0h</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="188" y="238">6h</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="326" y="238">12h</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="464" y="238">18h</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="602" y="238">24h</text>
+</svg>
+<figcaption>Fig 3 · Moiré load: pipeline A every 3 hours, pipeline B every 4, each within capacity — yet every 12 hours they sum into a spike nobody planned for.</figcaption>
+</figure>
+<h3>5. The monitoring blind spot: "the job is still running" is not health</h3>
+<p>Halfway through a periodic run, what signals do you actually hold? The process is alive; the CPU is busy. <strong>None of that distinguishes "working" from "stuck on a hanging chunk."</strong> By the time you notice, it is usually a downstream consumer that noticed the data never arrived.</p>
+<p>The chapter's verdict is that the periodic paradigm is <strong>inherently hard to monitor</strong>, because every run is a one-off with no steady state and therefore no "normal rate" to compare against. Doing it well means manufacturing your own signals: <strong>the slope of per-stage completion over time</strong>, <strong>this run's deviation from the same point in previous runs</strong>, and above all <strong>data freshness</strong> — how far the output lags the present moment. That last one is what users actually care about, and the right thing to write an SLO against.</p>
+<h3>6. Google Workflow: switching the paradigm to always-on</h3>
+<p>Google's answer was an internal system called <strong>Workflow</strong> (never open-sourced), whose core is one sentence: <strong>stop clocking in on a schedule</strong>. The pipeline runs continuously; work arrives and a worker picks it up. The chapter explains its shape by analogy to <strong>MVC</strong>:</p>
+<ul>
+<li><strong>Task Master = Model</strong>: a central component that <strong>holds all task state</strong> — which units of work exist, who owns each, how far along it is. The single authoritative truth in the system.</li>
+<li><strong>Workers = Controller</strong>: stateless; they take work from the Task Master, do it, and submit results. They may die or scale at any time.</li>
+<li><strong>Configuration = View</strong>: the stage definitions and topology that users face.</li>
+</ul>
+<p>Staged execution survives (each stage's output is the next stage's input), but <strong>it becomes rows of task state inside the Task Master rather than the start and end boundaries of a batch job</strong>. The peaks and troughs flatten, and latency moves from "wait for the next scheduled run" to very nearly continuous.</p>
+<h3>7. How correctness is guaranteed: the unique token is the numbered ticket</h3>
+<p>Running continuously forces one question: <strong>what if a worker only looks dead?</strong> It may just have been network-stalled for 30 seconds. If the Task Master has already reassigned its work and the worker then revives and submits, the same output gets written twice — classic <em>split-brain</em>.</p>
+<p>Workflow's answer is <strong>collaborative locking with unique tokens</strong>: every unit of work is handed out with a unique sequence token; a worker must present that token when it submits, and <strong>the Task Master checks whether it is still the currently valid one</strong>. A zombie worker whose work was reassigned holds a stale token, and its submission is refused outright. All output <strong>must be committed through the Task Master</strong> — there is no side channel.</p>
+<p>The spirit is exactly a database's <strong>optimistic lock</strong>: you don't have to prevent the failure, only guarantee that <strong>stale writes cannot land</strong>. Combined with each stage's output having a unique owner inside the Task Master, the pipeline produces <strong>exactly one</strong> correct result even as workers crash, restart, or hang.</p>
+<h3>8. Business continuity: replicate the authoritative state itself</h3>
+<p>Having become the single truth, the Task Master has also become <strong>the single point of failure</strong>. That is where the chapter ends: use <strong>distributed consensus</strong> to replicate the Task Master across clusters, elect one leader with the rest on standby, and fail over automatically when a whole cluster goes. The practical advice given is plain — <strong>keep a copy in at least two clusters, plus a third party as tiebreaker</strong> so two replicas can't deadlock on a tied vote. It is a direct application of Ch 23, "Managing Critical State": <strong>hand critical state to a real consensus implementation instead of improvising one out of heartbeats and timeouts.</strong></p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 302" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="p4" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="24">Workflow: an always-on task system + tokens that fence zombie workers</text>
+<text fill="#7c8593" font-size="10" x="24" y="52">workers (Controller · stateless)</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="112" x="24" y="62"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="80" y="82">worker 1</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="112" x="24" y="106"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="80" y="126">worker 2</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="112" x="24" y="150"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="80" y="170">worker 3</text>
+<rect fill="rgba(91,157,249,0.14)" height="96" rx="8" stroke="#5b9df9" stroke-width="2" width="224" x="208" y="70"></rect>
+<text fill="#e7ebf1" font-size="13.5" font-weight="700" text-anchor="middle" x="320" y="99">Task Master</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="320" y="121">the one authoritative state (Model)</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="320" y="140">per chunk: owner · progress</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="320" y="158">· currently valid token</text>
+<line marker-end="url(#p4)" stroke="#7c8593" x1="206" x2="142" y1="100" y2="82"></line>
+<text fill="#5b9df9" font-size="12" text-anchor="middle" x="176" y="80">1</text>
+<line marker-end="url(#p4)" stroke="#7c8593" x1="140" x2="204" y1="162" y2="148"></line>
+<text fill="#5b9df9" font-size="12" text-anchor="middle" x="176" y="174">2</text>
+<rect fill="rgba(155,108,245,0.14)" height="44" rx="6" stroke="#9b6cf5" width="150" x="468" y="98"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="543" y="117">Stage output</text>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="543" y="134">→ input to next stage</text>
+<line marker-end="url(#p4)" stroke="#7c8593" x1="434" x2="464" y1="120" y2="120"></line>
+<text fill="#5b9df9" font-size="12" text-anchor="middle" x="449" y="110">3</text>
+<rect fill="none" height="84" rx="8" stroke="rgba(91,157,249,0.4)" stroke-dasharray="5 4" width="360" x="140" y="192"></rect>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="320" y="212">the Task Master elects a leader by consensus across clusters</text>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" width="104" x="152" y="222"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="204" y="243">Cluster A · leader</text>
+<rect fill="rgba(91,157,249,0.06)" height="34" rx="6" stroke="#7c8593" width="104" x="268" y="222"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="320" y="243">Cluster B · standby</text>
+<rect fill="rgba(91,157,249,0.06)" height="34" rx="6" stroke="#7c8593" width="104" x="384" y="222"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="436" y="243">Cluster C · arbiter</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="320" y="292">a whole cluster can fail; the pipeline keeps running</text>
+</svg>
+<figcaption>Fig 4 · Workflow: (1) work is handed out with a unique token; (2) submissions must present it, and stale ones — already reassigned — are refused; (3) only validated output becomes the next stage's input. The Task Master itself is leader-elected across clusters.</figcaption>
+</figure>
+<h2>Key trade-offs and how to choose</h2>
+<p class="tcap">Table 1 · Periodic batch vs continuous processing: what the paradigm swap actually buys</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Periodic pipeline (timer + batch job)</th><th>Continuous pipeline (Workflow / streaming)</th></tr></thead>
+<tbody>
+<tr><th>Output latency</th><td>One period at best (hours to a day)</td><td><strong>Near-continuous</strong> (seconds to minutes)</td></tr>
+<tr><th>Resource curve</th><td>Square wave: idle troughs, herd peaks</td><td>Flat, high utilization</td></tr>
+<tr><th>Capacity planning</th><td>Must <strong>buy for the peak</strong>, idle the rest of the time</td><td>Buy for the mean</td></tr>
+<tr><th>Monitorability</th><td>Poor: one-off runs, no steady-state baseline</td><td>Good: continuous rate and backlog metrics</td></tr>
+<tr><th>Cost of correctness</th><td><strong>Low</strong>: on error, just rerun the batch</td><td><strong>High</strong>: needs tokens, idempotency, barriers</td></tr>
+<tr><th>Operational burden</th><td>Low: one timer, one job</td><td>High: a standing service, state and leader election to keep alive</td></tr>
+<tr><th>Fits when</th><td>Volume is steady, chain is shallow, daily is enough</td><td>Volume is large, chain is deep, freshness carries an SLO</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · The four diseases of a periodic pipeline: symptom → root cause → do this / not that</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Disease</th><th>Symptom</th><th>Root cause</th><th>Do this</th><th>Not this</th></tr></thead>
+<tbody>
+<tr><th>Hanging chunk</th><td>Nearly all workers idle; the barrier waits on one chunk</td><td>Data skew — the split doesn't match the distribution</td><td>Re-shard (salt hot keys, sub-split); run lagging chunks <strong>redundantly</strong></td><td><strong>Add machines</strong> — skew isn't a capacity problem</td></tr>
+<tr><th>Thundering herd</th><td>Shared storage and network time out at start-up, hitting neighbours</td><td>Square-wave load; peak far above the mean</td><td>Start-up jitter plus rate-limited ramp; switch paradigm once big enough</td><td>Just raising timeouts and retries — that amplifies the cascade</td></tr>
+<tr><th>Moiré load</th><td>Rare, periodic, unreproducible giant spikes</td><td>Independent schedules occasionally align</td><td>Watch total load <strong>at cluster level</strong>; stagger periods or add global admission control</td><td>Investigating pipeline by pipeline — each looks healthy alone</td></tr>
+<tr><th>Blind monitoring</th><td>"Still running," in fact long since stuck</td><td>One-off runs with no steady-state baseline</td><td>Make <strong>data freshness</strong> and per-stage completion rate the SLIs</td><td>Treating "process alive / CPU busy" as health</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 3 · How to deploy the Task Master (the authoritative state)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Shape</th><th>What it survives / doesn't</th><th>Fits</th></tr></thead>
+<tbody>
+<tr><th>Single instance, one cluster</th><td>Simplest; the pipeline stops dead if the process or cluster goes</td><td>Experimental or cheaply rerunnable pipelines</td></tr>
+<tr><th>One cluster plus hot standby</th><td>Survives process crashes, <strong>not a whole-cluster failure</strong></td><td>Ordinary business pipelines</td></tr>
+<tr><th>≥2 clusters plus tiebreaker (consensus)</th><td>Survives losing a cluster outright; costs cross-region latency, heavier operations, longer failover</td><td>Core pipelines with a hard continuity requirement</td></tr>
+</tbody></table></div>
+<h2>Why it matters / real systems</h2>
+<p>This chapter earns its place by turning "batch pipelines are hard to keep alive" from folklore into <strong>four predictable failure modes</strong>. Orchestrating DAGs today with <strong>Airflow, Luigi, Argo or Dagster</strong> is still fundamentally the periodic paradigm, and all four diseases apply — the canonical Airflow incident is a few hundred DAGs scheduled on the same minute, taking out the metadata database and the executor together: a textbook thundering herd. <strong>Flink, Beam, Google Dataflow and Kafka Streams</strong> are the open-source embodiment of the continuous paradigm; Beam's model descends directly from Google's MillWheel and Dataflow papers.</p>
+<p>Worth remembering most is the <strong>isomorphism of mechanism</strong>: Workflow's "Task Master plus unique token," Flink's "JobManager plus checkpoint barrier," and the Kafka transactional producer's "producer epoch fencing zombie producers" are the same idea — <strong>concentrate authoritative state in one place, then fence out the stragglers with a credential that expires</strong>.</p>
+<div class="ev">
+<div class="evh">FIELD EVIDENCE · NOT THE BOOK'S CLAIMS — THE COMPANIES' OWN</div>
+<ul>
+<li><strong>Google</strong> measured it in the MapReduce paper: with the backup-task mechanism disabled, the same sort job took <strong>1283 seconds, a 44% increase</strong>, with a long tail during which almost no write activity occurred — <strong>hard confirmation that stragglers and hanging chunks are real, and that redundant execution does cure them</strong>. <span class="src"><a href="https://research.google.com/archive/mapreduce-osdi04.pdf" rel="noopener" target="_blank">Dean &amp; Ghemawat, "MapReduce," OSDI 2004, §5.4 ↗</a></span></li>
+<li><strong>Google's</strong> MillWheel is a continuous stream-processing framework that tames out-of-order data with logical time (low watermarks) and <strong>transparently enforces idempotency and exactly-once delivery</strong> at the framework layer — evidence that the continuous paradigm can carry strong correctness guarantees rather than relying on a batch rerun as a safety net. <span class="src"><a href="https://research.google/pubs/millwheel-fault-tolerant-stream-processing-at-internet-scale/" rel="noopener" target="_blank">Akidau et al., "MillWheel," VLDB 2013 ↗</a></span></li>
+<li><strong>Google's</strong> Dataflow Model went further, arguing you need not maintain two systems — batch for correctness, streaming for latency — but can dial between correctness, latency and cost in one model. <strong>The orthodox extension of this chapter's move from periodic to continuous</strong>, and what later became Apache Beam. <span class="src"><a href="https://research.google/pubs/the-dataflow-model-a-practical-approach-to-balancing-correctness-latency-and-cost-in-massive-scale-unbounded-out-of-order-data-processing/" rel="noopener" target="_blank">Akidau et al., "The Dataflow Model," VLDB 2015 ↗</a></span></li>
+<li><strong>Airbnb</strong> open-sourced Airflow in 2015, letting pipelines be authored as programmable DAGs with central scheduling and visualization — the industry's most widely adopted answer. <strong>But it remains clock-triggered periodic scheduling</strong>, so every disease this chapter diagnoses still has to be treated. <span class="src"><a href="https://medium.com/airbnb-engineering/airflow-a-workflow-management-platform-46318b977fd8" rel="noopener" target="_blank">Airbnb Engineering, "Airflow: a workflow management platform," 2015 ↗</a></span></li>
+<li><strong>Netflix</strong> open-sourced its Maestro orchestrator in 2024, publishing that it runs <strong>around half a million jobs a day, up to 2 million on busy days</strong>, and deliberately supports cyclic workflows rather than DAGs only — nearly a decade after this chapter, pipeline orchestration is still evolving toward the more continuous and more flexible. <span class="src"><a href="https://netflixtechblog.com/maestro-netflixs-workflow-orchestrator-ee13a06f9c78" rel="noopener" target="_blank">Netflix TechBlog, "Maestro: Netflix's Workflow Orchestrator," 2024 ↗</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and disputes</h2>
+<ul>
+<li><strong>Treating "the job is still running" as health</strong> — the habit this chapter most wants to break. The only meaningful SLI is <strong>data freshness</strong>: how far the output lags the present.</li>
+<li><strong>Believing machines cure a hanging chunk</strong>: skew is a distribution problem, not a capacity one. Look at the split key before you look at the fleet size.</li>
+<li><strong>Assuming the continuous paradigm is immune</strong>: it flattens the peaks but buys you out-of-order data, watermarks, state management and backpressure instead — and <strong>a standing service costs far more to operate than a timer</strong>. On a small pipeline, going continuous is over-engineering.</li>
+<li><strong>The "exactly-once" wording is contested</strong>: with a network in the picture, strict exactly-once <em>delivery</em> is unachievable. What engineering delivers is an exactly-once <strong>effect</strong> — idempotent writes, deduplication, and credentials that expire. This chapter's guarantees are of that kind; don't read them as a law of physics.</li>
+<li><strong>Workflow was never open-sourced</strong>, and the chapter describes it at architecture level with few implementation details. You can borrow the ideas — centralized authoritative state, token fencing, consensus leader election — but you cannot copy the code; in practice people approximate it with Flink, Beam, or a bespoke scheduler.</li>
+<li><strong>Period limits and scope</strong>: written in 2016. Since then Beam and Flink have made unified batch-and-stream mainstream, and Airflow 2.x and Dagster introduced <strong>data-aware scheduling</strong> — triggering on data assets rather than purely on the clock — a direct answer to "don't use the clock as your trigger." But don't over-read it: the chapter never says periodic pipelines should be abolished, only that <strong>their failure modes are predictable</strong>. Switch when the scale demands it; don't churn before that.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. A pipeline's enemy is not data volume but <strong>the periodic paradigm itself</strong>; at scale its failures are predictable.</p>
+<p>2. The structural root: real pipelines are <strong>chained multi-stage</strong>, with a lockstep <strong>barrier</strong> between stages. Total runtime is the sum of each stage's slowest shard — the average is irrelevant.</p>
+<p>3. <strong>Hanging chunk</strong>: skew leaves one chunk holding up everyone while workers idle. <strong>Machines don't fix it</strong> — re-shard, or run lagging chunks redundantly (backup tasks).</p>
+<p>4. <strong>Thundering herd</strong>: the timer fires and thousands of workers arrive at once, peaking far above the mean, punching through shared storage and hurting neighbours. Jitter and rate limits shave the peak; the square wave remains.</p>
+<p>5. <strong>Moiré load</strong>: two individually healthy pipelines whose periods occasionally align (3h and 4h collide every 12h) sum into an unplanned spike — hard to reproduce, hard to attribute, and nobody's fault alone.</p>
+<p>6. <strong>Monitoring blind spot</strong>: one-off runs have no steady-state baseline, so "process alive" can't separate working from stuck. Measure <strong>data freshness</strong> and per-stage completion rate.</p>
+<p>7. <strong>Google Workflow</strong> changes the paradigm to always-on: <strong>Task Master holds the one authoritative state (Model), workers are stateless (Controller), configuration is the View</strong>.</p>
+<p>8. Correctness rests on <strong>collaborative locking with unique tokens</strong>: output must be committed through the Task Master with a valid token, so a zombie worker's stale submission is refused — the same spirit as an optimistic lock, and as Kafka's producer epoch.</p>
+<p>9. The authoritative state is itself a single point, so <strong>replicate it across clusters with consensus leader election</strong>; the book advises at least two clusters plus a tiebreaker. Mapping to today: Airflow / Argo / Dagster are the periodic paradigm (all four diseases apply), Flink / Beam / Dataflow the continuous one.</p>
+</div>
+</div>
+<footer>Chapter Deepread · Read this page and you have the chapter's core; go to the book itself for the full cases and detail.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
