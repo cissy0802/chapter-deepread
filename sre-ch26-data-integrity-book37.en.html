@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>SRE Ch 26 · Data Integrity — Chapter Deepread Book 37</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">CHAPTER DEEPREAD · SRE · CH 26</p>
+<h1>Data Integrity</h1>
+<p class="sub">Site Reliability Engineering · Ch 26 · Google · 2016</p>
+<p class="langbar"><a href="sre-ch26-data-integrity-book37.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The photos on your phone, a chat thread from four years ago, the contract in your cloud drive — you simply assume they are still there, and still exactly as you left them. This chapter is about that assumption: <strong>how do you make sure that when you open it, the thing is still there and hasn't been quietly mangled?</strong> It was written by two Google engineers who run Gmail and Google Drive — systems where losing a single item makes the news.</p>
+
+<h2>Start with something odd</h2>
+<p>Most people think: "I keep three copies, what could go wrong?" But three copies are exactly what will not save you. If you delete a file by accident, all three copies vanish <strong>within a second</strong> — none left. Extra copies protect you from a machine dying. They do not protect you from a person or a program doing the wrong thing. The book puts it bluntly: <strong>more copies is not the same as being able to get it back.</strong></p>
+
+<h2>Why this is hard</h2>
+<p>There are too many ways for data to go bad: a user slips, an operator types the wrong command, a program bug deletes in bulk, a disk quietly rots, a data center floods. Worse, <strong>the tempo differs too</strong>. Some losses happen all at once and you know immediately. Others leak a little every day, and by the time anyone notices six months later, the last clean copy has already aged out and been thrown away. No single trick covers all of that, which is why this chapter's answer is: <strong>put up three doors</strong>.</p>
+
+<h2>The three doors</h2>
+<p><strong>Door one is the trash can.</strong> Deleted things aren't really deleted — they get a "deleted" tag and sit there for a while before being cleaned out. This catches the most common accident by far: the slip, and the malicious wipe after someone's account is stolen. Undoing it costs essentially nothing: remove the tag.</p>
+<p><strong>Door two is the old photo album in a safe.</strong> Periodically copy everything to somewhere <strong>far away, disconnected, and untouchable</strong> — Google used tape. Precisely because it is physically cut off from the live system, whatever mess you make online cannot reach it. But the question that matters isn't "did we make a copy". It's <strong>"when did we last actually take it out and use it?"</strong></p>
+<p><strong>Door three is the clerk who counts the stock every day.</strong> A separate program constantly reconciles the data: does this song's record still point at a real audio file? Do the two ledgers add up? It <strong>prevents nothing</strong>. Its entire value is that it lets you find out <strong>before your users complain</strong> — because every day you find out late is a day the clean copy in the safe gets closer to expiring.</p>
+
+<h2>It replaces the question you were asking</h2>
+<p>The most useful line in the chapter: stop asking "do we have backups?" and start asking "<strong>when did we last restore everything, end to end, and how long did it take?</strong>" In real incidents, most teams' backup jobs report success every single day — nobody had ever tried loading one back. They find out on the day it matters. One honest cost: all three doors take real money (an extra copy is storage, daily counting is compute, rehearsing a restore takes people), and the trash can has an awkward side — the thing you thought you deleted is still lying around somewhere for a while.</p>
+
+<h2>Remember this</h2>
+<div class="tl">
+<p>Extra copies protect you from <strong>machines failing</strong>, not from <strong>people and programs doing the wrong thing</strong>. What actually saves you is three doors: <strong>a trash can, an offline backup, and daily stock-counting</strong>. And to judge whether a team is serious, one question is enough: <strong>when did you last actually restore?</strong></p>
+</div>
+<p class="switch-hint">Want the mechanisms, the selection tables and the real incident numbers? <a data-mode="deep">→ switch to the deep read</a></p>
+</div>
+
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">This chapter inverts the problem: <strong>data integrity is the means, data availability is the goal</strong> — users don't care how many replicas you hold or whether your checksums match, only whether the correct data is there when they need it. The things that can destroy it come in <strong>24 combinations</strong>, and no single measure covers them, so Google's answer is <strong>defense in depth with three lines</strong>: soft deletion, backups and restores, and out-of-band validation. The two lines that sting most: <strong>replication is not recoverability, and a backup whose restore was never verified is not a backup.</strong></p>
+
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Replica / replication</strong>: keeping the same data on several machines, automatically kept in sync, to survive machine and data-center failure.</li>
+<li><strong>Backup</strong>: a separate copy kept so that after an incident you can <em>load it back and keep running</em>.</li>
+<li><strong>Archive</strong>: data sealed away long-term for compliance and audit — usually <strong>cannot</strong> be loaded back into the live system. Not the same thing as a backup.</li>
+<li><strong>Restore</strong>: the act of actually loading a backup back in and getting the business running again.</li>
+<li><strong>Soft deletion</strong>: a delete only sets a "deleted" marker and reads filter it out; real removal happens later. What users see is a trash can.</li>
+<li><strong>Silent corruption / bit rot</strong>: data quietly changes on disk or in transit and reads back without any error — only active checking finds it.</li>
+<li><strong>Out-of-band validation</strong>: a program that runs <strong>independently of the main service</strong> and continuously reconciles the data, purely to detect problems early.</li>
+<li><strong>RPO / RTO</strong>: how much data you can afford to lose / how long you can afford to be unable to restore. The first sets backup frequency, the second sets medium and location.</li>
+<li><strong>Defense in depth</strong>: several layers, each catching a different class of failure; later layers catch rarer cases at higher cost.</li>
+</ul>
+</div>
+
+<h2>Where it sits</h2>
+<p>Chapter 26 of the SRE book, in the data-reliability cluster of Part III (Practices), right after Chapter 25 on data processing pipelines — fittingly, since <strong>pipelines are one of the leading ways data gets destroyed in bulk</strong>. The authors, Raymond Blum and Rhandeep Singh, spent years on Gmail and Google Drive, systems where losing one item counts as an incident. In the real world it maps to anything that holds user data for a long time: mail, cloud storage, SaaS, payment ledgers, warehouses.</p>
+
+<h2>What the chapter is trying to solve</h2>
+<p>Everyone knows how to write an availability SLO: 99.9% of requests succeed. But here is the awkward question: <strong>if the request succeeded and the response was empty, was that available?</strong> A system that has just emptied a user's mailbox can show green across the dashboard — latency normal, error rate zero. <em>Availability metrics measure whether the service is up, not whether the data is right.</em></p>
+<p>Traditional operations answers this with "we have backups". The chapter exists to expose the three holes in that sentence: <strong>the backup may never have been verified</strong> (when GitLab lost its primary in 2017, none of the <code>5</code> backup and replication techniques it had deployed actually worked); <strong>the backup may not keep up with the damage</strong> (of the roughly <code>600,000</code> audio tracks Google Music deleted by mistake in 2012, some <code>161,000</code> were gone before they were ever backed up); and <strong>nobody may notice at all</strong>, so that by the time you look, every generation inside the retention window is already poisoned.</p>
+<p>The cloud amplifies all three at once: high update rates, continuous delivery changing code daily, services calling services, users who expect <code>24×7</code> with no maintenance window, and data that accretes for a decade or more. The cost of not solving it isn't "slower". It's <strong>the user's things are gone, permanently</strong>.</p>
+
+<h2>The core, properly</h2>
+
+<h3>Redefine it: integrity is the means, availability is the goal</h3>
+<p>The textbook definition — data stays accurate and consistent over its lifetime — is useless for engineering, because it never tells you how much is enough or what to spend. This chapter swaps the yardstick for <strong>data availability from the user's point of view</strong>: <em>can the service put the correct data in the user's hands when they need it?</em> Two consequences follow immediately:</p>
+<ul>
+<li>Every checksum matches and every replica is present, but the application reads back something wrong → <strong>still a failure</strong>. Integrity was only ever the means.</li>
+<li>Nothing is actually lost, but restoring takes three days → indistinguishable from loss to the user. <strong>Recovery time is part of availability.</strong></li>
+</ul>
+<p>So the SLO should read "data is correctly readable at all times, and any corruption event is recovered within <code>X</code> hours", not "we back up nightly". And <strong>scale turns small probabilities into daily work</strong>: a system holding <code>10 billion</code> objects, each with a one-in-a-million annual chance of silent corruption, still produces about <code>10,000</code> bad objects a year for someone to deal with.</p>
+
+<h3>Why there is no silver bullet: 24 combinations</h3>
+<p>The book decomposes "how data goes bad" along three orthogonal axes:</p>
+<ul>
+<li><strong>Root cause (6)</strong>: user action, operator error, application bug, infrastructure defect, hardware failure, site disaster.</li>
+<li><strong>Scope (2)</strong>: wide (the whole dataset) vs narrow (one user, one row).</li>
+<li><strong>Rate (2)</strong>: <em>big bang</em> (everything at once — at least you find out immediately) vs <em>slow and creeping</em> (a trickle a day, discovered long after the retention window has rolled).</li>
+</ul>
+<p>Multiplied out: <code>6 × 2 × 2 = 24</code> combinations. The insight isn't the number, it's that <strong>every single defense covers only a few cells.</strong> Replicas cover hardware and site disasters, soft deletion covers accidental deletes, backups cover bulk corruption — but <strong>backups do not cover creeping loss</strong>: by the time you notice, the bad data has been copied into every generation inside the retention window. The only thing that covers that cell is <strong>noticing early</strong>. Which is why the answer has to be defense in depth, not "buy a better backup product".</p>
+
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 262" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="13" font-weight="700" x="14" y="20">How data goes bad: three axes, 24 combinations</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" x="14" y="44">1. Root cause (6)</text>
+<rect fill="rgba(91,157,249,0.10)" height="28" rx="6" stroke="#7c8593" width="96" x="12" y="52"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="60" y="70">User action</text>
+<rect fill="rgba(91,157,249,0.10)" height="28" rx="6" stroke="#7c8593" width="96" x="116" y="52"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="164" y="70">Operator error</text>
+<rect fill="rgba(91,157,249,0.10)" height="28" rx="6" stroke="#7c8593" width="96" x="220" y="52"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="268" y="70">App bug</text>
+<rect fill="rgba(91,157,249,0.10)" height="28" rx="6" stroke="#7c8593" width="96" x="324" y="52"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="372" y="70">Infra defect</text>
+<rect fill="rgba(91,157,249,0.10)" height="28" rx="6" stroke="#7c8593" width="96" x="428" y="52"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="476" y="70">Hardware fault</text>
+<rect fill="rgba(91,157,249,0.10)" height="28" rx="6" stroke="#7c8593" width="96" x="532" y="52"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="580" y="70">Site disaster</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" x="14" y="104">2. Scope (2)</text>
+<rect fill="rgba(155,108,245,0.10)" height="28" rx="6" stroke="#9b6cf5" width="304" x="12" y="112"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="164" y="130">Wide: the whole dataset</text>
+<rect fill="rgba(155,108,245,0.10)" height="28" rx="6" stroke="#9b6cf5" width="304" x="324" y="112"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="476" y="130">Narrow: one user / one row</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" x="14" y="164">3. Rate (2)</text>
+<rect fill="rgba(91,157,249,0.10)" height="28" rx="6" stroke="#5b9df9" width="304" x="12" y="172"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="164" y="190">Big bang: you know at once</text>
+<rect fill="rgba(224,107,107,0.14)" height="28" rx="6" stroke="#e06b6b" width="304" x="324" y="172"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="476" y="190">Creeping: found after retention rolls</text>
+<text fill="#9b6cf5" font-family="monospace" font-size="11.5" text-anchor="middle" x="320" y="224">6 × 2 × 2 = 24 combinations, no single measure covers them all</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="320" y="246">The hardest cell is bottom-right: backups cannot save creeping loss, only early detection can</text>
+</svg>
+<figcaption>Fig. 1 · Failure modes as root cause × scope × rate = 24 combinations. Each defense covers only a few cells, hence defense in depth.</figcaption>
+</figure>
+
+<h3>Line one: soft deletion</h3>
+<p>The mechanism is plain: a delete request doesn't delete. It stamps the record "deleted" with a timestamp, reads filter it out, and real removal happens when the window expires. What users see is a <strong>trash can</strong> and <strong>revision history</strong>.</p>
+<p>Why does it rank first? Because it catches the <strong>most frequent</strong> class of incident: accidental user deletes, malicious wipes after an account hijack, one ops script run against the wrong target. <em>These are far more common than a data center burning down</em>, and recovery costs essentially nothing — flip a flag, done in seconds, orders of magnitude faster than dredging a backup. On frequency × cost-to-recover, this is the highest-return layer you can build.</p>
+<p>Two engineering details. <strong>Window length is a genuine trade-off</strong>: too short and you can't save people (users often notice days later), too long and you pay storage while colliding head-on with the demand for real deletion; the common industry answer is weeks (Gmail's <code>30</code>-day trash is exactly this thinking). And <strong>lazy deletion</strong>: actually scrubbing data out of every replica, cache, index and backup can take weeks to converge at scale — meaning deletion is inherently a <strong>process</strong>, not an <strong>instant</strong>.</p>
+<p>Be clear about what it does not cover: soft deletion handles <em>deletion</em>. It does <strong>nothing about data being mangled</strong> — an app bug that miscomputes a field and writes a dirty value leaves nothing in the trash can.</p>
+
+<h3>Line two: backups and restores — the backup has no value, the restore does</h3>
+<p>This is the heart of the chapter, and it has three counterintuitive points.</p>
+<p><strong>(1) Replication is not backup.</strong> The book is blunt: <em>"Replication and redundancy are not recoverability."</em> A database that auto-syncs replicas <strong>guarantees</strong> that one bad delete or one corrupted row is pushed to every copy, usually before you can react. Put the magnitudes side by side and it's obvious: <strong>replication propagates in milliseconds to seconds, while humans notice in minutes to days</strong>. That gap of several orders of magnitude is the whole reason replicas cannot save you.</p>
+
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 272" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="r1" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#e06b6b"></path></marker>
+<marker id="b1" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker>
+</defs>
+<text fill="#5b9df9" font-size="13" font-weight="700" x="14" y="20">The same bad delete, on two paths</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" x="14" y="46">Replication chain (online, auto-sync)</text>
+<rect fill="rgba(224,107,107,0.20)" height="32" rx="6" stroke="#e06b6b" width="126" x="14" y="56"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="77" y="76">t=0 row deleted</text>
+<line marker-end="url(#r1)" stroke="#e06b6b" x1="142" x2="166" y1="72" y2="72"></line>
+<rect fill="rgba(224,107,107,0.12)" height="32" rx="6" stroke="#e06b6b" width="126" x="170" y="56"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="233" y="76">t≈50ms replica B gone</text>
+<line marker-end="url(#r1)" stroke="#e06b6b" x1="298" x2="322" y1="72" y2="72"></line>
+<rect fill="rgba(224,107,107,0.12)" height="32" rx="6" stroke="#e06b6b" width="126" x="326" y="56"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="389" y="76">t≈120ms replica C gone</text>
+<line marker-end="url(#r1)" stroke="#e06b6b" x1="454" x2="478" y1="72" y2="72"></line>
+<rect fill="rgba(224,107,107,0.26)" height="32" rx="6" stroke="#e06b6b" stroke-width="2" width="144" x="482" y="56"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="554" y="76">all three gone</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="320" y="106">Replicas guard against machines failing, not against operators erring</text>
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="14" x2="626" y1="124" y2="124"></line>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" x="14" y="148">Offline backup (last night's tape / immutable remote copy)</text>
+<rect fill="rgba(224,107,107,0.12)" height="32" rx="6" stroke="#e06b6b" width="164" x="14" y="158"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="96" y="178">Online: same delete, t=0</text>
+<line marker-end="url(#r1)" stroke="#e06b6b" x1="180" x2="238" y1="174" y2="174"></line>
+<text fill="#e06b6b" font-size="15" font-weight="700" x="248" y="180">✕</text>
+<line stroke="#9b6cf5" stroke-dasharray="5 4" stroke-width="2" x1="274" x2="274" y1="144" y2="206"></line>
+<text fill="#9b6cf5" font-size="10" text-anchor="middle" x="274" y="224">air-gapped</text>
+<rect fill="rgba(91,157,249,0.12)" height="32" rx="6" stroke="#5b9df9" width="176" x="300" y="158"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="388" y="178">02:00 snapshot, read-only</text>
+<line marker-end="url(#b1)" stroke="#5b9df9" x1="480" x2="504" y1="174" y2="174"></line>
+<rect fill="rgba(91,157,249,0.22)" height="32" rx="6" stroke="#5b9df9" stroke-width="2" width="122" x="506" y="158"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="567" y="178">still clean</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="320" y="252">Propagation takes milliseconds; humans notice in minutes to days — that gap is the reason</text>
+</svg>
+<figcaption>Fig. 2 · Replication ≠ backup: auto-sync hands the bad delete to every replica. Only a copy that is cut off, physically or logically, can still be clean.</figcaption>
+</figure>
+
+<p><strong>(2) A backup is not an archive.</strong> The book's test is a single question: <strong>can it be loaded back into the application?</strong> In its own words, <em>"the most important difference between backups and archives is that backups can be loaded back into an application, while archives cannot."</em> Backups exist so you can load and keep running, so format, schema and dependency versions must line up with the current system; archives exist for compliance and audit and may simply not go back in. Mistaking one for the other is a fixture of incident reviews.</p>
+<p><strong>(3) Derive the backup strategy from the recovery requirement.</strong> Don't start with "how often do we back up". Start with three questions: how much data can we lose (<code>RPO</code>) → sets frequency and whether you replay transaction logs; how long can we be down (<code>RTO</code>) → sets medium and location; which of the 24 cells must this cover → sets isolation. A snapshot inside the same cluster cannot survive "the delete was synced over", so there has to be a copy that is <strong>offline, heterogeneous, and remote</strong>. Google's choice at this layer was <strong>tape</strong> — absurdly slow, but <strong>physically disconnected from the live system</strong>, so no online mistake can reach it. That is what saved Gmail in 2011.</p>
+<p><strong>Be honest about cost</strong>: full backups are simplest but storage and time grow linearly with the data; incrementals and differentials save space but restores must be replayed in order, and <strong>the longer the chain, the more likely it breaks</strong>. Real systems land on "periodic full + incrementals + keep N generations", and <strong>how many generations is decided by how late you might plausibly notice corruption</strong> — which walks you right back to the creeping-loss cell.</p>
+
+<h3>Line three: out-of-band validation</h3>
+<p>The first two lines are both <strong>after the fact</strong>: they let you get data back, provided <strong>you know it went bad</strong>. The third line exists purely for the knowing. You run a set of <strong>validators</strong> independent of the main service that continuously reconcile the data — are references dangling (does this track's metadata still point at real audio?), do cross-store ledgers balance, do replicas agree, do business invariants hold?</p>
+<p>Why it must exist: <strong>the faster and more automated the system, the less time it takes to finish propagating the damage — while the time humans take to notice has not improved at all.</strong> A validator's value is compressing detection latency from "wait for a user to complain" (days) to "the next validation pass" (minutes to hours) — which decides whether a clean backup still exists inside the retention window. Google Music is the cautionary case: the problem surfaced only because an engineer investigated one track that wouldn't play, and by then roughly 161,000 tracks were past saving.</p>
+<p>Three practice notes: <strong>it must be out of band</strong> — an independent read path and deployment, never sharing the possibly-buggy code of the system under test, or the same bug fools service and validator alike; <strong>the validator itself must be monitored</strong> — one that silently stopped is worse than none, because it supplies false confidence; and <strong>alerts must be actionable</strong> — "<code>N</code> records don't reconcile" is useless, you need which records and since which version.</p>
+
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 322" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="d1" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="13" font-weight="700" x="14" y="20">Defense in depth: three lines, each catching a different class</text>
+<rect fill="rgba(91,157,249,0.10)" height="56" rx="10" stroke="#5b9df9" width="612" x="14" y="34"></rect>
+<text fill="#e7ebf1" font-size="12" x="32" y="57">Line 1 · Soft deletion</text>
+<text fill="#7c8593" font-size="10" x="32" y="77">Catches: user deletes, hijack wipes, a bad ops script · Recovery: flip a flag, seconds</text>
+<line marker-end="url(#d1)" stroke="#7c8593" x1="320" x2="320" y1="92" y2="106"></line>
+<text fill="#7c8593" font-size="9.5" x="332" y="105">what gets through goes on</text>
+<rect fill="rgba(155,108,245,0.10)" height="56" rx="10" stroke="#9b6cf5" width="612" x="14" y="110"></rect>
+<text fill="#e7ebf1" font-size="12" x="32" y="133">Line 2 · Backups &amp; restores</text>
+<text fill="#7c8593" font-size="10" x="32" y="153">Catches: app bugs that shred data, site disasters · Recovery: hours to days, if rehearsed</text>
+<line marker-end="url(#d1)" stroke="#7c8593" x1="320" x2="320" y1="168" y2="182"></line>
+<text fill="#7c8593" font-size="9.5" x="332" y="181">and if nobody notices?</text>
+<rect fill="rgba(91,157,249,0.10)" height="56" rx="10" stroke="#5b9df9" width="612" x="14" y="186"></rect>
+<text fill="#e7ebf1" font-size="12" x="32" y="209">Line 3 · Out-of-band validation</text>
+<text fill="#7c8593" font-size="10" x="32" y="229">Stops nothing — it only makes you notice sooner, which decides if a clean backup still exists</text>
+<line marker-end="url(#d1)" stroke="#7c8593" x1="320" x2="320" y1="244" y2="258"></line>
+<rect fill="rgba(91,157,249,0.18)" height="48" rx="10" stroke="#5b9df9" stroke-width="2" width="612" x="14" y="262"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="320" y="283">The user-facing goal: when they need it, the correct data is there</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="320" y="301">Data integrity is the means; data availability is the goal</text>
+</svg>
+<figcaption>Fig. 3 · Three lines of defense: each successive layer catches rarer scenarios at higher cost; the third prevents nothing and only compresses detection latency.</figcaption>
+</figure>
+
+<h3>Make recovery real: rehearse it, don't trust it</h3>
+<p>The step most often skipped: <strong>assume any recovery procedure that has not been rehearsed is broken.</strong> SRE treats recovery as a product feature under continuous test — periodic end-to-end exercises (Google's DiRT disaster recovery testing is exactly this idea) whose acceptance criterion is <strong>"the data was genuinely loaded back into the application and business validation passed"</strong>, not "the backup job returned success". The chapter ties this back to a few general SRE principles: <em>beginner's mind</em> (don't assume, go look), <em>trust but verify</em>, <em>hope is not a strategy</em>, and defense in depth itself.</p>
+
+<h2>Trade-offs and how to choose</h2>
+<p class="tcap">Table 1 · The three lines: what each catches, how fast, at what cost</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Line 1 · Soft deletion</th><th>Line 2 · Backups &amp; restores</th><th>Line 3 · Out-of-band validation</th></tr></thead>
+<tbody>
+<tr><th>Mainly catches</th><td>User deletes, hijack wipes, a script run against the wrong target</td><td>App bugs shredding data in bulk, site disasters, media failure</td><td><strong>Nothing</strong> — its job is early detection</td></tr>
+<tr><th>Recovery speed</th><td><strong>Seconds</strong> (flip a flag)</td><td>Hours to days (medium and bandwidth bound)</td><td>Produces no recovery ability</td></tr>
+<tr><th>Frequency covered</th><td>The most common incidents by far</td><td>Rarer, but far more destructive</td><td>Covers the creeping-loss cell nothing else reaches</td></tr>
+<tr><th>Main cost</th><td>Storage; collides with real-deletion privacy demands</td><td>Storage plus rehearsal effort; business hurt during recovery</td><td>Continuous compute; the validator itself needs monitoring</td></tr>
+<tr><th>Doesn't cover</th><td>Data being <strong>mangled</strong> rather than deleted; paths that bypass the layer</td><td>Creeping loss — every retained generation is already poisoned</td><td>It gets back exactly zero bytes</td></tr>
+</tbody></table></div>
+
+<p class="tcap">Table 2 · Replication / backup / archive: three things routinely conflated</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Replication</th><th>Backup</th><th>Archive</th></tr></thead>
+<tbody>
+<tr><th>Exists for</th><td>Serving reads and writes when a machine or site dies</td><td>Being able to <strong>load data back and keep running</strong></td><td>Compliance and audit, sealed long-term</td></tr>
+<tr><th>Loads back in?</th><td>N/A — it is already live</td><td><strong>Yes — that is its definition</strong></td><td><strong>Usually not</strong></td></tr>
+<tr><th>Facing a bad delete</th><td><strong>Syncs the delete in milliseconds; an accomplice</strong></td><td>Gets it back, inside the retention window</td><td>May hold the content but can't put it back</td></tr>
+<tr><th>Latency / isolation</th><td>Milliseconds to seconds, <strong>zero isolation</strong></td><td>Hours to days; needs offline / remote / heterogeneous</td><td>Days to weeks, strong isolation</td></tr>
+<tr><th>Classic misuse</th><td>Treating multi-AZ as a backup</td><td>Monitoring backup success, never verifying restore</td><td>Using an archive as a backup, discovering too late</td></tr>
+</tbody></table></div>
+
+<p class="tcap">Table 3 · Choosing medium and location (derived from the recovery requirement)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Option</th><th>Typical RTO</th><th>Isolation</th><th>Cost</th><th>When to pick it</th></tr></thead>
+<tbody>
+<tr><th>Same-cluster snapshot</th><td><strong>Minutes</strong></td><td>Low — a bad or malicious delete can take it too</td><td>Low</td><td>As the fastest layer, alongside soft deletion; <strong>never as the only line</strong></td></tr>
+<tr><th>Remote object storage<br/>(versioning / object lock)</th><td>Hours</td><td>Medium-high — cross-region, and can be made immutable</td><td>Medium</td><td>Most teams' main answer today; restore is <strong>bandwidth</strong> bound</td></tr>
+<tr><th>Offline tape</th><td><strong>A day or more</strong></td><td><strong>Highest — physically disconnected</strong></td><td>Cheapest per byte, slowest to fetch</td><td>The last line; it is what brought Gmail back</td></tr>
+<tr><th>Continuous log / WAL replay</th><td>Depends on replay volume</td><td>Depends where the log lives</td><td>Medium-high</td><td>When RPO must be minutes and replay time is acceptable</td></tr>
+</tbody></table></div>
+<p><strong>Do the arithmetic on recovery</strong>: RTO is often physics, not policy. Pulling <code>100 TB</code> back from a remote region at a saturated <code>10 Gbps</code> takes roughly <code>22</code> hours. If your RTO says "4 hours", no amount of extra storage spend fixes that — the architecture has to change (parallel per-shard restore, a nearer copy, hot data first). <strong>An RTO nobody has done the arithmetic on is a wish.</strong></p>
+
+<h2>Why it matters / in real systems</h2>
+<p>This chapter is required reading for data systems because it turns a platitude everybody can say — "we have backups" — into <strong>an auditable checklist</strong>: how many days is the soft-delete window? When was the last full restore rehearsal, and how long did it take? Which invariants do the validators cover, and when did they last complete a successful pass? That framing is now everywhere in the industry: object storage <strong>versioning and object lock</strong> are essentially "soft deletion plus a tamper-proof backup", warehouse time travel is soft deletion in another guise, data observability products are the commercialisation of the third line, and restore rehearsals are a hard compliance requirement for banks and cloud providers. In an architecture review or an interview it hands you three sentences that cut straight through: <em>multi-AZ is not a backup, backup success rate is not restore success rate, and an unmonitored validator is no validator at all.</em></p>
+
+<div class="ev">
+<div class="evh">EVIDENCE FROM INDUSTRY · not the book's claims, but what the companies said themselves</div>
+<ul>
+<li><strong>Google (Gmail, February 2011)</strong>: a bug in a storage software update left roughly <code>0.02%</code> of Gmail users looking at empty mailboxes, and Google restored the mail from <strong>tape</strong> — <strong>confirming that the last line has to be offline and heterogeneous</strong>: however many online replicas you hold, they went down together. <span class="src"><a href="https://sre.google/sre-book/data-integrity/" rel="noopener" target="_blank">Google SRE Book, Ch.26 Data Integrity ↗</a></span></li>
+<li><strong>Google (Google Music, March 2012)</strong>: a buggy privacy-related data deletion pipeline removed roughly <code>600,000</code> audio tracks; only <code>436,223</code> were recovered from tape, and about <code>161,000</code> <strong>were gone before they had ever been backed up</strong> — <strong>evidence that detecting early beats backing up more</strong>. The problem surfaced only because an engineer chased down one track that wouldn't play. <span class="src"><a href="https://sre.google/sre-book/data-integrity/" rel="noopener" target="_blank">Google SRE Book, Ch.26 Data Integrity ↗</a></span></li>
+<li><strong>GitLab (public postmortem, 2017-01-31)</strong>: after the primary's data directory was removed by mistake, <strong>none of the <code>5</code> deployed backup and replication techniques worked</strong> (S3 uploads failing silently, a <code>pg_dump</code> version mismatch, misconfigured notification mail); about <code>6</code> hours of data went with it, including roughly <code>5,000</code> projects and <code>700</code> new accounts — <strong>the most brutal possible confirmation that an unverified backup is not a backup</strong>. <span class="src"><a href="https://about.gitlab.com/blog/postmortem-of-database-outage-of-january-31/" rel="noopener" target="_blank">GitLab, "Postmortem of database outage of January 31", 2017 ↗</a></span></li>
+<li><strong>GitHub (public postmortem, 2018-10-21)</strong>: a <code>43</code>-second network partition triggered automated failover, both coasts accepted writes and the databases <strong>diverged</strong>; reconciling them took <code>24</code> hours and <code>11</code> minutes of degraded service — <strong>confirming that replication buys availability, not data correctness</strong>. <span class="src"><a href="https://github.blog/news-insights/company-news/oct21-post-incident-analysis/" rel="noopener" target="_blank">GitHub Blog, "October 21 post-incident analysis", 2018 ↗</a></span></li>
+</ul>
+</div>
+
+<h2>Pitfalls and open questions</h2>
+<ul>
+<li><strong>Treating replication, RAID or multi-AZ as backup</strong>: misconception number one. They defend against hardware and sites; against bad deletes and bad writes they are <strong>not merely useless but actively accelerating</strong>.</li>
+<li><strong>Monitoring backup success but not restore success</strong>: a job returning success says nothing about whether the data goes back in. GitLab's lesson was precisely "silent failure, and the notification never went out either".</li>
+<li><strong>Rehearsing only on a small database</strong>: real restores are bound by bandwidth and ordering dependencies, which a toy dataset never exposes. Rehearse against realistic volumes, or at least publish the arithmetic.</li>
+<li><strong>A validator that quietly stopped</strong>, or <strong>believing validation can replace backups</strong>: the first supplies false confidence, the second confuses the division of labour — validation compresses detection latency and recovers nothing.</li>
+<li><strong>The real tension between soft deletion and the right to be forgotten</strong>: soft deletion turns deleting into a process lasting weeks, while privacy law wants demonstrable, complete removal. There is no clean answer; write the window and the lazy-deletion convergence time explicitly into the design and the privacy statement. The book predates GDPR, and its age shows most here.</li>
+<li><strong>The 2016 threat model has no ransomware in it</strong>: an attacker's standard play today is to <strong>delete your backups first and encrypt your data second</strong>. The most important post-publication addition is <strong>immutability</strong> — object lock / WORM backup buckets, plus backup credentials outside the production identity system. The "offline tape" instinct was right; today's equivalent is "immutable plus privilege-isolated".</li>
+<li><strong>Don't treat "24 combinations" as doctrine</strong>: its value is prompting you to audit coverage cell by cell, not taxonomic precision.</li>
+</ul>
+
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. In one line: <strong>data integrity is the means, data availability is the goal</strong> — users care only whether the correct data is there when they need it.</p>
+<p>2. Availability SLOs cannot see data problems: a system that just emptied a mailbox shows all green, and <strong>recovery time is part of availability</strong>.</p>
+<p>3. Failure modes = root cause (6) × scope (2) × rate (2) = <strong>24 combinations</strong>; no silver bullet, only defense in depth. The hardest cell is <strong>creeping loss</strong>, which backups cannot cover and only early detection can.</p>
+<p>4. Line one, <strong>soft deletion</strong>: catches the highest-frequency deletes and hijack wipes, recovers in seconds; window length versus privacy is a real trade-off; it does nothing about mangled data.</p>
+<p>5. Line two, <strong>backups and restores</strong>: <em>replication and redundancy are not recoverability</em>; <strong>backups load back into the application, archives don't</strong>; derive strategy from RPO/RTO — Google chose tape precisely because it is disconnected.</p>
+<p>6. Line three, <strong>out-of-band validation</strong>: prevents nothing, but compresses detection from days to minutes; must be independently deployed, monitored itself, and alert actionably.</p>
+<p>7. <strong>An unrehearsed recovery procedure is broken by default</strong>: acceptance is "loaded back into the application, business validation passed", not "the backup job succeeded".</p>
+<p>8. RTO is usually physics: <code>100 TB</code> at a saturated <code>10 Gbps</code> is about <code>22</code> hours — an RTO with no arithmetic behind it is a wish.</p>
+<p>9. Three numbers worth carrying: Gmail 2011 recovered from tape for <code>0.02%</code> of users; Google Music 2012 lost about <code>161,000</code> tracks before they were ever backed up; GitLab 2017 had <code>5</code> backup techniques and none of them worked.</p>
+<p>10. Three questions that end an architecture review: multi-AZ is not a backup, backup success is not restore success, and <strong>when did you last do a full restore rehearsal?</strong></p>
+</div>
+</div>
+
+<footer>Chapter Deepread · Read this page and you have the chapter's core; go to the book itself for the full cases and detail.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
