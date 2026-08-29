@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals Ch 1 · Introduction and Overview — Books Deep-Read Book 46</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">BOOKS DEEP-READ · DATABASE INTERNALS · CH 1</p>
+<h1>Introduction and Overview: Taking the Database Apart</h1>
+<p class="sub">Database Internals · Ch 1 · Alex Petrov · 2019</p>
+<p class="langbar"><a href="dbinternals-ch01-introduction-and-overview-book46.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You tap search in a shopping app and get results in a second; your colleague in finance runs a full-year report and waits half a minute. Both are "querying a database" — yet the machines behind them look nothing alike. Chapter 1 of <em>Database Internals</em> doesn't teach you to use a database. It <strong>takes the casing off so you can see, for the first time, which parts are inside and what each one does</strong>.</p>
+
+<h2>An analogy first</h2>
+<p>Think of a database as a <strong>large warehouse store</strong>. You hand in a shopping list: a greeter takes it; a clerk reads it and works out the least-walking route through the aisles; another clerk actually walks that route and picks the goods. And underneath all of that — the part that matters most — is <strong>how the shelves are arranged</strong>. That layer is called the "storage engine", and it is what the next several hundred pages of the book are about.</p>
+
+<h2>Why "databases" differ so wildly</h2>
+<p>Here's the odd part: MySQL, Redis and ClickHouse all call themselves databases, but hand the reporting job to one and the checkout job to another and you can be a hundred times slower. The difference isn't the brand — it's <strong>how the goods are shelved</strong>.</p>
+<p>One arrangement is <strong>packing each customer's basket together</strong>: everything about one order sits side by side, so looking up a single order is one reach — great for checkout. The other is <strong>shelving by category</strong>: every order's "amount" in one pile, every "date" in another. To total the year's revenue you sweep the "amount" pile and never touch another shelf — great for reports, and because everything in a pile looks alike, it also compresses beautifully.</p>
+<p>Then there's <strong>where you keep it</strong>: spread across the counter (memory), within arm's reach but expensive and gone the moment the power cuts; or stacked in the warehouse (disk), cheap and still there after a blackout, at the cost of a walk every time.</p>
+
+<h2>Three dials that produce nearly every database</h2>
+<p>The most valuable thing in this chapter is that the author hands you three "dials". Different settings give you essentially every storage design on the market.</p>
+<p><strong>One: batch it up, or not.</strong> Walk to the warehouse for every single item, or jot a few dozen on a sticky note and carry them over in one trip? Batching is far less work — but if that note goes missing you're in trouble, so you need a backstop.</p>
+<p><strong>Two: how you change things.</strong> Flip back to the original page and erase the old number, or write a new line at the end of the notebook and mark the old one void? The first saves space but you must find the page every time; the second is blazingly fast to write, at the cost of an ever-thicker notebook that needs periodic tidying.</p>
+<p><strong>Three: keep it sorted, or not.</strong> Alphabetised like a contact book, so everything starting with "S" is one continuous flip; or jotted down as it comes, found via an index. Sorted makes it easy to grab a whole stretch at once — but every new entry has to be slotted into the right place.</p>
+
+<h2>So how do you choose?</h2>
+<p>What this chapter really wants you to stop asking is "which database is best?" The question to ask instead is: <strong>does my job look at a handful of rows, or sweep a billion? Read-heavy or write-heavy? Is the hot data small enough to fit on the counter?</strong> The author also lands one uncomfortable warning: <strong>don't pick a database off someone else's benchmark</strong> — the workload they measured is almost certainly not yours.</p>
+<p>The honest cost: none of the three dial settings is universally best — make writes faster and you generally pay it back in reads, in space, or in the tidying-up afterwards.</p>
+
+<h2>Remember this</h2>
+<div class="tl">
+<p>A database isn't a black box; it's four layers: <strong>take the request → plan the route → go fetch → and how things are shelved</strong>. The bottom layer decides what it's good at. And shelving comes down to three dials: <strong>batch before writing or not, erase-and-rewrite or append a new line, keep it sorted or not</strong>. Choosing a database is really choosing a setting for those three.</p>
+</div>
+<p class="switch-hint">Want the real anatomy, the magnitudes and the case studies? <a data-mode="deep">→ switch to Deep</a></p>
+</div>
+
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think you are choosing a database brand; you are really choosing a setting for <strong>three dials</strong>. This chapter first breaks the black-box word "database" into four layers — transport, query processing, execution, storage engine — then hands you three classification axes (memory vs disk, row vs column, data files vs index files), and finally collapses everything into the three variables that run through the whole book: <strong>buffering, mutability, and ordering</strong>. The remaining six hundred pages just fill in cells of that coordinate system.</p>
+
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>DBMS (database management system)</strong>: the whole piece of software that manages storing and retrieving data — PostgreSQL, MySQL and friends.</li>
+<li><strong>Storage engine</strong>: the bottom layer of a DBMS. It only cares what shape data takes on disk and how it is read and written — not how SQL is parsed. MySQL's InnoDB is a swappable storage engine.</li>
+<li><strong>Record / row / tuple</strong>: one piece of data in a table — an order, say.</li>
+<li><strong>Page</strong>: the smallest unit of disk I/O. Records are packed into fixed-size pages before being written (PostgreSQL defaults to <code>8 KB</code>, InnoDB to <code>16 KB</code>).</li>
+<li><strong>Index</strong>: a "table of contents" that locates a record without a full scan. One built on the <strong>primary key</strong> (the field uniquely identifying a record) is the primary index; the rest are secondary indexes.</li>
+<li><strong>Heap file</strong>: a data file where records are simply piled up in arrival order, with no ordering maintained.</li>
+<li><strong>B-Tree</strong>: a multi-level "directory tree" that narrows the search range at every level — the classic index structure for disk-based databases.</li>
+<li><strong>LSM-Tree</strong>: a write-optimised structure that buffers in memory, flushes whole batches sequentially to disk, and merges them in the background (Cassandra, RocksDB).</li>
+<li><strong>WAL (write-ahead log)</strong>: before changing data, append "what I am about to change" to an append-only log; replay it to recover after a crash.</li>
+<li><strong>OLTP / OLAP</strong>: the former is online transaction processing — high concurrency, few records touched per request; the latter is online analytics — one sweep over enormous numbers of rows, computing a handful of columns.</li>
+<li><strong>Write amplification / space amplification</strong>: how many bytes actually hit disk to write one byte / how much disk is actually consumed to store one byte. The two headline cost metrics of a storage engine.</li>
+</ul>
+</div>
+
+<h2>Where it sits</h2>
+<p>Alex Petrov is a contributor to Apache Cassandra. This chapter opens Part I, "Storage Engines", and doubles as the map for the entire book. In reading order it sits one level below DDIA: DDIA's Chapter 3 tells you what personalities LSM-trees and B-trees have; this book drills from here down into page layouts, splits and merges, and recovery protocols. It leads into Ch2–Ch7 (B-Tree basics, file formats, implementing B-Trees, transactions and recovery, B-Tree variants, log-structured storage) and then Part II on distributed systems.</p>
+
+<h2>The problem it tackles</h2>
+<p>"Database" is a worn-out black-box word: it covers PostgreSQL, Redis, ClickHouse and Cassandra at once — four systems whose internals differ more than a car does from a speedboat. <strong>Until you take the word apart, selection can only run on benchmarks and marketing.</strong></p>
+<p>The cost is concrete. A transaction system doing <code>20M</code> orders a day, peaking at <code>5k</code> QPS and touching one or two records per request, will degrade every single-row update into one write per column file if you put it on columnar storage. Conversely, a log table with <code>200</code> columns, <code>5B</code> new rows a day, whose queries only ever aggregate three to five of them, will drag the other 197 columns off disk on every scan if you put it in a row store. Worse, <strong>this class of mistake hides during load testing</strong> — at small volumes the cache absorbs everything; only once you reach terabytes and the hit rate falls does it show its face in production.</p>
+<p>So this chapter hands you a dissection grid. Petrov opens by admitting, honestly, that <strong>there is no single blueprint for database design</strong> — yet almost every system still fits one layered picture, and their real disagreements all reduce to three variables.</p>
+
+<h2>Core content, in depth</h2>
+
+<h3>1. The anatomy: four layers</h3>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 340" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="e1a" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#7c8593" font-size="11" x="30" y="26">A client query arrives ↓ (the same layer also carries node-to-node traffic)</text>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="7" stroke="#7c8593" width="580" x="30" y="36"></rect>
+<text fill="#d9dee5" font-size="11.5" text-anchor="middle" x="320" y="58">Transport · accepts requests, carries client and inter-node traffic</text>
+<line marker-end="url(#e1a)" stroke="#7c8593" x1="320" x2="320" y1="70" y2="86"></line>
+<rect fill="rgba(91,157,249,0.06)" height="56" rx="7" stroke="#7c8593" width="580" x="30" y="88"></rect>
+<text fill="#8fbaff" font-size="11.5" x="42" y="105">Query processor</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="252" x="42" y="112"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="168" y="129">Parse · validate · access control</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="252" x="346" y="112"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="472" y="129">Optimizer → plan (dependency tree)</text>
+<line marker-end="url(#e1a)" stroke="#7c8593" x1="320" x2="320" y1="144" y2="160"></line>
+<rect fill="rgba(91,157,249,0.06)" height="56" rx="7" stroke="#7c8593" width="580" x="30" y="162"></rect>
+<text fill="#8fbaff" font-size="11.5" x="42" y="179">Execution engine</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="252" x="42" y="186"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="168" y="203">Local execution · reads local storage</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="252" x="346" y="186"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="472" y="203">Remote execution · fetch, then merge</text>
+<line marker-end="url(#e1a)" stroke="#7c8593" x1="320" x2="320" y1="218" y2="234"></line>
+<rect fill="rgba(155,108,245,0.08)" height="94" rx="7" stroke="#5b9df9" stroke-width="2" width="580" x="30" y="236"></rect>
+<text fill="#8fbaff" font-size="11.5" x="42" y="253">Storage engine　← the battleground of Part I</text>
+<rect fill="rgba(91,157,249,0.1)" height="60" rx="5" stroke="#7c8593" width="108" x="42" y="260"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="96" y="277">Transaction mgr</text>
+<text fill="#7c8593" font-size="8.5" text-anchor="middle" x="96" y="292">schedules txns,</text>
+<text fill="#7c8593" font-size="8.5" text-anchor="middle" x="96" y="305">logical consistency</text>
+<rect fill="rgba(91,157,249,0.1)" height="60" rx="5" stroke="#7c8593" width="108" x="156" y="260"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="210" y="277">Lock manager</text>
+<text fill="#7c8593" font-size="8.5" text-anchor="middle" x="210" y="292">concurrency locks,</text>
+<text fill="#7c8593" font-size="8.5" text-anchor="middle" x="210" y="305">physical integrity</text>
+<rect fill="rgba(155,108,245,0.2)" height="60" rx="5" stroke="#9b6cf5" stroke-width="2" width="108" x="270" y="260"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="324" y="277">Access methods</text>
+<text fill="#7c8593" font-size="8.5" text-anchor="middle" x="324" y="292">the structures:</text>
+<text fill="#7c8593" font-size="8.5" text-anchor="middle" x="324" y="305">B-Tree · LSM · heap</text>
+<rect fill="rgba(91,157,249,0.1)" height="60" rx="5" stroke="#7c8593" width="108" x="384" y="260"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="438" y="277">Buffer manager</text>
+<text fill="#7c8593" font-size="8.5" text-anchor="middle" x="438" y="292">page cache,</text>
+<text fill="#7c8593" font-size="8.5" text-anchor="middle" x="438" y="305">what stays in RAM</text>
+<rect fill="rgba(91,157,249,0.1)" height="60" rx="5" stroke="#7c8593" width="108" x="498" y="260"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="552" y="277">Recovery mgr</text>
+<text fill="#7c8593" font-size="8.5" text-anchor="middle" x="552" y="292">write-ahead log,</text>
+<text fill="#7c8593" font-size="8.5" text-anchor="middle" x="552" y="305">replay after crash</text>
+</svg>
+<figcaption>Fig 1 · The four layers a query passes through, and the five parts inside the storage engine. Petrov stresses this is not the only blueprint — but nearly every DBMS fits it.</figcaption>
+</figure>
+<p>The part worth pausing on is the <strong>query optimizer</strong>: it estimates the cost of each route from table statistics and expresses the winner as a <strong>tree of dependent operations</strong> — the execution plan. The magnitude matters here: for a two-table join, "filter then join" versus "join then filter" can differ by orders of magnitude in rows scanned. What the optimizer saves is usually not 10%, it's 100×. The <strong>execution engine</strong> splits into local and remote, the latter being the part that fetches across nodes and stitches results back together — a foreshadowing of Part II.</p>
+<p>Among the storage engine's five parts, the two most often conflated are the first two: the <em>transaction manager</em> guards <strong>logical consistency</strong> (both sides of a transfer succeed or neither does), while the <em>lock manager</em> guards <strong>physical integrity</strong> (bytes don't get mangled by two hands at once) — one is about business semantics, the other about concurrency safety. <em>Access methods</em> are the storage structures themselves (heap files, B-Trees, LSM-Trees); they decide what shape data takes on disk, and they are the entire subject of the next six chapters. That classic interview question — "walk me through how a SQL statement gets executed" — is answered by reciting these four layers.</p>
+
+<h3>2. In memory or on disk</h3>
+<p>Get the magnitudes straight first, because they are the reason this whole discipline exists: <strong>a random memory access takes about <code>100 ns</code>; a random read from an NVMe SSD about <code>100 µs</code> (~1,000× slower); a seek on a spinning disk about <code>10 ms</code> (~100,000× slower).</strong> That three-order-of-magnitude gap is what forced pages, buffer pools and sequential writes into existence.</p>
+<p><strong>Disk-based</strong> systems keep data on disk and use memory only as a cache. Because disks can only be read and written in <em>pages</em>, you inherit a pile of problems that don't exist in memory — how to serialise a record into bytes, how to lay a page out, how to express a pointer as a file offset, how to get data that is "usually read together" onto the same page. <strong>The entire complexity of the B-Tree was forced out by exactly this.</strong> <strong>In-memory</strong> systems, by contrast, can use pointer-based structures directly (linked lists, skip lists) without contorting them to be disk-friendly — the implementation is actually simpler.</p>
+<p>The commonest misconception is that in-memory databases aren't durable. <strong>Wrong: they persist via WAL plus periodic snapshots</strong> — writes are appended to an on-disk log, memory is dumped whole from time to time, and recovery loads the latest snapshot and replays the log after it. As for not fitting in memory: the disk-based answer is a <em>buffer pool</em> (memory holds copies of pages, the master copy is on disk); <em>anti-caching</em> inverts it — <strong>memory holds the master copy, and when it fills, the least recently used records are evicted to disk</strong>. The whole difference is in the phrase "which copy is authoritative".</p>
+<p>Magnitudes for selection: hot data under <code>200 GB</code> with a sub-millisecond <code>p99</code> requirement — sessions, counters, leaderboards — makes in-memory a bargain. A <code>20 TB</code> primary with heavily skewed access (<code>5%</code> of the data taking <code>90%</code> of requests) does not: paying to hold 20 TB in RAM is buying what you don't need. Disk-based with a generous buffer pool is the answer.</p>
+
+<h3>3. Rows or columns — and that "wide column" mix-up</h3>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 340" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="165" y="26">Row-oriented</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="165" y="42">On disk: one row's fields sit together</text>
+<rect fill="rgba(91,157,249,0.26)" height="24" stroke="#5b9df9" width="28" x="33" y="52"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="47" y="69">1</text>
+<rect fill="rgba(91,157,249,0.26)" height="24" stroke="#5b9df9" width="28" x="61" y="52"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="75" y="69">An</text>
+<rect fill="rgba(91,157,249,0.26)" height="24" stroke="#5b9df9" width="28" x="89" y="52"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="103" y="69">99</text>
+<rect fill="rgba(155,108,245,0.26)" height="24" stroke="#9b6cf5" width="28" x="121" y="52"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="135" y="69">2</text>
+<rect fill="rgba(155,108,245,0.26)" height="24" stroke="#9b6cf5" width="28" x="149" y="52"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="163" y="69">Bo</text>
+<rect fill="rgba(155,108,245,0.26)" height="24" stroke="#9b6cf5" width="28" x="177" y="52"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="191" y="69">88</text>
+<rect fill="rgba(140,145,155,0.22)" height="24" stroke="#7c8593" width="28" x="209" y="52"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="223" y="69">3</text>
+<rect fill="rgba(140,145,155,0.22)" height="24" stroke="#7c8593" width="28" x="237" y="52"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="251" y="69">Cy</text>
+<rect fill="rgba(140,145,155,0.22)" height="24" stroke="#7c8593" width="28" x="265" y="52"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="279" y="69">77</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="165" y="92">same colour = same row (id · name · amount)</text>
+<text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="165" y="116">Fetch a whole record in one I/O</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="165" y="132">Good for OLTP: point reads, single-row writes</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="475" y="26">Column-oriented</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="475" y="42">On disk: one column's values sit together</text>
+<rect fill="rgba(91,157,249,0.26)" height="24" stroke="#5b9df9" width="28" x="343" y="52"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="357" y="69">1</text>
+<rect fill="rgba(91,157,249,0.26)" height="24" stroke="#5b9df9" width="28" x="371" y="52"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="385" y="69">2</text>
+<rect fill="rgba(91,157,249,0.26)" height="24" stroke="#5b9df9" width="28" x="399" y="52"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="413" y="69">3</text>
+<rect fill="rgba(155,108,245,0.26)" height="24" stroke="#9b6cf5" width="28" x="431" y="52"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="445" y="69">An</text>
+<rect fill="rgba(155,108,245,0.26)" height="24" stroke="#9b6cf5" width="28" x="459" y="52"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="473" y="69">Bo</text>
+<rect fill="rgba(155,108,245,0.26)" height="24" stroke="#9b6cf5" width="28" x="487" y="52"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="501" y="69">Cy</text>
+<rect fill="rgba(140,145,155,0.22)" height="24" stroke="#7c8593" width="28" x="519" y="52"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="533" y="69">99</text>
+<rect fill="rgba(140,145,155,0.22)" height="24" stroke="#7c8593" width="28" x="547" y="52"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="561" y="69">88</text>
+<rect fill="rgba(140,145,155,0.22)" height="24" stroke="#7c8593" width="28" x="575" y="52"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="589" y="69">77</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="475" y="92">same colour = same column, each its own file</text>
+<text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="475" y="116">Read only the columns you need: 2 of 200</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="475" y="132">Good for OLAP: wide aggregates, compresses well</text>
+<line stroke="rgba(120,120,130,0.3)" x1="30" x2="610" y1="156" y2="156"></line>
+<text fill="#9b6cf5" font-size="12" font-weight="700" x="30" y="182">Wide column stores (BigTable / HBase / Cassandra) — "column" in the name, row store in behaviour</text>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#7c8593" width="86" x="30" y="222"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="73" y="243">Rows u1 · u2</text>
+<rect fill="none" height="90" rx="7" stroke="rgba(155,108,245,0.45)" stroke-dasharray="5 4" width="212" x="140" y="196"></rect>
+<text fill="#8fbaff" font-size="10.5" x="150" y="212">Column family: profile</text>
+<rect fill="rgba(91,157,249,0.26)" height="24" stroke="#5b9df9" width="192" x="150" y="220"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="246" y="237">u1·name ｜ u1·city (contiguous)</text>
+<rect fill="rgba(155,108,245,0.26)" height="24" stroke="#9b6cf5" width="192" x="150" y="252"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="246" y="269">u2·name ｜ u2·city (contiguous)</text>
+<rect fill="none" height="90" rx="7" stroke="rgba(155,108,245,0.45)" stroke-dasharray="5 4" width="212" x="372" y="196"></rect>
+<text fill="#8fbaff" font-size="10.5" x="382" y="212">Column family: stats</text>
+<rect fill="rgba(91,157,249,0.26)" height="24" stroke="#5b9df9" width="192" x="382" y="220"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="478" y="237">u1·visits ｜ u1·last (contiguous)</text>
+<rect fill="rgba(155,108,245,0.26)" height="24" stroke="#9b6cf5" width="192" x="382" y="252"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="478" y="269">u2·visits ｜ u2·last (contiguous)</text>
+<text fill="#7c8593" font-size="10" x="30" y="312">Inside a column family a row's fields are still contiguous → still one hop to read a row. Grouped row storage, not a columnar database.</text>
+</svg>
+<figcaption>Fig 2 · The byte layouts of row and column stores, and why a "wide column store" is not a columnar database — families only group fields; inside a family, rows stay contiguous.</figcaption>
+</figure>
+<p><strong>Row-oriented</strong>: all of a record's fields sit adjacent on disk, so fetching a whole record takes one I/O — exactly what OLTP wants. <strong>Column-oriented</strong>: all values of a column sit adjacent, usually in their own file. A <code>SELECT date, sum(amount) … GROUP BY date</code> over a <code>200</code>-column table needs to read 2 columns — theoretically <code>1%</code> of the I/O of a row store. Better still, <strong>a single column's data is highly homogeneous</strong> — the same country code, the same date repeated endlessly — so it compresses an order better than row layout, saving both disk and the bytes dragged into memory.</p>
+<p>The cost is equally concrete: a column store scatters one row across many files, so inserting or updating a <strong>single</strong> record becomes one write per file; and it needs an implicit positional id (the <code>i</code>-th value of every column belongs to row <code>i</code>) to put a row back together. Which is why column stores are almost always designed for <strong>bulk writes and very few updates</strong>.</p>
+<p><strong>Petrov goes out of his way here to correct a high-frequency misconception</strong>: BigTable / HBase / Cassandra — <em>wide column stores</em> — <strong>are not columnar databases</strong>. They organise data as a multidimensional map (row key → column family → column → timestamped version), and <strong>within a column family the layout is still row-contiguous</strong>. "Column" is in the name; the behaviour is closer to a row store. Calling Cassandra a "columnar database" is a classic interview deduction.</p>
+
+<h3>4. Data files, index files, and that layer of indirection</h3>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 288" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="e3a" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle" x="165" y="24">A · Direct reference (heap-organized)</text>
+<rect fill="rgba(91,157,249,0.1)" height="30" rx="5" stroke="#7c8593" width="124" x="34" y="38"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="96" y="58">2nd index: name</text>
+<rect fill="rgba(91,157,249,0.1)" height="30" rx="5" stroke="#7c8593" width="124" x="172" y="38"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="234" y="58">2nd index: city</text>
+<line marker-end="url(#e3a)" stroke="#7c8593" x1="96" x2="150" y1="68" y2="100"></line>
+<line marker-end="url(#e3a)" stroke="#7c8593" x1="234" x2="182" y1="68" y2="100"></line>
+<rect fill="rgba(155,108,245,0.18)" height="34" rx="5" stroke="#9b6cf5" stroke-width="2" width="222" x="54" y="104"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="165" y="125">Heap file · records (physical location)</text>
+<text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="165" y="160">Read: index → record, 1 hop</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="165" y="178">Write: a record moves page → every</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="165" y="193">index pointer must change → write amp</text>
+<line stroke="rgba(120,120,130,0.3)" stroke-dasharray="4 4" x1="320" x2="320" y1="14" y2="206"></line>
+<text fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle" x="475" y="24">B · Primary-key indirection (clustered)</text>
+<rect fill="rgba(91,157,249,0.1)" height="30" rx="5" stroke="#7c8593" width="124" x="344" y="38"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="406" y="58">2nd index: name</text>
+<rect fill="rgba(91,157,249,0.1)" height="30" rx="5" stroke="#7c8593" width="124" x="482" y="38"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="544" y="58">2nd index: city</text>
+<text fill="#7c8593" font-size="9" text-anchor="middle" x="475" y="82">(these store the primary key, not a location)</text>
+<line marker-end="url(#e3a)" stroke="#7c8593" x1="406" x2="460" y1="86" y2="100"></line>
+<line marker-end="url(#e3a)" stroke="#7c8593" x1="544" x2="492" y1="86" y2="100"></line>
+<rect fill="rgba(155,108,245,0.18)" height="34" rx="5" stroke="#9b6cf5" stroke-width="2" width="222" x="364" y="104"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="475" y="125">PK index (clustered · records in the tree)</text>
+<text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="475" y="160">Read: index → PK → PK index, 2 hops</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="475" y="178">Write: moving a record does not touch</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="475" y="193">secondary indexes at all</text>
+<line stroke="rgba(120,120,130,0.3)" x1="30" x2="610" y1="214" y2="214"></line>
+<text fill="#9b6cf5" font-size="11" text-anchor="middle" x="320" y="238">Two ways to pay for the same thing: A pays on writes, B pays on reads.</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="320" y="258">In the wild: PostgreSQL ≈ A (indexes point at heap tuples)　MySQL InnoDB ≈ B (secondary indexes hold the PK)</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="320" y="276">Uber's 2016 move off Postgres was driven by exactly this write amplification (evidence below).</text>
+</svg>
+<figcaption>Fig 3 · Whether the primary index becomes a layer of indirection: direct references read fast but amplify writes; primary-key indirection costs one extra hop but makes writes far cheaper.</figcaption>
+</figure>
+<p>A database keeps two kinds of files: <strong>data files</strong> hold the records themselves, <strong>index files</strong> hold "how to locate a record fast". Data files come in three organisations: <em>heap-organized</em> — records piled in arrival order with no ordering maintained, fastest to write but unfindable without an index; <em>index-organized (IOT)</em> — <strong>the data lives inside the index structure</strong>, key-ordered, so a primary-key lookup lands in one shot and range scans are contiguous; <em>hash-organized</em> — bucketed by the hash of the key. The companion notion is <em>clustered</em> versus <em>nonclustered</em>: clustered means <strong>the physical order of records follows the index key order</strong>; nonclustered keeps data elsewhere, in unrelated order.</p>
+<p>Then comes the most chewable trade-off in the chapter: <strong>what should a secondary index store?</strong></p>
+<ul>
+<li><strong>Option A · direct reference</strong>: the secondary index stores the record's physical location. One hop to read — the fastest path. The cost: the moment a record moves (an update forces a new page), the pointers in <strong>every</strong> secondary index must be updated — even indexes whose fields this update never touched.</li>
+<li><strong>Option B · primary-key indirection</strong>: the secondary index stores only the primary key; a read consults the secondary index for the key, then the primary index for the record — <strong>two hops</strong>. The cost is that extra lookup; the benefit is that record movement is invisible to secondary indexes, and only an index whose field actually changed needs updating.</li>
+</ul>
+<p>PostgreSQL takes A, MySQL InnoDB takes B. This is not an academic disagreement — <strong>it directly determines how bad write amplification gets on a table carrying a dozen indexes</strong>, and Uber's evidence in the next section is the invoice.</p>
+
+<h3>5. Three variables: buffering, mutability, ordering</h3>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 282" xmlns="http://www.w3.org/2000/svg">
+<circle cx="26" cy="20" fill="#5b9df9" r="5"></circle><text fill="#b9c0ca" font-size="10.5" x="36" y="24">B-Tree</text>
+<circle cx="88" cy="20" fill="#8fbaff" r="5"></circle><text fill="#b9c0ca" font-size="10.5" x="98" y="24">Copy-on-Write B-Tree</text>
+<circle cx="222" cy="20" fill="#9b6cf5" r="5"></circle><text fill="#b9c0ca" font-size="10.5" x="232" y="24">LSM-Tree</text>
+<circle cx="300" cy="20" fill="#7c8593" r="5"></circle><text fill="#b9c0ca" font-size="10.5" x="310" y="24">Heap file + hash index</text>
+<text fill="#5b9df9" font-size="11.5" font-weight="700" x="26" y="72">① Buffering</text>
+<line stroke="rgba(120,120,130,0.5)" stroke-width="1.5" x1="150" x2="596" y1="88" y2="88"></line>
+<circle cx="176" cy="88" fill="#7c8593" r="6"></circle>
+<circle cx="208" cy="88" fill="#5b9df9" r="6"></circle>
+<circle cx="242" cy="88" fill="#8fbaff" r="6"></circle>
+<circle cx="566" cy="88" fill="#9b6cf5" r="6"></circle>
+<text fill="#7c8593" font-size="10" x="150" y="108">none · write as it arrives</text>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="596" y="108">batch up · merge into sequential writes</text>
+<text fill="#5b9df9" font-size="11.5" font-weight="700" x="26" y="152">② Mutability</text>
+<line stroke="rgba(120,120,130,0.5)" stroke-width="1.5" x1="150" x2="596" y1="168" y2="168"></line>
+<circle cx="176" cy="168" fill="#5b9df9" r="6"></circle>
+<circle cx="210" cy="168" fill="#7c8593" r="6"></circle>
+<circle cx="530" cy="168" fill="#8fbaff" r="6"></circle>
+<circle cx="566" cy="168" fill="#9b6cf5" r="6"></circle>
+<text fill="#7c8593" font-size="10" x="150" y="188">in-place update · space-efficient</text>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="596" y="188">append-only · very fast writes</text>
+<text fill="#5b9df9" font-size="11.5" font-weight="700" x="26" y="232">③ Ordering</text>
+<line stroke="rgba(120,120,130,0.5)" stroke-width="1.5" x1="150" x2="596" y1="248" y2="248"></line>
+<circle cx="176" cy="248" fill="#7c8593" r="6"></circle>
+<circle cx="518" cy="248" fill="#8fbaff" r="6"></circle>
+<circle cx="548" cy="248" fill="#5b9df9" r="6"></circle>
+<circle cx="578" cy="248" fill="#9b6cf5" r="6"></circle>
+<text fill="#7c8593" font-size="10" x="150" y="268">unordered · point lookups only</text>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="596" y="268">key-ordered · range scans read sequentially</text>
+</svg>
+<figcaption>Fig 4 · Three dials, and where four common structures land. B-Tree and LSM-Tree part ways only on ① and ②; on ③ they sit on the same side — which is why they can substitute for each other.</figcaption>
+</figure>
+<p>The chapter closes on a sentence that turns out to be extremely useful: <strong>any storage structure can be described with three variables.</strong></p>
+<p><strong>① Buffering</strong> — whether to accumulate a batch in memory before writing. The payoff is turning <strong>many small random writes into few sequential ones</strong>: on spinning disks sequential writes beat random ones by roughly two orders of magnitude, and on SSDs it cuts write amplification and spares the flash. The cost is that whatever is buffered vanishes on power loss, so <strong>it must be backed by a WAL</strong>. An LSM-Tree's memtable is the canonical example.</p>
+<p><strong>② Mutability</strong> — in-place update versus append-only. In-place saves space and keeps the read path short, at the cost of random writes, page fragmentation and concurrent writers on one page. Append-only writes extremely fast and is naturally sequential-I/O friendly, at the cost of <strong>space amplification</strong> plus the ongoing expense of background <em>compaction</em> — a record's many historical versions only disappear once merged away. A Copy-on-Write B-Tree (LMDB) is exactly the combination "B-Tree shape, immutable writes".</p>
+<p><strong>③ Ordering</strong> — whether records sit key-ordered on disk. Ordering buys range scans (<code>WHERE date BETWEEN …</code>) that read contiguously, at the cost of maintaining order on every write. Unordered (heap file plus hash index) writes fastest but only does point lookups.</p>
+<p><strong>These three are the book's coordinate system</strong>: for every structure that follows, ask first "where are its three dials set", then listen to the implementation. Far more useful than memorising names.</p>
+
+<h3>6. How to compare databases (the author's warning)</h3>
+<p>The chapter ends on something quite counterintuitive: <strong>comparing databases is far harder than it looks, and most public comparisons are untrustworthy.</strong> Three reasons — the benchmark's workload is almost certainly not yours; change the configuration, the hardware or the data distribution and the conclusion can invert; and the consistency and durability guarantees written in vendor documentation may simply not hold. Petrov's prescription: test with <strong>your own real workload</strong> (YCSB and TPC-C are a starting point, not a finish line); read the source, the issue tracker and the mailing lists to see what "known problems" look like; and for claims about distributed guarantees, look for <strong>independent third-party verification</strong> — he names Jepsen.</p>
+
+<h2>Key trade-offs &amp; choices</h2>
+<p class="tcap">Table 1 · In-memory vs disk-based: where the master copy lives</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Disk-based</th><th>In-memory</th></tr></thead>
+<tbody>
+<tr><th>Master copy</th><td>On disk; memory holds a <strong>buffer pool</strong> of page copies</td><td>In memory; disk is for recovery (<strong>anti-caching</strong> evicts cold records)</td></tr>
+<tr><th>Access latency</th><td>SSD random read ~<code>100 µs</code>, disk seek ~<code>10 ms</code></td><td>~<code>100 ns</code> — <strong>10³–10⁵× faster</strong></td></tr>
+<tr><th>Structural complexity</th><td>High — page layout, serialisation, file offsets</td><td>Low — pointer structures work directly</td></tr>
+<tr><th>Durability</th><td>Naturally on disk, plus WAL</td><td><strong>Also durable</strong>: WAL + periodic snapshots, replay on restart</td></tr>
+<tr><th>Cost ceiling</th><td>Cheap from TB to PB</td><td>Hard-capped by RAM capacity and price</td></tr>
+<tr><th>Pick it when</th><td>Data is <code>TB</code>-scale and skewed (<code>5%</code> of data, <code>90%</code> of requests)</td><td>Hot set <code>&lt;200 GB</code>, sub-ms <code>p99</code>: sessions, counters, leaderboards</td></tr>
+</tbody></table></div>
+
+<p class="tcap">Table 2 · Row vs column vs wide column — three things constantly conflated</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Row-oriented</th><th>Column-oriented</th><th>Wide column</th></tr></thead>
+<tbody>
+<tr><th>Disk layout</th><td>One <strong>row</strong>'s fields contiguous</td><td>One <strong>column</strong>'s values contiguous, own file</td><td>Row key → family; <strong>row-contiguous inside a family</strong></td></tr>
+<tr><th>Good at</th><td>Point reads, single-row writes (OLTP)</td><td>Wide aggregates over few columns (OLAP)</td><td>Keyed reads/writes over huge, sparse row sets</td></tr>
+<tr><th>Typical I/O</th><td>One row = one I/O</td><td>2 of <code>200</code> columns ≈ <strong>1% of the bytes</strong></td><td>One row ≈ one hop (per family)</td></tr>
+<tr><th>Compression</th><td>Mediocre — mixed types per row</td><td><strong>Strong</strong> — homogeneous, highly repetitive</td><td>Mediocre</td></tr>
+<tr><th>Single-row update</th><td>Cheap</td><td><strong>Expensive</strong> — one write per column file</td><td>Cheap</td></tr>
+<tr><th>Examples</th><td>PostgreSQL, MySQL</td><td>ClickHouse, Vertica</td><td>BigTable, HBase, Cassandra</td></tr>
+<tr><th>Common mix-up</th><td>—</td><td>—</td><td><strong>Calling it a columnar database</strong> (wrong)</td></tr>
+</tbody></table></div>
+
+<p class="tcap">Table 3 · Data file organisation and what the index references</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Heap-organized + direct reference</th><th>Index-organized (clustered) + PK indirection</th></tr></thead>
+<tbody>
+<tr><th>Where records live</th><td>A separate heap file, piled in arrival order</td><td><strong>Inside the primary key index</strong>, key-ordered</td></tr>
+<tr><th>Secondary index holds</th><td>The record's <strong>physical location</strong></td><td>The record's <strong>primary key</strong></td></tr>
+<tr><th>Read via secondary index</th><td><strong>1 hop</strong> — faster</td><td><strong>2 hops</strong> — one extra primary index lookup</td></tr>
+<tr><th>Updating one field</th><td>Record moves page → <strong>every</strong> index updated</td><td>Only the index whose field actually changed</td></tr>
+<tr><th>Primary key range scan</th><td>Index ordered but data isn't → random I/O on lookup</td><td><strong>Data itself is ordered</strong> → contiguous reads</td></tr>
+<tr><th>Example</th><td>PostgreSQL</td><td>MySQL InnoDB</td></tr>
+<tr><th>Where it hurts</th><td>Write amplification climbs sharply with index count</td><td>Longer secondary read path; a long PK fattens every index</td></tr>
+</tbody></table></div>
+
+<p class="tcap">Table 4 · Common structures as dial settings</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Structure</th><th>Buffering</th><th>Mutability</th><th>Ordering</th><th>What you buy / what you pay</th></tr></thead>
+<tbody>
+<tr><th>B-Tree</th><td>Low</td><td>In-place</td><td>Ordered</td><td>Steady reads, space-efficient; writes are random I/O, strains under heavy ingest</td></tr>
+<tr><th>Copy-on-Write B-Tree</th><td>Low</td><td>Immutable</td><td>Ordered</td><td>Lock-free reads, simple crash recovery; every write copies the path's pages</td></tr>
+<tr><th>LSM-Tree</th><td><strong>Heavy</strong></td><td>Append-only</td><td>Ordered</td><td>Huge write throughput, sequential I/O; reads consult many levels, compaction burns CPU and bandwidth</td></tr>
+<tr><th>Heap file + hash index</th><td>None</td><td>In-place</td><td><strong>Unordered</strong></td><td>Cheapest writes, very fast point reads; <strong>no range scans at all</strong></td></tr>
+</tbody></table></div>
+
+<p class="tcap">Table 5 · Read it backwards: given a workload, where to set the dials</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Scenario</th><th>Defining load characteristics</th><th>Dial settings</th></tr></thead>
+<tbody>
+<tr><th>Transactional primary</th><td><code>5k</code> QPS, 1–2 records per request, read:write ~<code>10:1</code>, many indexes</td><td>Row-oriented + disk-based + ordered; if write-heavy, prefer PK indirection</td></tr>
+<tr><th>Ingest-heavy logs / events</th><td>Hundreds of thousands of appends per second, almost no updates</td><td>Heavy buffering + append-only (LSM family); avoid in-place B-Trees</td></tr>
+<tr><th>Reporting / dashboards</th><td><code>200</code> columns, <code>5B</code> new rows a day, only 3–5 columns aggregated</td><td>Column-oriented; accept "bulk write, almost never update"</td></tr>
+<tr><th>Sessions / counters / leaderboards</th><td>Hot set <code>&lt;200 GB</code>, sub-millisecond <code>p99</code></td><td>In-memory; durability via WAL + snapshots — don't assume it isn't durable</td></tr>
+<tr><th>Pure key lookups, no ranges</th><td>Only <code>get(key)</code> / <code>put(key)</code></td><td>Unordered (heap + hash) is cheapest; ordering here is write cost paid for nothing</td></tr>
+</tbody></table></div>
+
+<h2>Why it matters / in real systems</h2>
+<p>The value of this chapter isn't its facts — it's that it gives you <strong>a grid that takes any database apart</strong>. Look at RocksDB: heavy buffering, append-only, ordered. LMDB: light buffering, immutable, ordered. Redis: master copy in memory, WAL plus snapshots underneath. <strong>Asked in an interview why Cassandra writes so fast but reads deserve caution, the answer isn't a memorised conclusion — it's reading its three dials aloud</strong>: writes are fast because of heavy buffering and append-only; reads deserve caution because one record may be spread across levels until compaction converges it. What follows are the invoices real companies have published for these trade-offs.</p>
+<div class="ev">
+<div class="evh">Field evidence · these claims aren't the book's — the companies stated them publicly</div>
+<ul>
+<li><strong>Uber</strong> (2016) explained publicly why it moved from Postgres to MySQL: Postgres indexes point directly at on-disk tuple locations, so <strong>updating a row means updating every index on the table</strong> — "when a table has a dozen indexes defined on it, an update to a field that is only covered by a single index must be propagated into all 12 indexes"; InnoDB's secondary indexes hold the primary key, so only indexes whose fields changed need touching. <strong>This is the real invoice for the chapter's primary-index-indirection trade-off.</strong> <span class="src"><a href="https://www.uber.com/us/en/blog/postgres-to-mysql-migration/" rel="noopener" target="_blank">Uber Engineering Blog, "Why Uber Engineering Switched from Postgres to MySQL", 2016 ↗</a></span></li>
+<li><strong>Meta (Facebook)</strong> swapped MySQL's storage engine from InnoDB (B-Tree, in-place) to RocksDB (LSM, append-only) and reported that on its social-graph workload <strong>space usage was cut in half compared with compressed InnoDB</strong>. The reason is specific: RocksDB doesn't use fixed page sizes, so a page compressed to 5 KB occupies 5 KB, where InnoDB must still fill 8 KB. <strong>A direct measurement of what turning the mutability dial to append-only buys.</strong> <span class="src"><a href="https://engineering.fb.com/2016/08/31/core-infra/myrocks-a-space-and-write-optimized-mysql-database/" rel="noopener" target="_blank">Engineering at Meta, "MyRocks: A space- and write-optimized MySQL database", 2016 ↗</a></span></li>
+<li><strong>Google</strong>'s Bigtable paper defines the system as "a sparse, distributed, persistent multidimensional sorted map" and explains that <strong>columns are grouped into column families</strong> as the unit of access control and organisation — it never claimed to be a columnar database. <strong>This is the original source behind Petrov's correction.</strong> <span class="src"><a href="https://research.google/pubs/bigtable-a-distributed-storage-system-for-structured-data/" rel="noopener" target="_blank">F. Chang et al., "Bigtable: A Distributed Storage System for Structured Data", OSDI 2006 ↗</a></span></li>
+<li><strong>Jepsen</strong> — Kyle Kingsbury's independent testing project, which Petrov names in this chapter — reported in 2023 that MySQL 8.0.34's <code>REPEATABLE READ</code> exhibits lost updates and other anomalies, satisfying <strong>neither Adya's definition of repeatable read nor the ambiguous ANSI SQL one</strong>. An isolation level whose documentation says "repeatable read", measured and found otherwise: <strong>the hardest possible example of "don't trust vendor docs, look for independent verification".</strong> <span class="src"><a href="https://jepsen.io/analyses/mysql-8.0.34" rel="noopener" target="_blank">Jepsen, "MySQL 8.0.34", 2023 ↗</a></span></li>
+</ul>
+</div>
+
+<h2>Pitfalls &amp; debates</h2>
+<ul>
+<li><strong>Treating wide column stores as columnar databases</strong> — the correction most worth keeping from this chapter. Cassandra and HBase families merely group fields; inside a family, rows stay contiguous. The real column stores are ClickHouse and Vertica.</li>
+<li><strong>Assuming in-memory databases aren't durable</strong>: they have WAL and snapshots too. Don't over-correct either — configure "flush once a second" and a crash will lose that second.</li>
+<li><strong>Assuming PostgreSQL has clustered indexes</strong>: its <code>CLUSTER</code> command is a <strong>one-shot</strong> reordering of the table by an index; subsequent writes land unordered again. It maintains no continuously clustered structure.</li>
+<li><strong>Selecting on public benchmarks</strong>: the author devotes a section to cold water — change the workload, hardware, configuration or data distribution and the conclusion can reverse.</li>
+<li><strong>Treating the four-layer architecture as a specification</strong>: Petrov himself says there is no single blueprint. Cloud-native databases have already pulled the picture apart — Aurora and Snowflake push the storage engine into a remote shared tier, so "buffer manager and access methods live in one process" no longer holds.</li>
+<li><strong>Its moment in time</strong>: written in 2019. The rise and fall of persistent memory (Intel discontinued Optane in 2022), the I/O-stack shifts brought by NVMe and io_uring, and new access methods like vector indexes are all outside its scope. The three-variable framework is unaffected — it's a taxonomy, not a technology list.</li>
+</ul>
+
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① This chapter is the book's map — it breaks the black box "database" into four layers, then collapses it into three variables.</p>
+<p>② The anatomy: <strong>transport → query processing (parse + optimizer producing a plan) → execution engine (local / remote) → storage engine</strong>. Five parts inside the engine: transaction manager (logical consistency), lock manager (physical integrity), access methods (the structures themselves), buffer manager (page cache), recovery manager (WAL).</p>
+<p>③ Memory vs disk is <code>100 ns</code> against <code>100 µs</code> against <code>10 ms</code> — the page semantics of disk forced out the whole complexity of the B-Tree. In-memory systems <strong>are durable</strong> (WAL + snapshots); anti-caching differs from a buffer pool only in which copy is authoritative.</p>
+<p>④ Row stores fetch a whole row in one shot; column stores touch only the columns used (2 of 200 ≈ 1% of the bytes) and compress better, at the price of expensive single-row updates.</p>
+<p>⑤ <strong>Wide column ≠ columnar</strong>: inside a BigTable / HBase / Cassandra column family the layout is row-contiguous. The single most frequent misconception here.</p>
+<p>⑥ <strong>Whether a secondary index stores a physical location or a primary key</strong> decides between a one-hop read and low write amplification — PostgreSQL and InnoDB sit at opposite ends, and Uber's 2016 migration was the invoice.</p>
+<p>⑦ The book's coordinate system is three variables: <strong>buffering</strong> (random writes become sequential, must be WAL-backed), <strong>mutability</strong> (in-place saves space vs append-only writes fast but needs compaction), <strong>ordering</strong> (order buys range scans, disorder buys write speed).</p>
+<p>⑧ Settings are structures: B-Tree = low buffering + in-place + ordered; LSM-Tree = heavy buffering + append-only + ordered; CoW B-Tree = low buffering + immutable + ordered; heap + hash = no buffering + in-place + unordered.</p>
+<p>⑨ The author's warning: <strong>don't pick a database off public benchmarks</strong> — measure with your own workload, read the source and issues, and for distributed guarantees look for independent verification (Jepsen).</p>
+<p>⑩ The caveat: there is no single blueprint for database design; the four-layer picture has already been pulled apart by disaggregated cloud architectures, but the three-variable taxonomy still holds.</p>
+</div>
+</div>
+
+<footer>Books Deep-Read · reading this page ≈ the core of this chapter; for full case studies and depth, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
