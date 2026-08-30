@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals 第 2 章 · B-Tree 基础 — 专业书籍精读 Book 47</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -49,46 +50,38 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </style></head><body>
 <div class="container">
 <p class="top">专业书籍精读 · Database Internals · 第 2 章</p>
-<h1>B-Tree 基础</h1>
+<h1 data-tts="828fcf656c924e6e">B-Tree 基础</h1>
 <p class="sub">Database Internals · Ch 2 · Alex Petrov · 2019</p>
 <p class="langbar"><a href="dbinternals-ch02-btree-basics-book47.en.html">EN →</a></p>
 <div class="modebar">
 <button data-mode="pop">科普版</button>
 <button data-mode="deep">精读版</button>
 </div>
-
 <div class="mode mode-pop">
-<h2>这一章讲什么？</h2>
+<h2 data-tts="6dd523cea21582a4">这一章讲什么？</h2>
 <p>你在淘宝按订单号查一笔三年前的订单，几十亿条记录里，零点几秒就翻了出来。数据库靠的是<strong>索引</strong>——一本能瞬间定位的目录。这一章讲的就是那本目录几乎唯一的做法：<strong>B-Tree</strong>。它 1972 年被提出，五十多年过去，MySQL、PostgreSQL、SQLite、Oracle 的默认索引<strong>仍然是它</strong>。为什么偏偏是它？</p>
-
-<h2>先说个怪事</h2>
+<h2 data-tts="d2b66b9293a6d3f7">先说个怪事</h2>
 <p>计算机课上教的「查找树」，是每次问一个是非题：比它大还是比它小？往左还是往右？这在内存里非常好用。可一旦把同样的树搬到硬盘上，它就<strong>慢得不能用</strong>——快慢的账，突然算错了。</p>
-
-<h2>旧世界为什么难</h2>
+<h2 data-tts="bff0e58ff72f02e1">旧世界为什么难</h2>
 <p>关键在于：<strong>硬盘不零卖</strong>。哪怕只想读一个字节，它也得整块整块地搬——一次最少几千字节。跑一趟很贵，搬多搬少反倒差别不大。</p>
 <p>而那种「每次只岔两条路」的树，一个岔路口只有一个小小的路标。几十亿条数据，你得连着问三十来次「往左还是往右」，每问一次就要往硬盘跑一趟。<strong>慢就慢在跑腿的次数上，不是比大小的次数上。</strong></p>
-
-<h2>核心机制：把路标做成目录页</h2>
+<h2 data-tts="a634203eb66e68ee">核心机制：把路标做成目录页</h2>
 <p>第一招是<strong>不再让一个岔路口只放一个路标</strong>。既然每次都要整块搬，那就把这一整块塞满路标——一页纸上列出几百个区间：「订单号 1 万到 5 万在这架，5 万到 9 万在那架……」看一眼就知道下一步去哪，就像查字典先看侧边的字母索引。结果是<strong>树被压扁了</strong>：原来三十几层，现在三四层；最上面那两三层很小、常年待在内存里，于是查一次通常只要真去硬盘跑<strong>一趟</strong>。</p>
 <p>第二招更妙：<strong>这棵树是从下往上长的</strong>。新数据先塞进最底下那一页；那页满了就一分为二，把中间那个路标交给上一级；上一级也满了再往上交；一直到最顶上那页也撑不住时，整棵树才<strong>整体长高一层</strong>。因为长高永远发生在顶上，每片叶子离树根<strong>永远一样远</strong>——它天生就是平的，不用像别的树那样翻来覆去调平衡。</p>
 <p>第三招给「翻页」用：真正的数据只放最底下一层，而最底层的页<strong>手拉手串成一条链</strong>。所以「把三月一号之后的一千条订单列出来」，就是找到起点顺着链走，不用再爬回树顶。</p>
-
-<h2>带来了什么 / 该怎么选</h2>
+<h2 data-tts="f5a78169a9ecdaee">带来了什么 / 该怎么选</h2>
 <p>五十年不倒，是因为它一次满足了三件事：<strong>找一条快、连着找一批也快、还能随时插删并保持有序</strong>。哈希表找一条也快，但它不认顺序，后两件都做不了。</p>
 <p>诚实的代价只有一句：<strong>它偏爱按顺序灌进来的数据</strong>——自增编号、时间戳都省心；主键要是随机码那样到处乱插，页就会被劈得普遍只装半满，白占空间、写入也更费劲。</p>
-
-<h2>一句话记住</h2>
+<h2 data-tts="fd68e2b0c8eb65ff">一句话记住</h2>
 <div class="tl">
 <p>B-Tree 不是「更聪明的查找树」，而是<strong>为硬盘的脾气重新设计过的查找树</strong>：既然硬盘只能整块搬，那就把一整块塞满路标、一次岔出几百条路，把树从三十层压成三四层——省的不是比大小的次数，是<strong>跑硬盘的次数</strong>。</p>
 </div>
 <p class="switch-hint">想进到具体机制、记号和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
 </div>
-
 <div class="mode mode-deep" hidden="">
-<h2>一句话</h2>
+<h2 data-tts="719f96c3f4b53c8e">一句话</h2>
 <p class="lead">这一章的核心命题：<strong>B-Tree 不是「更快的查找树」，而是「为块设备重写过的查找树」</strong>。它优化的不是比较次数，而是<em>磁盘往返次数</em>——把一个节点撑到<strong>整整一页</strong>、把扇出（fanout）从 2 拉到几百上千，树高就从几十层塌成三四层；再让它<strong>从叶子往上长</strong>，于是天生完美平衡、无需旋转。这就是五十年来磁盘数据库索引的默认答案。</p>
-
-<h2>Glossary · 术语表</h2>
+<h2 data-tts="3d4cade66688527d">Glossary · 术语表</h2>
 <div class="glossary">
 <ul>
 <li><strong>块设备（block device）</strong>：磁盘这类只能按固定大小的「块」整块读写的存储，不零卖字节。</li>
@@ -103,17 +96,13 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>缓冲池（page cache / buffer pool）</strong>：内存里替磁盘页留的一块地，命中就不必真去读盘。</li>
 </ul>
 </div>
-
-<h2>坐标</h2>
+<h2 data-tts="fc92353e8cfd8f72">坐标</h2>
 <p>Part I「存储引擎」的第 2 章。<strong>上承</strong> Ch1 的三个旋钮——B-Tree 正是「<strong>缓冲 + 原地改 + 按键有序</strong>」这一角的经典实现；<strong>下启</strong> Ch3（页内怎么摆字节）、Ch4（分裂合并与并发的工程细节）、Ch6（变体）与 Ch7（它的对立面：LSM-Tree）。对应现实里几乎所有磁盘型 OLTP 数据库的默认索引。</p>
-
-<h2>这章要解决什么</h2>
+<h2 data-tts="a0fafe176ffb0ed1">这章要解决什么</h2>
 <p>拿一个场景当锚：一张 <strong>20 亿行</strong>的订单表，要求按订单号点查的 <code>p99</code>（一百个请求里第 99 慢的那个）压在 <code>10 ms</code> 以内、扛 <code>5 万</code> QPS。全表扫描不行；全塞内存也不行——每行 200 字节就是 <code>400 GB</code>。所以<strong>索引必须住在磁盘上</strong>，而磁盘的计价单位不是「比较一次」，是<strong>一次随机 I/O</strong>：机械盘约 <code>10 ms</code>（每盘约 100 IOPS），NVMe SSD 约 <code>50–100 µs</code>。</p>
 <p>把教科书里的平衡二叉树直接搬上去会怎样？20 亿条要走大约 <code>log₂(2×10⁹) ≈ 31</code> 层——<strong>最多 31 次随机 I/O</strong>：机械盘上 0.3 秒，SSD 上也有 2–3 毫秒，且一次查询就吃掉三十次 IOPS 预算。这章要解决的就是：<strong>把内存里的查找结构，改造成一个「以页读次数计价」的结构</strong>。</p>
-
-<h2>核心内容，讲透</h2>
-
-<h3>一、为什么内存里的二叉树一上磁盘就废了</h3>
+<h2 data-tts="0cfa727733263d92">核心内容，讲透</h2>
+<h3 data-tts="ea68f41a0abc4eb0">一、为什么内存里的二叉树一上磁盘就废了</h3>
 <p>Petrov 把原因拆得很干脆，四条：</p>
 <ul>
 <li><strong>扇出太低 → 树太高</strong>。每个节点只岔两条路，树高是 <code>log₂ N</code>；而<strong>树高的单位不是「层」，是「磁盘往返」</strong>。</li>
@@ -122,184 +111,176 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>再平衡太贵</strong>。AVL、红黑树靠<em>旋转（rotation）</em>——局部改指针——维持平衡；在内存里几乎免费，落到磁盘上每次旋转都要<strong>改写好几个页</strong>。</li>
 </ul>
 <p>所以这一章的钩子是：<strong>你以为查找结构比的是「问几次问题」，其实磁盘上比的是「跑几趟腿」。</strong></p>
-
 <figure>
-<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
-<line x1="318" x2="318" y1="14" y2="288" stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4"></line>
-<text x="150" y="26" fill="#7c8593" font-size="12.5" font-weight="700" text-anchor="middle">二叉查找树 · 一个岔路口一个路标</text>
-<circle cx="150" cy="48" r="8" fill="rgba(91,157,249,0.18)" stroke="#7c8593"></circle>
-<circle cx="112" cy="80" r="8" fill="rgba(91,157,249,0.18)" stroke="#7c8593"></circle>
-<circle cx="188" cy="80" r="8" fill="rgba(91,157,249,0.18)" stroke="#7c8593"></circle>
-<circle cx="92" cy="112" r="8" fill="rgba(91,157,249,0.18)" stroke="#7c8593"></circle>
-<circle cx="132" cy="112" r="8" fill="rgba(91,157,249,0.18)" stroke="#7c8593"></circle>
-<circle cx="168" cy="112" r="8" fill="rgba(91,157,249,0.18)" stroke="#7c8593"></circle>
-<circle cx="208" cy="112" r="8" fill="rgba(91,157,249,0.18)" stroke="#7c8593"></circle>
-<line x1="150" x2="112" y1="56" y2="72" stroke="#7c8593"></line>
-<line x1="150" x2="188" y1="56" y2="72" stroke="#7c8593"></line>
-<line x1="112" x2="92" y1="88" y2="104" stroke="#7c8593"></line>
-<line x1="112" x2="132" y1="88" y2="104" stroke="#7c8593"></line>
-<line x1="188" x2="168" y1="88" y2="104" stroke="#7c8593"></line>
-<line x1="188" x2="208" y1="88" y2="104" stroke="#7c8593"></line>
-<text x="150" y="142" fill="#7c8593" font-size="15" text-anchor="middle">⋮</text>
-<text x="150" y="164" fill="#e06b6b" font-size="11.5" font-weight="700" text-anchor="middle">第 31 层</text>
-<text x="150" y="196" fill="#b9c0ca" font-size="11" text-anchor="middle">20 亿条 → 约 31 层</text>
-<text x="150" y="216" fill="#e06b6b" font-size="11" text-anchor="middle">最多 31 次随机 I/O</text>
-<text x="150" y="236" fill="#7c8593" font-size="10" text-anchor="middle">机械盘约 0.3 秒 · SSD 也要 2–3 毫秒</text>
-<rect x="46" y="252" width="208" height="30" rx="5" fill="rgba(224,107,107,0.10)" stroke="rgba(224,107,107,0.45)"></rect>
-<text x="150" y="271" fill="#b9c0ca" font-size="9.5" text-anchor="middle">为拿回 32 字节整搬 8 KB · 99.6% 白搬</text>
-<text x="480" y="26" fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle">B-Tree · 一个节点 = 一整页路标</text>
-<rect x="412" y="40" width="136" height="20" rx="4" fill="rgba(155,108,245,0.20)" stroke="#9b6cf5"></rect>
-<text x="480" y="54" fill="#e7ebf1" font-size="10" text-anchor="middle">根（1 页 · 岔出几百条）</text>
-<rect x="356" y="82" width="80" height="18" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
-<rect x="444" y="82" width="80" height="18" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
-<rect x="532" y="82" width="70" height="18" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
-<text x="480" y="95" fill="#b9c0ca" font-size="9.5" text-anchor="middle">内部节点</text>
-<rect x="356" y="118" width="52" height="18" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
-<rect x="416" y="118" width="52" height="18" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
-<rect x="476" y="118" width="52" height="18" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
-<rect x="536" y="118" width="66" height="18" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
-<text x="480" y="131" fill="#b9c0ca" font-size="9.5" text-anchor="middle">内部节点</text>
-<rect x="356" y="154" width="246" height="18" rx="4" fill="rgba(91,157,249,0.20)" stroke="#5b9df9"></rect>
-<text x="479" y="167" fill="#e7ebf1" font-size="10" text-anchor="middle">叶子层：真正的数据</text>
-<line x1="480" x2="480" y1="60" y2="80" stroke="#7c8593"></line>
-<line x1="480" x2="480" y1="100" y2="116" stroke="#7c8593"></line>
-<line x1="480" x2="480" y1="136" y2="152" stroke="#7c8593"></line>
-<text x="480" y="196" fill="#b9c0ca" font-size="11" text-anchor="middle">20 亿条 → 只要 4 层</text>
-<text x="480" y="216" fill="#8fbaff" font-size="11" text-anchor="middle">最多 4 次页读</text>
-<text x="480" y="236" fill="#7c8593" font-size="10" text-anchor="middle">上面 3 层常驻内存 → 通常只 1 次真读盘</text>
-<rect x="376" y="252" width="208" height="30" rx="5" fill="rgba(91,157,249,0.10)" stroke="rgba(91,157,249,0.45)"></rect>
-<text x="480" y="271" fill="#b9c0ca" font-size="9.5" text-anchor="middle">一页 8 KB 塞满路标 ≈ 岔出 200–500 条</text>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="318" x2="318" y1="14" y2="288"></line>
+<text fill="#7c8593" font-size="12.5" font-weight="700" text-anchor="middle" x="150" y="26">二叉查找树 · 一个岔路口一个路标</text>
+<circle cx="150" cy="48" fill="rgba(91,157,249,0.18)" r="8" stroke="#7c8593"></circle>
+<circle cx="112" cy="80" fill="rgba(91,157,249,0.18)" r="8" stroke="#7c8593"></circle>
+<circle cx="188" cy="80" fill="rgba(91,157,249,0.18)" r="8" stroke="#7c8593"></circle>
+<circle cx="92" cy="112" fill="rgba(91,157,249,0.18)" r="8" stroke="#7c8593"></circle>
+<circle cx="132" cy="112" fill="rgba(91,157,249,0.18)" r="8" stroke="#7c8593"></circle>
+<circle cx="168" cy="112" fill="rgba(91,157,249,0.18)" r="8" stroke="#7c8593"></circle>
+<circle cx="208" cy="112" fill="rgba(91,157,249,0.18)" r="8" stroke="#7c8593"></circle>
+<line stroke="#7c8593" x1="150" x2="112" y1="56" y2="72"></line>
+<line stroke="#7c8593" x1="150" x2="188" y1="56" y2="72"></line>
+<line stroke="#7c8593" x1="112" x2="92" y1="88" y2="104"></line>
+<line stroke="#7c8593" x1="112" x2="132" y1="88" y2="104"></line>
+<line stroke="#7c8593" x1="188" x2="168" y1="88" y2="104"></line>
+<line stroke="#7c8593" x1="188" x2="208" y1="88" y2="104"></line>
+<text fill="#7c8593" font-size="15" text-anchor="middle" x="150" y="142">⋮</text>
+<text fill="#e06b6b" font-size="11.5" font-weight="700" text-anchor="middle" x="150" y="164">第 31 层</text>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="150" y="196">20 亿条 → 约 31 层</text>
+<text fill="#e06b6b" font-size="11" text-anchor="middle" x="150" y="216">最多 31 次随机 I/O</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="150" y="236">机械盘约 0.3 秒 · SSD 也要 2–3 毫秒</text>
+<rect fill="rgba(224,107,107,0.10)" height="30" rx="5" stroke="rgba(224,107,107,0.45)" width="208" x="46" y="252"></rect>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="150" y="271">为拿回 32 字节整搬 8 KB · 99.6% 白搬</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="480" y="26">B-Tree · 一个节点 = 一整页路标</text>
+<rect fill="rgba(155,108,245,0.20)" height="20" rx="4" stroke="#9b6cf5" width="136" x="412" y="40"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="480" y="54">根（1 页 · 岔出几百条）</text>
+<rect fill="rgba(91,157,249,0.12)" height="18" rx="4" stroke="#7c8593" width="80" x="356" y="82"></rect>
+<rect fill="rgba(91,157,249,0.12)" height="18" rx="4" stroke="#7c8593" width="80" x="444" y="82"></rect>
+<rect fill="rgba(91,157,249,0.12)" height="18" rx="4" stroke="#7c8593" width="70" x="532" y="82"></rect>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="480" y="95">内部节点</text>
+<rect fill="rgba(91,157,249,0.12)" height="18" rx="4" stroke="#7c8593" width="52" x="356" y="118"></rect>
+<rect fill="rgba(91,157,249,0.12)" height="18" rx="4" stroke="#7c8593" width="52" x="416" y="118"></rect>
+<rect fill="rgba(91,157,249,0.12)" height="18" rx="4" stroke="#7c8593" width="52" x="476" y="118"></rect>
+<rect fill="rgba(91,157,249,0.12)" height="18" rx="4" stroke="#7c8593" width="66" x="536" y="118"></rect>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="480" y="131">内部节点</text>
+<rect fill="rgba(91,157,249,0.20)" height="18" rx="4" stroke="#5b9df9" width="246" x="356" y="154"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="479" y="167">叶子层：真正的数据</text>
+<line stroke="#7c8593" x1="480" x2="480" y1="60" y2="80"></line>
+<line stroke="#7c8593" x1="480" x2="480" y1="100" y2="116"></line>
+<line stroke="#7c8593" x1="480" x2="480" y1="136" y2="152"></line>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="480" y="196">20 亿条 → 只要 4 层</text>
+<text fill="#8fbaff" font-size="11" text-anchor="middle" x="480" y="216">最多 4 次页读</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="480" y="236">上面 3 层常驻内存 → 通常只 1 次真读盘</text>
+<rect fill="rgba(91,157,249,0.10)" height="30" rx="5" stroke="rgba(91,157,249,0.45)" width="208" x="376" y="252"></rect>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="480" y="271">一页 8 KB 塞满路标 ≈ 岔出 200–500 条</text>
 </svg>
 <figcaption>图 1 · 同样 20 亿条数据：二叉树把成本花在「层数」上，B-Tree 把一整页都换成路标，把层数压成个位数。</figcaption>
 </figure>
-
-<h3>二、规则变了：块设备按「趟」计价</h3>
+<h3 data-tts="26f7199213f31a87">二、规则变了：块设备按「趟」计价</h3>
 <p>磁盘不零卖。机械盘按扇区（512 字节或 4 KB）读写，文件系统按页（通常 4 KB）读写，数据库自己再定一层页（4–16 KB）。<strong>读 1 个字节和读一整页，成本几乎一样</strong>——大头是那一趟往返。SSD 更进一步：它<strong>不能原地覆写</strong>，最小擦除单位是比页更大的块，由内部的 FTL（闪存转换层，把「逻辑地址」映射到「实际闪存位置」）腾挪。</p>
 <p>推论只有一句，却决定了整章：<strong>目标函数从「最少的比较次数」变成「最少的页读次数」</strong>。于是节点大小应当<strong>等于页大小</strong>——一趟既然躲不掉，就让搬回来的东西全都有用。算个量级：PostgreSQL 一页 <code>8 KB</code>，一条索引项按「键 16 字节 + 指针 8 字节 + 槽位开销 8 字节 ≈ 32 字节」估，一页约装 <strong>250 条</strong>路标，于是 3 层覆盖 1560 万条、<strong>4 层覆盖 39 亿条</strong>——刚才那 20 亿行，四层就装下了。</p>
-
-<h3>三、B-Tree 的解剖：分隔键、扇出、占用率</h3>
+<h3 data-tts="66e051232533cf13">三、B-Tree 的解剖：分隔键、扇出、占用率</h3>
 <p>B-Tree 由 Bayer 与 McCreight 在 <strong>1972</strong> 年提出，Comer 1979 年的综述《The Ubiquitous B-Tree》把它推成教科书标准。它是二叉查找树的推广：<strong>一个节点不再只存一个键、只岔两条路，而是存一串有序的键、岔出很多条路</strong>。三种角色：<strong>根节点</strong>（唯一入口）、<strong>内部节点</strong>（只放路标）、<strong>叶子节点</strong>（放数据或指向数据的位置）。</p>
 <p>最要紧的一条结构常识：<strong>一个内部节点有 n 个分隔键，就有 n+1 个指针</strong>——n 个路标把键空间切成 n+1 段。比如 <code>50 | 90</code> 切出「&lt;50」「50–90」「≥90」三段，对应三个孩子。一次查找就是从根开始，<strong>在页内对这几百个分隔键做二分查找</strong>（纯内存操作，几乎免费），选中一段，顺指针读下一页，直到叶子。总代价是 <code>log_k N</code> 次页读——<code>k</code> 是扇出、<code>N</code> 是总条数；别被记号唬住，它只说一件事：<strong>扇出越大、树越矮、跑腿次数越少</strong>。</p>
 <p>还有一个常被忽略的量：<strong>占用率</strong>。B-Tree 的页<strong>故意不装满</strong>，留白是为了让未来的插入能就地塞进去、不必立刻分裂；经典不变式「除根之外每个节点至少半满」正是树高不会退化的保证来源。代价是<strong>空间换时间</strong>：索引天然比数据「虚胖」一截。</p>
-
 <figure>
-<svg viewBox="0 0 640 314" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
-<defs><marker id="b2a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
-<marker id="b2h" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
-<text x="20" y="20" fill="#5b9df9" font-size="12" font-weight="700">查找 key = 72 的路径（紫色）</text>
-<rect x="236" y="34" width="168" height="26" rx="4" fill="rgba(155,108,245,0.22)" stroke="#9b6cf5" stroke-width="2"></rect>
-<line x1="292" x2="292" y1="34" y2="60" stroke="#9b6cf5"></line>
-<line x1="348" x2="348" y1="34" y2="60" stroke="#9b6cf5"></line>
-<text x="264" y="52" fill="#e7ebf1" font-size="11" text-anchor="middle">·</text>
-<text x="320" y="52" fill="#e7ebf1" font-size="11" text-anchor="middle">50</text>
-<text x="376" y="52" fill="#e7ebf1" font-size="11" text-anchor="middle">90</text>
-<text x="424" y="45" fill="#9b6cf5" font-size="10" font-family="monospace">根：2 个分隔键 → 3 个指针</text>
-<text x="424" y="59" fill="#7c8593" font-size="9.5">72 落在 50–90 这段 → 走中间</text>
-<line x1="264" x2="120" y1="60" y2="104" stroke="#7c8593" marker-end="url(#b2a)"></line>
-<line x1="320" x2="320" y1="60" y2="104" stroke="#9b6cf5" stroke-width="2" marker-end="url(#b2h)"></line>
-<line x1="376" x2="520" y1="60" y2="104" stroke="#7c8593" marker-end="url(#b2a)"></line>
-<rect x="60" y="108" width="120" height="24" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
-<text x="120" y="125" fill="#b9c0ca" font-size="10.5" text-anchor="middle">12 | 30</text>
-<rect x="260" y="108" width="120" height="24" rx="4" fill="rgba(155,108,245,0.22)" stroke="#9b6cf5" stroke-width="2"></rect>
-<text x="320" y="125" fill="#e7ebf1" font-size="10.5" text-anchor="middle">60 | 75</text>
-<rect x="460" y="108" width="120" height="24" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
-<text x="520" y="125" fill="#b9c0ca" font-size="10.5" text-anchor="middle">120 | 160</text>
-<line x1="286" x2="240" y1="132" y2="176" stroke="#7c8593" marker-end="url(#b2a)"></line>
-<line x1="320" x2="330" y1="132" y2="176" stroke="#9b6cf5" stroke-width="2" marker-end="url(#b2h)"></line>
-<line x1="354" x2="420" y1="132" y2="176" stroke="#7c8593" marker-end="url(#b2a)"></line>
-<rect x="30" y="180" width="88" height="30" rx="4" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
-<text x="74" y="199" fill="#b9c0ca" font-size="9.5" text-anchor="middle">8,10 · 数据</text>
-<rect x="128" y="180" width="88" height="30" rx="4" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
-<text x="172" y="199" fill="#b9c0ca" font-size="9.5" text-anchor="middle">30,44 · 数据</text>
-<rect x="226" y="180" width="88" height="30" rx="4" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
-<text x="270" y="199" fill="#b9c0ca" font-size="9.5" text-anchor="middle">52,58 · 数据</text>
-<rect x="324" y="180" width="88" height="30" rx="4" fill="rgba(155,108,245,0.22)" stroke="#9b6cf5" stroke-width="2"></rect>
-<text x="368" y="199" fill="#e7ebf1" font-size="9.5" text-anchor="middle">68,72 · 数据</text>
-<rect x="422" y="180" width="88" height="30" rx="4" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
-<text x="466" y="199" fill="#b9c0ca" font-size="9.5" text-anchor="middle">80,88 · 数据</text>
-<rect x="520" y="180" width="88" height="30" rx="4" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
-<text x="564" y="199" fill="#b9c0ca" font-size="9.5" text-anchor="middle">124,150 ·数据</text>
-<line x1="118" x2="128" y1="222" y2="222" stroke="#5b9df9" marker-end="url(#b2a)"></line>
-<line x1="216" x2="226" y1="222" y2="222" stroke="#5b9df9" marker-end="url(#b2a)"></line>
-<line x1="314" x2="324" y1="222" y2="222" stroke="#5b9df9" marker-end="url(#b2a)"></line>
-<line x1="412" x2="422" y1="222" y2="222" stroke="#5b9df9" marker-end="url(#b2a)"></line>
-<line x1="510" x2="520" y1="222" y2="222" stroke="#5b9df9" marker-end="url(#b2a)"></line>
-<line x1="74" x2="74" y1="210" y2="222" stroke="#5b9df9"></line>
-<line x1="172" x2="172" y1="210" y2="222" stroke="#5b9df9"></line>
-<line x1="270" x2="270" y1="210" y2="222" stroke="#5b9df9"></line>
-<line x1="368" x2="368" y1="210" y2="222" stroke="#5b9df9"></line>
-<line x1="466" x2="466" y1="210" y2="222" stroke="#5b9df9"></line>
-<line x1="564" x2="564" y1="210" y2="222" stroke="#5b9df9"></line>
-<text x="320" y="246" fill="#8fbaff" font-size="10.5" text-anchor="middle">叶子之间的兄弟指针：范围扫描顺着链一直走，不必回溯到根</text>
-<rect x="30" y="258" width="578" height="46" rx="6" fill="rgba(91,157,249,0.07)" stroke="rgba(91,157,249,0.30)"></rect>
-<text x="319" y="276" fill="#b9c0ca" font-size="10" text-anchor="middle">内部节点只放路标、不放数据；页内用二分查找定位区间</text>
-<text x="319" y="294" fill="#7c8593" font-size="9.5" text-anchor="middle">图中每节点只画 2 个分隔键 / 3 条岔路；真实一页里是几百条，所以几十亿条也只要 3–4 层</text>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 314" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b2a" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="b2h" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="12" font-weight="700" x="20" y="20">查找 key = 72 的路径（紫色）</text>
+<rect fill="rgba(155,108,245,0.22)" height="26" rx="4" stroke="#9b6cf5" stroke-width="2" width="168" x="236" y="34"></rect>
+<line stroke="#9b6cf5" x1="292" x2="292" y1="34" y2="60"></line>
+<line stroke="#9b6cf5" x1="348" x2="348" y1="34" y2="60"></line>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="264" y="52">·</text>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="320" y="52">50</text>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="376" y="52">90</text>
+<text fill="#9b6cf5" font-family="monospace" font-size="10" x="424" y="45">根：2 个分隔键 → 3 个指针</text>
+<text fill="#7c8593" font-size="9.5" x="424" y="59">72 落在 50–90 这段 → 走中间</text>
+<line marker-end="url(#b2a)" stroke="#7c8593" x1="264" x2="120" y1="60" y2="104"></line>
+<line marker-end="url(#b2h)" stroke="#9b6cf5" stroke-width="2" x1="320" x2="320" y1="60" y2="104"></line>
+<line marker-end="url(#b2a)" stroke="#7c8593" x1="376" x2="520" y1="60" y2="104"></line>
+<rect fill="rgba(91,157,249,0.12)" height="24" rx="4" stroke="#7c8593" width="120" x="60" y="108"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="120" y="125">12 | 30</text>
+<rect fill="rgba(155,108,245,0.22)" height="24" rx="4" stroke="#9b6cf5" stroke-width="2" width="120" x="260" y="108"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="320" y="125">60 | 75</text>
+<rect fill="rgba(91,157,249,0.12)" height="24" rx="4" stroke="#7c8593" width="120" x="460" y="108"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="520" y="125">120 | 160</text>
+<line marker-end="url(#b2a)" stroke="#7c8593" x1="286" x2="240" y1="132" y2="176"></line>
+<line marker-end="url(#b2h)" stroke="#9b6cf5" stroke-width="2" x1="320" x2="330" y1="132" y2="176"></line>
+<line marker-end="url(#b2a)" stroke="#7c8593" x1="354" x2="420" y1="132" y2="176"></line>
+<rect fill="rgba(91,157,249,0.10)" height="30" rx="4" stroke="#7c8593" width="88" x="30" y="180"></rect>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="74" y="199">8,10 · 数据</text>
+<rect fill="rgba(91,157,249,0.10)" height="30" rx="4" stroke="#7c8593" width="88" x="128" y="180"></rect>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="172" y="199">30,44 · 数据</text>
+<rect fill="rgba(91,157,249,0.10)" height="30" rx="4" stroke="#7c8593" width="88" x="226" y="180"></rect>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="270" y="199">52,58 · 数据</text>
+<rect fill="rgba(155,108,245,0.22)" height="30" rx="4" stroke="#9b6cf5" stroke-width="2" width="88" x="324" y="180"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="368" y="199">68,72 · 数据</text>
+<rect fill="rgba(91,157,249,0.10)" height="30" rx="4" stroke="#7c8593" width="88" x="422" y="180"></rect>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="466" y="199">80,88 · 数据</text>
+<rect fill="rgba(91,157,249,0.10)" height="30" rx="4" stroke="#7c8593" width="88" x="520" y="180"></rect>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="564" y="199">124,150 ·数据</text>
+<line marker-end="url(#b2a)" stroke="#5b9df9" x1="118" x2="128" y1="222" y2="222"></line>
+<line marker-end="url(#b2a)" stroke="#5b9df9" x1="216" x2="226" y1="222" y2="222"></line>
+<line marker-end="url(#b2a)" stroke="#5b9df9" x1="314" x2="324" y1="222" y2="222"></line>
+<line marker-end="url(#b2a)" stroke="#5b9df9" x1="412" x2="422" y1="222" y2="222"></line>
+<line marker-end="url(#b2a)" stroke="#5b9df9" x1="510" x2="520" y1="222" y2="222"></line>
+<line stroke="#5b9df9" x1="74" x2="74" y1="210" y2="222"></line>
+<line stroke="#5b9df9" x1="172" x2="172" y1="210" y2="222"></line>
+<line stroke="#5b9df9" x1="270" x2="270" y1="210" y2="222"></line>
+<line stroke="#5b9df9" x1="368" x2="368" y1="210" y2="222"></line>
+<line stroke="#5b9df9" x1="466" x2="466" y1="210" y2="222"></line>
+<line stroke="#5b9df9" x1="564" x2="564" y1="210" y2="222"></line>
+<text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="320" y="246">叶子之间的兄弟指针：范围扫描顺着链一直走，不必回溯到根</text>
+<rect fill="rgba(91,157,249,0.07)" height="46" rx="6" stroke="rgba(91,157,249,0.30)" width="578" x="30" y="258"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="319" y="276">内部节点只放路标、不放数据；页内用二分查找定位区间</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="319" y="294">图中每节点只画 2 个分隔键 / 3 条岔路；真实一页里是几百条，所以几十亿条也只要 3–4 层</text>
 </svg>
 <figcaption>图 2 · B+-Tree 的解剖：内部节点只放分隔键（n 个键 → n+1 个指针），数据全在叶子层，叶子之间用兄弟指针串成有序链。</figcaption>
 </figure>
-
-<h3>四、B+-Tree：现实里的「B-Tree」几乎都是它</h3>
+<h3 data-tts="e12aae4ef43f75ed">四、B+-Tree：现实里的「B-Tree」几乎都是它</h3>
 <p>原版 B-Tree 会<strong>把数据顺手放在内部节点里</strong>。而几乎所有真实数据库用的是变体 <strong>B+-Tree</strong>，两处改动：</p>
 <ul>
 <li><strong>数据只放叶子</strong>，内部节点纯粹是路标。于是内部节点每条项更小 → <strong>扇出更大、树更矮</strong>，整个内部层小到可以常驻内存。</li>
 <li><strong>叶子之间加兄弟指针</strong>串成有序链。于是<strong>范围扫描变成线性遍历</strong>——「查三月一号之后的 1000 条订单」定位一次起点就顺链走，不用反复回到根。</li>
 </ul>
 <p>Petrov 也直说：差异主要在实现层面，业界口语中的「B-Tree」通常指的就是这一族。<strong>面试里说清「数据在叶子、叶子串链」，比背定义更值钱。</strong></p>
-
-<h3>五、增删：一棵从叶子往上长的树</h3>
+<h3 data-tts="f2dace6ee1ae406a">五、增删：一棵从叶子往上长的树</h3>
 <p><strong>插入</strong>：像查找一样走到目标叶子，把新项按序塞进去。塞得下，一次插入就是<strong>一次页内改写</strong>。塞不下（溢出）就<strong>分裂</strong>：把这页从中间劈成两页，把中间那个键<strong>上提</strong>给父节点当新的分隔键；父节点若也满了就继续往上分裂、继续上提。<strong>一直到根也撑不住时，根才分裂、生出新根——整棵树在这一刻长高一层。</strong></p>
 <p>这就是最优雅的地方：<strong>它只从根部长高，生长的动力却来自叶子</strong>。长高既然是整体性的，所有叶子到根的距离就<strong>永远相等</strong>——天生完美平衡、<strong>完全不需要旋转</strong>。红黑树那套「局部旋转维持平衡」在这里根本不存在，这是它适合磁盘的第二个理由。</p>
 <p><strong>删除</strong>：走到叶子删掉那一项；若占用率跌破阈值（下溢），要么向兄弟<strong>借</strong>几项（重分布），要么和兄弟<strong>合并</strong>成一页——后者让父节点少一个分隔键，可能一路向上传递，根只剩一个孩子时树<strong>矮一层</strong>。但要留一句注脚：<strong>很多真实引擎会推迟甚至跳过合并</strong>（要同时锁多个页、并发代价高，收益只是省点空间），宁可让页维持低占用、靠后台整理回收。<strong>「教科书说至少半满」和「你线上那个索引真的半满」是两回事。</strong></p>
-
 <figure>
-<svg viewBox="0 0 640 330" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
-<defs><marker id="b3a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
-<text x="20" y="20" fill="#5b9df9" font-size="12" font-weight="700">① 插入撑爆 → 分裂 → 中间的键上提给父节点</text>
-<text x="72" y="42" fill="#7c8593" font-size="10" text-anchor="middle">插入前</text>
-<rect x="24" y="52" width="96" height="22" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
-<text x="72" y="67" fill="#b9c0ca" font-size="10" text-anchor="middle">父：30</text>
-<rect x="24" y="90" width="96" height="24" rx="4" fill="rgba(224,107,107,0.16)" stroke="#e06b6b"></rect>
-<text x="72" y="106" fill="#e7ebf1" font-size="9.5" text-anchor="middle">10 12 15 18 满</text>
-<line x1="72" x2="72" y1="74" y2="88" stroke="#7c8593"></line>
-<text x="72" y="134" fill="#e06b6b" font-size="10" text-anchor="middle">再插入 16 → 放不下</text>
-<line x1="140" x2="196" y1="90" y2="90" stroke="#7c8593" marker-end="url(#b3a)"></line>
-<text x="168" y="82" fill="#7c8593" font-size="10" text-anchor="middle">分裂</text>
-<text x="380" y="42" fill="#7c8593" font-size="10" text-anchor="middle">分裂后</text>
-<rect x="316" y="52" width="128" height="22" rx="4" fill="rgba(155,108,245,0.22)" stroke="#9b6cf5" stroke-width="2"></rect>
-<text x="380" y="67" fill="#e7ebf1" font-size="10" text-anchor="middle">父：30 | 15 ← 上提</text>
-<rect x="212" y="98" width="120" height="24" rx="4" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
-<text x="272" y="114" fill="#b9c0ca" font-size="9.5" text-anchor="middle">10 12（半满）</text>
-<rect x="432" y="98" width="120" height="24" rx="4" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
-<text x="492" y="114" fill="#b9c0ca" font-size="9.5" text-anchor="middle">16 18（半满）</text>
-<line x1="344" x2="290" y1="74" y2="96" stroke="#7c8593" marker-end="url(#b3a)"></line>
-<line x1="420" x2="474" y1="74" y2="96" stroke="#7c8593" marker-end="url(#b3a)"></line>
-<text x="380" y="142" fill="#8fbaff" font-size="10" text-anchor="middle">父满了就继续往上分裂；根也满时，整棵树长高一层</text>
-<line x1="20" x2="620" y1="160" y2="160" stroke="rgba(120,120,130,0.30)" stroke-dasharray="4 4"></line>
-<text x="20" y="186" fill="#5b9df9" font-size="12" font-weight="700">② 删除下溢 → 与兄弟合并 → 分隔键下沉</text>
-<text x="112" y="208" fill="#7c8593" font-size="10" text-anchor="middle">删除后</text>
-<rect x="44" y="218" width="136" height="22" rx="4" fill="rgba(155,108,245,0.22)" stroke="#9b6cf5" stroke-width="2"></rect>
-<text x="112" y="233" fill="#e7ebf1" font-size="10" text-anchor="middle">父：30 | 15</text>
-<rect x="24" y="262" width="76" height="24" rx="4" fill="rgba(224,107,107,0.16)" stroke="#e06b6b"></rect>
-<text x="62" y="278" fill="#e7ebf1" font-size="9.5" text-anchor="middle">10 太空</text>
-<rect x="124" y="262" width="76" height="24" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
-<text x="162" y="278" fill="#b9c0ca" font-size="9.5" text-anchor="middle">16 18</text>
-<line x1="86" x2="62" y1="240" y2="260" stroke="#7c8593"></line>
-<line x1="138" x2="162" y1="240" y2="260" stroke="#7c8593"></line>
-<text x="112" y="306" fill="#e06b6b" font-size="10" text-anchor="middle">占用率跌破阈值</text>
-<line x1="216" x2="272" y1="262" y2="262" stroke="#7c8593" marker-end="url(#b3a)"></line>
-<text x="244" y="254" fill="#7c8593" font-size="10" text-anchor="middle">合并</text>
-<text x="440" y="208" fill="#7c8593" font-size="10" text-anchor="middle">合并后</text>
-<rect x="372" y="218" width="136" height="22" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
-<text x="440" y="233" fill="#b9c0ca" font-size="10" text-anchor="middle">父：30（15 被删掉）</text>
-<rect x="372" y="262" width="136" height="24" rx="4" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
-<text x="440" y="278" fill="#b9c0ca" font-size="9.5" text-anchor="middle">10 16 18（并成一页）</text>
-<line x1="440" x2="440" y1="240" y2="260" stroke="#7c8593"></line>
-<text x="440" y="306" fill="#7c8593" font-size="10" text-anchor="middle">根只剩一个孩子时，树矮一层</text>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 330" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b3a" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12" font-weight="700" x="20" y="20">① 插入撑爆 → 分裂 → 中间的键上提给父节点</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="72" y="42">插入前</text>
+<rect fill="rgba(91,157,249,0.12)" height="22" rx="4" stroke="#7c8593" width="96" x="24" y="52"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="72" y="67">父：30</text>
+<rect fill="rgba(224,107,107,0.16)" height="24" rx="4" stroke="#e06b6b" width="96" x="24" y="90"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="72" y="106">10 12 15 18 满</text>
+<line stroke="#7c8593" x1="72" x2="72" y1="74" y2="88"></line>
+<text fill="#e06b6b" font-size="10" text-anchor="middle" x="72" y="134">再插入 16 → 放不下</text>
+<line marker-end="url(#b3a)" stroke="#7c8593" x1="140" x2="196" y1="90" y2="90"></line>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="168" y="82">分裂</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="380" y="42">分裂后</text>
+<rect fill="rgba(155,108,245,0.22)" height="22" rx="4" stroke="#9b6cf5" stroke-width="2" width="128" x="316" y="52"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="380" y="67">父：30 | 15 ← 上提</text>
+<rect fill="rgba(91,157,249,0.14)" height="24" rx="4" stroke="#5b9df9" width="120" x="212" y="98"></rect>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="272" y="114">10 12（半满）</text>
+<rect fill="rgba(91,157,249,0.14)" height="24" rx="4" stroke="#5b9df9" width="120" x="432" y="98"></rect>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="492" y="114">16 18（半满）</text>
+<line marker-end="url(#b3a)" stroke="#7c8593" x1="344" x2="290" y1="74" y2="96"></line>
+<line marker-end="url(#b3a)" stroke="#7c8593" x1="420" x2="474" y1="74" y2="96"></line>
+<text fill="#8fbaff" font-size="10" text-anchor="middle" x="380" y="142">父满了就继续往上分裂；根也满时，整棵树长高一层</text>
+<line stroke="rgba(120,120,130,0.30)" stroke-dasharray="4 4" x1="20" x2="620" y1="160" y2="160"></line>
+<text fill="#5b9df9" font-size="12" font-weight="700" x="20" y="186">② 删除下溢 → 与兄弟合并 → 分隔键下沉</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="112" y="208">删除后</text>
+<rect fill="rgba(155,108,245,0.22)" height="22" rx="4" stroke="#9b6cf5" stroke-width="2" width="136" x="44" y="218"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="112" y="233">父：30 | 15</text>
+<rect fill="rgba(224,107,107,0.16)" height="24" rx="4" stroke="#e06b6b" width="76" x="24" y="262"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="62" y="278">10 太空</text>
+<rect fill="rgba(91,157,249,0.12)" height="24" rx="4" stroke="#7c8593" width="76" x="124" y="262"></rect>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="162" y="278">16 18</text>
+<line stroke="#7c8593" x1="86" x2="62" y1="240" y2="260"></line>
+<line stroke="#7c8593" x1="138" x2="162" y1="240" y2="260"></line>
+<text fill="#e06b6b" font-size="10" text-anchor="middle" x="112" y="306">占用率跌破阈值</text>
+<line marker-end="url(#b3a)" stroke="#7c8593" x1="216" x2="272" y1="262" y2="262"></line>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="244" y="254">合并</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="440" y="208">合并后</text>
+<rect fill="rgba(91,157,249,0.12)" height="22" rx="4" stroke="#7c8593" width="136" x="372" y="218"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="440" y="233">父：30（15 被删掉）</text>
+<rect fill="rgba(91,157,249,0.14)" height="24" rx="4" stroke="#5b9df9" width="136" x="372" y="262"></rect>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="440" y="278">10 16 18（并成一页）</text>
+<line stroke="#7c8593" x1="440" x2="440" y1="240" y2="260"></line>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="440" y="306">根只剩一个孩子时，树矮一层</text>
 </svg>
 <figcaption>图 3 · 分裂与合并：B-Tree 只在根部长高 / 变矮，所以每片叶子到根的距离永远相等——天生平衡，无需旋转。</figcaption>
 </figure>
-
-<h2>关键权衡与选型</h2>
+<h2 data-tts="74770b233b00e8ed">关键权衡与选型</h2>
 <p class="tcap">表 1 · 同一批数据，两种结构在磁盘上的账（以 20 亿条、页 8 KB 为例）</p>
 <div class="tblwrap"><table class="cmp">
 <thead><tr><th></th><th>平衡二叉查找树</th><th>B-Tree（页式多路树）</th></tr></thead>
@@ -311,7 +292,6 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <tr><th>维持平衡</th><td>靠旋转 → 每次都改写多个页</td><td><strong>不旋转</strong>，靠分裂 / 合并，只在根部改变高度</td></tr>
 <tr><th>代价</th><td>结构简单、内存里极优</td><td>页留白（空间换时间）、分裂时要写多页</td></tr>
 </tbody></table></div>
-
 <p class="tcap">表 2 · B-Tree vs B+-Tree：为什么工业界一边倒地选后者</p>
 <div class="tblwrap"><table class="cmp">
 <thead><tr><th></th><th>原版 B-Tree</th><th>B+-Tree（实际用的）</th></tr></thead>
@@ -322,7 +302,6 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <tr><th>范围扫描</th><td>要中序遍历、反复回溯到父节点</td><td>叶子有兄弟链 → <strong>线性往下走</strong></td></tr>
 <tr><th>代价</th><td>—</td><td>点查不能提前结束；兄弟指针也要维护</td></tr>
 </tbody></table></div>
-
 <p class="tcap">表 3 · 页大小怎么选（真实默认值作锚）</p>
 <div class="tblwrap"><table class="cmp">
 <thead><tr><th>页大小</th><th>好处</th><th>代价</th><th>谁在用</th></tr></thead>
@@ -332,45 +311,41 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <tr><th><code>16 KB</code></th><td>扇出更大、树更矮；对顺序扫描友好</td><td>改一条记录也要写回 16 KB → <strong>写放大更重</strong>；页级锁争用更凶</td><td>MySQL InnoDB 默认</td></tr>
 <tr><th><code>32–64 KB</code></th><td>扫描吞吐最高</td><td>点查浪费严重、并发争用最重</td><td>偏分析型 / 大块顺序读</td></tr>
 </tbody></table></div>
-
 <p><strong>分裂点也是个权衡，而且反直觉：不是永远对半分。</strong>主键若是自增 ID 或时间戳，插入永远落在<strong>最右那一页</strong>；对半分裂会让左半页<strong>永远停在 50% 满、再没人来填</strong>，索引白白虚胖一倍。PostgreSQL 的做法是最右页分裂时故意<strong>偏斜</strong>，把左页留到 <code>fillfactor</code>（B-Tree 默认 <code>90</code>）那么满。反过来，主键若是 UUID 这类随机值，插入均匀砸在所有页上、分裂到处发生、页普遍卡在半满附近——这就是<strong>「别拿 UUID 当聚簇主键」的机理</strong>。</p>
-
 <figure>
-<svg viewBox="0 0 640 220" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
-<line x1="318" x2="318" y1="14" y2="206" stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4"></line>
-<text x="152" y="26" fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle">顺序键（自增 ID / 时间戳）</text>
-<text x="152" y="44" fill="#7c8593" font-size="10" text-anchor="middle">插入永远落在最右页 → 偏斜分裂</text>
-<rect x="30" y="58" width="50" height="58" rx="4" fill="none" stroke="#7c8593"></rect>
-<rect x="30" y="64" width="50" height="52" rx="4" fill="rgba(91,157,249,0.35)" stroke="none"></rect>
-<rect x="92" y="58" width="50" height="58" rx="4" fill="none" stroke="#7c8593"></rect>
-<rect x="92" y="64" width="50" height="52" rx="4" fill="rgba(91,157,249,0.35)" stroke="none"></rect>
-<rect x="154" y="58" width="50" height="58" rx="4" fill="none" stroke="#7c8593"></rect>
-<rect x="154" y="64" width="50" height="52" rx="4" fill="rgba(91,157,249,0.35)" stroke="none"></rect>
-<rect x="216" y="58" width="50" height="58" rx="4" fill="none" stroke="#7c8593"></rect>
-<rect x="216" y="64" width="50" height="52" rx="4" fill="rgba(91,157,249,0.35)" stroke="none"></rect>
-<text x="148" y="136" fill="#8fbaff" font-size="11" text-anchor="middle">页普遍约 90% 满</text>
-<text x="148" y="156" fill="#7c8593" font-size="10" text-anchor="middle">PostgreSQL 最右页按 fillfactor=90 偏斜分裂</text>
-<text x="148" y="176" fill="#7c8593" font-size="10" text-anchor="middle">索引紧凑 · 扫描时读的都是有效数据</text>
-<text x="480" y="26" fill="#e06b6b" font-size="12" font-weight="700" text-anchor="middle">随机键（UUID / 哈希主键）</text>
-<text x="480" y="44" fill="#7c8593" font-size="10" text-anchor="middle">插入砸在所有页上 → 到处对半分裂</text>
-<rect x="350" y="58" width="50" height="58" rx="4" fill="none" stroke="#7c8593"></rect>
-<rect x="350" y="88" width="50" height="28" rx="4" fill="rgba(224,107,107,0.35)" stroke="none"></rect>
-<rect x="412" y="58" width="50" height="58" rx="4" fill="none" stroke="#7c8593"></rect>
-<rect x="412" y="82" width="50" height="34" rx="4" fill="rgba(224,107,107,0.35)" stroke="none"></rect>
-<rect x="474" y="58" width="50" height="58" rx="4" fill="none" stroke="#7c8593"></rect>
-<rect x="474" y="92" width="50" height="24" rx="4" fill="rgba(224,107,107,0.35)" stroke="none"></rect>
-<rect x="536" y="58" width="50" height="58" rx="4" fill="none" stroke="#7c8593"></rect>
-<rect x="536" y="84" width="50" height="32" rx="4" fill="rgba(224,107,107,0.35)" stroke="none"></rect>
-<text x="468" y="136" fill="#e06b6b" font-size="11" text-anchor="middle">页普遍只有 50–70% 满</text>
-<text x="468" y="156" fill="#7c8593" font-size="10" text-anchor="middle">同样的数据，索引占地明显更大</text>
-<text x="468" y="176" fill="#7c8593" font-size="10" text-anchor="middle">分裂频繁 · 写放大与缓存命中都变差</text>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 220" xmlns="http://www.w3.org/2000/svg">
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="318" x2="318" y1="14" y2="206"></line>
+<text fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle" x="152" y="26">顺序键（自增 ID / 时间戳）</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="152" y="44">插入永远落在最右页 → 偏斜分裂</text>
+<rect fill="none" height="58" rx="4" stroke="#7c8593" width="50" x="30" y="58"></rect>
+<rect fill="rgba(91,157,249,0.35)" height="52" rx="4" stroke="none" width="50" x="30" y="64"></rect>
+<rect fill="none" height="58" rx="4" stroke="#7c8593" width="50" x="92" y="58"></rect>
+<rect fill="rgba(91,157,249,0.35)" height="52" rx="4" stroke="none" width="50" x="92" y="64"></rect>
+<rect fill="none" height="58" rx="4" stroke="#7c8593" width="50" x="154" y="58"></rect>
+<rect fill="rgba(91,157,249,0.35)" height="52" rx="4" stroke="none" width="50" x="154" y="64"></rect>
+<rect fill="none" height="58" rx="4" stroke="#7c8593" width="50" x="216" y="58"></rect>
+<rect fill="rgba(91,157,249,0.35)" height="52" rx="4" stroke="none" width="50" x="216" y="64"></rect>
+<text fill="#8fbaff" font-size="11" text-anchor="middle" x="148" y="136">页普遍约 90% 满</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="148" y="156">PostgreSQL 最右页按 fillfactor=90 偏斜分裂</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="148" y="176">索引紧凑 · 扫描时读的都是有效数据</text>
+<text fill="#e06b6b" font-size="12" font-weight="700" text-anchor="middle" x="480" y="26">随机键（UUID / 哈希主键）</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="480" y="44">插入砸在所有页上 → 到处对半分裂</text>
+<rect fill="none" height="58" rx="4" stroke="#7c8593" width="50" x="350" y="58"></rect>
+<rect fill="rgba(224,107,107,0.35)" height="28" rx="4" stroke="none" width="50" x="350" y="88"></rect>
+<rect fill="none" height="58" rx="4" stroke="#7c8593" width="50" x="412" y="58"></rect>
+<rect fill="rgba(224,107,107,0.35)" height="34" rx="4" stroke="none" width="50" x="412" y="82"></rect>
+<rect fill="none" height="58" rx="4" stroke="#7c8593" width="50" x="474" y="58"></rect>
+<rect fill="rgba(224,107,107,0.35)" height="24" rx="4" stroke="none" width="50" x="474" y="92"></rect>
+<rect fill="none" height="58" rx="4" stroke="#7c8593" width="50" x="536" y="58"></rect>
+<rect fill="rgba(224,107,107,0.35)" height="32" rx="4" stroke="none" width="50" x="536" y="84"></rect>
+<text fill="#e06b6b" font-size="11" text-anchor="middle" x="468" y="136">页普遍只有 50–70% 满</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="468" y="156">同样的数据，索引占地明显更大</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="468" y="176">分裂频繁 · 写放大与缓存命中都变差</text>
 </svg>
 <figcaption>图 4 · 键的顺序决定页的占用率：顺序键让页接近满，随机键把页劈得处处半空——同样的数据，索引却胖了一圈。</figcaption>
 </figure>
-
 <p><strong>什么时候不该选 B-Tree？</strong>写入远多于读取、键又随机、还对空间敏感时——原地改写意味着「改一条记录 = 写回一整页」，随机键又让页普遍半空。这正是日志结构存储（LSM-Tree，Ch7）的主场：把随机写攒成顺序写，代价是读要在多层里找、还要后台合并。</p>
-
-<h2>为什么重要 / 落到真实系统</h2>
+<h2 data-tts="9010c19287f27a60">为什么重要 / 落到真实系统</h2>
 <p>点名一遍就知道它多普遍：<strong>PostgreSQL</strong> 的 <code>nbtree</code>、<strong>InnoDB</strong> 的聚簇索引（主键就是一棵 B+-Tree，二级索引的叶子存主键值）、<strong>SQLite</strong>、<strong>Oracle</strong>、<strong>SQL Server</strong>、<strong>MongoDB</strong> 的 WiredTiger、etcd 底下的 <strong>bbolt</strong>——全是 B-Tree / B+-Tree。理解这一章等于拿到一把通用扳手：为什么索引不用哈希表（哈希点查也快，但不认顺序，做不了范围扫描和 <code>ORDER BY</code>）、为什么 <code>EXPLAIN</code> 里索引扫描代价那么低（树才 3–4 层、上层全在缓冲池）、为什么 DBA 反复念叨主键要单调递增。</p>
 <div class="ev">
 <div class="evh">大厂实证 · 这些不是书里说的，是这些项目 / 公司自己公开写下的</div>
@@ -381,8 +356,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>Microsoft Research</strong> 的 Bw-Tree 论文主张：「我们这种新形式的 B 树……通过一种<em>无闩锁（latch-free）</em>的方式获得极高性能，充分利用了现代多核芯片的处理器缓存」，存储层则用日志结构适配闪存。<strong>可见 B-Tree 的「形状」没被推翻，被重做的是加锁与写回方式。</strong><span class="src"><a href="https://www.microsoft.com/en-us/research/publication/the-bw-tree-a-b-tree-for-new-hardware/" rel="noopener" target="_blank">Levandoski, Lomet &amp; Sengupta《The Bw-Tree》, ICDE 2013 ↗</a></span></li>
 </ul>
 </div>
-
-<h2>易错点与争议</h2>
+<h2 data-tts="7aa8e7a01a865697">易错点与争议</h2>
 <ul>
 <li><strong>「B」不是 binary。</strong>Comer 1979 年的综述就点明：原作者从未解释过 B 代表什么，balanced、bushy、Bayer、Boeing 都有人猜。把它理解成「二叉树」是入门第一个坑——它恰恰是<strong>反二叉</strong>的。</li>
 <li><strong>把 B-Tree 和 B+-Tree 混为一谈。</strong>线上跑的几乎一定是 B+-Tree：数据在叶子、叶子串成链。另外，旋转是 AVL / 红黑树的机制，B-Tree 没有。</li>
@@ -390,8 +364,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>以为页永远至少半满。</strong>那是教科书不变式；真实引擎常推迟或跳过合并，删除多的表可以长期低占用，需重建或整理才能回收。</li>
 <li><strong>时代局限。</strong>本书 2019 年成书，讲的是磁盘时代的经典形态。此后三条线都在动摇它的前提：多核并发催生无闩锁变体（Bw-Tree）；NVMe 与持久内存把随机 I/O 的价格拉低两三个数量级，「省往返」的收益不再绝对；写密集场景被 LSM 大面积替换。<strong>但只要「随机点查 + 范围扫描 + 按页交易的存储」同时存在，B-Tree 就仍是默认答案。</strong></li>
 </ul>
-
-<h2>要点</h2>
+<h2 data-tts="a9f944ce6abf24df">要点</h2>
 <div class="tl">
 <p>① B-Tree 不是更快的查找树，是<strong>为块设备重写过的查找树</strong>——优化的是<strong>磁盘往返次数</strong>，不是比较次数。</p>
 <p>② 二叉树上磁盘就废：扇出低、节点远小于页（搬 8 KB 只用 32 字节）、局部性差（每层一次随机 I/O）、旋转要改写多页。</p>
@@ -403,7 +376,6 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <p>⑧ 真实系统：PostgreSQL nbtree（Lehman-Yao B-link 树）、InnoDB 聚簇索引、SQLite、WiredTiger、bbolt；反方是 Facebook 的 MyRocks——换成 LSM 后同一份数据从 1172 GB 降到 574 GB。坑：B 不是 binary；<code>O(log N)</code> 不等于快（实际常只 1 次物理 I/O）。</p>
 </div>
 </div>
-
 <footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
 </div>
 <script>
