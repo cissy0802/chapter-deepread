@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals Ch 2 · B-Tree Basics — Book Deep Read 47</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">BOOK DEEP READ · DATABASE INTERNALS · CH 2</p>
+<h1>B-Tree Basics</h1>
+<p class="sub">Database Internals · Ch 2 · Alex Petrov · 2019</p>
+<p class="langbar"><a href="dbinternals-ch02-btree-basics-book47.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You look up a three-year-old order by its number, and out of billions of records it comes back in a fraction of a second. The database does that with an <strong>index</strong> — a table of contents that can pin down any entry instantly. This chapter is about the one way of building that table of contents that almost everybody uses: the <strong>B-Tree</strong>. It was invented in 1972, and fifty years later it is still the default index in MySQL, PostgreSQL, SQLite and Oracle. Why that one?</p>
+
+<h2>Start with something odd</h2>
+<p>The search tree you were taught in class asks a yes/no question at every step: bigger or smaller? left or right? In memory that works beautifully. Move the very same tree onto a disk and it becomes <strong>unusably slow</strong>. The arithmetic of "fast" suddenly comes out wrong.</p>
+
+<h2>Why the old world struggled</h2>
+<p>Here is the catch: <strong>a disk does not sell you one byte</strong>. Even if you want a single byte, it hauls back a whole block — thousands of bytes at a minimum. The trip is expensive; how much you carry back barely matters.</p>
+<p>And a tree that forks two ways has exactly one signpost at each fork. With billions of records you have to ask "left or right?" thirty-odd times in a row, and every question means another trip to the disk. <strong>The slowness lives in the number of trips, not the number of comparisons.</strong></p>
+
+<h2>The core idea: turn a signpost into a directory page</h2>
+<p>Trick one: <strong>stop putting a single signpost at each fork</strong>. If the disk insists on hauling a whole block anyway, pack that block full of signposts — one sheet listing hundreds of ranges: "orders 10,000–50,000 on that shelf, 50,000–90,000 on the next one." One glance tells you where to go next, the way you find a word by the letter tabs on the side of a dictionary rather than turning pages. The result is a <strong>tree squashed flat</strong>: thirty-odd levels become three or four. And the top two or three levels are small enough to live in memory permanently, so a lookup usually costs just <strong>one</strong> real trip to the disk.</p>
+<p>Trick two is prettier: <strong>this tree grows from the bottom up</strong>. New data goes into the bottom page; when that page fills, it splits in two and hands its middle signpost up to the level above; if that level fills, it hands one up too; and only when the very top page can no longer cope does the whole tree <strong>gain a level, all at once</strong>. Because growth always happens at the top, every leaf sits <strong>exactly the same distance</strong> from the root — the tree is level by construction and never needs the endless rebalancing other trees do.</p>
+<p>Trick three is for flipping pages: the real data lives only on the bottom row, and those bottom pages are <strong>joined hand to hand in a chain</strong>. So "list the thousand orders after March 1st" means finding the starting point and walking the chain — never climbing back to the top.</p>
+
+<h2>What it buys you</h2>
+<p>Fifty years of dominance come from doing three things at once: <strong>finding one record fast, finding a whole run of them fast, and still allowing inserts and deletes while staying in order</strong>. A hash table finds one record fast too, but it has no notion of order, so the other two are out of reach.</p>
+<p>The honest cost, in one sentence: <strong>it prefers data that arrives in order</strong> — counters and timestamps keep it happy; a primary key made of random codes gets pages sliced up until they sit half empty, wasting space and making writes more expensive.</p>
+
+<h2>Remember this</h2>
+<div class="tl">
+<p>A B-Tree is not a cleverer search tree — it is <strong>a search tree rebuilt around the disk's temperament</strong>. Since the disk can only haul whole blocks, fill a whole block with signposts and fork hundreds of ways at once, and thirty levels collapse into three or four. What you save is not comparisons; it is <strong>trips to the disk</strong>.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the notation and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">The claim of this chapter: <strong>a B-Tree is not "a faster search tree" — it is "a search tree rewritten for block devices."</strong> What it optimizes is not comparisons but <em>round trips to disk</em>. Blow one node up to <strong>a full page</strong>, push the fanout from 2 to several hundred, and the height collapses from dozens of levels to three or four; then let it <strong>grow upward from the leaves</strong>, and it comes out perfectly balanced with no rotations at all. That is why it has been the default disk index for fifty years.</p>
+
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Block device</strong> — storage like a disk that can only be read and written in fixed-size blocks; it never sells single bytes.</li>
+<li><strong>Page</strong> — the smallest unit the database itself reads or writes, made of one or more disk blocks. PostgreSQL defaults to <code>8 KB</code>, InnoDB to <code>16 KB</code>.</li>
+<li><strong>Random vs sequential I/O</strong> — reading pages scattered all over, versus reading straight through. On spinning disks the two differ by tens of times.</li>
+<li><strong>Binary search tree (BST)</strong> — one key per node, two ways out, smaller left and larger right: the textbook search structure.</li>
+<li><strong>Height</strong> — how many levels from root to leaf. For a disk structure, <strong>height is roughly how many pages a lookup must read</strong>.</li>
+<li><strong>Fanout / branching factor</strong> — how many ways one node can fork. Two for a binary tree, hundreds to thousands for a B-Tree.</li>
+<li><strong>Separator key</strong> — a signpost inside an internal node. It is not data; it only carves the key space into ranges.</li>
+<li><strong>Occupancy</strong> — how much of a page holds live data; the rest is deliberate slack left for future inserts.</li>
+<li><strong>Overflow / underflow</strong> — a page that no longer fits its contents (must split) versus one that has grown too empty (may merge).</li>
+<li><strong>Buffer pool / page cache</strong> — the slice of memory the database keeps disk pages in; a hit means no real read.</li>
+</ul>
+</div>
+
+<h2>Where it sits</h2>
+<p>Chapter 2 of Part I, "Storage Engines." It <strong>follows</strong> Ch1's three dials — a B-Tree is the classic occupant of the "<strong>buffered + updated in place + key-ordered</strong>" corner — and it <strong>sets up</strong> Ch3 (how bytes are laid out inside a page), Ch4 (splits, merges and concurrency in practice), Ch6 (variants) and Ch7 (its opposite number, the LSM-Tree). In the real world it maps onto the default index of essentially every disk-based OLTP database.</p>
+
+<h2>The problem the chapter attacks</h2>
+<p>Anchor it in something concrete: a <strong>2-billion-row</strong> orders table, point lookups by order number at a <code>p99</code> (the 99th slowest request in a hundred) under <code>10 ms</code>, holding <code>50k</code> QPS. A full scan is out. Keeping it all in memory is out too — at 200 bytes a row that is <code>400 GB</code>. So <strong>the index has to live on disk</strong>, and disk does not bill you per comparison; it bills you per <strong>random I/O</strong>: roughly <code>10 ms</code> on a spinning disk (about 100 IOPS per drive), <code>50–100 µs</code> on an NVMe SSD.</p>
+<p>What happens if you just move a textbook balanced binary tree onto that disk? Two billion rows means about <code>log₂(2×10⁹) ≈ 31</code> levels — <strong>up to 31 random I/Os</strong>: 0.3 seconds on a spinning disk, still 2–3 milliseconds on SSD, and one query eating thirty IOPS of budget. So the task is: <strong>convert an in-memory search structure into one that is billed in page reads</strong>.</p>
+
+<h2>The core content, properly</h2>
+
+<h3>1. Why an in-memory binary tree dies on disk</h3>
+<p>Petrov's reasons are blunt, and there are four:</p>
+<ul>
+<li><strong>Fanout too low, so the tree is too tall.</strong> Two ways out per node gives height <code>log₂ N</code> — and <strong>the unit of height is not "levels," it is "trips to disk."</strong></li>
+<li><strong>Node granularity does not match page granularity.</strong> A binary node is a few dozen bytes; the disk hauls a whole page regardless. Fetching 32 bytes by moving 8 KB puts <strong>useful payload under 0.4%</strong>.</li>
+<li><strong>Poor locality.</strong> Nodes are allocated wherever; a parent and child landing next to each other on disk is pure coincidence. Every "left or right?" is likely <strong>another random I/O</strong>.</li>
+<li><strong>Rebalancing is expensive.</strong> AVL and red-black trees keep their shape with <em>rotations</em> — local pointer surgery that is nearly free in memory, but on disk means <strong>rewriting several pages</strong> every time.</li>
+</ul>
+<p>Hence the hook of the chapter: <strong>you think a search structure competes on how many questions it asks; on disk it competes on how many trips it makes.</strong></p>
+
+<figure>
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<line x1="318" x2="318" y1="14" y2="288" stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4"></line>
+<text x="150" y="26" fill="#7c8593" font-size="11" font-weight="700" text-anchor="middle">Binary tree · one signpost per fork</text>
+<circle cx="150" cy="48" r="8" fill="rgba(91,157,249,0.18)" stroke="#7c8593"></circle>
+<circle cx="112" cy="80" r="8" fill="rgba(91,157,249,0.18)" stroke="#7c8593"></circle>
+<circle cx="188" cy="80" r="8" fill="rgba(91,157,249,0.18)" stroke="#7c8593"></circle>
+<circle cx="92" cy="112" r="8" fill="rgba(91,157,249,0.18)" stroke="#7c8593"></circle>
+<circle cx="132" cy="112" r="8" fill="rgba(91,157,249,0.18)" stroke="#7c8593"></circle>
+<circle cx="168" cy="112" r="8" fill="rgba(91,157,249,0.18)" stroke="#7c8593"></circle>
+<circle cx="208" cy="112" r="8" fill="rgba(91,157,249,0.18)" stroke="#7c8593"></circle>
+<line x1="150" x2="112" y1="56" y2="72" stroke="#7c8593"></line>
+<line x1="150" x2="188" y1="56" y2="72" stroke="#7c8593"></line>
+<line x1="112" x2="92" y1="88" y2="104" stroke="#7c8593"></line>
+<line x1="112" x2="132" y1="88" y2="104" stroke="#7c8593"></line>
+<line x1="188" x2="168" y1="88" y2="104" stroke="#7c8593"></line>
+<line x1="188" x2="208" y1="88" y2="104" stroke="#7c8593"></line>
+<text x="150" y="142" fill="#7c8593" font-size="15" text-anchor="middle">⋮</text>
+<text x="150" y="164" fill="#e06b6b" font-size="11" font-weight="700" text-anchor="middle">level 31</text>
+<text x="150" y="196" fill="#b9c0ca" font-size="10.5" text-anchor="middle">2 billion rows → about 31 levels</text>
+<text x="150" y="216" fill="#e06b6b" font-size="10.5" text-anchor="middle">up to 31 random I/Os</text>
+<text x="150" y="236" fill="#7c8593" font-size="9.5" text-anchor="middle">~0.3 s on a spinning disk · 2–3 ms on SSD</text>
+<rect x="34" y="252" width="232" height="26" rx="5" fill="rgba(224,107,107,0.10)" stroke="rgba(224,107,107,0.45)"></rect>
+<text x="150" y="269" fill="#b9c0ca" font-size="9" text-anchor="middle">hauling 8 KB to fetch 32 bytes · 99.6% wasted</text>
+<text x="480" y="26" fill="#5b9df9" font-size="11" font-weight="700" text-anchor="middle">B-Tree · one node = one whole page</text>
+<rect x="404" y="40" width="152" height="20" rx="4" fill="rgba(155,108,245,0.20)" stroke="#9b6cf5"></rect>
+<text x="480" y="54" fill="#e7ebf1" font-size="9" text-anchor="middle">root (1 page · hundreds of ways)</text>
+<rect x="356" y="82" width="80" height="18" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
+<rect x="444" y="82" width="80" height="18" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
+<rect x="532" y="82" width="70" height="18" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
+<text x="480" y="95" fill="#b9c0ca" font-size="9" text-anchor="middle">internal nodes</text>
+<rect x="356" y="118" width="52" height="18" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
+<rect x="416" y="118" width="52" height="18" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
+<rect x="476" y="118" width="52" height="18" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
+<rect x="536" y="118" width="66" height="18" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
+<text x="480" y="131" fill="#b9c0ca" font-size="9" text-anchor="middle">internal nodes</text>
+<rect x="356" y="154" width="246" height="18" rx="4" fill="rgba(91,157,249,0.20)" stroke="#5b9df9"></rect>
+<text x="479" y="167" fill="#e7ebf1" font-size="9.5" text-anchor="middle">leaf level: the actual data</text>
+<line x1="480" x2="480" y1="60" y2="80" stroke="#7c8593"></line>
+<line x1="480" x2="480" y1="100" y2="116" stroke="#7c8593"></line>
+<line x1="480" x2="480" y1="136" y2="152" stroke="#7c8593"></line>
+<text x="480" y="196" fill="#b9c0ca" font-size="10.5" text-anchor="middle">2 billion rows → only 4 levels</text>
+<text x="480" y="216" fill="#8fbaff" font-size="10.5" text-anchor="middle">at most 4 page reads</text>
+<text x="480" y="236" fill="#7c8593" font-size="9.5" text-anchor="middle">top 3 levels stay cached → usually 1 real read</text>
+<rect x="364" y="252" width="232" height="26" rx="5" fill="rgba(91,157,249,0.10)" stroke="rgba(91,157,249,0.45)"></rect>
+<text x="480" y="269" fill="#b9c0ca" font-size="9" text-anchor="middle">an 8 KB page packed with signposts ≈ 200–500 ways</text>
+</svg>
+<figcaption>Fig 1 · The same 2 billion rows: a binary tree spends its budget on levels; a B-Tree turns a whole page into signposts and crushes the level count into single digits.</figcaption>
+</figure>
+
+<h3>2. The rules changed: block devices bill per trip</h3>
+<p>Disks do not sell single bytes. Spinning disks read and write in sectors (512 bytes or 4 KB), the filesystem in pages (usually 4 KB), and the database layers its own page on top (4–16 KB). <strong>Reading one byte and reading a whole page cost about the same</strong> — the bill is the trip. SSDs go further: they <strong>cannot overwrite in place</strong>, their smallest erase unit is a block larger than a page, and an internal FTL (flash translation layer, mapping logical addresses onto real flash locations) shuffles things around.</p>
+<p>One conclusion follows, and it dictates the whole chapter: <strong>the objective function changes from "fewest comparisons" to "fewest page reads."</strong> So a node should be <strong>exactly one page</strong> — if the trip is unavoidable, make everything it carries back useful. To size it: PostgreSQL's page is <code>8 KB</code>, and at roughly "16-byte key + 8-byte pointer + 8 bytes of slot overhead ≈ 32 bytes" per index entry, one page holds about <strong>250 signposts</strong>. Three levels then cover 15.6 million entries and <strong>four levels cover 3.9 billion</strong> — those 2 billion rows fit in four.</p>
+
+<h3>3. Anatomy: separator keys, fanout, occupancy</h3>
+<p>B-Trees came from Bayer and McCreight in <strong>1972</strong>; Comer's 1979 survey <em>The Ubiquitous B-Tree</em> made them the textbook standard. A B-Tree generalizes the binary search tree: <strong>a node no longer holds one key and forks two ways — it holds a sorted run of keys and forks many ways</strong>. Three roles: the <strong>root</strong> (the single entry point), <strong>internal nodes</strong> (signposts only) and <strong>leaf nodes</strong> (the data, or pointers to it).</p>
+<p>The structural fact worth memorizing: <strong>an internal node with n separator keys has n+1 pointers</strong> — n signposts carve the key space into n+1 ranges. Keys <code>50 | 90</code> carve out "&lt;50", "50–90" and "≥90": three children. A lookup then starts at the root, <strong>binary-searches those few hundred separator keys inside the page</strong> (pure memory work, essentially free), picks a range, follows the pointer to the next page, and repeats down to a leaf. Total cost is <code>log_k N</code> page reads, where <code>k</code> is the fanout and <code>N</code> the entry count. Do not let the notation intimidate: it says one thing only — <strong>bigger fanout, shorter tree, fewer trips</strong>.</p>
+<p>One more quantity people skip: <strong>occupancy</strong>. B-Tree pages are <strong>deliberately not full</strong>; the slack lets future inserts land in place instead of forcing an immediate split, and the classic invariant "every node but the root is at least half full" is exactly what keeps the height from degenerating. The price is <strong>space for time</strong>: an index is inherently puffier than the data it points at.</p>
+
+<figure>
+<svg viewBox="0 0 640 314" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="e2a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="e2h" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text x="20" y="20" fill="#5b9df9" font-size="11.5" font-weight="700">Lookup path for key = 72 (in violet)</text>
+<rect x="204" y="34" width="168" height="26" rx="4" fill="rgba(155,108,245,0.22)" stroke="#9b6cf5" stroke-width="2"></rect>
+<line x1="260" x2="260" y1="34" y2="60" stroke="#9b6cf5"></line>
+<line x1="316" x2="316" y1="34" y2="60" stroke="#9b6cf5"></line>
+<text x="232" y="52" fill="#e7ebf1" font-size="11" text-anchor="middle">·</text>
+<text x="288" y="52" fill="#e7ebf1" font-size="11" text-anchor="middle">50</text>
+<text x="344" y="52" fill="#e7ebf1" font-size="11" text-anchor="middle">90</text>
+<text x="388" y="45" fill="#9b6cf5" font-size="9.5" font-family="monospace">root: 2 separator keys → 3 pointers</text>
+<text x="388" y="59" fill="#7c8593" font-size="9">72 falls in 50–90 → take the middle</text>
+<line x1="232" x2="120" y1="60" y2="104" stroke="#7c8593" marker-end="url(#e2a)"></line>
+<line x1="288" x2="316" y1="60" y2="104" stroke="#9b6cf5" stroke-width="2" marker-end="url(#e2h)"></line>
+<line x1="344" x2="500" y1="60" y2="104" stroke="#7c8593" marker-end="url(#e2a)"></line>
+<rect x="60" y="108" width="120" height="24" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
+<text x="120" y="125" fill="#b9c0ca" font-size="10.5" text-anchor="middle">12 | 30</text>
+<rect x="260" y="108" width="120" height="24" rx="4" fill="rgba(155,108,245,0.22)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="320" y="125" fill="#e7ebf1" font-size="10.5" text-anchor="middle">60 | 75</text>
+<rect x="460" y="108" width="120" height="24" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
+<text x="520" y="125" fill="#b9c0ca" font-size="10.5" text-anchor="middle">120 | 160</text>
+<line x1="286" x2="240" y1="132" y2="176" stroke="#7c8593" marker-end="url(#e2a)"></line>
+<line x1="320" x2="330" y1="132" y2="176" stroke="#9b6cf5" stroke-width="2" marker-end="url(#e2h)"></line>
+<line x1="354" x2="420" y1="132" y2="176" stroke="#7c8593" marker-end="url(#e2a)"></line>
+<rect x="30" y="180" width="88" height="30" rx="4" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
+<text x="74" y="199" fill="#b9c0ca" font-size="9" text-anchor="middle">8,10 · data</text>
+<rect x="128" y="180" width="88" height="30" rx="4" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
+<text x="172" y="199" fill="#b9c0ca" font-size="9" text-anchor="middle">30,44 · data</text>
+<rect x="226" y="180" width="88" height="30" rx="4" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
+<text x="270" y="199" fill="#b9c0ca" font-size="9" text-anchor="middle">52,58 · data</text>
+<rect x="324" y="180" width="88" height="30" rx="4" fill="rgba(155,108,245,0.22)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="368" y="199" fill="#e7ebf1" font-size="9" text-anchor="middle">68,72 · data</text>
+<rect x="422" y="180" width="88" height="30" rx="4" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
+<text x="466" y="199" fill="#b9c0ca" font-size="9" text-anchor="middle">80,88 · data</text>
+<rect x="520" y="180" width="88" height="30" rx="4" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
+<text x="564" y="199" fill="#b9c0ca" font-size="9" text-anchor="middle">124,150 · data</text>
+<line x1="118" x2="128" y1="222" y2="222" stroke="#5b9df9" marker-end="url(#e2a)"></line>
+<line x1="216" x2="226" y1="222" y2="222" stroke="#5b9df9" marker-end="url(#e2a)"></line>
+<line x1="314" x2="324" y1="222" y2="222" stroke="#5b9df9" marker-end="url(#e2a)"></line>
+<line x1="412" x2="422" y1="222" y2="222" stroke="#5b9df9" marker-end="url(#e2a)"></line>
+<line x1="510" x2="520" y1="222" y2="222" stroke="#5b9df9" marker-end="url(#e2a)"></line>
+<line x1="74" x2="74" y1="210" y2="222" stroke="#5b9df9"></line>
+<line x1="172" x2="172" y1="210" y2="222" stroke="#5b9df9"></line>
+<line x1="270" x2="270" y1="210" y2="222" stroke="#5b9df9"></line>
+<line x1="368" x2="368" y1="210" y2="222" stroke="#5b9df9"></line>
+<line x1="466" x2="466" y1="210" y2="222" stroke="#5b9df9"></line>
+<line x1="564" x2="564" y1="210" y2="222" stroke="#5b9df9"></line>
+<text x="320" y="246" fill="#8fbaff" font-size="9.5" text-anchor="middle">sibling pointers between leaves: a range scan walks the chain, never back to the root</text>
+<rect x="30" y="258" width="578" height="46" rx="6" fill="rgba(91,157,249,0.07)" stroke="rgba(91,157,249,0.30)"></rect>
+<text x="319" y="276" fill="#b9c0ca" font-size="9.5" text-anchor="middle">internal nodes hold signposts only, never data · a binary search inside the page picks the range</text>
+<text x="319" y="294" fill="#7c8593" font-size="9" text-anchor="middle">each node here shows 2 separator keys / 3 ways; a real page holds hundreds — which is why billions of rows need only 3–4 levels</text>
+</svg>
+<figcaption>Fig 2 · Anatomy of a B+-Tree: internal nodes carry separator keys only (n keys → n+1 pointers), all data sits in the leaves, and sibling pointers chain the leaves in key order.</figcaption>
+</figure>
+
+<h3>4. B+-Trees: what "B-Tree" almost always means in practice</h3>
+<p>A strict, original B-Tree happily <strong>stores data inside internal nodes</strong>. Nearly every real database uses the <strong>B+-Tree</strong> variant instead, with two changes:</p>
+<ul>
+<li><strong>Data only in the leaves</strong>, internal nodes purely signposts. Each internal entry is therefore smaller → <strong>bigger fanout, shorter tree</strong>, and the whole internal level is small enough to stay resident in memory.</li>
+<li><strong>Sibling pointers between leaves</strong>, chaining them in order. So a <strong>range scan becomes a linear walk</strong> — "the 1000 orders after March 1st" locates one starting point and follows the chain instead of climbing back to the root repeatedly.</li>
+</ul>
+<p>Petrov says as much outright: since the differences are largely implementation detail, "B-Tree" in industry usage generally means this family. <strong>Being able to say "data in the leaves, leaves chained" is worth more in an interview than reciting the definition.</strong></p>
+
+<h3>5. Inserts and deletes: a tree that grows from the leaves up</h3>
+<p><strong>Insert</strong>: walk down to the target leaf exactly as a lookup would and slot the new entry into key order. If it fits, the whole insert is <strong>one page rewrite</strong>. If it does not (overflow), the page <strong>splits</strong>: it is cut in half and the middle key is <strong>promoted</strong> to the parent as a new separator. If the parent is now full too, it splits and promotes in turn. <strong>Only when the root itself cannot cope does the root split into a new root — and in that instant the whole tree gains a level.</strong></p>
+<p>That is the elegant part: <strong>it only ever grows taller at the root, yet the force driving that growth comes from the leaves</strong>. Because growth is a whole-tree event, every leaf stays <strong>exactly as far from the root as every other</strong> — perfectly balanced by construction, <strong>with no rotations whatsoever</strong>. The red-black trick of rebalancing locally simply does not exist here, and that is the second reason it suits disks.</p>
+<p><strong>Delete</strong>: walk to the leaf and remove the entry. If occupancy drops below the threshold (underflow), the page either <strong>borrows</strong> entries from a sibling (redistribution) or <strong>merges</strong> with one — the latter costs the parent a separator key and can cascade upward; when the root is left with a single child, the tree <strong>loses a level</strong>. One footnote from reality, though: <strong>many real engines defer or skip merging altogether</strong> (it locks several pages at once and is expensive under concurrency, while the payoff is only some space), preferring to let pages sit sparse and reclaim them with background maintenance. <strong>"The textbook says at least half full" and "your production index actually is half full" are two different statements.</strong></p>
+
+<figure>
+<svg viewBox="0 0 640 330" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="e3a" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text x="20" y="20" fill="#5b9df9" font-size="11.5" font-weight="700">① insert overflows → split → middle key promoted to the parent</text>
+<text x="72" y="42" fill="#7c8593" font-size="9.5" text-anchor="middle">before</text>
+<rect x="24" y="52" width="96" height="22" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
+<text x="72" y="67" fill="#b9c0ca" font-size="10" text-anchor="middle">parent: 30</text>
+<rect x="24" y="90" width="96" height="24" rx="4" fill="rgba(224,107,107,0.16)" stroke="#e06b6b"></rect>
+<text x="72" y="106" fill="#e7ebf1" font-size="9" text-anchor="middle">10 12 15 18 full</text>
+<line x1="72" x2="72" y1="74" y2="88" stroke="#7c8593"></line>
+<text x="72" y="134" fill="#e06b6b" font-size="9.5" text-anchor="middle">insert 16 → no room</text>
+<line x1="140" x2="196" y1="90" y2="90" stroke="#7c8593" marker-end="url(#e3a)"></line>
+<text x="168" y="82" fill="#7c8593" font-size="9.5" text-anchor="middle">split</text>
+<text x="380" y="42" fill="#7c8593" font-size="9.5" text-anchor="middle">after</text>
+<rect x="308" y="52" width="144" height="22" rx="4" fill="rgba(155,108,245,0.22)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="380" y="67" fill="#e7ebf1" font-size="9.5" text-anchor="middle">parent: 30 | 15 ← promoted</text>
+<rect x="212" y="98" width="120" height="24" rx="4" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="272" y="114" fill="#b9c0ca" font-size="9" text-anchor="middle">10 12 (half full)</text>
+<rect x="432" y="98" width="120" height="24" rx="4" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="492" y="114" fill="#b9c0ca" font-size="9" text-anchor="middle">16 18 (half full)</text>
+<line x1="344" x2="290" y1="74" y2="96" stroke="#7c8593" marker-end="url(#e3a)"></line>
+<line x1="420" x2="474" y1="74" y2="96" stroke="#7c8593" marker-end="url(#e3a)"></line>
+<text x="380" y="142" fill="#8fbaff" font-size="9.5" text-anchor="middle">parent full too? it splits as well — when the root splits, the tree gains a level</text>
+<line x1="20" x2="620" y1="160" y2="160" stroke="rgba(120,120,130,0.30)" stroke-dasharray="4 4"></line>
+<text x="20" y="186" fill="#5b9df9" font-size="11.5" font-weight="700">② delete underflows → merge with a sibling → separator key pulled down</text>
+<text x="112" y="208" fill="#7c8593" font-size="9.5" text-anchor="middle">after the delete</text>
+<rect x="44" y="218" width="136" height="22" rx="4" fill="rgba(155,108,245,0.22)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="112" y="233" fill="#e7ebf1" font-size="9.5" text-anchor="middle">parent: 30 | 15</text>
+<rect x="24" y="262" width="76" height="24" rx="4" fill="rgba(224,107,107,0.16)" stroke="#e06b6b"></rect>
+<text x="62" y="278" fill="#e7ebf1" font-size="9" text-anchor="middle">10 too empty</text>
+<rect x="124" y="262" width="76" height="24" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
+<text x="162" y="278" fill="#b9c0ca" font-size="9" text-anchor="middle">16 18</text>
+<line x1="86" x2="62" y1="240" y2="260" stroke="#7c8593"></line>
+<line x1="138" x2="162" y1="240" y2="260" stroke="#7c8593"></line>
+<text x="112" y="306" fill="#e06b6b" font-size="9.5" text-anchor="middle">occupancy below threshold</text>
+<line x1="216" x2="272" y1="262" y2="262" stroke="#7c8593" marker-end="url(#e3a)"></line>
+<text x="244" y="254" fill="#7c8593" font-size="9.5" text-anchor="middle">merge</text>
+<text x="440" y="208" fill="#7c8593" font-size="9.5" text-anchor="middle">after the merge</text>
+<rect x="360" y="218" width="160" height="22" rx="4" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></rect>
+<text x="440" y="233" fill="#b9c0ca" font-size="9.5" text-anchor="middle">parent: 30 (15 removed)</text>
+<rect x="360" y="262" width="160" height="24" rx="4" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="440" y="278" fill="#b9c0ca" font-size="9" text-anchor="middle">10 16 18 (now one page)</text>
+<line x1="440" x2="440" y1="240" y2="260" stroke="#7c8593"></line>
+<text x="440" y="306" fill="#7c8593" font-size="9.5" text-anchor="middle">root down to one child → the tree loses a level</text>
+</svg>
+<figcaption>Fig 3 · Splits and merges: a B-Tree only ever gains or loses height at the root, so every leaf stays equidistant from it — balanced by construction, never rotated.</figcaption>
+</figure>
+
+<h2>The trade-offs that matter</h2>
+<p class="tcap">Table 1 · The same data, two structures, billed on disk (2 billion rows, 8 KB pages)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Balanced binary search tree</th><th>B-Tree (paged, multi-way)</th></tr></thead>
+<tbody>
+<tr><th>Node size</th><td>a few dozen bytes, far below one page</td><td><strong>exactly one page</strong> (4–16 KB)</td></tr>
+<tr><th>Fanout</th><td><code>2</code></td><td><code>200–500</code> (shorter keys, bigger fanout)</td></tr>
+<tr><th>Height</th><td><code>log₂ N ≈ 31</code> levels</td><td><code>log_k N ≈ 4</code> levels</td></tr>
+<tr><th>Page reads per lookup</th><td>up to 31, nearly all random I/O</td><td>≤ 4; upper levels stay cached → <strong>usually 1 real read</strong></td></tr>
+<tr><th>Staying balanced</th><td>rotations → several page rewrites each time</td><td><strong>no rotations</strong>; splits and merges, height changes only at the root</td></tr>
+<tr><th>What it costs</th><td>simple, and optimal in memory</td><td>slack in every page (space for time); a split writes several pages</td></tr>
+</tbody></table></div>
+
+<p class="tcap">Table 2 · B-Tree vs B+-Tree: why industry went one way</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Original B-Tree</th><th>B+-Tree (what you actually run)</th></tr></thead>
+<tbody>
+<tr><th>Where data lives</th><td>internal nodes may hold it too</td><td><strong>leaves only</strong></td></tr>
+<tr><th>Internal fanout</th><td>smaller — entries carry data</td><td><strong>larger</strong> → shorter tree, internal level easy to cache whole</td></tr>
+<tr><th>Point lookup</th><td>may hit early; depth varies</td><td>always reaches a leaf → <strong>uniform cost, predictable latency</strong></td></tr>
+<tr><th>Range scan</th><td>in-order traversal, repeatedly back up to the parent</td><td>leaf chain → <strong>a linear walk</strong></td></tr>
+<tr><th>What it costs</th><td>—</td><td>no early exit on point lookups; sibling pointers need maintaining</td></tr>
+</tbody></table></div>
+
+<p class="tcap">Table 3 · Choosing a page size, anchored on real defaults</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Page size</th><th>Upside</th><th>Cost</th><th>Who ships it</th></tr></thead>
+<tbody>
+<tr><th><code>4 KB</code></th><td>aligned with the OS page; least useless data per I/O</td><td>smaller fanout → taller tree; low ceiling on entry size</td><td>SQLite default</td></tr>
+<tr><th><code>8 KB</code></th><td>the usual compromise between height and waste</td><td>—</td><td>PostgreSQL default (<code>BLCKSZ</code>)</td></tr>
+<tr><th><code>16 KB</code></th><td>bigger fanout, shorter tree; friendly to sequential scans</td><td>changing one row still writes 16 KB → <strong>heavier write amplification</strong>; more page-level contention</td><td>MySQL InnoDB default</td></tr>
+<tr><th><code>32–64 KB</code></th><td>highest scan throughput</td><td>wasteful for point lookups; worst contention</td><td>analytics-leaning, large sequential reads</td></tr>
+</tbody></table></div>
+
+<p><strong>The split point is a trade-off too, and a counterintuitive one: it should not always be down the middle.</strong> If the primary key is an auto-increment or a timestamp, every insert lands on the <strong>rightmost page</strong>; splitting 50/50 there leaves the left half <strong>stuck at 50% forever, with nobody left to fill it</strong> — the index puffs up to twice its necessary size. PostgreSQL's answer is to split the rightmost page <strong>lopsidedly</strong>, leaving the left page <code>fillfactor</code> full (90 by default for B-Trees). Conversely, a random key like a UUID spreads inserts evenly across every page, so splits happen everywhere and pages settle near half full — <strong>that is the mechanism behind "don't use a UUID as your clustered primary key."</strong></p>
+
+<figure>
+<svg viewBox="0 0 640 220" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<line x1="318" x2="318" y1="14" y2="206" stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4"></line>
+<text x="152" y="26" fill="#5b9df9" font-size="11" font-weight="700" text-anchor="middle">Sequential keys (auto-increment / timestamp)</text>
+<text x="152" y="44" fill="#7c8593" font-size="9.5" text-anchor="middle">inserts always land on the rightmost page → lopsided split</text>
+<rect x="30" y="58" width="50" height="58" rx="4" fill="none" stroke="#7c8593"></rect>
+<rect x="30" y="64" width="50" height="52" rx="4" fill="rgba(91,157,249,0.35)" stroke="none"></rect>
+<rect x="92" y="58" width="50" height="58" rx="4" fill="none" stroke="#7c8593"></rect>
+<rect x="92" y="64" width="50" height="52" rx="4" fill="rgba(91,157,249,0.35)" stroke="none"></rect>
+<rect x="154" y="58" width="50" height="58" rx="4" fill="none" stroke="#7c8593"></rect>
+<rect x="154" y="64" width="50" height="52" rx="4" fill="rgba(91,157,249,0.35)" stroke="none"></rect>
+<rect x="216" y="58" width="50" height="58" rx="4" fill="none" stroke="#7c8593"></rect>
+<rect x="216" y="64" width="50" height="52" rx="4" fill="rgba(91,157,249,0.35)" stroke="none"></rect>
+<text x="148" y="136" fill="#8fbaff" font-size="10.5" text-anchor="middle">pages end up about 90% full</text>
+<text x="148" y="156" fill="#7c8593" font-size="9.5" text-anchor="middle">PostgreSQL splits the rightmost page at fillfactor = 90</text>
+<text x="148" y="176" fill="#7c8593" font-size="9.5" text-anchor="middle">compact index · scans read useful bytes</text>
+<text x="480" y="26" fill="#e06b6b" font-size="11" font-weight="700" text-anchor="middle">Random keys (UUID / hashed primary key)</text>
+<text x="480" y="44" fill="#7c8593" font-size="9.5" text-anchor="middle">inserts hit every page → 50/50 splits everywhere</text>
+<rect x="350" y="58" width="50" height="58" rx="4" fill="none" stroke="#7c8593"></rect>
+<rect x="350" y="88" width="50" height="28" rx="4" fill="rgba(224,107,107,0.35)" stroke="none"></rect>
+<rect x="412" y="58" width="50" height="58" rx="4" fill="none" stroke="#7c8593"></rect>
+<rect x="412" y="82" width="50" height="34" rx="4" fill="rgba(224,107,107,0.35)" stroke="none"></rect>
+<rect x="474" y="58" width="50" height="58" rx="4" fill="none" stroke="#7c8593"></rect>
+<rect x="474" y="92" width="50" height="24" rx="4" fill="rgba(224,107,107,0.35)" stroke="none"></rect>
+<rect x="536" y="58" width="50" height="58" rx="4" fill="none" stroke="#7c8593"></rect>
+<rect x="536" y="84" width="50" height="32" rx="4" fill="rgba(224,107,107,0.35)" stroke="none"></rect>
+<text x="468" y="136" fill="#e06b6b" font-size="10.5" text-anchor="middle">pages sit at only 50–70% full</text>
+<text x="468" y="156" fill="#7c8593" font-size="9.5" text-anchor="middle">same data, visibly larger index</text>
+<text x="468" y="176" fill="#7c8593" font-size="9.5" text-anchor="middle">frequent splits · worse write amplification and cache hits</text>
+</svg>
+<figcaption>Fig 4 · Key order decides page occupancy: sequential keys pack pages nearly full, random keys slice them half empty — same data, a visibly fatter index.</figcaption>
+</figure>
+
+<p><strong>When should you not pick a B-Tree?</strong> When writes far outnumber reads, keys are random, and space matters — updating in place means "change one row, write back a whole page," and random keys leave pages half empty. That is the home turf of log-structured storage (LSM-Trees, Ch7): it batches random writes into sequential ones, at the cost of searching several levels on read and compacting in the background.</p>
+
+<h2>Why it matters / in real systems</h2>
+<p>The roll call alone shows how universal it is: PostgreSQL's <code>nbtree</code>, InnoDB's clustered index (the primary key <em>is</em> a B+-Tree, and secondary index leaves store primary key values), SQLite, Oracle, SQL Server, MongoDB's WiredTiger, and bbolt underneath etcd — all B-Trees or B+-Trees. Understanding this chapter hands you a general-purpose wrench: why indexes aren't hash tables (hash point lookups are fast too, but hashes have no order, so range scans and <code>ORDER BY</code> are out); why an index scan costs so little in <code>EXPLAIN</code> (three or four levels, upper ones all in the buffer pool); and why DBAs keep insisting your primary key be monotonically increasing.</p>
+<div class="ev">
+<div class="evh">EVIDENCE FROM THE FIELD · not the book's claims, but what these projects and companies published themselves</div>
+<ul>
+<li><strong>PostgreSQL</strong>'s own nbtree README opens by calling itself "a correct implementation of Lehman and Yao's high-concurrency B-tree management algorithm," adding to every page a <em>right-link</em> to its sibling and a <em>high key</em> bounding the page's range — so a reader can notice and follow a concurrent split <strong>without holding locks across levels</strong>. <strong>It confirms the structure in this chapter, and shows concurrency needed inventions of its own.</strong><span class="src"><a href="https://github.com/postgres/postgres/blob/master/src/backend/access/nbtree/README" rel="noopener" target="_blank">postgres/…/nbtree/README ↗</a></span></li>
+<li><strong>PostgreSQL</strong>'s split-point code spells the trade-off out: "If the page is the rightmost page on its level, we instead try to arrange to leave the left split page fillfactor% full. In this way, when we are inserting successively increasing keys (consider sequences, timestamps, etc) we will end up with a tree whose pages are about fillfactor% full." B-Trees default to <code>fillfactor = 90</code>. <strong>Direct confirmation that sequential keys want a lopsided split.</strong><span class="src"><a href="https://github.com/postgres/postgres/blob/master/src/backend/access/nbtree/nbtsplitloc.c" rel="noopener" target="_blank">postgres/…/nbtsplitloc.c ↗</a></span></li>
+<li><strong>Facebook (Meta)</strong> supplies the <strong>counter-evidence</strong> in its own MyRocks docs: "B+Tree indexes get fragmented if not inserted sequentially. It is not uncommon that fragmentation increases 30~50% additional space." In their Linkbench runs the same dataset took <code>1172 GB</code> on InnoDB and only <code>574 GB</code> on LSM-based MyRocks, with write volume falling from <code>152 MB/s</code> to <code>67 MB/s</code>. <strong>That is the production-scale price of occupancy and update-in-place.</strong><span class="src"><a href="https://github.com/facebook/mysql-5.6/wiki/MyRocks-advantages-over-InnoDB" rel="noopener" target="_blank">Facebook mysql-5.6 wiki, "MyRocks advantages over InnoDB" ↗</a></span></li>
+<li><strong>Microsoft Research</strong>'s Bw-Tree paper argues: "Our new form of B tree, called the Bw-tree achieves its very high performance via a <em>latch-free</em> approach that effectively exploits the processor caches of modern multi-core chips," with a log-structured storage layer suited to flash. <strong>The B-Tree's shape was never overturned; what got rebuilt was its locking and write-back.</strong><span class="src"><a href="https://www.microsoft.com/en-us/research/publication/the-bw-tree-a-b-tree-for-new-hardware/" rel="noopener" target="_blank">Levandoski, Lomet &amp; Sengupta, "The Bw-Tree," ICDE 2013 ↗</a></span></li>
+</ul>
+</div>
+
+<h2>Common mistakes and open questions</h2>
+<ul>
+<li><strong>The "B" is not for binary.</strong> Comer's 1979 survey already notes that the original authors never explained what it stands for — balanced, bushy, Bayer and Boeing have all been guessed. Reading a B-Tree as a binary tree is the first trap, since it is precisely <strong>anti-binary</strong>.</li>
+<li><strong>Conflating B-Trees and B+-Trees.</strong> What you run is almost certainly a B+-Tree: data in the leaves, leaves chained. Also, rotations belong to AVL and red-black trees; B-Trees have none.</li>
+<li><strong>Assuming <code>O(log N)</code> means fast.</strong> The real cost is <strong>page reads and cache hits</strong>, not comparisons. A four-level tree with three levels resident in the buffer pool usually costs <strong>one physical I/O</strong> per point lookup — and that "one in practice" is the actual selling point.</li>
+<li><strong>Assuming pages are always at least half full.</strong> That is the textbook invariant; real engines routinely defer or skip merges, so a delete-heavy table can sit sparse for a long time and needs a rebuild or reorganization to reclaim the space.</li>
+<li><strong>Where the book shows its age.</strong> Written in 2019, it describes the classic disk-era form. Three developments have since pulled at its premises: multi-core concurrency produced latch-free variants (Bw-Tree); NVMe and persistent memory dropped the price of random I/O by two or three orders of magnitude, so "save a round trip" pays less absolutely; and write-heavy workloads have been widely displaced by LSM storage. <strong>But as long as random point lookups, range scans and block-billed storage coexist, the B-Tree remains the default answer.</strong></li>
+</ul>
+
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① A B-Tree is not a faster search tree; it is <strong>a search tree rewritten for block devices</strong> — it optimizes <strong>round trips to disk</strong>, not comparisons.</p>
+<p>② Binary trees die on disk: low fanout, nodes far smaller than a page (8 KB hauled for 32 bytes), poor locality (a random I/O per level), and rotations that rewrite several pages.</p>
+<p>③ The core move: <strong>node size = page size</strong>, the page packed with separator keys. Fanout goes from 2 to 200–500 and the height for 2 billion rows collapses from <code>31</code> levels to <code>4</code>.</p>
+<p>④ Structure to memorize: an internal node with <strong>n separator keys has n+1 pointers</strong>; internal nodes are signposts, leaves hold data; binary search inside the page picks the range.</p>
+<p>⑤ "B-Tree" in practice means <strong>B+-Tree</strong>: data only in leaves, leaves chained by sibling pointers — hence <strong>uniform point-lookup cost and linear range scans</strong>.</p>
+<p>⑥ Inserts <strong>split and promote the middle key</strong>, possibly up to the root — <strong>the tree only grows taller at the root</strong>, so it is balanced by construction and <strong>never rotates</strong>; deletes borrow or merge, though many engines <strong>defer merging</strong> to avoid the concurrency cost.</p>
+<p>⑦ Trade-offs: page size (height versus write amplification and contention); and the split point <strong>should not always be 50/50</strong> — sequential keys want a lopsided split (PostgreSQL's <code>fillfactor = 90</code>), while random keys (UUIDs) leave pages half full and the index bloated.</p>
+<p>⑧ In real systems: PostgreSQL nbtree (a Lehman-Yao B-link tree), InnoDB's clustered index, SQLite, WiredTiger, bbolt; the counter-case is Facebook's MyRocks, where switching to LSM took the same data from 1172 GB to 574 GB. Traps: "B" is not binary, and <code>O(log N)</code> is not the same as fast (in practice it is often a single physical I/O).</p>
+</div>
+</div>
+
+<footer>Book Deep Read · Finish this page and you have the chapter's core; go to the book itself for the full cases and detail.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
