@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals 第 3 章 · 文件格式 — 专业书籍精读 Book 48</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -49,7 +50,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </style></head><body>
 <div class="container">
 <p class="top">专业书籍精读 · Database Internals · 第 3 章</p>
-<h1>文件格式</h1>
+<h1 data-tts="414e9f1b2c4b2972">文件格式</h1>
 <p class="sub">Database Internals · Ch 3 · Alex Petrov · 2019</p>
 <p class="langbar"><a href="dbinternals-ch03-file-formats-book48.en.html">EN →</a></p>
 <div class="modebar">
@@ -57,13 +58,13 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <button data-mode="deep">精读版</button>
 </div>
 <div class="mode mode-pop">
-<h2>这一章讲什么？</h2>
+<h2 data-tts="9aa3c0f479c46560">这一章讲什么？</h2>
 <p>你手机里的相册、微信的聊天记录、公司的订单库，最后都变成硬盘上的<strong>一个文件</strong>。上一章讲了数据库为什么用「目录树」来找数据，这一章往下钻一层：<strong>树的每个节点，落到硬盘上到底是怎么摆的一堆字节？</strong>听着像枯燥的收尾工作，其实所有漂亮算法能不能在真机器上跑起来，全看这一层。</p>
-<h2>先打个比方</h2>
+<h2 data-tts="6cb16fc82a14a803">先打个比方</h2>
 <p>把硬盘想成一本<strong>活页笔记本</strong>：它不许你「在第 37 行插一句话」，只能<strong>一整页撕下来、写好、再放回去</strong>。可数据库要塞进去的东西长短不一——一条订单 80 个字节，一段商品描述 3000 个字节。怎么把长短不齐的内容，整整齐齐塞进大小固定的页里，还得随时能加、能删？</p>
-<h2>旧世界为什么难</h2>
+<h2 data-tts="0024cfad029f1704">旧世界为什么难</h2>
 <p>在内存里，这些脏活有人替你干：要放新东西，跟系统要块地方就行；东西不要了，还回去；想记住它在哪，记个门牌号即可。到了硬盘上，这三样便利全没了——门牌号换一页就作废，删掉一条留下的坑没人替你填，页的大小还是死的。要是老实按「每条记录固定占一格」来排，那格子必须按最长的记录来定，短记录就白白浪费一大半。</p>
-<h2>核心机制：一页纸 + 页首目录</h2>
+<h2 data-tts="438c1fab5bfeddc6">核心机制：一页纸 + 页首目录</h2>
 <p>数据库的解法，和排一张菜单差不多聪明：<strong>正文从页尾往前写，目录从页首往后排，中间留白</strong>。</p>
 <ul>
 <li><strong>新增</strong>：在中间的空白里找块地把内容写下，再在目录里加一行「第几条，在第几个字节」。</li>
@@ -71,18 +72,18 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>删除</strong>：把目录那行划掉，正文留下的空洞记进一张「空地清单」，下次有新内容优先填进去；等空洞攒得太零碎，才停下来把整页重排一次——像抽屉乱到一定程度才整理。</li>
 </ul>
 <p>另外每页还会附一个<strong>对账码</strong>：写的时候算一遍存着，读回来再算一遍，对不上就知道这页在硬盘上悄悄坏了。文件开头则写着一句暗号和版本号——将来格式改了，程序一看就知道该用哪套规矩读。</p>
-<h2>带来了什么</h2>
+<h2 data-tts="e5b2bc383c6ac97e">带来了什么</h2>
 <p>你能打开的几乎所有数据库文件都长这样：PostgreSQL 一页 8 KB、MySQL 16 KB、SQLite 4 KB，页里都是「页首目录 + 页尾正文」。代价也很诚实：<strong>删除并不立刻还你磁盘空间</strong>——空洞要等某次整理才收得回来，而那次整理得把整页重写一遍。</p>
-<h2>一句话记住</h2>
+<h2 data-tts="3133d3fd237b5b33">一句话记住</h2>
 <div class="tl">
 <p>硬盘只认整页，记录却长短不一。数据库的答案是<strong>一页纸 + 页首目录</strong>：正文随便摆、目录管顺序；删了先记在「空地清单」上、攒多了再整理；每页附一个对账码，防它在硬盘上悄悄烂掉。</p>
 </div>
 <p class="switch-hint">想看真实的字节布局、槽目录示意图和各家引擎的选择？ <a data-mode="deep">→ 切到精读版</a></p>
 </div>
 <div class="mode mode-deep" hidden="">
-<h2>一句话</h2>
+<h2 data-tts="8c5041b354050c9a">一句话</h2>
 <p class="lead">你以为「文件格式」是字节怎么摆的琐碎收尾，其实它是上一章那棵漂亮的 B-Tree 能不能在真硬件上跑起来的<strong>落地层</strong>。这一章的核心命题只有一句：<strong>内存里由分配器、指针和垃圾回收替你做的三件事——放下变长对象、回收释放的空间、稳定地引用一个对象——到了磁盘上都得自己重造一遍</strong>。重造出来的产物，就是本章的全部内容：定长的页、页内的<strong>槽目录（slotted page）</strong>、装数据的 <strong>cell</strong>、管空洞的<strong>空闲清单</strong>，外加认得出自己的<strong>版本号</strong>与发现得了损坏的<strong>校验和</strong>。</p>
-<h2>Glossary · 术语表</h2>
+<h2 data-tts="1d9fb7fc6eaae7be">Glossary · 术语表</h2>
 <div class="glossary">
 <ul>
 <li><strong>页 / 块（page / block）</strong>：数据库读写磁盘的最小单位，定长，常见 4 / 8 / 16 KiB。硬盘不支持「只改 3 个字节」，一律整页来回。</li>
@@ -98,9 +99,9 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>撕裂写（torn write）</strong>：一页还没写完就断电 / 崩溃，磁盘上留下半新半旧的一页。</li>
 </ul>
 </div>
-<h2>坐标</h2>
+<h2 data-tts="98e0a99be7319a4b">坐标</h2>
 <p>本章是《Database Internals》Part I「存储引擎」的第 3 章。<strong>上承第 2 章</strong>——那一章论证了 B-Tree 为什么是磁盘上的默认答案，但只画了树的形状，没说「一个节点在磁盘上到底长什么样」；<strong>下启第 4 章</strong>「实现 B-Tree」的分裂、合并、并发与页管理，那些操作全部建立在本章的页布局之上。对应现实：你用 PostgreSQL 的 <code>pageinspect</code> 扩展 dump 出来的那一页、InnoDB 的索引页、SQLite 文件里的 b-tree 页，就是这一章的实物。</p>
-<h2>这章要解决什么</h2>
+<h2 data-tts="4eddd53584f731a8">这章要解决什么</h2>
 <p>根子是：<strong>内存的编程模型和磁盘的编程模型在四个地方断裂了</strong>，而我们习惯的数据结构全是照着内存那套写的。<strong>粒度</strong>——内存按字节随机访问，磁盘只能整页来回，而一次随机 I/O 的代价基本与你要 1 个字节还是 8 KiB 无关（NVMe 上几十到上百微秒，机械盘上 <code>5–10</code> 毫秒），于是<strong>「页里怎么排」直接决定一次 I/O 换回多少有用数据</strong>。<strong>引用</strong>——内存指针是虚拟地址、重启就废，磁盘上必须换成能持久保存的坐标「页 ID + 页内偏移量」。<strong>分配与回收</strong>——没有 <code>malloc/free</code>、没有垃圾回收，删除留下的空洞得自己登记、自己复用、自己整理。<strong>可信度</strong>——内存里读到的基本就是写进去的，磁盘上不一定：位翻转、写错地址、撕裂写，都会还你一坨<strong>看起来完全合法</strong>的垃圾。</p>
 <p>不解决会怎样？给个量级：若图省事让每条记录占一个定长槽位，槽位得按最长记录定，比如 512 字节；一条 80 字节的订单占满整格就<strong>浪费 84%</strong>，8 KiB 的页只装得下 16 条。反过来，若让变长记录按键紧密排列，中间插一条就得 <code>memmove</code> 几 KB，删除留下的洞还永远回不来。本章要找的，是<strong>同时躲开这两种蠢</strong>的排法。</p>
 <p class="tcap">表 1 · 内存里免费、磁盘上必须自建的四件事</p>
@@ -112,13 +113,13 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <tr><th>稳定引用一个对象</th><td>指针，对象不动地址就不变</td><td><strong>页 ID + 槽号</strong>：物理偏移可以随便变，槽号不变</td></tr>
 <tr><th>信任读到的字节</th><td>基本可信（有 ECC 内存兜底）</td><td><strong>页级校验和</strong>：写时算、读时校</td></tr>
 </tbody></table></div>
-<h2>核心内容，讲透</h2>
-<h3>一、先把数据变成字节：定长、变长与位打包</h3>
+<h2 data-tts="0cfa727733263d92">核心内容，讲透</h2>
+<h3 data-tts="9a68236781dc1161">一、先把数据变成字节：定长、变长与位打包</h3>
 <p>最底下一层是<em>二进制编码（binary encoding）</em>：一个值怎么变成一串字节。<strong>定长的数字</strong>按固定宽度写，但字节序必须在格式里定死。磁盘格式偏爱<strong>大端（big-endian，高位字节在前，也叫网络字节序）</strong>，理由很实际：大端存的无符号整数，<strong>按字节逐位比较的结果就等于数值比较的结果</strong>——键可以直接 <code>memcmp</code> 比大小，不必先反序列化。SQLite 的文件头就明文规定：多字节字段一律大端。</p>
 <p><strong>变长的数据</strong>（字符串、blob）有两条老路：C 风格的<em>结束符</em>（读到 <code>\0</code> 为止——得逐字节扫，内容里还不能出现 <code>\0</code>），和<em>长度前缀</em>（先写长度再写内容）。数据库一律选后者：<strong>读之前就知道有多长，能一次读完，也能直接跳过</strong>。<strong>位打包</strong>用来省那些只有几种取值的字段——PostgreSQL 的行头就带一个 null bitmap，<strong>每列 1 bit</strong> 记「这列是不是 NULL」。</p>
-<h3>二、文件的骨架：魔数、版本、定长页</h3>
+<h3 data-tts="0dfd5d4c666ce5f4">二、文件的骨架：魔数、版本、定长页</h3>
 <p>再往上是文件整体：<strong>头部 + 一长串等长的页</strong>。头部放全局信息——魔数、格式版本、页大小；SQLite 的文件前 16 个字节永远是 <code>SQLite format 3\0</code>。为什么非得<strong>定长页</strong>？因为定长意味着<strong>第 <code>n</code> 页在哪 = <code>n ×</code> 页大小</strong>，一次乘法就寻址，不需要任何「页目录」式的间接层，也让页缓存里的槽位可以随便互换复用。这是整套设计里最不起眼、却最省事的一条约束。</p>
-<h3>三、slotted page：这一章的心脏</h3>
+<h3 data-tts="3dc46eda6a2847a7">三、slotted page：这一章的心脏</h3>
 <p>现在到了本章的主角。设计一个页内布局，要<strong>同时</strong>满足三个诉求：</p>
 <ul>
 <li>① 存<strong>变长</strong>记录，且额外开销要小；</li>
@@ -164,7 +165,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </figure>
 <p>于是三个诉求各自落地：<strong>插入</strong>就是把 cell 写进空白区的尾端，再往槽目录里加一个偏移量——变长记录只占它实际需要的字节，加上 2 字节槽位和一个小 cell 头，<strong>开销可以压到个位数字节</strong>（诉求 ①）。<strong>删除</strong>把槽标为无效、把 cell 那段空间挂进空闲清单等待复用（诉求 ②）。而<strong>槽号是稳定的对外身份</strong>——记录在页里挪了位置，只要更新槽里的偏移量，外面拿着「页 ID + 槽号」的引用就完全不必改（诉求 ③）。</p>
 <p>PostgreSQL 是这套结构的教科书实物：一页默认 8 KiB，开头 <strong>24 字节的页头</strong>，随后是<strong>每个 4 字节的行指针</strong>（<code>ItemIdData</code>，就是槽）从前往后排，元组从页尾往前塞，页头里 <code>pd_lower</code> / <code>pd_upper</code> 两个 2 字节的偏移量正好圈出中间那块空闲区。</p>
-<h3>四、逻辑序与物理序解耦：为什么插入不用搬家</h3>
+<h3 data-tts="ac2a4b87148bf63c">四、逻辑序与物理序解耦：为什么插入不用搬家</h3>
 <p>这是 slotted page 最漂亮、也最容易被读过就忘的一点。B-Tree 要求<strong>节点内的键有序</strong>，才能在页里二分查找。天真的做法是让 cell 在页里就按键排好——那么往中间插一个键，就得把它后面几 KB 的字节整体后移。</p>
 <p>真实做法是：<strong>让槽目录有序，cell 物理上随便乱</strong>。插入一个中间键时，cell 追加到空白区尾端（谁都不用动），只在槽目录里 <code>memmove</code> 一小段偏移量。算一笔账：一页 8 KiB 装 100 条记录，最坏情况要挪 <code>100 × 2 = 200</code> 字节的偏移量，而不是几 KB 的记录本体——<strong>便宜一个数量级以上，而且挪的是缓存友好的连续小数组</strong>。查找时也是在这个有序小数组上二分，每一步再顺着偏移量跳过去读键。</p>
 <figure>
@@ -203,7 +204,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <figcaption>图 2 · 逻辑序（槽目录按键有序）与物理序（cell 按写入先后乱放）解耦：插入中间键只挪偏移量，不搬记录本体。</figcaption>
 </figure>
 <p>顺带一提，InnoDB 走的是个值得对照的<strong>变体</strong>：记录之间用「下一条」指针连成一条<strong>按键有序的单链表</strong>，页里的 <em>page directory</em> 只做<strong>稀疏</strong>索引——每个槽罩住 <code>4–8</code> 条记录。查找先在稀疏目录上二分定位到大致区间，再沿链表线性走几步。目录小了，代价是多几次指针跳转。<strong>同一个问题，两种合理答案，这就是本章反复示范的那种权衡。</strong></p>
-<h3>五、cell 里装什么：两种 cell 与放不下的大对象</h3>
+<h3 data-tts="04bb2023eb2a5d0d">五、cell 里装什么：两种 cell 与放不下的大对象</h3>
 <p>B-Tree 有两种节点，页里也就有两种 cell。<strong>分隔键 cell（key cell）</strong>只装「键 + 子页 ID」，用于内部节点导航；<strong>键值 cell（key-value cell）</strong>装「键 + 数据」，只出现在叶子。为什么要分？因为内部节点<strong>只需要路标，不必背 payload</strong>——同样一页能塞下的分隔键就更多，<em>扇出（fan-out）</em>更高、树更矮，正好接上第 2 章那个「31 层塌成 4 层」的结论。cell 的小头部记下自己的总长、键长，以及值长（叶子）或子页 ID（内部），变长字段跟在后面。</p>
 <p>那一个值大到<strong>一页都装不下</strong>怎么办？两条路：其一是<strong>溢出页（overflow page）</strong>——cell 里只留前一段和一个指向溢出页的指针，剩下的内容串成一条页链，SQLite 就这么干；其二是<strong>挪到旁路存储</strong>——PostgreSQL 的 TOAST：一行宽过约 <strong>2 KB</strong>（<code>TOAST_TUPLE_THRESHOLD</code>）就先压缩、再把大字段切块搬进一张附属表，行里只留一个指针。目的是保证 8 KiB 的页<strong>至少还能装下 4 行</strong>——毕竟一页只装一行的树，扇出低得没法看。</p>
 <figure>
@@ -240,7 +241,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </svg>
 <figcaption>图 3 · 两种 cell：内部节点只存「分隔键 + 子页 ID」以抬高扇出；叶子存键值，值放不下就留个指针、把剩余内容串成溢出页链。</figcaption>
 </figure>
-<h3>六、空洞、空闲清单与页内压缩</h3>
+<h3 data-tts="d46b83da9a6a5b2b">六、空洞、空闲清单与页内压缩</h3>
 <p>删除一条记录，<strong>通常不立刻搬家</strong>：把它的槽标为无效，cell 占的那段空间挂进一张<strong>空闲清单（availability list / freelist）</strong>——每段空洞的头部记下自己的大小和下一段空洞的偏移量，串成一条链。下次插入先在链上找一段够大的：<strong>首次适配（first-fit）</strong>拿第一个装得下的，快，但常把一大段切剩一点点；<strong>最佳适配（best-fit）</strong>扫完整条链挑最贴身的，省空间，但要遍历、剩下的边角更小更没用。SQLite 把这些空洞叫 <em>freeblock</em>，还在页头单记一个「零碎字节数」——那些小到连挂进链表都不值当的边角料。</p>
 <p>等碎片攒到某个阈值——<strong>空闲总量够，却没有一段连续放得下新 cell</strong>——就触发<strong>页内压缩（defragmentation / compaction）</strong>：把所有存活 cell 重新紧密码到页尾，同步更新槽目录里的偏移量。代价是<strong>整页重写一次</strong>，收益是把散碎空间攒回一整块。诉求 ③ 的价值在这一刻兑现：压缩把每个 cell 都挪了窝，<strong>但槽号没变，页外所有引用毫发无伤</strong>。</p>
 <figure>
@@ -280,10 +281,10 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </svg>
 <figcaption>图 4 · 删除只是标记 + 挂进空闲清单；碎片攒够了才整页压缩一次，把散碎空间攒回一整块。</figcaption>
 </figure>
-<h3>七、认得出自己、也发现得了损坏：版本号与校验和</h3>
+<h3 data-tts="fe92433400a8a0c0">七、认得出自己、也发现得了损坏：版本号与校验和</h3>
 <p>最后两个不起眼却救命的字段。<strong>版本</strong>：格式一定会变，文件必须自报家门，否则新版程序读老文件就是灾难。Cassandra 干脆把版本写进 SSTable 的<strong>文件名</strong>——<code>nb-1-big-Data.db</code> 里的 <code>nb</code> 就是格式版本、<code>big</code> 是格式类型，<strong>不打开文件就知道该用哪套读法</strong>。</p>
 <p><strong>校验和</strong>：写页时算一个短摘要存进页里，读回来重算一遍，对不上就说明这页坏了——防的是位腐烂、写错地址，以及断电时只写了半页的撕裂写。三点要记住：它<strong>防意外不防恶意</strong>（不是加密哈希，能改数据的人也能改校验和）；它<strong>只在你读到这页时才发现问题</strong>（所以认真的系统还会定期主动扫盘，叫 scrubbing）；它<strong>管不到内存里的损坏</strong>——数据在页缓存里被写坏，照样会带着「正确」的新校验和落盘。</p>
-<h2>关键权衡与选型</h2>
+<h2 data-tts="b4aa995ef661fac8">关键权衡与选型</h2>
 <p class="tcap">表 2 · 页大小怎么选（括号内为真实默认值）</p>
 <div class="tblwrap"><table class="cmp">
 <thead><tr><th>页大小</th><th>好处</th><th>代价</th><th>谁这么选</th></tr></thead>
@@ -312,7 +313,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <tr><th>攒够了再压缩</th><td>碎片超阈值时把整页存活 cell 重排紧密</td><td><strong>整页重写一次</strong>，还要写 WAL；有延迟尖刺</td><td>几乎所有 B-Tree 引擎的兜底手段</td></tr>
 <tr><th>干脆不回收</th><td>文件不可变，空间靠后台合并整文件时释放</td><td>合并前<strong>同一条键的多个版本同时占着盘</strong></td><td>LSM 一侧：把回收从页级挪到文件级</td></tr>
 </tbody></table></div>
-<h2>为什么重要 / 落到真实系统</h2>
+<h2 data-tts="8b1d1260e6df90cc">为什么重要 / 落到真实系统</h2>
 <p>这一章有三个很具体的兑现口。<strong>排障时看得懂</strong>：「删了一半数据，表文件为什么一个字节都没小？」——删除只是标记 + 挂空闲清单，复用发生在页内，文件不会缩；PostgreSQL 里得等 <code>VACUUM</code> 把死元组的空间还给页，只有 <code>VACUUM FULL</code> 重写整表才真的缩文件。<strong>建模时知道边界</strong>：行宽越过约 2 KB，PostgreSQL 就把字段挪进 TOAST 表，本来一次 I/O 拿到的行变成两次——「往主表塞大 JSON」在压测里的断崖不是玄学，是页装不下了。<strong>评审和面试时说得清</strong>：「B-Tree 页内插入是 O(n) 搬移吗？」——搬的是槽目录里的偏移量，不是记录本体。</p>
 <div class="ev">
 <div class="evh">一手实证 · 下面这些不是书里说的，是各系统自己公开写的</div>
@@ -324,7 +325,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>Apache Cassandra</strong> 把格式版本编进 SSTable 的文件名，形如 <code>&lt;版本&gt;-&lt;编号&gt;-&lt;格式&gt;-&lt;组件&gt;.db</code>（例：<code>nb-1-big-Data.db</code>）——<strong>不打开文件就知道该用哪个读法，本章「版本化」主张的一个极简实现</strong>。<span class="src"><a href="https://cassandra.apache.org/_/blog/Apache-Cassandra-4.1-New-SSTable-Identifiers.html" rel="noopener" target="_blank">Apache Cassandra 官方博客「New SSTable Identifiers」, 2022 ↗</a></span></li>
 </ul>
 </div>
-<h2>易错点与争议</h2>
+<h2 data-tts="f0d8913d14a7e81f">易错点与争议</h2>
 <ul>
 <li><strong>把 slotted page 当「数据库的通用页格式」。</strong>它是<strong>可变、原地更新</strong>那一派的答案。LSM 一侧的 SSTable 写完就不再改，根本不需要页内回收机制，空间靠整文件合并释放；列存（Parquet / ORC）则按 row group + column chunk 组织，目标是扫描时只读用得上的列。<strong>页格式跟着存储模型走，没有一种通用布局。</strong></li>
 <li><strong>把槽目录当索引。</strong>它只在<strong>一页之内</strong>定位，页与页之间的导航仍然靠 B-Tree。一页 8 KiB 里二分几步，和跨百万页找一条记录，是两个量级的问题。</li>
@@ -333,7 +334,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>「把内存结构原样落盘」的诱惑。</strong>直接 <code>mmap</code> 一个 C 结构体最省事、最快，但格式就此绑死在这台机器的字节序、对齐规则甚至编译器版本上，换个平台就读不了。Petrov 的立场很明确：<strong>每个字节都显式定义</strong>——这也是主流格式都自己规定字节序的原因。</li>
 <li><strong>时代局限与争议。</strong>本章的前提是「块设备 + 定长页 + 改一点也要整页读写」。近年 NVMe 的原子写、Zoned Namespace（ZNS）盘，以及各类「只顺序整段写」的设计，都在动摇其中几条假设。另一边，页大小无普适最优却常被做成刚性选择：PostgreSQL 的 8 KiB 是<strong>编译期常量</strong>，想换得重编译并重建集群——这个僵硬本身就是长期被诟病的点。</li>
 </ul>
-<h2>要点</h2>
+<h2 data-tts="25f63380ae604a88">要点</h2>
 <div class="tl">
 <p>① 一句话：磁盘上没有分配器、没有指针、没有垃圾回收，<strong>本章就是把这三件事在文件里重造一遍</strong>；它是 B-Tree 从纸面落到硬件的那一层。</p>
 <p>② 四条断裂：粒度（只能整页读写，一次随机 I/O 在 NVMe 上几十微秒、机械盘上 <code>5–10</code> 毫秒）、引用（指针 → 页 ID + 偏移量）、回收（自己管空洞）、可信度（字节会悄悄坏）。</p>
