@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals Ch 3 · File Formats — Chapter Deepread Book 48</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">CHAPTER DEEPREAD · DATABASE INTERNALS · CH 3</p>
+<h1>File Formats</h1>
+<p class="sub">Database Internals · Ch 3 · Alex Petrov · 2019</p>
+<p class="langbar"><a href="dbinternals-ch03-file-formats-book48.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The photos on your phone, your chat history, your company's order book — all of it ends up as <strong>a file on a disk</strong>. The previous chapter explained why databases use a tree of signposts to find things. This chapter goes one floor down: <strong>what does one node of that tree actually look like, as a pile of bytes on disk?</strong> It sounds like tedious clean-up work. In fact, whether any of those elegant algorithms can run on real hardware is decided right here.</p>
+<h2>An analogy first</h2>
+<p>Think of a disk as a <strong>ring binder</strong>. It won't let you "insert a sentence on line 37". You can only take out a whole page, rewrite it, and put it back. But the things a database has to store come in wildly different sizes — an order is 80 bytes, a product description is 3,000. How do you pack ragged content neatly into fixed-size pages, and still be able to add and remove things at any time?</p>
+<h2>Why the old world was hard</h2>
+<p>In memory, someone else does the dirty work for you: ask the system for space and you get some; hand it back when you're done; remember where a thing lives by keeping its house number. On disk all three conveniences vanish. The house number is worthless once the thing moves to another page, nobody fills in the hole a deletion leaves behind, and the page size is fixed. And if you take the easy route — one fixed-size cubbyhole per record — the cubbyhole has to be sized for the longest record, so short records waste most of their space.</p>
+<h2>The core mechanism: one page, with a table of contents at the front</h2>
+<p>The answer databases reached is about as clever as laying out a menu: <strong>write the body from the back of the page forward, keep the table of contents at the front, leave the gap in the middle</strong>.</p>
+<ul>
+<li><strong>Insert</strong>: find room in the middle gap, write the content there, then add a line to the contents — "item number so-and-so, at byte such-and-such".</li>
+<li><strong>Lookup and ordering</strong>: the contents are kept in order; the body lies wherever it landed. To read things in order you follow the contents — and <strong>shuffling a few short lines of a table of contents is far cheaper than dragging paragraphs of body text around</strong>. This one trick is the soul of the chapter.</li>
+<li><strong>Delete</strong>: cross out that line of the contents, and note the hole left in the body on a "vacant lots" list so the next insert can reuse it. Only when the holes get too scattered does the page stop and rearrange itself — the way you tidy a drawer only once it's bad enough.</li>
+</ul>
+<p>Each page also carries a <strong>tally number</strong>: computed and stored when the page is written, recomputed when it is read back. If the two disagree, you know the page quietly rotted on disk. The front of the file holds a passphrase and a version number, so a future program can tell at a glance which set of rules to read it by.</p>
+<h2>What it buys you</h2>
+<p>Nearly every database file you can open looks like this: PostgreSQL uses 8 KB pages, MySQL 16 KB, SQLite 4 KB, and inside each one sits a directory at the front and content at the back. The cost is honest too: <strong>deleting does not hand your disk space back right away</strong> — the holes come back only at some later tidy-up, and that tidy-up rewrites the whole page.</p>
+<h2>Remember this one line</h2>
+<div class="tl">
+<p>Disks only deal in whole pages, but records come in ragged sizes. The database's answer is <strong>a page with a directory at the front</strong>: content lies wherever it fell, the directory keeps the order; deletions go on a "vacant lots" list and get tidied in a batch; and every page carries a tally number so it can't rot in silence.</p>
+</div>
+<p class="switch-hint">Want the real byte layouts, the slotted-page diagrams and what each engine actually chose? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">You'd think "file formats" is the fussy clean-up work of deciding how bytes are arranged. It is in fact the <strong>landing layer</strong> where the elegant B-Tree of the previous chapter meets real hardware. The chapter has a single thesis: <strong>the three things an allocator, a pointer and a garbage collector do for you in memory — holding variable-size objects, reclaiming freed space, and referring to an object stably — all have to be rebuilt by hand on disk</strong>. What gets built is everything in this chapter: fixed-size pages, the in-page <strong>slotted page</strong> directory, <strong>cells</strong> that hold the data, an <strong>availability list</strong> for the holes, plus a <strong>version</strong> so the file knows what it is and a <strong>checksum</strong> so you find out when it rots.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Page / block</strong> — the smallest unit a database reads or writes from disk. Fixed size, typically 4 / 8 / 16 KiB. Disks won't "change just 3 bytes"; it's always a whole page, both ways.</li>
+<li><strong>Serialization</strong> — flattening an in-memory object into a byte string so it can be written to a file; turning it back is deserialization.</li>
+<li><strong>Offset</strong> — "how many bytes from the start of the page" something sits. On-disk addresses are almost always relative coordinates like this.</li>
+<li><strong>Page ID</strong> — which page of the file. Since pages are fixed size, page <code>n</code> lives at <code>n ×</code> page size: one multiplication.</li>
+<li><strong>Cell</strong> — the little run of bytes in a page holding one record (a key, plus a value or child pointer, plus a small header). Petrov calls them cells; engines differ (PostgreSQL: tuple, InnoDB: record).</li>
+<li><strong>Slot directory</strong> — the array of "record <em>i</em> starts at byte <em>x</em>" offsets at the front of the page. The protagonist of this chapter.</li>
+<li><strong>Endianness</strong> — for a multi-byte number, whether the most significant byte comes first (big-endian) or last (little-endian). Reading one file on different machines means the format must nail this down.</li>
+<li><strong>Fragmentation</strong> — enough free space in total, but scattered into pieces, none of them large enough for the next record.</li>
+<li><strong>Magic number</strong> — a fixed byte string at the start of a file. Check it first; if it doesn't match, this isn't that kind of file.</li>
+<li><strong>Checksum</strong> — a short digest of a chunk of data, stored on write and recomputed on read, to notice that bytes were quietly corrupted.</li>
+<li><strong>Torn write</strong> — power loss or a crash mid-page, leaving half-new, half-old bytes on disk.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This is Chapter 3 of Part I, "Storage Engines". <strong>It follows Chapter 2</strong>, which argued why the B-Tree is the default answer on disk but only ever drew the shape of the tree, never what a node looks like in bytes. <strong>It sets up Chapter 4</strong>, "Implementing B-Trees" — splits, merges, concurrency, page management — all of which stand on the page layout defined here. In the real world: the page you dump with PostgreSQL's <code>pageinspect</code> extension, an InnoDB index page, a b-tree page inside a SQLite file. Those are this chapter, made of actual bytes.</p>
+<h2>The problem it solves</h2>
+<p>The root of it: <strong>the memory programming model and the disk programming model break apart in four places</strong> — and every data structure we're used to was written for the memory one. <strong>Granularity</strong>: memory is byte-addressable, disks move whole pages, and the cost of one random I/O is roughly the same whether you wanted 1 byte or 8 KiB (tens to hundreds of microseconds on NVMe, <code>5–10</code> ms on spinning disks). So <strong>how you arrange bytes within a page directly decides how much useful data one I/O buys you</strong>. <strong>References</strong>: a memory pointer is a virtual address and is worthless after a restart; on disk a reference must become a durable coordinate, "page ID + offset within the page". <strong>Allocation and reclamation</strong>: no <code>malloc/free</code>, no garbage collector — the hole a deletion leaves is yours to record, reuse and tidy. <strong>Trustworthiness</strong>: in memory, what you read is what you wrote; on disk, not necessarily — bit rot, misdirected writes and torn writes all hand you garbage that looks perfectly well-formed.</p>
+<p>What happens if you don't solve it? Concretely: give every record a fixed-size slot and the slot must be sized for the longest record — say 512 bytes. An 80-byte order then <strong>wastes 84%</strong> of its slot, and an 8 KiB page holds just 16 of them. Go the other way, packing variable-size records tightly in key order, and inserting in the middle means <code>memmove</code>-ing kilobytes, while the holes left by deletions never come back. This chapter is the search for a layout that <strong>dodges both kinds of stupid at once</strong>.</p>
+<p class="tcap">Table 1 · Four things that are free in memory and must be built by hand on disk</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Capability</th><th>In memory (who does it for you)</th><th>On disk (this chapter's answer)</th></tr></thead>
+<tbody>
+<tr><th>Hold variable-size objects</th><td>The allocator hands you a block of any size</td><td>Fixed pages + <strong>cells with length prefixes</strong>; overflow pages when it won't fit</td></tr>
+<tr><th>Reclaim freed space</th><td><code>free()</code> or a GC, compaction included</td><td><strong>Availability list + in-page compaction</strong>, on your own schedule</td></tr>
+<tr><th>Refer to an object stably</th><td>A pointer; the address holds as long as the object doesn't move</td><td><strong>Page ID + slot number</strong>: the physical offset may move, the slot number doesn't</td></tr>
+<tr><th>Trust the bytes you read</th><td>Broadly safe (ECC memory underneath)</td><td><strong>Per-page checksums</strong>: computed on write, verified on read</td></tr>
+</tbody></table></div>
+<h2>The core, explained properly</h2>
+<h3>1. Turning data into bytes: fixed-size, variable-size, bit-packed</h3>
+<p>The bottom layer is <em>binary encoding</em>: how one value becomes a string of bytes. <strong>Fixed-size numbers</strong> are written at a fixed width, but the format must pin down endianness. On-disk formats lean toward <strong>big-endian</strong> (most significant byte first, also called network byte order) for a very practical reason: for big-endian unsigned integers, <strong>comparing byte by byte gives the same answer as comparing the numbers</strong> — keys can go straight through <code>memcmp</code> without being deserialized first. SQLite's format spells it out: every multi-byte field is big-endian.</p>
+<p><strong>Variable-size data</strong> (strings, blobs) has two classic options: a C-style <em>terminator</em> (read until <code>\0</code> — which means scanning byte by byte, and the content may never contain a <code>\0</code>), or a <em>length prefix</em> (write the length, then the bytes). Databases universally take the second: <strong>you know the size before you read, so you can grab it in one go — or skip it entirely</strong>. <strong>Bit packing</strong> covers fields with only a handful of possible values: PostgreSQL's tuple header carries a null bitmap that spends <strong>1 bit per column</strong> to record "is this column NULL".</p>
+<h3>2. The skeleton of a file: magic number, version, fixed-size pages</h3>
+<p>One level up is the file as a whole: <strong>a header followed by a long run of equally sized pages</strong>. The header holds the global facts — magic number, format version, page size. The first 16 bytes of a SQLite file are always <code>SQLite format 3\0</code>. Why insist on <strong>fixed-size pages</strong>? Because fixed size means <strong>page <code>n</code> lives at <code>n ×</code> page size</strong> — one multiplication to address it, with no page-directory indirection anywhere — and it lets slots in the page cache be swapped and reused interchangeably. It's the least glamorous constraint in the design and the one that saves the most work.</p>
+<h3>3. The slotted page: the heart of the chapter</h3>
+<p>Now the protagonist. A page layout has to satisfy three requirements <strong>at the same time</strong>:</p>
+<ul>
+<li>① store <strong>variable-size</strong> records with little overhead;</li>
+<li>② let deleted space be <strong>reclaimed and reused</strong>;</li>
+<li>③ refer to a record <strong>without exposing its physical location</strong> — otherwise one compaction moves the records and every reference pointing at them breaks.</li>
+</ul>
+<p>The <em>slotted page</em> catches all three at once. The page is cut into three parts: a <strong>header</strong>, a <strong>slot directory growing forward from the front</strong> (an array of fixed-size offsets, usually 2 bytes each), and a <strong>cell area growing backward from the tail</strong>, with free space caught in between. The header keeps two offsets marking the boundaries of that gap; <strong>when the two pointers meet, the page is full</strong>.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 262" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="a1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="a2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text fill="#5b9df9" font-size="13" font-weight="700" x="20" y="26">Inside one page (say 8 KiB): two ends growing toward each other</text>
+<rect fill="none" height="72" rx="8" stroke="rgba(91,157,249,0.45)" width="580" x="30" y="60"></rect>
+<rect fill="rgba(155,108,245,0.2)" height="40" rx="4" stroke="#9b6cf5" width="72" x="38" y="76"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="74" y="100">header</text>
+<rect fill="rgba(91,157,249,0.22)" height="40" rx="4" stroke="#5b9df9" width="42" x="116" y="76"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="137" y="100">slot0</text>
+<rect fill="rgba(91,157,249,0.22)" height="40" rx="4" stroke="#5b9df9" width="42" x="162" y="76"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="183" y="100">slot1</text>
+<rect fill="rgba(91,157,249,0.22)" height="40" rx="4" stroke="#5b9df9" width="42" x="208" y="76"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="229" y="100">slot2</text>
+<rect fill="none" height="40" rx="4" stroke="rgba(120,120,130,0.55)" stroke-dasharray="4 4" width="128" x="258" y="76"></rect>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="322" y="100">free space</text>
+<rect fill="rgba(91,157,249,0.1)" height="40" rx="4" stroke="#7c8593" width="70" x="392" y="76"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="427" y="100">cell 2</text>
+<rect fill="rgba(91,157,249,0.1)" height="40" rx="4" stroke="#7c8593" width="66" x="466" y="76"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="499" y="100">cell 1</text>
+<rect fill="rgba(91,157,249,0.1)" height="40" rx="4" stroke="#7c8593" width="66" x="536" y="76"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="569" y="100">cell 0</text>
+<line marker-end="url(#a1)" stroke="#5b9df9" x1="116" x2="250" y1="68" y2="68"></line>
+<text fill="#5b9df9" font-family="monospace" font-size="10" x="122" y="58">slots grow →</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="602" x2="394" y1="68" y2="68"></line>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="end" x="598" y="58">← cells grow from the tail</text>
+<path d="M137,120 C137,168 400,150 427,150" fill="none" marker-end="url(#a2)" stroke="#9b6cf5" stroke-dasharray="3 3"></path>
+<path d="M183,120 C183,182 470,168 499,168" fill="none" marker-end="url(#a2)" stroke="#9b6cf5" stroke-dasharray="3 3"></path>
+<path d="M229,120 C229,200 540,186 569,186" fill="none" marker-end="url(#a2)" stroke="#9b6cf5" stroke-dasharray="3 3"></path>
+<text fill="#9b6cf5" font-family="monospace" font-size="10.5" x="30" y="222">slot i holds the 2-byte offset of cell i</text>
+<text fill="#7c8593" font-size="10.5" x="30" y="244">a reference names page + slot, so the cell may move freely inside</text>
+</svg>
+<figcaption>Fig. 1 · Anatomy of a slotted page: header, slot directory growing forward, cells growing backward, free space caught in the middle. The two ends meeting means the page is full.</figcaption>
+</figure>
+<p>Each requirement then lands somewhere concrete. <strong>Insert</strong> writes the cell at the tail end of the gap and appends an offset to the slot directory — a variable-size record takes only the bytes it needs, plus a 2-byte slot and a small cell header, so <strong>overhead comes down to single-digit bytes</strong> (①). <strong>Delete</strong> marks the slot invalid and hands the cell's bytes to the availability list for reuse (②). And <strong>the slot number is the stable public identity</strong>: when a record moves inside its page you only update the offset in its slot, and every outside reference holding "page ID + slot number" stays valid (③).</p>
+<p>PostgreSQL is the textbook specimen of this structure: 8 KiB pages by default, a <strong>24-byte page header</strong>, then <strong>4-byte line pointers</strong> (<code>ItemIdData</code> — the slots) growing forward while tuples are packed backward from the tail, with the header's two 2-byte offsets <code>pd_lower</code> and <code>pd_upper</code> bracketing the free space between them.</p>
+<h3>4. Logical order vs. physical order: why an insert never moves house</h3>
+<p>This is the prettiest idea in the chapter, and the easiest to read past. A B-Tree needs the <strong>keys inside a node to be ordered</strong> so it can binary-search within the page. The naive approach keeps the cells themselves in key order — and then inserting a key in the middle means shifting the kilobytes that follow it.</p>
+<p>What actually happens: <strong>the slot directory is ordered, the cells lie in physical disarray</strong>. Inserting a middle key appends the cell to the tail of the gap (nothing else moves) and <code>memmove</code>s a short run of offsets in the directory. Do the arithmetic: an 8 KiB page holding 100 records shifts at worst <code>100 × 2 = 200</code> bytes of offsets rather than kilobytes of record bodies — <strong>more than an order of magnitude cheaper, and it's a small contiguous array that the CPU cache loves</strong>. Lookups binary-search that same little sorted array, following each offset to read the key it points at.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 244" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a3" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="24">Inserting key 33: only offsets move, no cell is relocated</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10.5" x="100" y="48">slot directory — sorted by key (2-byte offsets)</text>
+<rect fill="rgba(91,157,249,0.18)" height="30" rx="5" stroke="#5b9df9" width="80" x="100" y="56"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="140" y="76">key 12</text>
+<rect fill="rgba(91,157,249,0.18)" height="30" rx="5" stroke="#5b9df9" width="80" x="190" y="56"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="230" y="76">key 25</text>
+<rect fill="rgba(155,108,245,0.3)" height="30" rx="5" stroke="#9b6cf5" stroke-width="2" width="80" x="280" y="56"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="320" y="76">key 33 new</text>
+<rect fill="rgba(91,157,249,0.18)" height="30" rx="5" stroke="#5b9df9" width="80" x="370" y="56"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="410" y="76">key 40</text>
+<rect fill="rgba(91,157,249,0.18)" height="30" rx="5" stroke="#5b9df9" width="80" x="460" y="56"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="500" y="76">key 58</text>
+<line marker-end="url(#a3)" stroke="#7c8593" x1="140" x2="316" y1="88" y2="154"></line>
+<line marker-end="url(#a3)" stroke="#7c8593" x1="230" x2="140" y1="88" y2="154"></line>
+<line marker-end="url(#a3)" stroke="#9b6cf5" x1="320" x2="496" y1="88" y2="154"></line>
+<line marker-end="url(#a3)" stroke="#7c8593" x1="410" x2="410" y1="88" y2="154"></line>
+<line marker-end="url(#a3)" stroke="#7c8593" x1="500" x2="234" y1="88" y2="154"></line>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="5" stroke="#7c8593" width="80" x="100" y="158"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="140" y="178">cell 25</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="5" stroke="#7c8593" width="80" x="190" y="158"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="230" y="178">cell 58</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="5" stroke="#7c8593" width="80" x="280" y="158"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="320" y="178">cell 12</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="5" stroke="#7c8593" width="80" x="370" y="158"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="410" y="178">cell 40</text>
+<rect fill="rgba(155,108,245,0.18)" height="30" rx="5" stroke="#9b6cf5" stroke-width="2" width="80" x="460" y="158"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="500" y="178">cell 33</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" x="100" y="212">cell area — physical order = insertion order; new cell just appended</text>
+<text fill="#9b6cf5" font-size="10.5" x="100" y="232">worst case: memmove 100 × 2 = 200 bytes of offsets, not KBs of records</text>
+</svg>
+<figcaption>Fig. 2 · Logical order (slot directory sorted by key) decoupled from physical order (cells lying in insertion order): a middle insert shifts offsets, never record bodies.</figcaption>
+</figure>
+<p>Worth contrasting: InnoDB takes a <strong>variant</strong>. Its records are chained by "next record" pointers into a <strong>singly linked list in key order</strong>, and the in-page <em>page directory</em> is only a <strong>sparse</strong> index — each slot owns roughly <code>4–8</code> records. A lookup binary-searches the sparse directory to a neighbourhood, then walks a few links. Smaller directory, at the price of a few extra pointer hops. <strong>One problem, two defensible answers — exactly the kind of trade-off this chapter keeps demonstrating.</strong></p>
+<h3>5. What goes in a cell: two kinds, and values that don't fit</h3>
+<p>A B-Tree has two kinds of node, so a page has two kinds of cell. A <strong>separator (key) cell</strong> holds only "key + child page ID" and does navigation in internal nodes; a <strong>key-value cell</strong> holds "key + data" and appears only in leaves. Why split them? Because an internal node <strong>needs signposts, not payload</strong> — the same page then fits many more separator keys, which means higher <em>fan-out</em> and a shallower tree, exactly the conclusion Chapter 2 landed on. The cell's small header records its own length, the key length, and either the value length (leaf) or the child page ID (internal), with the variable-size fields following.</p>
+<p>What if a value is too large for a page at all? Two roads. <strong>Overflow pages</strong>: the cell keeps a prefix plus a pointer, and the rest is chained across overflow pages — SQLite's approach. Or <strong>move it aside</strong>: PostgreSQL's TOAST kicks in once a row exceeds roughly <strong>2 kB</strong> (<code>TOAST_TUPLE_THRESHOLD</code>), compressing it and relocating large fields in chunks into a side table, leaving a pointer in the row. The goal is to keep <strong>at least 4 rows per 8 KiB page</strong> — a tree with one row per page has hopeless fan-out.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 234" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a4" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="24">Internal node: separator cell</text>
+<rect fill="rgba(91,157,249,0.14)" height="34" rx="5" stroke="#5b9df9" width="90" x="20" y="44"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="65" y="66">cell hdr</text>
+<rect fill="rgba(91,157,249,0.14)" height="34" rx="5" stroke="#5b9df9" width="90" x="114" y="44"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="159" y="66">separator key</text>
+<rect fill="rgba(155,108,245,0.22)" height="34" rx="5" stroke="#9b6cf5" width="90" x="208" y="44"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="253" y="66">child page ID</text>
+<line marker-end="url(#a4)" stroke="#9b6cf5" x1="253" x2="253" y1="80" y2="122"></line>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="5" stroke="#7c8593" width="120" x="193" y="126"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="253" y="146">child page #42</text>
+<text fill="#7c8593" font-size="10.5" x="20" y="186">no payload → more signposts per page</text>
+<text fill="#7c8593" font-size="10.5" x="20" y="206">→ higher fan-out, shallower tree</text>
+<line stroke="rgba(120,120,130,0.3)" stroke-dasharray="4 4" x1="330" x2="330" y1="14" y2="216"></line>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="352" y="24">Leaf node: key-value cell</text>
+<rect fill="rgba(91,157,249,0.14)" height="34" rx="5" stroke="#5b9df9" width="80" x="352" y="44"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="392" y="66">cell hdr</text>
+<rect fill="rgba(91,157,249,0.14)" height="34" rx="5" stroke="#5b9df9" width="70" x="436" y="44"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="471" y="66">key</text>
+<rect fill="rgba(155,108,245,0.22)" height="34" rx="5" stroke="#9b6cf5" width="110" x="510" y="44"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="565" y="66">oversized value</text>
+<line marker-end="url(#a4)" stroke="#9b6cf5" x1="565" x2="565" y1="80" y2="122"></line>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="5" stroke="#7c8593" width="96" x="420" y="126"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="468" y="146">overflow #77</text>
+<line marker-end="url(#a4)" stroke="#7c8593" x1="518" x2="546" y1="141" y2="141"></line>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="5" stroke="#7c8593" width="96" x="548" y="126"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="596" y="146">overflow #78</text>
+<text fill="#7c8593" font-size="10.5" x="352" y="186">too big → keep a prefix + a pointer</text>
+<text fill="#7c8593" font-size="10.5" x="352" y="206">rest is chained (or moved into TOAST)</text>
+</svg>
+<figcaption>Fig. 3 · Two kinds of cell: internal nodes store "separator key + child page ID" to buy fan-out; leaves store key and value, and an oversized value leaves behind a pointer into a chain of overflow pages.</figcaption>
+</figure>
+<h3>6. Holes, the availability list, and in-page compaction</h3>
+<p>Deleting a record usually <strong>moves nothing</strong>: its slot is marked invalid and the bytes its cell occupied go onto an <strong>availability list</strong> (freelist) — each hole's header records its own size and the offset of the next hole, chaining them together. The next insert walks the chain looking for a hole big enough: <strong>first-fit</strong> takes the first one that fits — fast, but it often leaves a sliver behind; <strong>best-fit</strong> scans the whole chain for the snuggest one — thriftier, but it costs a traversal and the leftovers are smaller and less usable. SQLite calls these holes <em>freeblocks</em> and separately counts "fragmented free bytes": the crumbs too small to be worth chaining at all.</p>
+<p>Once fragmentation crosses a threshold — <strong>plenty of free space in total, but no single run large enough for the next cell</strong> — the page triggers <strong>defragmentation (compaction)</strong>: surviving cells are repacked tightly against the tail and the offsets in the slot directory are updated to match. The cost is <strong>rewriting the whole page</strong>; the payoff is scattered space gathered back into one run. And requirement ③ pays off precisely here: compaction moves every cell, <strong>yet the slot numbers don't change, so every reference from outside the page survives untouched</strong>.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 268" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a5" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#7c8593" font-family="monospace" font-size="11" x="16" y="66">① initial</text>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="4" stroke="#5b9df9" width="96" x="120" y="44"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="168" y="64">A</text>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="4" stroke="#5b9df9" width="96" x="222" y="44"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="270" y="64">B</text>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="4" stroke="#5b9df9" width="96" x="324" y="44"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="372" y="64">C</text>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="4" stroke="#5b9df9" width="96" x="426" y="44"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="474" y="64">D</text>
+<rect fill="none" height="30" rx="4" stroke="rgba(120,120,130,0.5)" stroke-dasharray="4 4" width="90" x="528" y="44"></rect>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="573" y="64">free</text>
+<text fill="#7c8593" font-family="monospace" font-size="11" x="16" y="146">② delete B, D</text>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="4" stroke="#5b9df9" width="96" x="120" y="124"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="168" y="144">A</text>
+<rect fill="none" height="30" rx="4" stroke="#9b6cf5" stroke-dasharray="4 3" width="96" x="222" y="124"></rect>
+<text fill="#9b6cf5" font-size="10" text-anchor="middle" x="270" y="144">hole</text>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="4" stroke="#5b9df9" width="96" x="324" y="124"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="372" y="144">C</text>
+<rect fill="none" height="30" rx="4" stroke="#9b6cf5" stroke-dasharray="4 3" width="96" x="426" y="124"></rect>
+<text fill="#9b6cf5" font-size="10" text-anchor="middle" x="474" y="144">hole</text>
+<rect fill="none" height="30" rx="4" stroke="rgba(120,120,130,0.5)" stroke-dasharray="4 4" width="90" x="528" y="124"></rect>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="573" y="144">free</text>
+<path d="M270,156 C300,182 440,182 470,158" fill="none" marker-end="url(#a5)" stroke="#9b6cf5" stroke-dasharray="3 3"></path>
+<text fill="#9b6cf5" font-family="monospace" font-size="10" text-anchor="middle" x="372" y="196">availability list: each hole stores its size + next offset</text>
+<text fill="#7c8593" font-family="monospace" font-size="11" x="16" y="238">③ compacted</text>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="4" stroke="#5b9df9" width="96" x="120" y="216"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="168" y="236">A</text>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="4" stroke="#5b9df9" width="96" x="222" y="216"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="270" y="236">C</text>
+<rect fill="none" height="30" rx="4" stroke="rgba(120,120,130,0.5)" stroke-dasharray="4 4" width="294" x="324" y="216"></rect>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="471" y="236">one contiguous run (slot numbers unchanged)</text>
+</svg>
+<figcaption>Fig. 4 · Deletion only marks and chains the hole; only once fragmentation builds up does the page compact, gathering scattered space back into one run.</figcaption>
+</figure>
+<h3>7. Knowing what you are, and noticing rot: versions and checksums</h3>
+<p>Two unglamorous, life-saving fields. <strong>Version</strong>: formats change, so a file has to state what it is, or a newer binary reading an older file is a disaster. Cassandra puts the version straight into the SSTable's <strong>filename</strong> — in <code>nb-1-big-Data.db</code>, <code>nb</code> is the format version and <code>big</code> the format type, so <strong>you know which reader to use without opening the file</strong>.</p>
+<p><strong>Checksum</strong>: compute a short digest when the page is written, store it in the page, recompute on read; a mismatch means the page is damaged. It guards against bit rot, misdirected writes, and the half-written page a power loss leaves behind. Three things to keep straight: it protects against <strong>accidents, not adversaries</strong> (it is not a cryptographic hash — whoever can change the data can change the checksum); it only finds the problem <strong>when you happen to read that page</strong> (which is why serious systems also scrub proactively); and it says nothing about <strong>corruption in memory</strong> — data mangled in the page cache goes to disk with a perfectly "correct" new checksum.</p>
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 2 · Choosing a page size (real defaults in brackets)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Page size</th><th>Upside</th><th>Cost</th><th>Who picks it</th></tr></thead>
+<tbody>
+<tr><th>4 KiB</th><td>Aligns with common filesystem / SSD blocks; little waste for small records; finer lock granularity, less contention</td><td>Taller tree, more I/Os per lookup; header + slot directory are a <strong>larger share of overhead</strong></td><td>SQLite (default 4096, tunable 512–65536)</td></tr>
+<tr><th>8 KiB</th><td>The usual compromise between fan-out and waste; a ~2 kB row limit still fits most OLTP rows</td><td>Wide rows trip TOAST / overflow, costing an extra hop</td><td>PostgreSQL (<code>BLCKSZ</code>, a <strong>compile-time constant</strong>)</td></tr>
+<tr><th>16 KiB</th><td>High fan-out, shallow tree; better value on scans and bulk writes</td><td><strong>Read amplification</strong>: 16 KiB moved for a 100-byte record; coarser page locks</td><td>MySQL / InnoDB (settable 4–64 KiB)</td></tr>
+<tr><th>≥ 64 KiB</th><td>Best efficiency for large sequential I/O; suits scan-heavy workloads</td><td>Read and write amplification on random point lookups get ugly</td><td>Analytical / columnar formats and some LSM block sizes</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 3 · Three ways to lay variable-size records out in a page</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Fixed-size slots</th><th>Slotted page</th><th>Immutable append (SSTable)</th></tr></thead>
+<tbody>
+<tr><th>Layout</th><td>One equally sized cubbyhole per record</td><td>Directory keeps order; cells grow from the tail</td><td>Sorted once, written once, <strong>read-only</strong> thereafter</td></tr>
+<tr><th>Space efficiency</th><td><strong>Poor</strong>: slots sized for the longest record — an 80-byte row in 512 bytes wastes 84%</td><td>Good: actual length + ~2-byte slot + small cell header</td><td>Best: packed tight, and compressible in blocks</td></tr>
+<tr><th>Middle insert</th><td>Shifts every following slot</td><td><strong>memmoves offsets only</strong> (hundreds of bytes)</td><td>Not supported — it goes into a new file</td></tr>
+<tr><th>Reclaiming deletes</th><td>Slot marked empty, immediately reusable</td><td>Chained on the availability list; <strong>compacted when fragmented</strong></td><td>Not reclaimed in place — dropped during <strong>file compaction</strong></td></tr>
+<tr><th>Fits</th><td>Genuinely fixed-size data (evenly sized time-series samples)</td><td><strong>Update-in-place B-Tree engines</strong>: PostgreSQL, InnoDB, SQLite</td><td>Write-heavy LSM engines that tolerate read amplification: Cassandra, RocksDB</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 4 · Managing free space</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Strategy</th><th>How it works</th><th>Cost</th><th>When to use it</th></tr></thead>
+<tbody>
+<tr><th>First-fit</th><td>Walk the chain, take the first hole that fits</td><td>Slivers left behind are often unusable; fragmentation builds fast</td><td>Frequent inserts of similarly sized records; you want speed</td></tr>
+<tr><th>Best-fit</th><td>Scan the whole chain, take the snuggest hole</td><td>A traversal per insert; leftovers are even smaller</td><td>Widely varying record sizes, space under pressure</td></tr>
+<tr><th>Compact when fragmented</th><td>Past a threshold, repack all surviving cells tightly</td><td><strong>A full page rewrite</strong> plus its WAL record; a latency spike</td><td>The fallback in essentially every B-Tree engine</td></tr>
+<tr><th>Don't reclaim at all</th><td>Files are immutable; space is freed when they are merged away</td><td>Until then, <strong>several versions of the same key sit on disk</strong></td><td>The LSM side: reclamation moves from page level to file level</td></tr>
+</tbody></table></div>
+<h2>Why it matters / in real systems</h2>
+<p>This chapter cashes out in three very concrete places. <strong>You can read a symptom</strong>: "I deleted half the data — why hasn't the table file shrunk by a single byte?" Because deletion only marks and chains; reuse happens inside the page and the file never shrinks. In PostgreSQL you wait for <code>VACUUM</code> to return dead tuples' space to the page, and only <code>VACUUM FULL</code>, which rewrites the table, actually shrinks the file. <strong>You know where the modelling cliff is</strong>: cross roughly 2 kB of row width and PostgreSQL starts moving fields into the TOAST table, so a row that was one I/O becomes two — the drop-off when you "stuff big JSON into the main table" isn't mysterious, the page just can't hold it. <strong>And you can answer cleanly in a review</strong>: "isn't an in-page B-Tree insert an O(n) shift?" — what shifts are the offsets in the slot directory, not the record bodies.</p>
+<div class="ev">
+<div class="evh">PRIMARY EVIDENCE · NOT THE BOOK'S CLAIMS — EACH SYSTEM'S OWN WORDS</div>
+<ul>
+<li><strong>PostgreSQL</strong>'s own documentation spells the heap page layout out byte by byte: a <strong>24-byte page header</strong>, then <strong>4-byte line pointers</strong> (<code>ItemIdData</code>) allocated forward from the front while tuples are packed backward from the tail, with the 2-byte <code>pd_lower</code> / <code>pd_upper</code> offsets bracketing the unallocated space between — <strong>a textbook slotted page, in the field</strong>. <span class="src"><a href="https://www.postgresql.org/docs/current/storage-page-layout.html" rel="noopener" target="_blank">PostgreSQL docs, "Database Page Layout" ↗</a></span></li>
+<li><strong>SQLite</strong>'s file format document reads as a line-by-line confirmation of this chapter: the first <strong>16 bytes are always <code>SQLite format 3\0</code></strong>; every multi-byte header field is big-endian; a b-tree page is a header plus a 2-byte big-endian cell offset array plus a cell content area growing back from the tail; holes are <em>freeblocks</em> chained together, each storing "next freeblock offset + own size", and a fragmented page can be reorganized so that all cells are packed tightly at the end — <strong>availability list and in-page compaction, verbatim</strong>. <span class="src"><a href="https://www.sqlite.org/fileformat.html" rel="noopener" target="_blank">SQLite, "Database File Format" ↗</a></span></li>
+<li><strong>NetApp and the University of Wisconsin</strong> studied <strong>1.53 million production drives over 41 months</strong> and found <strong>more than 400,000 checksum mismatches</strong>, with nearline drives developing them <strong>an order of magnitude more often</strong> than enterprise-class drives — <strong>which is why those few checksum bytes in a page are not fastidiousness</strong>. <span class="src"><a href="https://www.usenix.org/conference/fast-08/analysis-data-corruption-storage-stack" rel="noopener" target="_blank">Bairavasundaram et al., "An Analysis of Data Corruption in the Storage Stack", FAST 2008 ↗</a></span></li>
+<li><strong>PostgreSQL 18</strong> flipped data checksums from off-by-default to <strong>enabled by default in <code>initdb</code></strong> (turning them off now needs an explicit <code>--no-data-checksums</code>) — <strong>a moved default is the clearest statement that the community thinks the overhead is worth paying today</strong>. <span class="src"><a href="https://www.postgresql.org/docs/18/release-18.html" rel="noopener" target="_blank">PostgreSQL 18 release notes ↗</a></span></li>
+<li><strong>Apache Cassandra</strong> encodes the format version in the SSTable filename itself, as <code>&lt;version&gt;-&lt;generation&gt;-&lt;format&gt;-&lt;component&gt;.db</code> (e.g. <code>nb-1-big-Data.db</code>) — <strong>a minimal implementation of this chapter's versioning argument: know the reader before you open the file</strong>. <span class="src"><a href="https://cassandra.apache.org/_/blog/Apache-Cassandra-4.1-New-SSTable-Identifiers.html" rel="noopener" target="_blank">Apache Cassandra blog, "New SSTable Identifiers", 2022 ↗</a></span></li>
+</ul>
+</div>
+<h2>Common mistakes and open questions</h2>
+<ul>
+<li><strong>Treating the slotted page as "the" database page format.</strong> It is the answer for the <strong>mutable, update-in-place</strong> school. An LSM SSTable is never modified after it is written, needs no in-page reclamation at all, and frees space by merging whole files; columnar formats (Parquet, ORC) organize by row group and column chunk so that a scan reads only the columns it needs. <strong>Page layout follows the storage model; there is no universal one.</strong></li>
+<li><strong>Mistaking the slot directory for an index.</strong> It locates records <strong>within a single page</strong>. Navigation between pages is still the B-Tree's job. Binary-searching within 8 KiB and finding one record among millions of pages are problems an order of magnitude apart.</li>
+<li><strong>Expecting deletes to free disk space immediately.</strong> A delete usually just marks and chains; the space becomes reusable at the next in-page compaction, and the file size typically doesn't budge (in PostgreSQL you additionally wait for <code>VACUUM</code>, and only <code>VACUUM FULL</code> shrinks the file).</li>
+<li><strong>Treating checksums as integrity insurance.</strong> They are not cryptographic hashes and stop no deliberate tampering; they fire only when the page is read, so a bad page can sit there for a long time; and they cover nothing that happens in memory. "What you read is what you wrote" also needs scrubbing and verified backups.</li>
+<li><strong>The temptation to dump in-memory structs straight to disk.</strong> <code>mmap</code>-ing a C struct is the fastest thing to write and the fastest to run — and it welds your format to this machine's endianness, alignment rules and even compiler version, so another platform can't read it. Petrov's position is unambiguous: <strong>define every byte explicitly</strong>, which is exactly why mainstream formats pin down their own byte order.</li>
+<li><strong>Where the chapter shows its age.</strong> Its premise is "block device, fixed-size pages, read the whole page to change a byte of it". NVMe atomic writes, Zoned Namespace (ZNS) drives and various "only ever write whole segments" designs are all pulling at parts of that. Meanwhile there is no universally optimal page size, yet the choice is often made rigid: PostgreSQL's 8 KiB is a <strong>compile-time constant</strong>, so changing it means recompiling and rebuilding the cluster — a stiffness that has drawn complaints for years.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① In one line: on disk there is no allocator, no pointer, no garbage collector — <strong>this chapter rebuilds all three inside a file</strong>. It is the layer where the B-Tree comes down from paper onto hardware.</p>
+<p>② Four breaks: granularity (whole pages only; one random I/O is tens of microseconds on NVMe, <code>5–10</code> ms on spinning disks), references (pointer → page ID + offset), reclamation (you manage the holes), trustworthiness (bytes rot quietly).</p>
+<p>③ Encoding: pin down endianness for fixed-size numbers (big-endian lets you compare keys byte by byte), use <strong>length prefixes</strong> rather than terminators for variable-size data, and bit-pack flags and null markers.</p>
+<p>④ File skeleton: magic number + version + a run of <strong>fixed-size pages</strong> — fixed size is what makes "where is page n" a single multiplication.</p>
+<p>⑤ <strong>The slotted page is the heart</strong>: header + slot directory growing forward + cells growing backward, catching all three requirements — variable-size records, reclaimable space, and <strong>references not welded to physical positions</strong>.</p>
+<p>⑥ The prettiest move: <strong>decoupling logical from physical order</strong> — the directory is sorted, the cells are not; a middle insert shifts a few hundred bytes of offsets instead of kilobytes of records. InnoDB answers the same question differently, with an ordered linked list plus a sparse directory.</p>
+<p>⑦ Two kinds of cell: internal nodes carry "separator key + child page ID" to buy fan-out; leaves carry key and value, and oversized values go to overflow pages (SQLite) or a side table (PostgreSQL's TOAST, threshold ~<code>2 kB</code>, to keep at least 4 rows per page).</p>
+<p>⑧ Space management: delete = mark + chain on the availability list (first-fit is fast, best-fit is thrifty); compact the page once no single run fits — <strong>the cost is a full page rewrite, the payoff is contiguous space, and stable slot numbers keep every outside reference intact</strong>.</p>
+<p>⑨ Two life-saving fields: a version so the file states what it is (Cassandra puts it in the filename), and a checksum to catch silent corruption — but it guards against accidents, not adversaries, and only when you read.</p>
+<p>⑩ The selection rule: page size (SQLite 4 KiB / PostgreSQL 8 KiB / InnoDB 16 KiB) and page layout both pick a point among <strong>wasted space, tree height, read amplification and lock granularity</strong>. There is no universal optimum.</p>
+</div>
+</div>
+<footer>Chapter Deepread · Read this page ≈ get the core of the chapter; for full cases and depth, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
