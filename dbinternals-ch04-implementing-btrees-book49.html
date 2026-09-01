@@ -50,7 +50,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </style></head><body>
 <div class="container">
 <p class="top">专业书籍精读 · Database Internals · 第 4 章</p>
-<h1>实现 B-Tree</h1>
+<h1 data-tts="2efdfd416f98642a">实现 B-Tree</h1>
 <p class="sub">Database Internals · Ch 4 · Alex Petrov · 2019</p>
 <p class="langbar"><a href="dbinternals-ch04-implementing-btrees-book49.en.html">EN →</a></p>
 <div class="modebar">
@@ -58,37 +58,37 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <button data-mode="deep">精读版</button>
 </div>
 <div class="mode mode-pop">
-<h2>这一章讲什么？</h2>
+<h2 data-tts="6b027c9accae425d">这一章讲什么？</h2>
 <p>前两章你已经知道：数据库用一棵「目录树」找数据，树的每个节点就是硬盘上的一页纸。可那都是<strong>静态的样子</strong>。这一章问的是动态的问题：<strong>这本册子每天被塞进几百万条新记录、删掉几百万条旧记录，它是怎么一边被翻、一边自己长胖变瘦，还始终不乱的？</strong></p>
-<h2>先打个比方</h2>
+<h2 data-tts="4d8db76d82e15bd4">先打个比方</h2>
 <p>把数据库想成一排<strong>文件柜的抽屉</strong>，每个抽屉按字母顺序放卡片，抽屉外贴着「A–F」「G–M」这样的标签。</p>
 <p>教科书讲到这里就结束了：<strong>抽屉满了就分成两个</strong>，再去总目录上加一行新标签。听起来两句话的事。可真管这排柜子的人知道，麻烦全在这两句话之外。</p>
-<h2>旧世界为什么难</h2>
+<h2 data-tts="d484253e8db37433">旧世界为什么难</h2>
 <p>四件事，教科书一件都没讲。</p>
 <p><strong>第一，分完家得通知上级。</strong>可你手上只有一个抽屉，怎么知道它的标签写在总目录的第几行？给每张卡片背面写上「我属于第几个抽屉」倒是可以，但抽屉一分家，里面成百上千张卡片全得重写一遍背面。</p>
 <p><strong>第二，分家太频繁。</strong>抽屉一满就劈成两半，两个新抽屉各只装一半——于是柜子永远只用了一半的容量，你却要多买一倍的柜子。</p>
 <p><strong>第三，号码牌总是递增时，对半分是纯浪费。</strong>新卡片的编号一天比一天大，永远只往最后一个抽屉里塞。这时候把满抽屉对半劈开，前半个抽屉<strong>这辈子都不会再有人往里放东西了</strong>——它就那么半空着，直到永远。</p>
 <p><strong>第四，删了的地方收不回来。</strong>抽走一张卡片只是留下一道缝；抽屉不会自动变小，柜子也不会自动变少。</p>
-<h2>核心机制：四个很朴素的对策</h2>
+<h2 data-tts="20718d4d336361ce">核心机制：四个很朴素的对策</h2>
 <ul>
 <li><strong>面包屑</strong>：不在卡片背面写归属，而是<strong>找的时候一路记下自己走过哪几层</strong>——就像下楼时在每个楼梯口丢一颗石子。要往上通知，照着石子原路走回去就行。这样抽屉分家，谁的背面都不用改。</li>
 <li><strong>先向邻居借地方</strong>：抽屉满了，先看看隔壁松不松；松就匀几张过去，<strong>把分家这件事往后拖</strong>。柜子的平均使用率能从一半提到三分之二。</li>
 <li><strong>顺序号别对半切</strong>：发现新卡片总往最后塞，就<strong>别劈中间，几乎全留在原抽屉，只把最后一两张挪进新抽屉</strong>。旧抽屉塞得满满当当，新抽屉继续接着装。</li>
 <li><strong>整柜从零开始装最省事</strong>：如果你手上是一沓<strong>已经排好序</strong>的卡片，那就别一张张往里插——直接一屉一屉码满，码完再写标签。全程一次家都不用分。</li>
 </ul>
-<h2>带来了什么 / 该怎么选</h2>
+<h2 data-tts="e1edb57daf4d3dc5">带来了什么 / 该怎么选</h2>
 <p>这解释了两件你多半亲眼见过的事。<strong>用自增编号当主键，比用随机乱码当主键快得多、也省得多</strong>——顺序插入让每个抽屉都塞到快满，随机插入把新卡片撒得到处都是，处处引发分家。以及，<strong>往一张空表里灌一亿行数据，先灌数据、最后再建索引，比边灌边建快得多</strong>——前者是「一屉屉码满」，后者是「一张张插」。</p>
 <p>诚实的代价：<strong>把抽屉塞得越满，将来在中间插一张卡片就越容易立刻引发分家</strong>——所以正经数据库都会故意留一成空位，宁可多占一点柜子。</p>
-<h2>一句话记住</h2>
+<h2 data-tts="89aa08b72530a326">一句话记住</h2>
 <div class="tl">
 <p>教科书说「抽屉满了就分家」，那是全章最容易的一句。真正的功夫在别处：<strong>用面包屑找到上级、先向邻居借地方少分家、顺序号别对半切、能整柜码满就别一张张插。</strong></p>
 </div>
 <p class="switch-hint">想看面包屑栈怎么处理并发、右倾分裂省下多少空间、PostgreSQL 与 InnoDB 的真实默认值？ <a data-mode="deep">→ 切到精读版</a></p>
 </div>
 <div class="mode mode-deep" hidden="">
-<h2>一句话</h2>
+<h2 data-tts="912c42763082e52c">一句话</h2>
 <p class="lead">你以为这一章讲的是「分裂与合并算法」，其实<strong>那两行伪代码是全章最容易的部分</strong>。真正的工程量全在分裂之外：<strong>怎么找到父节点（答案是面包屑，不是父指针）、怎么少分裂（先向兄弟借）、顺序键怎么别浪费掉一半空间（右倾分裂）、删完的洞怎么收回来（vacuum）</strong>。这一章是把第 2 章的树形状、第 3 章的页字节，缝成一个能在生产里连跑十年而不崩不胖的实现——<strong>它是「教科书 B-Tree」和「PostgreSQL / InnoDB 里那棵 B-Tree」之间的全部差距</strong>。</p>
-<h2>Glossary · 术语表</h2>
+<h2 data-tts="0798f90fb699ab29">Glossary · 术语表</h2>
 <div class="glossary">
 <ul>
 <li><strong>节点 / 页（node / page）</strong>：B-Tree 的一个节点正好落在一页上（常见 4 / 8 / 16 KiB）。下文「节点」与「页」基本同义。</li>
@@ -104,9 +104,9 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>bulk loading（批量加载）</strong>：数据已排好序时，绕开逐条插入、自底向上一次把树建出来。</li>
 </ul>
 </div>
-<h2>坐标</h2>
+<h2 data-tts="a5a07863e8c9872e">坐标</h2>
 <p>本章是《Database Internals》Part I「存储引擎」的第 4 章，也是 Part I 里<strong>工程味最重</strong>的一章。<strong>上承第 2、3 章</strong>——第 2 章论证了 B-Tree 为什么是磁盘上的默认答案（高扇出把树压矮），第 3 章给出了一页的字节布局（槽式页、cell、空闲清单）；<strong>下启第 5 章「事务处理与恢复」</strong>，本章里每一次分裂、合并、页内压缩，到了第 5 章都得配上 WAL 才敢在崩溃面前声称正确。对应现实：PostgreSQL 的 <code>nbtree</code> 模块、InnoDB 的聚簇索引、SQLite 的 <code>btree.c</code>——本章讲的每个机制，在这三份代码里都找得到对应的实现和它们各自的取舍。</p>
-<h2>这章要解决什么</h2>
+<h2 data-tts="8ebb70551427050d">这章要解决什么</h2>
 <p>把教科书那版 B-Tree 直接搬进生产，你会连撞四堵墙。</p>
 <p><strong>第一堵：分裂要往上传播，而节点不知道自己的父亲是谁。</strong>叶子满了拆成两半，父节点必须多收一个分隔键；父可能也满，继续往上，最坏一路顶到根——根一分裂，树就长高一层。可页里存的只有键和子指针，<strong>没有指回父亲的路</strong>。天真的补救是存一个父指针，代价却立刻现形：节点一分裂，<strong>它名下所有子节点的父指针都要改一遍</strong>——扇出 500 的节点分裂就是 500 次额外页更新，还全得写进 WAL。</p>
 <p><strong>第二堵：对半分裂让你白买一半的硬件。</strong>满了就 50/50 劈开，两个新页各半满，随机插入下稳态填充率长年在 <code>50%–70%</code> 徘徊。给个量级：<strong>1 亿行</strong>的订单表，主键索引每条 16 字节、8 KiB 页扇出约 500，填满约 <strong>2 GB</strong>，稳态半满就是 <strong>4 GB</strong>。多出的 2 GB 不只占硬盘，它<strong>等量地挤占页缓存</strong>——本来全放得进内存的索引现在放不下，命中率一掉，延迟就抬头。</p>
@@ -122,8 +122,8 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <tr><th>一次建整棵树</th><td>—（没讲）</td><td><strong>批量加载</strong>：预排序后自底向上建，零分裂</td></tr>
 <tr><th>并发</th><td>—（没讲）</td><td>兄弟指针 + 高键（Blink-tree），让读不必上锁</td></tr>
 </tbody></table></div>
-<h2>核心内容，讲透</h2>
-<h3>一、节点自报家门：页头、最右指针与高键</h3>
+<h2 data-tts="0cfa727733263d92">核心内容，讲透</h2>
+<h3 data-tts="4cc65695dd1c66ca">一、节点自报家门：页头、最右指针与高键</h3>
 <p>B-Tree 节点的页头除了第 3 章讲过的那些（魔数、cell 数、空闲空间边界），还得记<strong>这一页在树里的身份</strong>：叶子还是内部节点。这决定了 cell 按哪种格式解读——叶子里是「键 + 值」，内部节点里是「分隔键 + 子页 ID」。</p>
 <p>然后是一个容易被跳过、却逼出两种流派的细节：<strong>内部节点有 N 个分隔键，却有 N+1 个子指针</strong>。把「键 + 指针」打包成 cell，最后那个指针就<strong>配不到键</strong>——它管的是「比所有分隔键都大」的那一片。两条出路：</p>
 <ul>
@@ -183,10 +183,10 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </svg>
 <figcaption>图 1 · 一个内部节点的解剖：N 个分隔键配 N+1 个子指针，落单的那个要么进页头（最右指针），要么靠高键配平；同层之间再连一条兄弟链。</figcaption>
 </figure>
-<h3>二、页内二分查找：在偏移量数组上二分，返回的是「插入点」</h3>
+<h3 data-tts="e363dbe7cb0684e0">二、页内二分查找：在偏移量数组上二分，返回的是「插入点」</h3>
 <p>找到一页之后还要在页里定位。第 3 章说过，槽式页里 <strong>cell 物理上乱放，但槽目录（偏移量数组）按键有序</strong>——所以二分是在这个<strong>小而连续的偏移量数组</strong>上做的：取中间的槽，顺偏移量跳过去读键，比大小，缩小区间。一页 8 KiB 装 500 个键，<code>log₂500 ≈ 9</code> 步到底，全程只碰这一页，不产生任何额外 I/O。</p>
 <p>一个小设计值得点名：<strong>没找到时不能只返回「没找到」</strong>。插入要知道插在哪儿，范围扫描要知道从哪儿开始扫。所以实现普遍让二分返回<strong>插入点</strong>，并用<strong>负数编码</strong>（如 <code>-(插入点) - 1</code>）把两种结果塞进一个返回值：正数是命中下标，负数一变换就是插入位置。同一次二分，三种调用者都用得上。</p>
-<h3>三、分裂向上传播与面包屑：为什么不存父指针</h3>
+<h3 data-tts="ce2556f9981b2b43">三、分裂向上传播与面包屑：为什么不存父指针</h3>
 <p>这是全章第一个真正的工程决断。叶子分裂后父节点要收下新的分隔键；父可能也满，继续往上；一路顶到根，根分裂，<strong>树长高一层</strong>——这是 B-Tree 唯一会长高的时刻，所以它天然保持完美平衡。问题只有一个：<strong>怎么找到父节点？</strong></p>
 <p>直觉方案是给每个节点存父指针，Petrov 直接否掉了它：<strong>写放大</strong>——分裂时被搬进新节点那一半的子节点父指针全部作废，扇出 500 的节点分裂就是<strong>数百次额外页更新 + 数百条 WAL 记录</strong>；<strong>并发不一致</strong>——父指针散落在几百个页里，没法和分裂本身放进同一个原子操作。</p>
 <p>真实答案是<strong>面包屑（breadcrumbs）</strong>：查找本来就是从根往下走的，那就在下行时把「经过哪一页、走的哪个槽」一路压进栈；需要往上传播时，<strong>弹栈就是父节点</strong>。妙处在于这份信息<strong>本来就白拿</strong>——你为了找到叶子，无论如何都得走这一趟。</p>
@@ -226,11 +226,11 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </svg>
 <figcaption>图 2 · 面包屑栈：查找下行时顺手记下「经过哪页、走的哪个槽」，分裂需要父节点时弹栈即得——不必给每个节点存父指针，也就免掉了分裂时数百次子节点更新。</figcaption>
 </figure>
-<h3>四、少分裂：先向兄弟借地方</h3>
+<h3 data-tts="d530173ec513152b">四、少分裂：先向兄弟借地方</h3>
 <p>第二个工程决断针对填充率。既然分裂又贵（写三个页 + WAL）又浪费空间（两个半满页），那就<strong>能不分就不分</strong>：节点满了先看左右兄弟，<strong>哪边有空位就把边界上的几个键挪过去</strong>，顺手更新父节点里那个分隔键——这叫<strong>再平衡（rebalancing）</strong>。</p>
 <p>这就是 <em>B*-tree</em> 的思路：只有<strong>自己和兄弟都满了</strong>，才把 2 个节点拆成 3 个。算笔账：普通 B-Tree 分裂后每个节点保证至少半满，<strong>最低填充率 50%</strong>；2 拆 3 让每个节点至少装到 <code>2/3</code>，<strong>最低填充率提到约 66%</strong>。同样的数据，索引体积小掉四分之一，页缓存里也就多装四分之一。</p>
 <p>代价一点不含糊：<strong>一次操作要同时改两三个页（自己、兄弟、父）</strong>，并发下就是同时握两三个 latch——加锁顺序必须全局一致，否则死锁；写放大也从「改一页」变成「改三页」。这是一笔<strong>拿写路径复杂度和延迟尖刺换空间与缓存命中率</strong>的交易，不是所有引擎都愿意做。反向的合并同理：听着漂亮，但同样要动多个页，还容易和分裂来回拉锯（刚合完又满了、又分开）——<strong>这正是 PostgreSQL 干脆放弃合并半空页的原因</strong>。</p>
-<h3>五、右侧追加与批量加载：顺序键值得单开一条路</h3>
+<h3 data-tts="071d8761d482d426">五、右侧追加与批量加载：顺序键值得单开一条路</h3>
 <p>这一节最贴近日常。你的主键多半是自增 ID、时间戳或雪花 ID——<strong>它们都单调递增，于是每一条插入都砸在最右边那片叶子上</strong>。对这种负载，通用逻辑处处吃亏，值得单开快车道。</p>
 <p><strong>快车道一：右倾分裂。</strong>最右叶子满了别劈中间，<strong>把绝大部分键留在原页，只把最后一小撮挪进新页</strong>。理由很硬：左半页此后<strong>不可能再收到任何键</strong>（新键只会更大），对半劈就是把一半空间永久锁死。InnoDB 的实际填充率印证了这笔账——顺序插入与随机插入的差距近乎一倍，官方数字见下方实证框。</p>
 <p><strong>快车道二：缓存最右叶子。</strong>既然插入总落在同一页，就别每次从根走一趟。PostgreSQL 的 <code>nbtree</code> 缓存了上次插入命中的叶子，若它仍是最右叶、还有空位、且新键比页里首键大，就<strong>直接插进去</strong>，这条路径叫 <em>fastpath</em>。它自带一个刹车：所有写线程都去抢同一页的排他锁，反而会争用——所以拿不到锁就退回常规路径。</p>
@@ -304,7 +304,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </svg>
 <figcaption>图 4 · 逐条插入 vs 批量加载。数据已有序时自底向上一次建成整棵树——这就是「先灌数据、最后建索引」比「边灌边建」快得多的原因。</figcaption>
 </figure>
-<h3>六、压缩：粒度是唯一的问题</h3>
+<h3 data-tts="24a5de78543a3e39">六、压缩：粒度是唯一的问题</h3>
 <p>压缩能省磁盘、省 I/O，代价是每次读都要解压。Petrov 把选择压平成一个问题：<strong>粒度多大？</strong></p>
 <ul>
 <li><strong>整个文件</strong>：压缩率最高，但<strong>没法定位单个页</strong>——B-Tree 靠「第 n 页在哪 = n × 页大小」寻址，一压全文件这条前提就没了。基本出局。</li>
@@ -312,10 +312,10 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>按 cell / 行</strong>：粒度最细、解压最省，但压缩率最差——<strong>可参考的上下文太短</strong>，几十字节里榨不出多少冗余。</li>
 </ul>
 <p>还有一条不改布局的省法：<strong>去重</strong>。PostgreSQL 13 起的 B-Tree <em>deduplication</em> 就是典型——一个键值重复很多次时（比如给低基数的 <code>status</code> 列建索引），把它们合并成<strong>一条「键 + 一串行指针」的 posting list</strong>，键只存一次，既省体积又<strong>顺带推迟叶子页分裂</strong>。</p>
-<h3>七、碎片、vacuum 与页的回收</h3>
+<h3 data-tts="c8f227784edcc5c6">七、碎片、vacuum 与页的回收</h3>
 <p>最后是维护。两个来源持续制造死空间：<strong>删除</strong>（标记 + 挂空闲清单，第 3 章）与<strong>更新</strong>（变长值改长了原地放不下，只能挪走、原位留洞）。结果是<strong>页里有效载荷越来越低，页数却一个不少</strong>——磁盘、页缓存、每次整页读，成本一分不减。对策分两层：<strong>页内</strong>把存活 cell 重新紧密码到一起（代价是整页重写），<strong>页间</strong>把完全空掉的页摘下来放进全局空闲页清单供分裂复用——注意后者通常<strong>不缩小文件</strong>，只是让空间可复用。</p>
 <p>这里有一个必须知道的现实差异。<strong>PostgreSQL 只回收「完全变空」的页</strong>——只剩几个键的页继续占着，于是「一个区间里绝大多数键最终被删掉」这种模式会长期浪费空间。<strong>InnoDB 走另一条路</strong>：填充率跌破 <code>MERGE_THRESHOLD</code> 就跟邻页合并，代价是两页都在阈值附近时「合了又分」地抖动。<strong>同一个问题，两种权衡，两家都在官方文档里诚实写下了自己的代价</strong>（原文见下方实证框）。</p>
-<h2>关键权衡与选型</h2>
+<h2 data-tts="da5f2445679ed9ec">关键权衡与选型</h2>
 <p class="tcap">表 2 · 怎么找到父节点</p>
 <div class="tblwrap"><table class="cmp">
 <thead><tr><th></th><th>父指针</th><th>面包屑栈（主流）</th></tr></thead>
@@ -344,7 +344,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <tr><th>这么选的代价</th><td>「区间里绝大多数键被删」的模式会<strong>严重浪费空间</strong>，需要 <code>REINDEX</code></td><td>官方警告：两页都接近 50% 时<strong>合了又分，抖动伤性能</strong></td></tr>
 <tr><th>省空间的额外招</th><td><strong>去重（PG 13+，默认开）</strong>：重复键合成 posting list，同时推迟分裂</td><td>页级压缩（<code>ROW_FORMAT=COMPRESSED</code> 等）</td></tr>
 </tbody></table></div>
-<h2>为什么重要 / 落到真实系统</h2>
+<h2 data-tts="25ae8c6b3af46bea">为什么重要 / 落到真实系统</h2>
 <p><strong>选主键时说得出理由。</strong>「UUID v4 当主键为什么慢」不是玄学：随机键让插入均匀砸向每一片叶子，<strong>每片都得读进页缓存、改脏、写回</strong>，分裂遍地开花；换成时间有序的 ID（自增、UUID v7、雪花 ID），插入集中在最右一页，走右倾分裂与 fastpath——<strong>索引体积近乎减半，页缓存里放得下的索引近乎翻倍</strong>。这条结论有官方文档背书，不是传闻。</p>
 <p><strong>导数据时选得对路。</strong>往空表灌一亿行：边灌边维护 5 个索引，等于一亿次「走根到叶 + 可能分裂 + 写 WAL」；先灌数据、最后 <code>CREATE INDEX</code>，走的是<strong>排序 + 自底向上批量建树</strong>，纯顺序 I/O、零分裂、页填到接近满。</p>
 <p><strong>排障时找得到方向。</strong>「表只有 3 GB，索引却 12 GB，<code>VACUUM</code> 之后一点没小」——多半就是第七节那件事，要真收回来得 <code>REINDEX</code>。反过来，InnoDB 上写延迟周期性抖动，就该想到 <code>MERGE_THRESHOLD</code> 附近的合并—分裂拉锯。</p>
@@ -359,7 +359,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>批量加载在 MySQL 里是默认路径</strong>：创建或重建 B-Tree 索引时 InnoDB 执行<strong>批量加载</strong>，官方称之为 <em>sorted index build</em>——先扫聚簇索引把条目送进排序缓冲，再自底向上建树，并可用 <code>innodb_fill_factor</code> 预留增长空间（文档明确称该值是「提示而非硬性上限」）。<span class="src"><a href="https://dev.mysql.com/doc/refman/8.0/en/sorted-index-builds.html" rel="noopener" target="_blank">MySQL 文档「Sorted Index Builds」↗</a></span></li>
 </ul>
 </div>
-<h2>易错点与争议</h2>
+<h2 data-tts="385c757323f8ce4a">易错点与争议</h2>
 <ul>
 <li><strong>以为「B-Tree 保证至少半满」是好消息。</strong>它是<strong>下界保证</strong>，不是目标值——真实负载下稳态填充率常年在 <code>50%–70%</code>，意味着你为索引买的硬盘和内存有三分之一到一半在装空气。本章大半篇幅（再平衡、右倾分裂、批量加载、去重）都在跟这个数字较劲。</li>
 <li><strong>以为分裂是罕见事件。</strong>随机键 + 高写入下，分裂是<strong>常态</strong>。一次叶子分裂至少改 3 个页（原叶、新叶、父）并写进 WAL；PostgreSQL 在 checkpoint 后首次改动一页时还要写整页镜像。逻辑上「插一行」，落到磁盘上可以是几十 KiB。</li>
@@ -368,7 +368,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>把 fillfactor 一律调到 100。</strong>诱惑很大（索引最小、缓存命中最高），但静态表之外这么做等于<strong>把所有留白都退掉</strong>，之后每一次中间插入都可能立刻触发分裂。PostgreSQL 把默认定在 90 而非 100，正是这个道理。</li>
 <li><strong>时代局限与争议。</strong>本章整套算计建立在「块设备 + 原地更新 + 改页要写 WAL」之上，三个方向正在动摇它：<strong>LSM-tree</strong>（第 7 章）放弃原地更新，把分裂 / 碎片换成后台合并问题；<strong>Bw-tree 等无锁变体</strong>（第 6 章）用增量记录 + 映射表绕开页内原地修改，本章的 latch 与分裂传播全得重写；<strong>NVMe / 持久内存</strong>让「随机 I/O 昂贵」这条公理松动，扇出、页大小、分裂策略的最优点都会跟着漂移。而 PostgreSQL 拒绝合并半空页，是<strong>为并发正确性与实现简单付出的空间代价</strong>，社区争论多年至今未改；InnoDB 选了另一边，也如实写下了抖动代价。<strong>没有对错，只有两张不同的账单。</strong></li>
 </ul>
-<h2>要点</h2>
+<h2 data-tts="36f680349794891d">要点</h2>
 <div class="tl">
 <p>① 一句话：教科书的「满了就分裂」是全章最容易的部分，<strong>真正的工程量在分裂之外</strong>——怎么找父节点、怎么少分裂、顺序键怎么不浪费、删完怎么收回来。</p>
 <p>② N 个分隔键配 N+1 个子指针，落单那个要么进页头（<strong>最右指针</strong>，SQLite），要么靠<strong>高键</strong>配平（PostgreSQL）。而<strong>高键 + 兄弟指针 = Lehman &amp; Yao 的 Blink-tree</strong>：读者靠「键超过了高键」识破并发分裂、右移一步继续，<strong>几乎不用加读锁</strong>；兄弟链还让范围扫描不必爬回父节点，代价是每次分裂 / 合并都要顺手维护邻居。</p>
