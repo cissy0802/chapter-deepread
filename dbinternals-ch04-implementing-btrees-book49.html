@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals 第 4 章 · 实现 B-Tree — 专业书籍精读 Book 49</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · Database Internals · 第 4 章</p>
+<h1>实现 B-Tree</h1>
+<p class="sub">Database Internals · Ch 4 · Alex Petrov · 2019</p>
+<p class="langbar"><a href="dbinternals-ch04-implementing-btrees-book49.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>前两章你已经知道：数据库用一棵「目录树」找数据，树的每个节点就是硬盘上的一页纸。可那都是<strong>静态的样子</strong>。这一章问的是动态的问题：<strong>这本册子每天被塞进几百万条新记录、删掉几百万条旧记录，它是怎么一边被翻、一边自己长胖变瘦，还始终不乱的？</strong></p>
+<h2>先打个比方</h2>
+<p>把数据库想成一排<strong>文件柜的抽屉</strong>，每个抽屉按字母顺序放卡片，抽屉外贴着「A–F」「G–M」这样的标签。</p>
+<p>教科书讲到这里就结束了：<strong>抽屉满了就分成两个</strong>，再去总目录上加一行新标签。听起来两句话的事。可真管这排柜子的人知道，麻烦全在这两句话之外。</p>
+<h2>旧世界为什么难</h2>
+<p>四件事，教科书一件都没讲。</p>
+<p><strong>第一，分完家得通知上级。</strong>可你手上只有一个抽屉，怎么知道它的标签写在总目录的第几行？给每张卡片背面写上「我属于第几个抽屉」倒是可以，但抽屉一分家，里面成百上千张卡片全得重写一遍背面。</p>
+<p><strong>第二，分家太频繁。</strong>抽屉一满就劈成两半，两个新抽屉各只装一半——于是柜子永远只用了一半的容量，你却要多买一倍的柜子。</p>
+<p><strong>第三，号码牌总是递增时，对半分是纯浪费。</strong>新卡片的编号一天比一天大，永远只往最后一个抽屉里塞。这时候把满抽屉对半劈开，前半个抽屉<strong>这辈子都不会再有人往里放东西了</strong>——它就那么半空着，直到永远。</p>
+<p><strong>第四，删了的地方收不回来。</strong>抽走一张卡片只是留下一道缝；抽屉不会自动变小，柜子也不会自动变少。</p>
+<h2>核心机制：四个很朴素的对策</h2>
+<ul>
+<li><strong>面包屑</strong>：不在卡片背面写归属，而是<strong>找的时候一路记下自己走过哪几层</strong>——就像下楼时在每个楼梯口丢一颗石子。要往上通知，照着石子原路走回去就行。这样抽屉分家，谁的背面都不用改。</li>
+<li><strong>先向邻居借地方</strong>：抽屉满了，先看看隔壁松不松；松就匀几张过去，<strong>把分家这件事往后拖</strong>。柜子的平均使用率能从一半提到三分之二。</li>
+<li><strong>顺序号别对半切</strong>：发现新卡片总往最后塞，就<strong>别劈中间，几乎全留在原抽屉，只把最后一两张挪进新抽屉</strong>。旧抽屉塞得满满当当，新抽屉继续接着装。</li>
+<li><strong>整柜从零开始装最省事</strong>：如果你手上是一沓<strong>已经排好序</strong>的卡片，那就别一张张往里插——直接一屉一屉码满，码完再写标签。全程一次家都不用分。</li>
+</ul>
+<h2>带来了什么 / 该怎么选</h2>
+<p>这解释了两件你多半亲眼见过的事。<strong>用自增编号当主键，比用随机乱码当主键快得多、也省得多</strong>——顺序插入让每个抽屉都塞到快满，随机插入把新卡片撒得到处都是，处处引发分家。以及，<strong>往一张空表里灌一亿行数据，先灌数据、最后再建索引，比边灌边建快得多</strong>——前者是「一屉屉码满」，后者是「一张张插」。</p>
+<p>诚实的代价：<strong>把抽屉塞得越满，将来在中间插一张卡片就越容易立刻引发分家</strong>——所以正经数据库都会故意留一成空位，宁可多占一点柜子。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>教科书说「抽屉满了就分家」，那是全章最容易的一句。真正的功夫在别处：<strong>用面包屑找到上级、先向邻居借地方少分家、顺序号别对半切、能整柜码满就别一张张插。</strong></p>
+</div>
+<p class="switch-hint">想看面包屑栈怎么处理并发、右倾分裂省下多少空间、PostgreSQL 与 InnoDB 的真实默认值？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">你以为这一章讲的是「分裂与合并算法」，其实<strong>那两行伪代码是全章最容易的部分</strong>。真正的工程量全在分裂之外：<strong>怎么找到父节点（答案是面包屑，不是父指针）、怎么少分裂（先向兄弟借）、顺序键怎么别浪费掉一半空间（右倾分裂）、删完的洞怎么收回来（vacuum）</strong>。这一章是把第 2 章的树形状、第 3 章的页字节，缝成一个能在生产里连跑十年而不崩不胖的实现——<strong>它是「教科书 B-Tree」和「PostgreSQL / InnoDB 里那棵 B-Tree」之间的全部差距</strong>。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>节点 / 页（node / page）</strong>：B-Tree 的一个节点正好落在一页上（常见 4 / 8 / 16 KiB）。下文「节点」与「页」基本同义。</li>
+<li><strong>叶子节点 / 内部节点（leaf / internal node）</strong>：叶子在树的最底层、装真正的数据；内部节点只装「路标」，负责把查找导向正确的子树。</li>
+<li><strong>分隔键（separator key）</strong>：内部节点里的路标键，划出「小于它走左边、大于它走右边」的分界。</li>
+<li><strong>扇出（fan-out）</strong>：一个内部节点能指向多少个子节点。扇出越大，树越矮，一次查找踩的磁盘次数越少。</li>
+<li><strong>分裂 / 合并（split / merge）</strong>：一页装不下了拆成两页叫分裂；一页太空了跟<strong>兄弟节点</strong>（同层相邻的页）并成一页叫合并。</li>
+<li><strong>填充率 / fillfactor</strong>：一页里被真实数据占用的比例。50% 意味着一半的磁盘和一半的内存缓存都在装空气。</li>
+<li><strong>单调递增键（monotonically increasing key）</strong>：一直变大的键，如自增主键、时间戳、雪花 ID。它导致所有插入都砸在树的最右边。</li>
+<li><strong>WAL（write-ahead log，预写日志）</strong>：改页之前先把「我要怎么改」记进一个只追加的日志，崩溃后靠它恢复。第 5 章的主角，这里只需知道<strong>改页要额外写日志，所以少改页 = 少写盘</strong>。</li>
+<li><strong>latch</strong>：保护内存中一个页不被同时改坏的短命轻量锁（区别于保护事务的锁）。</li>
+<li><strong>vacuum / 清理</strong>：把删除、更新留下的死空间收回来的后台维护动作。</li>
+<li><strong>bulk loading（批量加载）</strong>：数据已排好序时，绕开逐条插入、自底向上一次把树建出来。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>本章是《Database Internals》Part I「存储引擎」的第 4 章，也是 Part I 里<strong>工程味最重</strong>的一章。<strong>上承第 2、3 章</strong>——第 2 章论证了 B-Tree 为什么是磁盘上的默认答案（高扇出把树压矮），第 3 章给出了一页的字节布局（槽式页、cell、空闲清单）；<strong>下启第 5 章「事务处理与恢复」</strong>，本章里每一次分裂、合并、页内压缩，到了第 5 章都得配上 WAL 才敢在崩溃面前声称正确。对应现实：PostgreSQL 的 <code>nbtree</code> 模块、InnoDB 的聚簇索引、SQLite 的 <code>btree.c</code>——本章讲的每个机制，在这三份代码里都找得到对应的实现和它们各自的取舍。</p>
+<h2>这章要解决什么</h2>
+<p>把教科书那版 B-Tree 直接搬进生产，你会连撞四堵墙。</p>
+<p><strong>第一堵：分裂要往上传播，而节点不知道自己的父亲是谁。</strong>叶子满了拆成两半，父节点必须多收一个分隔键；父可能也满，继续往上，最坏一路顶到根——根一分裂，树就长高一层。可页里存的只有键和子指针，<strong>没有指回父亲的路</strong>。天真的补救是存一个父指针，代价却立刻现形：节点一分裂，<strong>它名下所有子节点的父指针都要改一遍</strong>——扇出 500 的节点分裂就是 500 次额外页更新，还全得写进 WAL。</p>
+<p><strong>第二堵：对半分裂让你白买一半的硬件。</strong>满了就 50/50 劈开，两个新页各半满，随机插入下稳态填充率长年在 <code>50%–70%</code> 徘徊。给个量级：<strong>1 亿行</strong>的订单表，主键索引每条 16 字节、8 KiB 页扇出约 500，填满约 <strong>2 GB</strong>，稳态半满就是 <strong>4 GB</strong>。多出的 2 GB 不只占硬盘，它<strong>等量地挤占页缓存</strong>——本来全放得进内存的索引现在放不下，命中率一掉，延迟就抬头。</p>
+<p><strong>第三堵：顺序键把这笔浪费变成纯亏。</strong>主键是自增 ID 或时间戳时，<strong>每一条插入都砸在最右边那片叶子上</strong>。此时对半分裂尤其蠢：劈出来的左半页<strong>再也不会有任何新键落进去</strong>，永久半空。填充率被死死钉在 50%——而它本可以接近 100%。</p>
+<p><strong>第四堵：删除和更新留下的洞不会自己消失。</strong>删一条只是标记 + 挂空闲清单（第 3 章）；变长字段被 <code>UPDATE</code> 改长了原地放不下，就得挪走、原位留洞。洞攒够了，一页有效载荷可能只剩三成，却照样占着 8 KiB 磁盘、8 KiB 缓存，每次读还是整页搬。</p>
+<p class="tcap">表 1 · 教科书讲的 B-Tree vs 生产实现必须补的东西</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>问题</th><th>教科书的说法</th><th>真实实现要补什么</th></tr></thead>
+<tbody>
+<tr><th>找到父节点</th><td>「把分隔键插入父节点」——默认父节点已知</td><td><strong>面包屑栈</strong>：下行时压栈，需要时弹栈回溯</td></tr>
+<tr><th>节点满了</th><td>立刻对半分裂</td><td><strong>先向兄弟借地方</strong>拖延分裂；顺序键改<strong>右倾分裂</strong></td></tr>
+<tr><th>节点太空</th><td>与兄弟合并</td><td>合并代价高——PostgreSQL 干脆<strong>只回收全空的页</strong></td></tr>
+<tr><th>一次建整棵树</th><td>—（没讲）</td><td><strong>批量加载</strong>：预排序后自底向上建，零分裂</td></tr>
+<tr><th>并发</th><td>—（没讲）</td><td>兄弟指针 + 高键（Blink-tree），让读不必上锁</td></tr>
+</tbody></table></div>
+<h2>核心内容，讲透</h2>
+<h3>一、节点自报家门：页头、最右指针与高键</h3>
+<p>B-Tree 节点的页头除了第 3 章讲过的那些（魔数、cell 数、空闲空间边界），还得记<strong>这一页在树里的身份</strong>：叶子还是内部节点。这决定了 cell 按哪种格式解读——叶子里是「键 + 值」，内部节点里是「分隔键 + 子页 ID」。</p>
+<p>然后是一个容易被跳过、却逼出两种流派的细节：<strong>内部节点有 N 个分隔键，却有 N+1 个子指针</strong>。把「键 + 指针」打包成 cell，最后那个指针就<strong>配不到键</strong>——它管的是「比所有分隔键都大」的那一片。两条出路：</p>
+<ul>
+<li><strong>最右指针（rightmost pointer）</strong>：把这个落单的指针单独塞进页头。简单直接，SQLite 就是这么干的。</li>
+<li><strong>高键（high key）</strong>：给这一页规定一个<strong>上界</strong>——「本页及其子树的键都不超过它」——最后那个指针于是也有键可配。更重要的是，高键顺手解决了并发下的大麻烦：读者读到一页，发现<strong>要找的键比这页的高键还大</strong>，立刻就知道「这页在我来的路上刚分裂过」，顺兄弟指针往右挪一步即可，<strong>全程不用加读锁</strong>。这正是 Lehman &amp; Yao 1981 年那篇 Blink-tree 论文的核心招式，PostgreSQL 的 <code>nbtree</code> 直接实现了它。</li>
+</ul>
+<p><strong>兄弟指针（sibling links）</strong>是页头里的另一件事：同层相邻页互指。好处很实在——范围扫描（<code>WHERE id BETWEEN 1000 AND 9000</code>）沿叶子链横扫即可，<strong>不必每读完一页就爬回父节点</strong>。代价同样实在：<strong>每次分裂、合并、页删除都要额外维护左右邻居</strong>，而这几个页在并发下属于不同的 latch，顺序稍有不慎就是死锁。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 252" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="b1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="b2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text fill="#5b9df9" font-size="13" font-weight="700" x="16" y="22">内部节点：N 个分隔键，却有 N+1 个子指针</text>
+<rect fill="rgba(155,108,245,0.2)" height="46" rx="5" stroke="#9b6cf5" width="104" x="16" y="40"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="68" y="58">页头</text>
+<text fill="#c9b6f5" font-size="9.5" text-anchor="middle" x="68" y="76">最右指针 →D</text>
+<rect fill="rgba(91,157,249,0.2)" height="46" rx="5" stroke="#5b9df9" width="104" x="128" y="40"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="180" y="58">键 12</text>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="180" y="76">子页 →A</text>
+<rect fill="rgba(91,157,249,0.2)" height="46" rx="5" stroke="#5b9df9" width="104" x="240" y="40"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="292" y="58">键 25</text>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="292" y="76">子页 →B</text>
+<rect fill="rgba(91,157,249,0.2)" height="46" rx="5" stroke="#5b9df9" width="104" x="352" y="40"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="404" y="58">键 40</text>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="404" y="76">子页 →C</text>
+<text fill="#9b6cf5" font-size="9.5" x="470" y="52">第 4 个指针没有键可配</text>
+<text fill="#7c8593" font-size="9.5" x="470" y="68">→ 塞进页头（SQLite）</text>
+<text fill="#7c8593" font-size="9.5" x="470" y="84">→ 或改用高键（PostgreSQL）</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="180" x2="78" y1="88" y2="140"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="292" x2="218" y1="88" y2="140"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="404" x2="358" y1="88" y2="140"></line>
+<line marker-end="url(#b2)" stroke="#9b6cf5" x1="68" x2="498" y1="88" y2="140"></line>
+<rect fill="rgba(91,157,249,0.1)" height="40" rx="5" stroke="#5b9df9" width="124" x="16" y="144"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="78" y="160">子页 A</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="78" y="176">键 &lt; 12</text>
+<rect fill="rgba(91,157,249,0.1)" height="40" rx="5" stroke="#5b9df9" width="124" x="156" y="144"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="218" y="160">子页 B</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="218" y="176">12 ≤ 键 &lt; 25</text>
+<rect fill="rgba(91,157,249,0.1)" height="40" rx="5" stroke="#5b9df9" width="124" x="296" y="144"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="358" y="160">子页 C</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="358" y="176">25 ≤ 键 &lt; 40</text>
+<rect fill="rgba(155,108,245,0.14)" height="40" rx="5" stroke="#9b6cf5" width="124" x="436" y="144"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="498" y="160">子页 D</text>
+<text fill="#c9b6f5" font-size="9.5" text-anchor="middle" x="498" y="176">键 ≥ 40</text>
+<line marker-end="url(#b1)" stroke="#7c8593" stroke-dasharray="3 3" x1="140" x2="154" y1="200" y2="200"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" stroke-dasharray="3 3" x1="280" x2="294" y1="200" y2="200"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" stroke-dasharray="3 3" x1="420" x2="434" y1="200" y2="200"></line>
+<line stroke="#7c8593" stroke-dasharray="3 3" x1="78" x2="78" y1="184" y2="200"></line>
+<line stroke="#7c8593" stroke-dasharray="3 3" x1="78" x2="140" y1="200" y2="200"></line>
+<line stroke="#7c8593" stroke-dasharray="3 3" x1="218" x2="218" y1="184" y2="200"></line>
+<line stroke="#7c8593" stroke-dasharray="3 3" x1="218" x2="280" y1="200" y2="200"></line>
+<line stroke="#7c8593" stroke-dasharray="3 3" x1="358" x2="358" y1="184" y2="200"></line>
+<line stroke="#7c8593" stroke-dasharray="3 3" x1="358" x2="420" y1="200" y2="200"></line>
+<text fill="#7c8593" font-family="monospace" font-size="10" x="16" y="226">兄弟指针：范围扫描沿叶子链横扫，不用爬回父节点</text>
+<text fill="#9b6cf5" font-family="monospace" font-size="10" x="16" y="244">代价：每次分裂 / 合并都要顺手改邻居，并发下顺序错了就死锁</text>
+</svg>
+<figcaption>图 1 · 一个内部节点的解剖：N 个分隔键配 N+1 个子指针，落单的那个要么进页头（最右指针），要么靠高键配平；同层之间再连一条兄弟链。</figcaption>
+</figure>
+<h3>二、页内二分查找：在偏移量数组上二分，返回的是「插入点」</h3>
+<p>找到一页之后还要在页里定位。第 3 章说过，槽式页里 <strong>cell 物理上乱放，但槽目录（偏移量数组）按键有序</strong>——所以二分是在这个<strong>小而连续的偏移量数组</strong>上做的：取中间的槽，顺偏移量跳过去读键，比大小，缩小区间。一页 8 KiB 装 500 个键，<code>log₂500 ≈ 9</code> 步到底，全程只碰这一页，不产生任何额外 I/O。</p>
+<p>一个小设计值得点名：<strong>没找到时不能只返回「没找到」</strong>。插入要知道插在哪儿，范围扫描要知道从哪儿开始扫。所以实现普遍让二分返回<strong>插入点</strong>，并用<strong>负数编码</strong>（如 <code>-(插入点) - 1</code>）把两种结果塞进一个返回值：正数是命中下标，负数一变换就是插入位置。同一次二分，三种调用者都用得上。</p>
+<h3>三、分裂向上传播与面包屑：为什么不存父指针</h3>
+<p>这是全章第一个真正的工程决断。叶子分裂后父节点要收下新的分隔键；父可能也满，继续往上；一路顶到根，根分裂，<strong>树长高一层</strong>——这是 B-Tree 唯一会长高的时刻，所以它天然保持完美平衡。问题只有一个：<strong>怎么找到父节点？</strong></p>
+<p>直觉方案是给每个节点存父指针，Petrov 直接否掉了它：<strong>写放大</strong>——分裂时被搬进新节点那一半的子节点父指针全部作废，扇出 500 的节点分裂就是<strong>数百次额外页更新 + 数百条 WAL 记录</strong>；<strong>并发不一致</strong>——父指针散落在几百个页里，没法和分裂本身放进同一个原子操作。</p>
+<p>真实答案是<strong>面包屑（breadcrumbs）</strong>：查找本来就是从根往下走的，那就在下行时把「经过哪一页、走的哪个槽」一路压进栈；需要往上传播时，<strong>弹栈就是父节点</strong>。妙处在于这份信息<strong>本来就白拿</strong>——你为了找到叶子，无论如何都得走这一趟。</p>
+<p>还有一个必须处理的细节：<strong>面包屑可能过期</strong>。并发下你走到叶子的这段时间里，栈里记的父节点自己可能已经分裂，你的分隔键<strong>不再归它管</strong>。这时高键与兄弟指针第二次救场：把栈里的页读回来，发现键超过了它的高键，就沿兄弟指针右移一步再试——<strong>不必重新从根走一遍，也不必全程握着锁。</strong></p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 290" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="c1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="c2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text fill="#5b9df9" font-size="13" font-weight="700" x="16" y="22">下行时留面包屑，分裂时照着原路走回去</text>
+<rect fill="rgba(91,157,249,0.18)" height="32" rx="5" stroke="#5b9df9" width="112" x="72" y="42"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="128" y="63">根 #1</text>
+<rect fill="rgba(91,157,249,0.18)" height="32" rx="5" stroke="#5b9df9" width="112" x="72" y="112"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="128" y="133">内部 #7</text>
+<rect fill="rgba(91,157,249,0.12)" height="32" rx="5" stroke="#5b9df9" width="98" x="30" y="182"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="79" y="203">叶子 #23</text>
+<rect fill="rgba(155,108,245,0.24)" height="32" rx="5" stroke="#9b6cf5" stroke-width="2" width="98" x="146" y="182"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="195" y="203">叶子 #41 新</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="128" x2="128" y1="76" y2="110"></line>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="120" x2="82" y1="146" y2="180"></line>
+<line marker-end="url(#c2)" stroke="#9b6cf5" x1="140" x2="192" y1="146" y2="180"></line>
+<line stroke="rgba(120,120,130,0.3)" stroke-dasharray="4 4" x1="286" x2="286" y1="34" y2="228"></line>
+<text fill="#8fbaff" font-family="monospace" font-size="10.5" x="312" y="50">面包屑栈（下行时压入）</text>
+<rect fill="rgba(91,157,249,0.14)" height="26" rx="4" stroke="#5b9df9" width="196" x="312" y="60"></rect>
+<text fill="#e7ebf1" font-size="10.5" x="322" y="78">① 根 #1 · 走了槽 2</text>
+<rect fill="rgba(91,157,249,0.14)" height="26" rx="4" stroke="#5b9df9" width="196" x="312" y="94"></rect>
+<text fill="#e7ebf1" font-size="10.5" x="322" y="112">② 内部 #7 · 走了槽 5</text>
+<rect fill="rgba(155,108,245,0.2)" height="26" rx="4" stroke="#9b6cf5" width="196" x="312" y="128"></rect>
+<text fill="#e7ebf1" font-size="10.5" x="322" y="146">③ 叶子 #23 · 命中，但满了</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="524" x2="524" y1="62" y2="140"></line>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" x="530" y="86">下行</text>
+<line marker-end="url(#c2)" stroke="#9b6cf5" x1="576" x2="576" y1="152" y2="66"></line>
+<text fill="#9b6cf5" font-family="monospace" font-size="9.5" x="582" y="120">回溯</text>
+<text fill="#b9c0ca" font-size="10.5" x="16" y="252">① 叶子 #23 满 → 分裂出 #41 → <tspan fill="#9b6cf5">弹栈</tspan> 拿到内部 #7，插入新分隔键</text>
+<text fill="#b9c0ca" font-size="10.5" x="16" y="272">② 若 #7 也满 → 继续弹栈到根 #1 → 根分裂，<tspan fill="#9b6cf5">树长高一层</tspan>（B-Tree 唯一长高的时刻）</text>
+</svg>
+<figcaption>图 2 · 面包屑栈：查找下行时顺手记下「经过哪页、走的哪个槽」，分裂需要父节点时弹栈即得——不必给每个节点存父指针，也就免掉了分裂时数百次子节点更新。</figcaption>
+</figure>
+<h3>四、少分裂：先向兄弟借地方</h3>
+<p>第二个工程决断针对填充率。既然分裂又贵（写三个页 + WAL）又浪费空间（两个半满页），那就<strong>能不分就不分</strong>：节点满了先看左右兄弟，<strong>哪边有空位就把边界上的几个键挪过去</strong>，顺手更新父节点里那个分隔键——这叫<strong>再平衡（rebalancing）</strong>。</p>
+<p>这就是 <em>B*-tree</em> 的思路：只有<strong>自己和兄弟都满了</strong>，才把 2 个节点拆成 3 个。算笔账：普通 B-Tree 分裂后每个节点保证至少半满，<strong>最低填充率 50%</strong>；2 拆 3 让每个节点至少装到 <code>2/3</code>，<strong>最低填充率提到约 66%</strong>。同样的数据，索引体积小掉四分之一，页缓存里也就多装四分之一。</p>
+<p>代价一点不含糊：<strong>一次操作要同时改两三个页（自己、兄弟、父）</strong>，并发下就是同时握两三个 latch——加锁顺序必须全局一致，否则死锁；写放大也从「改一页」变成「改三页」。这是一笔<strong>拿写路径复杂度和延迟尖刺换空间与缓存命中率</strong>的交易，不是所有引擎都愿意做。反向的合并同理：听着漂亮，但同样要动多个页，还容易和分裂来回拉锯（刚合完又满了、又分开）——<strong>这正是 PostgreSQL 干脆放弃合并半空页的原因</strong>。</p>
+<h3>五、右侧追加与批量加载：顺序键值得单开一条路</h3>
+<p>这一节最贴近日常。你的主键多半是自增 ID、时间戳或雪花 ID——<strong>它们都单调递增，于是每一条插入都砸在最右边那片叶子上</strong>。对这种负载，通用逻辑处处吃亏，值得单开快车道。</p>
+<p><strong>快车道一：右倾分裂。</strong>最右叶子满了别劈中间，<strong>把绝大部分键留在原页，只把最后一小撮挪进新页</strong>。理由很硬：左半页此后<strong>不可能再收到任何键</strong>（新键只会更大），对半劈就是把一半空间永久锁死。InnoDB 的实际填充率印证了这笔账——顺序插入与随机插入的差距近乎一倍，官方数字见下方实证框。</p>
+<p><strong>快车道二：缓存最右叶子。</strong>既然插入总落在同一页，就别每次从根走一趟。PostgreSQL 的 <code>nbtree</code> 缓存了上次插入命中的叶子，若它仍是最右叶、还有空位、且新键比页里首键大，就<strong>直接插进去</strong>，这条路径叫 <em>fastpath</em>。它自带一个刹车：所有写线程都去抢同一页的排他锁，反而会争用——所以拿不到锁就退回常规路径。</p>
+<p><strong>快车道三：批量加载。</strong>数据<strong>本来就有序</strong>时（导入、重建索引、LSM 的合并输出），逐条插入是纯浪费。正确做法是<strong>自底向上建树</strong>：把有序数据一页页码满写成叶子层，再取每片叶子的首键组成上一层，逐层往上直到只剩一个根。<strong>全程零分裂零查找，页可填到接近 100%，且是纯顺序写盘。</strong>MySQL 把它叫 <em>sorted index build</em>，创建或重建索引时默认走这条路。这也解释了那条经典建议：<strong>往空表灌数据，先灌数据、最后建索引</strong>。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 236" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="13" font-weight="700" x="16" y="22">顺序键下：对半分裂 vs 右倾分裂</text>
+<text fill="#b9c0ca" font-size="11" x="16" y="66">① 对半分裂</text>
+<text fill="#7c8593" font-size="9.5" x="16" y="82">（50/50）</text>
+<rect fill="none" height="40" rx="4" stroke="#7c8593" width="96" x="170" y="50"></rect>
+<rect fill="rgba(91,157,249,0.3)" height="38" width="47" x="171" y="51"></rect>
+<rect fill="none" height="40" rx="4" stroke="#7c8593" width="96" x="280" y="50"></rect>
+<rect fill="rgba(91,157,249,0.3)" height="38" width="47" x="281" y="51"></rect>
+<rect fill="none" height="40" rx="4" stroke="#7c8593" width="96" x="390" y="50"></rect>
+<rect fill="rgba(91,157,249,0.3)" height="38" width="47" x="391" y="51"></rect>
+<rect fill="none" height="40" rx="4" stroke="#7c8593" width="96" x="500" y="50"></rect>
+<rect fill="rgba(91,157,249,0.3)" height="38" width="30" x="501" y="51"></rect>
+<text fill="#7c8593" font-size="9.5" x="170" y="106">每片叶子约 50% 满，而左边这些页此后再也收不到新键 → 空间永久锁死</text>
+<line stroke="rgba(120,120,130,0.25)" stroke-dasharray="4 4" x1="16" x2="624" y1="120" y2="120"></line>
+<text fill="#b9c0ca" font-size="11" x="16" y="160">② 右倾分裂</text>
+<text fill="#7c8593" font-size="9.5" x="16" y="176">（几乎不动）</text>
+<rect fill="none" height="40" rx="4" stroke="#9b6cf5" width="96" x="170" y="144"></rect>
+<rect fill="rgba(155,108,245,0.35)" height="38" width="90" x="171" y="145"></rect>
+<rect fill="none" height="40" rx="4" stroke="#9b6cf5" width="96" x="280" y="144"></rect>
+<rect fill="rgba(155,108,245,0.35)" height="38" width="90" x="281" y="145"></rect>
+<rect fill="none" height="40" rx="4" stroke="#9b6cf5" width="96" x="390" y="144"></rect>
+<rect fill="rgba(155,108,245,0.35)" height="38" width="90" x="391" y="145"></rect>
+<rect fill="none" height="40" rx="4" stroke="#9b6cf5" width="96" x="500" y="144"></rect>
+<rect fill="rgba(155,108,245,0.35)" height="38" width="26" x="501" y="145"></rect>
+<text fill="#c9b6f5" font-size="9.5" x="170" y="200">叶子填到约 15/16 ≈ 94%（InnoDB 官方数字），只有最右一页在长</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" x="16" y="226">同样一亿行 · 索引体积差近一倍 · 页缓存里能装下的索引也差近一倍</text>
+</svg>
+<figcaption>图 3 · 顺序键场景下，对半分裂把一半空间永久锁死；右倾分裂让写满的叶子真的接近写满。填充率的差别会等量传导到磁盘占用和页缓存命中率上。</figcaption>
+</figure>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 222" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="d1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="d2" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="16" y="22">① 逐条插入</text>
+<rect fill="rgba(91,157,249,0.18)" height="28" rx="4" stroke="#5b9df9" width="84" x="90" y="42"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="132" y="61">根</text>
+<line marker-end="url(#d1)" stroke="#7c8593" x1="120" x2="72" y1="72" y2="100"></line>
+<line marker-end="url(#d1)" stroke="#7c8593" x1="144" x2="196" y1="72" y2="100"></line>
+<rect fill="none" height="28" rx="4" stroke="#7c8593" width="80" x="30" y="102"></rect>
+<rect fill="rgba(91,157,249,0.28)" height="26" width="40" x="31" y="103"></rect>
+<rect fill="none" height="28" rx="4" stroke="#7c8593" width="80" x="164" y="102"></rect>
+<rect fill="rgba(91,157,249,0.28)" height="26" width="46" x="165" y="103"></rect>
+<text fill="#7c8593" font-size="10" x="16" y="156">每条都走一趟根 → 叶</text>
+<text fill="#7c8593" font-size="10" x="16" y="174">页满就分裂：写 3 个页 + WAL</text>
+<text fill="#7c8593" font-size="10" x="16" y="192">稳态填充率 ~50–70%</text>
+<line stroke="rgba(120,120,130,0.3)" stroke-dasharray="4 4" x1="300" x2="300" y1="10" y2="205"></line>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="322" y="22">② 批量加载（输入已排序）</text>
+<rect fill="rgba(255,255,255,0.03)" height="22" rx="4" stroke="rgba(91,157,249,0.4)" width="292" x="322" y="34"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="468" y="49">已排序的输入：1, 2, 3, 4, 5, …</text>
+<rect fill="none" height="28" rx="4" stroke="#9b6cf5" width="88" x="322" y="70"></rect>
+<rect fill="rgba(155,108,245,0.35)" height="26" width="86" x="323" y="71"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="366" y="89">叶 · 满</text>
+<rect fill="none" height="28" rx="4" stroke="#9b6cf5" width="88" x="424" y="70"></rect>
+<rect fill="rgba(155,108,245,0.35)" height="26" width="86" x="425" y="71"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="468" y="89">叶 · 满</text>
+<rect fill="none" height="28" rx="4" stroke="#9b6cf5" width="88" x="526" y="70"></rect>
+<rect fill="rgba(155,108,245,0.35)" height="26" width="86" x="527" y="71"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="570" y="89">叶 · 满</text>
+<line marker-end="url(#d2)" stroke="#9b6cf5" x1="366" x2="420" y1="100" y2="122"></line>
+<line marker-end="url(#d2)" stroke="#9b6cf5" x1="468" x2="468" y1="100" y2="122"></line>
+<line marker-end="url(#d2)" stroke="#9b6cf5" x1="570" x2="516" y1="100" y2="122"></line>
+<rect fill="rgba(155,108,245,0.18)" height="28" rx="4" stroke="#9b6cf5" width="180" x="378" y="124"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="468" y="143">父层：取每片叶的首键</text>
+<text fill="#c9b6f5" font-size="10" x="322" y="174">自底向上、逐层建起，全程零分裂零查找</text>
+<text fill="#7c8593" font-size="10" x="322" y="192">纯顺序写盘，页可填到接近 100%</text>
+</svg>
+<figcaption>图 4 · 逐条插入 vs 批量加载。数据已有序时自底向上一次建成整棵树——这就是「先灌数据、最后建索引」比「边灌边建」快得多的原因。</figcaption>
+</figure>
+<h3>六、压缩：粒度是唯一的问题</h3>
+<p>压缩能省磁盘、省 I/O，代价是每次读都要解压。Petrov 把选择压平成一个问题：<strong>粒度多大？</strong></p>
+<ul>
+<li><strong>整个文件</strong>：压缩率最高，但<strong>没法定位单个页</strong>——B-Tree 靠「第 n 页在哪 = n × 页大小」寻址，一压全文件这条前提就没了。基本出局。</li>
+<li><strong>按页</strong>：主流折中。页仍可寻址，读一个 cell 要先解压整页——反正本来就得整页读。麻烦在<strong>压缩后长度不定</strong>，得额外记录每页压完占多少、放在哪。</li>
+<li><strong>按 cell / 行</strong>：粒度最细、解压最省，但压缩率最差——<strong>可参考的上下文太短</strong>，几十字节里榨不出多少冗余。</li>
+</ul>
+<p>还有一条不改布局的省法：<strong>去重</strong>。PostgreSQL 13 起的 B-Tree <em>deduplication</em> 就是典型——一个键值重复很多次时（比如给低基数的 <code>status</code> 列建索引），把它们合并成<strong>一条「键 + 一串行指针」的 posting list</strong>，键只存一次，既省体积又<strong>顺带推迟叶子页分裂</strong>。</p>
+<h3>七、碎片、vacuum 与页的回收</h3>
+<p>最后是维护。两个来源持续制造死空间：<strong>删除</strong>（标记 + 挂空闲清单，第 3 章）与<strong>更新</strong>（变长值改长了原地放不下，只能挪走、原位留洞）。结果是<strong>页里有效载荷越来越低，页数却一个不少</strong>——磁盘、页缓存、每次整页读，成本一分不减。对策分两层：<strong>页内</strong>把存活 cell 重新紧密码到一起（代价是整页重写），<strong>页间</strong>把完全空掉的页摘下来放进全局空闲页清单供分裂复用——注意后者通常<strong>不缩小文件</strong>，只是让空间可复用。</p>
+<p>这里有一个必须知道的现实差异。<strong>PostgreSQL 只回收「完全变空」的页</strong>——只剩几个键的页继续占着，于是「一个区间里绝大多数键最终被删掉」这种模式会长期浪费空间。<strong>InnoDB 走另一条路</strong>：填充率跌破 <code>MERGE_THRESHOLD</code> 就跟邻页合并，代价是两页都在阈值附近时「合了又分」地抖动。<strong>同一个问题，两种权衡，两家都在官方文档里诚实写下了自己的代价</strong>（原文见下方实证框）。</p>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 2 · 怎么找到父节点</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>父指针</th><th>面包屑栈（主流）</th></tr></thead>
+<tbody>
+<tr><th>怎么做</th><td>每个节点存一个指向父亲的页 ID</td><td>下行查找时把「页 + 槽号」压栈，需要时弹栈</td></tr>
+<tr><th>额外成本</th><td>节点分裂时，<strong>被搬走的几百个子节点父指针全要改</strong>，还要各写一条 WAL</td><td><strong>零额外成本</strong>——查找本来就要走这一趟</td></tr>
+<tr><th>并发</th><td>父指针散在数百页里，<strong>没法和分裂放进一个原子操作</strong></td><td>栈可能过期，但靠<strong>高键 + 兄弟指针</strong>右移一步即可修正</td></tr>
+<tr><th>适合</th><td>只读或极少写的树</td><td><strong>几乎所有生产 B-Tree</strong></td></tr>
+</tbody></table></div>
+<p class="tcap">表 3 · 节点满了怎么办：四种分裂策略</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>策略</th><th>做法</th><th>填充率</th><th>代价</th><th>什么时候用</th></tr></thead>
+<tbody>
+<tr><th>对半分裂</th><td>满了就 50/50 劈开</td><td>随机负载稳态 <code>50–70%</code></td><td>顺序键下左半页<strong>永久半空</strong></td><td>默认兜底；键分布确实随机时够用</td></tr>
+<tr><th>先向兄弟借<br/>（B*-tree）</th><td>自己满了先匀给邻居；两边都满才 2 拆 3</td><td>最低从 50% 提到 <code>≈ 66%</code></td><td>一次动 <strong>2–3 个页</strong>，多握 latch，写放大与死锁风险都上升</td><td>空间 / 缓存吃紧，且愿意为此付写路径复杂度</td></tr>
+<tr><th>右倾分裂</th><td>只把最后一小撮键挪进新页</td><td>InnoDB 顺序插入 <code>≈ 15/16 (94%)</code></td><td>判错负载（其实是随机键）就白留了空位</td><td><strong>自增 ID / 时间戳 / 雪花 ID</strong>——绝大多数 OLTP 主键</td></tr>
+<tr><th>批量加载</th><td>输入预排序，自底向上一次建成</td><td>可到<strong>接近 100%</strong>（留 fillfactor）</td><td>要求输入<strong>已排序</strong>；建的过程中不能并发写</td><td>初次导入、<code>REINDEX</code>、LSM 合并输出</td></tr>
+</tbody></table></div>
+<p class="tcap">表 4 · 留白与回收：各家的真实默认值</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>PostgreSQL（nbtree）</th><th>MySQL / InnoDB</th></tr></thead>
+<tbody>
+<tr><th>建索引时留白</th><td><code>fillfactor</code> <strong>默认 90</strong>（叶子填到 90%，右端扩展时同样按此填）</td><td><code>innodb_fill_factor</code>，<strong>排序建索引</strong>时生效；聚簇索引插入默认预留 <code>1/16</code></td></tr>
+<tr><th>顺序插入的填充率</th><td>靠 fastpath 缓存最右叶，避免每次从根走</td><td>官方数字：<strong>≈ 15/16 满</strong>；随机插入则 <code>1/2 – 15/16</code></td></tr>
+<tr><th>页太空怎么办</th><td><strong>只回收完全变空的页</strong>；只剩几个键的页<strong>继续占着</strong></td><td>低于 <code>MERGE_THRESHOLD</code>（<strong>默认 50</strong>）尝试与邻页合并</td></tr>
+<tr><th>这么选的代价</th><td>「区间里绝大多数键被删」的模式会<strong>严重浪费空间</strong>，需要 <code>REINDEX</code></td><td>官方警告：两页都接近 50% 时<strong>合了又分，抖动伤性能</strong></td></tr>
+<tr><th>省空间的额外招</th><td><strong>去重（PG 13+，默认开）</strong>：重复键合成 posting list，同时推迟分裂</td><td>页级压缩（<code>ROW_FORMAT=COMPRESSED</code> 等）</td></tr>
+</tbody></table></div>
+<h2>为什么重要 / 落到真实系统</h2>
+<p><strong>选主键时说得出理由。</strong>「UUID v4 当主键为什么慢」不是玄学：随机键让插入均匀砸向每一片叶子，<strong>每片都得读进页缓存、改脏、写回</strong>，分裂遍地开花；换成时间有序的 ID（自增、UUID v7、雪花 ID），插入集中在最右一页，走右倾分裂与 fastpath——<strong>索引体积近乎减半，页缓存里放得下的索引近乎翻倍</strong>。这条结论有官方文档背书，不是传闻。</p>
+<p><strong>导数据时选得对路。</strong>往空表灌一亿行：边灌边维护 5 个索引，等于一亿次「走根到叶 + 可能分裂 + 写 WAL」；先灌数据、最后 <code>CREATE INDEX</code>，走的是<strong>排序 + 自底向上批量建树</strong>，纯顺序 I/O、零分裂、页填到接近满。</p>
+<p><strong>排障时找得到方向。</strong>「表只有 3 GB，索引却 12 GB，<code>VACUUM</code> 之后一点没小」——多半就是第七节那件事，要真收回来得 <code>REINDEX</code>。反过来，InnoDB 上写延迟周期性抖动，就该想到 <code>MERGE_THRESHOLD</code> 附近的合并—分裂拉锯。</p>
+<div class="ev">
+<div class="evh">一手实证 · 下面这些不是书里说的，是各系统 / 论文自己公开写的</div>
+<ul>
+<li><strong>Lehman &amp; Yao（1981）</strong>提出 Blink-tree：给每页加一个<strong>右兄弟链接</strong>和一个<strong>高键</strong>（本页允许的键上界），靠这两样就能<strong>检测出并发发生的页分裂</strong>，从而让查找<strong>几乎不用加读锁</strong>——本章「高键 + 兄弟指针 + 面包屑可以过期」这一整套的源头。<span class="src"><a href="https://www.csd.uoc.gr/~hy460/pdf/p650-lehman.pdf" rel="noopener" target="_blank">Lehman &amp; Yao《Efficient Locking for Concurrent Operations on B-Trees》, ACM TODS 6(4):650–670, 1981（PDF）↗</a></span></li>
+<li><strong>PostgreSQL</strong> 的 <code>nbtree</code> README 直接写明：本实现基于 Lehman &amp; Yao 的高并发 B-Tree 算法，并为反向扫描额外加了「左兄弟」链接；对单调递增的键，它<strong>缓存上次插入命中的最右叶子</strong>走 fastpath，但因为实测发现这会<strong>加剧最右页排他锁的争用</strong>，所以只<strong>条件性地尝试取锁，拿不到就退回常规路径</strong>。<span class="src"><a href="https://github.com/postgres/postgres/blob/master/src/backend/access/nbtree/README" rel="noopener" target="_blank">PostgreSQL 源码 src/backend/access/nbtree/README ↗</a></span></li>
+<li><strong>PostgreSQL 官方文档</strong>对页回收说得毫不掩饰：完全变空的索引页会被回收复用，但<strong>「若一页上除了少数几个键之外都被删除了，该页仍保持已分配状态」</strong>，因此「每个键区间最终只剩少数键」的使用模式<strong>会导致空间利用很差</strong>。<span class="src"><a href="https://www.postgresql.org/docs/current/routine-reindex.html" rel="noopener" target="_blank">PostgreSQL 文档「Routine Reindexing」↗</a></span> 同一家的 <code>fillfactor</code> <strong>默认 90</strong>——静态表适合 100，频繁更新的表该调低以减少分裂。<span class="src"><a href="https://www.postgresql.org/docs/current/sql-createindex.html" rel="noopener" target="_blank">PostgreSQL 文档「CREATE INDEX」↗</a></span> PG 13 起还默认开启 <strong>B-Tree 去重</strong>：重复键合并成「键 + 有序 TID 数组」的 posting list，文档称其<strong>显著减小索引体积</strong>，且因为是懒执行的，还能<strong>阻止或推迟叶子页分裂</strong>。<span class="src"><a href="https://www.postgresql.org/docs/current/btree-implementation.html" rel="noopener" target="_blank">PostgreSQL 文档「B-Tree Implementation · Deduplication」↗</a></span></li>
+<li><strong>MySQL / InnoDB 官方文档</strong>给出了本章最有说服力的一组数字：向聚簇索引插入新记录时，InnoDB <strong>刻意留下页面 1/16 的空间</strong>给未来的插入与更新；<strong>若记录按顺序（升序或降序）插入，最终页约 15/16 满；若按随机顺序插入，页只有 1/2 到 15/16 满</strong>——顺序键与随机键在空间上的差距，官方自己量化了。<span class="src"><a href="https://dev.mysql.com/doc/refman/8.0/en/innodb-physical-structure.html" rel="noopener" target="_blank">MySQL 文档「The Physical Structure of an InnoDB Index」↗</a></span></li>
+<li><strong>InnoDB 的页合并阈值</strong>同样是公开的：<code>MERGE_THRESHOLD</code> <strong>默认 50</strong>（即此前硬编码的值，可设 1–50），删除或缩短行导致页填充率跌破它就尝试与邻页合并；文档并直言<strong>「若两页都接近 50% 满，合并后很快又会分裂；这种合并—分裂若频繁发生，会对性能产生不利影响」</strong>。<span class="src"><a href="https://dev.mysql.com/doc/refman/8.4/en/index-page-merge-threshold.html" rel="noopener" target="_blank">MySQL 文档「Configuring the Merge Threshold for Index Pages」↗</a></span></li>
+<li><strong>批量加载在 MySQL 里是默认路径</strong>：创建或重建 B-Tree 索引时 InnoDB 执行<strong>批量加载</strong>，官方称之为 <em>sorted index build</em>——先扫聚簇索引把条目送进排序缓冲，再自底向上建树，并可用 <code>innodb_fill_factor</code> 预留增长空间（文档明确称该值是「提示而非硬性上限」）。<span class="src"><a href="https://dev.mysql.com/doc/refman/8.0/en/sorted-index-builds.html" rel="noopener" target="_blank">MySQL 文档「Sorted Index Builds」↗</a></span></li>
+</ul>
+</div>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>以为「B-Tree 保证至少半满」是好消息。</strong>它是<strong>下界保证</strong>，不是目标值——真实负载下稳态填充率常年在 <code>50%–70%</code>，意味着你为索引买的硬盘和内存有三分之一到一半在装空气。本章大半篇幅（再平衡、右倾分裂、批量加载、去重）都在跟这个数字较劲。</li>
+<li><strong>以为分裂是罕见事件。</strong>随机键 + 高写入下，分裂是<strong>常态</strong>。一次叶子分裂至少改 3 个页（原叶、新叶、父）并写进 WAL；PostgreSQL 在 checkpoint 后首次改动一页时还要写整页镜像。逻辑上「插一行」，落到磁盘上可以是几十 KiB。</li>
+<li><strong>把父指针当理所当然。</strong>内存里的树几乎都存父指针，磁盘上的 B-Tree 几乎都不存。差别只在一处：<strong>内存里改一个指针是几纳秒，磁盘上改一页要走 WAL、进页缓存、最终落盘</strong>。同一个数据结构换个介质，最优实现就完全不同。</li>
+<li><strong>以为删除会让索引变小。</strong>不会。页内空间挂进空闲清单等待复用，页级回收也只是把空页还给全局清单，<strong>文件大小往往一动不动</strong>。真要缩得 <code>REINDEX</code> / <code>VACUUM FULL</code>，代价是重建。</li>
+<li><strong>把 fillfactor 一律调到 100。</strong>诱惑很大（索引最小、缓存命中最高），但静态表之外这么做等于<strong>把所有留白都退掉</strong>，之后每一次中间插入都可能立刻触发分裂。PostgreSQL 把默认定在 90 而非 100，正是这个道理。</li>
+<li><strong>时代局限与争议。</strong>本章整套算计建立在「块设备 + 原地更新 + 改页要写 WAL」之上，三个方向正在动摇它：<strong>LSM-tree</strong>（第 7 章）放弃原地更新，把分裂 / 碎片换成后台合并问题；<strong>Bw-tree 等无锁变体</strong>（第 6 章）用增量记录 + 映射表绕开页内原地修改，本章的 latch 与分裂传播全得重写；<strong>NVMe / 持久内存</strong>让「随机 I/O 昂贵」这条公理松动，扇出、页大小、分裂策略的最优点都会跟着漂移。而 PostgreSQL 拒绝合并半空页，是<strong>为并发正确性与实现简单付出的空间代价</strong>，社区争论多年至今未改；InnoDB 选了另一边，也如实写下了抖动代价。<strong>没有对错，只有两张不同的账单。</strong></li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 一句话：教科书的「满了就分裂」是全章最容易的部分，<strong>真正的工程量在分裂之外</strong>——怎么找父节点、怎么少分裂、顺序键怎么不浪费、删完怎么收回来。</p>
+<p>② N 个分隔键配 N+1 个子指针，落单那个要么进页头（<strong>最右指针</strong>，SQLite），要么靠<strong>高键</strong>配平（PostgreSQL）。而<strong>高键 + 兄弟指针 = Lehman &amp; Yao 的 Blink-tree</strong>：读者靠「键超过了高键」识破并发分裂、右移一步继续，<strong>几乎不用加读锁</strong>；兄弟链还让范围扫描不必爬回父节点，代价是每次分裂 / 合并都要顺手维护邻居。</p>
+<p>③ 页内二分是在<strong>有序的偏移量数组</strong>上做的（8 KiB 页约 500 键，<code>log₂500 ≈ 9</code> 步），且必须返回<strong>插入点</strong>而非只报「没找到」。</p>
+<p>④ <strong>面包屑栈取代父指针</strong>：下行时顺手记下路径，传播分裂时弹栈即得。父指针出局，是因为节点一分裂就要改数百个子节点的父指针，且无法与分裂原子化。</p>
+<p>⑤ <strong>先向兄弟借地方</strong>（B*-tree）把最低填充率从 50% 提到约 <code>2/3</code>，代价是一次动 2–3 个页、多握 latch。反向的合并同理，所以 PostgreSQL 干脆放弃合并半空页。</p>
+<p>⑥ <strong>顺序键值得单开快车道</strong>：右倾分裂（InnoDB 顺序插入页约 <code>15/16</code> 满，随机插入只 <code>1/2–15/16</code>）+ 缓存最右叶（PostgreSQL fastpath，且会因锁争用主动退回常规路径）。</p>
+<p>⑦ <strong>批量加载</strong>：输入已排序时自底向上建树，零分裂零查找、纯顺序写、页填到接近满——这就是「先灌数据、最后建索引」快得多的原因（MySQL 的 sorted index build）。</p>
+<p>⑧ 压缩只有<strong>粒度</strong>一个问题：整文件压了页就不可寻址，按 cell 压不出东西，<strong>按页是主流折中</strong>；另有一条不改布局的省法是 PG 13+ 的<strong>去重</strong>。而维护是长期账：删除与变长更新持续制造死空间，靠页内压缩 + 页级回收兜底，但<strong>通常不缩小文件</strong>——PostgreSQL 只回收全空页（需 <code>REINDEX</code> 才真收），InnoDB 用 <code>MERGE_THRESHOLD</code> 合并（代价是合了又分的抖动）。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

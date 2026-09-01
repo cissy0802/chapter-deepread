@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals Ch 4 · Implementing B-Trees — Book Deep Read 49</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">BOOK DEEP READ · Database Internals · Chapter 4</p>
+<h1>Implementing B-Trees</h1>
+<p class="sub">Database Internals · Ch 4 · Alex Petrov · 2019</p>
+<p class="langbar"><a href="dbinternals-ch04-implementing-btrees-book49.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>From the last two chapters you know that a database finds data through a kind of directory tree, and that each node of that tree is one page on disk. But all of that was the <strong>static picture</strong>. This chapter asks the moving question: <strong>this ledger takes in millions of new records a day and loses millions of old ones, all while people are reading it — how does it grow, shrink and stay in order at the same time?</strong></p>
+<h2>An analogy first</h2>
+<p>Picture a row of <strong>filing cabinet drawers</strong>. Each drawer holds cards in alphabetical order, and each has a label on the front: "A–F", "G–M".</p>
+<p>The textbook stops right here: <strong>when a drawer fills up, split it into two</strong>, then add a line to the master index. Two sentences. Anyone who has actually run such a cabinet knows the trouble is entirely in what those two sentences leave out.</p>
+<h2>Why the old world is hard</h2>
+<p>Four things, none of them in the textbook.</p>
+<p><strong>One: after splitting, you have to tell the level above.</strong> But you are holding one drawer — how do you know which line of the master index carries its label? You could write "I belong to drawer 12" on the back of every card, but then splitting a drawer means rewriting the back of hundreds of cards.</p>
+<p><strong>Two: splitting too often.</strong> Halve a drawer the moment it fills and each half is only half full — so the cabinet is permanently running at half capacity while you buy twice as many cabinets.</p>
+<p><strong>Three: when the numbers only go up, halving is pure waste.</strong> New cards get ever-larger numbers, so they always go into the last drawer. Split that full drawer down the middle and <strong>nobody will ever put anything in the front half again</strong>. It sits half empty forever.</p>
+<p><strong>Four: what you remove doesn't come back.</strong> Pulling a card just leaves a gap. The drawer doesn't shrink, and the cabinet doesn't go away.</p>
+<h2>The core idea: four very plain answers</h2>
+<ul>
+<li><strong>Breadcrumbs.</strong> Instead of writing the owner on the back of every card, <strong>note which drawers you passed through on your way down</strong> — like dropping a pebble at each landing on the stairs. To report upward, walk back along the pebbles. Now a split rewrites nothing.</li>
+<li><strong>Ask the neighbour first.</strong> Drawer full? Check whether the one next door has slack; if so, shift a few cards across and <strong>put off the split</strong>. Average usage climbs from about a half to about two-thirds.</li>
+<li><strong>Don't halve a sequence.</strong> If new cards always land at the end, <strong>don't cut in the middle — keep nearly everything where it is and move only the last card or two</strong>. The old drawer stays packed; the new one carries on filling.</li>
+<li><strong>Loading a whole cabinet? Don't insert one by one.</strong> If your cards are <strong>already sorted</strong>, just pack drawer after drawer to the brim and write the labels afterwards. Not a single split along the way.</li>
+</ul>
+<h2>What it buys you</h2>
+<p>This explains two things you have probably watched happen. <strong>An auto-incrementing primary key is far faster and far smaller than a random one</strong> — sequential inserts pack every drawer nearly full, while random inserts scatter cards everywhere and trigger splits all over. And <strong>loading a hundred million rows into an empty table goes much faster if you load the data first and build the index last</strong> — that's "pack the drawers" instead of "insert one card at a time".</p>
+<p>The honest cost: <strong>the fuller you pack a drawer, the sooner an insert in the middle forces a split</strong> — which is why serious databases deliberately leave about a tenth of each page empty, and accept the extra cabinets.</p>
+<h2>Remember one thing</h2>
+<div class="tl">
+<p>"When a drawer fills, split it" is the easiest sentence in the chapter. The real craft is everywhere else: <strong>breadcrumbs to find the level above, borrow from a neighbour to split less, never halve a sequence, and pack whole drawers instead of inserting one at a time.</strong></p>
+</div>
+<p class="switch-hint">Want the breadcrumb stack under concurrency, how much space a right-leaning split saves, and the real defaults in PostgreSQL and InnoDB? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think this chapter is about "the split and merge algorithm". In fact <strong>those two lines of pseudocode are the easiest part of it</strong>. The engineering is everywhere else: <strong>how you find the parent (breadcrumbs, not parent pointers), how you split less often (borrow from a sibling), how you stop sequential keys from wasting half your space (right-leaning splits), and how you get deleted space back (vacuum)</strong>. This chapter stitches the tree shape of Chapter 2 to the page bytes of Chapter 3 into something that runs in production for ten years without breaking or bloating — <strong>it is the entire distance between the textbook B-Tree and the one inside PostgreSQL or InnoDB</strong>.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Node / page</strong>: one B-Tree node sits on exactly one page (commonly 4 / 8 / 16 KiB). Below, "node" and "page" are near-synonyms.</li>
+<li><strong>Leaf / internal node</strong>: leaves are the bottom layer and hold the real data; internal nodes hold only signposts that steer a search into the right subtree.</li>
+<li><strong>Separator key</strong>: the signpost key inside an internal node, drawing the "smaller goes left, larger goes right" boundary.</li>
+<li><strong>Fan-out</strong>: how many children one internal node points at. Higher fan-out means a shallower tree and fewer disk trips per lookup.</li>
+<li><strong>Split / merge</strong>: a page that no longer fits is split into two; a page grown too empty is merged with a <strong>sibling</strong> (the adjacent page on the same level).</li>
+<li><strong>Fill factor / occupancy</strong>: the share of a page holding real data. At 50%, half your disk and half your page cache are holding air.</li>
+<li><strong>Monotonically increasing key</strong>: a key that only ever grows — auto-increment IDs, timestamps, snowflake IDs. It sends every insert to the far right of the tree.</li>
+<li><strong>WAL (write-ahead log)</strong>: before changing a page you first record "here is how I will change it" in an append-only log, so a crash can be recovered from. It is Chapter 5's subject; here you only need to know that <strong>changing a page costs an extra log write, so fewer page changes means less writing</strong>.</li>
+<li><strong>Latch</strong>: a short-lived lightweight lock protecting an in-memory page from concurrent corruption (distinct from a transaction lock).</li>
+<li><strong>Vacuum</strong>: background maintenance that reclaims the dead space left by deletes and updates.</li>
+<li><strong>Bulk loading</strong>: when data is already sorted, bypassing one-by-one insertion and building the tree bottom-up in a single pass.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This is Chapter 4 of Part I, "Storage Engines" — and the most engineering-flavoured chapter in that part. <strong>It follows Chapters 2 and 3</strong>: Chapter 2 argued why the B-Tree is the default answer on disk (high fan-out flattens the tree), and Chapter 3 gave the byte layout of a page (slotted pages, cells, the availability list). <strong>It sets up Chapter 5, "Transaction Processing and Recovery"</strong>, where every split, merge and in-page compaction here needs a WAL behind it before it can claim correctness across a crash. In the real world: PostgreSQL's <code>nbtree</code>, InnoDB's clustered index, SQLite's <code>btree.c</code> — every mechanism in this chapter has an implementation, and a distinct set of trade-offs, in those three codebases.</p>
+<h2>The problem this chapter attacks</h2>
+<p>Carry the textbook B-Tree straight into production and you hit four walls.</p>
+<p><strong>Wall one: splits propagate upward, but a node has no idea who its parent is.</strong> A full leaf splits in two, so the parent must take a new separator key; the parent may be full too, so it continues upward, at worst all the way to the root — and when the root splits, the tree grows a level. But a page holds only keys and child pointers, with <strong>no route back to the parent</strong>. The naive fix is to store a parent pointer, and the cost shows up immediately: when a node splits, <strong>every one of its children needs its parent pointer rewritten</strong> — a node with fan-out 500 means 500 extra page updates, all of which must go through the WAL.</p>
+<p><strong>Wall two: halving splits make you buy twice the hardware.</strong> Split 50/50 on overflow and both new pages are half full; under random inserts steady-state occupancy hovers around <code>50%–70%</code>. To put a number on it: a <strong>100-million-row</strong> orders table, primary-key index at 16 bytes per entry, 8 KiB pages with fan-out about 500, comes to roughly <strong>2 GB</strong> packed — and <strong>4 GB</strong> at half occupancy. Those extra 2 GB don't just take disk; they <strong>crowd the page cache by exactly as much</strong>. An index that would have fit in memory no longer does, hit rate drops, and latency follows.</p>
+<p><strong>Wall three: sequential keys turn that waste into a dead loss.</strong> With an auto-increment or timestamp primary key, <strong>every insert lands on the rightmost leaf</strong>. Halving is especially foolish there: the left half <strong>can never receive another key</strong>, so it stays half empty forever. Occupancy is pinned at 50% when it could have been close to 100%.</p>
+<p><strong>Wall four: the holes left by deletes and updates don't disappear.</strong> A delete is only a mark plus an entry on the availability list (Chapter 3); a variable-length field grown by an <code>UPDATE</code> no longer fits in place, so it moves and leaves a hole behind. Once holes accumulate, a page's live payload may be down to thirty percent while it still occupies 8 KiB of disk, 8 KiB of cache, and a full-page read every time.</p>
+<p class="tcap">Table 1 · The textbook B-Tree vs what a production implementation must add</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Problem</th><th>What the textbook says</th><th>What a real implementation adds</th></tr></thead>
+<tbody>
+<tr><th>Finding the parent</th><td>"Insert the separator into the parent" — the parent is assumed known</td><td><strong>Breadcrumb stack</strong>: push the path on the way down, pop it when you need it</td></tr>
+<tr><th>Node is full</th><td>Split it in half, immediately</td><td><strong>Borrow from a sibling</strong> to defer the split; go <strong>right-leaning</strong> for sequential keys</td></tr>
+<tr><th>Node is too empty</th><td>Merge with a sibling</td><td>Merging is expensive — PostgreSQL simply <strong>reclaims only fully empty pages</strong></td></tr>
+<tr><th>Building a whole tree</th><td>— (not covered)</td><td><strong>Bulk loading</strong>: pre-sort, build bottom-up, zero splits</td></tr>
+<tr><th>Concurrency</th><td>— (not covered)</td><td>Sibling links + high keys (B<sup>link</sup>-tree) so readers need no locks</td></tr>
+</tbody></table></div>
+<h2>The core of it</h2>
+<h3>1. A node that identifies itself: page header, rightmost pointer, high key</h3>
+<p>Beyond what Chapter 3 covered (magic number, cell count, free-space boundaries), a B-Tree page header must record <strong>the page's identity within the tree</strong>: leaf or internal. That decides how the cells are read — "key + value" in a leaf, "separator key + child page ID" in an internal node.</p>
+<p>Then comes a detail that is easy to skip past and yet forces two schools of thought: <strong>an internal node has N separator keys but N+1 child pointers</strong>. Package "key + pointer" into one cell and the last pointer <strong>has no key to pair with</strong> — it owns the range above every separator. Two ways out:</p>
+<ul>
+<li><strong>Rightmost pointer</strong>: put the odd pointer in the page header on its own. Simple and direct; SQLite does this.</li>
+<li><strong>High key</strong>: give the page an <strong>upper bound</strong> — "no key in this page or its subtree exceeds this" — so the last pointer has a key after all. More importantly, the high key incidentally solves a hard concurrency problem: a reader arrives at a page, finds that <strong>the key it wants is above that page's high key</strong>, and instantly knows the page split while it was on its way; it steps right along the sibling link, <strong>never taking a read lock</strong>. This is the central trick of Lehman &amp; Yao's 1981 B<sup>link</sup>-tree paper, implemented directly in PostgreSQL's <code>nbtree</code>.</li>
+</ul>
+<p><strong>Sibling links</strong> are the header's other job: adjacent pages on a level point at each other. The benefit is concrete — a range scan (<code>WHERE id BETWEEN 1000 AND 9000</code>) sweeps along the leaf chain <strong>instead of climbing back to the parent after every page</strong>. The cost is equally concrete: <strong>every split, merge and page deletion must also fix up the neighbours</strong>, and under concurrency those pages sit behind different latches, so a careless ordering is a deadlock.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 252" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="b1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="b2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text fill="#5b9df9" font-size="13" font-weight="700" x="16" y="22">Internal node: N separator keys, but N+1 child pointers</text>
+<rect fill="rgba(155,108,245,0.2)" height="46" rx="5" stroke="#9b6cf5" width="104" x="16" y="40"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="68" y="58">header</text>
+<text fill="#c9b6f5" font-size="9" text-anchor="middle" x="68" y="76">rightmost →D</text>
+<rect fill="rgba(91,157,249,0.2)" height="46" rx="5" stroke="#5b9df9" width="104" x="128" y="40"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="180" y="58">key 12</text>
+<text fill="#b9c0ca" font-size="9" text-anchor="middle" x="180" y="76">child →A</text>
+<rect fill="rgba(91,157,249,0.2)" height="46" rx="5" stroke="#5b9df9" width="104" x="240" y="40"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="292" y="58">key 25</text>
+<text fill="#b9c0ca" font-size="9" text-anchor="middle" x="292" y="76">child →B</text>
+<rect fill="rgba(91,157,249,0.2)" height="46" rx="5" stroke="#5b9df9" width="104" x="352" y="40"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="404" y="58">key 40</text>
+<text fill="#b9c0ca" font-size="9" text-anchor="middle" x="404" y="76">child →C</text>
+<text fill="#9b6cf5" font-size="9" x="468" y="52">4th pointer has no key</text>
+<text fill="#7c8593" font-size="9" x="468" y="68">→ into the header (SQLite)</text>
+<text fill="#7c8593" font-size="9" x="468" y="84">→ or use a high key (Postgres)</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="180" x2="78" y1="88" y2="140"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="292" x2="218" y1="88" y2="140"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="404" x2="358" y1="88" y2="140"></line>
+<line marker-end="url(#b2)" stroke="#9b6cf5" x1="68" x2="498" y1="88" y2="140"></line>
+<rect fill="rgba(91,157,249,0.1)" height="40" rx="5" stroke="#5b9df9" width="124" x="16" y="144"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="78" y="160">child A</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="78" y="176">key &lt; 12</text>
+<rect fill="rgba(91,157,249,0.1)" height="40" rx="5" stroke="#5b9df9" width="124" x="156" y="144"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="218" y="160">child B</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="218" y="176">12 ≤ key &lt; 25</text>
+<rect fill="rgba(91,157,249,0.1)" height="40" rx="5" stroke="#5b9df9" width="124" x="296" y="144"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="358" y="160">child C</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="358" y="176">25 ≤ key &lt; 40</text>
+<rect fill="rgba(155,108,245,0.14)" height="40" rx="5" stroke="#9b6cf5" width="124" x="436" y="144"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="498" y="160">child D</text>
+<text fill="#c9b6f5" font-size="9.5" text-anchor="middle" x="498" y="176">key ≥ 40</text>
+<line marker-end="url(#b1)" stroke="#7c8593" stroke-dasharray="3 3" x1="140" x2="154" y1="200" y2="200"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" stroke-dasharray="3 3" x1="280" x2="294" y1="200" y2="200"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" stroke-dasharray="3 3" x1="420" x2="434" y1="200" y2="200"></line>
+<line stroke="#7c8593" stroke-dasharray="3 3" x1="78" x2="78" y1="184" y2="200"></line>
+<line stroke="#7c8593" stroke-dasharray="3 3" x1="78" x2="140" y1="200" y2="200"></line>
+<line stroke="#7c8593" stroke-dasharray="3 3" x1="218" x2="218" y1="184" y2="200"></line>
+<line stroke="#7c8593" stroke-dasharray="3 3" x1="218" x2="280" y1="200" y2="200"></line>
+<line stroke="#7c8593" stroke-dasharray="3 3" x1="358" x2="358" y1="184" y2="200"></line>
+<line stroke="#7c8593" stroke-dasharray="3 3" x1="358" x2="420" y1="200" y2="200"></line>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" x="16" y="226">Sibling links: a range scan sweeps the leaf chain, never climbing back up</text>
+<text fill="#9b6cf5" font-family="monospace" font-size="9.5" x="16" y="244">Cost: every split / merge must fix the neighbours — wrong latch order, deadlock</text>
+</svg>
+<figcaption>Fig. 1 · Anatomy of an internal node: N separator keys against N+1 child pointers. The odd pointer goes either into the header (rightmost pointer) or is balanced by a high key; a sibling chain then links the level together.</figcaption>
+</figure>
+<h3>2. Binary search in a page: search the offset array, and return an insertion point</h3>
+<p>Having found the page, you still have to locate the key inside it. As Chapter 3 showed, in a slotted page <strong>the cells lie in arbitrary physical order, but the slot directory (the offset array) is sorted by key</strong> — so the binary search runs over that <strong>small, contiguous offset array</strong>: take the middle slot, follow its offset to read the key, compare, halve the range. An 8 KiB page holding 500 keys is done in <code>log₂500 ≈ 9</code> steps, all within that one page, with no extra I/O at all.</p>
+<p>One small design point deserves naming: <strong>"not found" is not a sufficient answer</strong>. An insert needs to know where to put the key; a range scan needs to know where to start sweeping. So implementations return the <strong>insertion point</strong>, commonly folding both results into a single value with a negative encoding such as <code>-(insertion point) - 1</code>: a non-negative result is the index of a hit, a negative one converts to the insertion position. One binary search, three kinds of caller.</p>
+<h3>3. Propagating splits, and why nobody stores parent pointers</h3>
+<p>Here is the chapter's first genuine engineering decision. After a leaf splits, the parent takes a new separator key; the parent may be full, so it continues upward; reach the root and the root splits, and <strong>the tree grows a level</strong> — the only moment a B-Tree ever gets taller, which is why it stays perfectly balanced for free. Only one question remains: <strong>how do you find the parent?</strong></p>
+<p>The intuitive answer is a parent pointer in every node. Petrov rules it out on two counts. <strong>Write amplification</strong>: when a node splits, the parent pointer of every child moved into the new node is invalidated, so a node with fan-out 500 means <strong>hundreds of extra page updates and hundreds of WAL records</strong>. <strong>Concurrent inconsistency</strong>: those pointers are scattered across hundreds of pages and cannot be made atomic with the split itself.</p>
+<p>The real answer is <strong>breadcrumbs</strong>. A search already walks down from the root, so on the way down you push "which page I visited, which slot I took" onto a stack; when you need to propagate upward, <strong>popping the stack gives you the parent</strong>. The elegance is that the information is <strong>free</strong> — you had to walk that path to reach the leaf anyway.</p>
+<p>One detail must still be handled: <strong>breadcrumbs go stale</strong>. Under concurrency, a parent recorded on your stack may itself have split while you were descending, so your separator key <strong>no longer belongs to it</strong>. Here high keys and sibling links save the day a second time: read the stacked page back, find the key above its high key, and step one page right along the sibling link — <strong>no need to restart from the root, and no need to hold locks the whole way down.</strong></p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 290" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="c1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="c2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text fill="#5b9df9" font-size="13" font-weight="700" x="16" y="22">Drop breadcrumbs on the way down; walk them back to split</text>
+<rect fill="rgba(91,157,249,0.18)" height="32" rx="5" stroke="#5b9df9" width="112" x="72" y="42"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="128" y="63">root #1</text>
+<rect fill="rgba(91,157,249,0.18)" height="32" rx="5" stroke="#5b9df9" width="112" x="72" y="112"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="128" y="133">internal #7</text>
+<rect fill="rgba(91,157,249,0.12)" height="32" rx="5" stroke="#5b9df9" width="98" x="30" y="182"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="79" y="203">leaf #23</text>
+<rect fill="rgba(155,108,245,0.24)" height="32" rx="5" stroke="#9b6cf5" stroke-width="2" width="98" x="146" y="182"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="195" y="203">leaf #41 new</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="128" x2="128" y1="76" y2="110"></line>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="120" x2="82" y1="146" y2="180"></line>
+<line marker-end="url(#c2)" stroke="#9b6cf5" x1="140" x2="192" y1="146" y2="180"></line>
+<line stroke="rgba(120,120,130,0.3)" stroke-dasharray="4 4" x1="286" x2="286" y1="34" y2="228"></line>
+<text fill="#8fbaff" font-family="monospace" font-size="10.5" x="312" y="50">breadcrumb stack (pushed while descending)</text>
+<rect fill="rgba(91,157,249,0.14)" height="26" rx="4" stroke="#5b9df9" width="196" x="312" y="60"></rect>
+<text fill="#e7ebf1" font-size="10.5" x="322" y="78">1. root #1 · took slot 2</text>
+<rect fill="rgba(91,157,249,0.14)" height="26" rx="4" stroke="#5b9df9" width="196" x="312" y="94"></rect>
+<text fill="#e7ebf1" font-size="10.5" x="322" y="112">2. internal #7 · took slot 5</text>
+<rect fill="rgba(155,108,245,0.2)" height="26" rx="4" stroke="#9b6cf5" width="196" x="312" y="128"></rect>
+<text fill="#e7ebf1" font-size="10.5" x="322" y="146">3. leaf #23 · reached, but full</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="524" x2="524" y1="62" y2="140"></line>
+<text fill="#7c8593" font-family="monospace" font-size="9" x="530" y="86">down</text>
+<line marker-end="url(#c2)" stroke="#9b6cf5" x1="580" x2="580" y1="152" y2="66"></line>
+<text fill="#9b6cf5" font-family="monospace" font-size="9" x="586" y="120">back</text>
+<text fill="#b9c0ca" font-size="10.5" x="16" y="252">1. leaf #23 is full → split off #41 → <tspan fill="#9b6cf5">pop</tspan> to internal #7, insert the new separator</text>
+<text fill="#b9c0ca" font-size="10.5" x="16" y="272">2. if #7 is full too → keep popping to root #1 → the root splits and <tspan fill="#9b6cf5">the tree grows a level</tspan></text>
+</svg>
+<figcaption>Fig. 2 · The breadcrumb stack: a descending search records "which page, which slot" for free, and a split pops it to reach the parent — no parent pointers, and therefore no hundreds of child updates per split.</figcaption>
+</figure>
+<h3>4. Splitting less: borrow from a sibling first</h3>
+<p>The second engineering decision targets occupancy. Since a split is both expensive (three pages plus WAL) and wasteful of space (two half-full pages), the move is to <strong>avoid it where you can</strong>: when a node fills, look at its siblings first and <strong>shift a few boundary keys to whichever one has room</strong>, updating the separator key in the parent. This is <strong>rebalancing</strong>.</p>
+<p>That is the <em>B*-tree</em> idea: only when <strong>a node and its sibling are both full</strong> do you turn 2 nodes into 3. Do the arithmetic: an ordinary B-Tree guarantees each node is at least half full after a split, so <strong>minimum occupancy is 50%</strong>; splitting 2 into 3 leaves each node at least <code>2/3</code> full, raising the <strong>minimum to about 66%</strong>. For the same data, the index is a quarter smaller and the page cache holds a quarter more of it.</p>
+<p>The cost is not subtle: <strong>one operation now touches two or three pages (self, sibling, parent)</strong>, which under concurrency means holding two or three latches — the acquisition order has to be globally consistent or you deadlock — and write amplification goes from "one page" to "three". It is a trade of write-path complexity and latency spikes for space and cache hit rate, and not every engine takes it. The same logic runs in reverse for merges: attractive on paper, but they too touch several pages and can thrash against splits (merge, refill, split again) — <strong>which is precisely why PostgreSQL declines to merge half-empty pages at all</strong>.</p>
+<h3>5. Right-only appends and bulk loading: sequential keys deserve their own lane</h3>
+<p>This is the section closest to daily life. Your primary key is most likely an auto-increment ID, a timestamp or a snowflake ID — <strong>all monotonically increasing, so every insert lands on the rightmost leaf</strong>. Generic logic loses on every count here, which is why implementations open special lanes.</p>
+<p><strong>Lane one: right-leaning splits.</strong> When the rightmost leaf fills, don't cut down the middle — <strong>keep almost every key where it is and move only the last handful into the new page</strong>. The reasoning is airtight: the left half <strong>can never receive another key</strong> (new keys are only larger), so halving locks half that space away permanently. InnoDB's real occupancy figures bear the bill out — the gap between sequential and random inserts is nearly a factor of two; the official numbers are in the evidence box below.</p>
+<p><strong>Lane two: cache the rightmost leaf.</strong> If inserts always land on the same page, don't walk from the root every time. PostgreSQL's <code>nbtree</code> caches the leaf the last insert hit, and if it is still the rightmost leaf, still has room, and the new key exceeds the page's first key, it <strong>inserts straight into it</strong> — a path called the <em>fastpath</em>. It ships with its own brake: every writer then contends for an exclusive lock on that same page, so if the lock isn't available the code falls back to the ordinary path.</p>
+<p><strong>Lane three: bulk loading.</strong> When the data is <strong>already sorted</strong> (an import, an index rebuild, the output of an LSM compaction), inserting one row at a time is pure waste. The right move is to <strong>build bottom-up</strong>: pack the sorted data page by page into a leaf level, take the first key of each leaf to form the level above, and repeat until one root remains. <strong>Zero splits, zero searches, pages packed to nearly 100%, and purely sequential writes.</strong> MySQL calls this a <em>sorted index build</em> and takes that path by default when creating or rebuilding an index. It is also why the classic advice holds: <strong>when loading an empty table, load the data first and build the indexes last</strong>.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 236" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="13" font-weight="700" x="16" y="22">Sequential keys: halving split vs right-leaning split</text>
+<text fill="#b9c0ca" font-size="11" x="16" y="66">1. halving</text>
+<text fill="#7c8593" font-size="9.5" x="16" y="82">(50/50)</text>
+<rect fill="none" height="40" rx="4" stroke="#7c8593" width="96" x="170" y="50"></rect>
+<rect fill="rgba(91,157,249,0.3)" height="38" width="47" x="171" y="51"></rect>
+<rect fill="none" height="40" rx="4" stroke="#7c8593" width="96" x="280" y="50"></rect>
+<rect fill="rgba(91,157,249,0.3)" height="38" width="47" x="281" y="51"></rect>
+<rect fill="none" height="40" rx="4" stroke="#7c8593" width="96" x="390" y="50"></rect>
+<rect fill="rgba(91,157,249,0.3)" height="38" width="47" x="391" y="51"></rect>
+<rect fill="none" height="40" rx="4" stroke="#7c8593" width="96" x="500" y="50"></rect>
+<rect fill="rgba(91,157,249,0.3)" height="38" width="30" x="501" y="51"></rect>
+<text fill="#7c8593" font-size="9.5" x="170" y="106">Each leaf ~50% full — and these left pages can never take another key</text>
+<line stroke="rgba(120,120,130,0.25)" stroke-dasharray="4 4" x1="16" x2="624" y1="120" y2="120"></line>
+<text fill="#b9c0ca" font-size="11" x="16" y="160">2. right-leaning</text>
+<text fill="#7c8593" font-size="9.5" x="16" y="176">(barely moves)</text>
+<rect fill="none" height="40" rx="4" stroke="#9b6cf5" width="96" x="170" y="144"></rect>
+<rect fill="rgba(155,108,245,0.35)" height="38" width="90" x="171" y="145"></rect>
+<rect fill="none" height="40" rx="4" stroke="#9b6cf5" width="96" x="280" y="144"></rect>
+<rect fill="rgba(155,108,245,0.35)" height="38" width="90" x="281" y="145"></rect>
+<rect fill="none" height="40" rx="4" stroke="#9b6cf5" width="96" x="390" y="144"></rect>
+<rect fill="rgba(155,108,245,0.35)" height="38" width="90" x="391" y="145"></rect>
+<rect fill="none" height="40" rx="4" stroke="#9b6cf5" width="96" x="500" y="144"></rect>
+<rect fill="rgba(155,108,245,0.35)" height="38" width="26" x="501" y="145"></rect>
+<text fill="#c9b6f5" font-size="9.5" x="170" y="200">Leaves reach ~15/16 ≈ 94% full (InnoDB's own figure); only the last page grows</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" x="16" y="226">Same 100M rows · index size differs by nearly 2× · so does what fits in the page cache</text>
+</svg>
+<figcaption>Fig. 3 · Under sequential keys a halving split locks half the space away forever, while a right-leaning split lets a full leaf actually be full. The occupancy gap carries straight through to disk usage and cache hit rate.</figcaption>
+</figure>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 222" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="d1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="d2" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="16" y="22">1. row-by-row insert</text>
+<rect fill="rgba(91,157,249,0.18)" height="28" rx="4" stroke="#5b9df9" width="84" x="90" y="42"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="132" y="61">root</text>
+<line marker-end="url(#d1)" stroke="#7c8593" x1="120" x2="72" y1="72" y2="100"></line>
+<line marker-end="url(#d1)" stroke="#7c8593" x1="144" x2="196" y1="72" y2="100"></line>
+<rect fill="none" height="28" rx="4" stroke="#7c8593" width="80" x="30" y="102"></rect>
+<rect fill="rgba(91,157,249,0.28)" height="26" width="40" x="31" y="103"></rect>
+<rect fill="none" height="28" rx="4" stroke="#7c8593" width="80" x="164" y="102"></rect>
+<rect fill="rgba(91,157,249,0.28)" height="26" width="46" x="165" y="103"></rect>
+<text fill="#7c8593" font-size="10" x="16" y="156">every row walks root → leaf</text>
+<text fill="#7c8593" font-size="10" x="16" y="174">a full page splits: 3 pages + WAL</text>
+<text fill="#7c8593" font-size="10" x="16" y="192">steady-state occupancy ~50–70%</text>
+<line stroke="rgba(120,120,130,0.3)" stroke-dasharray="4 4" x1="300" x2="300" y1="10" y2="205"></line>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="322" y="22">2. bulk load (input already sorted)</text>
+<rect fill="rgba(255,255,255,0.03)" height="22" rx="4" stroke="rgba(91,157,249,0.4)" width="292" x="322" y="34"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="468" y="49">sorted input: 1, 2, 3, 4, 5, …</text>
+<rect fill="none" height="28" rx="4" stroke="#9b6cf5" width="88" x="322" y="70"></rect>
+<rect fill="rgba(155,108,245,0.35)" height="26" width="86" x="323" y="71"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="366" y="89">leaf · full</text>
+<rect fill="none" height="28" rx="4" stroke="#9b6cf5" width="88" x="424" y="70"></rect>
+<rect fill="rgba(155,108,245,0.35)" height="26" width="86" x="425" y="71"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="468" y="89">leaf · full</text>
+<rect fill="none" height="28" rx="4" stroke="#9b6cf5" width="88" x="526" y="70"></rect>
+<rect fill="rgba(155,108,245,0.35)" height="26" width="86" x="527" y="71"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="570" y="89">leaf · full</text>
+<line marker-end="url(#d2)" stroke="#9b6cf5" x1="366" x2="420" y1="100" y2="122"></line>
+<line marker-end="url(#d2)" stroke="#9b6cf5" x1="468" x2="468" y1="100" y2="122"></line>
+<line marker-end="url(#d2)" stroke="#9b6cf5" x1="570" x2="516" y1="100" y2="122"></line>
+<rect fill="rgba(155,108,245,0.18)" height="28" rx="4" stroke="#9b6cf5" width="196" x="370" y="124"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="468" y="143">parent: first key of each leaf</text>
+<text fill="#c9b6f5" font-size="10" x="322" y="174">built bottom-up: zero splits, zero searches</text>
+<text fill="#7c8593" font-size="10" x="322" y="192">purely sequential writes, pages packed to ~100%</text>
+</svg>
+<figcaption>Fig. 4 · Row-by-row insertion vs bulk loading. When the input is already sorted the whole tree is built bottom-up in one pass — which is why "load the data first, build the index last" wins so decisively.</figcaption>
+</figure>
+<h3>6. Compression: granularity is the only question</h3>
+<p>Compression saves disk and I/O at the cost of decompressing on every read. Petrov flattens the choice to one question: <strong>at what granularity?</strong></p>
+<ul>
+<li><strong>The whole file</strong>: best ratio, but <strong>individual pages are no longer addressable</strong> — a B-Tree locates page <code>n</code> at <code>n ×</code> page size, and compressing the file destroys that premise. Essentially out.</li>
+<li><strong>Per page</strong>: the mainstream compromise. Pages stay addressable, and reading one cell means decompressing a whole page — which you had to read whole anyway. The nuisance is that <strong>compressed length varies</strong>, so you need extra bookkeeping for where each page landed and how big it is.</li>
+<li><strong>Per cell / row</strong>: finest granularity and cheapest decompression, worst ratio — <strong>there is too little context</strong> to find redundancy in a few dozen bytes.</li>
+</ul>
+<p>There is also a saving that doesn't touch the layout at all: <strong>deduplication</strong>. PostgreSQL 13's B-Tree <em>deduplication</em> is the model — when one key value repeats many times (indexing a low-cardinality <code>status</code> column, say), the duplicates are merged into <strong>a single "key + list of row pointers" posting list</strong> with the key stored once, saving space and <strong>incidentally deferring leaf page splits</strong>.</p>
+<h3>7. Fragmentation, vacuum and page reclamation</h3>
+<p>Finally, maintenance. Two sources produce dead space continuously: <strong>deletes</strong> (a mark plus the availability list, Chapter 3) and <strong>updates</strong> (a variable-length value grown too large to fit in place has to move, leaving a hole). The result is that <strong>live payload per page keeps falling while the page count does not</strong> — disk, page cache and full-page reads all cost exactly as much as before. The response has two layers: <strong>within a page</strong>, repack the live cells together (at the cost of rewriting the page); <strong>across pages</strong>, unlink fully empty pages into a global free-page list for later splits to reuse — note that the latter usually <strong>does not shrink the file</strong>, it only makes the space reusable.</p>
+<p>One real-world divergence is worth knowing. <strong>PostgreSQL reclaims only pages that have become completely empty</strong> — a page down to its last few keys stays allocated, so a pattern where "most keys in a range are eventually deleted" wastes space indefinitely. <strong>InnoDB takes the other road</strong>: once occupancy falls below <code>MERGE_THRESHOLD</code> it merges with a neighbouring page, at the cost of thrashing between merge and split when both pages sit near the threshold. <strong>One problem, two trade-offs, and both vendors write the cost down honestly in their own documentation</strong> (quoted in the evidence box below).</p>
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 2 · How to find the parent node</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Parent pointers</th><th>Breadcrumb stack (mainstream)</th></tr></thead>
+<tbody>
+<tr><th>Mechanism</th><td>Each node stores the page ID of its parent</td><td>The descending search pushes "page + slot"; pop when needed</td></tr>
+<tr><th>Extra cost</th><td>On a split, <strong>hundreds of moved children need their pointer rewritten</strong>, each with its own WAL record</td><td><strong>Zero</strong> — the search had to walk that path anyway</td></tr>
+<tr><th>Concurrency</th><td>Pointers scattered over hundreds of pages <strong>cannot be made atomic with the split</strong></td><td>The stack may be stale, but <strong>high key + sibling link</strong> fixes it with one step right</td></tr>
+<tr><th>Fits</th><td>Read-only or near-read-only trees</td><td><strong>Essentially every production B-Tree</strong></td></tr>
+</tbody></table></div>
+<p class="tcap">Table 3 · What to do with a full node: four split strategies</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Strategy</th><th>Mechanism</th><th>Occupancy</th><th>Cost</th><th>When to use it</th></tr></thead>
+<tbody>
+<tr><th>Halving split</th><td>Cut 50/50 when full</td><td>Steady state <code>50–70%</code> under random load</td><td>Under sequential keys the left half is <strong>half empty forever</strong></td><td>The default fallback; fine when keys really are random</td></tr>
+<tr><th>Borrow from a sibling<br/>(B*-tree)</th><td>Shift to a neighbour first; split 2 into 3 only when both are full</td><td>Minimum rises from 50% to <code>≈ 66%</code></td><td>Touches <strong>2–3 pages</strong>, more latches, higher write amplification and deadlock risk</td><td>Space or cache is tight and you'll pay write-path complexity for it</td></tr>
+<tr><th>Right-leaning split</th><td>Move only the last few keys into the new page</td><td>InnoDB, sequential inserts: <code>≈ 15/16 (94%)</code></td><td>Misjudge the workload (keys are actually random) and the reserve is wasted</td><td><strong>Auto-increment IDs, timestamps, snowflake IDs</strong> — most OLTP primary keys</td></tr>
+<tr><th>Bulk loading</th><td>Pre-sorted input, built bottom-up in one pass</td><td>Up to <strong>nearly 100%</strong> (minus fill factor)</td><td>Requires <strong>sorted</strong> input; no concurrent writes during the build</td><td>Initial import, <code>REINDEX</code>, LSM compaction output</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 4 · Reserve and reclamation: the real defaults</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>PostgreSQL (nbtree)</th><th>MySQL / InnoDB</th></tr></thead>
+<tbody>
+<tr><th>Reserve at build time</th><td><code>fillfactor</code> <strong>defaults to 90</strong> (leaves filled to 90%, and likewise when extending at the right)</td><td><code>innodb_fill_factor</code> for <strong>sorted index builds</strong>; clustered-index inserts reserve <code>1/16</code> by default</td></tr>
+<tr><th>Occupancy under sequential inserts</th><td>A fastpath caches the rightmost leaf to avoid walking from the root</td><td>Official figure: <strong>≈ 15/16 full</strong>; random inserts only <code>1/2 – 15/16</code></td></tr>
+<tr><th>Handling near-empty pages</th><td><strong>Reclaims only fully empty pages</strong>; a page down to a few keys <strong>stays allocated</strong></td><td>Below <code>MERGE_THRESHOLD</code> (<strong>default 50</strong>) it attempts a merge with a neighbour</td></tr>
+<tr><th>What that choice costs</th><td>"Most keys in a range eventually deleted" <strong>wastes space badly</strong>; needs <code>REINDEX</code></td><td>Documented warning: with both pages near 50%, <strong>merge-then-split thrashing hurts performance</strong></td></tr>
+<tr><th>Extra space saving</th><td><strong>Deduplication (PG 13+, on by default)</strong>: duplicates become a posting list, also deferring splits</td><td>Page-level compression (<code>ROW_FORMAT=COMPRESSED</code> and friends)</td></tr>
+</tbody></table></div>
+<h2>Why it matters / in real systems</h2>
+<p><strong>You can justify a primary key choice.</strong> "Why is a UUID v4 primary key slow" is not folklore: random keys spread inserts evenly over every leaf, so <strong>each one has to be read into the page cache, dirtied and written back</strong>, with splits everywhere. Switch to a time-ordered ID (auto-increment, UUID v7, snowflake) and inserts concentrate on the rightmost page, taking the right-leaning split and the fastpath — <strong>roughly halving index size and roughly doubling how much of the index fits in cache</strong>. That conclusion has vendor documentation behind it.</p>
+<p><strong>You load data the right way.</strong> A hundred million rows into an empty table: maintaining five indexes as you go means a hundred million rounds of "walk root to leaf, maybe split, write WAL". Load the data first and run <code>CREATE INDEX</code> last and you get <strong>sort plus bottom-up build</strong> — sequential I/O, zero splits, pages packed nearly full.</p>
+<p><strong>You know where to look when debugging.</strong> "The table is 3 GB, the index is 12 GB, and <code>VACUUM</code> didn't shrink it at all" is almost always section 7 above; getting the space back means <code>REINDEX</code>. Conversely, periodic write-latency spikes on InnoDB should send you straight to merge-split thrashing around <code>MERGE_THRESHOLD</code>.</p>
+<div class="ev">
+<div class="evh">PRIMARY EVIDENCE · not the book's claims, but what these projects state themselves</div>
+<ul>
+<li><strong>Lehman &amp; Yao (1981)</strong> introduced the B<sup>link</sup>-tree: add a <strong>right-sibling link</strong> to every page plus a <strong>high key</strong> (an upper bound on the keys allowed on that page), and those two additions alone make it possible to <strong>detect a concurrent page split</strong>, which lets the tree be searched <strong>essentially without read locks</strong>. This is the origin of everything in this chapter about high keys, sibling links, and breadcrumbs being allowed to go stale. <span class="src"><a href="https://www.csd.uoc.gr/~hy460/pdf/p650-lehman.pdf" rel="noopener" target="_blank">Lehman &amp; Yao, "Efficient Locking for Concurrent Operations on B-Trees", ACM TODS 6(4):650–670, 1981 (PDF) ↗</a></span></li>
+<li><strong>PostgreSQL</strong>'s <code>nbtree</code> README states outright that the implementation follows Lehman &amp; Yao's high-concurrency B-tree algorithm, adding a "left sibling" link of its own to support backward scans. For monotonically increasing keys it <strong>caches the leaf the last insert hit</strong> and takes a fastpath — but because testing showed this <strong>increases contention on the exclusive lock of the rightmost leaf</strong>, it only <strong>conditionally attempts the lock and abandons the fastpath when it isn't available</strong>. <span class="src"><a href="https://github.com/postgres/postgres/blob/master/src/backend/access/nbtree/README" rel="noopener" target="_blank">PostgreSQL source, src/backend/access/nbtree/README ↗</a></span></li>
+<li><strong>PostgreSQL's own documentation</strong> is candid about page reclamation: completely empty index pages are reclaimed for re-use, but <strong>"if all but a few index keys on a page have been deleted, the page remains allocated"</strong>, so a usage pattern where all but a few keys in each range are eventually deleted <strong>will see poor use of space</strong>. <span class="src"><a href="https://www.postgresql.org/docs/current/routine-reindex.html" rel="noopener" target="_blank">PostgreSQL docs, "Routine Reindexing" ↗</a></span> From the same project, B-tree <code>fillfactor</code> <strong>defaults to 90</strong> — 100 suits a static table, while a heavily updated one wants it lower to reduce page splits. <span class="src"><a href="https://www.postgresql.org/docs/current/sql-createindex.html" rel="noopener" target="_blank">PostgreSQL docs, "CREATE INDEX" ↗</a></span> Since PG 13 it also enables <strong>B-tree deduplication</strong> by default: duplicates become a "key + sorted TID array" posting list, which the docs say <strong>significantly reduces index storage</strong> and, being lazy, <strong>prevents or at least delays leaf page splits</strong>. <span class="src"><a href="https://www.postgresql.org/docs/current/btree-implementation.html" rel="noopener" target="_blank">PostgreSQL docs, "B-Tree Implementation · Deduplication" ↗</a></span></li>
+<li><strong>MySQL / InnoDB's documentation</strong> supplies the chapter's most persuasive numbers: when inserting new records into a clustered index InnoDB <strong>deliberately leaves 1/16 of the page free</strong> for future inserts and updates, and <strong>if records are inserted in sequential order the resulting pages are about 15/16 full, while random-order insertion leaves pages from 1/2 to 15/16 full</strong> — the sequential-vs-random space gap, quantified by the vendor. <span class="src"><a href="https://dev.mysql.com/doc/refman/8.0/en/innodb-physical-structure.html" rel="noopener" target="_blank">MySQL docs, "The Physical Structure of an InnoDB Index" ↗</a></span></li>
+<li><strong>InnoDB's merge threshold</strong> is equally public: <code>MERGE_THRESHOLD</code> <strong>defaults to 50</strong> (the previously hardcoded value; settable from 1 to 50), and a delete or shortening update that drops a page below it triggers an attempted merge with a neighbour. The docs add plainly that <strong>"if both pages are close to 50% full, a page split can occur soon after the pages are merged. If this merge-split behavior occurs frequently, it can have an adverse affect on performance."</strong> <span class="src"><a href="https://dev.mysql.com/doc/refman/8.4/en/index-page-merge-threshold.html" rel="noopener" target="_blank">MySQL docs, "Configuring the Merge Threshold for Index Pages" ↗</a></span></li>
+<li><strong>Bulk loading is the default path in MySQL</strong>: InnoDB performs a bulk load when creating or rebuilding B-tree indexes, a method the documentation calls a <em>sorted index build</em> — scan the clustered index into a sort buffer, then build bottom-up, with <code>innodb_fill_factor</code> reserving room for growth (a value the docs explicitly describe as a hint rather than a hard limit). <span class="src"><a href="https://dev.mysql.com/doc/refman/8.0/en/sorted-index-builds.html" rel="noopener" target="_blank">MySQL docs, "Sorted Index Builds" ↗</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and open arguments</h2>
+<ul>
+<li><strong>Reading "a B-Tree is at least half full" as good news.</strong> It is a <strong>lower bound</strong>, not a target — real workloads sit at <code>50%–70%</code> for years, meaning a third to a half of the disk and memory you bought for the index is holding air. Most of this chapter (rebalancing, right-leaning splits, bulk loading, deduplication) is a fight with that number.</li>
+<li><strong>Assuming splits are rare.</strong> Under random keys and heavy writes, splits are <strong>the norm</strong>. One leaf split changes at least 3 pages (old leaf, new leaf, parent) and writes them to the WAL; PostgreSQL additionally writes a full-page image the first time a page is touched after a checkpoint. A logical "insert one row" can be tens of KiB on disk.</li>
+<li><strong>Taking parent pointers for granted.</strong> In-memory trees nearly always store them; on-disk B-Trees nearly never do. The difference is one thing: <strong>changing a pointer in memory takes nanoseconds, changing a page on disk goes through the WAL, the page cache and eventually the platter</strong>. Same data structure, different medium, completely different optimum.</li>
+<li><strong>Expecting deletes to shrink the index.</strong> They don't. In-page space goes onto the availability list to await reuse, and page-level reclamation only returns empty pages to a global list — <strong>the file size typically does not budge</strong>. Actually shrinking it means <code>REINDEX</code> / <code>VACUUM FULL</code>, and the cost is a rebuild.</li>
+<li><strong>Setting fillfactor to 100 across the board.</strong> The temptation is real (smallest index, best cache hit rate), but outside a static table this <strong>gives back all your headroom</strong>, and every subsequent middle insert can trigger a split immediately. PostgreSQL defaults to 90 rather than 100 for exactly this reason.</li>
+<li><strong>Limits of its era, and live arguments.</strong> The whole calculus here assumes "block device, update in place, page changes go through the WAL", and three developments are eroding it: <strong>LSM-trees</strong> (Chapter 7) abandon in-place updates and trade split/fragmentation problems for background compaction; <strong>lock-free variants like the Bw-tree</strong> (Chapter 6) use delta records and a mapping table to avoid modifying pages in place, which invalidates this chapter's latching and split propagation entirely; and <strong>NVMe and persistent memory</strong> are loosening the axiom that random I/O is expensive, shifting the optimum for fan-out, page size and split policy. Separately, PostgreSQL's refusal to merge half-empty pages is <strong>a space cost paid for concurrency correctness and implementation simplicity</strong>, argued over for years and still unchanged; InnoDB chose the other side and documented its thrashing cost just as honestly. <strong>No right answer — two different bills.</strong></li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. In a sentence: the textbook's "split when full" is the easiest part of the chapter; <strong>the real engineering is everywhere else</strong> — finding the parent, splitting less, not wasting space on sequential keys, and getting deleted space back.</p>
+<p>2. N separator keys against N+1 child pointers: the odd one goes into the header (<strong>rightmost pointer</strong>, SQLite) or is balanced by a <strong>high key</strong> (PostgreSQL). And <strong>high key + sibling links = Lehman &amp; Yao's B<sup>link</sup>-tree</strong>: a reader detects a concurrent split by seeing its key exceed the high key, steps one page right, and <strong>needs essentially no read locks</strong>. Sibling links also spare range scans the climb back to the parent, at the cost of fixing up neighbours on every split and merge.</p>
+<p>3. In-page binary search runs over the <strong>sorted offset array</strong> (about 500 keys in an 8 KiB page, <code>log₂500 ≈ 9</code> steps) and must return an <strong>insertion point</strong>, not merely "not found".</p>
+<p>4. <strong>Breadcrumb stacks replace parent pointers</strong>: record the path while descending, pop it when propagating a split. Parent pointers lose because one split rewrites hundreds of children's pointers and cannot be made atomic with the split.</p>
+<p>5. <strong>Borrowing from a sibling</strong> (B*-tree) raises minimum occupancy from 50% to about <code>2/3</code>, at the cost of touching 2–3 pages and holding more latches. Merging has the same shape in reverse, which is why PostgreSQL declines to merge half-empty pages at all.</p>
+<p>6. <strong>Sequential keys deserve their own lane</strong>: right-leaning splits (InnoDB reaches <code>≈ 15/16</code> full on sequential inserts against just <code>1/2–15/16</code> on random ones) plus caching the rightmost leaf (PostgreSQL's fastpath, which backs off to the normal path under lock contention).</p>
+<p>7. <strong>Bulk loading</strong>: with sorted input, build bottom-up — zero splits, zero searches, sequential writes, pages packed nearly full. That is why "load the data, then build the index" wins so clearly (MySQL's sorted index build).</p>
+<p>8. Compression has exactly one question, <strong>granularity</strong>: compress the file and pages stop being addressable, compress per cell and there's nothing to squeeze, so <strong>per page is the mainstream compromise</strong>; PG 13+ <strong>deduplication</strong> is a further saving that doesn't touch the layout. Maintenance is the long-term bill: deletes and variable-length updates create dead space continuously, handled by in-page compaction plus page reclamation — but <strong>the file usually doesn't shrink</strong>. PostgreSQL reclaims only fully empty pages (so <code>REINDEX</code> is what actually recovers the space), InnoDB merges below <code>MERGE_THRESHOLD</code> (at the cost of merge-split thrashing).</p>
+</div>
+</div>
+<footer>Book Deep Read · reading this page ≈ getting the core of the chapter; for the full cases and extensions, go to the book itself.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
