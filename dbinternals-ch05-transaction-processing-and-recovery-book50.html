@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals 第 5 章 · 事务处理与恢复 — 专业书籍精读 Book 50</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · Database Internals · 第 5 章</p>
+<h1>事务处理与恢复</h1>
+<p class="sub">Database Internals · Ch 5 · Alex Petrov · 2019</p>
+<p class="langbar"><a href="dbinternals-ch05-transaction-processing-and-recovery-book50.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你在手机上点「转账」，屏幕转了半秒，弹出「成功」。就在这半秒里，机房停电了。</p>
+<p>前四章讲的是数据库怎么把数据<strong>摆得整齐、找得飞快</strong>。这一章讲另一件事：<strong>改到一半断电了怎么办；两个人同时改同一条记录怎么办。</strong>没有这一章，前面那棵漂亮的目录树只是个「单人使用、且永不断电」才成立的玩具。</p>
+<h2>先说个怪事</h2>
+<p>你大概以为：硬盘上那些数据文件是数据库的「正本」，旁边那个日志文件是备份。<strong>其实反过来。</strong>日志才是正本、才是真相；数据文件只是日志的一份「誊清稿」——丢了照着日志重誊一遍就是。数据库的可靠性，整个建立在这层颠倒的关系上。</p>
+<h2>旧世界为什么难</h2>
+<p><strong>一，改一件事要动好几个地方。</strong>转账要一边减、一边加，这两下必须<strong>要么都算数、要么都不算数</strong>——只做一半，钱就凭空消失了。</p>
+<p><strong>二，改动发生在内存里，而内存断电就没。</strong>数据库不可能每改一个字就跑一趟硬盘，它把常用的那几页搬到内存「桌面」上改、攒一批再写回去。中间一停电，桌面上没写回去的全丢。</p>
+<p><strong>三，往硬盘上东一处西一处地写，慢得离谱。</strong>你改的记录散落在第 3 页、第 700 页、第 9 万页；硬盘最怕来回翻找，最喜欢「一直往后写」。</p>
+<h2>核心机制：一本流水账，加两种锁</h2>
+<p><strong>先记流水账，再动正本。</strong>要改什么，先在一本<strong>只往后添、从不回头改</strong>的流水账上写一行「我要把第 700 页那个数从 100 改成 80」；这一行落盘了，才允许去动正本。流水账一路往后写，正合硬盘胃口。于是<strong>提交一笔转账，你只需等这一行账落盘</strong>——正本什么时候誊清，慢慢来。</p>
+<p><strong>崩溃之后，先重演，再撤销。</strong>最反直觉的一步：断电重启，数据库<strong>不是</strong>先清理烂摊子，而是拿起流水账<strong>把整段历史原样重演一遍</strong>——连那些明知最后要撤销的动作也照做。等世界还原到断电前一刻，它才回头把那些「话说了一半、没来得及说『我做完了』」的事务倒着撤掉。先铺平地板再挪家具，比一边铺一边挪简单得多。</p>
+<p><strong>两种完全不同的「锁」。</strong>一种管人：不让你看到别人做了一半的事，跟着整笔事务从头持到尾。另一种管手：内存里那页纸正被改写，别的线程这会儿读到的会是半成品——它只护住那几微秒，改完立刻放。中文都叫锁，其实是两码事，混淆它们是新手最常摔的跟头。</p>
+<h2>带来了什么 / 代价是什么</h2>
+<p>有了这几招，数据库才敢说那句「成功」。它的意思不是「你的钱已誊到正本上」，而是「<strong>这件事已写进流水账、流水账已真的落盘；剩下的交给我，断电也丢不了</strong>」。<strong>代价也藏在这句话里</strong>：只要链条上有一环（硬盘、固件、文件系统）谎称「写好了」，上面所有精巧设计一起落空。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>数据库的真相不在数据文件里，<strong>在那本只往后添的流水账里</strong>：改任何东西之前先记账，提交只等这一行账落盘；断电重启后，先照账把历史整个重演一遍，再把没说完的话撤掉。至于并发，记住有<strong>两种锁</strong>——一种护事务之间的规矩，一种只护内存里那页纸的几微秒。</p>
+</div>
+<p class="switch-hint">想进到具体机制、记号和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">这一章把存储引擎从「一个会存会找的数据结构」升级成<strong>一个真正的数据库</strong>：ACID 不是某个模块提供的，而是<strong>页缓存、预写日志、并发控制</strong>三件套合力挤出来的结果。而它们共同的底牌只有一条——<strong>改数据之前先把要做的事写进日志</strong>。由此得出全章最该记住的一句反直觉判断：<em>磁盘上的数据文件不是数据库的正本，日志才是；数据文件只是日志的一份可以丢弃、可以重算的物化结果。</em></p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>事务（transaction）</strong>：一组要「作为整体」生效或作废的读写操作，如「A 减 100、B 加 100」。</li>
+<li><strong>ACID</strong>：事务的四个承诺——原子性（全做或全不做）、一致性（不破坏数据约束）、隔离性（并发事务互不干扰）、持久性（说了提交就丢不了）。</li>
+<li><strong>页（page）</strong>：数据库读写磁盘的最小单位（PostgreSQL 默认 <code>8 KB</code>，InnoDB 默认 <code>16 KB</code>）。</li>
+<li><strong>页缓存 / 缓冲池（buffer pool）</strong>：数据库自己在内存里管的一块区域，装着最近用到的页；所有修改先发生在这里。</li>
+<li><strong>脏页（dirty page）</strong>：内存里已改过、还没写回磁盘的页。</li>
+<li><strong>刷盘 / <code>fsync</code></strong>：命令操作系统把字节真正推到持久介质并等它确认——唯一能说「丢不了」的动作，也是整条链上最慢的一步。</li>
+<li><strong>预写日志（WAL, write-ahead log）</strong>：一个只追加、从不原地修改的文件，按顺序记录「我打算怎么改数据」。</li>
+<li><strong>LSN（log sequence number）</strong>：日志记录的序号，单调递增；页头存着「本页最后被哪条日志改过」，恢复时靠它判断该不该重做。</li>
+<li><strong>检查点（checkpoint）</strong>：定期把脏页成批写回，并在日志里打个「到这为止都安全了」的标记；恢复从这里起步，不必回放整条日志。</li>
+<li><strong>锁（lock）</strong>：加在<strong>逻辑对象</strong>（一行、一段键区间）上、持续<strong>整个事务</strong>的互斥，管隔离性。</li>
+<li><strong>闩（latch）</strong>：加在<strong>内存中物理结构</strong>上、只持续<strong>几微秒</strong>的互斥，防两个线程同时改花同一页——本质就是互斥量（mutex）。</li>
+<li><strong>幂等（idempotent）</strong>：做一次和做十次结果一样；恢复流程必须幂等，因为恢复自己也可能中途再崩。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>本章是 Part I「存储引擎」的第 5 章，也是这一部分的<strong>收口之作</strong>。前四章——引论与概览、B-Tree 基础、文件格式、实现 B-Tree——描述的都是一个<strong>静态、单线程、永不断电</strong>的世界里数据该怎么摆。这一章把那棵树扔进真实世界：会有几百个并发连接同时读写它，随时可能断电。往后，Ch6（B-Tree 变体）里的写时复制（copy-on-write）就是「换一种方式实现原子性」的分支，Ch7（LSM-Tree）则把本章的「日志」直接抬成主存储结构；而 Part II 的 Ch13 分布式事务，本地那一半正是这里讲的东西。</p>
+<h2>这章要解决什么</h2>
+<p>把前四章的成果摆到一起，会看见一个尴尬的缺口：<strong>一次逻辑上「原子」的改动，落到存储引擎里往往要动好几个页</strong>。往 B-Tree 插一条记录可能触发叶子分裂、父节点加指针、甚至根节点上移——三四页各自的修改，中间任何一刻断电，磁盘上留下的就是一棵<strong>结构损坏的树</strong>：指针指向一个还没写完的页，整个索引作废。</p>
+<p>而这些页都不是直接改在磁盘上的，是改在内存的页缓存里——也就是说，<strong>任何时刻磁盘上的数据文件都处在「过期且不自洽」的中间状态</strong>。再叠上几百个事务同时读写，问题就拧成三股：<strong>内存与磁盘之间的搬运怎么既快又可控</strong>（页缓存与驱逐、检查点）、<strong>断电后怎么从一堆半成品里还原出自洽的数据库</strong>（日志与恢复）、<strong>并发事务之间怎么不互相看到半成品</strong>（并发控制）。不解决它们，数据库能给的最强承诺只有「祝你好运」。</p>
+<h2>核心内容，讲透</h2>
+<h3>一、四道关卡：ACID 是被谁分别扛下来的</h3>
+<p>面试里问「ACID 怎么实现的」，标准答案不是一句话，而是一张分工表。一个事务从进入引擎到提交，依次经过四个组件：<em>事务管理器</em>协调整笔事务、决定提交还是中止；<em>锁管理器</em>守住被访问的逻辑对象，别的事务想碰就排队；<em>页缓存</em>把页从磁盘调进内存，所有修改都发生在这里；<em>日志管理器</em>把「我准备怎么改」先写成日志。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 240" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="15" y="22">一个事务在存储引擎里走过的四道关卡</text>
+<rect fill="rgba(91,157,249,0.1)" height="46" rx="7" stroke="#7c8593" width="130" x="15" y="38"></rect>
+<text fill="#e7ebf1" font-size="12" text-anchor="middle" x="80" y="67">事务管理器</text>
+<rect fill="rgba(91,157,249,0.1)" height="46" rx="7" stroke="#7c8593" width="130" x="175" y="38"></rect>
+<text fill="#e7ebf1" font-size="12" text-anchor="middle" x="240" y="67">锁管理器</text>
+<rect fill="rgba(91,157,249,0.14)" height="46" rx="7" stroke="#5b9df9" stroke-width="2" width="130" x="335" y="38"></rect>
+<text fill="#e7ebf1" font-size="12" text-anchor="middle" x="400" y="67">页缓存</text>
+<rect fill="rgba(155,108,245,0.2)" height="46" rx="7" stroke="#9b6cf5" stroke-width="2" width="130" x="495" y="38"></rect>
+<text fill="#e7ebf1" font-size="12" text-anchor="middle" x="560" y="67">日志管理器</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="145" x2="171" y1="61" y2="61"></line>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="305" x2="331" y1="61" y2="61"></line>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="465" x2="491" y1="61" y2="61"></line>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="80" y="102">决定提交 / 中止</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle" x="80" y="117">→ 原子性 A</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="240" y="102">守逻辑对象·排队</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle" x="240" y="117">→ 隔离性 I</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="400" y="102">内存改页·缓冲刷盘</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle" x="400" y="117">→ 性能</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="560" y="102">先记后改·管恢复</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle" x="560" y="117">→ 持久性 D</text>
+<line marker-end="url(#a1)" stroke="#5b9df9" x1="400" x2="400" y1="128" y2="172"></line>
+<line marker-end="url(#a1)" stroke="#9b6cf5" x1="560" x2="560" y1="128" y2="172"></line>
+<rect fill="rgba(91,157,249,0.08)" height="38" rx="7" stroke="#5b9df9" width="150" x="325" y="176"></rect>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="400" y="200">数据文件（誊清稿）</text>
+<rect fill="rgba(155,108,245,0.12)" height="38" rx="7" stroke="#9b6cf5" width="150" x="485" y="176"></rect>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="560" y="200">日志文件（真相）</text>
+<text fill="#7c8593" font-size="10.5" x="15" y="200">磁盘：</text>
+<text fill="#7c8593" font-size="10" x="15" y="222">日志先行：数据文件上的任何改动，必须先在日志里出现过</text>
+</svg>
+<figcaption>图 1 · ACID 不是一个模块的功劳：原子性归事务管理器、隔离性归锁管理器、持久性归日志管理器，页缓存则负责让这一切别慢到不能用。</figcaption>
+</figure>
+<h3>二、页缓存：数据库为什么坚持自己管内存</h3>
+<p>操作系统本来就有文件缓存，数据库为什么还要自己做一层？因为它需要三件操作系统给不了的东西：<strong>知道哪些页正被人用（不能踢）、哪些页被改过（踢之前必须先落盘）、以及决定谁先落盘的权力</strong>。这三件都直接关系正确性，交不出去。</p>
+<p>关键动作有四个。<em>钉住（pinning）</em>：页正被使用时加引用计数，不为零就不许驱逐——B-Tree 往下走时，路径上的页都是钉住的。<em>标脏</em>：内存里改过就打标记。<em>驱逐（eviction）</em>：缓存满了挑一个没被钉住的页踢掉；若它是脏的得先写回，<strong>而写回之前还必须确认覆盖它的日志已落盘</strong>。<em>检查点</em>：与其等缓存满了被动零星刷盘，不如定期主动成批刷，顺便在日志里打个标记，把恢复起点往前推。</p>
+<p>驱逐策略比课本上的 LRU 复杂得多，原因很实际：<strong>朴素 LRU 会被一次全表扫描彻底冲垮</strong>。一条 <code>SELECT * FROM 大表</code> 顺序读过几百万页、每页只用一次，却把攒了几小时的热点页全挤出去——扫描结束，命中率归零，接下来几分钟所有查询都在打磁盘。所以 MySQL InnoDB 把 LRU 链表切成「新 / 旧」两段：新读进来的页<strong>先插在中点</strong>（旧段头部）而不是最前面，<strong>再次</strong>被访问才升级进新段——一次性扫描的页只在旧段里打个转就被淘汰，碰不到热点。旧段默认占 <code>3/8</code>（<code>innodb_old_blocks_pct</code> 默认 <code>37</code>）。</p>
+<h3>三、预写日志：用一次顺序写，换掉几十次随机写</h3>
+<p>WAL 的规则只有一句话，却撑起整章：<strong>任何对数据页的修改，其日志记录必须先于该数据页落盘。</strong>反过来读更有味道——只要日志在，数据页何时落盘就完全自由了，因为随时能照日志重算。数据文件由此降格成「日志的一份物化快照」。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="a2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="a3" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="15" y="22">内存里改，磁盘上落——谁先落盘是有规矩的</text>
+<rect fill="none" height="112" rx="8" stroke="rgba(91,157,249,0.4)" stroke-dasharray="5 4" width="605" x="15" y="34"></rect>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" x="27" y="52">内存 · 页缓存（buffer pool）</text>
+<rect fill="rgba(91,157,249,0.07)" height="36" rx="6" stroke="#7c8593" width="92" x="30" y="62"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="76" y="85">干净页 P3</text>
+<rect fill="rgba(155,108,245,0.22)" height="36" rx="6" stroke="#9b6cf5" stroke-width="2" width="92" x="138" y="62"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="184" y="85">脏页 P7</text>
+<rect fill="rgba(155,108,245,0.22)" height="36" rx="6" stroke="#9b6cf5" stroke-width="2" width="92" x="246" y="62"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="292" y="85">脏页 P9</text>
+<rect fill="rgba(91,157,249,0.07)" height="36" rx="6" stroke="#7c8593" stroke-dasharray="4 3" width="92" x="354" y="62"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="400" y="85">钉住 P4</text>
+<rect fill="rgba(155,108,245,0.12)" height="36" rx="6" stroke="#9b6cf5" width="130" x="470" y="62"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="535" y="85">日志缓冲</text>
+<text fill="#7c8593" font-size="10" x="30" y="122">脏 = 已改、尚未落盘　　钉住 = 有人正在用，不许驱逐</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="184" x2="215" y1="104" y2="222"></line>
+<line marker-end="url(#a3)" stroke="#9b6cf5" x1="535" x2="520" y1="104" y2="222"></line>
+<circle cx="527" cy="164" fill="#0f1216" r="11" stroke="#9b6cf5"></circle>
+<text fill="#9b6cf5" font-size="11" font-weight="700" text-anchor="middle" x="527" y="168">1</text>
+<circle cx="199" cy="164" fill="#0f1216" r="11" stroke="#7c8593"></circle>
+<text fill="#b9c0ca" font-size="11" font-weight="700" text-anchor="middle" x="199" y="168">2</text>
+<line marker-end="url(#a3)" stroke="#9b6cf5" stroke-dasharray="5 4" x1="514" x2="216" y1="164" y2="164"></line>
+<text fill="#9b6cf5" font-size="11" text-anchor="middle" x="365" y="154">日志先行：① 必须先于 ②</text>
+<rect fill="rgba(91,157,249,0.08)" height="42" rx="7" stroke="#5b9df9" width="170" x="130" y="226"></rect>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="215" y="252">数据文件（随机写）</text>
+<rect fill="rgba(155,108,245,0.14)" height="42" rx="7" stroke="#9b6cf5" width="170" x="435" y="226"></rect>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="520" y="252">日志文件（顺序写）</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="320" y="290">提交时只等 ① 完成；② 可以攒到检查点再成批做</text>
+</svg>
+<figcaption>图 2 · 日志先行规则：脏页允许被写回磁盘，前提是覆盖它的日志记录已经落盘。提交的代价因此收缩成一次顺序写。</figcaption>
+</figure>
+<p><strong>这笔买卖为什么划算，要给量级。</strong>一笔事务改了 5 条散落在不同页上的记录：老实刷盘是 <strong>5 次随机写</strong>；走 WAL 则是把 5 条日志拼进一段连续字节，<strong>一次顺序写 + 一次 <code>fsync</code></strong>。机械盘上随机写要付寻道时间（约 <code>5–10 毫秒</code>），顺序写几乎不用；NVMe 上寻道虽已消失，一次 <code>fsync</code> 的固有开销（<code>0.1–1 毫秒</code>量级）仍远大于追加几条记录进日志缓冲。差距还会被<strong>组提交（group commit）</strong>放大：并发到达的几十笔事务共享<strong>同一次</strong> <code>fsync</code>——每秒 <code>5 万</code>笔小事务的负载下，<code>fsync</code> 次数能从 5 万降到几千。</p>
+<p><strong>日志里记什么？</strong>三种口味。<em>物理日志</em>记「第 700 页第 32 字节从 <code>0x0A</code> 变成 <code>0x14</code>」——重放精确，但一次 B-Tree 分裂会产生大量字节级记录。<em>逻辑日志</em>记「往表 t 插入 (k=42, v=…)」——紧凑，但重放它要求数据库已处在语义完整的状态。ARIES 取折中的<em>物理逻辑日志（physiological logging）</em>：<strong>页与页之间是逻辑的、页内部是物理的</strong>——记「在第 700 页里插入这条记录」，页内怎么挪字节由页自己负责。</p>
+<p>再有两条策略选择，构成全章最经典的四象限。<em>偷（steal）</em>：允许把<strong>尚未提交</strong>的事务弄脏的页写回磁盘吗？<em>强制（force）</em>：事务提交时必须把它改过的页全写回磁盘吗？</p>
+<p class="tcap">表 1 · steal / force 四象限：为什么工业界几乎一致选了「偷 + 不强制」</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>force：提交时强制刷所有脏页</th><th>no-force：提交时不刷脏页</th></tr></thead>
+<tbody>
+<tr><th>no-steal<br/>未提交的脏页不许写回</th><td>既不用 redo 也不用 undo，最简单；但<strong>提交慢</strong>（随机写）+ <strong>缓存被未提交事务占死</strong></td><td>不用 undo，但要 redo；仍然受「大事务撑爆缓存」之苦</td></tr>
+<tr><th>steal<br/>未提交的脏页可以写回</th><td>需要 undo，不需要 redo；提交依然慢</td><td><strong>需要 redo + undo，实现最复杂</strong>——但提交只等一次顺序写、缓存可自由周转。<strong>ARIES / InnoDB / PostgreSQL 走的都是这条</strong></td></tr>
+</tbody></table></div>
+<p>读法：左上角最好写，右下角最好用。<strong>把复杂度从运行时挪进恢复代码里</strong>，是这一章最核心的一次交易——运行时每天跑几十亿次，恢复代码一年跑不了几次。</p>
+<h3>四、ARIES：先把历史原样重演，再撤销未完成的</h3>
+<p>ARIES（Mohan 等人 1992 年在 IBM 提出，DB2 的恢复算法）是「偷 + 不强制」这条路上的标准答案。它的恢复分三个阶段，顺序是<strong>分析 → 重做 → 撤销</strong>。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="a4" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="a5" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#e8794b"></path></marker>
+</defs>
+<text fill="#7c8593" font-family="monospace" font-size="10" x="15" y="20">日志（LSN 递增）→</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="190" y="42">最早脏页起点</text>
+<text fill="#5b9df9" font-family="monospace" font-size="9.5" text-anchor="middle" x="300" y="26">上次检查点</text>
+<text fill="#e8794b" font-family="monospace" font-size="10" text-anchor="middle" x="575" y="42">✕ 崩溃</text>
+<line marker-end="url(#a4)" stroke="#7c8593" x1="100" x2="620" y1="60" y2="60"></line>
+<line stroke="rgba(120,120,130,0.4)" stroke-dasharray="4 3" x1="190" x2="190" y1="46" y2="205"></line>
+<line stroke="rgba(91,157,249,0.5)" stroke-dasharray="4 3" x1="300" x2="300" y1="32" y2="205"></line>
+<line stroke="rgba(232,121,75,0.6)" stroke-dasharray="4 3" x1="575" x2="575" y1="46" y2="205"></line>
+<rect fill="rgba(91,157,249,0.22)" height="24" rx="5" stroke="#5b9df9" width="275" x="300" y="82"></rect>
+<text fill="#5b9df9" font-family="monospace" font-size="10.5" x="15" y="99">① 分析</text>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="437" y="99">重建脏页表 + 活跃事务表</text>
+<rect fill="rgba(155,108,245,0.25)" height="24" rx="5" stroke="#9b6cf5" width="385" x="190" y="122"></rect>
+<text fill="#9b6cf5" font-family="monospace" font-size="10.5" x="15" y="139">② 重做</text>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="382" y="139">重演历史——连注定要回滚的也照做</text>
+<rect fill="rgba(232,121,75,0.2)" height="24" rx="5" stroke="#e8794b" width="470" x="105" y="162"></rect>
+<text fill="#e8794b" font-family="monospace" font-size="10.5" x="15" y="179">③ 撤销</text>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="340" y="179">倒着回滚未提交的事务，并写补偿记录</text>
+<line marker-end="url(#a5)" stroke="#e8794b" x1="200" x2="112" y1="196" y2="196"></line>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="320" y="232">终点：已提交事务的效果全在，未提交事务的痕迹全无</text>
+</svg>
+<figcaption>图 3 · ARIES 三阶段。注意重做的起点比检查点更早——它要从「最早那个还没落盘的脏页」开始，而不是从检查点开始。</figcaption>
+</figure>
+<p><strong>① 分析</strong>：从上一个检查点向前扫日志，重建两张表——<em>脏页表</em>（崩溃时哪些页是脏的、每页最早被哪条日志弄脏）与<em>活跃事务表</em>（崩溃时还没提交的事务，即「输家」）。这一步只是把崩溃瞬间的现场重新画出来。</p>
+<p><strong>② 重做</strong>：从脏页表里<strong>最早</strong>那个日志位置开始向前重放。最反直觉的一点在这——ARIES 管它叫<em>重演历史（repeating history）</em>：<strong>所有事务的所有改动都重做一遍，包括那些明知属于「输家」、马上就要被撤销的。</strong>为什么不聪明点跳过？因为跳过意味着重做逻辑得判断「哪些该做」，而这个判断本身依赖一个尚未还原的状态。先无脑还原到崩溃前一刻、再统一撤销，简单得多也更不易错。避免无谓重放靠的不是聪明，是个笨办法：页头里存着它最后被哪条日志改过（<code>pageLSN</code>），日志编号不比它大就说明这次改动已在盘上，跳过。</p>
+<p><strong>③ 撤销</strong>：对输家事务沿日志倒着走，逐条抵消。第二个精巧设计在这——<em>补偿日志记录（CLR）</em>：每撤销一步，就<strong>再写一条日志记下「我撤销了什么、下一步该撤销哪条」</strong>。于是即便数据库<strong>在恢复途中又崩一次</strong>，重启后照着 CLR 就知道撤销进行到哪了，不会重复撤销。恢复流程因此是幂等的——这点在实践中至关重要，因为「恢复时又崩」恰恰是最常见的连环故障（引发第一次崩溃的坏内存条还在机器里呢）。</p>
+<h3>五、并发控制：三条路线，以及那个人人搞混的区分</h3>
+<p>并发控制要挡住一组<strong>异常</strong>：脏读（读到别人没提交的数据）、不可重复读（同一事务里两次读同一行结果不同）、幻读（两次范围查询看到的行数不同）。理论上的黄金标准是<em>可串行化（serializability）</em>——并发执行的结果等价于把这些事务按某个顺序一个个跑完。隔离级别，本质就是<strong>用放宽哪几种异常，换多少并发度</strong>。</p>
+<p>实现路线有三条。<strong>悲观（锁）</strong>：先申请锁再动手，冲突就等，靠两阶段锁（先只加、后只放）保证可串行化。<strong>乐观（OCC）</strong>：先干，提交前再检查这期间有没有人跟我冲突，有就整笔重来。<strong>多版本（MVCC）</strong>：写不覆盖旧值而是产生新版本，读按自己的时间戳取「当时该看到的那个版本」——<strong>读永远不阻塞写、写也不阻塞读</strong>，这正是它在 OLTP 场景压倒性流行的原因（PostgreSQL、InnoDB、Oracle 都是 MVCC）。</p>
+<p>然后是本章最该单独拎出来的一对概念，也是数据库面试最高频的辨析题——<strong>锁（lock）与闩（latch）</strong>。中文都译成「锁」，可它们连守护对象都不是一回事。</p>
+<p class="tcap">表 2 · 锁 vs 闩：中文同名，实则两个世界</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>锁 lock</th><th>闩 latch</th></tr></thead>
+<tbody>
+<tr><th>守护什么</th><td><strong>逻辑对象</strong>：一行、一段键区间、一张表</td><td><strong>物理结构</strong>：内存里那一页、那个链表节点</td></tr>
+<tr><th>持有多久</th><td>整个事务，可达<strong>秒级甚至更久</strong></td><td>一次结构操作，<strong>纳秒到微秒级</strong></td></tr>
+<tr><th>为谁存在</th><td>隔离性——别让事务看到半成品</td><td>正确性——别让线程读到改到一半的内存</td></tr>
+<tr><th>谁管理</th><td>锁管理器，有等待队列、可查询、可显式加</td><td>就是操作系统的互斥量 / 读写锁，无中央登记</td></tr>
+<tr><th>死锁怎么办</th><td><strong>检测</strong>：维护「谁在等谁」的图，发现环就选一个牺牲者回滚</td><td><strong>不检测</strong>——靠约定固定的加闩顺序从设计上避免</td></tr>
+<tr><th>崩溃后</th><td>需要恢复（锁表要在恢复期间重建）</td><td>随内存一起消失，无需恢复</td></tr>
+</tbody></table></div>
+<p>闩最漂亮的用法是 B-Tree 上的<em>闩蟹行（latch crabbing）</em>。往下查找时，每层都持闩不放，根节点就成了全库瓶颈；一层不持，又可能读到一个正在分裂的中间节点。蟹行的规则是<strong>像螃蟹倒手一样，先抓住孩子，确认孩子「安全」后再松开父亲</strong>——「安全」指这次写不会让该节点分裂或合并（有足够空位），那它的祖先就绝不会被波及，可以放心松手。全程手里最多攥两层。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="15" y="20">闩蟹行：手里最多同时攥两层</text>
+<line stroke="#7c8593" x1="110" x2="110" y1="62" y2="94"></line>
+<line stroke="#7c8593" x1="110" x2="110" y1="118" y2="150"></line>
+<rect fill="rgba(155,108,245,0.25)" height="24" rx="5" stroke="#9b6cf5" stroke-width="2" width="76" x="72" y="38"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="110" y="55">根 ●</text>
+<rect fill="rgba(91,157,249,0.06)" height="24" rx="5" stroke="#565c66" stroke-dasharray="3 3" width="76" x="72" y="94"></rect>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="110" y="111">中间层</text>
+<rect fill="rgba(91,157,249,0.06)" height="24" rx="5" stroke="#565c66" stroke-dasharray="3 3" width="76" x="72" y="150"></rect>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="110" y="167">叶子</text>
+<text fill="#9b6cf5" font-size="11" text-anchor="middle" x="110" y="200">① 先给根加闩</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="110" y="218">读它，判断该往哪个孩子走</text>
+<line stroke="#7c8593" x1="320" x2="320" y1="62" y2="94"></line>
+<line stroke="#7c8593" x1="320" x2="320" y1="118" y2="150"></line>
+<rect fill="rgba(91,157,249,0.06)" height="24" rx="5" stroke="#565c66" stroke-dasharray="3 3" width="76" x="282" y="38"></rect>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="320" y="55">根 ○</text>
+<rect fill="rgba(155,108,245,0.25)" height="24" rx="5" stroke="#9b6cf5" stroke-width="2" width="76" x="282" y="94"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="320" y="111">中间层 ●</text>
+<rect fill="rgba(91,157,249,0.06)" height="24" rx="5" stroke="#565c66" stroke-dasharray="3 3" width="76" x="282" y="150"></rect>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="320" y="167">叶子</text>
+<text fill="#9b6cf5" font-size="11" text-anchor="middle" x="320" y="200">② 抓住孩子，再松开根</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="320" y="218">孩子「安全」= 不会分裂或合并</text>
+<line stroke="#7c8593" x1="530" x2="530" y1="62" y2="94"></line>
+<line stroke="#7c8593" x1="530" x2="530" y1="118" y2="150"></line>
+<rect fill="rgba(91,157,249,0.06)" height="24" rx="5" stroke="#565c66" stroke-dasharray="3 3" width="76" x="492" y="38"></rect>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="530" y="55">根 ○</text>
+<rect fill="rgba(91,157,249,0.06)" height="24" rx="5" stroke="#565c66" stroke-dasharray="3 3" width="76" x="492" y="94"></rect>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="530" y="111">中间层 ○</text>
+<rect fill="rgba(155,108,245,0.25)" height="24" rx="5" stroke="#9b6cf5" stroke-width="2" width="76" x="492" y="150"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="530" y="167">叶子 ●</text>
+<text fill="#9b6cf5" font-size="11" text-anchor="middle" x="530" y="200">③ 到叶子，动手改</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="530" y="218">根早已释放，不再是全库瓶颈</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" x="15" y="242">● = 持有闩　　○ = 已释放</text>
+</svg>
+<figcaption>图 4 · 闩蟹行：先抓孩子、确认它不会分裂，再松开父亲。根节点的闩因此只被持有极短时间，避免它成为并发瓶颈。</figcaption>
+</figure>
+<p>顺带一提，Blink-tree 更进一步：给每个节点加一个指向<strong>右兄弟</strong>的指针和一个「最高键」。这样即使你读到的是一个刚分裂完、还没来得及更新父指针的节点，也能顺着右指针自己找到该去的地方——用一点结构冗余换掉了一部分加闩需求。</p>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 3 · 三条并发控制路线：什么场景选什么</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>悲观 · 两阶段锁</th><th>多版本 MVCC</th><th>乐观 OCC</th></tr></thead>
+<tbody>
+<tr><th>基本做法</th><td>动手前先申请锁，冲突就等</td><td>写产生新版本，读按时间戳取旧版本</td><td>先干，提交前验证有无冲突</td></tr>
+<tr><th>读写互相阻塞</th><td><strong>会</strong>——读写互斥，长事务拖垮并发</td><td><strong>不会</strong>——读不阻塞写、写不阻塞读</td><td>不会（但可能白干一场）</td></tr>
+<tr><th>主要代价</th><td>锁开销 + 死锁检测；吞吐随冲突率快速下降</td><td><strong>旧版本要占空间、要清理</strong>（PostgreSQL 的 vacuum、InnoDB 的 undo 段膨胀）</td><td><strong>冲突率一高就雪崩式重试</strong>，白白烧 CPU</td></tr>
+<tr><th>适合</th><td>冲突密集、事务短</td><td>读多写少的通用 OLTP（绝大多数业务）</td><td>冲突稀少、事务短小</td></tr>
+<tr><th>真实系统</th><td>早期 DB2、SQL Server 默认（悲观锁 + 意向锁）</td><td>PostgreSQL、MySQL InnoDB、Oracle</td><td>内存数据库、部分分布式引擎的写路径</td></tr>
+</tbody></table></div>
+<p class="tcap">表 4 · 页缓存驱逐策略：为什么没人用课本上的 LRU</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>策略</th><th>怎么工作</th><th>代价 / 失效场景</th></tr></thead>
+<tbody>
+<tr><th>朴素 LRU</th><td>踢掉最久没被访问的页</td><td><strong>一次全表扫描就能清空整个缓冲池</strong>；且维护链表要加锁，本身成为热点</td></tr>
+<tr><th>CLOCK</th><td>页排成环，用一个引用位近似 LRU，指针转一圈踢掉引用位为 0 的</td><td>精度不如 LRU，但<strong>几乎无锁</strong>——用精度换并发度</td></tr>
+<tr><th>LFU / 按频率</th><td>踢掉访问次数最少的</td><td>对「曾经很热、现在没人用」的页反应迟钝，需要老化机制</td></tr>
+<tr><th>LRU-K / 2Q / 中点插入</th><td>看<strong>第 K 次</strong>访问的时间，或先放「旧段」、二次访问才升级</td><td>参数要调；实现复杂。<strong>InnoDB 走的是中点插入，旧段占 <code>3/8</code></strong></td></tr>
+</tbody></table></div>
+<p><strong>还有一组不进表、但选型时必须掂量的权衡：</strong></p>
+<ul>
+<li><strong>检查点频率</strong>。做得勤：每次刷的脏页少、崩溃后恢复快，但持续占用磁盘带宽、干扰正常负载。做得稀：日常更快，但崩溃后要重放的日志更长——<strong>恢复时间目标（RTO）本质上是被检查点间隔定住的</strong>。PostgreSQL 的 <code>checkpoint_timeout</code> 默认 <code>5 分钟</code>，正是在「日常开销」和「最坏恢复时间」之间取的一个保守中值。</li>
+<li><strong>日志刷盘的严格程度</strong>。老实 <code>fsync</code>，提交延迟高但真丢不了；放宽成「每秒刷一次」（如 InnoDB 的 <code>innodb_flush_log_at_trx_commit=2</code>），吞吐能提升数倍，代价是<strong>崩溃可能丢掉最后一秒的已提交事务</strong>——这是拿持久性 D 直接换性能，只有在业务明确能接受时才可以按。</li>
+<li><strong>隔离级别</strong>。往下调一级（比如从可串行化调到读已提交）能显著提高并发，但放进来的异常要由应用自己防。最典型的陷阱是快照隔离下的<em>写偏斜（write skew）</em>：两个事务各自读到一致的快照、各自做出合法的决定，合起来却破坏了约束——比如「至少留一名医生值班」，两个医生同时看到「还有另一个人在」然后都请了假。</li>
+</ul>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>这一章是<strong>所有单机数据库的公共地基</strong>，抽象几乎没有过时：PostgreSQL、InnoDB、SQLite、SQL Server 的恢复路径都是 ARIES 的变体或简化；就连 RocksDB 这类 LSM 引擎，内存表前面也挡着一个功能完全相同的 WAL。往上一层，它还是<strong>分布式事务的本地一半</strong>——两阶段提交里「参与者承诺我一定能提交」，兑现手段正是本地日志已经落盘。面试里「WAL 为什么快」「redo 和 undo 各解决什么」「lock 和 latch 有什么区别」都是常规题，分水岭就在能不能说清本章这几条因果。</p>
+<div class="ev">
+<div class="evh">大厂实证 · 这些不是书里的说法，是各家自己公开写下的</div>
+<ul>
+<li><strong>PostgreSQL</strong> 官方文档把 WAL 写成一句定义：「对数据文件的修改，必须在描述这些修改的 WAL 记录被刷到持久存储<strong>之后</strong>才能写入」，并点明收益——<strong>不需要在每次提交时把数据页刷盘</strong>。正面验证了「用一次顺序写换掉多次随机写」这笔交易。<span class="src"><a href="https://www.postgresql.org/docs/current/wal-intro.html" rel="noopener" target="_blank">PostgreSQL 官方文档 · Write-Ahead Logging ↗</a></span></li>
+<li><strong>IBM</strong> 的 ARIES 论文给出「偷 + 不强制 + 重演历史 + 补偿记录」整套方案，并写明已实现在 OS/2 Extended Edition 数据库管理器与 DB2 中——<strong>30 多年后仍是主流关系数据库恢复路径的模板。</strong><span class="src"><a href="https://dl.acm.org/doi/10.1145/128765.128770" rel="noopener" target="_blank">C. Mohan et al.《ARIES》, ACM TODS 17(1), 1992 ↗</a></span></li>
+<li><strong>Oracle / MySQL</strong> 官方手册明说 InnoDB 不用朴素 LRU：新读入的页<strong>先插在链表中点</strong>，再次被访问才升级；旧段默认占 <code>3/8</code>（<code>innodb_old_blocks_pct</code> 默认 <code>37</code>），就为了让全表扫描<strong>挤不掉热点页</strong>。反面印证课本 LRU 在真实负载下不够用。<span class="src"><a href="https://dev.mysql.com/doc/refman/8.4/en/innodb-buffer-pool.html" rel="noopener" target="_blank">MySQL 8.4 参考手册 · Buffer Pool ↗</a></span></li>
+<li><strong>SQLite</strong> 官方在《如何损坏一个 SQLite 数据库》里把 <code>fsync</code> 描述成一道 I/O 屏障，并列出头号损坏原因之一：<strong>文件系统或硬件在 <code>fsync</code> 上撒谎</strong>——它一谎报「写好了」，上层所有日志设计一起失效。<span class="src"><a href="https://www.sqlite.org/howtocorrupt.html" rel="noopener" target="_blank">SQLite 官方文档 · How To Corrupt An SQLite Database File ↗</a></span></li>
+<li><strong>PostgreSQL 社区</strong> 2018 年发现「fsyncgate」：Linux 上一次<strong>失败</strong>的回写会把错误标记消耗掉，下次 <code>fsync</code> 可能返回成功，而那页其实已经丢了——这个假设在代码里躺了近 20 年，修复方式是<strong><code>fsync</code> 一失败就直接 PANIC</strong>（PostgreSQL 12 引入并回补到 9.4 起各版本）。<strong>本章唯一的反面实证：日志算法再严密，也挡不住底层接口语义不成立。</strong><span class="src"><a href="https://wiki.postgresql.org/wiki/Fsync_Errors" rel="noopener" target="_blank">PostgreSQL Wiki · Fsync Errors ↗</a></span></li>
+<li><strong>Amazon</strong> 在 Aurora 论文里把本章逻辑推到极致：既然日志才是真相，就<strong>只把重做日志发到存储层</strong>，由存储节点异步、持续地把页算出来。Amazon 自述这样做「减少了网络流量，<strong>免掉了检查点和崩溃恢复</strong>」。<span class="src"><a href="https://assets.amazon.science/dc/2b/4ef2b89649f9a393d37d3e042f4e/amazon-aurora-design-considerations-for-high-throughput-cloud-native-relational-databases.pdf" rel="noopener" target="_blank">A. Verbitski et al.《Amazon Aurora》, SIGMOD 2017 ↗</a></span></li>
+</ul>
+</div>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>把锁和闩混为一谈</strong>（面试最高频的失分点）。守护对象、生命周期、死锁处理全不同；说「B-Tree 遍历时加锁」几乎总是错的——那是加闩。</li>
+<li><strong>以为「提交返回成功」= 数据页已经在磁盘上</strong>。不是。那一刻保证的只有<strong>日志</strong>已落盘，数据页可能几分钟后才被检查点刷下去。这正是「持久性」的真实含义，也是恢复流程必不可少的原因。</li>
+<li><strong>以为 ARIES 恢复只做撤销</strong>。恰恰相反，它<strong>先重做全部历史</strong>（包括注定要回滚的事务）再撤销；这个「多此一举」换来的是极大简化、且可重入的恢复流程。</li>
+<li><strong>以为 MVCC 就是无锁、没冲突</strong>。它消除的是<strong>读写</strong>之间的阻塞；写写冲突依然要靠锁或提交时验证解决。而且快照隔离不等于可串行化——<strong>写偏斜</strong>就是它挡不住的经典漏网之鱼。</li>
+<li><strong>以为 <code>fsync</code> 返回成功就万事大吉</strong>。fsyncgate 证明这条假设能在最主流的操作系统上悄悄失守 20 年。真正的持久性要求硬件、固件、文件系统、数据库四层都不撒谎。</li>
+<li><strong>时代局限</strong>。本章模型的前提是「磁盘远慢于内存，所以值得用日志把随机写换成顺序写」。这个前提正在两头松动：持久内存与超低延迟 NVMe 缩小了写日志的相对收益，学界因此有大量绕开传统 WAL 的内存数据库恢复方案；云原生数据库（如 Aurora）则把日志下推到存储层，让「检查点」「崩溃恢复」在数据库进程里几乎消失。另外本章对分布式恢复几乎没着墨——那要等 Part II 的 Ch13。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① ACID 不是某个模块给的，是<strong>页缓存 + 预写日志 + 并发控制</strong>三件套合力挤出来的；共同底牌是「先记日志，再改数据」。</p>
+<p>② 最该记住的反直觉判断：<strong>日志才是数据库的正本</strong>，数据文件只是它一份可丢弃、可重算的物化结果。</p>
+<p>③ 页缓存自己管，为的是掌握三件事：谁在被用（钉住）、谁被改过（脏页）、谁先落盘。<strong>朴素 LRU 会被一次全表扫描冲垮</strong>，所以工业实现都用 CLOCK / 中点插入这类变体。</p>
+<p>④ 日志先行规则：<strong>覆盖某脏页的日志必须先于该页落盘</strong>。提交的代价因此收缩成一次顺序写 + 一次 <code>fsync</code>，还能靠组提交摊薄。</p>
+<p>⑤ 四象限选型：工业界一致选<strong>偷 + 不强制（steal / no-force）</strong>——运行时最快，代价是恢复代码里 redo、undo 都得有。<strong>把复杂度从每天几十亿次的运行路径，挪进一年跑不了几次的恢复路径。</strong></p>
+<p>⑥ ARIES 三阶段：<strong>分析 → 重做 → 撤销</strong>。重做要「重演历史」，连注定回滚的也照做；撤销要写<strong>补偿记录（CLR）</strong>，好让恢复本身再崩一次也不出错。</p>
+<p>⑦ 并发控制三条路：悲观锁（冲突密集）、MVCC（读多写少的通用选择，代价是旧版本要清理）、乐观 OCC（冲突稀少，否则重试雪崩）。</p>
+<p>⑧ <strong>锁 ≠ 闩</strong>：锁守逻辑对象、持续整个事务、有死锁检测；闩守内存里的物理结构、只持续微秒、靠固定加闩顺序避免死锁。B-Tree 用<strong>闩蟹行</strong>——先抓孩子、确认安全再松父亲。</p>
+<p>⑨ 三组要自己拿主意的权衡：检查点频率（日常开销 ↔ 恢复时间）、日志刷盘严格度（延迟 ↔ 会不会丢已提交事务）、隔离级别（并发度 ↔ 应用得自己防哪些异常）。而地基比想象中薄——<code>fsync</code> 一撒谎，上面全盘落空。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

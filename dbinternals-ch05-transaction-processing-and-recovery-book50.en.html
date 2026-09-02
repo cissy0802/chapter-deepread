@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals Ch 5 · Transaction Processing and Recovery — Book Deep Read 50</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">BOOK DEEP READ · Database Internals · Chapter 5</p>
+<h1>Transaction Processing and Recovery</h1>
+<p class="sub">Database Internals · Ch 5 · Alex Petrov · 2019</p>
+<p class="langbar"><a href="dbinternals-ch05-transaction-processing-and-recovery-book50.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You tap "send money" on your phone. The spinner turns for half a second, then says <em>success</em>. Somewhere in that half second, the machine room loses power.</p>
+<p>The first four chapters were about arranging data so it can be found fast. This one is about something else entirely: <strong>what happens when a change is only half made and the lights go out, and what happens when two people edit the same record at the same time.</strong> Without this chapter, that elegant index tree is a toy that only works for one user on a machine that never fails.</p>
+<h2>A strange thing first</h2>
+<p>You probably assume the data files on disk are the database's master copy, and the log file sitting next to them is a backup. <strong>It is the other way round.</strong> The log is the master copy, the source of truth; the data files are just a fair copy of it — lose them and you can write them out again from the log. The whole reliability story rests on that inversion.</p>
+<h2>Why the old world was hard</h2>
+<p><strong>One: changing one thing means touching several places.</strong> A transfer subtracts here and adds there, and those two must <strong>both count or neither count</strong> — do half and money vanishes.</p>
+<p><strong>Two: changes happen in memory, and memory dies with the power.</strong> A database cannot make a trip to disk for every byte, so it pulls the pages it needs onto a "desk" in memory, edits them there and writes a batch back later. Cut the power mid-way and everything still on the desk is gone.</p>
+<p><strong>Three: writing to scattered spots on disk is agonizingly slow.</strong> The records you touched live on page 3, page 700 and page 90,000. Disks hate that kind of hunting around; what they love is writing straight on from where they stopped.</p>
+<h2>The core idea: one running ledger, and two kinds of lock</h2>
+<p><strong>Write the ledger first, then touch the master copy.</strong> Before changing anything, add a line to a ledger that is <strong>only ever appended to, never gone back over</strong>: "I am about to change that number on page 700 from 100 to 80." Only once that line is safely on disk may you touch the master copy. The ledger is written straight on from where it stopped, exactly what a disk likes. So <strong>committing a transfer means waiting for one ledger line to land</strong> — the fair copy can be written out at leisure.</p>
+<p><strong>After a crash: replay first, undo second.</strong> This is the counterintuitive part. On restart the database does <strong>not</strong> begin by cleaning up the mess. It picks up the ledger and <strong>replays the whole stretch of history exactly as it happened</strong> — including the moves it already knows will have to be undone. Only once the world has been restored to the instant before the crash does it go back and undo the transactions that got half a sentence out and never said "I'm done." Laying the floor flat and then moving the furniture is far simpler than doing both at once.</p>
+<p><strong>Two completely different kinds of lock.</strong> One governs people: it stops you seeing work someone else has only half done, and it stays held for the whole transaction. The other governs hands: a page in memory is being rewritten right now, so another thread would read something half-finished — that one guards a few microseconds and is dropped the moment the edit is over. English calls both of them locks; they are not the same thing at all, and confusing them is the beginner's classic stumble.</p>
+<h2>What you get, and what it costs</h2>
+<p>With these in place a database can finally say <em>success</em> and mean it. Not "your money is already in the fair copy," but "<strong>this is written into the ledger, and the ledger really is on disk; leave the rest to me, a power cut cannot take it away.</strong>" <strong>The cost hides in that same sentence</strong>: if any link in the chain — drive, firmware, filesystem — claims "written" when it has not, every clever design above it collapses together.</p>
+<h2>One thing to remember</h2>
+<div class="tl">
+<p>A database's truth is not in its data files, <strong>it is in that append-only ledger</strong>: write the entry before changing anything, and a commit waits only for that entry to land. After a crash, replay the whole history from the ledger first, then undo the sentences that were never finished. As for concurrency, remember there are <strong>two kinds of lock</strong> — one guarding the rules between transactions, one guarding a few microseconds on a single page in memory.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the notation and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">This chapter promotes the storage engine from "a data structure that can store and find things" into <strong>an actual database</strong>: ACID is not supplied by any one module, it is squeezed out of three parts working together — <strong>the page cache, the write-ahead log, and concurrency control</strong>. Their shared trump card is a single rule: <strong>write down what you are about to do before you do it</strong>. From which follows the chapter's most counterintuitive judgement: <em>the data files on disk are not the database's master copy. The log is. The data files are merely a materialized result of the log — discardable, recomputable.</em></p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Transaction</strong> — a group of reads and writes that must take effect, or not, as a single unit: "debit A by 100, credit B by 100."</li>
+<li><strong>ACID</strong> — the four promises: atomicity (all or nothing), consistency (constraints preserved), isolation (concurrent transactions do not disturb each other), durability (once committed, it cannot be lost).</li>
+<li><strong>Page</strong> — the smallest unit a database reads or writes to disk (PostgreSQL defaults to <code>8 KB</code>, InnoDB to <code>16 KB</code>).</li>
+<li><strong>Page cache / buffer pool</strong> — a region of memory the database manages itself, holding recently used pages; every modification happens here first.</li>
+<li><strong>Dirty page</strong> — a page modified in memory and not yet written back to disk.</li>
+<li><strong>Flush / <code>fsync</code></strong> — telling the OS to push bytes onto durable media and waiting for confirmation. The only operation that lets you say "this cannot be lost," and the slowest step in the whole chain.</li>
+<li><strong>Write-ahead log (WAL)</strong> — an append-only file, never modified in place, recording in order what the database intends to change.</li>
+<li><strong>LSN (log sequence number)</strong> — a monotonically increasing record number. Each page header stores which log record last touched it, so recovery can tell whether a record still needs replaying.</li>
+<li><strong>Checkpoint</strong> — periodically writing dirty pages back in a batch and marking the log: "everything up to here is safely on disk." Recovery starts from there instead of replaying the entire log.</li>
+<li><strong>Lock</strong> — mutual exclusion on a <strong>logical object</strong> (a row, a key range), held for the <strong>whole transaction</strong>. It exists for isolation.</li>
+<li><strong>Latch</strong> — mutual exclusion on a <strong>physical structure in memory</strong>, held for <strong>microseconds</strong>, stopping two threads from scribbling over the same page. It is essentially a mutex.</li>
+<li><strong>Idempotent</strong> — doing it once and doing it ten times give the same result. Recovery must be idempotent, because recovery itself can crash halfway.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This is Chapter 5 of Part I, "Storage Engines," and the part's <strong>closing argument</strong>. The first four chapters — the overview, B-Tree basics, file formats, implementing B-Trees — all described how to lay out data in a world that is <strong>static, single-threaded and never loses power</strong>. This chapter throws that tree into the real one, where hundreds of connections read and write it at once and the power can go at any moment. Downstream, the copy-on-write of Ch6 (B-Tree Variants) is one branch of "another way to get atomicity," and Ch7 (LSM-Trees) promotes this chapter's log into the primary storage structure outright; in Part II, the local half of distributed transactions (Ch13) is exactly what is built here.</p>
+<h2>The problem it solves</h2>
+<p>Put the first four chapters side by side and an awkward gap appears: <strong>one logically "atomic" change usually touches several pages</strong>. Inserting a record into a B-Tree may split a leaf, add a pointer to the parent, even push up a new root — three or four separate page modifications, and a power cut at any instant between them leaves a <strong>structurally broken tree</strong> on disk: a pointer into a page that was never finished, and the whole index is void.</p>
+<p>Worse, none of those pages was modified on disk directly; they were modified in the page cache. Which means <strong>at any given moment the data files on disk are stale and internally inconsistent</strong>. Layer hundreds of concurrent transactions on top and the problem braids into three: <strong>how to move pages between memory and disk quickly but under control</strong> (page cache, eviction, checkpoints), <strong>how to reconstruct a self-consistent database out of a heap of half-finished work after a crash</strong> (logging and recovery), and <strong>how to keep concurrent transactions from seeing each other's half-finished work</strong> (concurrency control). Without all three, the strongest promise a database can offer is "good luck."</p>
+<h2>The core material</h2>
+<h3>1. Four stations: who actually carries each letter of ACID</h3>
+<p>When an interview asks "how is ACID implemented," the right answer is not a sentence but a division of labour. A transaction passes through four components: the <em>transaction manager</em> coordinates it and decides commit or abort; the <em>lock manager</em> guards the logical objects it touches, making other transactions queue; the <em>page cache</em> pulls pages from disk into memory, where every modification actually happens; the <em>log manager</em> writes down what is about to change, before it changes.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 240" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="15" y="22">The four stations a transaction passes through</text>
+<rect fill="rgba(91,157,249,0.1)" height="46" rx="7" stroke="#7c8593" width="130" x="15" y="38"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="80" y="60">Transaction</text>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="80" y="75">manager</text>
+<rect fill="rgba(91,157,249,0.1)" height="46" rx="7" stroke="#7c8593" width="130" x="175" y="38"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="240" y="67">Lock manager</text>
+<rect fill="rgba(91,157,249,0.14)" height="46" rx="7" stroke="#5b9df9" stroke-width="2" width="130" x="335" y="38"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="400" y="67">Page cache</text>
+<rect fill="rgba(155,108,245,0.2)" height="46" rx="7" stroke="#9b6cf5" stroke-width="2" width="130" x="495" y="38"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="560" y="67">Log manager</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="145" x2="171" y1="61" y2="61"></line>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="305" x2="331" y1="61" y2="61"></line>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="465" x2="491" y1="61" y2="61"></line>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="80" y="102">commit or abort</text>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" text-anchor="middle" x="80" y="117">→ Atomicity</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="240" y="102">guards logical objects</text>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" text-anchor="middle" x="240" y="117">→ Isolation</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="400" y="102">edits pages in memory</text>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" text-anchor="middle" x="400" y="117">→ Performance</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="560" y="102">log first, change after</text>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" text-anchor="middle" x="560" y="117">→ Durability</text>
+<line marker-end="url(#a1)" stroke="#5b9df9" x1="400" x2="400" y1="128" y2="172"></line>
+<line marker-end="url(#a1)" stroke="#9b6cf5" x1="560" x2="560" y1="128" y2="172"></line>
+<rect fill="rgba(91,157,249,0.08)" height="38" rx="7" stroke="#5b9df9" width="150" x="325" y="176"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="400" y="200">Data files (fair copy)</text>
+<rect fill="rgba(155,108,245,0.12)" height="38" rx="7" stroke="#9b6cf5" width="150" x="485" y="176"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="560" y="200">Log file (the truth)</text>
+<text fill="#7c8593" font-size="10.5" x="15" y="200">On disk:</text>
+<text fill="#7c8593" font-size="9.5" x="15" y="224">Write-ahead rule: any change to the data files must appear in the log first</text>
+</svg>
+<figcaption>Fig. 1 · ACID is nobody's single achievement: atomicity from the transaction manager, isolation from the lock manager, durability from the log manager — with the page cache keeping it all fast enough to use.</figcaption>
+</figure>
+<h3>2. The page cache: why a database insists on managing memory itself</h3>
+<p>The operating system already caches files, so why build another layer? Because the database needs three things the OS cannot give it: <strong>knowing which pages are in use (and must not be evicted), which have been modified (and must be flushed before eviction), and the authority to decide what gets written first</strong>. All three bear directly on correctness, so none can be delegated.</p>
+<p>Four mechanisms matter. <em>Pinning</em>: a page in use carries a reference count, and a non-zero count forbids eviction — every page on a B-Tree's root-to-leaf path is pinned. <em>Marking dirty</em>: modified in memory, flagged. <em>Eviction</em>: when the cache fills, pick an unpinned page and drop it; if it is dirty it must be written back first, <strong>and before that, the log covering it must already be on disk</strong>. <em>Checkpointing</em>: rather than flushing reactively in dribs when the cache fills, flush in batches on a schedule and mark the log, pulling the recovery starting point forward.</p>
+<p>Eviction policy is far messier than the textbook LRU, for a very practical reason: <strong>a single full table scan will wipe out a naive LRU</strong>. One <code>SELECT * FROM big_table</code> reads several million pages, uses each exactly once, and evicts hot pages accumulated over hours — when the scan ends the hit rate is zero and every query hits disk for minutes. So MySQL InnoDB splits its LRU list into a "young" and an "old" sublist: a newly read page <strong>is inserted at the midpoint</strong> (the head of the old sublist), not at the front, and is only promoted into the young sublist if it is accessed <strong>again</strong>. One-shot scan pages therefore make a lap of the old sublist and are evicted without ever touching the hot set. The old sublist defaults to <code>3/8</code> of the pool (<code>innodb_old_blocks_pct</code> defaults to <code>37</code>).</p>
+<h3>3. Write-ahead logging: trading many random writes for one sequential one</h3>
+<p>The WAL rule is a single sentence that holds up the whole chapter: <strong>for any modification to a data page, its log record must reach disk before that page does.</strong> Read it backwards and it gets more interesting — as long as the log is there, a data page can be flushed whenever, because it can always be recomputed from the log. The data files are thereby demoted to "one materialized snapshot of the log."</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="a2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="a3" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="15" y="22">Edited in memory, landed on disk — in a fixed order</text>
+<rect fill="none" height="112" rx="8" stroke="rgba(91,157,249,0.4)" stroke-dasharray="5 4" width="605" x="15" y="34"></rect>
+<text fill="#7c8593" font-family="monospace" font-size="10" x="27" y="52">Memory · buffer pool</text>
+<rect fill="rgba(91,157,249,0.07)" height="36" rx="6" stroke="#7c8593" width="92" x="30" y="62"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="76" y="85">Clean P3</text>
+<rect fill="rgba(155,108,245,0.22)" height="36" rx="6" stroke="#9b6cf5" stroke-width="2" width="92" x="138" y="62"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="184" y="85">Dirty P7</text>
+<rect fill="rgba(155,108,245,0.22)" height="36" rx="6" stroke="#9b6cf5" stroke-width="2" width="92" x="246" y="62"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="292" y="85">Dirty P9</text>
+<rect fill="rgba(91,157,249,0.07)" height="36" rx="6" stroke="#7c8593" stroke-dasharray="4 3" width="92" x="354" y="62"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="400" y="85">Pinned P4</text>
+<rect fill="rgba(155,108,245,0.12)" height="36" rx="6" stroke="#9b6cf5" width="130" x="470" y="62"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="535" y="85">Log buffer</text>
+<text fill="#7c8593" font-size="9.5" x="30" y="122">dirty = modified, not yet on disk       pinned = in use, cannot be evicted</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="184" x2="215" y1="104" y2="222"></line>
+<line marker-end="url(#a3)" stroke="#9b6cf5" x1="535" x2="520" y1="104" y2="222"></line>
+<circle cx="527" cy="164" fill="#0f1216" r="11" stroke="#9b6cf5"></circle>
+<text fill="#9b6cf5" font-size="11" font-weight="700" text-anchor="middle" x="527" y="168">1</text>
+<circle cx="199" cy="164" fill="#0f1216" r="11" stroke="#7c8593"></circle>
+<text fill="#b9c0ca" font-size="11" font-weight="700" text-anchor="middle" x="199" y="168">2</text>
+<line marker-end="url(#a3)" stroke="#9b6cf5" stroke-dasharray="5 4" x1="514" x2="216" y1="164" y2="164"></line>
+<text fill="#9b6cf5" font-size="10.5" text-anchor="middle" x="365" y="154">Write-ahead rule: ① must precede ②</text>
+<rect fill="rgba(91,157,249,0.08)" height="42" rx="7" stroke="#5b9df9" width="170" x="130" y="226"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="215" y="252">Data files (random writes)</text>
+<rect fill="rgba(155,108,245,0.14)" height="42" rx="7" stroke="#9b6cf5" width="170" x="435" y="226"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="520" y="252">Log file (sequential writes)</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="320" y="290">A commit waits only for ①; ② can be batched until the next checkpoint</text>
+</svg>
+<figcaption>Fig. 2 · The write-ahead rule: a dirty page may be written back only once the log record covering it is durable. The cost of a commit shrinks to one sequential write.</figcaption>
+</figure>
+<p><strong>Why the trade pays off, with real magnitudes.</strong> A transaction modifies five records scattered across different pages. Flushing honestly is <strong>five random writes</strong>; the WAL route packs five log records into one contiguous stretch of bytes — <strong>one sequential write plus one <code>fsync</code></strong>. On spinning disks a random write pays a seek (roughly <code>5–10 ms</code>) that a sequential write does not. On NVMe the seek is gone, but the intrinsic cost of an <code>fsync</code> (on the order of <code>0.1–1 ms</code>) still dwarfs appending a few records into an existing log buffer. <strong>Group commit</strong> widens the gap further: dozens of concurrent transactions share <strong>one</strong> <code>fsync</code> — under <code>50,000</code> small transactions per second, that takes the <code>fsync</code> count from 50,000 down to a few thousand.</p>
+<p><strong>What goes into the log?</strong> Three flavours. <em>Physical logging</em> records "bytes 32 onward of page 700 changed from <code>0x0A</code> to <code>0x14</code>" — exact to replay, but one B-Tree split produces a flood of byte-level records. <em>Logical logging</em> records "insert (k=42, v=…) into table t" — compact, but replaying it requires the database to already be in a semantically complete state. ARIES takes the middle road, <em>physiological logging</em>: <strong>logical between pages, physical within a page</strong> — "insert this record into page 700," and how bytes shuffle inside the page is the page's own business.</p>
+<p>Then two policy choices, forming the chapter's most famous quadrant. <em>Steal</em>: may a page dirtied by an <strong>uncommitted</strong> transaction be written back to disk? <em>Force</em>: must all pages a transaction modified be written back at commit?</p>
+<p class="tcap">Table 1 · The steal / force quadrant, and why industry converged on one corner</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>force: flush all dirty pages at commit</th><th>no-force: flush nothing at commit</th></tr></thead>
+<tbody>
+<tr><th>no-steal<br/>uncommitted dirty pages stay</th><td>Needs neither redo nor undo — the simplest; but <strong>slow commits</strong> (random writes) and <strong>the cache is held hostage</strong> by uncommitted work</td><td>No undo needed, redo is; still suffers from large transactions filling the cache</td></tr>
+<tr><th>steal<br/>uncommitted dirty pages may be written</th><td>Needs undo, not redo; commits are still slow</td><td><strong>Needs both redo and undo — the most complex to implement</strong>, but a commit waits on one sequential write and the cache turns over freely. <strong>ARIES, InnoDB and PostgreSQL all live here</strong></td></tr>
+</tbody></table></div>
+<p>Read it this way: the top-left corner is the easiest to write, the bottom-right the best to use. <strong>Moving complexity out of the runtime and into the recovery code</strong> is this chapter's central bargain — the runtime executes billions of times a day, recovery runs a handful of times a year.</p>
+<h3>4. ARIES: repeat history verbatim, then undo what never finished</h3>
+<p>ARIES (Mohan et al., IBM, 1992 — DB2's recovery algorithm) is the canonical answer for the steal / no-force corner. Recovery runs in three phases, in this order: <strong>analysis → redo → undo</strong>.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="a4" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="a5" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#e8794b"></path></marker>
+</defs>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" x="15" y="20">Log (increasing LSN) →</text>
+<text fill="#7c8593" font-family="monospace" font-size="9" text-anchor="middle" x="190" y="42">oldest dirty page</text>
+<text fill="#5b9df9" font-family="monospace" font-size="9" text-anchor="middle" x="300" y="26">last checkpoint</text>
+<text fill="#e8794b" font-family="monospace" font-size="9.5" text-anchor="middle" x="575" y="42">✕ crash</text>
+<line marker-end="url(#a4)" stroke="#7c8593" x1="100" x2="620" y1="60" y2="60"></line>
+<line stroke="rgba(120,120,130,0.4)" stroke-dasharray="4 3" x1="190" x2="190" y1="46" y2="205"></line>
+<line stroke="rgba(91,157,249,0.5)" stroke-dasharray="4 3" x1="300" x2="300" y1="32" y2="205"></line>
+<line stroke="rgba(232,121,75,0.6)" stroke-dasharray="4 3" x1="575" x2="575" y1="46" y2="205"></line>
+<rect fill="rgba(91,157,249,0.22)" height="24" rx="5" stroke="#5b9df9" width="275" x="300" y="82"></rect>
+<text fill="#5b9df9" font-family="monospace" font-size="10" x="15" y="99">① Analysis</text>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="437" y="99">rebuild dirty-page and transaction tables</text>
+<rect fill="rgba(155,108,245,0.25)" height="24" rx="5" stroke="#9b6cf5" width="385" x="190" y="122"></rect>
+<text fill="#9b6cf5" font-family="monospace" font-size="10" x="15" y="139">② Redo</text>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="382" y="139">repeat history — even changes doomed to roll back</text>
+<rect fill="rgba(232,121,75,0.2)" height="24" rx="5" stroke="#e8794b" width="470" x="105" y="162"></rect>
+<text fill="#e8794b" font-family="monospace" font-size="10" x="15" y="179">③ Undo</text>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="340" y="179">roll back losers, writing compensation records</text>
+<line marker-end="url(#a5)" stroke="#e8794b" x1="200" x2="112" y1="196" y2="196"></line>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="320" y="232">End state: every committed effect present, every uncommitted trace gone</text>
+</svg>
+<figcaption>Fig. 3 · The three ARIES phases. Note that redo starts earlier than the checkpoint — from the oldest page that had not yet been flushed, not from the checkpoint itself.</figcaption>
+</figure>
+<p><strong>① Analysis</strong> scans forward from the last checkpoint and rebuilds two tables: the <em>dirty page table</em> (which pages were dirty at the crash, and which log record first dirtied each) and the <em>transaction table</em> (which transactions were still uncommitted — the "losers"). This phase only redraws the scene at the moment of the crash.</p>
+<p><strong>② Redo</strong> replays forward from the <strong>earliest</strong> log position in the dirty page table. Here is the counterintuitive part — ARIES calls it <em>repeating history</em>: <strong>every change by every transaction is redone, including transactions known to be losers that are about to be undone.</strong> Why not be clever and skip them? Because skipping means the redo logic must judge which changes belong, and that judgement depends on a state that has not been restored yet. Restoring the world blindly to the instant before the crash and then undoing in one pass is far simpler and far harder to get wrong. Avoiding pointless replay comes not from cleverness but from a blunt trick: each page header stores which log record last modified it (<code>pageLSN</code>), and a record whose number is not greater has already made it to disk — skip.</p>
+<p><strong>③ Undo</strong> walks backward through the log for the loser transactions, cancelling their changes one by one. The second piece of craft lives here — the <em>compensation log record</em> (CLR): every undo step <strong>writes another log record saying what was undone and which record is next</strong>. So even if the database <strong>crashes again during recovery</strong>, the CLRs tell the restart where the undo had got to, and nothing is undone twice. Recovery is therefore idempotent — which matters enormously in practice, because "crashing during recovery" is the single most common cascading failure (the bad memory stick that caused the first crash is, after all, still in the machine).</p>
+<h3>5. Concurrency control: three routes, and the distinction everyone gets wrong</h3>
+<p>Concurrency control exists to block a family of <strong>anomalies</strong>: dirty reads (seeing uncommitted data), non-repeatable reads (the same row read twice in one transaction differs), phantoms (a range query returns a different set of rows the second time). The theoretical gold standard is <em>serializability</em> — the concurrent outcome is equivalent to running the transactions one at a time in some order. Isolation levels are, at bottom, <strong>a purchase of concurrency paid for by admitting particular anomalies</strong>.</p>
+<p>There are three implementation routes. <strong>Pessimistic (locking)</strong>: acquire before you act, wait on conflict, and get serializability from two-phase locking (only acquire, then only release). <strong>Optimistic (OCC)</strong>: just do the work, then check at commit time whether anyone conflicted, and redo the whole transaction if so. <strong>Multiversion (MVCC)</strong>: a write produces a new version rather than overwriting, and a read takes the version its timestamp entitles it to — so <strong>reads never block writes and writes never block reads</strong>, which is exactly why it dominates OLTP (PostgreSQL, InnoDB and Oracle are all MVCC).</p>
+<p>And now the pair worth singling out, the highest-frequency database interview distinction there is: <strong>lock versus latch</strong>. Both are called locks in casual speech, yet they do not even guard the same kind of thing.</p>
+<p class="tcap">Table 2 · Lock vs latch: same word, two different worlds</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Lock</th><th>Latch</th></tr></thead>
+<tbody>
+<tr><th>Guards what</th><td><strong>Logical objects</strong>: a row, a key range, a table</td><td><strong>Physical structures</strong>: that page in memory, that list node</td></tr>
+<tr><th>Held how long</th><td>The whole transaction — <strong>seconds or more</strong></td><td>One structural operation — <strong>nanoseconds to microseconds</strong></td></tr>
+<tr><th>Exists for</th><td>Isolation: keep transactions from seeing half-done work</td><td>Correctness: keep threads from reading half-written memory</td></tr>
+<tr><th>Managed by</th><td>The lock manager — wait queues, inspectable, can be taken explicitly</td><td>Just an OS mutex or reader-writer lock; no central registry</td></tr>
+<tr><th>Deadlocks</th><td><strong>Detected</strong>: keep a waits-for graph, find a cycle, roll back a victim</td><td><strong>Not detected</strong> — avoided by design, via a fixed acquisition order</td></tr>
+<tr><th>After a crash</th><td>Must be recovered (the lock table is rebuilt during recovery)</td><td>Vanishes with memory; nothing to recover</td></tr>
+</tbody></table></div>
+<p>The prettiest use of latches is <em>latch crabbing</em> on a B-Tree. Hold a latch at every level on the way down and the root becomes a global bottleneck; hold none and you may read an internal node mid-split. The crabbing rule is to move hand over hand like a crab: <strong>take hold of the child, confirm the child is "safe," then release the parent</strong> — where "safe" means this write cannot split or merge that node (there is room), so its ancestors cannot possibly be affected and can be let go. At most two levels are ever held at once.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="15" y="20">Latch crabbing: never more than two levels in hand</text>
+<line stroke="#7c8593" x1="110" x2="110" y1="62" y2="94"></line>
+<line stroke="#7c8593" x1="110" x2="110" y1="118" y2="150"></line>
+<rect fill="rgba(155,108,245,0.25)" height="24" rx="5" stroke="#9b6cf5" stroke-width="2" width="76" x="72" y="38"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="110" y="55">Root ●</text>
+<rect fill="rgba(91,157,249,0.06)" height="24" rx="5" stroke="#565c66" stroke-dasharray="3 3" width="76" x="72" y="94"></rect>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="110" y="111">Inner</text>
+<rect fill="rgba(91,157,249,0.06)" height="24" rx="5" stroke="#565c66" stroke-dasharray="3 3" width="76" x="72" y="150"></rect>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="110" y="167">Leaf</text>
+<text fill="#9b6cf5" font-size="10.5" text-anchor="middle" x="110" y="200">① Latch the root</text>
+<text fill="#7c8593" font-size="9" text-anchor="middle" x="110" y="218">read it, pick which child to follow</text>
+<line stroke="#7c8593" x1="320" x2="320" y1="62" y2="94"></line>
+<line stroke="#7c8593" x1="320" x2="320" y1="118" y2="150"></line>
+<rect fill="rgba(91,157,249,0.06)" height="24" rx="5" stroke="#565c66" stroke-dasharray="3 3" width="76" x="282" y="38"></rect>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="320" y="55">Root ○</text>
+<rect fill="rgba(155,108,245,0.25)" height="24" rx="5" stroke="#9b6cf5" stroke-width="2" width="76" x="282" y="94"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="320" y="111">Inner ●</text>
+<rect fill="rgba(91,157,249,0.06)" height="24" rx="5" stroke="#565c66" stroke-dasharray="3 3" width="76" x="282" y="150"></rect>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="320" y="167">Leaf</text>
+<text fill="#9b6cf5" font-size="10.5" text-anchor="middle" x="320" y="200">② Take the child, drop the root</text>
+<text fill="#7c8593" font-size="9" text-anchor="middle" x="320" y="218">safe = it cannot split or merge</text>
+<line stroke="#7c8593" x1="530" x2="530" y1="62" y2="94"></line>
+<line stroke="#7c8593" x1="530" x2="530" y1="118" y2="150"></line>
+<rect fill="rgba(91,157,249,0.06)" height="24" rx="5" stroke="#565c66" stroke-dasharray="3 3" width="76" x="492" y="38"></rect>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="530" y="55">Root ○</text>
+<rect fill="rgba(91,157,249,0.06)" height="24" rx="5" stroke="#565c66" stroke-dasharray="3 3" width="76" x="492" y="94"></rect>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="530" y="111">Inner ○</text>
+<rect fill="rgba(155,108,245,0.25)" height="24" rx="5" stroke="#9b6cf5" stroke-width="2" width="76" x="492" y="150"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="530" y="167">Leaf ●</text>
+<text fill="#9b6cf5" font-size="10.5" text-anchor="middle" x="530" y="200">③ Reach the leaf, modify</text>
+<text fill="#7c8593" font-size="9" text-anchor="middle" x="530" y="218">root released — no bottleneck</text>
+<text fill="#7c8593" font-family="monospace" font-size="9" x="15" y="242">● = latch held    ○ = released</text>
+</svg>
+<figcaption>Fig. 4 · Latch crabbing: take the child, confirm it will not split, then release the parent. The root's latch is therefore held only briefly and never becomes a global bottleneck.</figcaption>
+</figure>
+<p>Blink-trees go one step further: each node carries a pointer to its <strong>right sibling</strong> plus a high key, so even if you land on a node that has just split and whose parent pointer is not updated yet, you can follow the right pointer to where you should be — trading a little structural redundancy for fewer latches.</p>
+<h2>Trade-offs and how to choose</h2>
+<p class="tcap">Table 3 · Three concurrency-control routes: what to pick when</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Pessimistic · 2PL</th><th>Multiversion · MVCC</th><th>Optimistic · OCC</th></tr></thead>
+<tbody>
+<tr><th>How it works</th><td>Acquire before acting, wait on conflict</td><td>Writes create versions; reads take the one their timestamp allows</td><td>Act first, validate for conflicts at commit</td></tr>
+<tr><th>Reads block writes?</th><td><strong>Yes</strong> — long transactions strangle concurrency</td><td><strong>No</strong> — reads never block writes, writes never block reads</td><td>No (but work may be thrown away)</td></tr>
+<tr><th>Main cost</th><td>Lock overhead plus deadlock detection; throughput falls fast as conflict rises</td><td><strong>Old versions occupy space and must be cleaned</strong> (PostgreSQL vacuum, InnoDB undo-segment bloat)</td><td><strong>Retry avalanche once conflict rates climb</strong>, burning CPU on discarded work</td></tr>
+<tr><th>Suits</th><td>Conflict-heavy workloads with short transactions</td><td>Read-mostly general OLTP — most business systems</td><td>Rare conflicts, short transactions</td></tr>
+<tr><th>Real systems</th><td>Early DB2, SQL Server defaults (locking plus intent locks)</td><td>PostgreSQL, MySQL InnoDB, Oracle</td><td>In-memory databases, the write path of some distributed engines</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 4 · Page eviction policies: why nobody ships the textbook LRU</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Policy</th><th>How it works</th><th>Cost / where it breaks</th></tr></thead>
+<tbody>
+<tr><th>Naive LRU</th><td>Evict the least recently used page</td><td><strong>One full table scan empties the whole pool</strong>; and maintaining the list needs locking, making it a contention point itself</td></tr>
+<tr><th>CLOCK</th><td>Pages in a ring with a reference bit approximating LRU; the hand evicts entries whose bit is 0</td><td>Less precise than LRU but <strong>almost lock-free</strong> — precision traded for concurrency</td></tr>
+<tr><th>LFU / frequency</th><td>Evict the least frequently accessed page</td><td>Slow to react to pages that were hot and no longer are; needs an ageing scheme</td></tr>
+<tr><th>LRU-K / 2Q / midpoint insertion</th><td>Look at the time of the <strong>K-th</strong> access, or park new pages in an "old" sublist until a second access promotes them</td><td>Needs tuning, more complex. <strong>InnoDB uses midpoint insertion, old sublist at <code>3/8</code></strong></td></tr>
+</tbody></table></div>
+<p><strong>Three more trade-offs that never fit in a table but always have to be weighed:</strong></p>
+<ul>
+<li><strong>Checkpoint frequency.</strong> Frequent: fewer dirty pages per flush and faster recovery, but a constant drain on disk bandwidth that interferes with real traffic. Rare: faster day to day, but a longer log to replay after a crash — <strong>your recovery time objective is really pinned by the checkpoint interval</strong>. PostgreSQL's <code>checkpoint_timeout</code> defaults to <code>5 minutes</code>, a conservative midpoint between everyday overhead and worst-case recovery.</li>
+<li><strong>How strictly the log is flushed.</strong> An honest <code>fsync</code> means higher commit latency and genuinely nothing lost. Relaxing to "flush once a second" (InnoDB's <code>innodb_flush_log_at_trx_commit=2</code>) can multiply throughput, at the price that <strong>a crash may lose the last second of committed transactions</strong> — trading durability straight for speed, acceptable only when the business has explicitly said so.</li>
+<li><strong>Isolation level.</strong> Dropping a level (say from serializable to read committed) buys real concurrency, but the anomalies you let in become the application's problem. The classic trap is <em>write skew</em> under snapshot isolation: two transactions each read a consistent snapshot, each make a locally legal decision, and together they break a constraint — "at least one doctor must stay on call," and two doctors each see the other is on call and both go home.</li>
+</ul>
+<h2>Why it matters / real systems</h2>
+<p>This chapter is <strong>the common foundation under every single-node database</strong>, and its abstractions have barely dated: the recovery paths of PostgreSQL, InnoDB, SQLite and SQL Server are all variants or simplifications of ARIES, and even LSM engines like RocksDB put a functionally identical WAL in front of the memtable. One level up, it is <strong>the local half of distributed transactions</strong> — a participant's "I promise I can commit" in two-phase commit is redeemed precisely by its local log already being durable. In interviews, "why is WAL fast," "what do redo and undo each solve" and "what is the difference between a lock and a latch" are standard questions, and the dividing line is whether you can state the causal chain in this chapter.</p>
+<div class="ev">
+<div class="evh">EVIDENCE FROM THE FIELD · not the book's claims — each company's own published words</div>
+<ul>
+<li><strong>PostgreSQL</strong>'s manual states WAL as a definition: changes to data files "must be written only <strong>after</strong> those changes have been logged, that is, after WAL records describing the changes have been flushed to permanent storage" — and names the payoff, that <strong>data pages need not be flushed on every commit</strong>. Direct confirmation of the sequential-for-random trade. <span class="src"><a href="https://www.postgresql.org/docs/current/wal-intro.html" rel="noopener" target="_blank">PostgreSQL documentation · Write-Ahead Logging ↗</a></span></li>
+<li><strong>IBM</strong>'s ARIES paper laid out the whole steal / no-force / repeating-history / compensation-record package and records that it was implemented in IBM's OS/2 Extended Edition Database Manager and DB2 — <strong>still the template for mainstream relational recovery more than thirty years on.</strong> <span class="src"><a href="https://dl.acm.org/doi/10.1145/128765.128770" rel="noopener" target="_blank">C. Mohan et al., "ARIES", ACM TODS 17(1), 1992 ↗</a></span></li>
+<li><strong>Oracle / MySQL</strong>'s manual states plainly that InnoDB does not use a naive LRU: a newly read page <strong>is inserted at the list midpoint</strong> and only promoted on a second access, with the old sublist defaulting to <code>3/8</code> of the pool (<code>innodb_old_blocks_pct</code> = <code>37</code>), precisely so that scans <strong>cannot push out the hot set</strong>. Confirmation from the other direction that textbook LRU is not enough under real load. <span class="src"><a href="https://dev.mysql.com/doc/refman/8.4/en/innodb-buffer-pool.html" rel="noopener" target="_blank">MySQL 8.4 Reference Manual · Buffer Pool ↗</a></span></li>
+<li><strong>SQLite</strong>'s "How To Corrupt An SQLite Database File" describes <code>fsync</code> as an I/O barrier and lists among the leading causes of corruption a <strong>filesystem or hardware that lies about <code>fsync</code></strong> — one false "written" and every logging design above it fails at once. <span class="src"><a href="https://www.sqlite.org/howtocorrupt.html" rel="noopener" target="_blank">SQLite documentation · How To Corrupt An SQLite Database File ↗</a></span></li>
+<li><strong>The PostgreSQL community</strong> found "fsyncgate" in 2018: on Linux a <strong>failed</strong> writeback could consume the error flag, so the next <code>fsync</code> might return success while that page was already lost — an assumption that had sat in the code for nearly twenty years. The fix was to <strong>PANIC on <code>fsync</code> failure</strong> (introduced in PostgreSQL 12, backpatched to 9.4 and later). <strong>The chapter's one counter-example: no logging algorithm, however rigorous, survives a lower-level interface whose semantics do not hold.</strong> <span class="src"><a href="https://wiki.postgresql.org/wiki/Fsync_Errors" rel="noopener" target="_blank">PostgreSQL Wiki · Fsync Errors ↗</a></span></li>
+<li><strong>Amazon</strong>'s Aurora paper pushes this chapter's logic to its limit: if the log is the truth, then <strong>send only the redo log to the storage layer</strong> and let storage nodes materialize pages asynchronously and continuously. Amazon's own words: doing so "reduces networking traffic, <strong>avoids checkpoints and crash recovery</strong>." <span class="src"><a href="https://assets.amazon.science/dc/2b/4ef2b89649f9a393d37d3e042f4e/amazon-aurora-design-considerations-for-high-throughput-cloud-native-relational-databases.pdf" rel="noopener" target="_blank">A. Verbitski et al., "Amazon Aurora", SIGMOD 2017 ↗</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and open questions</h2>
+<ul>
+<li><strong>Conflating locks and latches</strong> — the single most common interview slip. What they guard, how long they live and how deadlocks are handled all differ; saying "the B-Tree takes locks while traversing" is almost always wrong, those are latches.</li>
+<li><strong>Believing "commit returned" means the data pages are on disk.</strong> It does not. At that instant only the <strong>log</strong> is guaranteed durable; the pages may not be flushed for minutes, until a checkpoint. That is what durability actually means, and why recovery is indispensable.</li>
+<li><strong>Believing ARIES recovery only undoes.</strong> The opposite: it <strong>redoes all of history first</strong>, losers included, and only then undoes. That apparent waste buys a drastically simpler and re-entrant recovery path.</li>
+<li><strong>Believing MVCC means lock-free and conflict-free.</strong> What it removes is blocking between <strong>readers and writers</strong>; write-write conflicts still need locks or commit-time validation. And snapshot isolation is not serializability — <strong>write skew</strong> is the classic anomaly it fails to catch.</li>
+<li><strong>Believing a successful <code>fsync</code> settles the matter.</strong> Fsyncgate showed that assumption quietly failing on the most mainstream OS for twenty years. Real durability requires hardware, firmware, filesystem and database all to be honest.</li>
+<li><strong>Where the chapter is of its time.</strong> Its model assumes disks are far slower than memory, which is what makes trading random writes for a log worthwhile. That premise is loosening from both ends: persistent memory and very low latency NVMe shrink the relative gain of logging, prompting a large research literature on in-memory recovery schemes that bypass classical WAL; and cloud-native databases such as Aurora push the log into the storage layer, so that "checkpoint" and "crash recovery" all but disappear from the database process. The chapter also says very little about distributed recovery — that waits for Ch13 in Part II.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① ACID is not any one module's doing: it is squeezed out of <strong>page cache + write-ahead log + concurrency control</strong>, whose shared trump card is "log it before you change it."</p>
+<p>② The judgement to keep: <strong>the log is the database's master copy</strong>; the data files are only a discardable, recomputable materialization of it.</p>
+<p>③ The database manages its own page cache to own three facts: what is in use (pinned), what has been modified (dirty), and what gets flushed first. <strong>A naive LRU is wiped out by one full table scan</strong>, so real engines use CLOCK or midpoint-insertion variants.</p>
+<p>④ The write-ahead rule: <strong>the log covering a dirty page must reach disk before the page does.</strong> The cost of a commit therefore shrinks to one sequential write plus one <code>fsync</code>, amortized further by group commit.</p>
+<p>⑤ The quadrant: industry converged unanimously on <strong>steal / no-force</strong> — fastest at runtime, at the price of needing both redo and undo in recovery. <strong>Complexity is moved off a path executed billions of times a day onto one run a handful of times a year.</strong></p>
+<p>⑥ ARIES in three phases: <strong>analysis → redo → undo</strong>. Redo repeats history, losers included; undo writes <strong>compensation records</strong> so that recovery itself can crash again without harm.</p>
+<p>⑦ Three concurrency routes: pessimistic locking (conflict-heavy), MVCC (the general read-mostly choice, paying for it in version cleanup), optimistic OCC (rare conflicts, otherwise a retry avalanche).</p>
+<p>⑧ <strong>Lock ≠ latch</strong>: a lock guards a logical object for a whole transaction and has deadlock detection; a latch guards a physical structure in memory for microseconds and avoids deadlock by a fixed acquisition order. B-Trees use <strong>latch crabbing</strong> — take the child, confirm it is safe, release the parent.</p>
+<p>⑨ Three judgement calls that are yours to make: checkpoint frequency (everyday overhead vs recovery time), log flush strictness (latency vs possibly losing committed transactions), isolation level (concurrency vs which anomalies the application must defend against). And the foundation is thinner than it looks — one lie from <code>fsync</code> and everything above it falls.</p>
+</div>
+</div>
+<footer>Book Deep Read · Reading this page ≈ having the chapter's core. For the full worked examples, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
