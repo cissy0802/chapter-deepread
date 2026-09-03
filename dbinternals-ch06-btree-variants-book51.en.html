@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals Ch 6 · B-Tree Variants — Book Deep Read Book 51</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">BOOK DEEP READ · Database Internals · Chapter 6</p>
+<h1>B-Tree Variants</h1>
+<p class="sub">Database Internals · Ch 6 · Alex Petrov · 2019</p>
+<p class="langbar"><a href="dbinternals-ch06-btree-variants-book51.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The previous chapters built the database's index: layers of signposts that get you to the right page in a few hops. This one asks a different question — <strong>that scheme was invented forty years ago for spinning disks and single-core machines. Does it still fit?</strong></p>
+<h2>A strange thing first</h2>
+<p>You probably assume the expensive part is <em>finding</em>. <strong>It isn't. The expensive part is changing.</strong> Edit an eighty-character record and the disk has to rewrite a whole page — thousands of characters. And so nobody reads a half-rewritten sheet, that page also gets a "work in progress" sign hung on it: everyone who passes has to wait. Finding a record costs three or four page turns. Changing one costs a full re-copy plus a queue of bystanders.</p>
+<h2>Why the old world is hard</h2>
+<p><strong>One: change one character, rewrite a whole page.</strong> The page is the disk's unit; changing one byte costs about what changing the whole page costs.</p>
+<p><strong>Two: the higher the "work in progress" sign hangs, the worse the jam.</strong> Everyone passes through the topmost sheet of the index. Put a sign on it and all the machine's cores queue behind it.</p>
+<p><strong>Three: overwriting in place is itself risky.</strong> Lose power halfway through overwriting a page and you are left with a half-old, half-new mess — most of the ledger from the previous chapter exists to clean up after exactly this.</p>
+<h2>The core idea: four ways to stop editing the original</h2>
+<p><strong>1. Re-copy instead of scribbling.</strong> To change a page, leave the original alone: copy it onto a fresh sheet and edit the copy, re-copying the signposts along the route from the cover down to it, then point the first line of the index at the new version — <strong>flipping that pointer is instantaneous</strong>, either old or new, never in between. Anyone reading the old version is entirely unaffected; readers never queue.</p>
+<p><strong>2. Stick notes on it, re-copy later.</strong> Instead of re-copying a page on every edit, stick a run of notes in the margin saying "this line now reads…", and let readers combine sheet and notes. Once the notes pile up, re-copy the whole thing once into a clean page.</p>
+<p><strong>3. File it in tiers.</strong> New changes go into the thin folder on top; when it fills, the whole folder is merged into a thicker one below, tier by tier. A finished folder is never edited again, so writing is always <strong>one continuous pass</strong> — exactly what flash likes, and the opposite of scattered little writes, which it hates.</p>
+<p><strong>4. Everyone cites door numbers, not addresses.</strong> Every signpost names a door number, and one registry maps "door number → current address". To change a page, write a small "change slip", pin it to the page, and repoint that one registry line at the slip — <strong>rewriting one registry line is a single indivisible instant</strong>, so nobody hangs a sign and nobody queues.</p>
+<h2>What it buys, and what it costs</h2>
+<p>Each trick cures one ailment: re-copying cures power loss and reader queues, margin notes cure "rewrite a page per character", tiered filing cures flash's dislike of scattered writes, door numbers cure queueing. <strong>The costs rhyme too</strong>: once a new version exists, someone has to sweep up the old one — the writes you save turn into space you occupy and background tidying you now owe.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p>The classic index tree is expensive to change, not to search. All four variants in this chapter attack the same assumption — <strong>does it really have to be edited in place?</strong> Stop editing in place and you get re-copying, note-sticking, tiered merging, or a pinned change slip plus a repointed door number. What you buy is power-loss safety, readers who never queue, and a shape flash likes. What you pay is space, and a tidying job that never ends.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the notation and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">This chapter isn't a tour of four new data structures. It takes the bundle that <em>is</em> a B-Tree — <strong>page-organized + updated in place + protected by latches</strong> — and replaces the parts one at a time. The thesis is a single counterintuitive claim: <em>a B-Tree's cost center moved long ago from "how many disk trips per lookup" to "how many bytes per change, and how many threads have to wait"</em>. So almost <strong>none</strong> of these variants exists to make lookups faster; they exist to <strong>write less, wait less, and suit flash better</strong>. And their first move is remarkably uniform: <strong>stop updating in place</strong>.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Page</strong>: the smallest unit a database reads and writes, commonly <code>4–16 KB</code>; one B-Tree node is usually one page.</li>
+<li><strong>In-place update</strong>: writing new content over the page's existing disk location — the classic B-Tree default.</li>
+<li><strong>Write amplification</strong>: bytes actually hitting the device per byte of useful data. Changing 100 bytes but rewriting an <code>8 KB</code> page is 80×.</li>
+<li><strong>Space amplification</strong>: space actually occupied per byte of useful data, including in-page slack and old versions not yet reclaimed.</li>
+<li><strong>Latch</strong>: a mutex over a physical in-memory structure, held for nanoseconds to microseconds — a different animal from a lock, which is held for a whole transaction.</li>
+<li><strong>CAS (compare-and-swap)</strong>: one atomic CPU instruction — "if this slot still holds the old value, install the new one, else tell me it failed". The bedrock of latch-free structures.</li>
+<li><strong>Latch-free / lock-free</strong>: threads make progress by retrying CAS rather than by excluding each other; a thread descheduled mid-operation stalls nobody else.</li>
+<li><strong>Copy-on-write (CoW)</strong>: don't touch the original page — copy it, edit the copy, then atomically flip the pointer. Also called shadow paging.</li>
+<li><strong>Memory mapping (mmap)</strong>: map the file into the process address space so reading the file is reading memory, with paging left to the OS.</li>
+<li><strong>MVCC</strong>: keep several versions of the same data; each read takes the version matching its point in time, so reads never block writes.</li>
+<li><strong>Delta record</strong>: a small record describing only what this change did, prepended to a node without touching the node itself.</li>
+<li><strong>Mapping table</strong>: a layer of indirection — pointers store logical page ids, and this table translates them to current physical addresses.</li>
+<li><strong>Reconciliation</strong>: combining "the on-disk page image + the updates accumulated in memory" into one clean, packed page, then writing it out.</li>
+<li><strong>Sorted run</strong>: a contiguous, key-sorted stretch of data that is never modified once written.</li>
+<li><strong>Fractional cascading</strong>: storing pointers into the next level inside the current one, so a level-by-level search need not re-search each level.</li>
+<li><strong>Erase block</strong>: flash cannot be overwritten in place; a whole block (often several MB) must be erased first, so scattered random writes trigger internal relocation.</li>
+<li><strong>Cache-oblivious</strong>: a layout that hard-codes no cache or page size, yet still achieves near-optimal I/O behavior.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This is Chapter 6 of Part I, "Storage Engines". Chapters 2–4 built the textbook B-Tree (structure, page formats, the engineering of splits and merges); Chapter 5 made it survive crashes and concurrency with a page cache, a write-ahead log and concurrency control. This chapter is the <strong>variation on that theme</strong>: if the classic B-Tree's pains all descend from updating in place, what grows when you drop that premise? It is also the bridge to what follows — <strong>Chapter 7's LSM-Tree pushes "never update in place, batch and write sequentially" to its limit</strong> — while the Bw-Tree's sibling pointers come from the B<sup>link</sup>-tree mentioned in Chapter 5, and its snapshots share ancestry with Chapter 5's MVCC.</p>
+<h2>What the chapter is solving</h2>
+<p>At <em>finding</em>, the classic B-Tree is close to flawless: a billion records with a fan-out in the hundreds is four levels deep, so a point lookup is a handful of I/Os. Every problem is on the <em>changing</em> side, and it splits into three bills.</p>
+<p><strong>Bill one: write amplification.</strong> Changing a <code>100-byte</code> record rewrites at least one <code>8–16 KB</code> page — <strong>80–160× at the page level alone</strong>. That's just the start. To stop a half-written page from leaving a <em>torn page</em> behind, engines pay a surcharge: MySQL InnoDB's <em>doublewrite buffer</em> writes each page twice, and PostgreSQL's <code>full_page_writes</code> stuffs an entire page into the WAL the first time it is modified after a checkpoint. Below that, SSDs manage <strong>erase blocks</strong> of several MB, so scattered random writes provoke internal relocation and stack on another layer. <strong>Updating in place is not a free default; it is the source of a stack of tax bills.</strong></p>
+<p><strong>Bill two: concurrency.</strong> Chapter 5's latch crabbing already shortens how long the root is held, but it cannot dissolve one fact: <strong>every lookup and every modification starts at the root, and there is only one root</strong>. On today's <code>64–128</code>-core machines the bottleneck is no longer disk seeks but cache lines bouncing between cores on those hot pages — one core touches the latch in the root and every other core's copy is invalidated. <strong>The more memory-resident and the more parallel the workload, the larger latching looms in the bill.</strong></p>
+<p><strong>Bill three: fragmentation and space.</strong> Nodes typically sit around 70% full, and briefly 50% after a split; after enough inserts and deletes, in-page holes and out-of-order pages accumulate until a sequential scan degrades from "read straight through" to "hop around".</p>
+<p>What if you don't fix any of this? Mostly nothing — mainstream databases have lived this way for decades. But in three settings the three bills turn fatal: <strong>write-heavy workloads</strong> (amplification eats bandwidth and SSD endurance), <strong>many-core in-memory databases</strong> (latching dominates everything), and <strong>embedded systems that must be usable the instant they restart</strong>. The variants here take aim at those three.</p>
+<h2>The core, properly explained</h2>
+<h3>1. Copy-on-write B-Trees: turn "change" into "repoint"</h3>
+<p>The idea in one line: <strong>no page is ever overwritten.</strong> To modify a leaf, copy it and edit the copy; the copy lives at a new address, so the parent's pointer must change too — which means copying the parent as well, <strong>all the way to the root</strong> (this is <em>path copying</em>). Then one pointer, "where the root is", is atomically flipped to the new root. Before the flip the new tree does not exist to anyone; at the flip it exists entirely. <strong>There is no in-between state, so there is nothing for a log to clean up.</strong></p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 272" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="c1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="c2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="15" y="20">Copy-on-write: edit one leaf, copy one path, flip the root pointer once</text>
+<rect fill="rgba(91,157,249,0.07)" height="26" rx="6" stroke="#7c8593" width="86" x="72" y="44"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="115" y="62">old root</text>
+<rect fill="rgba(91,157,249,0.07)" height="26" rx="6" stroke="#7c8593" width="70" x="30" y="106"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="65" y="124">inner A</text>
+<rect fill="rgba(91,157,249,0.07)" height="26" rx="6" stroke="#7c8593" width="70" x="130" y="106"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="165" y="124">inner B</text>
+<rect fill="rgba(91,157,249,0.07)" height="26" rx="6" stroke="#7c8593" width="62" x="18" y="168"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="49" y="186">leaf 1</text>
+<rect fill="rgba(91,157,249,0.07)" height="26" rx="6" stroke="#7c8593" width="62" x="92" y="168"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="123" y="186">leaf 2</text>
+<rect fill="rgba(91,157,249,0.07)" height="26" rx="6" stroke="#7c8593" width="62" x="166" y="168"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="197" y="186">leaf 3</text>
+<line stroke="#7c8593" x1="100" x2="65" y1="70" y2="106"></line>
+<line stroke="#7c8593" x1="130" x2="165" y1="70" y2="106"></line>
+<line stroke="#7c8593" x1="55" x2="49" y1="132" y2="168"></line>
+<line stroke="#7c8593" x1="75" x2="118" y1="132" y2="168"></line>
+<line stroke="#7c8593" x1="165" x2="197" y1="132" y2="168"></line>
+<text fill="#7c8593" font-size="10" x="18" y="216">old version: readers keep reading it, not a byte touched</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="243" x2="289" y1="120" y2="120"></line>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="266" y="112">edit leaf 3</text>
+<rect fill="rgba(155,108,245,0.22)" height="26" rx="6" stroke="#9b6cf5" stroke-width="2" width="86" x="430" y="44"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="473" y="62">new root′</text>
+<rect fill="rgba(91,157,249,0.07)" height="26" rx="6" stroke="#565c66" stroke-dasharray="3 3" width="70" x="330" y="106"></rect>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="365" y="124">inner A</text>
+<rect fill="rgba(155,108,245,0.22)" height="26" rx="6" stroke="#9b6cf5" stroke-width="2" width="70" x="500" y="106"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="535" y="124">inner B′</text>
+<rect fill="rgba(91,157,249,0.07)" height="26" rx="6" stroke="#565c66" stroke-dasharray="3 3" width="62" x="320" y="168"></rect>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="351" y="186">leaf 1</text>
+<rect fill="rgba(91,157,249,0.07)" height="26" rx="6" stroke="#565c66" stroke-dasharray="3 3" width="62" x="410" y="168"></rect>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="441" y="186">leaf 2</text>
+<rect fill="rgba(155,108,245,0.22)" height="26" rx="6" stroke="#9b6cf5" stroke-width="2" width="62" x="500" y="168"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="531" y="186">leaf 3′</text>
+<line marker-end="url(#c2)" stroke="#9b6cf5" x1="455" x2="380" y1="70" y2="104"></line>
+<line marker-end="url(#c2)" stroke="#9b6cf5" x1="495" x2="530" y1="70" y2="104"></line>
+<line marker-end="url(#c2)" stroke="#9b6cf5" x1="515" x2="450" y1="132" y2="166"></line>
+<line marker-end="url(#c2)" stroke="#9b6cf5" x1="540" x2="535" y1="132" y2="166"></line>
+<line stroke="#565c66" stroke-dasharray="3 3" x1="345" x2="351" y1="132" y2="168"></line>
+<text fill="#9b6cf5" font-size="9.5" x="300" y="216">purple = written this time (3 pages); dashed = shared, not copied</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10.5" x="15" y="246">meta page: root pointer — one atomic write turns "old root" into "new root′"</text>
+<text fill="#7c8593" font-size="10" x="15" y="264">the whole new tree goes live at once</text>
+</svg>
+<figcaption>Fig 1 · A copy-on-write B-Tree: only pages on the modified path (purple) are newly written; the rest is shared with the old tree, whose root still describes a consistent snapshot.</figcaption>
+</figure>
+<p><strong>It throws in three things for free.</strong> First, <strong>crash safety</strong>: the root pointer is either old or new, so what is on disk is always a consistent tree — no redo, no undo, usable straight after restart. Second, <strong>MVCC by construction</strong>: a read transaction grabs the root as of its start, and nothing a writer does can reach it, with not a single latch on the read path. Third, <strong>reads can go straight through a memory map</strong>: LMDB maps the whole database into the address space and returns data directly from mapped memory, with no malloc and no memcpy.</p>
+<p><strong>The costs land in three places, none of them light.</strong> One, <strong>single-write amplification is worse</strong>: in a four-level tree one changed record writes four new pages, so <code>100 bytes</code> costs <code>32–64 KB</code>. Two, <strong>there can be only one writer</strong>: path copying plus a root flip is inherently serial — writers can never deadlock, but write throughput is pinned to one thread. Three, <strong>reclaiming old pages</strong>: superseded pages go on a free list awaiting reuse, and <strong>as long as one old reader still pins the old root, not one of those pages can be reused</strong> — a read-only transaction running for half an hour visibly bloats the file, the same disease as a long transaction holding back PostgreSQL's vacuum.</p>
+<h3>2. Abstracting node updates and lazy B-Trees: split the in-memory form from the on-disk form</h3>
+<p>Copy-on-write fixed atomicity and read concurrency but not write amplification — one changed byte still rewrites a page. The lazy route comes at it differently: <strong>if rewriting a page is expensive, don't do it every time; accumulate updates in memory and compute a new page once enough have piled up.</strong></p>
+<p>The enabling insight is that <strong>a page's in-memory form need not equal its on-disk form</strong>. On disk it should be packed and scannable; in memory it can use pointers and skip lists, which suit the CPU. WiredTiger, MongoDB's default storage engine, works this way: once read in, the page image stays <strong>read-only</strong>, while new inserts and updates hang off that page in an <em>update chain</em>, and a read is the image plus the chain. Only when the page is evicted or checkpointed does <em>reconciliation</em> run, folding both into one clean page written out.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 252" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="l1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="l2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="15" y="20">Lazy B-Tree: a page = read-only disk image + in-memory update chain</text>
+<rect fill="none" height="122" rx="8" stroke="rgba(91,157,249,0.35)" stroke-dasharray="5 4" width="322" x="15" y="34"></rect>
+<text fill="#7c8593" font-family="monospace" font-size="10" x="26" y="50">memory</text>
+<rect fill="rgba(91,157,249,0.10)" height="52" rx="6" stroke="#5b9df9" width="108" x="26" y="60"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="80" y="81">base image</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="80" y="98">read-only</text>
+<rect fill="rgba(155,108,245,0.2)" height="24" rx="5" stroke="#9b6cf5" width="82" x="158" y="60"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="199" y="76">update k=7</text>
+<rect fill="rgba(155,108,245,0.2)" height="24" rx="5" stroke="#9b6cf5" width="82" x="158" y="90"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="199" y="106">insert k=9</text>
+<rect fill="rgba(155,108,245,0.2)" height="24" rx="5" stroke="#9b6cf5" width="82" x="256" y="60"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="297" y="76">delete k=3</text>
+<line marker-end="url(#l2)" stroke="#9b6cf5" x1="134" x2="154" y1="76" y2="74"></line>
+<line marker-end="url(#l2)" stroke="#9b6cf5" x1="134" x2="154" y1="98" y2="102"></line>
+<line marker-end="url(#l2)" stroke="#9b6cf5" x1="240" x2="252" y1="72" y2="72"></line>
+<text fill="#9b6cf5" font-size="9.5" x="158" y="146">update chain: writes touch only this</text>
+<text fill="#7c8593" font-size="9.5" x="26" y="130">a read merges</text>
+<text fill="#7c8593" font-size="9.5" x="26" y="144">image + chain</text>
+<line marker-end="url(#l1)" stroke="#7c8593" x1="346" x2="400" y1="98" y2="98"></line>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="376" y="88">evict /</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="376" y="118">checkpoint</text>
+<rect fill="rgba(91,157,249,0.14)" height="52" rx="6" stroke="#5b9df9" stroke-width="2" width="112" x="406" y="72"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="462" y="93">reconcile</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="462" y="110">clean new page</text>
+<line marker-end="url(#l1)" stroke="#7c8593" x1="518" x2="550" y1="98" y2="98"></line>
+<rect fill="rgba(155,108,245,0.14)" height="52" rx="6" stroke="#9b6cf5" width="70" x="554" y="72"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="589" y="94">write to</text>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="589" y="110">new spot</text>
+<text fill="#7c8593" font-size="10.5" x="15" y="196">n small updates → 1 page rewrite: amplification amortized over the chain</text>
+<text fill="#7c8593" font-size="10.5" x="15" y="218">cost: reads merge two sources; unflushed updates lean on the log after a crash</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" x="15" y="242">in-memory form (lists, skip lists) is now decoupled from on-disk form (packed page)</text>
+</svg>
+<figcaption>Fig 2 · The lazy move: updates land in an in-memory chain and are reconciled into a fresh page image only on eviction or checkpoint.</figcaption>
+</figure>
+<p>The arithmetic shows where the win is: if a page is modified <code>50</code> times between checkpoints, the classic engine flushes it many times, the lazy engine writes it <strong>once</strong> at reconciliation — <strong>amplification is amortized over the chain length</strong>. You pay with a heavier read path (two sources to merge) and updates sitting in memory unflushed, recoverable only via the write-ahead log. A relative on the same route is the <em>Lazy-Adaptive Tree</em>, which attaches buffers to subtrees rather than single pages and <strong>cascades</strong> updates down a level at a time when a buffer fills — already close to the flavor of the next chapter.</p>
+<h3>3. FD-Trees: a shape rearranged for flash</h3>
+<p>The first two moves stayed inside one tree. The FD-Tree changes the shape, for a very concrete reason: <strong>random writes are far costlier than sequential ones on flash</strong>, which cannot overwrite in place and must erase whole blocks, so small scattered writes provoke internal relocation. So: <strong>make every write sequential</strong>.</p>
+<p>The structure has two parts: a <strong>small B-Tree on top (the head tree)</strong> holding the newest data, and beneath it <strong>several levels of immutable sorted runs</strong> whose capacity grows by a fixed ratio per level. New data enters the head tree; when it fills, it is <strong>merged</strong> with the next level into a new sorted run — and a merge is one pass written front to back, exactly what flash wants. <strong>There is no random write left on the write path.</strong></p>
+<p>Tiering brings a new problem: a lookup must visit every level, and a binary search per level is a random read per level. <em>Fractional cascading</em> is the elegant fix: <strong>the upper run stores pointers (the book calls them fences) into the matching position in the level below</strong>. Having searched level 1 you already hold "start here on level 2", with no second search. The original paper's result: updates cost <code>O(logB n)</code> <strong>sequential</strong> I/Os while searches cost <code>O(logB n)</code> <strong>random</strong> ones (<code>B</code> is the flash page size) — in plain words, <strong>lookups stay in the same league as a plain B-Tree while writes drop to the level of a write-optimized structure</strong>.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 262" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="f1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+<marker id="f2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="15" y="20">FD-Tree: a small head tree over immutable runs, stitched by fence pointers</text>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="6" stroke="#5b9df9" stroke-width="2" width="150" x="15" y="38"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="90" y="58">head B-Tree</text>
+<text fill="#7c8593" font-size="9.5" x="176" y="57">newest writes land here</text>
+<rect fill="rgba(155,108,245,0.16)" height="26" rx="5" stroke="#9b6cf5" width="200" x="15" y="86"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="115" y="104">level 1 sorted run</text>
+<rect fill="rgba(155,108,245,0.16)" height="26" rx="5" stroke="#9b6cf5" width="330" x="15" y="130"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="180" y="148">level 2 sorted run (× k)</text>
+<rect fill="rgba(155,108,245,0.16)" height="26" rx="5" stroke="#9b6cf5" width="500" x="15" y="174"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="265" y="192">level 3 sorted run (× k²)</text>
+<line marker-end="url(#f1)" stroke="#9b6cf5" x1="90" x2="90" y1="68" y2="84"></line>
+<line marker-end="url(#f1)" stroke="#9b6cf5" x1="115" x2="115" y1="112" y2="128"></line>
+<line marker-end="url(#f1)" stroke="#9b6cf5" x1="180" x2="180" y1="156" y2="172"></line>
+<text fill="#9b6cf5" font-size="9.5" x="134" y="126">merge down when full</text>
+<text fill="#9b6cf5" font-size="9.5" x="200" y="170">merge = one sequential pass</text>
+<circle cx="190" cy="99" fill="none" r="5" stroke="#5b9df9"></circle>
+<circle cx="300" cy="143" fill="none" r="5" stroke="#5b9df9"></circle>
+<circle cx="436" cy="187" fill="none" r="5" stroke="#5b9df9"></circle>
+<line marker-end="url(#f2)" stroke="#5b9df9" stroke-dasharray="4 3" x1="196" x2="294" y1="103" y2="139"></line>
+<line marker-end="url(#f2)" stroke="#5b9df9" stroke-dasharray="4 3" x1="306" x2="430" y1="147" y2="183"></line>
+<text fill="#5b9df9" font-size="9.5" x="330" y="106">fence pointer: where to</text>
+<text fill="#5b9df9" font-size="9.5" x="330" y="120">start on the next level</text>
+<text fill="#7c8593" font-size="10.5" x="15" y="228">writes: sequential only — the shape flash prefers</text>
+<text fill="#7c8593" font-size="10.5" x="15" y="250">reads: level by level, but never re-searched — that is what fractional cascading buys</text>
+</svg>
+<figcaption>Fig 3 · The FD-Tree trades random writes for tiered sequential merges, then uses fence pointers to pull the cost of a multi-level search back down near single-level.</figcaption>
+</figure>
+<h3>4. Bw-Trees: delete latching entirely</h3>
+<p>The Bw-Tree (Microsoft Research, 2013) goes after bill two. Its goal is extreme: <strong>not one latch anywhere in the tree</strong>, with all progress made by CAS. Three parts, none optional.</p>
+<p><strong>Part one: delta records.</strong> To modify a page, leave it alone and write a small record saying only what changed, pointing at the page — forming a <em>delta chain</em>. A read walks the chain from its head, applying changes onto the base page. <strong>A write drops from "rewrite a page" to "append tens of bytes".</strong></p>
+<p><strong>Part two: the mapping table.</strong> This is the trick worth stealing. Every pointer in the tree holds a <strong>logical page id</strong>, not a physical address, and a mapping table translates ids to current addresses. Replacing a page therefore <strong>degenerates into changing one slot in that table</strong> — one CAS, atomic. <strong>Not a byte of the parent moves</strong>, which is precisely why latch-freedom is possible: modifying a page never requires holding its parent. A failed CAS just means someone else won; re-read and retry.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 272" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="b2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="15" y="20">Bw-Tree: pointers hold page ids, so replacing a page is one CAS</text>
+<rect fill="rgba(91,157,249,0.07)" height="30" rx="6" stroke="#7c8593" width="120" x="15" y="42"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="75" y="62">parent node</text>
+<text fill="#7c8593" font-size="9.5" x="15" y="88">it stores "page P7",</text>
+<text fill="#7c8593" font-size="9.5" x="15" y="104">never an address</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="139" x2="176" y1="57" y2="57"></line>
+<rect fill="rgba(91,157,249,0.12)" height="86" rx="7" stroke="#5b9df9" width="130" x="180" y="34"></rect>
+<text fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle" x="245" y="52">mapping table</text>
+<text fill="#b9c0ca" font-family="monospace" font-size="9.5" x="192" y="72">P6 → 0x…a10</text>
+<text fill="#e7ebf1" font-family="monospace" font-size="9.5" x="192" y="92">P7 → 0x…f28</text>
+<text fill="#b9c0ca" font-family="monospace" font-size="9.5" x="192" y="112">P8 → 0x…b04</text>
+<rect fill="none" height="16" rx="3" stroke="#9b6cf5" stroke-width="1.5" width="112" x="188" y="79"></rect>
+<text fill="#9b6cf5" font-size="9.5" x="176" y="136">flip this slot = page replaced</text>
+<line marker-end="url(#b2)" stroke="#9b6cf5" x1="314" x2="352" y1="86" y2="86"></line>
+<rect fill="rgba(155,108,245,0.22)" height="30" rx="6" stroke="#9b6cf5" stroke-width="2" width="104" x="356" y="42"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="408" y="62">delta: insert k=9</text>
+<rect fill="rgba(155,108,245,0.16)" height="30" rx="6" stroke="#9b6cf5" width="104" x="356" y="88"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="408" y="108">delta: delete k=3</text>
+<rect fill="rgba(91,157,249,0.10)" height="34" rx="6" stroke="#5b9df9" width="104" x="356" y="134"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="408" y="150">base page P7</text>
+<text fill="#7c8593" font-size="9" text-anchor="middle" x="408" y="164">(untouched)</text>
+<line marker-end="url(#b2)" stroke="#9b6cf5" x1="408" x2="408" y1="72" y2="86"></line>
+<line marker-end="url(#b2)" stroke="#9b6cf5" x1="408" x2="408" y1="118" y2="132"></line>
+<text fill="#9b6cf5" font-size="9.5" x="470" y="60">a new delta is</text>
+<text fill="#9b6cf5" font-size="9.5" x="470" y="74">tens of bytes</text>
+<text fill="#7c8593" font-size="9.5" x="470" y="108">a read walks the</text>
+<text fill="#7c8593" font-size="9.5" x="470" y="122">chain onto the base</text>
+<line marker-end="url(#b1)" stroke="#7c8593" stroke-dasharray="4 3" x1="408" x2="408" y1="172" y2="196"></line>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#5b9df9" stroke-dasharray="4 3" width="184" x="316" y="198"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="408" y="218">chain too long → consolidate</text>
+<text fill="#7c8593" font-size="10.5" x="15" y="212">a failed CAS means someone won:</text>
+<text fill="#7c8593" font-size="10.5" x="15" y="230">re-read the table, retry, nobody blocks</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" x="15" y="260">old versions can't be freed at once — epoch-based reclamation defers it</text>
+</svg>
+<figcaption>Fig 4 · The Bw-Tree's three parts: delta chains make writes cheap, the mapping table makes "replace a page" one atomic instruction, and consolidation plus deferred reclamation clean up after both.</figcaption>
+</figure>
+<p><strong>Part three: consolidation and reclamation.</strong> Longer chains mean slower reads (the paper's own curves show throughput falling as the chain grows), so past a threshold the page is <em>consolidated</em>: base plus chain are folded into a new page and CAS'd into the table. The superseded page and deltas <strong>cannot be freed immediately</strong> — threads may still be reading them, and in a latch-free structure nobody announces they are done. The answer is <em>epoch-based reclamation</em>: park doomed objects in the current epoch and free them once every thread that entered it has left.</p>
+<p><strong>And splits?</strong> That is the hard part: a split changes two nodes, the node and its parent, while a CAS is atomic over only one location. So it is broken into two individually atomic steps. <strong>Step one</strong> installs a split delta on the node carrying a <strong>side link</strong> to the new sibling (the B<sup>link</sup>-tree idea) — the structure is already usable, and threads arriving here follow the side link even though the parent knows nothing yet. <strong>Step two</strong> installs an index-entry delta at the parent. A thread that stumbles onto a half-finished split does not wait: it <strong>finishes step two on the other thread's behalf</strong> and moves on.</p>
+<h3>5. Cache-oblivious B-Trees: delete the page-size parameter too</h3>
+<p>The last route comes from algorithms — beautiful, rarely engineered. A classic B-Tree needs one tuning decision: how big a node must be to match the page size. But the storage hierarchy has many levels — L1/L2/L3, memory, SSD — each with its own block, and <strong>one node size cannot please them all</strong>. The cache-oblivious B-Tree flattens the tree using a recursive <em>van Emde Boas layout</em>: split the tree at half its height, store the top half and each bottom half contiguously, repeat. Now <strong>whatever block size the layer above reads with, the stretch it reads contains a contiguous slice of a root-to-leaf path</strong>, so near-optimal I/O falls out without knowing the block size. The cost is that <strong>maintaining the layout under updates is expensive</strong> — this is an idea to borrow from, not a production option.</p>
+<h2>Trade-offs and how to choose</h2>
+<p class="tcap">Table 1 · Four routes: what each cures, and what it charges</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Copy-on-write</th><th>Lazy / buffered</th><th>FD-Tree</th><th>Bw-Tree</th></tr></thead>
+<tbody>
+<tr><th>Treats</th><td>crash safety + read concurrency</td><td>write amplification</td><td>random writes on flash</td><td>latching cost on many cores</td></tr>
+<tr><th>Key move</th><td>path copying + atomic root flip</td><td>updates into a memory chain, reconcile on eviction</td><td>tiered immutable runs + fence pointers</td><td>delta chains + CAS on a mapping table</td></tr>
+<tr><th>Free upside</th><td><strong>no WAL and no recovery path needed</strong>; readers get snapshots</td><td>n updates amortized into 1 page rewrite</td><td>the write path is <strong>entirely sequential</strong></td><td>threads <strong>never block</strong>; a descheduled one stalls nobody</td></tr>
+<tr><th>Main cost</th><td><strong>per-write amplification ≈ tree height</strong>; <strong>one writer only</strong>; long readers pin old pages</td><td>reads merge two sources; unflushed updates need the log</td><td><strong>read amplification</strong> across levels + merge writes</td><td>complex; pointer chasing hurts CPU caches; needs epoch reclamation</td></tr>
+<tr><th>In the wild</th><td>LMDB (OpenLDAP)</td><td>WiredTiger (MongoDB), LA-Tree</td><td>research implementation; the idea lives on in LSM</td><td>nonclustered indexes on SQL Server memory-optimized tables</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · In-place vs not: one decision, a chain of consequences</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>In-place (classic B-Tree)</th><th>Never in place (this chapter)</th></tr></thead>
+<tbody>
+<tr><th>After a crash</th><td>pages may be torn, so <strong>a WAL must redo/undo</strong>, plus doublewrite or full-page WAL images</td><td>old versions are untouched and the switch is atomic — <strong>the lightest designs need no recovery at all</strong></td></tr>
+<tr><th>Readers vs writers</th><td>readers latch; they wait while a writer edits the page</td><td>the old version stays readable — <strong>snapshots / MVCC for free</strong></td></tr>
+<tr><th>Shape of writes</th><td>random, wherever the tree says</td><td>biased toward sequential (merges, appends) — friendly to flash</td></tr>
+<tr><th>Space</th><td>compact; slack comes from in-page holes</td><td><strong>room must be kept for old versions</strong>, so reclamation is mandatory</td></tr>
+<tr><th>Who cleans up</th><td>little to clean, but recovery code is intricate</td><td><strong>free lists, consolidation, epochs, reconciliation</strong> — saved writes become background work</td></tr>
+</tbody></table></div>
+<p><strong>Turning that into selection criteria:</strong></p>
+<ul>
+<li><strong>Read-heavy, barely written, embedded in the process, must be usable the instant it restarts</strong> (config stores, directory services, local caches) → copy-on-write: no latches and no copies on the read path, no recovery procedure, provided you can live with <strong>one writer</strong>.</li>
+<li><strong>General OLTP with real write volume, compression and multi-core writers</strong> → the lazy/buffered route; this is exactly WiredTiger's position.</li>
+<li><strong>Writes far outnumber reads, on flash</strong> → the tiered-merge shape (the FD-Tree expresses it in B-Tree terms; industry's answer is the next chapter's LSM-Tree). Choose it only when you are willing to buy write amplification with <strong>read amplification</strong>.</li>
+<li><strong>Fully in memory, many cores, latch contention is the top bottleneck</strong> → the latch-free route. But read the controversy below before you commit.</li>
+</ul>
+<h2>Why it matters / in real systems</h2>
+<p>The value here isn't that you will go implement a Bw-Tree; it is a <strong>transferable map of trade-offs</strong>: <em>immutability + indirection + buffering + deferred reclamation</em>. ZFS and Btrfs share copy-on-write ancestry with LMDB; container image layers and Git's object store are also "never edit the old, only add new, then swap one reference". <strong>Any system that replaces in-place modification with "write a new copy, flip a pointer atomically" gains snapshots and crash safety, and simultaneously takes on a garbage-collection debt.</strong> In interviews, "why does LMDB need no WAL", "is latch-free always faster", and "why do write-optimized stores all look like tiered merges" are all this chapter.</p>
+<div class="ev">
+<div class="evh">EVIDENCE FROM INDUSTRY · not the book's claims, but what these companies published themselves</div>
+<ul>
+<li><strong>LMDB (OpenLDAP)</strong> states the payoff of copy-on-write as a definition in its official header: "Data pages use a copy-on-write strategy so no active data pages are ever overwritten, which also provides resistance to corruption and <strong>eliminates the need of any special recovery procedures after a system crash</strong>." The same passage adds: "Writes are fully serialized; only one write transaction may be active at a time, which guarantees that writers can never deadlock," and "The database structure is multi-versioned so readers run with no locks; <strong>writers cannot block readers, and readers don't block writers</strong>." A direct confirmation that an atomic root flip buys crash safety and snapshots for free.<span class="src"><a href="https://github.com/LMDB/lmdb/blob/mdb.master/libraries/liblmdb/lmdb.h" rel="noopener" target="_blank">LMDB official source, lmdb.h (OpenLDAP repository mirror) ↗</a></span></li>
+<li><strong>WiredTiger (MongoDB's default engine)</strong> documents the lazy route in its architecture guide: "New key/value pairs are inserted into row-store leaf pages using a <code>WT_INSERT</code> structure. Existing entries on leaf pages can be updated, modified or deleted through <code>WT_UPDATE</code> structures. <strong>As new updates are made, these structures are chained into an update list</strong>"; a dirty page evicted from cache "goes through reconciliation".<span class="src"><a href="https://github.com/wiredtiger/wiredtiger/blob/develop/src/docs/arch-btree.dox" rel="noopener" target="_blank">WiredTiger architecture guide · arch-btree ↗</a></span></li>
+<li><strong>MongoDB</strong> turns that machinery into a user-facing promise: "WiredTiger uses MultiVersion Concurrency Control (MVCC). At the start of an operation, WiredTiger provides a point-in-time snapshot of the data to the operation," and "WiredTiger uses a write-ahead log (i.e. journal) in combination with checkpoints to ensure data durability."<span class="src"><a href="https://github.com/mongodb/docs/blob/master/source/core/wiredtiger.txt" rel="noopener" target="_blank">MongoDB documentation source · WiredTiger Storage Engine ↗</a></span></li>
+<li><strong>Microsoft</strong> shipped the Bw-Tree in SQL Server, and its documentation is blunter than the paper: "Nonclustered indexes on memory-optimized tables are implemented using a data structure called a Bw-tree, originally envisioned and described by Microsoft Research in 2011"; a Bw-tree is "<strong>a lock and latch-free variation of a B-tree</strong>"; and an update means the engine "creates a <strong>delta record</strong> that describes the change, and appends it to the previous page. Then it also updates the page map table address for that previous page, to the address of the delta record."<span class="src"><a href="https://learn.microsoft.com/en-us/sql/relational-databases/sql-server-index-design-guide" rel="noopener" target="_blank">Microsoft Learn · SQL Server Index Architecture and Design Guide ↗</a></span></li>
+<li><strong>Microsoft Research</strong>'s original paper (ICDE 2013) supplies the positive numbers — and its own boundary, since the evaluation is <strong>in-memory only</strong>: on a real Xbox LIVE workload (<code>27 million</code> get/set operations, read-to-write about <code>7.5:1</code>), "the Bw-tree exhibits a throughput of 10.4M operations/second, while BerkeleyDB has a throughput of 555K operations/second, representing <strong>a speedup of 18.7x</strong>"; the write-heavier deduplication workload keeps an <code>8.6×</code> speedup and the synthetic one <code>5.8×</code>. Against a latch-free skip list it is roughly <code>3.7×</code> (<code>3.83</code> vs <code>1.02 M ops/sec</code>).<span class="src"><a href="https://www.microsoft.com/en-us/research/publication/the-bw-tree-a-b-tree-for-new-hardware/" rel="noopener" target="_blank">J. Levandoski, D. Lomet, S. Sengupta, "The Bw-Tree", ICDE 2013 ↗</a></span></li>
+<li><strong>The counter-evidence · CMU et al. (SIGMOD 2018)</strong> reimplemented the Bw-Tree and reached the opposite conclusion: "Unfortunately, the Bw-Tree papers from Microsoft are <strong>missing important details and the source code has not been released</strong>." Their optimized variant is <code>1.1–2.5×</code> faster than the original proposal, yet the verdict is unambiguous: "despite our improvements, <strong>the Bw-Tree still does not perform as well as other concurrent data structures that use locks</strong>." The strongest available rebuttal to "latch-free must be faster".<span class="src"><a href="https://dl.acm.org/doi/10.1145/3183713.3196895" rel="noopener" target="_blank">Z. Wang, A. Pavlo et al., "Building a Bw-Tree Takes More Than Just Buzz Words", SIGMOD 2018 ↗</a></span></li>
+<li><strong>The FD-Tree paper (VLDB 2010)</strong> describes its own structure and payoff: "an FD-tree consists of the head tree – a small B+-tree on the top, and a few levels of sorted runs of increasing sizes at the bottom", it "performs an update in <code>O(logB n)</code> sequential I/Os and completes a search in <code>O(logB n)</code> random I/Os", and the result is "a similar search performance to the standard B+-tree, and a similar update performance to the write-optimized B+-tree variant" — precisely the both-ends-covered outcome this chapter is after.<span class="src"><a href="https://www.microsoft.com/en-us/research/publication/tree-indexing-on-solid-state-drives/" rel="noopener" target="_blank">Y. Li, B. He, R. J. Yang, Q. Luo, K. Yi, "Tree Indexing on Solid State Drives", VLDB 2010 ↗</a></span></li>
+</ul>
+</div>
+<h2>Traps and controversies</h2>
+<ul>
+<li><strong>Thinking copy-on-write saves writes.</strong> The opposite: <strong>per-write amplification is worse</strong>, since a whole path is copied. It wins elsewhere — no WAL, no torn-page doublewrite, no recovery path, and a snapshot thrown in. Score it <strong>end to end</strong>, not per write.</li>
+<li><strong>Reading LMDB's "lock-free" as high write concurrency.</strong> The lock-freedom is for <strong>readers</strong>; there is always exactly <strong>one writer</strong>. Stunning when reads dominate, a hard ceiling when writes do.</li>
+<li><strong>Forgetting that immutability bills you later.</strong> Someone must reclaim old versions: free lists for copy-on-write, epochs for the Bw-Tree, reconciliation and checkpoints for the lazy route. <strong>One long reader pinning old versions is enough to make the file grow without bound.</strong></li>
+<li><strong>Equating the Bw-Tree's latch-freedom with speed.</strong> This is the chapter's live controversy. The SIGMOD 2018 reimplementation found that pointer chasing along delta chains, the extra hop through the mapping table and epoch reclamation together <strong>can outweigh the latches you removed</strong>, while <em>optimistic lock coupling</em> — readers validate a version counter instead of taking a lock — reaches comparable scalability far more simply. Latch-freedom is a trade, not free speed.</li>
+<li><strong>Mistaking the FD-Tree for an LSM-Tree.</strong> The shape rhymes (tiers, merges, sequential writes), but an updatable B-Tree still sits on top, and <strong>fence pointers</strong> exist specifically to hold down multi-level read amplification. It is a B-Tree borrowing from LSM, not LSM itself.</li>
+<li><strong>Period limits.</strong> The chapter's cost model rests on "random writes are far dearer than sequential ones" and "the page is the indivisible unit of I/O" — both being loosened by NVMe and byte-addressable persistent memory, while the B-Tree/LSM boundary keeps blurring. More fundamentally: <strong>none of these variants is a free lunch</strong>. They move cost from the write path to the read path, and from run time to the background.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① A classic B-Tree's cost center is changing, not finding: <code>100 bytes</code> changed rewrites an <code>8–16 KB</code> page, and latches must fend off concurrency. Every variant here attacks those two bills.</p>
+<p>② The three bills: <strong>write amplification</strong> (80–160× at the page level, plus doublewrite / full-page WAL / SSD erase blocks), <strong>latching cost</strong> (cache-line contention on the root across cores), and <strong>fragmentation and space</strong>.</p>
+<p>③ <strong>Copy-on-write</strong>: path copying plus an atomic root flip. Crash safety (you can drop the WAL entirely) and snapshot isolation come free; you pay per-write amplification ≈ tree height, <strong>a single writer</strong>, and old pages held hostage by long readers. See LMDB.</p>
+<p>④ <strong>Lazy / buffered</strong>: accept that the in-memory form need not equal the on-disk form; updates hang in a memory chain and are <strong>reconciled into one new page</strong> at eviction or checkpoint, amortizing n changes into one rewrite. See WiredTiger.</p>
+<p>⑤ <strong>FD-Tree</strong>: a small head B-Tree over tiered immutable sorted runs makes every write sequential, and <strong>fence pointers (fractional cascading)</strong> cancel the read amplification of searching many levels. It is the bridge to the next chapter's LSM.</p>
+<p>⑥ <strong>Bw-Tree</strong>: delta chains (cheap writes) + a <strong>mapping table</strong> (replacing a page is one CAS, the parent untouched) + consolidation and epoch reclamation. Splits become two atomic steps held together by a B<sup>link</sup>-style side link, and passing threads finish the job for you.</p>
+<p>⑦ <strong>Cache-oblivious B-Tree</strong>: a van Emde Boas layout deletes "how big is a page" from the design. Lovely idea, costly to maintain, rare in practice.</p>
+<p>⑧ The through-line: <strong>immutability + indirection + buffering + deferred reclamation</strong> — the writes you save reappear as space occupied and background work owed. The total does not vanish.</p>
+<p>⑨ The counterintuitive conclusion worth keeping: <strong>latch-free does not mean faster</strong>. The vendor reports 18.7× (in memory, against BerkeleyDB); an independent reimplementation finds it still trails modern lock-based structures. <strong>Read whose experiment it is, on which workload, against what.</strong></p>
+</div>
+</div>
+<footer>Book Deep Read · Reading this page ≈ having the chapter's core. For the full worked examples, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

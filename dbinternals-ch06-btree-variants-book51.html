@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals 第 6 章 · B-Tree 变体 — 专业书籍精读 Book 51</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · Database Internals · 第 6 章</p>
+<h1>B-Tree 变体</h1>
+<p class="sub">Database Internals · Ch 6 · Alex Petrov · 2019</p>
+<p class="langbar"><a href="dbinternals-ch06-btree-variants-book51.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>前几章把数据库那本「目录」建好了：一层层的路标，几步就翻到你要的那一页。这一章问的是另一件事——<strong>这套办法是四十年前为机械硬盘、单核机器想出来的，今天还合身吗？</strong></p>
+<h2>先说个怪事</h2>
+<p>你大概以为，数据库的贵在于「找」。<strong>其实贵在「改」。</strong>你改一条八十个字的记录，硬盘上至少要重写一整页（几千到上万个字）；而且为了别人不会读到一张改到一半的纸，这页上还得挂个「施工中」的牌子——谁路过谁等。找一条记录只要翻三四页，改一条记录却要重抄一页、还要让路人排队。</p>
+<h2>旧世界为什么难</h2>
+<p><strong>一，改一个字，重写一整页。</strong>页是硬盘的最小单位，改一个字节和改一整页花的力气差不多。</p>
+<p><strong>二，「施工中」的牌子挂在越上面越堵。</strong>目录树的最顶上那一页人人都要路过，它一挂牌，整台机器的几十个核就一起排队。</p>
+<p><strong>三，原地涂改本身就危险。</strong>正把一页覆盖到一半断电，这页就成了半旧半新的乱码——上一章那本流水账，一多半就是为了给这种「涂改」擦屁股。</p>
+<h2>核心机制：四种「别在原稿上涂改」的办法</h2>
+<p><strong>一、誊清而不涂改。</strong>要改哪一页，不动原稿，抄一张新的、在新纸上改；从封面到那一页的一路路标也跟着重抄，最后把目录第一行指向新版本——<strong>换指向是一瞬间的事</strong>，要么旧要么新，没有中间态。正在读旧版本的人完全不受影响，读者永远不必排队。</p>
+<p><strong>二、先贴便签，攒够了再誊。</strong>不必每改一次就重抄整页，先在页边贴一串便签写「这行改成了什么」，读的人把原页和便签合起来看；便签攒多了再一次性重抄成干净的一页。</p>
+<p><strong>三、分层归档。</strong>新改动先进最上面那本薄册子，薄册子满了就整本并进下面更厚的一本，一层层往下。每本册子做好就不再改，写下去全是<strong>一口气顺着写</strong>——固态盘最喜欢这样，最怕东一处西一处地零敲碎打。</p>
+<p><strong>四、大家只认门牌号，不认地址。</strong>所有指路的地方都写门牌号，另有一本「门牌号 → 现在的地址」的登记簿。要改某一页，就写一张「改动条」贴在原页上，再把登记簿那一行改指向它——<strong>改一行登记簿是不可分割的瞬间动作</strong>，谁都不用挂牌、不用排队。</p>
+<h2>带来了什么 / 该怎么选</h2>
+<p>这四招各治一个病：誊清治「怕断电、读者排队」，便签治「改一个字重写一页」，分层归档治「固态盘怕零散写」，门牌号治「排队」。<strong>代价也都长得像</strong>：新版本写出来了，旧版本得有人打扫——省下的写，往往变成多占的空间和一堆后台整理的活。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>经典的目录树贵在改，不在找。这一章的四个变体全在拆同一个假设——<strong>非得在原地涂改不可吗？</strong>不涂改，改成誊清一份、贴便签攒着、分层归并、或者只追加一张改动条再换个门牌指向；换来的是不怕断电、读者不排队、对固态盘友好，付出的是空间和一份没完没了的打扫工作。</p>
+</div>
+<p class="switch-hint">想进到具体机制、记号和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">这一章不是介绍四个新数据结构，而是把「B-Tree = <strong>按页组织 + 原地修改 + 加闩保护</strong>」这个捆绑拆开，逐项替换掉。核心命题只有一句反直觉的话：<em>B-Tree 的成本重心早就从「查一次要跑几趟盘」挪到了「改一次要写多少字节、要让多少线程等」</em>——所以本章所有变体，几乎<strong>没有一个是为了让查找更快</strong>，它们都是为了让<strong>写更少、等更短、对闪存更友好</strong>。而它们共同的第一步动作惊人地一致：<strong>不再原地修改</strong>。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>页（page）</strong>：数据库读写磁盘的最小单位，常见 <code>4–16 KB</code>；B-Tree 的一个节点通常就是一页。</li>
+<li><strong>原地更新（in-place update）</strong>：把新内容直接覆盖到该页原来的磁盘位置上——经典 B-Tree 的默认做法。</li>
+<li><strong>写放大（write amplification）</strong>：写入 1 字节有效数据，实际落到设备上的字节数。改 100 字节却重写一个 <code>8 KB</code> 页，就是 80 倍。</li>
+<li><strong>空间放大（space amplification）</strong>：存 1 字节有效数据实际占的空间，包括页内空位与尚未回收的旧版本。</li>
+<li><strong>闩（latch）</strong>：加在内存中物理结构上、只持续纳秒到微秒的互斥，本质是互斥量；与持续整个事务的「锁」是两回事。</li>
+<li><strong>CAS（compare-and-swap，比较并交换）</strong>：CPU 的一条原子指令——「若这个位置还是旧值就换成新值，否则告诉我失败」。无闩结构的地基。</li>
+<li><strong>无闩 / lock-free</strong>：线程不靠互斥推进，靠 CAS 反复重试；任一线程被挂起也不会卡住其他线程。</li>
+<li><strong>写时复制（copy-on-write, CoW）</strong>：不改原页，复制一份改在副本上，最后原子地把指向切到副本；也叫影子分页（shadow paging）。</li>
+<li><strong>内存映射（mmap）</strong>：把文件映射进进程地址空间，读文件变成读内存，调页交给操作系统。</li>
+<li><strong>MVCC（多版本并发控制）</strong>：同一份数据保留多个版本，读按自己的时间点取对应版本，于是读不阻塞写。</li>
+<li><strong>增量记录（delta record）</strong>：只描述「这次改了什么」的小记录，挂在原节点前面，不动原节点本身。</li>
+<li><strong>映射表（mapping table）</strong>：一层间接寻址——指针存的是逻辑页号，由这张表翻译成当前物理地址。</li>
+<li><strong>归并成页（reconciliation）</strong>：把「磁盘上的页镜像 + 内存里累积的更新」算成一个干净紧凑的新页再写出去。</li>
+<li><strong>有序段（sorted run）</strong>：一段按键排好序、写完就不再修改的连续数据。</li>
+<li><strong>分数级联（fractional cascading）</strong>：在上层预存指向下层位置的指针，使逐层查找不必每层重新二分。</li>
+<li><strong>擦除块</strong>：闪存不能就地改写，必须整块（常见几 MB）擦除后再写，所以零散随机写会诱发内部搬迁。</li>
+<li><strong>缓存无关（cache-oblivious）</strong>：布局不写死任何一级缓存 / 页的大小，却仍能拿到接近最优的 I/O 表现。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>本章位于 Part I「存储引擎」的第 6 章。Ch2–Ch4 建起了教科书式的 B-Tree（结构、页格式、分裂与合并的工程细节），Ch5 用页缓存 + 预写日志 + 并发控制让它扛住崩溃与并发。这一章是同一条线上的<strong>变奏</strong>：既然经典 B-Tree 的痛点都源自「原地修改」，那把这个前提换掉会长出什么样子。它同时是通向下一章的桥——<strong>Ch7 的 LSM-Tree 就是把「不原地改、攒批顺序写」推到极致</strong>；而 Bw-Tree 用到的兄弟指针来自 Ch5 提过的 Blink-tree，MVCC 快照的思路则和 Ch5 的并发控制一脉相承。</p>
+<h2>这章要解决什么</h2>
+<p>经典 B-Tree 在「找」这件事上几乎无可挑剔：<code>10 亿</code>条记录、扇出几百的树高也就 4 层，一次点查最多几趟 I/O。问题全在「改」的那一侧，可以摊成三笔账。</p>
+<p><strong>第一笔，写放大。</strong>改一条 <code>100 字节</code>的记录，磁盘上最少重写一个 <code>8–16 KB</code> 的页——<strong>页级放大就有 80–160 倍</strong>。这还只是开头：为防止「页写到一半断电」留下半新半旧的<em>撕裂页（torn page）</em>，引擎还得交税——MySQL InnoDB 的<em>双写缓冲（doublewrite buffer）</em>把同一页写两遍，PostgreSQL 的 <code>full_page_writes</code> 要求每次检查点后第一次改某页时把整页塞进 WAL。再往下，固态盘按<strong>擦除块</strong>（常见几 MB）管理，零散随机写诱发内部搬迁，又叠一层。<strong>「原地更新」不是免费的默认选项，它是一串税单的源头。</strong></p>
+<p><strong>第二笔，并发。</strong>Ch5 的闩蟹行已经把根节点持闩时间压得很短，但压不掉一个事实：<strong>每次查找和修改都必须从根开始，而根只有一个</strong>。单机 <code>64–128</code> 核的今天，瓶颈不再是磁盘寻道，而是热点页上的缓存行来回弹跳——一个核动了根上的闩，其他核缓存里的副本就作废。<strong>越是内存驻留、越是多核，加闩本身的开销占比越高。</strong></p>
+<p><strong>第三笔，碎片与空间。</strong>节点通常只装到七成满，分裂后一度只有五成；反复增删之后，页内空洞与页间顺序错乱一起累积，顺序扫描从「顺着读」退化成「到处跳」。</p>
+<p>不解决会怎样？也没怎样——几十年主流数据库都这么活着。但三种场景里这三笔账会变成致命伤：<strong>写密集负载</strong>（吃掉带宽与 SSD 寿命）、<strong>多核内存数据库</strong>（加闩开销压过一切）、<strong>要求崩溃后零恢复时间</strong>的嵌入式场景。本章的变体分别冲着它们去。</p>
+<h2>核心内容，讲透</h2>
+<h3>一、写时复制 B-Tree：把「改」变成「换指向」</h3>
+<p>思路一句话：<strong>任何页都不再被覆盖。</strong>要修改某个叶子，就复制一份、改在副本上；副本换了地址，父节点里那个指针就得跟着改——于是父节点也得复制一份……<strong>一路复制到根</strong>（这叫<em>路径拷贝</em>）。最后把「树根在哪」这一个指针原子地切到新根上。切换之前，整棵新树对外不存在；切换完成的一瞬间，它整个生效。<strong>没有中间态，也就不需要日志来擦屁股。</strong></p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 268" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="c1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="c2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="15" y="20">写时复制：改一个叶子，重抄一条路径，最后换一次根指针</text>
+<rect fill="rgba(91,157,249,0.07)" height="26" rx="6" stroke="#7c8593" width="86" x="72" y="44"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="115" y="62">旧根</text>
+<rect fill="rgba(91,157,249,0.07)" height="26" rx="6" stroke="#7c8593" width="70" x="30" y="106"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="65" y="124">中间 A</text>
+<rect fill="rgba(91,157,249,0.07)" height="26" rx="6" stroke="#7c8593" width="70" x="130" y="106"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="165" y="124">中间 B</text>
+<rect fill="rgba(91,157,249,0.07)" height="26" rx="6" stroke="#7c8593" width="62" x="18" y="168"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="49" y="186">叶 1</text>
+<rect fill="rgba(91,157,249,0.07)" height="26" rx="6" stroke="#7c8593" width="62" x="92" y="168"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="123" y="186">叶 2</text>
+<rect fill="rgba(91,157,249,0.07)" height="26" rx="6" stroke="#7c8593" width="62" x="166" y="168"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="197" y="186">叶 3</text>
+<line stroke="#7c8593" x1="100" x2="65" y1="70" y2="106"></line>
+<line stroke="#7c8593" x1="130" x2="165" y1="70" y2="106"></line>
+<line stroke="#7c8593" x1="55" x2="49" y1="132" y2="168"></line>
+<line stroke="#7c8593" x1="75" x2="118" y1="132" y2="168"></line>
+<line stroke="#7c8593" x1="165" x2="197" y1="132" y2="168"></line>
+<text fill="#7c8593" font-size="10" x="18" y="216">旧版本：读者继续读它，一个字节都没被动过</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="240" x2="286" y1="120" y2="120"></line>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="263" y="112">改叶 3</text>
+<rect fill="rgba(155,108,245,0.22)" height="26" rx="6" stroke="#9b6cf5" stroke-width="2" width="86" x="430" y="44"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="473" y="62">新根′</text>
+<rect fill="rgba(91,157,249,0.07)" height="26" rx="6" stroke="#565c66" stroke-dasharray="3 3" width="70" x="330" y="106"></rect>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="365" y="124">中间 A</text>
+<rect fill="rgba(155,108,245,0.22)" height="26" rx="6" stroke="#9b6cf5" stroke-width="2" width="70" x="500" y="106"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="535" y="124">中间 B′</text>
+<rect fill="rgba(91,157,249,0.07)" height="26" rx="6" stroke="#565c66" stroke-dasharray="3 3" width="62" x="320" y="168"></rect>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="351" y="186">叶 1</text>
+<rect fill="rgba(91,157,249,0.07)" height="26" rx="6" stroke="#565c66" stroke-dasharray="3 3" width="62" x="410" y="168"></rect>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="441" y="186">叶 2</text>
+<rect fill="rgba(155,108,245,0.22)" height="26" rx="6" stroke="#9b6cf5" stroke-width="2" width="62" x="500" y="168"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="531" y="186">叶 3′</text>
+<line marker-end="url(#c2)" stroke="#9b6cf5" x1="455" x2="380" y1="70" y2="104"></line>
+<line marker-end="url(#c2)" stroke="#9b6cf5" x1="495" x2="530" y1="70" y2="104"></line>
+<line marker-end="url(#c2)" stroke="#9b6cf5" x1="515" x2="450" y1="132" y2="166"></line>
+<line marker-end="url(#c2)" stroke="#9b6cf5" x1="540" x2="535" y1="132" y2="166"></line>
+<line stroke="#565c66" stroke-dasharray="3 3" x1="345" x2="351" y1="132" y2="168"></line>
+<text fill="#9b6cf5" font-size="10" x="320" y="216">紫色 = 这次新写的页（3 页）；虚线 = 与旧树共享、未复制</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10.5" x="18" y="246">元数据页：根指针 —— 一次原子写从「旧根」改成「新根′」，整棵新树同时生效</text>
+</svg>
+<figcaption>图 1 · 写时复制 B-Tree：只有被改动路径上的页（紫色）是新写的，其余与旧树共享。旧根仍然完整，因此老读者读到的是一个一致的快照。</figcaption>
+</figure>
+<p><strong>它顺手买一送三。</strong>其一，<strong>崩溃安全免费</strong>：根指针要么旧要么新，磁盘上永远是一棵自洽的树，不需要 redo / undo，重启即可用。其二，<strong>天然 MVCC</strong>：读事务开始时抓住当时的根，之后写者怎么折腾都碰不到它，读路径上一把闩都不用加。其三，<strong>读可以直接走内存映射</strong>：LMDB 把整个数据库 <code>mmap</code> 进地址空间，取数据直接从映射内存返回，不 malloc 不 memcpy。</p>
+<p><strong>代价在三处，都不轻。</strong>其一，<strong>单次写放大更大</strong>：树高 4 的树改一条记录要新写 4 页，<code>100 字节</code>付出 <code>32–64 KB</code>。其二，<strong>写者只能有一个</strong>：路径拷贝 + 换根天然串行，好处是写者永不死锁，坏处是写吞吐锁死在单线程。其三，<strong>旧页回收</strong>：换下来的页要进空闲页表等复用，而<strong>只要还有一个老读事务钉着旧根，那批页就一页也不能复用</strong>——一个跑了半小时的只读事务就能让文件肉眼可见地膨胀，和 PostgreSQL 里长事务拖住 vacuum 是同一个病。</p>
+<h3>二、抽象节点更新与惰性 B-Tree：让内存形态和磁盘形态分家</h3>
+<p>写时复制解决了原子性和读并发，却没解决写放大——改一个字节仍要重写整页。惰性（lazy）路线换了个角度：<strong>既然重写整页贵，就别每次都重写；把更新先攒在内存里，攒够了再算出一个新页。</strong></p>
+<p>关键是承认一件事：<strong>页在内存里的形态，没必要等于它在磁盘上的形态。</strong>磁盘形态要紧凑、能顺序扫描，内存形态则可以用指针、跳表这类对 CPU 友好的结构。WiredTiger（MongoDB 的默认存储引擎）就是典型：磁盘上的页镜像读进内存后<strong>保持只读</strong>，新的插入与更新挂进这一页附带的<em>更新链</em>，读取时把「基础镜像 + 更新链」合起来看；等到这页被驱逐或做检查点时，才执行一次<em>归并（reconciliation）</em>，把两边算成一个干净的新页写出去。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="l1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="l2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="15" y="20">惰性 B-Tree：一页 = 只读的磁盘镜像 + 内存里的更新链</text>
+<rect fill="none" height="120" rx="8" stroke="rgba(91,157,249,0.35)" stroke-dasharray="5 4" width="330" x="15" y="36"></rect>
+<text fill="#7c8593" font-family="monospace" font-size="10" x="26" y="52">内存</text>
+<rect fill="rgba(91,157,249,0.10)" height="52" rx="6" stroke="#5b9df9" width="104" x="28" y="62"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="80" y="83">基础页镜像</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="80" y="100">只读·不修改</text>
+<rect fill="rgba(155,108,245,0.2)" height="24" rx="5" stroke="#9b6cf5" width="72" x="160" y="62"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="196" y="78">改 k=7</text>
+<rect fill="rgba(155,108,245,0.2)" height="24" rx="5" stroke="#9b6cf5" width="72" x="160" y="92"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="196" y="108">插 k=9</text>
+<rect fill="rgba(155,108,245,0.2)" height="24" rx="5" stroke="#9b6cf5" width="72" x="252" y="62"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="288" y="78">删 k=3</text>
+<line marker-end="url(#l2)" stroke="#9b6cf5" x1="132" x2="156" y1="78" y2="78"></line>
+<line marker-end="url(#l2)" stroke="#9b6cf5" x1="132" x2="156" y1="100" y2="104"></line>
+<line marker-end="url(#l2)" stroke="#9b6cf5" x1="232" x2="248" y1="74" y2="74"></line>
+<text fill="#9b6cf5" font-size="9.5" x="160" y="146">更新链：写只碰这里，不重写整页</text>
+<text fill="#7c8593" font-size="9.5" x="28" y="132">读 = 镜像</text>
+<text fill="#7c8593" font-size="9.5" x="28" y="146">＋ 更新链</text>
+<line marker-end="url(#l1)" stroke="#7c8593" x1="360" x2="404" y1="98" y2="98"></line>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="382" y="90">驱逐 /</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="382" y="118">检查点</text>
+<rect fill="rgba(91,157,249,0.14)" height="52" rx="6" stroke="#5b9df9" stroke-width="2" width="112" x="412" y="72"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="468" y="93">归并</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="468" y="110">算出干净新页</text>
+<line marker-end="url(#l1)" stroke="#7c8593" x1="524" x2="556" y1="98" y2="98"></line>
+<rect fill="rgba(155,108,245,0.14)" height="52" rx="6" stroke="#9b6cf5" width="64" x="560" y="72"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="592" y="94">写到新</text>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="592" y="110">位置</text>
+<text fill="#7c8593" font-size="10.5" x="15" y="196">n 次小改动 → 1 次页重写：写放大按更新链长度摊薄</text>
+<text fill="#7c8593" font-size="10.5" x="15" y="218">代价：读要合并两份数据；内存里挂着尚未落盘的更新；崩溃时靠日志补回</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" x="15" y="240">同一页的内存形态（链表 / 跳表）与磁盘形态（紧凑页）从此解耦</text>
+</svg>
+<figcaption>图 2 · 惰性 B-Tree 的核心动作：更新先进内存里的更新链，直到驱逐或检查点时才归并成一个新的页镜像写出。</figcaption>
+</figure>
+<p>算一笔账就明白它值在哪：如果一页在两次检查点之间被改了 <code>50</code> 次，经典做法是把这页刷 <code>50</code> 次（或至少多次），惰性做法只在归并时写<strong>一次</strong>——<strong>写放大按更新链长度摊薄</strong>。代价是读路径变重（要合并两处数据）、内存里驻着尚未落盘的更新（崩溃时靠预写日志补回）。同一路线上还有一支<em>惰性自适应树（LA-Tree）</em>：把缓冲区挂在子树上而不是单页上，缓冲满了就把更新<strong>级联</strong>下推到下一层的缓冲区，一路推到叶子——已经很接近下一章 LSM 的味道了。</p>
+<h3>三、FD-Tree：为固态盘重排的形状</h3>
+<p>前两招都还在「一棵树」的框架里。FD-Tree 换了形状，动机非常具体：<strong>闪存上随机写远比顺序写贵</strong>（不能就地改写，必须整块擦除后重写，零散小写会诱发内部搬迁）。既然如此，那就<strong>把所有写变成顺序写</strong>。</p>
+<p>结构分两部分：顶上是一棵<strong>很小的 B-Tree（head tree）</strong>，装得下最新的少量数据；下面是<strong>若干层不可变的有序段</strong>，容量按固定倍数逐层放大。新数据先进头部小树，满了就与下一层<strong>归并</strong>成一个新的有序段——归并是从头到尾顺着写的，正合闪存胃口。<strong>写路径上再没有一次随机写。</strong></p>
+<p>但分层带来一个新麻烦：查一个键要逐层去找，每层一次二分查找就是一次随机读，层数一多读就塌了。<em>分数级联</em>是这里的点睛之笔：<strong>在上层的段里预先埋下指向下层对应位置的指针（书里叫 fence，栅栏）</strong>。于是查完第 1 层，你手里已经攥着「第 2 层该从哪个位置看起」，不必重新二分。原论文给出的结论是：更新只花 <code>O(logB n)</code> 次<strong>顺序</strong> I/O，查找花 <code>O(logB n)</code> 次<strong>随机</strong> I/O（<code>B</code> 是闪存页大小）——白话说就是<strong>查找的成本和普通 B-Tree 同量级，写入的成本却降到了写优化结构的水平</strong>。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 256" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="f1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+<marker id="f2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="15" y="20">FD-Tree：头部小树 + 逐层放大的不可变有序段，栅栏指针串起各层</text>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="6" stroke="#5b9df9" stroke-width="2" width="150" x="15" y="38"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="90" y="58">头部小 B-Tree</text>
+<text fill="#7c8593" font-size="9.5" x="176" y="57">最新写入先进这里，可原地改</text>
+<rect fill="rgba(155,108,245,0.16)" height="26" rx="5" stroke="#9b6cf5" width="200" x="15" y="86"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="115" y="104">第 1 层有序段（小）</text>
+<rect fill="rgba(155,108,245,0.16)" height="26" rx="5" stroke="#9b6cf5" width="330" x="15" y="130"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="180" y="148">第 2 层有序段（× k）</text>
+<rect fill="rgba(155,108,245,0.16)" height="26" rx="5" stroke="#9b6cf5" width="500" x="15" y="174"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="265" y="192">第 3 层有序段（× k²）</text>
+<line marker-end="url(#f1)" stroke="#9b6cf5" x1="90" x2="90" y1="68" y2="84"></line>
+<line marker-end="url(#f1)" stroke="#9b6cf5" x1="115" x2="115" y1="112" y2="128"></line>
+<line marker-end="url(#f1)" stroke="#9b6cf5" x1="180" x2="180" y1="156" y2="172"></line>
+<text fill="#9b6cf5" font-size="9.5" x="134" y="126">满了就整层归并下去</text>
+<text fill="#9b6cf5" font-size="9.5" x="200" y="170">归并 = 从头顺着写</text>
+<circle cx="190" cy="99" fill="none" r="5" stroke="#5b9df9"></circle>
+<circle cx="300" cy="143" fill="none" r="5" stroke="#5b9df9"></circle>
+<circle cx="436" cy="187" fill="none" r="5" stroke="#5b9df9"></circle>
+<line marker-end="url(#f2)" stroke="#5b9df9" stroke-dasharray="4 3" x1="196" x2="294" y1="103" y2="139"></line>
+<line marker-end="url(#f2)" stroke="#5b9df9" stroke-dasharray="4 3" x1="306" x2="430" y1="147" y2="183"></line>
+<text fill="#5b9df9" font-size="9.5" x="330" y="106">栅栏指针：直接告诉你</text>
+<text fill="#5b9df9" font-size="9.5" x="330" y="120">下一层从哪儿看起</text>
+<text fill="#7c8593" font-size="10.5" x="15" y="226">写：只有顺序写，闪存最喜欢的形状</text>
+<text fill="#7c8593" font-size="10.5" x="15" y="246">读：逐层往下，但每层不必重新二分 —— 这就是分数级联省下的钱</text>
+</svg>
+<figcaption>图 3 · FD-Tree：把随机写换成逐层归并的顺序写，再用栅栏指针把多层查找的代价压回接近单层的水平。</figcaption>
+</figure>
+<h3>四、Bw-Tree：把「加闩」整个删掉</h3>
+<p>Bw-Tree（Microsoft Research，2013）冲的是第二笔账——并发。它的目标极端：<strong>整棵树一把闩都不加</strong>，全靠 CAS 推进。三个零件缺一不可。</p>
+<p><strong>零件一：增量记录。</strong>要改一页，不动这页，写一条只说「这次改了什么」的小记录，让它指向原页——形成一条<em>增量链</em>。读的时候从链头往下走，把沿途的改动叠加到基础页上。<strong>写的成本从「重写一页」降成「追加一条几十字节的记录」。</strong></p>
+<p><strong>零件二：映射表。</strong>这是全章最值得学的一招。树里所有指针存的都不是物理地址，而是<strong>逻辑页号</strong>；另有一张映射表把页号翻译成当前物理地址。于是「用新版本替换某一页」就<strong>退化成在映射表里改一个槽位</strong>——一条 CAS 指令，原子完成。<strong>父节点里的指针一个字节都不用动</strong>，这正是无闩得以成立的关键：修改一页从来不需要同时锁住它的父亲。CAS 失败也不要紧，说明别人抢先了，重读、重试即可。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 268" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="b2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="15" y="20">Bw-Tree：所有指针只认逻辑页号，改一页 = 在映射表里 CAS 一次</text>
+<rect fill="rgba(91,157,249,0.07)" height="30" rx="6" stroke="#7c8593" width="120" x="15" y="42"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="75" y="62">父节点</text>
+<text fill="#7c8593" font-size="9.5" x="15" y="90">里面写的是「页号 P7」</text>
+<text fill="#7c8593" font-size="9.5" x="15" y="106">而不是某个物理地址</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="139" x2="176" y1="57" y2="57"></line>
+<rect fill="rgba(91,157,249,0.12)" height="86" rx="7" stroke="#5b9df9" width="130" x="180" y="34"></rect>
+<text fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle" x="245" y="52">映射表</text>
+<text fill="#b9c0ca" font-family="monospace" font-size="9.5" x="192" y="72">P6 → 0x…a10</text>
+<text fill="#e7ebf1" font-family="monospace" font-size="9.5" x="192" y="92">P7 → 0x…f28</text>
+<text fill="#b9c0ca" font-family="monospace" font-size="9.5" x="192" y="112">P8 → 0x…b04</text>
+<rect fill="none" height="16" rx="3" stroke="#9b6cf5" stroke-width="1.5" width="112" x="188" y="79"></rect>
+<text fill="#9b6cf5" font-size="9.5" x="180" y="136">这一格改一下 = 整页被替换</text>
+<line marker-end="url(#b2)" stroke="#9b6cf5" x1="314" x2="352" y1="86" y2="86"></line>
+<rect fill="rgba(155,108,245,0.22)" height="30" rx="6" stroke="#9b6cf5" stroke-width="2" width="96" x="356" y="42"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="404" y="62">增量：插 k=9</text>
+<rect fill="rgba(155,108,245,0.16)" height="30" rx="6" stroke="#9b6cf5" width="96" x="356" y="88"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="404" y="108">增量：删 k=3</text>
+<rect fill="rgba(91,157,249,0.10)" height="34" rx="6" stroke="#5b9df9" width="96" x="356" y="134"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="404" y="150">基础页 P7</text>
+<text fill="#7c8593" font-size="9" text-anchor="middle" x="404" y="164">（原样不动）</text>
+<line marker-end="url(#b2)" stroke="#9b6cf5" x1="404" x2="404" y1="72" y2="86"></line>
+<line marker-end="url(#b2)" stroke="#9b6cf5" x1="404" x2="404" y1="118" y2="132"></line>
+<text fill="#9b6cf5" font-size="9.5" x="462" y="60">新写的一条增量</text>
+<text fill="#9b6cf5" font-size="9.5" x="462" y="74">只有几十字节</text>
+<text fill="#7c8593" font-size="9.5" x="462" y="108">读 = 从链头往下</text>
+<text fill="#7c8593" font-size="9.5" x="462" y="122">把改动叠到基础页上</text>
+<line marker-end="url(#b1)" stroke="#7c8593" stroke-dasharray="4 3" x1="404" x2="404" y1="172" y2="196"></line>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#5b9df9" stroke-dasharray="4 3" width="160" x="324" y="198"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="404" y="218">链太长 → 合并成一个新页</text>
+<text fill="#7c8593" font-size="10.5" x="15" y="212">CAS 失败 = 有人抢先了：</text>
+<text fill="#7c8593" font-size="10.5" x="15" y="230">重读映射表、重试，谁也不必阻塞</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" x="15" y="258">旧版本不能立刻释放 —— 可能还有线程在读，靠 epoch 机制延后回收</text>
+</svg>
+<figcaption>图 4 · Bw-Tree 的三件套：增量链让写变便宜，映射表让「换一页」变成一条原子指令，合并与延迟回收负责收拾残局。</figcaption>
+</figure>
+<p><strong>零件三：合并与回收。</strong>链越长读越慢（原论文的实测曲线里，吞吐随链变长明显下降），所以链长超过阈值就<em>合并（consolidation）</em>：把基础页和整条链算成一个新页，再 CAS 进映射表。换下来的旧页与旧增量<strong>不能立刻释放</strong>——可能还有线程正在读，而无闩结构里没人能告诉你「读完了」。解法是<em>基于纪元的回收（epoch-based reclamation）</em>：待释放对象挂进当前纪元，等进入过该纪元的线程都离开了再统一释放。</p>
+<p><strong>分裂怎么办？</strong>这是最难的部分：分裂要同时改自己和父亲两个节点，而 CAS 一次只能原子地改一处。做法是拆成两个各自原子的步骤：<strong>第一步</strong>在被分裂节点上装一条「分裂增量」，附带指向新兄弟的<strong>侧向指针</strong>（Blink-tree 的思路）——此时结构已可用，父节点虽不知情，走到这里的线程顺着侧向指针也能找到目标；<strong>第二步</strong>再往父节点装一条「索引项增量」。撞见半完成分裂的线程不干等，而是<strong>顺手把第二步替它做完</strong>。</p>
+<h3>五、缓存无关 B-Tree：把页大小这个参数也删掉</h3>
+<p>最后一支路线来自算法领域，思想漂亮但工程上少见。经典 B-Tree 要调一个参数：节点多大才配得上页大小。可存储层级不止一层——L1 / L2 / L3 缓存、内存、SSD，每层的「块」都不一样，<strong>一个节点大小不可能同时讨好所有层</strong>。缓存无关 B-Tree 用递归的 <em>van Emde Boas 布局</em>把树摊平：反复把树从中间高度切开，上半棵与每个下半棵各自连续存放。于是<strong>无论上层用多大的块来读，读到的那段里都恰好含一条连续的树路径</strong>，不知道块大小也能拿到接近最优的 I/O。代价是<strong>更新时维护这个布局很贵</strong>——它是一种启发，而非生产选项。</p>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 1 · 四条变体路线：各治什么病，代价是什么</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>写时复制</th><th>惰性 / 缓冲</th><th>FD-Tree</th><th>Bw-Tree</th></tr></thead>
+<tbody>
+<tr><th>主治</th><td>崩溃安全 + 读并发</td><td>写放大</td><td>闪存上的随机写</td><td>多核上的加闩开销</td></tr>
+<tr><th>关键动作</th><td>路径拷贝 + 原子换根</td><td>更新先入内存链，驱逐时归并</td><td>分层不可变有序段 + 栅栏指针</td><td>增量链 + 映射表 CAS</td></tr>
+<tr><th>白赚了什么</th><td><strong>不需要 WAL 与恢复流程</strong>；读者天然拿到快照</td><td>n 次改动摊成 1 次页重写</td><td>写路径<strong>全部是顺序写</strong></td><td>线程<strong>永不阻塞</strong>，被挂起也不拖累别人</td></tr>
+<tr><th>主要代价</th><td><strong>单次写放大 ≈ 树高</strong>；<strong>只能一个写者</strong>；长读事务卡住页回收</td><td>读要合并两份数据；未落盘更新需日志兜底</td><td><strong>读放大</strong>（逐层查）+ 归并的写放大</td><td>实现复杂；指针追逐伤 CPU 缓存；需 epoch 回收</td></tr>
+<tr><th>真实系统</th><td>LMDB（OpenLDAP）</td><td>WiredTiger（MongoDB）、LA-Tree</td><td>论文实现，思想入 LSM 一脉</td><td>SQL Server 内存优化表的非聚集索引</td></tr>
+</tbody></table></div>
+<p class="tcap">表 2 · 原地更新 vs 不原地更新：一次决定引出的一串连锁反应</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>原地更新（经典 B-Tree）</th><th>不原地更新（本章各变体）</th></tr></thead>
+<tbody>
+<tr><th>崩溃后怎么办</th><td>页可能被写坏，<strong>必须靠 WAL 重放 / 回滚</strong>，还得防撕裂页（双写、整页写 WAL）</td><td>旧版本原封不动，切换是原子的，<strong>最轻的实现连恢复流程都不需要</strong></td></tr>
+<tr><th>读者与写者</th><td>读者要加闩，写者改页时读者得等</td><td>旧版本一直可读，<strong>天然快照 / MVCC</strong></td></tr>
+<tr><th>写的形状</th><td>随机写，位置由树结构决定</td><td>偏向顺序写（归并、追加），对闪存友好</td></tr>
+<tr><th>空间</th><td>紧凑；碎片来自页内空位</td><td><strong>要为旧版本留位置</strong>，必须有回收机制</td></tr>
+<tr><th>谁来打扫</th><td>没什么可扫，但恢复代码复杂</td><td><strong>空闲页表 / 合并 / epoch 回收 / 归并</strong>——省下的写变成后台的活</td></tr>
+</tbody></table></div>
+<p><strong>落到选型上的判据：</strong></p>
+<ul>
+<li><strong>读极多写极少、嵌入进程内、崩溃后要立刻可用</strong>（配置库、目录服务、本地缓存）→ 写时复制：读路径零加闩零拷贝、不需要恢复流程，前提是能接受<strong>单写者</strong>。</li>
+<li><strong>通用 OLTP，写有一定量，要压缩与多核写并发</strong> → 惰性 / 缓冲路线，WiredTiger 的定位正是这里。</li>
+<li><strong>写远多于读、跑在闪存上</strong> → 分层归并的形状（FD-Tree 是它在 B-Tree 语境下的表达，工业界的答案是下一章的 LSM-Tree）。愿意用<strong>读放大</strong>换<strong>写放大</strong>时才选。</li>
+<li><strong>数据全在内存、核数很多、闩争用是首要瓶颈</strong> → 无闩路线。但先读完下面「争议」那条再决定。</li>
+</ul>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>这一章的价值不在于让你去实现一棵 Bw-Tree，而在于一张<strong>可迁移的权衡地图</strong>：<em>不可变 + 间接层 + 缓冲 + 延迟回收</em>。ZFS、Btrfs 的写时复制与 LMDB 同源；容器镜像的分层、Git 的对象存储也是「不改旧的、只加新的、最后换一个引用」。<strong>凡是把「原地修改」换成「新写一份 + 原子换指向」的系统，都会同时收获快照能力与崩溃安全，也同时欠下一笔垃圾回收的债。</strong>面试里「LMDB 为什么不需要 WAL」「无闩就一定更快吗」「为什么写优化存储都长得像分层归并」，考的都是这一章。</p>
+<div class="ev">
+<div class="evh">大厂实证 · 这些不是书里的说法，是各家自己公开写下的</div>
+<ul>
+<li><strong>LMDB（OpenLDAP）</strong> 官方头文件把写时复制的收益写成一句定义：「数据页采用写时复制策略，因此活跃数据页从不会被覆盖，这也带来了抗损坏能力，并<strong>免除了系统崩溃后任何特殊恢复流程的需要</strong>」；同一段还写明「写是完全串行的，同一时刻只有一个写事务，这保证了写者永远不会死锁」以及「数据库结构是多版本的，因此读者不加锁运行；<strong>写者不阻塞读者，读者也不阻塞写者</strong>」。正面印证了本章「换根原子性 = 免费的崩溃安全 + 免费的快照」。<span class="src"><a href="https://github.com/LMDB/lmdb/blob/mdb.master/libraries/liblmdb/lmdb.h" rel="noopener" target="_blank">LMDB 官方源码 lmdb.h（OpenLDAP 官方仓库镜像）↗</a></span></li>
+<li><strong>WiredTiger（MongoDB 默认引擎）</strong> 官方架构文档描述的正是惰性路线：「新的键值对通过 <code>WT_INSERT</code> 结构插入行存叶子页。叶子页上已有的条目通过 <code>WT_UPDATE</code> 结构更新、修改或删除。<strong>随着新的更新产生，这些结构被串成一条更新链</strong>」；而脏页被驱逐时「要经过归并（reconciliation）」。<span class="src"><a href="https://github.com/wiredtiger/wiredtiger/blob/develop/src/docs/arch-btree.dox" rel="noopener" target="_blank">WiredTiger 官方架构文档 · arch-btree ↗</a></span></li>
+<li><strong>MongoDB</strong> 官方文档给出它建立在这套机制上的对外承诺：「WiredTiger 使用多版本并发控制（MVCC）。在操作开始时，WiredTiger 为该操作提供一份数据的时间点快照」，并配合「预写日志（即 journal）与检查点一起保证数据持久性」。<span class="src"><a href="https://github.com/mongodb/docs/blob/master/source/core/wiredtiger.txt" rel="noopener" target="_blank">MongoDB 官方文档源文件 · WiredTiger Storage Engine ↗</a></span></li>
+<li><strong>Microsoft</strong> 把 Bw-Tree 用进了 SQL Server 的产品线，官方文档写得比论文还直白：「内存优化表上的非聚集索引使用一种称为 Bw-tree 的数据结构实现，它最初由 Microsoft Research 在 2011 年设想并描述」，「Bw-tree 是 B-tree 的一种<strong>无锁、无闩</strong>变体」；更新的做法是「创建一条描述该变更的<strong>增量记录</strong>，追加到前一个页上，然后把页映射表中该页的地址更新为这条增量记录的地址」。<span class="src"><a href="https://learn.microsoft.com/en-us/sql/relational-databases/sql-server-index-design-guide" rel="noopener" target="_blank">Microsoft Learn · SQL Server 索引架构与设计指南 ↗</a></span></li>
+<li><strong>Microsoft Research</strong> 原论文（ICDE 2013）给出正面数字，也标明了适用边界——实验<strong>只评测内存内性能</strong>：在真实的 Xbox LIVE 负载（<code>2700 万</code>次 get/set，读写比约 <code>7.5:1</code>）上，Bw-tree 吞吐 <code>10.4 M ops/s</code>，BerkeleyDB 为 <code>555 K ops/s</code>，<strong>提速 18.7 倍</strong>；写更密集的去重负载上是 <code>8.6</code> 倍，合成负载 <code>5.8</code> 倍。对照无闩跳表也快约 <code>3.7</code> 倍（<code>3.83</code> 对 <code>1.02 M ops/s</code>）。<span class="src"><a href="https://www.microsoft.com/en-us/research/publication/the-bw-tree-a-b-tree-for-new-hardware/" rel="noopener" target="_blank">J. Levandoski, D. Lomet, S. Sengupta《The Bw-Tree》, ICDE 2013 ↗</a></span></li>
+<li><strong>反面实证 · CMU 等（SIGMOD 2018）</strong> 复现了 Bw-Tree 并给出与厂商相反的结论：「不幸的是，Microsoft 的 Bw-Tree 论文<strong>遗漏了重要细节，且源码从未公开</strong>」；他们的优化版比原方案快 <code>1.1–2.5</code> 倍，但结论毫不含糊——「尽管有我们的改进，<strong>Bw-Tree 的表现仍不及其他使用锁的并发数据结构</strong>」。这是对「无闩必然更快」最有力的一记反驳。<span class="src"><a href="https://dl.acm.org/doi/10.1145/3183713.3196895" rel="noopener" target="_blank">Z. Wang, A. Pavlo et al.《Building a Bw-Tree Takes More Than Just Buzz Words》, SIGMOD 2018 ↗</a></span></li>
+<li><strong>FD-Tree 原论文（VLDB 2010）</strong> 自述结构与收益：「FD-tree 由顶部一棵小 B+-tree（头部树）和底部若干层尺寸递增的有序段组成」，「更新花 <code>O(logB n)</code> 次顺序 I/O、查找花 <code>O(logB n)</code> 次随机 I/O」，效果是「查找性能与标准 B+-tree 相仿，更新性能与写优化的 B+-tree 变体相仿」——正是本章想要的那种「两头都不吃亏」。<span class="src"><a href="https://www.microsoft.com/en-us/research/publication/tree-indexing-on-solid-state-drives/" rel="noopener" target="_blank">Y. Li, B. He, R. J. Yang, Q. Luo, K. Yi《Tree Indexing on Solid State Drives》, VLDB 2010 ↗</a></span></li>
+</ul>
+</div>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>以为写时复制省写</strong>。恰恰相反：<strong>单次写放大更大</strong>（要拷贝整条路径）。它赢的地方在别处——免掉 WAL 与撕裂页的双写、免掉恢复流程、送你一份快照。省不省，要按<strong>端到端</strong>算，不是按单次写算。</li>
+<li><strong>以为 LMDB「无锁」意味着高写并发</strong>。它的无锁是给<strong>读者</strong>的；写者<strong>永远只有一个</strong>。读多写少时惊艳，写密集时这就是硬天花板。</li>
+<li><strong>忘了不可变结构的账单在后面</strong>。旧版本必须有人回收：写时复制靠空闲页表、Bw-Tree 靠 epoch、惰性路线靠归并与检查点。<strong>一个长读事务钉住旧版本，就能让文件持续膨胀。</strong></li>
+<li><strong>把 Bw-Tree 的「无闩」等同于「更快」</strong>。这是本章最大的争议点。SIGMOD 2018 的复现指出，增量链的指针追逐、映射表的额外一跳、epoch 回收的开销加起来<strong>可能盖过省掉闩的收益</strong>；而现代的<em>乐观锁耦合</em>（读只校验版本号、不真加锁）用简单得多的手段拿到了相近的可扩展性。无闩是权衡，不是免费加速。</li>
+<li><strong>把 FD-Tree 当成 LSM-Tree</strong>。形状很像（分层、归并、顺序写），但它顶上仍是一棵可原地更新的 B-Tree，并用<strong>栅栏指针</strong>专门压低多层查找的读放大。是「B-Tree 向 LSM 借力」，不是 LSM 本身。</li>
+<li><strong>时代局限</strong>。本章的成本模型建立在「随机写远贵于顺序写、页是不可分割的读写单位」之上，这两条正被 NVMe 与字节可寻址持久内存松动；B-Tree 与 LSM 的边界也在模糊。而更根本的一点是：这些变体<strong>没有免费午餐</strong>，它们只是把成本从写路径挪到读路径、从运行时挪到后台。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 经典 B-Tree 的成本重心在「改」不在「找」：改 <code>100 字节</code>要重写一个 <code>8–16 KB</code> 页，还要加闩挡住并发。本章所有变体都冲着这两笔账去。</p>
+<p>② 三笔账：<strong>写放大</strong>（页级 80–160 倍，再叠双写 / 整页写 WAL / SSD 擦除块）、<strong>加闩开销</strong>（多核下根节点的缓存行争用）、<strong>碎片与空间</strong>。</p>
+<p>③ <strong>写时复制</strong>：路径拷贝 + 原子换根。白赚崩溃安全（可以完全不要 WAL）与快照隔离，代价是单次写放大 ≈ 树高、<strong>只能有一个写者</strong>、旧页要等长读事务放手。代表：LMDB。</p>
+<p>④ <strong>惰性 / 缓冲</strong>：承认「内存形态 ≠ 磁盘形态」，更新先挂内存链，驱逐或检查点时<strong>归并成一个新页</strong>，把 n 次改动摊成 1 次页重写。代表：WiredTiger。</p>
+<p>⑤ <strong>FD-Tree</strong>：头部小 B-Tree + 逐层放大的不可变有序段，写路径全是顺序写，再用<strong>栅栏指针（分数级联）</strong>抵消多层查找的读放大。它是通往下一章 LSM 的桥。</p>
+<p>⑥ <strong>Bw-Tree</strong>：增量链（写变便宜）+ <strong>映射表</strong>（换一页 = 一次 CAS，父节点不用动）+ 合并与 epoch 回收；分裂拆成两个原子步骤，用 Blink-tree 式侧向指针撑住中间态，别的线程撞见了顺手帮忙做完。</p>
+<p>⑦ <strong>缓存无关 B-Tree</strong>：用 van Emde Boas 布局把「页多大」这个参数从设计里删掉。思想漂亮，维护昂贵，实践罕见。</p>
+<p>⑧ 贯穿全章的主线：<strong>不可变 + 间接层 + 缓冲 + 延迟回收</strong>——省下的写会变成多占的空间和后台的活，总量不会凭空消失。</p>
+<p>⑨ 最该记住的反直觉结论：<strong>无闩不等于更快</strong>。厂商给出 18.7 倍的正面数字（内存内、对比 BerkeleyDB），独立复现却发现它仍不及使用锁的现代并发结构。<strong>看结论要看谁做的实验、在什么负载上、和什么比。</strong></p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
