@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals Ch 7 · Log-Structured Storage — Book Deep Read 52</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+</style></head><body>
+<div class="container">
+<p class="top">BOOK DEEP READ · Database Internals · Chapter 7</p>
+<h1>Log-Structured Storage</h1>
+<p class="sub">Database Internals · Ch 7 · Alex Petrov · 2019</p>
+<p class="langbar"><a href="dbinternals-ch07-log-structured-storage-book52.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>Every message you send, every like you tap, every heartbeat your watch records ends up inside some database. The previous chapters described one way of storing it — <strong>like editing a dictionary</strong>: turn to the right page, rub out the old entry, write the new one. This chapter describes the opposite temperament: <strong>keeping a ledger</strong>. You only ever write on the next blank line, and you never go back to change a word.</p>
+
+<h2>An analogy first</h2>
+<p>You keep the books for a small shop. The <strong>dictionary school</strong>: one page per customer, and when a balance changes you flip to that page and rewrite it. Looking things up is easy, but you flip pages a thousand times a day. The <strong>ledger school</strong>: your pen never leaves the paper — "Alice +100", "Bob −30", "Alice +50", line after line. It is absurdly fast to write; the price is that to learn <strong>what Alice's balance is now</strong>, you must read from the top, find several Alice lines, and trust only <strong>the most recent one</strong>.</p>
+
+<h2>Why the old world struggled</h2>
+<p>Disks have one blunt preference: <strong>writing straight ahead is fast; hunting around for a spot to write is slow</strong> — not by a little, by tens to hundreds of times. And "editing a dictionary" is exactly the second kind: changing one number means visiting the page it lives on, and those pages are scattered all over the disk. For anything write-heavy — chat logs, sensor readings, application logs, like counters — that is the bottleneck.</p>
+
+<h2>How it pulls this off</h2>
+<ul>
+<li><strong>Write in a small notebook, then copy it out in one go.</strong> New data first goes into a small in-memory notebook (kept in order as you write), and when it fills up it is copied out <strong>in a single clean pass into a new volume</strong> on the shelf — that pass is the "straight ahead" kind of fast. The finished volume is <strong>never touched again</strong>.</li>
+<li><strong>Deleting is not erasing; it is adding a "void" slip.</strong> Volumes cannot be edited, so deleting means writing one more line: "this entry is void." The old record is still there, just covered up.</li>
+<li><strong>Look things up newest-first, and the newest wins.</strong> If the most recent line you find is a "void" slip, that person is treated as absent.</li>
+<li><strong>Tidy up on a schedule.</strong> Once the volumes pile up you cannot search them, so a background clerk keeps merging several old volumes into one, discarding the overwritten and voided entries <strong>for real</strong> along the way — this step is the heart of the design, and where the bill comes due.</li>
+</ul>
+<p>One more trick: each volume gets a cheat-strip on its cover that can tell you at a glance "this volume <strong>definitely does not</strong> contain Alice," which saves an enormous amount of pointless flipping.</p>
+
+<h2>So how do you choose?</h2>
+<p><strong>It does not make writing cheaper; it changes "pay now" into "put it on credit and repay in the background."</strong> The same record gets carried around several times during tidying, and several versions of it sit on disk at once. If you write a lot, read less, and rarely revise what you wrote — logs, metrics, messages — the ledger school wins outright. If you look things up precisely over and over, or need to read a whole range in order, the dictionary school is still the better fit.</p>
+
+<h2>One line to remember</h2>
+<div class="tl">
+<p>The whole cleverness of log-structured storage is <strong>replacing "go back and edit" with "append, then merge later."</strong> Writes got faster, but not one cent of the cost disappeared — it was simply moved onto three other bills: more volumes to search, more copies on disk, and a background clerk who never stops working.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the numbers and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think log-structured storage is a magic trick for making writes fast. It is really <strong>a single trade</strong>: replace "random in-place update" with "sequential append plus merge-after-the-fact." None of the write cost disappears — all of it is charged to <strong>read amplification</strong> and <strong>space amplification</strong>, and repaid in instalments by background <strong>compaction</strong>.</p>
+
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Append-only vs. in-place update</strong>: the former only ever adds at the end of a file and never goes back; the latter finds the page the data lives on and writes it back in place (the B-Tree way, and the assumption this chapter dismantles).</li>
+<li><strong>memtable</strong>: the mutable, sorted in-memory table that is still accepting data; every write lands here first. Usually implemented as a <strong>skiplist</strong>.</li>
+<li><strong>SSTable (Sorted String Table)</strong>: the <strong>sorted, immutable</strong> data file a memtable becomes when flushed. Not a byte of it is ever changed again.</li>
+<li><strong>WAL (write-ahead log)</strong>: an append to disk made before memory is touched, so a crash can be recovered by replaying it.</li>
+<li><strong>Tombstone</strong>: a "this key is deleted" record. You cannot remove old data, only write a tombstone that covers it.</li>
+<li><strong>Compaction</strong>: the background process that merges several SSTables, drops expired and overwritten versions, and writes out new files.</li>
+<li><strong>Amplification</strong>: what you actually pay ÷ what you logically needed. Read amplification is how much a single query really reads; write amplification is how many times a record is rewritten over its life; space amplification is disk footprint ÷ live data.</li>
+<li><strong>Bloom filter</strong>: a very memory-cheap "maybe present / definitely absent" test. "Absent" is always true; "present" may be a false positive.</li>
+<li><strong>FTL (flash translation layer)</strong>: the firmware layer inside an SSD. Flash can only be erased in blocks and written in pages, so the FTL never updates in place — it writes elsewhere and collects garbage later. It is itself a log structure.</li>
+</ul>
+</div>
+
+<h2>Where it sits</h2>
+<p>This is the <strong>closing chapter</strong> of Part I, "Storage Engines." Chapters 2–6 covered the B-Tree lineage: sorted, updated in place. Chapter 6's copy-on-write and Bw-Tree were already edging toward "stop updating in place," and this chapter takes that road to its end — <strong>never update in place at all, only append</strong>. It maps onto the whole write-optimized branch of real systems: LevelDB, RocksDB, Cassandra, HBase. Next comes Part II: distributed systems.</p>
+
+<h2>The problem it solves</h2>
+<p>The pain is in the B-Tree <strong>write path</strong>. To increment an 8-byte counter it must read the whole page into memory (pages are typically <code>4KB</code>–<code>16KB</code>), change those 8 bytes, and write the whole page back — and for crash safety it must first append to the WAL. <strong>An 8-byte logical write becomes tens of kilobytes of physical writes</strong>, and because those pages are scattered through the file, the writes are <strong>random</strong>.</p>
+<p>How far apart are random and sequential? Spinning disks manage random IOPS in the <code>100–200</code> range while sequential bandwidth comfortably exceeds <code>100MB/s</code>; SSDs have no head, but flash's "erase only in whole blocks" rule makes small random writes expensive in its own way. <strong>The gap is two to three orders of magnitude.</strong> So write-heavy workloads — time-series metrics, logs, chat messages, social counters — hit the wall on the write path first: not because the CPU is short, but because the disk is being forced to do the thing it is worst at. This chapter's bet is blunt: <strong>turn every write into a sequential append, and find another way to pay for reads and space.</strong></p>
+
+<h2>The core, explained</h2>
+
+<h3>1. One mutable table in memory, many immutable tables on disk</h3>
+<p>An LSM-tree (log-structured merge-tree) splits storage into two components with opposite temperaments. <strong>The in-memory table is mutable</strong> — that is the memtable, which stays sorted as writes are inserted. <strong>Everything on disk is immutable</strong> — a full memtable is frozen and written out <strong>in one sequential pass</strong> as an SSTable, after which not a byte changes.</p>
+<p>Crash safety comes from the WAL: a write is appended to the log before entering the memtable, so a crash is repaired by replay; once the memtable has been flushed successfully, its WAL segment can be discarded. <strong>Across the whole write path the disk does exactly two things: append to the WAL, and write out an SSTable sequentially — never an in-place modification.</strong></p>
+<figure>
+<svg viewBox="0 0 640 288" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="wa" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker>
+<marker id="wb" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"/></marker></defs>
+<text x="18" y="22" fill="#5b9df9" font-size="13" font-weight="700">Write path: sort in memory, flush once sequentially, never modify</text>
+<rect x="24" y="40" width="300" height="104" rx="8" fill="none" stroke="rgba(91,157,249,0.45)" stroke-dasharray="5 4"/>
+<text x="34" y="58" fill="#7c8593" font-size="10.5" font-family="monospace">MEMORY</text>
+<rect x="38" y="70" width="88" height="32" rx="6" fill="rgba(91,157,249,0.10)" stroke="#7c8593"/>
+<text x="82" y="91" fill="#b9c0ca" font-size="11" text-anchor="middle">writes</text>
+<line x1="126" y1="86" x2="164" y2="86" stroke="#7c8593" marker-end="url(#wa)"/>
+<rect x="170" y="64" width="136" height="52" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="238" y="84" fill="#e7ebf1" font-size="11.5" text-anchor="middle">memtable (mutable)</text>
+<text x="238" y="102" fill="#b9c0ca" font-size="10" text-anchor="middle">sorted · skiplist</text>
+<text x="34" y="130" fill="#7c8593" font-size="10">② insert into sorted table</text>
+<line x1="82" y1="102" x2="82" y2="176" stroke="#7c8593" stroke-dasharray="3 3" marker-end="url(#wa)"/>
+<text x="128" y="168" fill="#7c8593" font-size="10">① append to WAL first</text>
+<rect x="24" y="182" width="140" height="30" rx="6" fill="rgba(91,157,249,0.10)" stroke="#7c8593"/>
+<text x="94" y="202" fill="#b9c0ca" font-size="11" text-anchor="middle">WAL segment</text>
+<line x1="238" y1="116" x2="238" y2="180" stroke="#9b6cf5" stroke-dasharray="3 3" marker-end="url(#wb)"/>
+<text x="250" y="152" fill="#9b6cf5" font-size="10.5">③ full → freeze → flush</text>
+<rect x="176" y="182" width="150" height="30" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"/>
+<text x="251" y="202" fill="#e7ebf1" font-size="11" text-anchor="middle">new SSTable (immutable)</text>
+<line x1="326" y1="197" x2="366" y2="197" stroke="#7c8593" marker-end="url(#wa)"/>
+<rect x="372" y="160" width="244" height="74" rx="8" fill="none" stroke="rgba(120,120,130,0.4)" stroke-dasharray="5 4"/>
+<text x="382" y="178" fill="#7c8593" font-size="10.5" font-family="monospace">DISK · append-only</text>
+<rect x="384" y="188" width="66" height="30" rx="5" fill="rgba(91,157,249,0.10)" stroke="#7c8593"/>
+<text x="417" y="208" fill="#b9c0ca" font-size="10" text-anchor="middle">SSTable</text>
+<rect x="458" y="188" width="66" height="30" rx="5" fill="rgba(91,157,249,0.10)" stroke="#7c8593"/>
+<text x="491" y="208" fill="#b9c0ca" font-size="10" text-anchor="middle">SSTable</text>
+<rect x="532" y="188" width="66" height="30" rx="5" fill="rgba(91,157,249,0.10)" stroke="#7c8593"/>
+<text x="565" y="208" fill="#b9c0ca" font-size="10" text-anchor="middle">SSTable</text>
+<text x="494" y="256" fill="#9b6cf5" font-size="11" text-anchor="middle" font-family="monospace">piles up → background compaction</text>
+<text x="494" y="274" fill="#7c8593" font-size="9.5" text-anchor="middle">(read and space amplification accrue here)</text>
+</svg>
+<figcaption>Fig 1 · The LSM-tree write path: append to WAL, sort in the memtable, flush the full memtable out as an immutable SSTable. Nothing on disk is ever modified in place.</figcaption>
+</figure>
+
+<h3>2. Updates and deletes: everything is an append, deletion is a tombstone</h3>
+<p>If files are immutable, "change" and "delete" need new definitions. An <strong>update</strong> writes a new version while the old one still sits in an older SSTable. A <strong>delete</strong> writes a <em>tombstone</em> — the book calls it a "dormant certificate": it removes nothing, it only declares that from this timestamp onward the key is void.</p>
+<p>That yields a counter-intuitive rule: <strong>deleting data in an LSM makes the disk footprint grow first</strong>; real reclamation waits for compaction to roll over it. And deciding when a tombstone may itself be dropped needs care: as long as any older SSTable might still hold an earlier value for that key, the tombstone must stay. Drop it early and the old value resurfaces — <strong>resurrected data</strong>. Cassandra's <code>gc_grace_seconds</code> (ten days by default) is exactly that safety window.</p>
+
+<h3>3. The read path: merging, reconciliation, and that cheat-strip</h3>
+<p>Writes got simple, so reads got complicated. A key may live in the memtable and in several SSTables at once, so a read does two things. <strong>Merge-iteration</strong> — each SSTable is internally sorted but their key ranges may overlap, so a <em>priority queue (min-heap)</em> drives a k-way merge: repeatedly take the smallest key across the per-table cursors and advance that one, which turns many sources into a single globally ordered stream with one cursor per table. <strong>Reconciliation</strong> — when several records for the same key come out, the newest by <em>timestamp / epoch</em> wins, and if the newest is a tombstone the key counts as absent. <strong>"Newest wins" is the bedrock that makes the whole design consistent with itself.</strong></p>
+<figure>
+<svg viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="ra" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<text x="18" y="22" fill="#5b9df9" font-size="13" font-weight="700">Read path: newest to oldest, then reconcile by timestamp</text>
+<rect x="20" y="40" width="150" height="34" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="95" y="62" fill="#e7ebf1" font-size="11" text-anchor="middle">memtable (newest)</text>
+<text x="180" y="62" fill="#b9c0ca" font-size="10.5">k=7 → v3   ts=300</text>
+<rect x="20" y="88" width="150" height="34" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"/>
+<text x="95" y="110" fill="#e7ebf1" font-size="11" text-anchor="middle">SSTable 1 (newer)</text>
+<text x="180" y="110" fill="#b9c0ca" font-size="10.5">k=7 → tombstone   ts=200</text>
+<rect x="20" y="136" width="150" height="34" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/>
+<text x="95" y="158" fill="#b9c0ca" font-size="11" text-anchor="middle">SSTable 2 (older)</text>
+<text x="180" y="158" fill="#b9c0ca" font-size="10.5">k=7 → v1   ts=100</text>
+<rect x="20" y="184" width="150" height="34" rx="6" fill="rgba(91,157,249,0.06)" stroke="#7c8593" stroke-dasharray="4 3"/>
+<text x="95" y="206" fill="#7c8593" font-size="11" text-anchor="middle">SSTable 3 (oldest)</text>
+<text x="180" y="200" fill="#7c8593" font-size="10.5">Bloom filter: definitely no k=7</text>
+<text x="180" y="216" fill="#9b6cf5" font-size="10.5">→ skip the file, save a disk read</text>
+<line x1="424" y1="60" x2="470" y2="118" stroke="#7c8593" marker-end="url(#ra)"/>
+<line x1="424" y1="110" x2="470" y2="124" stroke="#7c8593" marker-end="url(#ra)"/>
+<line x1="424" y1="158" x2="470" y2="132" stroke="#7c8593" marker-end="url(#ra)"/>
+<rect x="476" y="106" width="146" height="44" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"/>
+<text x="549" y="124" fill="#e7ebf1" font-size="11" text-anchor="middle">merge + reconcile</text>
+<text x="549" y="141" fill="#b9c0ca" font-size="10" text-anchor="middle">k-way merge · newest wins</text>
+<text x="549" y="176" fill="#9b6cf5" font-size="11.5" text-anchor="middle" font-family="monospace">result: v3</text>
+<text x="549" y="196" fill="#7c8593" font-size="9.5" text-anchor="middle">ts=300 beats tombstone and v1</text>
+</svg>
+<figcaption>Fig 2 · Several versions of one key scattered across SSTables: a k-way merge lines them up in key order, reconciliation keeps the newest, and the Bloom filter lets a "definitely absent" file be skipped whole.</figcaption>
+</figure>
+<p>In the worst case a point lookup touches every SSTable — that is <strong>read amplification</strong>. The first wall against it is the <em>Bloom filter</em>: one per SSTable, a handful of hash functions map the key into a bit array, and a single zero bit proves <strong>the key is definitely not in this file</strong>, so the file is skipped entirely; all ones still only means "maybe." The cost is a direct trade of memory against false-positive rate — RocksDB's own table puts <code>9.9</code> bits per key at roughly <code>1%</code> false positives. A hundred million keys at 10 bits each is only <code>~125MB</code> of memory to eliminate 99% of pointless file reads, which is an extremely good deal. <strong>But it only helps point lookups; range scans get nothing from it.</strong></p>
+
+<h3>4. Compaction: the repayment mechanism</h3>
+<p>What happens without it? SSTables multiply without bound, read amplification degrades linearly, and overwritten versions and tombstones occupy disk forever. So the background is always doing the same job: <strong>read several SSTables → merge → reconcile → drop expired versions and eligible tombstones → write new files → delete the old ones</strong>. The elegant part is that <strong>immutability makes compaction unusually easy to write</strong>: sorted inputs mean sequential reads, a fresh output file means sequential writes, and no data locking is needed at all — most of the concurrency and torn-page trouble that Chapter 5's B-Tree recovery had to handle is dissolved by the structure itself.</p>
+<p>Compaction strategy is the selection decision worth memorizing from this chapter. Three dominate:</p>
+<ul>
+<li><strong>Leveled</strong> — the LevelDB / RocksDB default and Cassandra's LCS. Apart from L0, which is allowed to overlap, key ranges <strong>never overlap within a level</strong>, and each level is about <code>10×</code> the capacity of the one above. LevelDB's implementation doc is very concrete: a log becomes an SSTable at about <code>4MB</code>, more than <code>4</code> files at L0 triggers compaction, and level L is capped at <code>10^L MB</code>. The payoff is <strong>at most one file per level</strong>; the price is that the same row is rewritten again and again as it descends.</li>
+<li><strong>Size-tiered</strong> — Cassandra's STCS and RocksDB's universal compaction. Once enough similarly sized SSTables have accumulated (<code>4</code> by default in Cassandra) they are merged into a bigger one, and so on up. Write amplification is far lower, but one key may be spread over many tables, and a big merge keeps old and new alive at once, briefly nearly doubling disk usage.</li>
+<li><strong>Time-window (TWCS)</strong> — built for time-series and TTL data: bucket SSTables by time window and compact each window into a single SSTable at its end. Data lives and dies in batches, so <strong>an expired file is simply deleted whole</strong>. It assumes data arrives roughly in time order.</li>
+</ul>
+<figure>
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="ca" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<line x1="320" y1="16" x2="320" y2="288" stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4"/>
+<text x="158" y="24" fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle">Leveled</text>
+<text x="158" y="42" fill="#7c8593" font-size="9.5" text-anchor="middle">no overlap inside a level; each ~10x bigger</text>
+<text x="24" y="66" fill="#9b6cf5" font-size="10" font-family="monospace">L0</text>
+<rect x="52" y="54" width="52" height="18" rx="3" fill="rgba(155,108,245,0.20)" stroke="#9b6cf5"/>
+<rect x="110" y="54" width="52" height="18" rx="3" fill="rgba(155,108,245,0.20)" stroke="#9b6cf5"/>
+<rect x="168" y="54" width="52" height="18" rx="3" fill="rgba(155,108,245,0.20)" stroke="#9b6cf5"/>
+<text x="228" y="67" fill="#7c8593" font-size="9">overlaps</text>
+<line x1="136" y1="74" x2="136" y2="94" stroke="#7c8593" marker-end="url(#ca)"/>
+<text x="24" y="112" fill="#5b9df9" font-size="10" font-family="monospace">L1</text>
+<rect x="52" y="100" width="60" height="18" rx="3" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"/>
+<rect x="116" y="100" width="60" height="18" rx="3" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"/>
+<rect x="180" y="100" width="60" height="18" rx="3" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"/>
+<text x="248" y="113" fill="#7c8593" font-size="9">10MB</text>
+<line x1="146" y1="120" x2="146" y2="140" stroke="#7c8593" marker-end="url(#ca)"/>
+<text x="24" y="158" fill="#5b9df9" font-size="10" font-family="monospace">L2</text>
+<rect x="52" y="146" width="44" height="18" rx="3" fill="rgba(91,157,249,0.10)" stroke="#7c8593"/>
+<rect x="100" y="146" width="44" height="18" rx="3" fill="rgba(91,157,249,0.10)" stroke="#7c8593"/>
+<rect x="148" y="146" width="44" height="18" rx="3" fill="rgba(91,157,249,0.10)" stroke="#7c8593"/>
+<rect x="196" y="146" width="44" height="18" rx="3" fill="rgba(91,157,249,0.10)" stroke="#7c8593"/>
+<text x="248" y="159" fill="#7c8593" font-size="9">100MB</text>
+<text x="158" y="196" fill="#8fbaff" font-size="10.5" text-anchor="middle">read: at most 1 file per level</text>
+<text x="158" y="216" fill="#e8794b" font-size="10.5" text-anchor="middle">cost: rows rewritten again and again</text>
+<text x="158" y="236" fill="#7c8593" font-size="9.5" text-anchor="middle">write amplification often above 10x</text>
+<text x="158" y="266" fill="#9b6cf5" font-size="10.5" text-anchor="middle" font-family="monospace">best when reads dominate</text>
+<text x="480" y="24" fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle">Size-tiered</text>
+<text x="480" y="42" fill="#7c8593" font-size="9.5" text-anchor="middle">merge 4 similar-sized tables into a bigger one</text>
+<rect x="360" y="54" width="32" height="18" rx="3" fill="rgba(155,108,245,0.20)" stroke="#9b6cf5"/>
+<rect x="396" y="54" width="32" height="18" rx="3" fill="rgba(155,108,245,0.20)" stroke="#9b6cf5"/>
+<rect x="432" y="54" width="32" height="18" rx="3" fill="rgba(155,108,245,0.20)" stroke="#9b6cf5"/>
+<rect x="468" y="54" width="32" height="18" rx="3" fill="rgba(155,108,245,0.20)" stroke="#9b6cf5"/>
+<text x="512" y="67" fill="#7c8593" font-size="9">small</text>
+<line x1="430" y1="74" x2="430" y2="94" stroke="#7c8593" marker-end="url(#ca)"/>
+<rect x="360" y="100" width="72" height="18" rx="3" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"/>
+<rect x="438" y="100" width="72" height="18" rx="3" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"/>
+<text x="518" y="113" fill="#7c8593" font-size="9">medium</text>
+<line x1="436" y1="120" x2="436" y2="140" stroke="#7c8593" marker-end="url(#ca)"/>
+<rect x="360" y="146" width="146" height="18" rx="3" fill="rgba(91,157,249,0.10)" stroke="#7c8593"/>
+<text x="518" y="159" fill="#7c8593" font-size="9">large</text>
+<text x="480" y="196" fill="#8fbaff" font-size="10.5" text-anchor="middle">write: far fewer rewrites</text>
+<text x="480" y="216" fill="#e8794b" font-size="10.5" text-anchor="middle">cost: one key spread over many tables</text>
+<text x="480" y="236" fill="#7c8593" font-size="9.5" text-anchor="middle">disk can briefly double on a big merge</text>
+<text x="480" y="266" fill="#9b6cf5" font-size="10.5" text-anchor="middle" font-family="monospace">best when writes dominate</text>
+</svg>
+<figcaption>Fig 3 · The two dominant compaction strategies: leveled holds read amplification down and pays in writes; size-tiered holds write amplification down and pays in reads and space.</figcaption>
+</figure>
+
+<h3>5. Three amplifications and the RUM conjecture</h3>
+<p>The ledger can now be closed. Judging a storage engine comes down to three numbers — <strong>read, write and space amplification</strong> — and <strong>they cannot all be optimal at once; you get to pick two</strong>. That is the <em>RUM conjecture</em> the chapter cites (Athanassoulis et al., EDBT 2016): of Read, Update and Memory overheads, driving two down necessarily pushes the third up. B-Trees sit in the read-optimized corner — read amplification near 1, space compact, write amplification high. LSM-trees sit in the write-optimized corner — a fully sequential write path, but reads must merge and the disk holds several versions. <strong>Compaction strategy is how you fine-tune that mix inside the LSM corner.</strong></p>
+<figure>
+<svg viewBox="0 0 640 268" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<text x="18" y="22" fill="#5b9df9" font-size="13" font-weight="700">The RUM conjecture: keep two of three overheads low, never all three</text>
+<path d="M320,54 L520,214 L120,214 Z" fill="rgba(91,157,249,0.06)" stroke="rgba(91,157,249,0.5)" stroke-width="1.6"/>
+<circle cx="320" cy="54" r="5" fill="#9b6cf5"/>
+<text x="320" y="42" fill="#9b6cf5" font-size="11.5" text-anchor="middle" font-weight="700">R · read</text>
+<circle cx="120" cy="214" r="5" fill="#5b9df9"/>
+<text x="112" y="236" fill="#5b9df9" font-size="11.5" text-anchor="middle" font-weight="700">U · update</text>
+<circle cx="520" cy="214" r="5" fill="#5b9df9"/>
+<text x="528" y="236" fill="#5b9df9" font-size="11.5" text-anchor="middle" font-weight="700">M · memory</text>
+<circle cx="252" cy="118" r="4" fill="#e7ebf1"/>
+<text x="240" y="112" fill="#e7ebf1" font-size="10.5" text-anchor="end">B-Tree</text>
+<text x="240" y="127" fill="#7c8593" font-size="9" text-anchor="end">fast reads, compact · high write amp</text>
+<circle cx="300" cy="188" r="4" fill="#e7ebf1"/>
+<text x="312" y="184" fill="#e7ebf1" font-size="10.5">LSM · leveled</text>
+<text x="312" y="199" fill="#7c8593" font-size="9">reads and space ok · write amp &gt;10x</text>
+<circle cx="192" cy="186" r="4" fill="#e7ebf1"/>
+<text x="182" y="182" fill="#e7ebf1" font-size="10.5" text-anchor="end">LSM · size-tiered</text>
+<text x="182" y="197" fill="#7c8593" font-size="9" text-anchor="end">cheap writes · worse reads and space</text>
+<text x="320" y="258" fill="#7c8593" font-size="10" text-anchor="middle">Closer to a vertex means that overhead costs more. No design wins all three.</text>
+</svg>
+<figcaption>Fig 4 · The RUM conjecture: read, update and memory overheads form a triangle, and every storage engine is just a coordinate inside it — there is no all-three-optimal point.</figcaption>
+</figure>
+
+<h3>6. Unordered log structures, and the logs beneath your log</h3>
+<p><strong>A log structure does not have to be sorted. Bitcask</strong> (Riak's storage engine) takes that to the extreme: on disk it is a chain of purely appended, entirely unsorted data files, while memory holds a hash table called the <em>keydir</em> recording which file and offset holds each key's current value. Every read is therefore <strong>one in-memory hash lookup plus one positioned disk read</strong>. The price is equally blunt: <strong>every key must stay resident in memory</strong>, and <strong>range scans are not supported</strong>. <strong>WiscKey</strong> is the compromise: <em>key-value separation</em> keeps the key and a pointer in the LSM-tree while the value goes into an append-only vLog, so compaction moves keys but not values and <strong>write amplification drops sharply</strong>, at the cost of turning range scans into many random reads of the vLog. <strong>The rule is clear: the larger the values, the more key-value separation pays.</strong></p>
+<p>The last section is the most "database internals" of all: <strong>there are more logs beneath your log</strong>. The filesystem may itself be log-structured, and an SSD's <strong>FTL</strong> certainly is — flash erases in blocks and writes in pages, so it never updates in place; it writes to a free page, marks the old one invalid, and collects garbage later. The nasty part is that <strong>write amplification across layers multiplies rather than adds</strong>: an LSM rewriting a record 10 times, times whatever the FTL's garbage collection adds, can land tens of times the logical write volume on the flash cells. Worse, <strong>each layer's garbage collection is blind to the others</strong> — the database may have just declared a batch of data dead while the FTL is busy relocating it to a fresh block. The book's direction is to <strong>flatten the stack</strong>: bypass the filesystem and FTL and manage raw flash directly. The lesson generalizes — <strong>"sequential writes" is an assumption that may simply not hold in a layer you cannot see.</strong></p>
+
+<h2>Key trade-offs and how to choose</h2>
+<p>An anchor scenario first: an IoT platform with <code>500,000</code> devices reporting every <code>10</code> seconds — a steady <code>50,000</code> writes/sec — where queries are almost entirely "the last 24 hours for one device" and data expires after <code>30</code> days. A B-Tree collapses on the write path here: a few dozen bytes of point write drags a multi-kilobyte page, randomly. An LSM makes every write sequential, and TWCS lets each batch of expired data be <strong>deleted as a whole file</strong>. Conversely, an account balance table that is read-heavy and reconciled by primary-key ranges is still far easier on a B-Tree.</p>
+<p class="tcap">Table 1 · LSM-tree vs. B-tree (this chapter against Chapters 2–6)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>LSM-tree (this chapter)</th><th>B-tree (Ch 2–6)</th></tr></thead>
+<tbody>
+<tr><th>Disk write shape</th><td><strong>Purely sequential appends</strong>, never in place</td><td>In-place updates, page-level <strong>random writes</strong></td></tr>
+<tr><th>Write amplification</th><td>From background compaction; often <code>&gt;10×</code> when leveled</td><td>From page rewrites plus the WAL double-write</td></tr>
+<tr><th>Read amplification</th><td>May touch several SSTables; held down by Bloom filters</td><td>About <code>3–4</code> page reads, stable</td></tr>
+<tr><th>Space amplification</th><td><strong>High</strong> — old versions and tombstones wait for compaction</td><td>Low, though pages fragment</td></tr>
+<tr><th>Latency stability</th><td>Compaction competes with foreground IO; <strong>write stalls happen</strong></td><td>Steadier</td></tr>
+<tr><th>Best for</th><td>Write-heavy, rarely revised: time series, logs, messages, counters</td><td>Read-heavy, scattered updates, strict range scans</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · Choosing a compaction strategy (defaults as stated in each project's own docs)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Leveled</th><th>Size-tiered</th><th>Time-window (TWCS)</th></tr></thead>
+<tbody>
+<tr><th>Trigger</th><td>A level exceeds its cap (~<code>10×</code> per level)</td><td>N similarly sized tables accumulate (default <code>4</code>)</td><td>End of a time window</td></tr>
+<tr><th>Read amp.</th><td><strong>Low</strong> — at most one file per level</td><td>High — a key may sit in many tables</td><td>Low — usually one or two windows</td></tr>
+<tr><th>Write amp.</th><td><strong>High</strong> — RocksDB says "often larger than 10"</td><td>Low</td><td>Low</td></tr>
+<tr><th>Space amp.</th><td>Low (Cassandra cites ~<code>10%</code> headroom)</td><td><strong>High</strong> — disk may briefly double on a big merge</td><td>Low — whole buckets expire and go</td></tr>
+<tr><th>Pick it when</th><td>Reads dominate and disk is tight</td><td>Writes dominate and disk is plentiful</td><td>Time series with TTL, arriving roughly in order</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 3 · Sorted vs. unsorted: the second fork in log-structured design</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Sorted LSM</th><th>Bitcask (unsorted)</th><th>WiscKey (key-value split)</th></tr></thead>
+<tbody>
+<tr><th>Point lookup</th><td>Possibly several tables + Bloom filters</td><td><strong>Hash lookup + one positioned read</strong></td><td>LSM for the pointer, then one vLog read</td></tr>
+<tr><th>Range scan</th><td><strong>Supported and efficient</strong></td><td><strong>Not supported</strong></td><td>Supported, but many random vLog reads</td></tr>
+<tr><th>Memory need</th><td>Index plus Bloom filters</td><td><strong>Every key resident in memory</strong></td><td>Keys only — cheaper than a full LSM</td></tr>
+<tr><th>Write amp.</th><td>Compaction moves keys and values; highest</td><td>Low</td><td><strong>Low — compaction moves keys only</strong></td></tr>
+</tbody></table></div>
+
+<h2>Why it matters / in real systems</h2>
+<p>The weight of this chapter is that <strong>nearly every write-optimized store you use today is an instance of it</strong>. The lineage starts with Google's Bigtable (OSDI 2006), which fixed the memtable + SSTable + compaction skeleton; LevelDB turned it into an implementation anyone can read; Meta forked RocksDB from LevelDB, and it became a storage substrate embedded almost everywhere — MyRocks, TiKV, CockroachDB's Pebble, stream-processing state stores. Cassandra, HBase and ScyllaDB are the other branch of the same family.</p>
+<p>For day-to-day decisions it hands you <strong>a set of criteria you can say out loud</strong>: when choosing, ask "what is the read/write ratio, how big are the values, do we need range scans?"; when debugging, ask "which amplification is hurting right now — read, write or space?" Asked in an interview why LSM writes are fast, the answer is not "because they are sequential" but <strong>"because it swapped random writes for sequential ones and deferred the cost into compaction"</strong> — the second half is what separates answers.</p>
+<div class="ev">
+<div class="evh">EVIDENCE FROM THE FIELD · not the book's claims, but each project's own docs</div>
+<ul>
+<li><strong>Meta / RocksDB</strong> states the cost of leveled compaction plainly: "the usual write amplification of leveled compaction, which is often larger than 10"; universal (size-tiered) compaction instead "provides far better write amplification with worse read amplification," and during a full compaction "the DB will be temporarily double the disk space usage" — <strong>the official version of this chapter's "pick two of three amplifications."</strong> <span class="src"><a href="https://github.com/facebook/rocksdb/wiki/Leveled-Compaction" target="_blank" rel="noopener">RocksDB Wiki · Leveled Compaction ↗</a> / <a href="https://github.com/facebook/rocksdb/wiki/Universal-Compaction" target="_blank" rel="noopener">Universal Compaction ↗</a></span></li>
+<li><strong>Meta / RocksDB</strong> publishes the memory-vs-false-positive table for Bloom filters: <code>4.9</code> bits/key ≈ <code>10%</code>, <code>9.9</code> bits/key ≈ <code>1%</code>, <code>15.5</code> bits/key ≈ <code>0.1%</code>, the benefit being "reducing I/O, CPU, and block cache churn associated with <code>DB::Get</code>, or <code>Seek</code>." <span class="src"><a href="https://github.com/facebook/rocksdb/wiki/RocksDB-Bloom-Filter" target="_blank" rel="noopener">RocksDB Wiki · Bloom Filter ↗</a></span></li>
+<li><strong>Google / LevelDB</strong>'s implementation doc gives every concrete number behind leveled compaction: logs convert at "approximately 4MB by default," compaction fires when L0 exceeds "four" files, level L is capped at "(10^L) MB," output files switch at "the target file size (2MB)," and the "worst compaction cost is approximately 0.5 second" — <strong>this chapter's structure, verifiable at code level.</strong> <span class="src"><a href="https://github.com/google/leveldb/blob/main/doc/impl.md" target="_blank" rel="noopener">LevelDB · doc/impl.md ↗</a></span></li>
+<li><strong>Apache Cassandra</strong> confirms the selection table from both directions: LCS "is recommended for read-heavy workloads" because "a read operation... will only need to look at one SSTable per level," yet "is not a good choice for write-heavy workloads... because it will cause a lot of disk IO and CPU usage"; STCS "is recommended for write-intensive workloads" but "does not evict deleted data predictably," and holding old and new SSTables at once during a major compaction produces what it calls "space amplification." <span class="src"><a href="https://github.com/apache/cassandra/blob/trunk/doc/modules/cassandra/pages/managing/operating/compaction/lcs.adoc" target="_blank" rel="noopener">Cassandra Docs · LCS ↗</a> / <a href="https://github.com/apache/cassandra/blob/trunk/doc/modules/cassandra/pages/managing/operating/compaction/stcs.adoc" target="_blank" rel="noopener">STCS ↗</a></span></li>
+<li><strong>Apache Cassandra</strong> also writes the tombstone safety window into its docs: once a TTL expires "the data is converted to a tombstone which stays around for at least <code>gc_grace_seconds</code>," and tombstones must live in the same data directory as their data so that losing a disk cannot leave data "undeleted." <span class="src"><a href="https://github.com/apache/cassandra/blob/trunk/doc/modules/cassandra/pages/managing/operating/compaction/overview.adoc" target="_blank" rel="noopener">Cassandra Docs · Compaction Overview ↗</a></span></li>
+</ul>
+</div>
+
+<h2>Pitfalls and disputes</h2>
+<ul>
+<li><strong>"LSM writes are simply faster than B-tree writes" — half true.</strong> It only swaps random writes for sequential ones; the total volume written is actually larger. Under sustained write pressure, compaction competes with the foreground for IO and shows up as latency spikes or outright <strong>write stalls</strong>.</li>
+<li><strong>"Deleting should free space" — wrong.</strong> A delete writes a tombstone, so the footprint <strong>grows before it shrinks</strong>; "we deleted a lot of data and the disk filled up" is the classic operational surprise. The mirror-image mistake is <strong>reclaiming tombstones too early</strong>: while any older SSTable might still hold a previous value, dropping the tombstone resurrects deleted data — which is why deletes in Cassandra must be planned alongside the repair cycle.</li>
+<li><strong>"Add a Bloom filter and slow reads are cured" — only half of them.</strong> It helps point lookups and does <strong>nothing for range scans</strong>, and it can only ever prove absence, never presence.</li>
+<li><strong>"Pick a compaction strategy once and you're done" — no.</strong> This book was written in 2019; Cassandra has since introduced the Unified Compaction Strategy (UCS), and its docs now call it "the best recommendation for all workloads today." The three-way split is still the right way to understand the space, but it is no longer the latest answer.</li>
+<li><strong>RUM is a conjecture, not a theorem.</strong> It has no rigorous proof and is a qualitative description of the design space — better used to <strong>ask</strong> ("which of the three did I just sacrifice?") than to <strong>conclude</strong>.</li>
+</ul>
+
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. There is exactly one trade: <strong>swap "random in-place update" for "sequential append plus merge later."</strong> The cost does not vanish, it is deferred into compaction.</p>
+<p>2. Structure: one mutable in-memory table (memtable, usually a skiplist) + many <strong>immutable</strong> on-disk tables (SSTables) + a WAL for crash safety. Nothing on disk is modified in place.</p>
+<p>3. An update appends a new version; a delete writes a <strong>tombstone</strong> — so deleting grows the disk first and real reclamation waits for compaction.</p>
+<p>4. A read does two things: a <strong>k-way merge</strong> turns many sources into one ordered stream, then <strong>reconciliation</strong> keeps the newest by timestamp; a tombstone beats any older value.</p>
+<p>5. The <strong>Bloom filter</strong> is the first wall against read amplification: point lookups only, absence only; roughly <code>10</code> bits per key buys about <code>1%</code> false positives.</p>
+<p>6. <strong>Compaction is the heart of it</strong>: immutability makes it sequential-read, sequential-write and effectively lock-free. Three strategies — leveled (read-optimized, write amp &gt;10), size-tiered (write-optimized, worse reads and space), time-window (time series + TTL, whole buckets expire).</p>
+<p>7. The <strong>RUM conjecture</strong>: read, update and memory overheads — keep at most two low. B-Trees hold the read corner, LSM-trees the write corner.</p>
+<p>8. Log structures need not be sorted: <strong>Bitcask</strong> buys a single positioned read at the price of all keys in memory and no range scans; <strong>WiscKey</strong> moves only keys during compaction, and pays off more the larger the values.</p>
+<p>9. <strong>Log stacking</strong>: the filesystem and the SSD's FTL are log structures too, their write amplifications <strong>multiply</strong>, and their garbage collectors are blind to each other — "sequential writes" may not hold underneath you.</p>
+<p>10. Rule of thumb: write-heavy and rarely revised → LSM; read-heavy, range scans, tight disk → B-Tree; when something hurts, first name which amplification it is.</p>
+</div>
+</div>
+
+<footer>Book Deep Read · Finish this page and you have the chapter's core; for full cases and depth, go to the book itself.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
