@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview Vol 1 Ch 3 · A Framework for System Design Interviews — Book Deep Read 55</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">Book Deep Read · System Design Interview Vol 1 · Ch 3</p>
+<h1>A Framework for System Design Interviews</h1>
+<p class="sub">System Design Interview: An Insider's Guide · Vol 1 · Ch 3 · Alex Xu · 2020</p>
+<p class="langbar"><a href="sdi1-ch03-interview-framework-book55.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>Hire someone to redo your kitchen and the good ones never open with "I'll put in marble." They ask first: how many people live here? How old are the kids? A cat? What's the budget? How much do you actually cook? Only after that does a plan mean anything. This chapter teaches the engineer's version of that opening: <strong>given a deliberately vague, wide-open question, how do you use a fixed order of moves to turn it into a question you can actually answer.</strong></p>
+<h2>A strange thing first</h2>
+<p>This is the only chapter in the book that teaches no technology at all. No caches, no databases, not a single component name. <strong>And it is the chapter that decides whether you pass.</strong> Because this kind of exam is never a contest over who has the right answer — the question has no right answer. It watches something else: hand you a thing nobody has thought through, and can you tidy it into a plan, step by step.</p>
+<h2>Why the old world was hard</h2>
+<p>The most common failure looks like this: the question ends and the person starts answering. Out of nerves, out of fear of silence, out of a sense that answering fast looks smart.</p>
+<p>The trouble is that they are usually answering a different question. <strong>Starting before you understand is spending forty minutes on a problem you invented in your own head.</strong> However well you do it, the person across the table is thinking one thing the whole time: why didn't you ask?</p>
+<p>The opposite failure is just as common: talking about the big picture forever and never letting anything land. It looks thorough, but the one sentence they were waiting for — "and how would you actually build that part" — never arrives.</p>
+<p>Both are the same illness: <strong>no order of operations.</strong></p>
+<h2>The core mechanism: four moves</h2>
+<p><strong>① Ask first.</strong> Who uses this, which features must exist, roughly how many people, how fast does it need to be. Only then do you know whether you are building a bicycle or a freight train — and those two share no method whatsoever.</p>
+<p><strong>② Sketch it rough, and get a nod.</strong> Put a few boxes on the board: where data comes in, who it passes through, where it rests, how it goes back out. Then stop and ask, "Does this direction look right to you?" That pause matters — going on only after a nod is what keeps you from walking the wrong way for twenty minutes.</p>
+<p><strong>③ Pick the one or two parts that matter most and dig in.</strong> Not every part; there isn't time, and it isn't the point. What they want to see is usually one or two boxes. Pick those and explain what is actually inside: how it works, why it is built that way, and what it costs.</p>
+<p><strong>④ Wrap up.</strong> Spend the last few minutes on: where this thing breaks first, what happens when a piece dies, what you would watch after it ships, and what you would change if ten times as many people showed up.</p>
+<h2>How to use it</h2>
+<p>One discipline runs through all four: <strong>say it out loud.</strong> They cannot see inside your head, so the two minutes you spend thinking silently register as two minutes of nothing. Even hesitation should be spoken: "I'm torn between two approaches, one is cheaper and one is faster, and I lean toward the second because…" — that sentence is itself worth points.</p>
+<p>One honest cost: this order only guarantees that you explain yourself well. <strong>It is no substitute for actually knowing the material</strong> — the framework lets someone competent perform normally; it does not let someone unprepared bluff through.</p>
+<h2>Remember this</h2>
+<div class="tl">
+<p>What is being graded is not the diagram you end up with, but <strong>how you got from one vague sentence to that diagram</strong>. Ask first, sketch rough and get a nod, dig into one or two parts, leave three minutes to wrap up — narrating the whole way.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the time budget and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think a system design interview tests whether you can design systems. What it actually tests is this: <strong>with badly incomplete information, forty-five minutes on the clock, and another person sitting across from you, can you turn a vague problem into a workable one?</strong> The book says it plainly — this is a simulation of two co-workers collaborating on an open-ended problem, and the final diagram matters far less than the process that got you there. The chapter teaches no technology. It gives you an order; and that order happens to be exactly the order of a real design review.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>High-level design</strong>: a rough picture made of a few boxes showing the main components and how data flows between them, with no implementation detail.</li>
+<li><strong>Deep dive</strong>: picking one or two key components and explaining how they are built inside and why.</li>
+<li><strong>Functional vs non-functional requirements</strong>: the first is what the system must do (post, search); the second is how well (how fast, how reliable, at what scale). The second is the one candidates forget to ask about.</li>
+<li><strong>Trade-off</strong>: every choice gives something up. Being able to name what you gave up is what separates understanding a design from reciting one.</li>
+<li><strong>QPS (queries per second)</strong>: the standard yardstick for load. <strong>DAU</strong> is daily active users.</li>
+<li><strong>Fan-out</strong>: one write that must be delivered to many recipients — one post pushed into tens of thousands of followers' inboxes.</li>
+<li><strong>Cache</strong>: keeping hot data somewhere faster (usually memory) so you don't hit the database every time.</li>
+<li><strong>CDN (content delivery network)</strong>: pushing static content such as images and video to servers near the user, so it doesn't cross the planet on every request.</li>
+<li><strong>API endpoint</strong>: one concrete interface exposed to callers, e.g. <code>POST /v1/tweets</code>.</li>
+<li><strong>Schema</strong>: what the data looks like in storage — which fields, which indexes, which relationships.</li>
+<li><strong>Bottleneck</strong>: the first link in the chain to give way. A system's ceiling is set by it, not by its fastest part.</li>
+<li><strong>Buy-in</strong>: presenting your plan and getting explicit agreement before going further. The whole of step 2 is about obtaining it.</li>
+<li><strong>Over-engineering</strong>: paying for complexity that no real requirement asked for. This chapter names it the number-one red flag.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This closes Part I of Volume 1 and acts as the book's hinge: <strong>Ch1 hands you the parts</strong> (cache, replicas, load balancer, sharding), <strong>Ch2 hands you the ruler</strong> (QPS, storage, availability, all as orders of magnitude), and <strong>Ch3 hands you the order in which to use them</strong>. None of the twelve case chapters that follow — rate limiter, URL shortener, crawler, news feed, chat, YouTube, Google Drive — introduces a new method. <strong>Every one of them is this four-step sequence run once more.</strong> The real-world counterpart is concrete too: these four steps are the skeleton of a design doc and a design review, compressed from two weeks into forty-five minutes.</p>
+<h2>What the chapter is solving</h2>
+<p>The interviewer says "design Twitter," then stops talking. There is no scale in those two words, no feature scope, no constraints — <strong>and that is deliberate</strong>. The book names the reason: the questions are open and vague because real problems inside companies look exactly like that. The vagueness is part of the exam.</p>
+<p>What happens if you skip this? Three deaths, all typical.</p>
+<p><strong>One: answering immediately.</strong> The book is blunt — firing off an answer without thinking <strong>earns you no bonus points</strong>; this is not a trivia contest. Worse, you may be answering the wrong question entirely: the interviewer's Twitter has <strong>fifty million daily users and roughly a <code>100:1</code> read/write ratio</strong>, while you spent forty minutes designing an internal tool with ten thousand. Two problems three orders of magnitude apart share no correct answer.</p>
+<p><strong>Two: all breadth, no depth.</strong> Eight boxes on the board, each carrying nothing but a name. You have proved you have heard of these components, not that you have used them.</p>
+<p><strong>Three: diving straight in.</strong> Three minutes in, you are arguing about how many virtual nodes belong on the hash ring while the requirements are still unclear. The book gives a pointed example: in a question meant to probe whether you can handle scale, spending a long stretch weighing BFS against DFS is <strong>a clear negative signal</strong> — it says you don't know what is being looked for.</p>
+<p>Add the hard constraint: <strong>forty-five minutes</strong>. A standard on-site round runs 45–60 minutes, and once introductions and your own questions are subtracted, the design itself gets a bit over forty. On that budget, <strong>no order means you will drop something whole</strong> — not a detail, but an entire dimension such as non-functional requirements or the wrap-up. So the chapter delivers exactly one capability: <strong>a fixed sequence that fits any question, plus how many minutes each step gets.</strong></p>
+<h2>The core content, in full</h2>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="20">The four steps and the 45-minute budget</text>
+<rect fill="rgba(91,157,249,0.55)" height="34" width="96" x="60" y="36"></rect>
+<rect fill="rgba(91,157,249,0.3)" height="34" width="180" x="156" y="36"></rect>
+<rect fill="rgba(155,108,245,0.45)" height="34" width="216" x="336" y="36"></rect>
+<rect fill="rgba(155,108,245,0.22)" height="34" width="48" x="552" y="36"></rect>
+<rect fill="none" height="34" rx="4" stroke="rgba(143,186,255,0.35)" width="540" x="60" y="36"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="108" y="58">① Scope</text>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="246" y="58">② High-level design</text>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="444" y="58">③ Deep dive</text>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="576" y="58">④</text>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" text-anchor="middle" x="108" y="85">3–10 min</text>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" text-anchor="middle" x="246" y="85">10–15 min</text>
+<text fill="#c0a3fb" font-family="monospace" font-size="9.5" text-anchor="middle" x="444" y="85">10–25 min</text>
+<text fill="#c0a3fb" font-family="monospace" font-size="9.5" text-anchor="middle" x="576" y="85">3–5 min</text>
+<line stroke="#7c8593" x1="60" x2="600" y1="98" y2="98"></line>
+<text fill="#7c8593" font-family="monospace" font-size="9" text-anchor="middle" x="60" y="111">0</text>
+<text fill="#7c8593" font-family="monospace" font-size="9" text-anchor="middle" x="240" y="111">15</text>
+<text fill="#7c8593" font-family="monospace" font-size="9" text-anchor="middle" x="420" y="111">30</text>
+<text fill="#7c8593" font-family="monospace" font-size="9" text-anchor="middle" x="600" y="111">45 min</text>
+<rect fill="rgba(91,157,249,0.55)" height="10" rx="2" width="10" x="24" y="130"></rect>
+<text fill="#b9c0ca" font-size="10.5" x="42" y="139">① Output: an agreed list on the board — feature scope, scale assumptions, what is out of scope</text>
+<rect fill="rgba(91,157,249,0.3)" height="10" rx="2" width="10" x="24" y="158"></rect>
+<text fill="#b9c0ca" font-size="10.5" x="42" y="167">② Output: a box diagram they have nodded at, plus an estimate showing it holds at ①'s scale</text>
+<rect fill="rgba(155,108,245,0.45)" height="10" rx="2" width="10" x="24" y="186"></rect>
+<text fill="#b9c0ca" font-size="10.5" x="42" y="195">③ Output: 1–2 components in real detail — how it works, why built that way, what it costs</text>
+<rect fill="rgba(155,108,245,0.22)" height="10" rx="2" width="10" x="24" y="214"></rect>
+<text fill="#b9c0ca" font-size="10.5" x="42" y="223">④ Output: bottlenecks, failure cases, monitoring and rollout, the next order of magnitude</text>
+<rect fill="rgba(224,107,107,0.08)" height="42" rx="6" stroke="rgba(224,107,107,0.5)" width="576" x="24" y="242"></rect>
+<text fill="#f0a0a0" font-size="10.5" x="38" y="261">The budget is itself part of the score: ① has a ceiling (don't turn the hour into a</text>
+<text fill="#f0a0a0" font-size="10.5" x="38" y="277">requirements interview) and ③ has a floor. Moving ③ ahead of ① is the classic way to fail.</text>
+</svg>
+<figcaption>Figure 1 · The four steps and the 45-minute allocation given in the book. Bar widths use each step's median duration; below each is what that step must actually deliver.</figcaption>
+</figure>
+<h3>Step 1 — Understand the problem and establish design scope (3–10 min)</h3>
+<p>The book's demand here is close to severe: <strong>do not answer right away.</strong> Slow down, think deeply, ask questions. It puts "this is not a trivia contest" alongside, precisely to block the urge to jump — <strong>speed earns nothing and risks everything.</strong></p>
+<p>What to ask? Two layers. The first works on any question: <strong>which specific features are we building? How many users? How fast does the company expect to scale? What is the existing tech stack, and which services can we reuse?</strong> The last one is skipped most often and is closest to real work — real designs are never done on blank paper.</p>
+<p>The second layer lands those on the actual problem. Using "design a news feed," the book's questions are: <strong>mobile app, web, or both? Which features matter most? Is the feed in reverse chronological order or ranked by weight (friends' posts scoring higher)? How many friends can one user have? What is the traffic volume? Can a post contain images and video?</strong></p>
+<p>Notice what these have in common: <strong>a different answer to any one of them changes the architecture, not just a parameter.</strong> "Ranked by weight" means an extra ranking service and a feature store; "video allowed" means a transcoding pipeline, object storage and a CDN — enough to be its own interview question. Which gives the test in reverse: <strong>if a question's answer wouldn't change your design, it doesn't deserve any of these ten minutes.</strong></p>
+<p>The output of this step is not the questions. It is <strong>a short list in the corner of the board that both of you accept</strong>: feature scope, scale assumptions, explicit non-goals. Writing it down buys the same thing it bought in Ch2 — every later sentence now rests on something, and the other person can point at one line and say "change this one and let's look again."</p>
+<h3>Step 2 — Propose a high-level design and get buy-in (10–15 min)</h3>
+<p>The goal here is not to be right. It is <strong>to reach a picture you have both nodded at</strong>. The book's word is buy-in, and that is the whole point of the step: treat the interviewer as a teammate, ask for feedback while you draw, rather than presenting a finished artifact.</p>
+<p>Three concrete things. <strong>Draw the box diagram</strong>: clients, APIs, web servers, data stores, cache, CDN, message queue — the fewest boxes that trace data in and out. <strong>Run a back-of-the-envelope estimate</strong> (the Ch2 method) to check on the spot that this picture holds at the scale fixed in step 1; the book adds that you should do the arithmetic <strong>out loud</strong>. <strong>Negotiate with the interviewer</strong> whether to expand API endpoints and the database schema — this is an option, not an obligation: some want to see the signatures, some consider it a waste of the hour.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 286" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ah1" markerheight="7" markerwidth="7" orient="auto" refx="5.5" refy="2.6"><path d="M0,0 L5.5,2.6 L0,5.2 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="20">What step 2 produces: the news feed box diagram (the book's example)</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" x="20" y="46">① Publishing flow (write)</text>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="5" stroke="#5b9df9" width="76" x="18" y="56"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="56" y="75">Poster</text>
+<line marker-end="url(#ah1)" stroke="#7c8593" x1="96" x2="122" y1="71" y2="71"></line>
+<rect fill="rgba(91,157,249,0.1)" height="30" rx="5" stroke="#7c8593" width="90" x="126" y="56"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="171" y="75">Load balancer</text>
+<line marker-end="url(#ah1)" stroke="#7c8593" x1="218" x2="242" y1="71" y2="71"></line>
+<rect fill="rgba(91,157,249,0.1)" height="30" rx="5" stroke="#7c8593" width="96" x="246" y="56"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="294" y="75">Web servers</text>
+<line marker-end="url(#ah1)" stroke="#7c8593" x1="344" x2="368" y1="71" y2="71"></line>
+<rect fill="rgba(91,157,249,0.2)" height="30" rx="5" stroke="#5b9df9" stroke-width="1.6" width="96" x="372" y="56"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="420" y="75">Fanout service</text>
+<line marker-end="url(#ah1)" stroke="#7c8593" x1="470" x2="494" y1="71" y2="71"></line>
+<rect fill="rgba(91,157,249,0.2)" height="30" rx="5" stroke="#5b9df9" stroke-width="1.6" width="110" x="498" y="56"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="553" y="75">Inbox cache</text>
+<line marker-end="url(#ah1)" stroke="#7c8593" x1="294" x2="294" y1="88" y2="110"></line>
+<rect fill="rgba(91,157,249,0.1)" height="30" rx="5" stroke="#7c8593" width="96" x="246" y="112"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="294" y="131">Post store</text>
+<line marker-end="url(#ah1)" stroke="#7c8593" x1="420" x2="420" y1="88" y2="110"></line>
+<rect fill="rgba(91,157,249,0.1)" height="30" rx="5" stroke="#7c8593" width="96" x="372" y="112"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="420" y="131">Notification</text>
+<line stroke="rgba(120,120,130,0.3)" stroke-dasharray="4 4" x1="18" x2="620" y1="156" y2="156"></line>
+<text fill="#c0a3fb" font-family="monospace" font-size="10" x="20" y="180">② Retrieval flow (read)</text>
+<rect fill="rgba(155,108,245,0.14)" height="30" rx="5" stroke="#9b6cf5" width="76" x="18" y="190"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="56" y="209">Reader</text>
+<line marker-end="url(#ah1)" stroke="#7c8593" x1="96" x2="122" y1="205" y2="205"></line>
+<rect fill="rgba(155,108,245,0.08)" height="30" rx="5" stroke="#7c8593" width="90" x="126" y="190"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="171" y="209">Load balancer</text>
+<line marker-end="url(#ah1)" stroke="#7c8593" x1="218" x2="242" y1="205" y2="205"></line>
+<rect fill="rgba(155,108,245,0.08)" height="30" rx="5" stroke="#7c8593" width="96" x="246" y="190"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="294" y="209">Web servers</text>
+<line marker-end="url(#ah1)" stroke="#7c8593" x1="344" x2="368" y1="205" y2="205"></line>
+<rect fill="rgba(155,108,245,0.2)" height="30" rx="5" stroke="#9b6cf5" stroke-width="1.6" width="96" x="372" y="190"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="420" y="209">Feed service</text>
+<line marker-end="url(#ah1)" stroke="#7c8593" x1="470" x2="494" y1="205" y2="205"></line>
+<rect fill="rgba(155,108,245,0.2)" height="30" rx="5" stroke="#9b6cf5" stroke-width="1.6" width="110" x="498" y="190"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="553" y="209">Media CDN</text>
+<line marker-end="url(#ah1)" stroke="rgba(155,108,245,0.6)" stroke-dasharray="4 3" x1="553" x2="553" y1="90" y2="186"></line>
+<text fill="#c0a3fb" font-size="9.5" x="562" y="142">read hits here</text>
+<text fill="#7c8593" font-size="10" x="20" y="252">Nine boxes, and every one can be explained in a sentence — a box you cannot explain is a place you have not thought through.</text>
+<text fill="#7c8593" font-size="10" x="20" y="270">Splitting write from read is itself a challengeable choice: the fanout service moves cost onto the write path to make reads fast.</text>
+</svg>
+<figcaption>Figure 2 · The news feed at a high level: the write path (publish plus fanout) and the read path (pull plus media delivery). The heavier-outlined boxes are the likely deep-dive targets.</figcaption>
+</figure>
+<p>The common mistake here is not drawing badly — it is <strong>not stopping</strong>. Asking "does this direction look right to you?" costs ten seconds; not asking costs the next twenty minutes spent on a path the other person never accepted.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/capacity-estimation-day26.en.html" rel="noopener" target="_blank">System Design · Day 26 Capacity Estimation</a> — how that on-the-spot "does it hold?" check actually runs: QPS to machine count, how much headroom to keep, and which overheads get forgotten</aside>
+<h3>Step 3 — Design deep dive (10–25 min)</h3>
+<p>By now four things are in place: goals and feature scope are settled, the blueprint is drawn, you have feedback, and you have some sense of where to focus. This step is <strong>picking the components worth opening up, with the interviewer, and then opening them up</strong>.</p>
+<p>Which component depends on the question. The book gives a matched pair: for a <strong>URL shortener</strong> the weight is on the hash function — mapping a long URL to a short key and handling collisions; for a <strong>chat system</strong> it is on cutting latency and maintaining online/offline presence. Same process, entirely different landing point — which is the difference between a framework and a template.</p>
+<p>The real skill here is <strong>time management</strong>. The book names one way to lose points outright: getting pulled into unnecessary detail. <strong>Ten to twenty-five minutes buys two components, not five.</strong> So before choosing, ask: "would you rather see the storage side or the fanout side?" That question routinely saves five minutes, and five minutes is an eighth of the round.</p>
+<p>When you do open a component, three things suffice: <strong>how it works, why it is built that way, what it costs.</strong> The third is what separates recital from experience. Saying "use a cache" and stopping is recital; saying "the moment the cache dies, all of that traffic lands directly on the database, so you either warm it or put a breaker in front" is a deep dive.</p>
+<h3>Step 4 — Wrap up (3–5 min)</h3>
+<p>The book lists five closing moves:</p>
+<ul>
+<li><strong>Find the bottlenecks</strong>: where this design gives way first, and what you would improve next.</li>
+<li><strong>Recap the design briefly</strong>: after a long deep dive this refreshes the interviewer's memory — and memory is what writes the feedback an hour later.</li>
+<li><strong>Error cases</strong>: a server dies, the network drops.</li>
+<li><strong>Operations</strong>: how you monitor it, which metrics matter, how you roll it out.</li>
+<li><strong>The next order of magnitude</strong>: it holds a million users; what changes at ten million?</li>
+</ul>
+<p>What these share is that <strong>they all concern "afterwards."</strong> Many people treat these three minutes as a courtesy. They are the highest-yield three minutes in the room: the previous forty proved you can design, and these three prove <strong>you know what happens after a design ships</strong> — which is precisely the line between someone who solves exercises and someone who has been on call. The book adds a line that gets ignored: <strong>finishing the design is not finishing the interview; the interviewer decides when you are done.</strong> Ask for feedback early and often.</p>
+<h2>Key trade-offs</h2>
+<p>There is no technology selection in this chapter, but there are three real trade-offs: <strong>how to spend the clock, how to balance breadth against depth, and when to admit you don't know.</strong></p>
+<p class="tcap">Table 1 · The four steps: output, budget, the usual failure, and how to recover</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Step</th><th>Budget (45-min round)</th><th>Must deliver</th><th>Usual failure</th><th>Recovery line</th></tr></thead>
+<tbody>
+<tr><th>① Scope</th><td><code>3–10</code> min</td><td>Agreed feature scope, scale assumptions, explicit non-goals</td><td><strong>Answering without asking</strong>; or the reverse — still interviewing them at minute 15</td><td>"Let me confirm a few things that change the architecture, then I'll start designing."</td></tr>
+<tr><th>② High-level</th><td><code>10–15</code> min</td><td>A box diagram they nodded at, plus one live estimate</td><td>Drawing without stopping, <strong>never asking for buy-in</strong>; or opening the schema too early</td><td>"That's my overall shape — does the direction look right? Want me to write the API too?"</td></tr>
+<tr><th>③ Deep dive</th><td><code>10–25</code> min</td><td>1–2 components with mechanism, reasoning and cost</td><td>Five components at two sentences each; or detail irrelevant to the question</td><td>"Storage or fanout — which would you rather see? I'll dig where you care."</td></tr>
+<tr><th>④ Wrap up</th><td><code>3–5</code> min</td><td>Bottlenecks, error cases, monitoring and rollout, next scale tier</td><td><strong>Eaten by the earlier steps and skipped entirely</strong></td><td>"With a few minutes left, let me cover bottlenecks and what I'd watch in production."</td></tr>
+</tbody></table></div>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 280" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="18">The same 45 minutes, three ways to spend them</text>
+<rect fill="rgba(91,157,249,0.55)" height="9" rx="2" width="9" x="292" y="26"></rect>
+<text fill="#7c8593" font-size="9.5" x="305" y="34">① Scope</text>
+<rect fill="rgba(91,157,249,0.3)" height="9" rx="2" width="9" x="360" y="26"></rect>
+<text fill="#7c8593" font-size="9.5" x="373" y="34">② High-level</text>
+<rect fill="rgba(155,108,245,0.45)" height="9" rx="2" width="9" x="447" y="26"></rect>
+<text fill="#7c8593" font-size="9.5" x="460" y="34">③ Deep dive</text>
+<rect fill="rgba(155,108,245,0.22)" height="9" rx="2" width="9" x="537" y="26"></rect>
+<text fill="#7c8593" font-size="9.5" x="550" y="34">④ Wrap</text>
+<text fill="#8fbaff" font-size="10.5" x="20" y="70">✔ Even pace</text>
+<rect fill="rgba(91,157,249,0.55)" height="24" width="82" x="150" y="52"></rect>
+<rect fill="rgba(91,157,249,0.3)" height="24" width="153" x="232" y="52"></rect>
+<rect fill="rgba(155,108,245,0.45)" height="24" width="184" x="385" y="52"></rect>
+<rect fill="rgba(155,108,245,0.22)" height="24" width="41" x="569" y="52"></rect>
+<text fill="#7c8593" font-size="10" x="150" y="92">All four steps land; consensus precedes the dive, and the wrap-up is not squeezed out.</text>
+<text fill="#f0a0a0" font-size="10.5" x="20" y="126">✘ Dives too early</text>
+<rect fill="rgba(91,157,249,0.55)" height="24" width="10" x="150" y="108"></rect>
+<rect fill="rgba(91,157,249,0.3)" height="24" width="41" x="160" y="108"></rect>
+<rect fill="rgba(155,108,245,0.45)" height="24" width="388" x="201" y="108"></rect>
+<rect fill="rgba(155,108,245,0.22)" height="24" width="20" x="589" y="108"></rect>
+<text fill="#7c8593" font-size="10" x="150" y="148">Detail before requirements — however deep it goes, it may answer a different question.</text>
+<text fill="#f0a0a0" font-size="10.5" x="20" y="182">✘ Never digs</text>
+<rect fill="rgba(91,157,249,0.55)" height="24" width="102" x="150" y="164"></rect>
+<rect fill="rgba(91,157,249,0.3)" height="24" width="286" x="252" y="164"></rect>
+<rect fill="rgba(155,108,245,0.45)" height="24" width="51" x="538" y="164"></rect>
+<rect fill="rgba(155,108,245,0.22)" height="24" width="20" x="589" y="164"></rect>
+<text fill="#7c8593" font-size="10" x="150" y="204">A complete picture with no engineering judgement visible — only that you have heard of the parts.</text>
+<line stroke="#7c8593" x1="150" x2="609" y1="218" y2="218"></line>
+<text fill="#7c8593" font-family="monospace" font-size="9" text-anchor="middle" x="150" y="231">0</text>
+<text fill="#7c8593" font-family="monospace" font-size="9" text-anchor="middle" x="303" y="231">15</text>
+<text fill="#7c8593" font-family="monospace" font-size="9" text-anchor="middle" x="456" y="231">30</text>
+<text fill="#7c8593" font-family="monospace" font-size="9" text-anchor="middle" x="609" y="231">45 min</text>
+<text fill="#b9c0ca" font-size="10.5" x="20" y="258">Opposite failures, one root cause: a step ate someone else's budget. Feedback is written per</text>
+<text fill="#b9c0ca" font-size="10.5" x="20" y="274">dimension — missing a whole dimension costs more than covering one of them shallowly.</text>
+</svg>
+<figcaption>Figure 3 · Three allocations compared. The lower two each lose an entire dimension: the middle loses consensus, the last loses depth.</figcaption>
+</figure>
+<p class="tcap">Table 2 · The book's Dos and Don'ts, folded into one table</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Dimension</th><th>Do</th><th>Don't</th></tr></thead>
+<tbody>
+<tr><th>Opening</th><td>Always ask for clarification; never assume your assumption is right</td><td>Jump to a solution before requirements and assumptions are clear</td></tr>
+<tr><th>Mindset</th><td>Accept that there is no single right answer and no best answer; offer several approaches with their costs</td><td>Guess at a "model answer" and force-fit it; give one approach and be unable to say what it gives up</td></tr>
+<tr><th>Communication</th><td>Say what you are thinking; if you're stuck, ask for a hint</td><td><strong>Think in silence</strong> — unseen thinking reads as no thinking</td></tr>
+<tr><th>Pacing</th><td>Agree at the high level first, then drill component by component, most critical first</td><td>Sink deep into one component in the opening minutes</td></tr>
+<tr><th>Closing</th><td>Ask for feedback early and often; they say when it's over</td><td>Treat them as an examiner; assume you're finished once the design is described</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 3 · Three real trade-offs, and the cost of choosing wrong</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Trade-off</th><th>Cost of leaning A</th><th>Cost of leaning B</th><th>How to decide</th></tr></thead>
+<tbody>
+<tr><th>Breadth vs depth</th><td><strong>Breadth</strong>: reads as reciting a component list; no judgement visible</td><td><strong>Depth</strong>: structural gaps go unnoticed and the wrap-up gets squeezed out</td><td>Make sure all four steps land, then give every remaining minute to depth</td></tr>
+<tr><th>Driving vs following</th><td><strong>Driving</strong>: you may dig somewhere they don't care about</td><td><strong>Following</strong>: reads as having no opinion, moving only when prompted</td><td>At each turning point, propose and check: "I plan to dig into X — good?"</td></tr>
+<tr><th>Admitting vs bluffing</th><td><strong>Admitting</strong>: exposes one gap in your knowledge</td><td><strong>Bluffing</strong>: exposes your judgement and your honesty — far more expensive</td><td>The book is unambiguous: <strong>if you're stuck, ask for a hint.</strong> Hints don't cost points; invention does</td></tr>
+</tbody></table></div>
+<p>That last row deserves a sentence of its own. People assume "I'm not sure" loses points. The opposite holds: <strong>the interviewer almost certainly knows this area better than you, invention gets caught, and what gets caught is not "doesn't know" but "can't be trusted."</strong> Once credibility goes, nothing earlier in the hour brings it back.</p>
+<h2>Why it matters / in real systems</h2>
+<p>These four steps were not invented for interviews. They are <strong>a compressed design review</strong>. Stretch the clock from forty-five minutes to two weeks and each step has a counterpart: step 1 = settling requirements and <strong>non-goals</strong> — Amazon's Working Backwards pushes this to its limit by writing the press release and FAQ before any code, killing ideas that don't move a customer before an engineer is assigned; step 2 = the "architecture overview" section of a design doc, and the review meeting where people nod; step 3 = the thickest part of that doc, key decisions weighed against alternatives; step 4 = the pre-launch checklist: monitoring, alerting, rollback, capacity. <strong>Which is why this chapter is worth learning on its own: the return does not stop at an offer.</strong></p>
+<div class="ev">
+<div class="evh">Evidence from industry · not from the book — these are the companies' own public statements</div>
+<ul>
+<li><strong>Google</strong>, in its published re:Work hiring guidance, argues that <strong>structured interviewing</strong> — a set of planned questions plus a common scoring rubric — is <strong>more predictive of on-the-job performance</strong> than unstructured interviewing, saves roughly 40 minutes per interview on average, and raises candidate satisfaction; Dr. Melissa Harrell of its People Analytics team is quoted saying "structured interviews are one of the best tools we have to identify the strongest job candidates." <strong>Direct support for this chapter's skeleton: a fixed four-step order plus fixed evaluation dimensions is where the predictive power comes from, not ceremony.</strong><span class="src"><a href="https://rework.withgoogle.com/intl/en/guides/hiring-use-structured-interviewing" rel="noopener" target="_blank">Google re:Work, "Use structured interviewing" ↗</a></span></li>
+<li><strong>Google's Laszlo Bock</strong>, then SVP of People Operations, said publicly in 2013 that brainteaser questions are "a complete waste of time" — "they don't predict anything, they serve primarily to make the interviewer feel smart"; Google compared tens of thousands of interview scores against actual performance and found <strong>zero relationship</strong>. <strong>The counter-evidence: cleverness was never what is being measured, which is why this chapter teaches process and communication instead of tricks.</strong><span class="src"><a href="https://www.linkedin.com/pulse/20130620142512-35894743-on-gpas-and-brain-teasers-new-insights-from-google-on-recruiting-and-hiring" rel="noopener" target="_blank">L. Bock, "On GPAs and Brainteasers", 2013 (also reported in the New York Times) ↗</a></span></li>
+<li><strong>Amazon</strong> publicly describes its <strong>Bar Raiser</strong> program: a trained senior interviewer with no direct stake in the role joins every loop, responsible for keeping the assessment open, accurate and fair, and for holding the standard that every hire should be better than half the people already in comparable roles. <strong>Confirms that the interviewer is collecting signal against a scale rather than waiting for a particular answer — and the four steps are the order that produces evaluable signal.</strong><span class="src"><a href="https://www.aboutamazon.eu/news/working-at-amazon/what-is-a-bar-raiser-at-amazon" rel="noopener" target="_blank">About Amazon, "What is a Bar Raiser at Amazon?" ↗</a></span></li>
+<li><strong>Amazon's Working Backwards / PR-FAQ</strong> (documented by two former Amazon executives, Colin Bryar and Bill Carr, in the book of that name and its public material) <strong>takes step 1 to its extreme</strong>: in real engineering, clarifying requirements is not a warm-up, it is a gate that can kill the whole project before anyone is staffed to it.<span class="src"><a href="https://workingbackwards.com/concepts/working-backwards-pr-faq-process/" rel="noopener" target="_blank">Bryar &amp; Carr, "The Amazon Working Backwards PR/FAQ Process" ↗</a></span></li>
+<li><strong>Google's design doc practice</strong>: former Google engineer Malte Ubl writes in "Design Docs at Google" (2020) that the document records the high-level implementation strategy and key design decisions, <strong>with the emphasis on the trade-offs weighed when making them</strong>, and includes dedicated sections for goals and non-goals and for alternatives considered. <strong>Confirms steps 3 and 4: a real review is also looking for trade-offs and rejected options, not just the final diagram.</strong><span class="src"><a href="https://www.industrialempathy.com/posts/design-docs-at-google/" rel="noopener" target="_blank">M. Ubl, "Design Docs at Google", 2020 ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/system-design-interview-day25.en.html" rel="noopener" target="_blank">System Design · Day 25 The System Design Interview</a> — the same four steps run end to end on one full question: how to open, how the follow-ups land, and what the interviewer wrote down at each step</aside>
+<h2>Pitfalls and disputes</h2>
+<ul>
+<li><strong>Red flag one: over-engineering.</strong> The book's wording is harsh — over-engineering is <strong>a real disease</strong> among engineers, who delight in design purity and ignore trade-offs, and who typically miss its compounding cost. The interview version is proposing multi-region active-active for a service with ten thousand daily users.</li>
+<li><strong>Red flags two and three: narrow mindedness and stubbornness.</strong> The first forces every question onto the one stack you know; the second cannot absorb feedback — and that one is fatal, because it negates the chapter's premise that this is a collaboration.</li>
+<li><strong>Thinking in silence.</strong> The interviewer cannot see inside your head. Two quiet minutes of thought appear in the write-up as two minutes of nothing.</li>
+<li><strong>Reciting the framework.</strong> This is the method's most common corruption: mechanically firing off questions that have nothing to do with the problem ("mobile or web?" about an internal batch job), or naming all four steps while unable to state a single cost. <strong>Questions must serve a design judgement, not a procedure</strong> — interviewers can tell clarifying from performing clarification.</li>
+<li><strong>Limits of applicability.</strong> The book is from 2020 and the four steps target <strong>the generic big-tech backend round</strong>. Several rounds fit it poorly: ML system design (data sources, features, train/serve consistency, evaluation metrics), frontend system design, and rounds whose subject is building the internals of a component (Volume 2's Ch4, implementing a message queue). The skeleton still holds, but step 1's question list is entirely different — copying the generic four reads as answering the wrong question.</li>
+<li><strong>One genuine dispute.</strong> Whether forty-five minutes at a whiteboard can measure real design ability has been argued for years; critics say it measures interview performance and systematically favours people who have drilled the questions. That criticism is fair, but it lands on <strong>the format</strong>, not on this framework — within the format, having an order still beats not having one, and the order transfers to real work, which is where it earns more than drilling does.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① This is a simulation of <strong>two co-workers collaborating on an open-ended problem</strong>. The vagueness is deliberate and is part of the exam.</p>
+<p>② Four steps: <strong>scope → high-level design with buy-in → deep dive → wrap up</strong>, budgeted at <code>3–10</code> / <code>10–15</code> / <code>10–25</code> / <code>3–5</code> minutes.</p>
+<p>③ Step 1: <strong>do not answer immediately</strong> — speed earns nothing. One test decides what to ask: would a different answer change the architecture? If not, don't ask it.</p>
+<p>④ Step 2's keyword is <strong>buy-in</strong>: stop when the sketch is up and get a nod. Those ten seconds buy back twenty minutes.</p>
+<p>⑤ Step 3 fits 1–2 components, so <strong>ask which one they want to see</strong>. Cover three things each: how, why, and what it costs — <strong>naming the cost is what makes it a deep dive</strong>.</p>
+<p>⑥ Don't skip step 4: bottlenecks, error cases, monitoring and rollout, next scale tier. It proves <strong>you know what happens after a design ships</strong>.</p>
+<p>⑦ The discipline running through all four: <strong>say it out loud.</strong> Silent thinking scores as no thinking; if you're stuck, ask for a hint — <strong>hints don't cost points, invention does</strong>.</p>
+<p>⑧ Three red flags: <strong>over-engineering</strong> (design purity over trade-offs), <strong>narrow mindedness</strong>, <strong>stubbornness</strong>. None of them is a technical problem; all three are collaboration problems.</p>
+<p>⑨ These four steps are a compressed design review: <strong>non-goals → architecture overview → key decisions and alternatives → launch checklist</strong>. The return does not stop at an offer.</p>
+</div>
+</div>
+<footer>Book Deep Read · Reading this page ≈ getting the core of the chapter; go to the book itself for the full cases and detail.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
