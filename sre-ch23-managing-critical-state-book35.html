@@ -47,6 +47,10 @@ table.cmp td strong{color:#e7ebf1}
 .ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
 .ev .src a:hover{border-bottom-style:solid}
 footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
 </style></head><body>
 <div class="container">
 <p class="top">专业书籍精读 · SRE · 第 23 章</p>
@@ -187,6 +191,8 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <p>Paxos（Leslie Lamport）的骨架是两轮：<strong>① 抢提案号</strong>——候选者带一个全局递增的编号问过半数副本「我能提案吗」，答应的副本承诺<em>此后不再接受更小的编号</em>，并把已知的最新「已接受值」告诉他；<strong>② 提案落定</strong>——候选者提出值，但若第一轮收到过任何已接受值，它<strong>必须沿用那个值</strong>，过半数接受即定案。「必须沿用旧值」就是共识不会前后打脸的<strong>全部秘密</strong>：新多数派一定与旧多数派重叠，所以看得见旧决定，也就推翻不了它。</p>
 <p><strong>Multi-Paxos</strong> 是实用版：每条日志都跑满两轮太贵，于是推举一个<em>稳定领导者（stable leader）</em>一次性拿下第一轮，之后每条只需一轮，把一次写入压到 <strong>1 个网络往返 + 1 次 fsync</strong>。<strong>Raft</strong>（2014）把同一件事重组成「领导者选举 + 日志复制 + 安全性」，并把<em>可理解性</em>当设计目标——它不比 Paxos 更快或更安全，但工程师读得懂、写得对，<strong>这本身就是可靠性</strong>；etcd、Consul、TiKV、Kafka 的 KRaft 都走 Raft，<strong>Zab</strong> 则是 ZooKeeper 的变体。</p>
 <p>还有一条常被忽略的量级差异：这些算法只防<em>宕机故障</em>（节点会死但不会撒谎），容忍 <code>f</code> 个故障需 <code>2f + 1</code> 个副本；要防<em>拜占庭故障（Byzantine，节点还会发矛盾消息骗人）</em>则陡增到 <code>3f + 1</code>。数据中心内部几乎都只做前者。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/paxos-made-simple-paper44.html" target="_blank" rel="noopener">论文精读 · Paxos Made Simple</a> — Lamport 自己把两轮投票讲白话的那篇：提案号、承诺、以及「必须沿用已接受值」为什么就是安全性的全部</aside>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/raft-paper50.html" target="_blank" rel="noopener">论文精读 · Raft</a> — 把可理解性当设计目标的那篇：任期、随机选举超时、日志匹配性质与成员变更，逐条对着 Paxos 重排</aside>
 <h3 data-tts="dea5c9cdcf7671aa">共识落地的五种形态</h3>
 <ul>
 <li><strong>① 可靠复制状态机</strong>——最本质的形态，下面四种都是它的特例。</li>
@@ -237,6 +243,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </svg>
 <figcaption>图 3 · 分布式锁的正确姿势：租约会过期，持锁者未必知道；只有让存储层拒绝旧序号，才挡得住「醒过来的僵尸写入」。</figcaption>
 </figure>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/chubby-paper20.html" target="_blank" rel="noopener">论文精读 · The Chubby Lock Service</a> — 本节引用的那篇原论文：粗粒度锁 + 低容量可靠存储的自我定位怎么来的，以及序号（sequencer）为什么必须存在</aside>
 <h3 data-tts="7a005b920fb99a2f">「共识太慢」是个迷思</h3>
 <p>本章专门反驳一句流传甚广的话：<em>共识太慢、吞吐太低，扛不住正经业务</em>。它确实比单机贵，但<strong>贵在两个可预测的地方</strong>：<strong>网络往返</strong>——一次提交至少要等过半数副本回话，写延迟下限就是到「第 3 快的副本」（5 副本时）的往返时间，同机房 RTT 通常<strong>亚毫秒</strong>、同地域跨机房<strong>几毫秒</strong>、跨大陆<strong>几十毫秒</strong>、跨洋<strong>一百多毫秒</strong>，这是光速定的；<strong>磁盘落盘</strong>——日志得 <code>fsync</code> 才敢确认，机械盘一次通常<strong>几毫秒</strong>，SSD / NVMe 可压到<strong>亚毫秒</strong>。</p>
 <figure>

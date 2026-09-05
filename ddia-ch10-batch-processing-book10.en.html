@@ -47,6 +47,10 @@ table.cmp td strong{color:#e7ebf1}
 .ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
 .ev .src a:hover{border-bottom-style:solid}
 footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
 </style></head><body>
 <div class="container">
 <p class="top">Deep Read · DDIA · Chapter 10</p>
@@ -140,6 +144,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </figure>
 <p>A single MapReduce job can only express a simple "one in, one out" transform; real tasks (like a recommender) often chain <strong>dozens of jobs into a workflow</strong>—one job's output directory becomes the next job's input, orchestrated by schedulers like Airflow or Oozie. A complex flow at Google chained <strong>around 50 or more</strong> MapReduce jobs.</p>
 
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/map-reduce-paper18.en.html" target="_blank" rel="noopener">Paper deep-read · MapReduce</a> — the engineering detail in the original: how shuffle sorts and groups, how backup tasks absorb stragglers, and how determinism makes re-execution safe</aside>
 <h3>3. Joins: where batch processing earns its keep</h3>
 <p>Recommendation and analytics almost always need a join: you have a "user activity log" (who clicked what, huge) and want to stitch on a "user profile table" (age, region, relatively small) to compute "what each age group likes." In batch processing you can't <em>query the profile table remotely, record by record</em>, the way an online database does—hundreds of millions of network round-trips would be glacial and would crush the database. Hence several very different join strategies:</p>
 <p><strong>Reduce-side join (sort-merge join)</strong>: feed both datasets into Map with <code>userID</code> as key; once the framework shuffles, <em>a user's activity records and profile record naturally gather at the same reducer</em>, where you stitch them. The upside is it <strong>assumes nothing about the inputs—fully general</strong>; the cost is that both datasets must be fully sorted and shuffled, which is expensive.</p>
@@ -213,6 +218,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </figure>
 <p>Two more specializations exist: <strong>iterative / graph computation</strong> uses the <em>Pregel model</em> (a.k.a. bulk synchronous parallel, BSP)—each vertex sends messages to its neighbors and iterates round by round to convergence, a natural fit for PageRank and shortest-path algorithms that repeatedly sweep a graph. And <strong>high-level APIs</strong>—nobody wants to hand-write map/reduce daily, so Hive, Pig, Spark SQL, and Flink Table let you write <em>declarative</em> SQL-like queries, with a <strong>query optimizer automatically choosing the join algorithm and planning execution</strong> (echoing Ch 2's theme, "declarative beats imperative").</p>
 
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/pregel-paper22.en.html" target="_blank" rel="noopener">Paper deep-read · Pregel</a> — the "think like a vertex" original: BSP supersteps, vertex-to-vertex messaging and checkpoint fault tolerance, and why graph iteration beats MapReduce by an order of magnitude</aside>
 <h2>Key trade-offs and how to choose</h2>
 <p>Choosing in batch processing is essentially a trade-off among <strong>generality, speed, fault-tolerance cost, and ease of use</strong>. Three tables pull out the most-tested, most-useful comparisons.</p>
 <p class="tcap">Table 1 · MapReduce vs dataflow engines (Spark / Tez / Flink)</p>
@@ -255,6 +261,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </ul>
 </div>
 
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/google-file-system-paper17.en.html" target="_blank" rel="noopener">Paper deep-read · The Google File System</a> — the ancestor of HDFS: why 64 MB chunks, a single metadata master, and the record-append primitive tailored for batch workloads</aside>
 <h2>Pitfalls and controversies</h2>
 <ul>
 <li><strong>"MapReduce = big data" is a dated impression</strong>: it pioneered the paradigm, but because of repeated disk writes and weak expressiveness, in most scenarios it's now displaced by dataflow engines like Spark / Flink—even Google turned to successor systems long ago. Learn it for the ideas, not as tech to ship.</li>

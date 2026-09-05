@@ -47,6 +47,10 @@ table.cmp td strong{color:#e7ebf1}
 .ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
 .ev .src a:hover{border-bottom-style:solid}
 footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
 </style></head><body>
 <div class="container">
 <p class="top">专业书籍精读 · DDIA · 第 5 章</p>
@@ -184,6 +188,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <figcaption>图 3 · 无主 quorum：写到 2 台、读 2 台，因 w+r&gt;n，读集与写集必有交集（副本 2）——那台持最新 v2，读方取版本新的即可。</figcaption>
 </figure>
 <p><strong>怎么修复落后的副本</strong>：<em>读修复（read repair）</em>——客户端读到某副本给的旧值，顺手把新值写回它；<em>反熵（anti-entropy）</em>——后台进程持续比对、补齐各副本缺的数据。<strong>宽松 quorum 与提示移交（sloppy quorum + hinted handoff）</strong>：网络分区时，写可以先落到<strong>能连上但不属于「本该负责」的那 <code>n</code> 台</strong>的节点上，事后再转交回去——这样可用性更高，但<strong>此时 <code>w+r&gt;n</code> 的「读到最新」保证就不成立了</strong>。事实上，即便满足 quorum，并发写、部分写失败、宽松 quorum 等边角情形都可能让你读到旧值——<strong>无主复制默认只给最终一致性，不是线性一致</strong>。它靠<em>版本向量</em>识别「并发写」，把它们标成兄弟版本（siblings）留待合并。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/dynamo-paper54.html" target="_blank" rel="noopener">论文精读 · Dynamo</a> — 无主复制的原型：一致性哈希怎么分环、向量时钟怎么记冲突、提示移交与读修复怎么把「永远可写」撑起来</aside>
 <h3 data-tts="b4c7b50be7ebc076">④ 复制滞后与三种「读一致性」</h3>
 <p>只要用异步复制来做读扩展（单主 / 无主都常见），就绕不开<strong>复制滞后</strong>：从副本读到的是<strong>过期</strong>数据。滞后通常几毫秒到几秒，但从库卡住时能到分钟级。DDIA 给了三条针对性的弱一致性保证，越往下越强：</p>
 <ul>
@@ -218,6 +223,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>PostgreSQL</strong> 的流复制（WAL 传送）支持<strong>同步 / 异步 standby</strong> 切换，官方文档直言异步下主库故障<strong>可能丢失尚未送达 standby 的已提交事务</strong>——正是本章「异步复制会丢写」的权威印证。<span class="src"><a href="https://www.postgresql.org/docs/current/warm-standby.html" rel="noopener" target="_blank">PostgreSQL Docs · Log-Shipping Standby Servers ↗</a></span></li>
 </ul>
 </div>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/spanner-paper24.html" target="_blank" rel="noopener">论文精读 · Spanner</a> — 同步复制的另一极：Paxos 组 + TrueTime 时间区间怎么换来全球外部一致的事务，代价是多少提交延迟</aside>
 <h2 data-tts="41f4bb2966dc0d8b">易错点与争议</h2>
 <ul>
 <li><strong>把「最终一致」当「马上一致」</strong>：异步复制下读从库随时可能拿到旧值。做读写分离时，用户「读自己刚写的」那条路径要特意读主库或够新的副本。</li>

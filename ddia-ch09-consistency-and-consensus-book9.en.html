@@ -47,6 +47,10 @@ table.cmp td strong{color:#e7ebf1}
 .ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
 .ev .src a:hover{border-bottom-style:solid}
 footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
 </style></head><body>
 <div class="container">
 <p class="top">Deep-Read · DDIA · Chapter 9</p>
@@ -178,6 +182,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <figcaption>Fig 2 · Causality gives only a partial order (e2, e3 concurrent); total order broadcast fixes all events into one unique append-only log, and replicas replaying it in the same order end in the same state (state machine replication). The slot number is the fencing token.</figcaption>
 </figure>
 
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/time-clocks-ordering-paper31.en.html" target="_blank" rel="noopener">Paper deep-read · Time, Clocks, and the Ordering of Events</a> — Lamport's original: how happens-before is defined, and how logical clocks build a causally consistent total order from it</aside>
 <h3>3. Consensus: one problem, three disguises</h3>
 <p>The chapter's deepest insight lives here: <strong>total order broadcast, linearizable compare-and-set, and consensus are <em>equivalent</em> problems</strong> — solve one and you can solve the rest. Total order broadcast "decides the next message," which is just repeatedly reaching consensus on "the next value"; conversely, running consensus over and over yields a sequence of ordered values = total order broadcast. So cracking <strong>consensus</strong> is one key that opens three locks.</p>
 <p><strong>What consensus requires.</strong> Getting nodes to agree on a value, formally, needs four properties: <em>uniform agreement</em> (no two nodes decide differently), <em>integrity</em> (no node reneges on a decided value), <em>validity</em> (the decided value was proposed by some node), and <em>termination</em> (as long as a majority is alive, a decision is reached and it never hangs forever). The first three ensure <strong>safety</strong>; the fourth ensures <strong>liveness</strong> — and it is exactly termination that separates consensus from "2PC, which merely deadlocks."</p>
@@ -204,6 +209,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <figcaption>Fig 3 · Fault-tolerant consensus: two rounds of voting with intersecting majorities. The election and proposal majorities always share a node; having seen a higher epoch, it rejects the stale leader — mathematically ruling out "two leaders both committing."</figcaption>
 </figure>
 
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/raft-paper50.en.html" target="_blank" rel="noopener">Paper deep-read · Raft</a> — the paper that unpacks leader election, terms and majority log replication: the log matching property, the safety argument, and membership changes</aside>
 <h3>4. Atomic commit and two-phase commit (2PC)</h3>
 <p>A close cousin of consensus is <strong>atomic commit</strong>: a transaction spanning several machines (say, two shards) must <strong>all commit or all abort</strong>, never half-and-half. The classic answer, <em>two-phase commit (2PC)</em>, adds a <strong>coordinator</strong>. <strong>Phase 1, "prepare":</strong> the coordinator asks all participants "can you commit?"; a participant that answers "yes" has made an <strong>irrevocable promise</strong> (even if it crashes, on recovery it must still be able to commit). <strong>Phase 2, "commit / abort":</strong> if any said "no," the coordinator tells everyone to roll back; only if all said "yes" does it tell everyone to commit.</p>
 <p><strong>2PC's Achilles' heel: the coordinator is a single point.</strong> If the coordinator crashes at the very instant when "everyone answered yes but the commit order hasn't gone out," participants are stuck <strong>in doubt</strong> — they've promised and can't self-abort, yet get no instruction, so they can only <strong>hold their locks and wait</strong> for the coordinator to come back, freezing the affected data meanwhile. This is the watershed between 2PC and true <em>fault-tolerant consensus</em>: 2PC lacks consensus's fourth property, termination — once the coordinator falls, the protocol can <strong>block indefinitely</strong>. (Three-phase commit tries to patch this hole but relies on an assumption — bounded network delay — that doesn't hold in reality, so it's rarely used.)</p>
@@ -278,6 +284,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </ul>
 </div>
 
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/chubby-paper20.en.html" target="_blank" rel="noopener">Paper deep-read · The Chubby Lock Service</a> — the Chubby paper named here: why Google wrapped consensus as a lock service rather than a library, and what coarse-grained locking costs</aside>
 <h2>Pitfalls and debates</h2>
 <ul>
 <li><strong>Treating CAP as "pick 2 of 3."</strong> The most popular misreading. CAP only says that <em>when a partition occurs</em> you choose consistency or availability; with no partition you can have both. It also <strong>says nothing about latency</strong> — linearizability is slow even without a partition, and it's usually dropped because it's <strong>slow</strong>, not because of partitions.</li>

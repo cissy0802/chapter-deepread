@@ -47,6 +47,10 @@ table.cmp td strong{color:#e7ebf1}
 .ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
 .ev .src a:hover{border-bottom-style:solid}
 footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
 </style></head><body>
 <div class="container">
 <p class="top">专业书籍精读 · DDIA · 第 9 章</p>
@@ -164,6 +168,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </svg>
 <figcaption>图 2 · 因果只给出偏序（e2、e3 并发）；全序广播把所有事件定序成唯一的追加日志，各副本按同一顺序重放，最终状态必然相同（状态机复制）。槽位号即栅栏令牌。</figcaption>
 </figure>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/time-clocks-ordering-paper31.html" target="_blank" rel="noopener">论文精读 · Time, Clocks, and the Ordering of Events</a> — Lamport 时间戳的原论文：先发生（happens-before）关系怎么定义、逻辑时钟怎么由它造出一个尊重因果的全序</aside>
 <h3 data-tts="032c8b16ab5e6664">三、共识：一个问题，三种伪装</h3>
 <p>本章最深的洞见在这里：<strong>全序广播、线性一致的比较并设置（compare-and-set）、共识，是<em>等价</em>的问题</strong>——能解其一，就能解其余。全序广播「决定下一条消息是谁」，正是在对「下一个值」反复达成共识；反过来，反复运行共识，就得到一串定好序的值 = 全序广播。所以攻克<strong>共识</strong>，等于一把钥匙开三把锁。</p>
 <p><strong>共识要什么。</strong>让若干节点就一个值达成一致，形式上要满足四条：<em>协商一致</em>（没有两个节点决定出不同的值）、<em>诚实</em>（一个节点不能反悔已决定的值）、<em>有效</em>（决定的值必是某节点提议过的）、<em>可终止</em>（只要多数节点存活，就一定能决定，不会永远卡住）。前三条保证<strong>安全</strong>（不出错），第四条保证<strong>活性</strong>（有进展）——正是这第四条把共识和「只会脑裂的两阶段提交」区分开。</p>
@@ -189,6 +194,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </svg>
 <figcaption>图 3 · 容错共识的两轮投票与多数派相交。选举多数派与提议多数派必有公共节点，它见过更高纪元号便拒绝旧主，从数学上杜绝「两个主同时成功写入」。</figcaption>
 </figure>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/raft-paper50.html" target="_blank" rel="noopener">论文精读 · Raft</a> — 把「选主 + 纪元 + 多数派日志复制」拆开讲清的那篇：任期、日志匹配性质、安全性论证与成员变更</aside>
 <h3 data-tts="b58dfe4db4b78d42">四、原子提交与两阶段提交（2PC）</h3>
 <p>共识的一个近亲问题是<strong>原子提交</strong>：一笔事务横跨多台机器（比如同时改两个分片），必须<strong>要么全提交、要么全回滚</strong>，不许一半成一半败。经典解法<em>两阶段提交（2PC）</em>引入一个<strong>协调者</strong>：<strong>阶段一「准备」</strong>——协调者问所有参与者「你能提交吗？」，参与者若答「能」，就等于立下<strong>不可反悔的承诺</strong>（哪怕随后崩溃，恢复后也必须能提交）；<strong>阶段二「提交 / 中止」</strong>——只要有一个说「不能」，协调者就通知全体回滚；全说「能」，才通知全体提交。</p>
 <p><strong>2PC 的阿喀琉斯之踵：协调者是单点。</strong>若协调者在「所有人都答了能、但提交令还没发出」的<em>那一刻</em>崩溃，参与者就陷入<strong>存疑（in doubt）</strong>——它已承诺、不能自行回滚，又收不到指令，只能<strong>攥着锁死等</strong>协调者复活，相关数据这段时间被锁住、无法读写。这正是 2PC 和<em>容错共识</em>的分水岭：2PC 缺了共识的第四条「可终止」——协调者一倒可能<strong>无限期阻塞</strong>。（三阶段提交想补这个洞，却依赖「网络延迟有上界」这个现实里不成立的假设，故极少采用。）</p>
@@ -258,6 +264,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>Jepsen（Kyle Kingsbury）</strong> 用故障注入 + 线性一致性检查，在 etcd、ZooKeeper、MongoDB、Cassandra 等系统里查出过真实的一致性违背——反向证明「线性一致极难做对」，也说明为什么该把它交给经充分验证的现成组件。<span class="src">jepsen.io · 分布式系统安全性分析报告（Kyle Kingsbury）</span></li>
 </ul>
 </div>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/chubby-paper20.html" target="_blank" rel="noopener">论文精读 · The Chubby Lock Service</a> — 本节点名的 Chubby 论文：为什么 Google 选择把共识包装成「锁服务」而不是共识库，以及粗粒度锁的代价</aside>
 <h2 data-tts="487d5aeebb53ce66">易错点与争议</h2>
 <ul>
 <li><strong>把 CAP 当「三选二」</strong>：这是最流行的误读。CAP 只说<em>发生网络分区时</em>，一致性与可用性二选一；不分区时两者可兼得。它还<strong>完全没提延迟</strong>——而线性一致即使不分区也慢，现实中弃用它多半是<strong>嫌慢</strong>而非怕分区。</li>

@@ -46,6 +46,10 @@ table.cmp td strong{color:#e7ebf1}
 .ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
 .ev .src a:hover{border-bottom-style:solid}
 footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
 </style></head><body>
 <div class="container">
 <p class="top">Book Deep-Read · DDIA · Chapter 8</p>
@@ -163,6 +167,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 
 <p>The honest approach is to admit a clock carries a <strong>confidence interval</strong>—"it's about X, ±e." Google's Spanner takes this to its logical end: its <em>TrueTime</em> API returns a time <strong>interval</strong> rather than a point, and when committing a transaction it <strong>deliberately waits out</strong> that uncertainty (commit wait), yielding a trustworthy global ordering.</p>
 
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/spanner-paper24.en.html" target="_blank" rel="noopener">Paper deep-read · Spanner</a> — the engineering that takes "clocks with confidence intervals" to its limit: GPS and atomic clocks, a TrueTime interval, and waiting out the uncertainty at commit</aside>
 <h3>3. Process pauses: the lock holder may be dozing</h3>
 <p>Even if the network and clocks behave, a node can <strong>pause at any moment with no warning</strong>: most commonly a <em>stop-the-world garbage collection</em>—the whole process freezes for tens of milliseconds to seconds, and in extreme cases (large heaps) minutes; or a VM suspended for migration, a laptop lid closed, OS paging thrash. The killer detail: <strong>the paused process has no idea it stopped</strong>—it was fine before freezing, and after thawing it just carries on, oblivious that the world has moved.</p>
 <p>The classic wreck: a node takes a lease from the lock service and becomes leader; just as it's about to write shared storage, it <strong>pauses for 15 seconds in GC</strong>; meanwhile its lease has long expired and the system elected a new leader. When it thaws, it <strong>still believes it's the leader</strong> and writes with stale authority—<strong>split-brain: two "leaders" corrupt the data at once</strong>. The fix is a <strong>fencing token</strong>: every grant carries a <strong>monotonically increasing</strong> number, and storage accepts only writes whose number is <strong>larger than the last one</strong>, rejecting smaller ones. The just-woken stale leader clutches an old number, and its write is blocked (see Figure 3)—the system no longer trusts "I think I'm the leader," only the number on the token.</p>

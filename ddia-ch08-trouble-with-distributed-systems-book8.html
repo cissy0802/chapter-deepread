@@ -47,6 +47,10 @@ table.cmp td strong{color:#e7ebf1}
 .ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
 .ev .src a:hover{border-bottom-style:solid}
 footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
 </style></head><body>
 <div class="container">
 <p class="top">专业书籍精读 · DDIA · 第 8 章</p>
@@ -142,6 +146,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <figcaption>图 2 · 时钟不同步 + 最后写入者胜（LWW）：物理上更晚的写 B 因时间戳更小被判为「旧」而丢弃，造成静默的数据丢失。</figcaption>
 </figure>
 <p>更诚实的做法是承认时钟带<strong>置信区间</strong>——「现在大约是 X，误差 ±e」。Google 的 Spanner 正是把这点做到极致：它的 <em>TrueTime</em> API 直接返回一个时间<strong>区间</strong>而非一个点，并在提交事务时<strong>主动等待</strong>掉这段不确定（commit wait），从而给全球事务排出可信的先后。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/spanner-paper24.html" target="_blank" rel="noopener">论文精读 · Spanner</a> — 把「时钟带置信区间」做到极致的那套工程：GPS + 原子钟、TrueTime 返回区间、提交时主动等掉不确定</aside>
 <h3 data-tts="fae51e8445586231">3. 进程停顿：持锁者可能正在打盹</h3>
 <p>就算网络和时钟都乖，一个节点还可能<strong>在任意时刻、无预警地停顿</strong>：最常见是<em>垃圾回收（GC）的「stop-the-world」</em>——整个进程冻结几十毫秒到几秒，极端情况（大堆）可达数分钟；也可能是虚拟机被挂起迁移、笔记本合盖、操作系统换页抖动。要命的是<strong>停顿的进程对此毫不知情</strong>：它冻结前以为自己好好的，解冻后还接着干,浑然不觉世界已经变了。</p>
 <p>经典翻车场景：某节点从锁服务拿到租约（lease）成为主，正要写共享存储时<strong>GC 停顿了 15 秒</strong>；这期间租约早已过期，系统另选了新主。等它解冻，仍<strong>以为自己是主</strong>、带着过期的授权去写——<strong>脑裂（split-brain），数据被两个「主」同时改坏</strong>。解法是<strong>栅栏令牌（fencing token）</strong>：锁服务每次授权都发一个<strong>单调递增</strong>的号，存储端只接受号<strong>比上次大</strong>的写、拒绝更小的。打盹醒来的旧主攥着旧号，一写就被挡下（见图 3）——系统不再信任「我以为我是主」，只信任令牌上的号。</p>

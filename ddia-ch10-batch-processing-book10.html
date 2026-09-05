@@ -47,6 +47,10 @@ table.cmp td strong{color:#e7ebf1}
 .ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
 .ev .src a:hover{border-bottom-style:solid}
 footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
 </style></head><body>
 <div class="container">
 <p class="top">专业书籍精读 · DDIA · 第 10 章</p>
@@ -141,6 +145,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <figcaption>图 1 · MapReduce 数据流：Map 逐条吐键值对 → 按键排序分区 → Shuffle 跨机搬运，让「同一个键」在同一个 Reducer 碰头 → Reduce 汇总。排序凑堆是整台机器的发动机。</figcaption>
 </figure>
 <p>单个 MapReduce 作业只能表达「一进一出」的简单变换，真实任务（如推荐系统）往往要把<strong>几十个作业串成工作流</strong>——前一个的输出目录当后一个的输入，由 Airflow、Oozie 之类的调度器编排。Google 内部一个复杂流程曾串起<strong>约 50 个乃至更多</strong>的 MapReduce 作业。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/map-reduce-paper18.html" target="_blank" rel="noopener">论文精读 · MapReduce</a> — 原论文里的工程细节：shuffle 怎么排序凑堆、落后者（straggler）怎么靠备份任务兜住、失败怎么靠确定性重算</aside>
 <h3 data-tts="92bbd451f5878d42">三、连接（join）：批处理里最见功夫的一招</h3>
 <p>推荐、分析几乎都要 join：手上有一份「用户活动日志」（谁点了什么，海量），要拼上「用户资料表」（用户的年龄地区，相对小），才能算「各年龄段爱看什么」。在批处理里，你不能像在线数据库那样<em>逐条去远程查资料表</em>——上亿次网络往返会慢到天荒地老、还把数据库打垮。于是有了几套截然不同的 join 策略：</p>
 <p><strong>Reduce 端 join（sort-merge join，排序归并连接）</strong>：把两份数据都用 <code>用户ID</code> 当键喂进 Map，框架一洗牌，<em>同一个用户的活动记录和资料记录自然聚到同一个 Reducer</em>，在那里一拼即可。好处是<strong>不对输入做任何假设、通用</strong>；代价是两份数据都得完整排序、洗牌，开销大。</p>
@@ -214,6 +219,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <figcaption>图 3 · 物化 vs 流水线：MapReduce 每步把中间结果写回 HDFS 再读出（稳但慢）；数据流引擎把中间态留在内存 / 直接流给下一算子，靠「谱系重算」容错。</figcaption>
 </figure>
 <p>还有两类专门化：<strong>迭代 / 图计算</strong>用 <em>Pregel 模型</em>（又称批量同步并行 BSP）——每个顶点给邻居发消息、一轮轮迭代到收敛，天生适合 PageRank、最短路径这类要反复扫图的算法。<strong>高层 API</strong>——没人愿意天天手写 map/reduce，于是 Hive、Pig、Spark SQL、Flink Table 让你写<em>声明式</em>的类 SQL，由<strong>查询优化器自动选 join 算法、排执行计划</strong>（这正呼应了 Ch2「声明式胜过命令式」的主题）。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/pregel-paper22.html" target="_blank" rel="noopener">论文精读 · Pregel</a> — 「像顶点一样思考」的原论文：BSP 超步、顶点间消息传递与检查点容错，为什么图迭代比 MapReduce 快一个量级</aside>
 <h2 data-tts="3fc31113a0be5544">关键权衡与选型</h2>
 <p>批处理的选型，本质是在<strong>通用性、速度、容错代价、上手门槛</strong>之间做取舍。三张表把最常考、最实用的对比拎出来。</p>
 <p class="tcap">表 1 · MapReduce vs 数据流引擎（Spark / Tez / Flink）</p>
@@ -254,6 +260,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>Spark（加州大学伯克利）</strong> 用 <strong>RDD + 谱系重算</strong> 证明：把中间数据留在内存、靠血缘而非落盘副本容错，能让迭代式作业比 MapReduce 快<strong>一个数量级</strong>——验证了「物化 → 流水线」这一步的价值。<span class="src"><a href="https://www.usenix.org/conference/nsdi12/technical-sessions/presentation/zaharia" rel="noopener" target="_blank">Zaharia 等《Resilient Distributed Datasets》, NSDI 2012 ↗</a></span></li>
 </ul>
 </div>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/google-file-system-paper17.html" target="_blank" rel="noopener">论文精读 · The Google File System</a> — HDFS 的祖本：为什么把块设成 64 MB、单 master 管元数据、以及「记录追加」这个为批处理量身定做的原语</aside>
 <h2 data-tts="f23cd6e3553ea7fc">易错点与争议</h2>
 <ul>
 <li><strong>「MapReduce = 大数据」是过时印象</strong>：它开创了范式，但因反复落盘、表达力弱，如今在多数场景已被 Spark / Flink 等数据流引擎取代；连 Google 自己都早已转向后继系统。学它是学思想，不是学要上线的技术。</li>

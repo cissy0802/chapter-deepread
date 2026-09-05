@@ -46,6 +46,10 @@ table.cmp td strong{color:#e7ebf1}
 .ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
 .ev .src a:hover{border-bottom-style:solid}
 footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
 </style></head><body>
 <div class="container">
 <p class="top">BOOKS DEEP-READ · SRE · CH 23</p>
@@ -210,6 +214,8 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <p><strong>Multi-Paxos</strong> is the practical form: running two full rounds per entry is expensive, so a <em>stable leader</em> takes round one once, and every later entry needs a single round — putting one write at <strong>one network round trip plus one fsync</strong>. <strong>Raft</strong> (2014) reorganizes the same thing into leader election, log replication and safety, with <em>understandability</em> as an explicit design goal. It is no faster and no safer than Paxos, but engineers can read it and implement it correctly — <strong>which is itself reliability</strong>. etcd, Consul, TiKV and Kafka's KRaft all use Raft; <strong>Zab</strong> is ZooKeeper's variant.</p>
 <p>One order-of-magnitude difference that gets overlooked: all of these tolerate only <em>crash</em> failures — nodes die but never lie — and tolerating <code>f</code> failures needs <code>2f + 1</code> replicas. Tolerating <em>Byzantine</em> failures, where a node sends contradictory messages on purpose, jumps to <code>3f + 1</code>. Inside a data center, almost everyone builds only the former.</p>
 
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/paxos-made-simple-paper44.en.html" target="_blank" rel="noopener">Paper deep-read · Paxos Made Simple</a> — Lamport's own plain-language account of the two rounds: proposal numbers, promises, and why "must reuse an accepted value" is the whole of safety</aside>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/raft-paper50.en.html" target="_blank" rel="noopener">Paper deep-read · Raft</a> — the paper that made understandability a design goal: terms, randomised election timeouts, the log matching property and membership change, rebuilt piece by piece against Paxos</aside>
 <h3>Five shapes consensus takes in practice</h3>
 <ul>
 <li><strong>① A reliable replicated state machine</strong> — the fundamental shape; the four below are special cases of it.</li>
@@ -267,6 +273,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <figcaption>Fig 3 · Locking done right: leases expire and the holder may not know it, so only a store that rejects stale tokens stops the zombie write.</figcaption>
 </figure>
 
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/chubby-paper20.en.html" target="_blank" rel="noopener">Paper deep-read · The Chubby Lock Service</a> — the paper quoted here: where the "coarse-grained locking plus low-volume reliable storage" positioning comes from, and why sequencers must exist</aside>
 <h3>"Consensus is too slow" is a myth</h3>
 <p>The chapter goes out of its way to rebut a widespread line: <em>consensus algorithms are too slow and too low-throughput for serious systems</em>. They are indeed more expensive than a single machine, but <strong>the expense sits in two predictable places</strong>. <strong>Network round trips</strong> — a commit waits for a majority to answer, so the floor on write latency is the round trip to the third-fastest replica (with five). Intra-data-center RTT is typically <strong>sub-millisecond</strong>, cross-DC within a region <strong>a few milliseconds</strong>, cross-continent <strong>tens of milliseconds</strong>, and trans-oceanic <strong>a hundred-plus milliseconds</strong> — that floor is set by the speed of light. <strong>Durable writes</strong> — the log must be <code>fsync</code>ed before you dare acknowledge: typically <strong>a few milliseconds</strong> on spinning disks, down to <strong>sub-millisecond</strong> on SSD/NVMe.</p>
 

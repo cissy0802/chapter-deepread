@@ -46,6 +46,10 @@ table.cmp td strong{color:#e7ebf1}
 .ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
 .ev .src a:hover{border-bottom-style:solid}
 footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
 </style></head><body>
 <div class="container">
 <p class="top">Deep-Read · DDIA · Chapter 5</p>
@@ -207,6 +211,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 
 <p><strong>Repairing lagging replicas</strong>: <em>read repair</em> — the client reads a stale value from a replica and writes the fresh value back to it; <em>anti-entropy</em> — a background process continuously compares replicas and fills in missing data. <strong>Sloppy quorums + hinted handoff</strong>: during a network partition, a write can land on <strong>reachable nodes that aren't among the "home" <code>n</code></strong> and be handed back later — this raises availability, but <strong>the <code>w+r&gt;n</code> "read the latest" guarantee no longer holds</strong>. In fact, even when the quorum is met, concurrent writes, partial write failures, and sloppy quorums can all let you read stale data — <strong>leaderless replication gives eventual consistency by default, not linearizability</strong>. It uses <em>version vectors</em> to recognize "concurrent writes," marking them as siblings to be merged later.</p>
 
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/dynamo-paper54.en.html" target="_blank" rel="noopener">Paper deep-read · Dynamo</a> — the prototype for leaderless replication: consistent hashing, vector clocks for conflicts, hinted handoff and read repair behind "always writeable"</aside>
 <h3>④ Replication lag and three "read consistencies"</h3>
 <p>The moment you use asynchronous replication for read scaling (common in both single-leader and leaderless), you can't escape <strong>replication lag</strong>: reads from a follower return <strong>stale</strong> data. Lag is usually milliseconds to seconds, but can reach minutes when a follower stalls. DDIA gives three targeted weak-consistency guarantees, strengthening as you go down:</p>
 <ul>
@@ -245,6 +250,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </ul>
 </div>
 
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/spanner-paper24.en.html" target="_blank" rel="noopener">Paper deep-read · Spanner</a> — the opposite pole of synchronous replication: how Paxos groups plus TrueTime intervals buy globally externally-consistent transactions, and what commit latency they cost</aside>
 <h2>Pitfalls &amp; debates</h2>
 <ul>
 <li><strong>Treating "eventual" as "immediate."</strong> Under async replication a follower read can hand back a stale value at any time. When doing read-write splitting, the "read your own write" path must deliberately hit the leader or a fresh-enough replica.</li>
