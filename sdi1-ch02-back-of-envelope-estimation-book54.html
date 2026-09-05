@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview 卷一 第 2 章 · 粗略估算 — 专业书籍精读 Book 54</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · System Design Interview 卷一 · 第 2 章</p>
+<h1>粗略估算</h1>
+<p class="sub">System Design Interview: An Insider's Guide · Vol 1 · Ch 2 · Alex Xu · 2020</p>
+<p class="langbar"><a href="sdi1-ch02-back-of-envelope-estimation-book54.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>搬家前，你不会挨个称行李的重量，但你一定会先看一眼：<strong>这些东西，一辆小面包车装得下吗？</strong>看一眼就知道「装不下，得叫货车」——这个判断只花三秒，却决定了你今天要打哪个电话。这一章讲的就是工程师版的「看一眼」：在动手做任何系统之前，先用几个粗糙的数字判断出，<strong>这活儿到底是一辆小面包车的事，还是要叫车队</strong>。</p>
+<h2>先说个怪事</h2>
+<p>这一章从头到尾没有一个精确答案。它算出来的每个数字都是拍的、圆整过的、四舍五入到「大概」的。<strong>可它恰恰是全书最有用的一章之一。</strong>因为决定架构长什么样的从来不是「3512 还是 4108」，而是「三千还是三百万」——差一千倍的两个世界，完全不该用同一套做法。</p>
+<h2>旧世界为什么难</h2>
+<p>不做这一步的团队，会稳定地栽进两种坑，方向正好相反。</p>
+<p><strong>一种是高估。</strong>产品还没几个用户，团队已经按「以后会很大」的假想上了一整套复杂设施。结果是大半年时间花在维护这套设施上，产品本身几乎没动过。</p>
+<p><strong>另一种是低估。</strong>方案讲得挺漂亮，上线才发现要存的东西根本不是「买块硬盘」的量级，而是要塞满一整个仓库；等到发现时，改法就只剩下最贵最痛的那种了。</p>
+<p>两种坑的共同点是：<strong>没人在开工前花三分钟，把大概的数量写在纸上。</strong></p>
+<h2>核心机制：三件小事</h2>
+<p><strong>① 先在脑子里备几把「标尺」。</strong>就像厨师不用量杯也知道「一撮盐大概多少」，工程师得先记住几个常识性的量：从记忆里取一样东西是「一眨眼」，走到楼下车库取是「一趟」，寄到地球另一边再寄回来是「一次跨国快递」。这三件事之间差着极大的倍数——记住这个差距，很多设计不用算就能一眼否掉。</p>
+<p><strong>② 把假设写下来。</strong>估算真正的产出不是那个数字，而是那串假设：有多少人在用、每人每天用几次、每次留下多大的东西、要留多久。写下来，别人才能指着其中一条说「这条我不同意」——于是讨论从「你猜我猜」变成了「我们改这一条再算一遍」。</p>
+<p><strong>③ 只求量级，大胆取整。</strong>把复杂的数一律圆成整数再算，算完只看结果落在哪一档。这不是偷懒，是因为你的输入本来就是拍的——用精确的算法去处理拍脑袋的输入，得到的只是<strong>看起来很精确的错误</strong>。</p>
+<h2>该怎么用它</h2>
+<p>还有一个最容易被跳过的动作：<strong>算完平均，一定要再问一句「最挤的那一刻是多少」。</strong>一家饭馆按全天平均客流配座位，中午十二点一定会崩。真实世界里，最挤那一刻常常是平均的几十倍，而不是「多一点点」。</p>
+<p>诚实说一句代价：这套办法只能告诉你在哪个数量级，<strong>它永远回答不了「到底能不能扛住」——那得靠真的压一遍。</strong></p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>估算不是为了算对，是为了<strong>在三分钟内排除掉那些一眼就不成立的方案</strong>。写下假设、大胆取整、只看量级，再补上一问：最挤的那一刻呢？</p>
+</div>
+<p class="switch-hint">想进到具体机制、量级和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">你以为这一章在教「怎么把数算准」，其实它在教<strong>怎么用一串明说出来的假设，把一个开放问题压缩成一个量级</strong>。这一章的产出从来不是那个数字——是那串<strong>可以被别人当场推翻的假设</strong>。数字错一倍无所谓，量级错一千倍，你整个架构就建在了错误的前提上。</p>
+
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>QPS（queries per second）</strong>：每秒请求数，衡量系统压力最常用的尺子。写请求密集时也常写作 TPS（transactions per second）。</li>
+<li><strong>峰值 QPS（peak QPS）</strong>：一天里最忙那一刻的每秒请求数。系统容量要按它配，不是按平均配。</li>
+<li><strong>延迟（latency）</strong>：一次操作从发出到拿到结果花的时间。<strong>吞吐（throughput）</strong>：单位时间能处理多少个。两者是两回事，一个快不代表另一个大。</li>
+<li><strong>纳秒 / 微秒 / 毫秒（ns / µs / ms）</strong>：每一级差 1000 倍。1 毫秒 = 1000 微秒 = 1,000,000 纳秒。</li>
+<li><strong>往返时延（round-trip time, RTT）</strong>：请求发出去再收回来的一个来回耗时。</li>
+<li><strong>寻道（disk seek）</strong>：机械硬盘的磁头移动到目标位置所花的时间，是机械盘最慢的动作。</li>
+<li><strong>字节量级</strong>：1 KB ≈ 一千字节，1 MB ≈ 一百万，1 GB ≈ 十亿，1 TB ≈ 一万亿，1 PB ≈ 一千个 TB。一个英文字符 = 1 字节。</li>
+<li><strong>可用性（availability）</strong>：系统正常可用的时间占比，习惯用「几个 9」表达，如 <code>99.99%</code>。</li>
+<li><strong>SLA（service level agreement，服务等级协议）</strong>：服务商对可用性等指标做出的<strong>书面承诺</strong>，没做到通常要赔偿。</li>
+<li><strong>百分位（percentile）</strong>：把所有请求按耗时排队，<code>p99</code> 指第 99% 慢的那个请求的耗时——一百个请求里第 99 慢的那位等了多久。</li>
+<li><strong>DAU / MAU</strong>：日活跃用户数 / 月活跃用户数。</li>
+<li><strong>副本因子（replication factor）</strong>：同一份数据在集群里存几份。存 3 份，占用空间就是原始数据的 3 倍。</li>
+</ul>
+</div>
+
+<h2>坐标</h2>
+<p>本章是卷一 Part I「方法与基础」的第二章，夹在两块之间：<strong>Ch1 给的是零件与施工顺序</strong>（加缓存、加从库、分片……），<strong>Ch3 给的是面试流程</strong>（澄清需求 → 高层设计 → 深挖 → 收尾）。而 Ch2 补上中间那块——<strong>凭什么判断现在该走到哪一步</strong>。它是全书最短的一章，却是后面十二个案例（限流器、短网址、YouTube、Google Drive……）每一章开头都要重跑一遍的固定动作。</p>
+
+<h2>这章要解决什么</h2>
+<p>面试官问「设计一个 X」，紧接着的第二句几乎必然是「大概多少用户、多少数据」。这不是刁难，是因为<strong>脱离量级谈架构没有意义</strong>：同一个功能，日请求一万次和日请求一百亿次，正确答案完全不同——前者一台机器加一个数据库就够了，后者要谈分片、多机房和对象存储。</p>
+<p>不做估算会怎样？两个方向的失败都很典型。<strong>高估</strong>：产品只有五千用户，团队却上了分库分表加多活，八成时间在维护基础设施；而分片这一步几乎不可逆。<strong>低估</strong>：方案评审时说「存数据库里」，上线后才发现每天新增 <code>30 TB</code>——这不是加块盘的量级，是要重做整个存储层。</p>
+<p>更隐蔽的第三种失败是<strong>只算了平均</strong>。一个日活 100 万、人均每天 10 次请求的服务，摊平后约 <code>116 QPS</code>，听起来轻松得很；但流量从来不是摊平的，晚八点那一刻可能是均值的几倍甚至几十倍。<strong>按平均配容量的系统，一定会在最需要它的那一刻挂掉。</strong></p>
+<p>所以这一章要建立的能力只有一个：<strong>给定几条关于用户行为的假设，在白板上、三分钟内、不用计算器，把 QPS、存储、带宽算到量级正确。</strong></p>
+
+<h2>核心内容，讲透</h2>
+
+<h3>底表一：2 的幂——所有容量估算的起点</h3>
+<p>估算存储，永远是同一个乘法：<strong>一条记录多大 × 每天多少条 × 存多少天</strong>。所以第一件事是能在脑子里把数据量单位换算清楚。原书给的对照关系很朴素：一个 ASCII 字符占 1 字节；<code>2^10</code> 约等于一千，即 1 KB；<code>2^20</code> 约等于一百万，即 1 MB；<code>2^30</code> 约等于十亿，即 1 GB；<code>2^40</code> 是 1 TB；<code>2^50</code> 是 1 PB。</p>
+<p>看着简单，落到实处就是判断力。一条推文的结构在书里被拆成：推文 ID <code>64</code> 字节 + 正文 <code>140</code> 字节 + 媒体 <code>1 MB</code>。<strong>注意这三个数字之间的悬殊</strong>：文本部分只有两百字节，媒体是它的五千倍。这一眼就给出了整个存储设计的主线——<strong>文本随便放，媒体决定成本</strong>。真实系统里文本进数据库、媒体进对象存储加 CDN，根源就在这个比例上，而不是什么架构时尚。</p>
+
+<h3>底表二：延迟数字——工程师的「常识刻度」</h3>
+<p>第二张表是本章的灵魂，源自 Google 的 Jeff Dean，业内通称「每个程序员都该知道的延迟数字」。它的用法不是背诵，而是让你在听到一个设计时，<strong>立刻感知到它落在哪个数量级上</strong>。</p>
+<figure>
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<text x="20" y="22" fill="#5b9df9" font-size="12.5" font-weight="700">延迟阶梯（横轴为对数刻度：每往右一格 = 慢 10 倍）</text>
+<line x1="214" x2="214" y1="40" y2="244" stroke="rgba(120,120,130,0.28)" stroke-dasharray="3 4"></line>
+<line x1="346" x2="346" y1="40" y2="244" stroke="rgba(120,120,130,0.28)" stroke-dasharray="3 4"></line>
+<line x1="478" x2="478" y1="40" y2="244" stroke="rgba(120,120,130,0.28)" stroke-dasharray="3 4"></line>
+<line x1="610" x2="610" y1="40" y2="244" stroke="rgba(120,120,130,0.28)" stroke-dasharray="3 4"></line>
+<rect x="170" y="49" width="31" height="12" rx="2" fill="rgba(91,157,249,0.55)"></rect>
+<text x="20" y="59" fill="#b9c0ca" font-size="10.5">L1 缓存读取</text>
+<text x="207" y="59" fill="#8fbaff" font-size="9.5" font-family="monospace">0.5 ns</text>
+<rect x="170" y="73" width="132" height="12" rx="2" fill="rgba(91,157,249,0.55)"></rect>
+<text x="20" y="83" fill="#b9c0ca" font-size="10.5">主存（内存）读取</text>
+<text x="308" y="83" fill="#8fbaff" font-size="9.5" font-family="monospace">100 ns</text>
+<rect x="170" y="97" width="220" height="12" rx="2" fill="rgba(91,157,249,0.4)"></rect>
+<text x="20" y="107" fill="#b9c0ca" font-size="10.5">压缩 1 KB 数据</text>
+<text x="396" y="107" fill="#8fbaff" font-size="9.5" font-family="monospace">10 µs</text>
+<rect x="170" y="121" width="282" height="12" rx="2" fill="rgba(91,157,249,0.4)"></rect>
+<text x="20" y="131" fill="#b9c0ca" font-size="10.5">内存顺序读 1 MB</text>
+<text x="458" y="131" fill="#8fbaff" font-size="9.5" font-family="monospace">250 µs</text>
+<rect x="170" y="145" width="295" height="12" rx="2" fill="rgba(155,108,245,0.5)"></rect>
+<text x="20" y="155" fill="#b9c0ca" font-size="10.5">同机房一次往返</text>
+<text x="471" y="155" fill="#c0a3fb" font-size="9.5" font-family="monospace">500 µs</text>
+<rect x="170" y="169" width="352" height="12" rx="2" fill="rgba(155,108,245,0.5)"></rect>
+<text x="20" y="179" fill="#b9c0ca" font-size="10.5">机械硬盘一次寻道</text>
+<text x="528" y="179" fill="#c0a3fb" font-size="9.5" font-family="monospace">10 ms</text>
+<rect x="170" y="193" width="373" height="12" rx="2" fill="rgba(155,108,245,0.5)"></rect>
+<text x="20" y="203" fill="#b9c0ca" font-size="10.5">硬盘顺序读 1 MB</text>
+<text x="549" y="203" fill="#c0a3fb" font-size="9.5" font-family="monospace">30 ms</text>
+<rect x="170" y="217" width="404" height="12" rx="2" fill="rgba(224,107,107,0.5)"></rect>
+<text x="20" y="227" fill="#b9c0ca" font-size="10.5">跨洲往返（美↔欧）</text>
+<text x="580" y="227" fill="#f0a0a0" font-size="9.5" font-family="monospace">150 ms</text>
+<line x1="170" x2="620" y1="244" y2="244" stroke="#7c8593"></line>
+<text x="214" y="258" fill="#7c8593" font-size="9.5" font-family="monospace" text-anchor="middle">1 ns</text>
+<text x="346" y="258" fill="#7c8593" font-size="9.5" font-family="monospace" text-anchor="middle">1 µs</text>
+<text x="478" y="258" fill="#7c8593" font-size="9.5" font-family="monospace" text-anchor="middle">1 ms</text>
+<text x="610" y="258" fill="#7c8593" font-size="9.5" font-family="monospace" text-anchor="middle">1 s</text>
+<text x="20" y="280" fill="#7c8593" font-size="10">内存与机械硬盘之间差 5 个数量级；同机房往返又比跨洲往返快约 300 倍。</text>
+<text x="20" y="294" fill="#7c8593" font-size="10">读懂这张图，很多设计不用算就能一眼否掉——比如「每次请求都跨洲取一次数据」。</text>
+</svg>
+<figcaption>图 1 · 延迟阶梯（数据取自原书转载的 Jeff Dean「每个程序员都该知道的延迟数字」）。横轴是对数刻度，每格差 10 倍。</figcaption>
+</figure>
+<p>原书从这张表里直接读出五条结论，每一条都是可操作的设计判据：<strong>内存快、磁盘慢</strong>；<strong>尽可能避免磁盘寻道</strong>；<strong>简单压缩很便宜</strong>（压 1 KB 只要 <code>10 µs</code>）；<strong>跨网发数据前先压一下</strong>；<strong>数据中心通常分布在不同地区，跨区传输很花时间</strong>。</p>
+<p>第三条和第四条合起来是一条很实用的推论：压缩 1 KB 花 <code>10 µs</code>，而跨洲往返要 <code>150 ms</code>——相差<strong>一万五千倍</strong>。所以「先压缩再发」几乎永远划算，这不是玄学，是把两个数字放一起就能看出来的算术。</p>
+
+<h3>底表三：可用性的九位数——把「稳定」变成可核对的承诺</h3>
+<p>第三张表把「高可用」这个形容词换算成具体的停机时间。它之所以重要，是因为多加一个 9 的成本通常是<strong>指数级</strong>上升的，而收益只是每月少停几分钟——值不值，得先把两边都摆成数字。</p>
+<p class="tcap">表 1 · 可用性目标 ↔ 允许停机时间（原书给的对照表，取常用四档）</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>可用性</th><th>每天允许停机</th><th>每月允许停机</th><th>每年允许停机</th><th>典型对应</th></tr></thead>
+<tbody>
+<tr><th><code>99%</code></th><td>14.40 分钟</td><td>7.31 小时</td><td>3.65 天</td><td>内部工具、非关键后台</td></tr>
+<tr><th><code>99.9%</code></th><td>1.44 分钟</td><td>43.83 分钟</td><td>8.77 小时</td><td>多数 SaaS 的默认承诺</td></tr>
+<tr><th><code>99.99%</code></th><td>8.64 秒</td><td>4.38 分钟</td><td>52.60 分钟</td><td>主流云服务的区域级 SLA</td></tr>
+<tr><th><code>99.999%</code></th><td>864 毫秒</td><td>26.30 秒</td><td>5.26 分钟</td><td>电信 / 支付核心链路</td></tr>
+</tbody></table></div>
+<p>把它读透的关键在最后两行的对比：从 <code>99.9%</code> 到 <code>99.99%</code>，你争取的是<strong>每月 39 分钟</strong>。这 39 分钟意味着一次人工介入的重启都来不及做——<strong>它必须靠自动故障转移，也就意味着冗余、健康检查、演练这一整套东西。</strong>原书特别点明：主流云厂商（Amazon、Google、Microsoft）给出的 SLA 通常在 <code>99.9%</code> 及以上，而且<strong>永远不会是 100%</strong>。</p>
+
+<h3>走一遍完整估算：Twitter 的 QPS 与存储</h3>
+<p>原书用一个例子把方法串起来。假设条件全部明说：<strong>3 亿月活；50% 日活；用户平均每天发 2 条推文；10% 的推文带媒体；数据保留 5 年。</strong></p>
+<figure>
+<svg viewBox="0 0 640 350" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="e1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text x="20" y="20" fill="#5b9df9" font-size="12.5" font-weight="700">从假设到量级：一次完整的粗略估算</text>
+<rect x="24" y="32" width="592" height="46" rx="8" fill="rgba(155,108,245,0.1)" stroke="#9b6cf5" stroke-dasharray="5 4"></rect>
+<text x="36" y="49" fill="#c0a3fb" font-size="10" font-family="monospace">① 明写假设（真正的产出在这一行，不在下面的数字）</text>
+<text x="36" y="68" fill="#b9c0ca" font-size="10.5">3 亿月活 · 50% 日活 · 人均每天 2 条 · 10% 带媒体 · 媒体 1 MB · 保留 5 年</text>
+<line x1="320" x2="320" y1="78" y2="98" stroke="#7c8593" marker-end="url(#e1)"></line>
+<rect x="238" y="100" width="164" height="34" rx="6" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"></rect>
+<text x="320" y="121" fill="#e7ebf1" font-size="11" text-anchor="middle">日活 1.5 亿 → 3 亿条/天</text>
+<line x1="280" x2="170" y1="134" y2="164" stroke="#7c8593" marker-end="url(#e1)"></line>
+<line x1="360" x2="470" y1="134" y2="164" stroke="#7c8593" marker-end="url(#e1)"></line>
+<text x="150" y="156" fill="#5b9df9" font-size="10" font-family="monospace">② 流量线</text>
+<text x="446" y="156" fill="#5b9df9" font-size="10" font-family="monospace">③ 存储线</text>
+<rect x="60" y="168" width="220" height="32" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="170" y="188" fill="#b9c0ca" font-size="10.5" text-anchor="middle">÷ 86400 秒 ≈ 3500 QPS</text>
+<line x1="170" x2="170" y1="200" y2="224" stroke="#7c8593" marker-end="url(#e1)"></line>
+<rect x="60" y="226" width="220" height="32" rx="6" fill="rgba(91,157,249,0.2)" stroke="#5b9df9" stroke-width="1.6"></rect>
+<text x="170" y="246" fill="#e7ebf1" font-size="10.5" text-anchor="middle">× 2（峰值） ≈ 7000 QPS</text>
+<rect x="360" y="168" width="240" height="32" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="480" y="188" fill="#b9c0ca" font-size="10.5" text-anchor="middle">× 10% × 1 MB = 30 TB/天</text>
+<line x1="480" x2="480" y1="200" y2="224" stroke="#7c8593" marker-end="url(#e1)"></line>
+<rect x="360" y="226" width="240" height="32" rx="6" fill="rgba(91,157,249,0.2)" stroke="#5b9df9" stroke-width="1.6"></rect>
+<text x="480" y="246" fill="#e7ebf1" font-size="10.5" text-anchor="middle">× 365 × 5 年 ≈ 55 PB</text>
+<line x1="170" x2="240" y1="258" y2="284" stroke="#7c8593" marker-end="url(#e1)"></line>
+<line x1="480" x2="410" y1="258" y2="284" stroke="#7c8593" marker-end="url(#e1)"></line>
+<rect x="80" y="286" width="490" height="44" rx="8" fill="rgba(224,107,107,0.1)" stroke="#e06b6b"></rect>
+<text x="325" y="304" fill="#e7ebf1" font-size="10.5" text-anchor="middle">量级结论：7000 QPS 单机撑不住 → 缓存 + 从库，写多了才谈分片；</text>
+<text x="325" y="321" fill="#e7ebf1" font-size="10.5" text-anchor="middle">55 PB 不是「加块硬盘」的量级 → 必须对象存储 + CDN，且成本是首要约束</text>
+</svg>
+<figcaption>图 2 · 估算流水线：假设 → 每日事件数 → 分成流量线与存储线 → 得到两个量级结论。中间每一步都可以被人指着说「这条假设我不同意」。</figcaption>
+</figure>
+<p>拆开看，流量线只有两步：3 亿条除以一天的 <code>86400</code> 秒，约 <code>3500 QPS</code>；再乘 2 得峰值约 <code>7000 QPS</code>。存储线也只有两步：3 亿条里 10% 带媒体、每个 <code>1 MB</code>，得每天 <code>30 TB</code>；乘 5 年约 <code>55 PB</code>。</p>
+<p><strong>真正的价值在最后一步——把数字翻译成决定。</strong><code>7000 QPS</code> 这个量级，说明单台数据库肯定不够，但也远没到「必须分片」的程度，先上缓存和读副本就能覆盖；而 <code>55 PB</code> 一出来，「媒体存数据库」这个选项当场出局，对象存储加 CDN 成为唯一合理解，且成本会盖过性能成为首要约束。<strong>这两句翻译，才是这一章要交付的东西。</strong></p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/capacity-estimation-day26.html" target="_blank" rel="noopener">System Design · Day 26 容量估算</a> — 同一套算法怎么落到真实的容量规划：从 QPS 推机器数、留多少余量、以及压测怎么校准这些估算</aside>
+
+<h3>峰值：这一章最脆弱的那个假设</h3>
+<p>上面那步「× 2 得峰值」，是整条推理链里最该被质疑的一环。原书取 2 是个方便的默认值，但流量曲线的形状是<strong>由业务形态决定的</strong>，不是由公式决定的。用 Twitter 自己公布过的真实数字看一眼就明白差距有多大。</p>
+<figure>
+<svg viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<text x="20" y="20" fill="#5b9df9" font-size="12.5" font-weight="700">同一条流量曲线：稳态与峰值不在一个世界</text>
+<line x1="70" x2="70" y1="34" y2="210" stroke="#7c8593"></line>
+<line x1="70" x2="620" y1="210" y2="210" stroke="#7c8593"></line>
+<text x="62" y="52" fill="#7c8593" font-size="9.5" font-family="monospace" text-anchor="end">15 万/秒</text>
+<text x="62" y="214" fill="#7c8593" font-size="9.5" font-family="monospace" text-anchor="end">0</text>
+<line x1="70" x2="620" y1="197" y2="197" stroke="rgba(155,108,245,0.5)" stroke-dasharray="4 3"></line>
+<text x="626" y="200" fill="#c0a3fb" font-size="9" font-family="monospace" text-anchor="end">书里假设的峰值线（2 倍）</text>
+<polyline points="70,203 300,203 355,202 370,201 378,48 386,201 400,202 450,203 620,203" fill="none" stroke="#5b9df9" stroke-width="1.8"></polyline>
+<circle cx="378" cy="48" r="3.5" fill="#e06b6b"></circle>
+<text x="392" y="46" fill="#f0a0a0" font-size="10.5">峰值 143,199 条/秒</text>
+<text x="392" y="61" fill="#7c8593" font-size="9.5" font-family="monospace">2013-08-03 · 约稳态的 25 倍</text>
+<text x="86" y="192" fill="#8fbaff" font-size="10.5">稳态 ≈ 5,700 条/秒</text>
+<text x="70" y="234" fill="#7c8593" font-size="10">纵轴是线性刻度——所以稳态几乎贴着底。按「2 倍」配容量的系统，</text>
+<text x="70" y="248" fill="#7c8593" font-size="10">在这一秒会被真实峰值高出十几倍地掀翻。</text>
+</svg>
+<figcaption>图 3 · 峰值倍数不是常数：Twitter 公布的 2013 年记录中，峰值约为稳态的 25 倍，远高于教科书默认的 2 倍。</figcaption>
+</figure>
+<p>所以这一步正确的做法不是换一个更大的常数，而是<strong>把它明确列为一条假设、并注明依据</strong>——「按我们过去一年的曲线，峰值约为均值的 6 倍」。有依据的 6 倍，比没依据的 2 倍或 25 倍都可靠。</p>
+
+<h3>三条技巧：为什么「写下假设」比会算更重要</h3>
+<p>原书最后给了三条实操技巧，看着朴素，每一条都在挡一类具体失误。</p>
+<p><strong>取整与近似。</strong>白板上不做复杂算术：<code>99987 / 9.1</code> 直接当成 <code>100000 / 10</code> 来算。这不是马虎——你的输入本来就是拍的假设，<strong>用高精度算法处理低精度输入，只会得到看起来很精确的错误。</strong></p>
+<p><strong>写下你的假设。</strong>这是三条里最重要的一条，因为它改变了讨论的性质。假设写在白板上，评审就从「你猜我猜」变成了「把日活从 50% 改成 20% 再算一遍」。<strong>估算的输出是一条可复算的推理链，不是一个数。</strong>面试里也一样：面试官几乎不会纠正你的算术，但一定会挑战你的假设。</p>
+<p><strong>标注单位。</strong>只写 <code>5</code> 没有意义，要写 <code>5 MB</code>。原书把这条单独列出来，是因为单位混淆（把 MB 当 Mb、把每天当每秒）是估算里最常见也最致命的错误——它一次就能让你差 8 倍甚至 86400 倍。</p>
+<p>原书还列了面试常考的五类估算：<strong>QPS、峰值 QPS、存储、缓存容量、机器台数</strong>。这五个几乎覆盖了所有「设计一个 X」题目的开场。</p>
+
+<h2>关键权衡与选型</h2>
+<p>这一章的权衡不在「用哪个技术」，而在<strong>「算到什么精度就该停」</strong>和<strong>「算出来的量级对应哪一档架构」</strong>。</p>
+<p class="tcap">表 2 · 五类常考估算：怎么算、最容易错在哪</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>要估的量</th><th>怎么算</th><th>最常见的错</th><th>算完该问的下一句</th></tr></thead>
+<tbody>
+<tr><th>QPS</th><td>日活 × 人均每日次数 ÷ <code>86400</code></td><td>把月活当日活用</td><td>读写比是多少？</td></tr>
+<tr><th>峰值 QPS</th><td>QPS × 峰值倍数（书里取 2）</td><td><strong>倍数拍太小</strong>；忽略突发事件</td><td>最坏的一天长什么样？</td></tr>
+<tr><th>存储</th><td>单条大小 × 每日条数 × 保留天数</td><td><strong>漏算副本因子与索引开销</strong></td><td>冷热怎么分层？</td></tr>
+<tr><th>缓存容量</th><td>热点数据占比 × 总量（常按二八法则取 20%）</td><td>把全量数据都想放进内存</td><td>命中率目标是多少？</td></tr>
+<tr><th>机器台数</th><td>峰值 QPS ÷ 单机可承载 QPS，再留余量</td><td>按 100% 利用率算，不留冗余</td><td>挂一台 / 挂一个可用区还撑得住吗？</td></tr>
+</tbody></table></div>
+<p class="tcap">表 3 · 算出的量级 → 该做什么（档位是业界通行经验值，非原书给出；具体阈值随硬件与业务差异很大）</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>峰值量级</th><th>通常够用的做法</th><th>代价 / 前提</th></tr></thead>
+<tbody>
+<tr><th>约 100 QPS 以下</th><td>一台应用服务器 + 一个数据库</td><td><strong>没有冗余</strong>——挂了就全站没了</td></tr>
+<tr><th>约 1000 QPS 量级</th><td>负载均衡 + 多台无状态应用 + 读副本</td><td>多了一层要运维；<strong>复制滞后</strong>会读到旧数据</td></tr>
+<tr><th>约 10000 QPS 量级</th><td>再加缓存层与 CDN；慢任务走队列</td><td>缓存一致性窗口；<strong>缓存挂掉会瞬间打死数据库</strong></td></tr>
+<tr><th>10 万 QPS 以上 / 数据装不下单机</th><td>分片；必要时多机房</td><td><strong>近乎不可逆</strong>：跨片 join、热点、重分片全部变难</td></tr>
+</tbody></table></div>
+<p>表 3 真正想说的不是这些数字，而是<strong>「量级 → 动作」这条映射本身应该在你脑子里存在</strong>。面试和架构评审里最见功力的一句话是：「按我刚才的假设算下来峰值大概是一万，所以这一档我上缓存和读副本就够，先不谈分片。」<strong>结论有没有挂在数字上，是新手和老手最明显的分水岭。</strong></p>
+
+<h2>为什么重要 / 落到真实系统</h2>
+<p>这套方法之所以值得单独一章，是因为它是<strong>唯一能把开放题收敛的工具</strong>。没有量级，「设计一个短网址服务」可以扯一小时；有了量级，讨论立刻收敛到「读写比 100:1、峰值一万 QPS、五年 3 TB」这几个具体约束上。下面几条不是书里说的，是相关公司和作者自己公开写的：</p>
+<div class="ev">
+<div class="evh">大厂实证 · 这些不是书里说的，是公司 / 作者自己公开说的</div>
+<ul>
+<li><strong>Google 的 Jeff Dean</strong> 正是本章那张延迟表的源头。他在 Stanford 的公开讲义里不仅列出「每个程序员都该知道的数字」，还当场演示了一次估算：生成一个含 30 张缩略图的图片结果页，<strong>方案一串行读盘 = 30 次寻道 × 10 ms + 传输 ≈ 560 ms；方案二并行读 ≈ 18 ms</strong>——两个设计的优劣，用几个基础数字在动手写代码前就分出来了。<strong>这就是本章方法的原始形态：估算是用来做设计取舍的，不是用来交作业的。</strong><span class="src"><a href="https://research.google.com/people/jeff/stanford-295-talk.pdf" target="_blank" rel="noopener">J. Dean「Software Engineering Advice from Building Large-Scale Distributed Systems」, Stanford ↗</a></span></li>
+<li><strong>Twitter</strong> 自己公布过一组数字，正好戳中本章最脆弱的假设：2013 年 8 月 3 日日本播放《天空之城》时，Twitter 创下<strong>每秒 143,199 条</strong>推文的峰值，而当时的稳态约为<strong>每秒 5,700 条</strong>——峰值是均值的<strong>约 25 倍</strong>。原书估算峰值时取的系数是 2。<strong>反证：峰值倍数是要按业务形态定的，社交与直播类的突发远超经验默认值。</strong><span class="src"><a href="https://blog.x.com/engineering/en_us/a/2013/new-tweets-per-second-record-and-how" target="_blank" rel="noopener">Twitter Engineering「New Tweets per second record, and how!」, 2013 ↗</a></span></li>
+<li><strong>Google 的 Dean 与 Barroso</strong> 在《The Tail at Scale》（CACM, 2013）里给出一个量化结论：如果单台服务器的 <code>p99</code> 延迟是 1 秒，那么一个需要扇出到 <strong>100 台</strong>服务器的请求，将有<strong>约 63%</strong> 会超过 1 秒。<strong>验证了「只估平均值会系统性低估痛苦」：规模越大，尾部越是那个决定用户体验的东西。</strong><span class="src"><a href="https://cacm.acm.org/research/the-tail-at-scale/" target="_blank" rel="noopener">J. Dean &amp; L. A. Barroso「The Tail at Scale」, CACM 56(2), 2013 ↗</a></span></li>
+<li><strong>AWS</strong> 把本章第三张表变成了有法律效力的东西：Amazon Compute SLA 承诺 EC2 在跨两个以上可用区部署时，每个区域的月度正常运行时间不低于 <code>99.99%</code>，未达到则按档给服务抵扣。<strong>验证了「几个 9」不是形容词而是可核对、可索赔的承诺——你自己的 SLO 也应该这样定。</strong><span class="src"><a href="https://aws.amazon.com/compute/sla/" target="_blank" rel="noopener">Amazon Compute Service Level Agreement（官方 SLA 页）↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/cost-capacity-engineering-day27.html" target="_blank" rel="noopener">System Design · Day 27 成本与容量工程</a> — 估算之后：怎么在不破 SLO 的前提下把单位成本压下来，以及余量留多少才不是浪费</aside>
+
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>精度崇拜</strong>：把估算当算术竞赛，纠结 3512 还是 3500。评审和面试里没人在意这个差别；<strong>差一个数量级才是错，差一倍不是。</strong></li>
+<li><strong>峰值系数照抄 2 倍</strong>：这是本章最该带着怀疑读的一个数。Twitter 的真实记录是 25 倍。促销、开票、直播、热点事件驱动的业务，峰值倍数要按<strong>自己的历史曲线</strong>定，抄不来。</li>
+<li><strong>只估平均，不估尾部</strong>：均值漂亮的系统，用户感受到的可能全是 <code>p99</code>。扇出越多的架构，尾部被放大得越厉害（见上面 Tail at Scale 的 63%）。</li>
+<li><strong>存储漏算副本与开销</strong>：<code>55 PB</code> 是<strong>原始数据</strong>。真实集群通常存 3 份副本，再加索引、元数据、临时空间——落到采购单上往往是原始量的两三倍。这是估算里最常见、后果最贵的漏项。</li>
+<li><strong>单位错误</strong>：MB 与 Mb（字节与比特）差 8 倍，「每天」与「每秒」差 <code>86400</code> 倍。原书专门列一条讲标单位，不是啰嗦。</li>
+<li><strong>把估算当成压测的替代品</strong>：它只告诉你数量级，永远回答不了「这套代码到底能不能扛住」。真实瓶颈常常出现在估算不覆盖的地方——锁竞争、连接池、GC 停顿。<strong>估算定方向，压测定结论。</strong></li>
+<li><strong>时代局限</strong>：书中延迟表沿用了机械硬盘的年代（寻道 <code>10 ms</code>）。今天的 NVMe SSD 随机读常在<strong>百微秒量级</strong>，把「磁盘慢」这一条压缩了约两个数量级。但表里真正有价值的是<strong>相对关系</strong>——内存 ≪ 本地盘 ≪ 同机房网络 ≪ 跨洲网络——这个次序至今没变，因为最后一格由光速决定。</li>
+<li><strong>一点争议</strong>：估算在面试里有被仪式化的倾向——有的面试官只看你「做没做」，不看假设是否合理。但这不是方法的问题：真正的分水岭永远是<strong>你有没有把数字翻译成一个架构决定</strong>，而不是你有没有在白板上写满乘法。</li>
+</ul>
+
+<h2>要点</h2>
+<div class="tl">
+<p>① 估算的产出不是数字，是<strong>一串可以被当场推翻的假设</strong>——写下来，讨论才有支点。</p>
+<p>② 目标是<strong>量级正确</strong>：大胆取整、不用计算器；用精确算法处理拍脑袋的输入，只会得到精确的错误。</p>
+<p>③ 三张底表要熟：<strong>2 的幂</strong>（容量换算）、<strong>延迟数字</strong>（Jeff Dean 那张）、<strong>可用性九位数</strong>。</p>
+<p>④ 延迟表最该记住的是<strong>相对次序</strong>：内存 ≪ 本地盘 ≪ 同机房网络 ≪ 跨洲网络（<code>150 ms</code>，由光速兜底）。</p>
+<p>⑤ 由此得的实用推论：<strong>先压缩再跨网发</strong>——压 1 KB 只要 <code>10 µs</code>，跨洲一次往返 <code>150 ms</code>，差一万五千倍。</p>
+<p>⑥ 从 <code>99.9%</code> 到 <code>99.99%</code> 争的是每月 39 分钟，这点时间不够人工介入，<strong>只能靠自动故障转移</strong>——多一个 9 的成本是指数级的。</p>
+<p>⑦ 完整流程记住 Twitter 例子：假设 → 3 亿条/天 → <code>3500 QPS</code> / 峰值 <code>7000</code> → <code>30 TB/天</code> → 5 年 <code>55 PB</code>。</p>
+<p>⑧ <strong>最后一步才是重点</strong>：把量级翻译成决定（<code>55 PB</code> ⇒ 媒体必须走对象存储 + CDN，成本盖过性能）。</p>
+<p>⑨ 三条纪律：<strong>取整、写假设、标单位</strong>。单位混淆一次就能差 8 倍或 <code>86400</code> 倍。</p>
+<p>⑩ 两个要带着怀疑读的地方：<strong>峰值系数别照抄 2</strong>（Twitter 是 25 倍），<strong>存储别忘乘副本因子</strong>。</p>
+</div>
+</div>
+
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

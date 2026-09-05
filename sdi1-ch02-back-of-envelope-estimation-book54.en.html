@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview Vol 1 · Ch 2 · Back-of-the-Envelope Estimation — Book Deep Read 54</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">Book Deep Read · System Design Interview Vol 1 · Ch 2</p>
+<h1>Back-of-the-Envelope Estimation</h1>
+<p class="sub">System Design Interview: An Insider's Guide · Vol 1 · Ch 2 · Alex Xu · 2020</p>
+<p class="langbar"><a href="sdi1-ch02-back-of-envelope-estimation-book54.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>Before a move, you don't weigh each box. You take one look and ask: <strong>will all of this fit in a small van?</strong> That look costs three seconds, and it decides which phone call you make today. This chapter teaches the engineer's version of that look: before building anything, use a few rough numbers to work out whether the job is <strong>a small-van job or a fleet-of-trucks job</strong>.</p>
+<h2>A strange thing first</h2>
+<p>This chapter never produces a precise answer. Every number it computes is guessed, rounded, and shrugged at. <strong>And yet it is one of the most useful chapters in the book.</strong> Because what shapes an architecture is never "3,512 or 4,108" — it is "three thousand or three million". Those are two different worlds, and they should not be built the same way.</p>
+<h2>Why the old world was hard</h2>
+<p>Teams that skip this step reliably fall into two opposite holes.</p>
+<p><strong>Overestimating.</strong> The product has barely any users, but the team has already built out heavy machinery for the size it imagines it will one day be. Half a year later, most of the effort has gone into maintaining that machinery, and the product itself has hardly moved.</p>
+<p><strong>Underestimating.</strong> The plan sounds fine, and then it ships — and it turns out the thing you need to store is not "buy a bigger drive" sized, it is "fill a warehouse" sized. By the time anyone notices, the only fixes left are the expensive, painful ones.</p>
+<p>Both holes share one cause: <strong>nobody spent three minutes writing the rough quantities on paper before starting.</strong></p>
+<h2>The core mechanism: three small habits</h2>
+<p><strong>1. Keep a few rulers in your head.</strong> A cook doesn't need a measuring cup to know roughly what a pinch of salt is. An engineer needs the same instinct for a few everyday quantities: fetching something from memory is "a blink", walking down to the garage for it is "a trip", and posting it to the far side of the planet and back is "an international parcel". The gaps between those three are enormous — remember the gaps, and many designs can be ruled out without any arithmetic at all.</p>
+<p><strong>2. Write your assumptions down.</strong> The real output of an estimate is not the number, it is the list underneath it: how many people use this, how often each day, how much each use leaves behind, how long it is kept. Written down, someone else can point at one line and say "I disagree with that one" — and the discussion turns from guesswork into "change that line and run it again".</p>
+<p><strong>3. Round hard, and only trust the order of magnitude.</strong> Round the awkward numbers to clean ones before you start, and read only which bracket the result lands in. This isn't laziness: your inputs were guesses to begin with, and running guessed inputs through precise arithmetic just gives you <strong>a very precise wrong answer</strong>.</p>
+<h2>How to use it</h2>
+<p>One step gets skipped more than any other: <strong>after the average, always ask what the busiest moment looks like.</strong> A restaurant that sets out chairs for its all-day average will collapse at noon. In the real world the busiest instant is often dozens of times the average, not "a bit more".</p>
+<p>One honest cost: this method only tells you which bracket you are in. <strong>It can never answer "will it actually hold?" — only really pushing load through it can.</strong></p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p>Estimation isn't about being right. It's about <strong>ruling out the obviously impossible in three minutes</strong>. Write the assumptions, round hard, read the order of magnitude — then ask one more question: what about the busiest moment?</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the numbers and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">You think this chapter teaches you to get the numbers right. What it actually teaches is <strong>how to compress an open-ended question into an order of magnitude using a chain of assumptions you say out loud</strong>. The deliverable was never the number — it is <strong>a chain anyone in the room can knock down on the spot</strong>. Being off by 2× costs you nothing; being off by 1000× means your whole architecture rests on a false premise.</p>
+
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>QPS (queries per second)</strong>: requests handled per second — the most common yardstick for load. For write-heavy workloads it's often written TPS (transactions per second).</li>
+<li><strong>Peak QPS</strong>: the QPS at the busiest moment of the day. Capacity is sized against this, not against the average.</li>
+<li><strong>Latency</strong>: how long one operation takes from request to result. <strong>Throughput</strong>: how many operations complete per unit of time. They are different things — fast does not imply plentiful.</li>
+<li><strong>Nanosecond / microsecond / millisecond (ns / µs / ms)</strong>: each step is 1000×. 1 ms = 1,000 µs = 1,000,000 ns.</li>
+<li><strong>Round-trip time (RTT)</strong>: time for a request to go out and the answer to come back.</li>
+<li><strong>Disk seek</strong>: the time a spinning hard drive's head needs to move to the target position — the slowest thing a mechanical disk does.</li>
+<li><strong>Byte scale</strong>: 1 KB ≈ a thousand bytes, 1 MB ≈ a million, 1 GB ≈ a billion, 1 TB ≈ a trillion, 1 PB ≈ a thousand TB. One ASCII character = 1 byte.</li>
+<li><strong>Availability</strong>: the fraction of time a system is up, conventionally written as a number of nines, e.g. <code>99.99%</code>.</li>
+<li><strong>SLA (service level agreement)</strong>: a provider's <strong>written commitment</strong> on availability and similar metrics, usually backed by credits if missed.</li>
+<li><strong>Percentile</strong>: line all requests up by how long they took; <code>p99</code> is the 99th-slowest out of a hundred — how long that unlucky one waited.</li>
+<li><strong>DAU / MAU</strong>: daily active users / monthly active users.</li>
+<li><strong>Replication factor</strong>: how many copies of the same data the cluster keeps. Three copies means three times the raw space.</li>
+</ul>
+</div>
+
+<h2>Where it sits</h2>
+<p>This is the second chapter of Part I, "the method and the basics", wedged between two others: <strong>Ch1 gives you the parts and the order to install them</strong> (add a cache, add replicas, shard…), and <strong>Ch3 gives you the interview process</strong> (clarify → high-level design → deep dive → wrap up). Ch2 supplies the piece in between — <strong>how you decide which step you are actually at</strong>. It is the shortest chapter in the book, and it is the fixed opening move that all twelve later case studies (rate limiter, URL shortener, YouTube, Google Drive…) re-run from scratch.</p>
+
+<h2>What the chapter is solving</h2>
+<p>An interviewer says "design an X", and the second sentence is almost always "roughly how many users, how much data?". That isn't a trap. It's because <strong>architecture is meaningless without a scale attached</strong>: the same feature at ten thousand requests a day and at ten billion requests a day has completely different right answers — one machine and a database for the first, sharding and multi-region object storage for the second.</p>
+<p>What happens without an estimate? Both directions fail, and both are common. <strong>Overshoot</strong>: five thousand users, but the team has already sharded the database and gone multi-region, so most of the engineering time goes into infrastructure — and sharding is close to irreversible. <strong>Undershoot</strong>: the design review says "we'll put it in the database", and after launch it turns out to be <code>30 TB</code> of new data per day. That isn't a bigger disk; that's rebuilding the storage layer.</p>
+<p>The subtler third failure is <strong>estimating only the average</strong>. A service with 1M DAU and 10 requests per user per day averages about <code>116 QPS</code> — sounds trivial. But traffic is never flat, and 8pm may be several or several dozen times the mean. <strong>A system sized to the average is guaranteed to fail at the exact moment it matters most.</strong></p>
+<p>So the chapter builds exactly one skill: <strong>given a few assumptions about user behaviour, get QPS, storage and bandwidth right to an order of magnitude — on a whiteboard, in three minutes, without a calculator.</strong></p>
+
+<h2>The core content, properly</h2>
+
+<h3>Table one: powers of two — where every capacity estimate starts</h3>
+<p>Estimating storage is always the same multiplication: <strong>size of one record × records per day × days retained</strong>. So the first requirement is converting data units in your head. The book's reference points are plain: an ASCII character is 1 byte; <code>2^10</code> ≈ a thousand, i.e. 1 KB; <code>2^20</code> ≈ a million, 1 MB; <code>2^30</code> ≈ a billion, 1 GB; <code>2^40</code> is 1 TB; <code>2^50</code> is 1 PB.</p>
+<p>Trivial-looking, but it turns straight into judgement. The book breaks a tweet down as: tweet ID <code>64</code> bytes + text <code>140</code> bytes + media <code>1 MB</code>. <strong>Look at how lopsided that is</strong>: the text is two hundred bytes, the media is five thousand times larger. That single ratio hands you the whole storage strategy — <strong>text is free, media is the bill</strong>. Real systems put text in a database and media in object storage behind a CDN because of this ratio, not because of architectural fashion.</p>
+
+<h3>Table two: latency numbers — an engineer's sense of scale</h3>
+<p>The second table is the soul of the chapter, and it comes from Google's Jeff Dean; the industry knows it as "latency numbers every programmer should know". The point isn't to recite it. The point is that when you hear a design, you <strong>immediately feel which order of magnitude it lands in</strong>.</p>
+<figure>
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<text x="20" y="22" fill="#5b9df9" font-size="12.5" font-weight="700">The latency ladder (log scale: each step right = 10× slower)</text>
+<line x1="228" x2="228" y1="40" y2="244" stroke="rgba(120,120,130,0.28)" stroke-dasharray="3 4"></line>
+<line x1="354" x2="354" y1="40" y2="244" stroke="rgba(120,120,130,0.28)" stroke-dasharray="3 4"></line>
+<line x1="480" x2="480" y1="40" y2="244" stroke="rgba(120,120,130,0.28)" stroke-dasharray="3 4"></line>
+<line x1="606" x2="606" y1="40" y2="244" stroke="rgba(120,120,130,0.28)" stroke-dasharray="3 4"></line>
+<rect x="186" y="49" width="29" height="12" rx="2" fill="rgba(91,157,249,0.55)"></rect>
+<text x="20" y="59" fill="#b9c0ca" font-size="10.5">L1 cache reference</text>
+<text x="221" y="59" fill="#8fbaff" font-size="9.5" font-family="monospace">0.5 ns</text>
+<rect x="186" y="73" width="126" height="12" rx="2" fill="rgba(91,157,249,0.55)"></rect>
+<text x="20" y="83" fill="#b9c0ca" font-size="10.5">Main memory reference</text>
+<text x="318" y="83" fill="#8fbaff" font-size="9.5" font-family="monospace">100 ns</text>
+<rect x="186" y="97" width="210" height="12" rx="2" fill="rgba(91,157,249,0.4)"></rect>
+<text x="20" y="107" fill="#b9c0ca" font-size="10.5">Compress 1 KB</text>
+<text x="402" y="107" fill="#8fbaff" font-size="9.5" font-family="monospace">10 µs</text>
+<rect x="186" y="121" width="269" height="12" rx="2" fill="rgba(91,157,249,0.4)"></rect>
+<text x="20" y="131" fill="#b9c0ca" font-size="10.5">Read 1 MB from memory</text>
+<text x="461" y="131" fill="#8fbaff" font-size="9.5" font-family="monospace">250 µs</text>
+<rect x="186" y="145" width="282" height="12" rx="2" fill="rgba(155,108,245,0.5)"></rect>
+<text x="20" y="155" fill="#b9c0ca" font-size="10.5">Round trip, same datacenter</text>
+<text x="474" y="155" fill="#c0a3fb" font-size="9.5" font-family="monospace">500 µs</text>
+<rect x="186" y="169" width="336" height="12" rx="2" fill="rgba(155,108,245,0.5)"></rect>
+<text x="20" y="179" fill="#b9c0ca" font-size="10.5">Disk seek</text>
+<text x="528" y="179" fill="#c0a3fb" font-size="9.5" font-family="monospace">10 ms</text>
+<rect x="186" y="193" width="356" height="12" rx="2" fill="rgba(155,108,245,0.5)"></rect>
+<text x="20" y="203" fill="#b9c0ca" font-size="10.5">Read 1 MB from disk</text>
+<text x="548" y="203" fill="#c0a3fb" font-size="9.5" font-family="monospace">30 ms</text>
+<rect x="186" y="217" width="386" height="12" rx="2" fill="rgba(224,107,107,0.5)"></rect>
+<text x="20" y="227" fill="#b9c0ca" font-size="10.5">Packet CA → Netherlands → CA</text>
+<text x="578" y="227" fill="#f0a0a0" font-size="9.5" font-family="monospace">150 ms</text>
+<line x1="186" x2="620" y1="244" y2="244" stroke="#7c8593"></line>
+<text x="228" y="258" fill="#7c8593" font-size="9.5" font-family="monospace" text-anchor="middle">1 ns</text>
+<text x="354" y="258" fill="#7c8593" font-size="9.5" font-family="monospace" text-anchor="middle">1 µs</text>
+<text x="480" y="258" fill="#7c8593" font-size="9.5" font-family="monospace" text-anchor="middle">1 ms</text>
+<text x="606" y="258" fill="#7c8593" font-size="9.5" font-family="monospace" text-anchor="middle">1 s</text>
+<text x="20" y="280" fill="#7c8593" font-size="10">Memory and a spinning disk are five orders of magnitude apart; a same-datacenter</text>
+<text x="20" y="294" fill="#7c8593" font-size="10">round trip is ~300× faster than a transcontinental one.</text>
+</svg>
+<figcaption>Figure 1 · The latency ladder (numbers as reproduced in the book from Jeff Dean's "latency numbers every programmer should know"). Log scale — each gridline is 10×.</figcaption>
+</figure>
+<p>The book reads five conclusions straight off this table, each one an actionable design rule: <strong>memory is fast, disk is slow</strong>; <strong>avoid disk seeks where you can</strong>; <strong>simple compression is cheap</strong> (1 KB costs <code>10 µs</code>); <strong>compress before sending over the network</strong>; <strong>datacenters live in different regions and moving data between them takes real time</strong>.</p>
+<p>Rules three and four combine into something very practical: compressing 1 KB costs <code>10 µs</code>, a transcontinental round trip costs <code>150 ms</code> — a factor of <strong>fifteen thousand</strong>. "Compress first, then send" is almost always worth it, and that isn't folklore; it's arithmetic you can do by putting two numbers side by side.</p>
+
+<h3>Table three: the nines — turning "reliable" into a checkable promise</h3>
+<p>The third table converts the adjective "highly available" into concrete downtime. It matters because each additional nine typically costs <strong>exponentially</strong> more while buying you only a few more minutes a month — and you can only judge that trade once both sides are numbers.</p>
+<p class="tcap">Table 1 · Availability target ↔ allowed downtime (the book's table, four common tiers)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Availability</th><th>Per day</th><th>Per month</th><th>Per year</th><th>Typically</th></tr></thead>
+<tbody>
+<tr><th><code>99%</code></th><td>14.40 min</td><td>7.31 hours</td><td>3.65 days</td><td>Internal tools, non-critical batch</td></tr>
+<tr><th><code>99.9%</code></th><td>1.44 min</td><td>43.83 min</td><td>8.77 hours</td><td>Default commitment for most SaaS</td></tr>
+<tr><th><code>99.99%</code></th><td>8.64 s</td><td>4.38 min</td><td>52.60 min</td><td>Region-level SLA of major clouds</td></tr>
+<tr><th><code>99.999%</code></th><td>864 ms</td><td>26.30 s</td><td>5.26 min</td><td>Telecom / payment core paths</td></tr>
+</tbody></table></div>
+<p>The insight is in the gap between the middle rows. Going from <code>99.9%</code> to <code>99.99%</code> buys you <strong>39 minutes a month</strong>. Thirty-nine minutes is not enough for a human to be paged and restart something — <strong>which means it has to come from automatic failover, and therefore from redundancy, health checks and drills</strong>. The book notes explicitly that the major cloud providers (Amazon, Google, Microsoft) offer SLAs of <code>99.9%</code> or above, and that an SLA is <strong>never</strong> 100%.</p>
+
+<h3>A full worked estimate: Twitter's QPS and storage</h3>
+<p>The book ties the method together with one example, with every assumption stated out loud: <strong>300 million MAU; 50% use it daily; 2 tweets per user per day; 10% of tweets carry media; data retained for 5 years.</strong></p>
+<figure>
+<svg viewBox="0 0 640 350" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="e1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text x="20" y="20" fill="#5b9df9" font-size="12.5" font-weight="700">From assumptions to an order of magnitude</text>
+<rect x="24" y="32" width="592" height="46" rx="8" fill="rgba(155,108,245,0.1)" stroke="#9b6cf5" stroke-dasharray="5 4"></rect>
+<text x="36" y="49" fill="#c0a3fb" font-size="10" font-family="monospace">1 · State the assumptions (the real deliverable is this line, not the numbers below)</text>
+<text x="36" y="68" fill="#b9c0ca" font-size="10.5">300M MAU · 50% daily · 2 posts/user/day · 10% carry media · media 1 MB · keep 5 years</text>
+<line x1="320" x2="320" y1="78" y2="98" stroke="#7c8593" marker-end="url(#e1)"></line>
+<rect x="230" y="100" width="180" height="34" rx="6" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"></rect>
+<text x="320" y="121" fill="#e7ebf1" font-size="11" text-anchor="middle">150M DAU → 300M posts/day</text>
+<line x1="280" x2="170" y1="134" y2="164" stroke="#7c8593" marker-end="url(#e1)"></line>
+<line x1="360" x2="470" y1="134" y2="164" stroke="#7c8593" marker-end="url(#e1)"></line>
+<text x="140" y="156" fill="#5b9df9" font-size="10" font-family="monospace">2 · traffic</text>
+<text x="452" y="156" fill="#5b9df9" font-size="10" font-family="monospace">3 · storage</text>
+<rect x="60" y="168" width="220" height="32" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="170" y="188" fill="#b9c0ca" font-size="10.5" text-anchor="middle">÷ 86,400 s ≈ 3,500 QPS</text>
+<line x1="170" x2="170" y1="200" y2="224" stroke="#7c8593" marker-end="url(#e1)"></line>
+<rect x="60" y="226" width="220" height="32" rx="6" fill="rgba(91,157,249,0.2)" stroke="#5b9df9" stroke-width="1.6"></rect>
+<text x="170" y="246" fill="#e7ebf1" font-size="10.5" text-anchor="middle">× 2 (peak) ≈ 7,000 QPS</text>
+<rect x="360" y="168" width="240" height="32" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="480" y="188" fill="#b9c0ca" font-size="10.5" text-anchor="middle">× 10% × 1 MB = 30 TB/day</text>
+<line x1="480" x2="480" y1="200" y2="224" stroke="#7c8593" marker-end="url(#e1)"></line>
+<rect x="360" y="226" width="240" height="32" rx="6" fill="rgba(91,157,249,0.2)" stroke="#5b9df9" stroke-width="1.6"></rect>
+<text x="480" y="246" fill="#e7ebf1" font-size="10.5" text-anchor="middle">× 365 × 5 years ≈ 55 PB</text>
+<line x1="170" x2="240" y1="258" y2="284" stroke="#7c8593" marker-end="url(#e1)"></line>
+<line x1="480" x2="410" y1="258" y2="284" stroke="#7c8593" marker-end="url(#e1)"></line>
+<rect x="60" y="286" width="530" height="44" rx="8" fill="rgba(224,107,107,0.1)" stroke="#e06b6b"></rect>
+<text x="325" y="304" fill="#e7ebf1" font-size="10.5" text-anchor="middle">The verdict: 7,000 QPS is past one machine → cache + read replicas, shard only later;</text>
+<text x="325" y="321" fill="#e7ebf1" font-size="10.5" text-anchor="middle">55 PB is not a "buy a disk" number → object storage + CDN, with cost as the top constraint</text>
+</svg>
+<figcaption>Figure 2 · The estimation pipeline: assumptions → events per day → a traffic branch and a storage branch → two verdicts. Every step is something a reviewer can point at and dispute.</figcaption>
+</figure>
+<p>Unpacked, the traffic branch is two steps: 300M posts divided by the <code>86,400</code> seconds in a day is about <code>3,500 QPS</code>; times two gives a peak of roughly <code>7,000 QPS</code>. The storage branch is also two steps: 10% of 300M posts at <code>1 MB</code> each is <code>30 TB</code> per day; times five years is about <code>55 PB</code>.</p>
+<p><strong>The value is in the last step — translating numbers into decisions.</strong> <code>7,000 QPS</code> says one database won't do, but it is nowhere near "must shard" territory: a cache and read replicas cover it. And the moment <code>55 PB</code> appears, "store media in the database" is off the table, object storage plus a CDN becomes the only sane answer, and cost overtakes performance as the binding constraint. <strong>Those two sentences are what the chapter exists to deliver.</strong></p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/capacity-estimation-day26.en.html" target="_blank" rel="noopener">System Design · Day 26 Capacity Estimation</a> — the same arithmetic applied to real capacity planning: deriving machine counts from QPS, how much headroom to keep, and how load tests calibrate these guesses</aside>
+
+<h3>The peak: the most fragile assumption in the chapter</h3>
+<p>That "× 2 for peak" step is the link in the chain most deserving of suspicion. Two is a convenient default, but the shape of a traffic curve is <strong>set by the business, not by a formula</strong>. Twitter's own published numbers show how wide the gap can get.</p>
+<figure>
+<svg viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<text x="20" y="20" fill="#5b9df9" font-size="12.5" font-weight="700">One traffic curve: steady state and peak are not in the same world</text>
+<line x1="86" x2="86" y1="34" y2="210" stroke="#7c8593"></line>
+<line x1="86" x2="620" y1="210" y2="210" stroke="#7c8593"></line>
+<text x="78" y="52" fill="#7c8593" font-size="9.5" font-family="monospace" text-anchor="end">150k/s</text>
+<text x="78" y="214" fill="#7c8593" font-size="9.5" font-family="monospace" text-anchor="end">0</text>
+<line x1="86" x2="620" y1="197" y2="197" stroke="rgba(155,108,245,0.5)" stroke-dasharray="4 3"></line>
+<text x="620" y="192" fill="#c0a3fb" font-size="9" font-family="monospace" text-anchor="end">the book's assumed peak line (2×)</text>
+<polyline points="86,203 300,203 355,202 370,201 378,48 386,201 400,202 450,203 620,203" fill="none" stroke="#5b9df9" stroke-width="1.8"></polyline>
+<circle cx="378" cy="48" r="3.5" fill="#e06b6b"></circle>
+<text x="392" y="46" fill="#f0a0a0" font-size="10.5">peak 143,199 tweets/s</text>
+<text x="392" y="61" fill="#7c8593" font-size="9.5" font-family="monospace">2013-08-03 · about 25× steady state</text>
+<text x="100" y="192" fill="#8fbaff" font-size="10.5">steady state ≈ 5,700 tweets/s</text>
+<text x="86" y="234" fill="#7c8593" font-size="10">The vertical axis is linear — which is why the steady state hugs the floor. A system</text>
+<text x="86" y="248" fill="#7c8593" font-size="10">sized for "2×" is flipped over by a real peak more than ten times higher.</text>
+</svg>
+<figcaption>Figure 3 · The peak multiplier is not a constant: in Twitter's published 2013 record the peak was roughly 25× steady state, far above the textbook default of 2×.</figcaption>
+</figure>
+<p>So the right move is not to swap in a bigger constant. It is to <strong>list the multiplier as an explicit assumption with a stated basis</strong> — "from our last twelve months of traffic, peak runs about 6× the mean". A justified 6× beats both an unjustified 2× and an unjustified 25×.</p>
+
+<h3>Three techniques: why "write it down" beats being good at arithmetic</h3>
+<p>The chapter closes with three practical techniques. They look mundane; each blocks a specific class of mistake.</p>
+<p><strong>Rounding and approximation.</strong> No hard arithmetic on a whiteboard: treat <code>99987 / 9.1</code> as <code>100000 / 10</code>. This is not sloppiness — your inputs were assumptions to begin with, and <strong>running low-precision inputs through high-precision arithmetic only produces a precise wrong answer</strong>.</p>
+<p><strong>Write down your assumptions.</strong> This is the most important of the three, because it changes what kind of conversation you are having. With the assumptions on the board, a review moves from trading guesses to "change daily-active from 50% to 20% and run it again". <strong>The output of an estimate is a re-runnable chain of reasoning, not a number.</strong> Interviews work the same way: interviewers rarely correct your arithmetic, and they almost always challenge your assumptions.</p>
+<p><strong>Label your units.</strong> Writing <code>5</code> means nothing; write <code>5 MB</code>. The book calls this out separately because unit confusion — MB for Mb, per-day for per-second — is the most common and most lethal error in estimation. A single slip is worth a factor of 8, or of <code>86,400</code>.</p>
+<p>The book also lists the five estimates that come up most: <strong>QPS, peak QPS, storage, cache size, and number of servers</strong>. Those five cover the opening of essentially every "design an X" question.</p>
+
+<h2>Key trade-offs and choices</h2>
+<p>The trade-off here isn't "which technology". It is <strong>"how precise is precise enough"</strong> and <strong>"which architecture tier does this magnitude imply"</strong>.</p>
+<p class="tcap">Table 2 · The five common estimates: how to compute them, and where they go wrong</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Quantity</th><th>How to compute</th><th>Most common error</th><th>Ask this next</th></tr></thead>
+<tbody>
+<tr><th>QPS</th><td>DAU × actions per user per day ÷ <code>86,400</code></td><td>Using MAU where DAU belongs</td><td>What's the read/write ratio?</td></tr>
+<tr><th>Peak QPS</th><td>QPS × peak multiplier (the book uses 2)</td><td><strong>Multiplier far too small</strong>; ignoring bursts</td><td>What does the worst day look like?</td></tr>
+<tr><th>Storage</th><td>Record size × records per day × retention days</td><td><strong>Forgetting replication factor and index overhead</strong></td><td>How is hot/cold data tiered?</td></tr>
+<tr><th>Cache size</th><td>Hot fraction × total (often 20%, per the 80/20 rule)</td><td>Trying to fit the whole dataset in RAM</td><td>What hit rate are we targeting?</td></tr>
+<tr><th>Server count</th><td>Peak QPS ÷ per-server QPS, plus headroom</td><td>Sizing at 100% utilisation, no redundancy</td><td>Do we survive losing a box? An AZ?</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 3 · Magnitude → what to do (tiers are common industry rules of thumb, not from the book; real thresholds vary widely with hardware and workload)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Peak magnitude</th><th>Usually enough</th><th>Cost / precondition</th></tr></thead>
+<tbody>
+<tr><th>Under ~100 QPS</th><td>One app server plus one database</td><td><strong>No redundancy</strong> — one failure takes the site down</td></tr>
+<tr><th>~1,000 QPS</th><td>Load balancer + stateless app tier + read replicas</td><td>Another layer to operate; <strong>replication lag</strong> serves stale reads</td></tr>
+<tr><th>~10,000 QPS</th><td>Add a cache layer and a CDN; push slow work to a queue</td><td>Cache consistency window; <strong>a cache outage instantly floors the database</strong></td></tr>
+<tr><th>100k+ QPS, or data past one machine</th><td>Shard; multi-region if needed</td><td><strong>Near-irreversible</strong>: cross-shard joins, hot keys and resharding all get hard</td></tr>
+</tbody></table></div>
+<p>What Table 3 is really saying is not these particular numbers — it's that <strong>the magnitude → action mapping should exist in your head at all</strong>. The most convincing sentence in an interview or a design review is: "on my assumptions peak is around ten thousand, so at this tier a cache and read replicas are enough and I'm not going to shard yet." <strong>Whether the conclusion hangs off a number is the clearest line between a novice and someone who has done this.</strong></p>
+
+<h2>Why it matters / in real systems</h2>
+<p>This method earns its own chapter because it is <strong>the only tool that makes an open-ended question converge</strong>. Without a magnitude, "design a URL shortener" can run an hour. With one, the discussion collapses onto a few concrete constraints: 100:1 read/write, 10k peak QPS, 3 TB over five years. The items below are not the book's claims — they are what these companies and authors published themselves:</p>
+<div class="ev">
+<div class="evh">FIELD EVIDENCE · not the book's claims, but the companies' and authors' own</div>
+<ul>
+<li><strong>Google's Jeff Dean</strong> is the origin of the chapter's latency table. In his public Stanford lecture notes he not only lists the "numbers everyone should know" but works an estimate on the spot: to build an image results page of 30 thumbnails, <strong>design 1 (read serially) = 30 seeks × 10 ms + transfer ≈ 560 ms; design 2 (issue reads in parallel) ≈ 18 ms</strong> — two designs separated before a line of code was written, using nothing but a few base numbers. <strong>That is this chapter's method in its original form: estimation exists to make design trade-offs, not to hand in homework.</strong><span class="src"><a href="https://research.google.com/people/jeff/stanford-295-talk.pdf" target="_blank" rel="noopener">J. Dean, "Software Engineering Advice from Building Large-Scale Distributed Systems", Stanford ↗</a></span></li>
+<li><strong>Twitter</strong> published a pair of numbers that lands squarely on the chapter's weakest assumption: on 3 August 2013, during a Japanese broadcast of <em>Castle in the Sky</em>, Twitter hit a one-second peak of <strong>143,199 tweets per second</strong> against a steady state of roughly <strong>5,700 per second</strong> — a peak about <strong>25×</strong> the mean. The book's peak multiplier is 2. <strong>A counter-example: the multiplier has to be derived from your own traffic shape; social and live-event workloads burst far beyond the default.</strong><span class="src"><a href="https://blog.x.com/engineering/en_us/a/2013/new-tweets-per-second-record-and-how" target="_blank" rel="noopener">Twitter Engineering, "New Tweets per second record, and how!", 2013 ↗</a></span></li>
+<li><strong>Google's Dean and Barroso</strong> quantify the same point in "The Tail at Scale" (CACM, 2013): if an individual server has a <code>p99</code> latency of one second, a request that must fan out to <strong>100</strong> servers will exceed one second roughly <strong>63%</strong> of the time. <strong>Confirms that estimating only the mean systematically understates the pain: the larger the system, the more the tail is what users actually experience.</strong><span class="src"><a href="https://cacm.acm.org/research/the-tail-at-scale/" target="_blank" rel="noopener">J. Dean &amp; L. A. Barroso, "The Tail at Scale", CACM 56(2), 2013 ↗</a></span></li>
+<li><strong>AWS</strong> turned the chapter's third table into something legally binding: the Amazon Compute SLA commits to a Monthly Uptime Percentage of at least <code>99.99%</code> per region for EC2 deployed across two or more Availability Zones, with service credits when it is missed. <strong>Confirms that "nines" are not an adjective but a checkable, claimable commitment — and your own SLOs should be written the same way.</strong><span class="src"><a href="https://aws.amazon.com/compute/sla/" target="_blank" rel="noopener">Amazon Compute Service Level Agreement (official SLA page) ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/cost-capacity-engineering-day27.en.html" target="_blank" rel="noopener">System Design · Day 27 Cost and Capacity Engineering</a> — what comes after the estimate: driving unit cost down without breaking the SLO, and how much headroom stops being prudent and starts being waste</aside>
+
+<h2>Pitfalls and disputes</h2>
+<ul>
+<li><strong>Precision worship</strong>: treating the estimate as an arithmetic contest, agonising over 3,512 versus 3,500. Nobody in a review or an interview cares. <strong>An order of magnitude is an error; a factor of two is not.</strong></li>
+<li><strong>Copying the 2× peak multiplier</strong>: the number in this chapter most deserving of suspicion. Twitter's real record was 25×. For anything driven by sales, ticket drops, live streams or news events, derive the multiplier from <strong>your own historical curve</strong>; it doesn't transfer.</li>
+<li><strong>Estimating the mean and never the tail</strong>: a system with a beautiful average may be delivering nothing but <code>p99</code> to its users. The more a request fans out, the more the tail is amplified (see the 63% figure above).</li>
+<li><strong>Storage estimates that omit copies and overhead</strong>: <code>55 PB</code> is the <strong>raw</strong> figure. Real clusters usually keep three replicas, plus indexes, metadata and scratch space — the purchase order tends to be two to three times the raw number. This is the most common and most expensive omission in the whole exercise.</li>
+<li><strong>Unit errors</strong>: MB versus Mb (bytes versus bits) is a factor of 8; "per day" versus "per second" is a factor of <code>86,400</code>. The book devotes a whole technique to labelling units, and it isn't being fussy.</li>
+<li><strong>Treating estimation as a substitute for load testing</strong>: it gives you a magnitude and can never answer "will this code hold?". Real bottlenecks routinely appear where the estimate doesn't look — lock contention, connection pools, GC pauses. <strong>Estimation sets direction; load tests settle the question.</strong></li>
+<li><strong>A dated table</strong>: the latency numbers are from the spinning-disk era (<code>10 ms</code> seeks). Today's NVMe SSDs do random reads in the <strong>hundreds of microseconds</strong>, compressing "disk is slow" by about two orders of magnitude. But the table's real value is the <strong>relative ordering</strong> — memory ≪ local disk ≪ same-datacenter network ≪ transcontinental network — and that ordering has not changed, because the last gap is set by the speed of light.</li>
+<li><strong>One dispute</strong>: estimation has become somewhat ritualised in interviews, with some interviewers checking only that you did it rather than whether the assumptions were sensible. That is not a flaw in the method. The dividing line is still <strong>whether you translated a number into an architectural decision</strong>, not whether you filled a whiteboard with multiplication.</li>
+</ul>
+
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. The deliverable is not a number — it is <strong>a chain of assumptions anyone can knock down</strong>. Write them, and the discussion gains a fulcrum.</p>
+<p>2. Aim for the <strong>right order of magnitude</strong>: round hard, no calculator. Precise arithmetic over guessed inputs just yields a precise wrong answer.</p>
+<p>3. Know three tables cold: <strong>powers of two</strong> (capacity), <strong>latency numbers</strong> (Jeff Dean's), and <strong>the nines</strong> (availability).</p>
+<p>4. What matters most in the latency table is the <strong>relative order</strong>: memory ≪ local disk ≪ same-datacenter network ≪ transcontinental (<code>150 ms</code>, floored by the speed of light).</p>
+<p>5. A useful corollary: <strong>compress before sending across the network</strong> — 1 KB costs <code>10 µs</code>, one transcontinental round trip costs <code>150 ms</code>, a factor of fifteen thousand.</p>
+<p>6. Going from <code>99.9%</code> to <code>99.99%</code> buys 39 minutes a month — too little for a human to intervene, so <strong>it must come from automatic failover</strong>. Each extra nine costs exponentially more.</p>
+<p>7. Remember the whole flow via the Twitter example: assumptions → 300M posts/day → <code>3,500 QPS</code> / peak <code>7,000</code> → <code>30 TB/day</code> → <code>55 PB</code> over five years.</p>
+<p>8. <strong>The last step is the point</strong>: turn the magnitude into a decision (<code>55 PB</code> ⇒ media must live in object storage behind a CDN, and cost outranks performance).</p>
+<p>9. Three disciplines: <strong>round, state assumptions, label units</strong>. One unit slip is worth a factor of 8 — or of <code>86,400</code>.</p>
+<p>10. Two things to read sceptically: <strong>don't copy the 2× peak multiplier</strong> (Twitter's was 25×), and <strong>don't forget the replication factor</strong> in storage.</p>
+</div>
+</div>
+
+<footer>Book Deep Read · Reading this page ≈ getting the core of the chapter; go to the book itself for the full cases and detail.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
