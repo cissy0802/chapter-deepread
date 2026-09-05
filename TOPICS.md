@@ -27,7 +27,7 @@ BigCat 人工维护的计算机 / 软件经典书清单。**按书成簇、簇�
 - **Ch4 设计限流器** — Design a Rate Limiter — 令牌桶 / 漏桶 / 滑动窗口各挡住什么，以及限流器该放在哪一层、分布式下的竞态怎么处理（slug: `sdi1-ch04-rate-limiter`）· xref: `sd:rate-limiting-day10`, `sd:api-design-day9`
 - **Ch5 设计一致性哈希** — Design Consistent Hashing — 取模分片一加机器就全盘搬迁，一致性哈希用环 + 虚拟节点把搬迁量降到 1/N（slug: `sdi1-ch05-consistent-hashing`）· xref: `sd:sharding-day4`, `sd:replication-day5`
 - **Ch6 设计键值存储** — Design a Key-Value Store — Dynamo 那一整套：quorum NWR、向量时钟、Merkle 树反熵、gossip 与 hinted handoff 怎么拼成一个无主存储（slug: `sdi1-ch06-key-value-store`）· xref: `sd:database-selection-day3`, `sd:consistency-day6`, `sd:storage-engine-day47`
-- **Ch7 设计分布式唯一 ID** — Design a Unique ID Generator — 为什么自增主键在分布式下不成立，Snowflake 的时间戳 + 机器号 + 序列号怎么换来有序且无协调（slug: `sdi1-ch07-unique-id-generator`）· xref: `sd:unique-id-generation-day11`
+- **Ch7 设计分布式唯一 ID** — Design a Unique ID Generator in Distributed Systems — 为什么自增主键在分布式下不成立，Snowflake 的时间戳 + 机器号 + 序列号怎么换来有序且无协调（slug: `sdi1-ch07-unique-id-generator`）· xref: `sd:unique-id-generation-day11`
 - **Ch8 设计短网址服务** — Design a URL Shortener — 读多写少的极端形态：ID 编码成 base62、缓存命中率决定成本、301 与 302 的分析权衡（slug: `sdi1-ch08-url-shortener`）· xref: `sd:unique-id-generation-day11`, `sd:caching-day2`, `sd:rate-limiting-day10`
 - **Ch9 设计网页爬虫** — Design a Web Crawler — URL frontier 的礼貌队列 + 优先级队列双层设计、robots.txt、内容去重与爬虫陷阱（slug: `sdi1-ch09-web-crawler`）· xref: `sd:search-system-day12`, `sd:message-queue-day8`, `sd:rate-limiting-day10`
 - **Ch10 设计通知系统** — Design a Notification System — 可靠性全押在你控制不了的第三方通道（APNs / FCM / SMS）上：扇出、重试、去重与限流怎么设计（slug: `sdi1-ch10-notification-system`）· xref: `sd:message-queue-day8`, `sd:reliability-day23`, `sd:chat-system-day15`
@@ -36,6 +36,7 @@ BigCat 人工维护的计算机 / 软件经典书清单。**按书成簇、簇�
 - **Ch13 设计搜索自动补全** — Design a Search Autocomplete System — Trie 怎么撑住每敲一个字母一次查询：前缀缓存、Top-k 预存、离线聚合与 trie 分片（slug: `sdi1-ch13-search-autocomplete`）· xref: `sd:search-system-day12`, `sd:caching-day2`, `sd:cdn-edge-day28`
 - **Ch14 设计 YouTube** — Design YouTube — 转码流水线的 DAG 分解、分片上传、CDN 分层与冷热内容的成本取舍（slug: `sdi1-ch14-youtube`）· xref: `sd:video-streaming-day16`, `sd:cdn-edge-day28`, `sd:object-storage-day29`
 - **Ch15 设计 Google Drive** — Design Google Drive — 文件同步这一层：块级切分与去重、增量同步、修订历史，以及多端离线后的冲突怎么收敛（slug: `sdi1-ch15-google-drive`）· xref: `sd:object-storage-day29`, `sd:collaborative-editing-day45`, `sd:consistency-day6`
+- **Ch16 学习的延续** — The Learning Continues — 面试之后怎么接着长：真实系统的架构资料从哪读、怎么把一次次设计练习变成长期能力（slug: `sdi1-ch16-learning-continues`） · xref: `sd:system-design-interview-day25`
 
 ## System Design Interview Vol 2 · Alex Xu & Sahn Lam · 2022
 第二卷全部是案例，且比第一卷更深、更贴近真实工程——**造轮子的内部构造**（自己实现消息队列 / 对象存储）与**低延迟确定性系统**（交易所撮合）是它独有的两条线，本仓其他书都没有。
@@ -96,7 +97,9 @@ BigCat 人工维护的计算机 / 软件经典书清单。**按书成簇、簇�
 ### Part III. 交付生态
 - **Ch11 管理基础设施与环境** — Managing Infrastructure and Environments — 基础设施即代码的雏形，环境一致性（slug: `contdelivery-ch11-managing-infrastructure`）
 - **Ch12 管理数据** — Managing Data — 数据库迁移与 schema 演化如何纳入流水线（slug: `contdelivery-ch12-managing-data`）
-- **Ch13 组件与依赖** — Components and Dependencies — 依赖管理与组件化构建（slug: `contdelivery-ch13-components-and-dependencies`）
+- **Ch13 组件与依赖** — Managing Components and Dependencies — 依赖管理与组件化构建（slug: `contdelivery-ch13-components-and-dependencies`）
+- **Ch14 高级版本控制** — Advanced Version Control — 分支模型的真实代价：为什么主干开发 + 特性开关胜过长期分支，以及分布式版本控制怎么改变协作（slug: `contdelivery-ch14-advanced-version-control`） · xref: `sd:deployment-release-day22`
+- **Ch15 管理持续交付** — Managing Continuous Delivery — 成熟度模型、风险与合规：怎么把持续交付推销进一个组织，并让它的收益可度量（slug: `contdelivery-ch15-managing-continuous-delivery`） · xref: `sd:cost-capacity-engineering-day27`
 
 ## SRE — Site Reliability Engineering: How Google Runs Production Systems · Google（Beyer/Jones/Petoff/Murphy 编）· 2016
 
@@ -113,17 +116,20 @@ Google 怎么用软件工程的方法跑生产系统。**核心是把「可靠�
 - **Ch9 简单性** — Simplicity — 可靠性的敌人是复杂度，如何主动做减法（slug: `sre-ch09-simplicity`）
 - **Ch10 实用告警：从时序数据出发** — Practical Alerting from Time-Series Data — Borgmon 的时序模型：把告警建立在可聚合的指标规则上，而不是逐台机器的阈值（slug: `sre-ch10-practical-alerting`） · xref: `sd:observability-day21`, `sd:low-base-rate-alerting-day51`
 - **Ch12 有效排障** — Effective Troubleshooting — 系统化定位故障的方法论，而非拍脑袋猜（slug: `sre-ch12-effective-troubleshooting`）
-- **Ch15 事后复盘文化** — Postmortem Culture — 无指责（blameless）复盘：从失败里学习、不追人（slug: `sre-ch15-postmortem-culture`）
+- **Ch15 事后复盘文化** — Postmortem Culture: Learning from Failure — 无指责（blameless）复盘：从失败里学习、不追人（slug: `sre-ch15-postmortem-culture`）
 - **Ch17 为可靠性做测试** — Testing for Reliability — 从单测一路到生产探针与灾难演练：测试的层级怎么对应可靠性的层级（slug: `sre-ch17-testing-for-reliability`） · xref: `sd:chaos-engineering-day44`, `sd:chaos-correctness-oracle-day52`
 - **Ch18 SRE 中的软件工程** — Software Engineering in SRE — SRE 自己写产品级软件：以容量规划工具 Auxon 为例，说明为什么运维团队需要工程产出（slug: `sre-ch18-software-engineering-in-sre`） · xref: `sd:cost-capacity-engineering-day27`, `sd:capacity-estimation-day26`
 - **Ch19 前端负载均衡** — Load Balancing at the Frontend — DNS、任播（anycast）与 Maglev：流量在进入数据中心之前是怎么被分派的（slug: `sre-ch19-load-balancing-frontend`） · xref: `sd:cdn-edge-day28`, `sd:networking-fundamentals-day48`
 - **Ch20 数据中心内的负载均衡** — Load Balancing in the Datacenter — 子集化、加权轮询与「跛脚鸭」状态：为什么最少连接数在真实后端上会失效（slug: `sre-ch20-load-balancing-datacenter`） · xref: `sd:scalability-day1`, `sd:networking-fundamentals-day48`
 - **Ch21 处理过载** — Handling Overload — 优雅降级、负载脱落（load shedding）、客户端节流（slug: `sre-ch21-handling-overload`）
 - **Ch22 应对级联失效** — Addressing Cascading Failures — 一个组件拖垮全局的机理与防线（slug: `sre-ch22-addressing-cascading-failures`）
-- **Ch23 管理关键状态** — Managing Critical State: Distributed Consensus — 用分布式共识做可靠的状态复制（slug: `sre-ch23-managing-critical-state`）
+- **Ch23 管理关键状态** — Managing Critical State: Distributed Consensus for Reliability — 用分布式共识做可靠的状态复制（slug: `sre-ch23-managing-critical-state`）
 - **Ch24 分布式周期任务调度** — Distributed Periodic Scheduling with Cron — 把 cron 做成分布式服务：跨机器不重复不漏跑，靠 Paxos 存状态与「宁可漏跑不可重跑」的取舍（slug: `sre-ch24-distributed-cron`） · xref: `sd:workflow-engine-day39`, `sd:consensus-coordination-day46`
 - **Ch25 数据处理管线** — Data Processing Pipelines — 批 / 流管线的可靠性设计（slug: `sre-ch25-data-processing-pipelines`）
-- **Ch26 数据完整性** — Data Integrity — 「读到的就是写进的」：备份、恢复与静默损坏防护（slug: `sre-ch26-data-integrity`）
+- **Ch26 数据完整性** — Data Integrity: What You Read Is What You Wrote — 「读到的就是写进的」：备份、恢复与静默损坏防护（slug: `sre-ch26-data-integrity`）
+- **Ch27 大规模可靠的产品发布** — Reliable Product Launches at Scale — 发布协调工程（LCE）与发布检查单：怎么让一次面向上亿用户的上线不变成事故（slug: `sre-ch27-reliable-product-launches`） · xref: `sd:deployment-release-day22`, `sd:guardrails-before-scale-day41`
+- **Ch33 从其他行业学到的教训** — Lessons Learned from Other Industries — 核电、航空、医疗怎么做可靠性：准备度演练、事故指挥体系、对人为失误的态度——哪些能搬进软件，哪些搬不了（slug: `sre-ch33-lessons-from-other-industries`） · xref: `sd:guardrails-before-scale-day41`, `sd:fat-tailed-risk-day53`, `sd:fail-obviously-day54`
+- **Ch34 结语** — Conclusion — 把全书拧成一句：可靠性是可以工程化、可以预算、可以度量的，不是靠英雄主义救火换来的（slug: `sre-ch34-conclusion`） · xref: `sd:reliability-day23`
 ### 合辑（把多章浓缩成一篇）
 - **合辑 · 值班与事故响应** — On-Call and Incident Response — 覆盖 Ch11, 13, 14, 16。把 Ch11/13/14/16 合起来看：值班健康度、事故指挥体系（IC/OL/通讯）、故障追踪——SRE 里唯一无法自动化的那部分（slug: `sre-digest01-oncall-and-incident-response`） · xref: `sd:observability-day21`, `sd:low-base-rate-alerting-day51`, `sd:fail-obviously-day54`
 - **合辑 · SRE 的组织与协作** — SRE as an Organization — 覆盖 Part IV · Ch28–32。把 Part IV（Ch28–32）合起来看：新人如何被带到能值班、中断怎么管、运维过载怎么救、SRE 与开发的接洽模型怎么演化（slug: `sre-digest02-organization-and-collaboration`） · xref: `sd:guardrails-before-scale-day41`
@@ -137,12 +143,13 @@ Google 怎么用软件工程的方法跑生产系统。**核心是把「可靠�
 - **Ch3 测量并改变文化** — Measuring and Changing Culture — Westrum 组织文化模型与它为何影响绩效（slug: `accelerate-ch03-measuring-culture`）
 - **Ch4 技术实践** — Technical Practices — 持续交付的哪些实践真正驱动效能（slug: `accelerate-ch04-technical-practices`）
 - **Ch5 架构** — Architecture — 松耦合架构与团队自治如何解放交付速度（slug: `accelerate-ch05-architecture`）
-- **Ch6 把安全融入交付** — Integrating Infosec — 左移安全（shift-left），别让安全成为最后的瓶颈（slug: `accelerate-ch06-integrating-infosec`）
+- **Ch6 把安全融入交付** — Integrating Infosec into the Delivery Lifecycle — 左移安全（shift-left），别让安全成为最后的瓶颈（slug: `accelerate-ch06-integrating-infosec`）
 - **Ch7 软件的管理实践** — Management Practices for Software — 精益管理的四要素（限制在制品、可视化、监控反馈、授权变更）如何被证明预测交付效能（slug: `accelerate-ch07-management-practices`） · xref: `sd:cost-capacity-engineering-day27`
 - **Ch8 产品开发** — Product Development — 精益产品开发：小批量、可见的客户价值流、团队自主试验——技术实践与产品实践互为因果（slug: `accelerate-ch08-product-development`） · xref: `sd:deployment-release-day22`
 - **Ch9 让工作可持续** — Making Work Sustainable — 减少部署痛苦与倦怠（burnout）（slug: `accelerate-ch09-making-work-sustainable`）
 - **Ch10 员工满意度、认同与投入** — Employee Satisfaction, Identity, and Engagement — eNPS 与倦怠不是软指标：技术实践改善工作体验，工作体验又反过来预测组织绩效（slug: `accelerate-ch10-employee-satisfaction`） · xref: `sd:fail-obviously-day54`
 - **Ch11 领导者与管理者** — Leaders and Managers — 变革型领导如何放大技术实践的效果（slug: `accelerate-ch11-leaders-and-managers`）
+- **Ch16 高绩效的领导与管理** — High-Performance Leadership and Management — 以 ING 的转型为案例，把 Part I 的统计发现落成一套可执行的改进循环（slug: `accelerate-ch16-high-performance-leadership`） · xref: `sd:guardrails-before-scale-day41`
 ### 合辑（把多章浓缩成一篇）
 - **合辑 · 研究方法篇** — The Research — 覆盖 Part II · Ch12–15。把 Part II（Ch12–15）合起来看：这本书的结论凭什么可信——潜变量、心理测量学、为什么用问卷、样本怎么取（slug: `accelerate-digest01-the-research`） · xref: `sd:low-base-rate-alerting-day51`, `sd:fat-tailed-risk-day53`
 
@@ -210,13 +217,14 @@ DDIA 的自然续集，往下钻一层：数据库**存储引擎**与**分布式
 - **Ch6 存储** — Storage — 对象存储、列式格式、warehouse/lakehouse 存储层（slug: `dataeng-ch06-storage`）
 - **Ch7 采集** — Ingestion — 批 vs 流采集、ETL vs ELT（slug: `dataeng-ch07-ingestion`）
 - **Ch8 查询、建模与转换** — Queries, Modeling, and Transformation — SQL / 查询引擎、数据建模、dbt 式转换（slug: `dataeng-ch08-queries-modeling-transformation`）
-- **Ch9 为分析与 ML 服务数据** — Serving Data for Analytics and ML — BI、分析、特征供给（slug: `dataeng-ch09-serving-data`）
+- **Ch9 为分析与 ML 服务数据** — Serving Data for Analytics, Machine Learning, and Reverse ETL — BI、分析、特征供给（slug: `dataeng-ch09-serving-data`）
 ### Part III. 安全与未来
 - **Ch10 安全与隐私** — Security and Privacy — 数据工程师的安全责任（slug: `dataeng-ch10-security-and-privacy`）
+- **Ch11 数据工程的未来** — The Future of Data Engineering — 生命周期不会消失但工具会：简化、云化，以及「数据栈再往上抽象一层」意味着什么（slug: `dataeng-ch11-future-of-data-engineering`） · xref: `sd:data-lakehouse-day38`, `sd:feature-platform-day40`
 
 ## A Philosophy of Software Design · John Ousterhout · 2nd ed 2021
 
-短小精深的**软件设计品味**课。一条主线：**复杂度是敌人**，而复杂度来自依赖与晦涩；对策是「深模块」——简单接口包住复杂实现。全书每章一个可直接上手的判据。（精读核心设计章。）
+短小精深的**软件设计品味**课。一条主线：**复杂度是敌人**，而复杂度来自依赖与晦涩；对策是「深模块」——简单接口包住复杂实现。全书每章一个可直接上手的判据。（全书全收。**注意**：第 2 版新增「Decide What Matters」一章，本清单按 Ch21=Decide What Matters / Ch22=Conclusion 排；两者先后未从权威来源确认，写这两章前请先翻书核对编号。Ch1–20 的编号第 1、2 版一致，已核。）
 
 - **Ch1 引论：一切都是复杂度** — Introduction: It's All About Complexity — 软件设计的根本目标就是压住复杂度（slug: `aposd-ch01-its-all-about-complexity`）
 - **Ch2 复杂度的本质** — The Nature of Complexity — 复杂度的三种症状：变更放大、认知负担、未知的未知（slug: `aposd-ch02-nature-of-complexity`）
@@ -238,6 +246,8 @@ DDIA 的自然续集，往下钻一层：数据库**存储引擎**与**分布式
 - **Ch18 代码应当一目了然** — Code Should be Obvious — 「显而易见」是读者判定的，不是作者（slug: `aposd-ch18-code-should-be-obvious`）
 - **Ch19 软件趋势** — Software Trends — 用「复杂度」这把尺子重新评估敏捷、TDD、设计模式、getter/setter——哪些真的降低了复杂度（slug: `aposd-ch19-software-trends`）
 - **Ch20 为性能而设计** — Designing for Performance — 简洁与快通常同向；何时才该为性能牺牲清晰（slug: `aposd-ch20-designing-for-performance`）
+- **Ch21 分清什么重要** — Decide What Matters — 第 2 版新增章：好设计的本质是把重要的和不重要的分开，然后让重要的那部分显眼（slug: `aposd-ch21-decide-what-matters`）
+- **Ch22 结语** — Conclusion — 把全书收成一条判据：每次改动都问「这让系统更简单了还是更复杂了」（slug: `aposd-ch22-conclusion`）
 
 ## Software Engineering at Google · Titus Winters, Tom Manshreck, Hyrum Wright · 2020
 
@@ -265,6 +275,7 @@ Google 二十年工程实践的公开总结。**核心命题：软件工程 = �
 - **Ch23 持续集成** — Continuous Integration — CI 在超大规模下的形态与取舍（slug: `swegoogle-ch23-continuous-integration`）
 - **Ch24 持续交付** — Continuous Delivery — 小步、频繁、可回滚：把发布做成非事件（slug: `swegoogle-ch24-continuous-delivery`）
 - **Ch25 计算即服务** — Compute as a Service — 从 Borg 到托管计算：把机器当抽象资源（slug: `swegoogle-ch25-compute-as-a-service`）
+- **Ch26 后记** — Afterword — 把全书拧成一句：软件工程是编程乘以时间再乘以规模，三者缺一都不是这门学科（slug: `swegoogle-ch26-afterword`）
 ### 合辑（把多章浓缩成一篇）
 - **合辑 · 文化篇** — Culture — 覆盖 Ch2–7。把 Part 2（Ch2–7）合起来看：谦逊/尊重/信任三支柱、知识共享、公平性工程、带团队与规模化领导、工程效能怎么度量（slug: `swegoogle-digest01-culture`） · xref: `sd:code-review-signal-detection-day50`
 
