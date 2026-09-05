@@ -109,6 +109,71 @@ DDIA 的自然续集，往下钻一层：数据库**存储引擎**与**分布式
 - **Ch13 分布式事务** — Distributed Transactions — 2PC/3PC、Percolator、Calvin（slug: `dbinternals-ch13-distributed-transactions`）
 - **Ch14 共识** — Consensus — Paxos、Raft、Zab、拜占庭共识（slug: `dbinternals-ch14-consensus`）
 
+## System Design Interview Vol 1 — An Insider's Guide · Alex Xu · 2020
+系统设计面试的通行底本。**与本仓其他书最大的不同：它是案例制不是概念制**——每章从需求澄清一路走到 API、数据模型、组件演进，示范的是「怎么把一道开放题做完」。精读时保留这条主线，别拆成概念清单。（跳过 Ch16「学习的延续」——收尾励志章、无实质内容。）
+### Part I · 方法与基础（Ch1–3）
+- **Ch1 从零到百万用户** — Scale From Zero To Millions Of Users — 单机怎么一步步长成分层集群：加缓存、加从库、加负载均衡、拆数据层，每一步解决的到底是哪个瓶颈（slug: `sdi1-ch01-scale-to-millions`）· xref: `sd:scalability-day1`, `sd:caching-day2`, `sd:sharding-day4`
+- **Ch2 粗略估算** — Back-of-the-Envelope Estimation — 2 的幂、延迟数字、可用性九位数：怎么在白板上把 QPS / 存储 / 带宽算到量级正确（slug: `sdi1-ch02-back-of-envelope-estimation`）· xref: `sd:capacity-estimation-day26`, `sd:cost-capacity-engineering-day27`
+- **Ch3 系统设计面试框架** — A Framework for System Design Interviews — 四步法：澄清需求 → 高层设计 → 深挖 → 收尾，以及面试官到底在评估什么（slug: `sdi1-ch03-interview-framework`）· xref: `sd:system-design-interview-day25`, `sd:capacity-estimation-day26`
+### Part II · 系统案例（Ch4–15）
+- **Ch4 设计限流器** — Design a Rate Limiter — 令牌桶 / 漏桶 / 滑动窗口各挡住什么，以及限流器该放在哪一层、分布式下的竞态怎么处理（slug: `sdi1-ch04-rate-limiter`）· xref: `sd:rate-limiting-day10`, `sd:api-design-day9`
+- **Ch5 设计一致性哈希** — Design Consistent Hashing — 取模分片一加机器就全盘搬迁，一致性哈希用环 + 虚拟节点把搬迁量降到 1/N（slug: `sdi1-ch05-consistent-hashing`）· xref: `sd:sharding-day4`, `sd:replication-day5`
+- **Ch6 设计键值存储** — Design a Key-Value Store — Dynamo 那一整套：quorum NWR、向量时钟、Merkle 树反熵、gossip 与 hinted handoff 怎么拼成一个无主存储（slug: `sdi1-ch06-key-value-store`）· xref: `sd:database-selection-day3`, `sd:consistency-day6`, `sd:storage-engine-day47`
+- **Ch7 设计分布式唯一 ID** — Design a Unique ID Generator — 为什么自增主键在分布式下不成立，Snowflake 的时间戳 + 机器号 + 序列号怎么换来有序且无协调（slug: `sdi1-ch07-unique-id-generator`）· xref: `sd:unique-id-generation-day11`
+- **Ch8 设计短网址服务** — Design a URL Shortener — 读多写少的极端形态：ID 编码成 base62、缓存命中率决定成本、301 与 302 的分析权衡（slug: `sdi1-ch08-url-shortener`）· xref: `sd:unique-id-generation-day11`, `sd:caching-day2`, `sd:rate-limiting-day10`
+- **Ch9 设计网页爬虫** — Design a Web Crawler — URL frontier 的礼貌队列 + 优先级队列双层设计、robots.txt、内容去重与爬虫陷阱（slug: `sdi1-ch09-web-crawler`）· xref: `sd:search-system-day12`, `sd:message-queue-day8`, `sd:rate-limiting-day10`
+- **Ch10 设计通知系统** — Design a Notification System — 可靠性全押在你控制不了的第三方通道（APNs / FCM / SMS）上：扇出、重试、去重与限流怎么设计（slug: `sdi1-ch10-notification-system`）· xref: `sd:message-queue-day8`, `sd:reliability-day23`, `sd:chat-system-day15`
+- **Ch11 设计信息流** — Design a News Feed System — 写时扇出 vs 读时扇出，以及名人账号为什么必须走混合策略（slug: `sdi1-ch11-news-feed`）· xref: `sd:feed-system-day14`, `sd:caching-day2`
+- **Ch12 设计聊天系统** — Design a Chat System — 长连接接入层、消息 ID 的有序性、已读回执与离线推送，1v1 与群聊的存储差别（slug: `sdi1-ch12-chat-system`）· xref: `sd:chat-system-day15`, `sd:realtime-systems-day34`
+- **Ch13 设计搜索自动补全** — Design a Search Autocomplete System — Trie 怎么撑住每敲一个字母一次查询：前缀缓存、Top-k 预存、离线聚合与 trie 分片（slug: `sdi1-ch13-search-autocomplete`）· xref: `sd:search-system-day12`, `sd:caching-day2`, `sd:cdn-edge-day28`
+- **Ch14 设计 YouTube** — Design YouTube — 转码流水线的 DAG 分解、分片上传、CDN 分层与冷热内容的成本取舍（slug: `sdi1-ch14-youtube`）· xref: `sd:video-streaming-day16`, `sd:cdn-edge-day28`, `sd:object-storage-day29`
+- **Ch15 设计 Google Drive** — Design Google Drive — 文件同步这一层：块级切分与去重、增量同步、修订历史，以及多端离线后的冲突怎么收敛（slug: `sdi1-ch15-google-drive`）· xref: `sd:object-storage-day29`, `sd:collaborative-editing-day45`, `sd:consistency-day6`
+
+## System Design Interview Vol 2 · Alex Xu & Sahn Lam · 2022
+第二卷全部是案例，且比第一卷更深、更贴近真实工程——**造轮子的内部构造**（自己实现消息队列 / 对象存储）与**低延迟确定性系统**（交易所撮合）是它独有的两条线，本仓其他书都没有。
+- **Ch1 设计附近服务** — Proximity Service — 把球面切成可索引的格子：geohash / 四叉树 / S2 各自的边界问题与半径查询（slug: `sdi2-ch01-proximity-service`）· xref: `sd:geo-system-day19`, `sd:sharding-day4`
+- **Ch2 设计附近的好友** — Nearby Friends — 从静态兴趣点到高频移动的活人：位置流的发布订阅、Redis pub/sub 的扇出与陈旧位置的过期（slug: `sdi2-ch02-nearby-friends`）· xref: `sd:geo-system-day19`, `sd:chat-system-day15`, `sd:realtime-systems-day34`
+- **Ch3 设计 Google Maps** — Google Maps — 地图瓦片的分级预渲染、路网图上的最短路与 contraction hierarchies、ETA 与实时导航重算（slug: `sdi2-ch03-google-maps`）· xref: `sd:geo-system-day19`, `sd:cdn-edge-day28`
+- **Ch4 设计分布式消息队列** — Distributed Message Queue — 亲手造一个 Kafka：分段日志的磁盘布局、ISR 副本同步、消费者 rebalance 与元数据存哪（slug: `sdi2-ch04-distributed-message-queue`）· xref: `sd:message-queue-day8`, `sd:storage-engine-day47`, `sd:replication-day5`
+- **Ch5 设计监控告警系统** — Metrics Monitoring and Alerting System — 时序数据的写入放大与降采样、拉 vs 推的采集模型、告警规则引擎与去重收敛（slug: `sdi2-ch05-metrics-monitoring`）· xref: `sd:observability-day21`, `sd:low-base-rate-alerting-day51`, `sd:data-processing-day20`
+- **Ch6 设计广告点击聚合** — Ad Click Event Aggregation — 钱挂在聚合结果上时的流处理：点击去重、迟到数据回补、对账，以及大广告主的热点分片（slug: `sdi2-ch06-ad-click-aggregation`）· xref: `sd:data-processing-day20`, `sd:data-lakehouse-day38`, `sd:message-queue-day8`
+- **Ch7 设计酒店预订系统** — Hotel Reservation System — 有限库存的并发争抢：超卖怎么防、悲观锁 vs 乐观版本号、临时占位与幂等下单（slug: `sdi2-ch07-hotel-reservation`）· xref: `sd:distributed-transactions-day7`, `sd:consistency-day6`, `sd:api-design-day9`
+- **Ch8 设计分布式邮箱服务** — Distributed Email Service — 海量小对象的元数据难题：邮件正文与附件分离存储、按用户分区的收件箱索引与全文检索（slug: `sdi2-ch08-distributed-email`）· xref: `sd:object-storage-day29`, `sd:search-system-day12`, `sd:sharding-day4`
+- **Ch9 设计对象存储** — S3-like Object Storage — 数据面与元数据面分离、纠删码怎么用 1.5 倍空间换 11 个 9、大对象分片上传与版本控制（slug: `sdi2-ch09-object-storage`）· xref: `sd:object-storage-day29`, `sd:replication-day5`, `sd:consistency-day6`
+- **Ch10 设计实时排行榜** — Real-time Gaming Leaderboard — Redis sorted set 撑到多大就撑不住了：按分数分桶分片、查排名的近似解与精确解的代价差（slug: `sdi2-ch10-gaming-leaderboard`）· xref: `sd:database-selection-day3`, `sd:sharding-day4`, `sd:caching-day2`
+- **Ch11 设计支付系统** — Payment System — 支付进出账的双向流、幂等键、与第三方 PSP 的对账，以及失败重试怎么不重复扣款（slug: `sdi2-ch11-payment-system`）· xref: `sd:payments-day17`, `sd:distributed-transactions-day7`, `sd:reliability-day23`
+- **Ch12 设计数字钱包** — Digital Wallet — 从分布式事务一路推到事件溯源 + CQRS + Raft 复制状态机：让账本可重放、可审计、可恢复（slug: `sdi2-ch12-digital-wallet`）· xref: `sd:payments-day17`, `sd:consensus-coordination-day46`, `sd:distributed-transactions-day7`
+- **Ch13 设计证券交易所** — Stock Exchange — 全书最反直觉的一章：订单簿 + 单线程确定性撮合 + 定序器，靠不分布式换微秒级与可重放（slug: `sdi2-ch13-stock-exchange`）· xref: `sd:realtime-systems-day34`, `sd:networking-fundamentals-day48`, `sd:observability-day21`
+
+## Chaos Engineering — System Resiliency in Practice · Casey Rosenthal & Nora Jones · 2020
+混沌工程的正典，由创立这门学科的 Netflix 团队与同代实践者合写。**核心主张：可靠性不能靠「别出错」，只能靠主动制造故障去证伪你对系统的假设。** 前三章立原则，中间五章是 Slack / Google / 微软 / LinkedIn / Capital One 的一手实践，后半转向人的因素、投资回报与演进方向（持续验证、信息物理系统、安全混沌）。**全书 21 章全收，一章不跳。**
+### Part I · 铺垫（Ch1–3）
+- **Ch1 遭遇复杂系统** — Encountering Complex Systems — 复杂系统为什么不能靠拆开来理解：没有哪个工程师完整装得下它，故障来自组件之间而非组件本身（slug: `chaoseng-ch01-encountering-complex-systems`）· xref: `sd:chaos-engineering-day44`, `paper:no-silver-bullet-paper48`, `paper:tail-at-scale-paper27`
+- **Ch2 在复杂系统里导航** — Navigating Complex Systems — 动态安全模型：经济、工作量、安全三条边界互相挤压，系统总在向失效边界漂移（slug: `chaoseng-ch02-navigating-complex-systems`）· xref: `sd:guardrails-before-scale-day41`, `sd:reliability-day23`, `paper:harvest-yield-paper56`
+- **Ch3 原则总览** — Overview of Principles — 五条高级原则：建稳态假设、多样化真实事件、在生产跑、自动化持续跑、最小化爆炸半径（slug: `chaoseng-ch03-overview-of-principles`）· xref: `sd:chaos-engineering-day44`, `sd:chaos-correctness-oracle-day52`
+### Part II · 原则的实战（Ch4–8）
+- **Ch4 Slack 的灾难剧场** — Slack's Disasterpiece Theater — 给存量系统做混沌：先写设计文档、定预案、人在回路地演一场，而不是直接往生产扔猴子（slug: `chaoseng-ch04-slack-disasterpiece-theater`）· xref: `sd:chaos-engineering-day44`, `sd:deployment-release-day22`
+- **Ch5 Google 灾难恢复演练 DiRT** — Google DiRT: Disaster Recovery Testing — 把演练做到公司规模：不只摇技术组件，也摇人员、流程、供应链——包括「关键工程师联系不上」（slug: `chaoseng-ch05-google-dirt`）· xref: `sd:chaos-engineering-day44`, `sd:reliability-day23`
+- **Ch6 微软：实验的变化与优先级** — Microsoft Variation and Prioritization of Experiments — 故障空间是无穷的，所以真问题不是「怎么注入」而是「先注入哪个」——怎么排优先级（slug: `chaoseng-ch06-microsoft-variation-prioritization`）· xref: `sd:chaos-engineering-day44`, `sd:fat-tailed-risk-day53`
+- **Ch7 LinkedIn：对真实用户负责** — LinkedIn Being Mindful of Members — 生产实验的伦理与工程：把爆炸半径限制到少数真人身上，并在伤害扩大前自动叫停（slug: `chaoseng-ch07-linkedin-mindful-of-members`）· xref: `sd:guardrails-before-scale-day41`, `sd:chaos-engineering-day44`
+- **Ch8 Capital One：在强监管行业落地** — Capital One Adoption and Evolution of Chaos Engineering — 合规约束下怎么做混沌：从非生产环境起步、拿审计要的证据、再一步步走到生产（slug: `chaoseng-ch08-capital-one-adoption`）· xref: `sd:privacy-compliance-day43`, `sd:chaos-engineering-day44`
+### Part III · 人的因素（Ch9–12）
+- **Ch9 创造前瞻** — Creating Foresight — 从事后复盘转向事前想象：怎么在故障发生前把工程师心智模型里的盲区挖出来（slug: `chaoseng-ch09-creating-foresight`）· xref: `sd:observability-day21`, `sd:fail-obviously-day54`
+- **Ch10 人性化的混沌** — Humanistic Chaos — 把混沌工程的方法搬到人类组织上：往团队、角色与流程里注入扰动，观察组织怎么恢复（slug: `chaoseng-ch10-humanistic-chaos`）· xref: `sd:guardrails-before-scale-day41`, `sd:fail-obviously-day54`
+- **Ch11 人在回路** — People in the Loop — 什么时候该让人介入、什么时候人本身就是瓶颈：自动化与人类判断怎么分工（slug: `chaoseng-ch11-people-in-the-loop`）· xref: `sd:guardrails-before-scale-day41`, `sd:fail-obviously-day54`
+- **Ch12 实验选择问题（及一个解法）** — The Experiment Selection Problem (and a Solution) — 从随机注入走向血缘驱动的故障注入（LDFI）：用数据依赖关系算出「该注入哪里」而不是靠猜（slug: `chaoseng-ch12-experiment-selection-problem`）· xref: `sd:chaos-correctness-oracle-day52`, `sd:chaos-engineering-day44`
+### Part IV · 商业因素（Ch13–15）
+- **Ch13 混沌工程的投资回报** — ROI of Chaos Engineering — 怎么向业务证明「什么都没发生」的价值——用 Kirkpatrick 模型把预防性工作变成可度量的东西（slug: `chaoseng-ch13-roi-of-chaos-engineering`）· xref: `sd:cost-capacity-engineering-day27`, `sd:fat-tailed-risk-day53`
+- **Ch14 开放心态、开放科学与开放混沌** — Open Minds, Open Science, and Open Chaos — 混沌实验的结果为什么该像科学成果一样公开：可复现、可同行评议，以及围绕它的开源工具生态（slug: `chaoseng-ch14-open-minds-open-science`）· xref: `sd:chaos-engineering-day44`
+- **Ch15 混沌成熟度模型** — Chaos Maturity Model — 用采用度 × 精细度两个维度定位团队现在在哪一格、下一步该补什么（slug: `chaoseng-ch15-chaos-maturity-model`）· xref: `sd:chaos-engineering-day44`
+### Part V · 演进与结语（Ch16–21）
+- **Ch16 持续验证** — Continuous Verification — 从 CI/CD 推到 CV：Netflix 的 ChAP 怎么自动选实验、自动分流、自动判定，把混沌变成流水线的一道关（slug: `chaoseng-ch16-continuous-verification`）· xref: `sd:chaos-correctness-oracle-day52`, `sd:deployment-release-day22`, `paper:tail-at-scale-paper27`
+- **Ch17 走向信息物理系统** — Let's Get Cyber-Physical — 当故障会伤到人：FMEA、功能安全与软件那套「在生产里试」在物理世界的边界在哪（slug: `chaoseng-ch17-lets-get-cyber-physical`）· xref: `sd:iot-edge-day35`, `sd:fat-tailed-risk-day53`
+- **Ch18 HOP 与混沌工程** — HOP Meets Chaos Engineering — 人与组织绩效的五条原则：出错是常态、责备无助于学习，以及这如何改变你设计实验的方式（slug: `chaoseng-ch18-hop-meets-chaos-engineering`）· xref: `sd:fail-obviously-day54`, `sd:guardrails-before-scale-day41`
+- **Ch19 在数据库上做混沌** — Chaos Engineering on a Database — 分布式数据库怎么被系统性地摇：网络分区、时钟漂移、节点失联，以及故障下的一致性怎么验（slug: `chaoseng-ch19-chaos-engineering-on-a-database`）· xref: `sd:chaos-correctness-oracle-day52`, `paper:time-clocks-ordering-paper31`, `paper:raft-paper50`
+- **Ch20 安全混沌工程** — The Case for Security Chaos Engineering — 把安全事件当成可注入的故障：验的是检测与响应管不管用，而不是再做一次渗透测试（slug: `chaoseng-ch20-security-chaos-engineering`）· xref: `sd:security-day24`, `sd:chaos-engineering-day44`
+- **Ch21 结语** — Conclusion — 把全书拧成一条主张：在没人装得下整个系统的时代，经验主义地制造故障是唯一诚实的可靠性方法（slug: `chaoseng-ch21-conclusion`）· xref: `sd:chaos-engineering-day44`
+
 ## Fundamentals of Data Engineering — Plan and Build Robust Data Systems · Joe Reis & Matt Housley · 2022
 
 现代、云优先的数据工程全景。**把上面几本串成一条完整的数据栈**：采集→存储→转换→服务，warehouse/lakehouse/批流全覆盖——数据工程师的第一本系统读物。

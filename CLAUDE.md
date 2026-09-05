@@ -51,12 +51,188 @@
 - **术语随名即释（硬规则）**：引入任何概念 / 机制 / 缩写，必须当场一句话说清它**是什么、在做什么**。判据：没读过原书的工程师读完这句能不能复述？不能就补或删。别 name-drop。
 - **重点加粗**，克制。
 
+## 2.5 交叉引用姊妹站（硬规则 · 全仓适用）
+
+两个姊妹站和本仓高度互补——本仓按**书**走，它们分别按**主题**和按**论文**走。一章里讲到的机制或引到的论文，只要那边有一篇专门讲透，就把读者送过去。
+
+- **system-design**（`https://hub.cissychen.com/system-design/`）— 54 篇主题制长文，对应**机制 / 概念**。
+- **cs-papers-deepread**（`https://hub.cissychen.com/cs-papers-deepread/`）— 58 篇论文精读，对应**原书引用的论文**。书里点名一篇论文而那边正好有精读，是最该链的情形。
+
+**什么时候链**：读者读到这个概念会想「我要再深一层」，而那篇正好接得住——才链。**同主题 ≠ 该链**，泛泛相关一律不链。宁缺勿滥。
+
+**数量与位置**
+- 每章 **最多 3 条**；同一篇 system-design 页面在一章里只出现一次。
+- 放在**讲到该概念的那个小节末尾**（§4 的某个 `<h3>` 子节、§5 关键权衡、§6 落到真实系统），不要堆在页尾。
+- **只放在精读版（`.mode-deep`）里。科普版（`.mode-pop`）不放**——那是给零基础读者的短版，外链是干扰。
+
+**URL**
+- 中文页：`https://hub.cissychen.com/{仓名}/{文件名}`
+- 英文页：同名的 `.en.html`（两个姊妹站每篇都有），如 `…/system-design/rate-limiting-day10.en.html`
+- 一律 `target="_blank" rel="noopener"`。**别写 `system-design-bidaily`**——那是旧仓名，现在 404。（`cissy0802.github.io/{仓名}/` 也通，但统一用 `hub.cissychen.com`。）
+
+**HTML 形态（关乎 TTS，最硬的一条）**
+
+必须用 `<aside class="xref">`，内部**只能有纯文本和行内标签**（`<a>` / `<strong>` / `<span>`）：
+
+```html
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/rate-limiting-day10.html" target="_blank" rel="noopener">System Design · Day 10 Rate Limiting</a> — 令牌桶 vs 漏桶、滑动窗口的边界误差，以及分布式限流下的时钟与竞态</aside>
+```
+
+**绝不能用 `<div>` 包，内部绝不能出现 `<p>` / `<div>` / `<li>`。** 这三个标签在 `bake-tts.py` 的 `NARRATION_TAGS` 里，会被当成正文朗读 → 所在 `<h2>` 段的 hash 变化 → CI 重烘一条新 mp3、旧的变成 R2 孤儿（等周日的 prune job 清）。`aside` 不在 `NARRATION_TAGS` 里，其中的行内标签也收不到，所以完全隐形。
+
+实测（`ddia-ch01`，19 段，`python3 bake-tts.py <file> --dry-run`）：
+
+| 写法 | 结果 |
+| --- | --- |
+| `<aside class="xref">` + 纯文本 + `<a>` | 19/19 `skipped_existing`，零重烘 ✅ |
+| `<aside>` 内含 `<strong>` / `<span>` | 19/19 `skipped_existing`，零重烘 ✅ |
+| `<aside>` 内含 `<p>` | 该段重烘 ❌ |
+| `<div class="xref">` | 该段重烘 ❌ |
+
+**CSS**（加在复用的内联 `<style>` 末尾；英文页把 `content` 换成 `"Sister site"`）：
+
+```css
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+```
+
+标签文字走 CSS `::before`，不进 DOM——所以它既不被朗读、也不进站内搜索索引。
+
+**回填旧页**：只补 xref、不动正文的批量提交，走 `MSG="Backfill xref links [skip bake]" ./publish.sh`——`[skip bake]` 让 bake 工作流整个跳过（`publish.sh` 的 `MSG` 可被环境变量覆盖）。即使忘了带，只要守住上面的 `<aside>` 规则也不会产生任何新 mp3。
+
+**TOPICS.md 里已给出对应关系的章**（行尾 `· xref: …`）直接照用——前缀 `sd:` 指 system-design 页面、`paper:` 指 cs-papers-deepread 页面，值就是不带扩展名的文件名（如 `sd:chaos-engineering-day44` → `https://hub.cissychen.com/system-design/chaos-engineering-day44.html`）。没给 xref 的章自己按下面两张表匹配。routine 的工作目录里**没有**这两个仓，**只能用表里的文件名，一个字都不要臆造**——写错就是死链。
+
+### system-design 页面对照表（54 篇）
+
+| 页 | 文件名 | 主题 |
+| --- | --- | --- |
+| Day 1 | `scalability-day1.html` | Scalability 基础 — 从单机到千万 QPS |
+| Day 2 | `caching-day2.html` | 缓存 — 从浏览器到 DB 的多层穿透艺术 |
+| Day 3 | `database-selection-day3.html` | 数据库选型 — 不是『SQL 还是 NoSQL』那么简单 |
+| Day 4 | `sharding-day4.html` | 数据库分片 — 单机的尽头是分片，分片的尽头是后悔 |
+| Day 5 | `replication-day5.html` | 复制 (Replication) — 你以为复制是为了读扩展，其实是为了那一次故障 |
+| Day 6 | `consistency-day6.html` | 一致性 (Consistency) — 它不是一个开关，是一整条光谱 |
+| Day 7 | `distributed-transactions-day7.html` | 分布式事务 — 别做，做了也尽量做小 |
+| Day 8 | `message-queue-day8.html` | 消息队列 — 异步是解耦的代价，也是它的全部价值 |
+| Day 9 | `api-design-day9.html` | API 设计 — 契约一旦公开，破坏它的代价由所有调用方承担 |
+| Day 10 | `rate-limiting-day10.html` | Rate Limiting — 不只是「每秒 100 次」 |
+| Day 11 | `unique-id-generation-day11.html` | 唯一 ID 生成 — 时间、随机与索引的三角博弈 |
+| Day 12 | `search-system-day12.html` | 搜索系统 — 从倒排索引到语义检索 |
+| Day 13 | `recommendation-system-day13.html` | 推荐系统 — 从十亿候选到二十条的漏斗 |
+| Day 14 | `feed-system-day14.html` | Feed 系统 — 1 亿 DAU 关注流的 fanout 艺术 |
+| Day 15 | `chat-system-day15.html` | 聊天系统 — 10 亿用户、5000 万并发长连接的实时递交 |
+| Day 16 | `video-streaming-day16.html` | 视频流系统 — 2 亿 DAU 的点播，起播 2 秒、卡顿率 0.5% 以下 |
+| Day 17 | `payments-day17.html` | 支付系统 — 钱不能多也不能少的工程 |
+| Day 18 | `subscription-billing-day18.html` | 订阅与计费 — 把"按时间和用量收钱"做成可对账的引擎 |
+| Day 19 | `geo-system-day19.html` | 地理系统 — 把球面切成格子，再在格子里找最近的人 |
+| Day 20 | `data-processing-day20.html` | 计算作业系统 — 批处理与流处理的统一战争 |
+| Day 21 | `observability-day21.html` | 可观测性 — 当系统挂了，你能问出『为什么』吗 |
+| Day 22 | `deployment-release-day22.html` | 上线与发布 — 每天部署上百次、坏版本 5 分钟自动滚回 |
+| Day 23 | `reliability-day23.html` | 可靠性 — 一个下游抖动，不让它拖垮整条链路 |
+| Day 24 | `security-day24.html` | 安全基础 — 你是谁、你能做什么、密钥放哪 |
+| Day 25 | `system-design-interview-day25.html` | 系统设计面试 — 45 分钟把开放题做成一场架构对话 |
+| Day 26 | `capacity-estimation-day26.html` | 容量估算 — 用一张草稿纸把『这个设计扛不扛得住』算出来 |
+| Day 27 | `cost-capacity-engineering-day27.html` | 成本与容量工程 — 在不破 SLO 的前提下把单位成本压下来 |
+| Day 28 | `cdn-edge-day28.html` | CDN 与 Edge — 把计算和缓存推到离用户 50 公里处 |
+| Day 29 | `object-storage-day29.html` | 文件存储 — 用 1.5x 空间换 11 个 9 的持久性 |
+| Day 30 | `authorization-day30.html` | 权限与账号系统 — 一次 check 背后的图遍历、隔离与不可抵赖 |
+| Day 31 | `hybrid-search-day31.html` | 混合检索与重排序 — BM25 与向量的多阶段拼接 |
+| Day 32 | `llm-serving-day32.html` | LLM 服务架构 — 把 GPU 喂饱，把延迟压住 |
+| Day 33 | `ai-product-backend-day33.html` | AI 产品后端 — RAG、Agent loop 服务化与人机协同 |
+| Day 34 | `realtime-systems-day34.html` | 实时系统 — 在 100ms 内让世界保持一致 |
+| Day 35 | `iot-edge-day35.html` | 物联网与边缘 — 千万设备每 10 秒一次心跳的吞吐工程 |
+| Day 36 | `blockchain-day36.html` | 区块链与分布式账本 — 在无信任节点间复制一份谁也改不了的状态机 |
+| Day 37 | `multi-tenant-saas-day37.html` | 多租户 SaaS 架构 — 一套系统服务一万个互不信任的租户 |
+| Day 38 | `data-lakehouse-day38.html` | 数据湖与湖仓 — 在对象存储上长出一个数据库 |
+| Day 39 | `workflow-engine-day39.html` | 工作流引擎 — 让崩溃后还能接着跑的长流程 |
+| Day 40 | `feature-platform-day40.html` | 特征平台与 ML 基础设施 — 训练与推理共用一份特征的工程学 |
+| Day 41 | `guardrails-before-scale-day41.html` | 当故障快于人类反应 — 自动护栏、爆炸半径与变更安全 |
+| Day 42 | `globalization-multiregion-day42.html` | 全球化与多区域 — 光速是最后的约束 |
+| Day 43 | `privacy-compliance-day43.html` | 隐私与合规架构 — 当「删除」不再是 DELETE |
+| Day 44 | `chaos-engineering-day44.html` | 混沌工程 — 在生产里科学地制造故障 |
+| Day 45 | `collaborative-editing-day45.html` | 协作编辑系统 — 让上百人同时敲一个文档还能收敛 |
+| Day 46 | `consensus-coordination-day46.html` | 分布式共识与协调 — 让 5 台机器对「一件事」达成一致 |
+| Day 47 | `storage-engine-day47.html` | 数据库内部与存储引擎 — 一次读写在盘上到底发生了什么 |
+| Day 48 | `networking-fundamentals-day48.html` | 网络基础 — 一次请求在网线上到底走了几个来回 |
+| Day 49 | `container-orchestration-day49.html` | 容器与编排 — 声明式控制平面如何让机器自愈 |
+| Day 50 | `code-review-signal-detection-day50.html` | 把 Code Review 当信号检测系统 — 误报预算决定工具生死 |
+| Day 51 | `low-base-rate-alerting-day51.html` | 低底率下的告警系统 — 报告级误报如何淹没真报 |
+| Day 52 | `chaos-correctness-oracle-day52.html` | 给混沌工程装一个正确性 oracle — 故障下「还活着」不等于「答对了」 |
+| Day 53 | `fat-tailed-risk-day53.html` | 项目风险要按肥尾管理 — 别盯均值，盯尾部 |
+| Day 54 | `fail-obviously-day54.html` | Fail Obviously — 给 AI 工作流做失效可见性设计 |
+
+
+### cs-papers-deepread 论文对照表（58 篇）
+
+| 文件名 | 论文 |
+| --- | --- |
+| `attention-is-all-you-need-paper1.html` | Attention Is All You Need（Transformer） |
+| `deep-residual-learning-paper2.html` | Deep Residual Learning（ResNet） |
+| `alexnet-paper3.html` | AlexNet — 用深度卷积网络认图 |
+| `word2vec-paper4.html` | Word2Vec（词向量） |
+| `vision-transformer-paper5.html` | An Image is Worth 16×16 Words（ViT） |
+| `clip-paper6.html` | CLIP：用自然语言当老师教机器看图 |
+| `lstm-paper7.html` | Long Short-Term Memory（LSTM） |
+| `seq2seq-paper8.html` | Sequence to Sequence Learning（Seq2Seq） |
+| `bahdanau-attention-paper9.html` | Jointly Learning to Align and Translate（Bahdanau 注意力） |
+| `bert-paper10.html` | BERT：双向预训练 + 微调 |
+| `gpt-3-paper11.html` | GPT-3（Language Models are Few-Shot Learners） |
+| `scaling-laws-paper12.html` | Scaling Laws（神经语言模型的缩放律） |
+| `emergent-abilities-paper13.html` | Emergent Abilities（大模型的涌现能力） |
+| `instructgpt-rlhf-paper14.html` | InstructGPT：用人类反馈训练模型「听话」（RLHF） |
+| `constitutional-ai-paper15.html` | Constitutional AI（宪法 AI） |
+| `generative-adversarial-networks-paper16.html` | Generative Adversarial Networks（GAN） |
+| `google-file-system-paper17.html` | The Google File System（GFS） |
+| `map-reduce-paper18.html` | MapReduce：把「大规模并行」缩成两个函数 |
+| `bigtable-paper19.html` | Bigtable：一张能长到 PB 级的稀疏大表 |
+| `chubby-paper20.html` | The Chubby Lock Service（Chubby 锁服务） |
+| `percolator-paper21.html` | Percolator — 大规模增量处理 |
+| `pregel-paper22.html` | Pregel — 像顶点一样思考 |
+| `dremel-paper23.html` | Dremel：秒级交互式查询万亿行 |
+| `spanner-paper24.html` | Spanner — Google 的全球分布式数据库 |
+| `f1-distributed-sql-paper25.html` | F1：能扩展的分布式 SQL 数据库 |
+| `dapper-paper26.html` | Dapper：大规模分布式系统追踪 |
+| `tail-at-scale-paper27.html` | The Tail at Scale：大规模系统的尾延迟 |
+| `ddpm-paper28.html` | Denoising Diffusion Probabilistic Models（DDPM） |
+| `batch-normalization-paper29.html` | Batch Normalization（批归一化） |
+| `dropout-paper30.html` | Dropout（随机失活） |
+| `time-clocks-ordering-paper31.html` | Time, Clocks, and the Ordering of Events（逻辑时钟） |
+| `relational-model-paper32.html` | A Relational Model of Data（关系模型） |
+| `unix-time-sharing-paper33.html` | The UNIX Time-Sharing System（UNIX） |
+| `new-directions-in-cryptography-paper34.html` | New Directions in Cryptography（公钥密码学） |
+| `as-we-may-think-paper35.html` | As We May Think（诚如所思） |
+| `mathematical-theory-of-communication-paper36.html` | A Mathematical Theory of Communication（通信的数学理论） |
+| `goto-considered-harmful-paper37.html` | Go To Statement Considered Harmful（GOTO 有害论） |
+| `byzantine-generals-paper38.html` | The Byzantine Generals Problem（拜占庭将军问题） |
+| `end-to-end-arguments-paper39.html` | End-to-End Arguments in System Design（端到端论证） |
+| `rsa-paper40.html` | RSA 公钥密码体制 |
+| `anatomy-of-a-search-engine-paper41.html` | The Anatomy of a Search Engine（PageRank / 谷歌雏形） |
+| `on-computable-numbers-paper42.html` | On Computable Numbers（图灵机 / 可计算性） |
+| `decomposing-systems-into-modules-paper43.html` | 如何把系统拆成模块 · 信息隐藏 |
+| `paxos-made-simple-paper44.html` | Paxos Made Simple |
+| `congestion-avoidance-and-control-paper45.html` | Congestion Avoidance and Control（TCP 拥塞控制） |
+| `bitcoin-paper46.html` | Bitcoin（比特币白皮书） |
+| `computing-machinery-and-intelligence-paper47.html` | Computing Machinery and Intelligence（图灵测试） |
+| `no-silver-bullet-paper48.html` | No Silver Bullet（没有银弹） |
+| `adam-optimizer-paper49.html` | Adam：随机优化的默认解 |
+| `raft-paper50.html` | Raft：为「读得懂」而生的共识算法 |
+| `reflections-on-trusting-trust-paper51.html` | Reflections on Trusting Trust（信任的信任） |
+| `complexity-of-theorem-proving-paper52.html` | The Complexity of Theorem-Proving Procedures（NP 完全性） |
+| `dqn-atari-paper53.html` | Playing Atari with Deep Reinforcement Learning（DQN） |
+| `dynamo-paper54.html` | Dynamo：亚马逊的高可用键值存储 |
+| `alphago-paper55.html` | AlphaGo：深度网络 + 树搜索攻克围棋 |
+| `harvest-yield-paper56.html` | Harvest、Yield 与可扩展容错系统 |
+| `chord-paper57.html` | Chord（分布式哈希表 / DHT） |
+| `kafka-paper58.html` | Kafka：为日志处理而生的分布式消息系统 |
+
 ## 3. 文件约定 / 发布
 - 文件名 `{slug}-book{N}.html` + `{slug}-book{N}.en.html`，放仓库根目录。
 - 发布前更新 `index.html`（把对应灰色占位行原地转链接，见下）+ `index.en.html`（同步转 `.en` 链接）。
 - **index 条目的 `.title` 是「简介」不是「摘要」——一句话、一个钩子，只点出这一章那一两个核心想法 / 权衡，`Ch 标题 — 一个 clause` 到句号即止（对标样例第 1 章「Ch1 可靠·可扩展·可维护 — 先立三把尺子，用负载参数和响应时间百分位把『系统好不好』量化成可谈的东西」的分量，中文 ≤ 约 50 字、英文一行）。别把整章的问题、机制、权衡、影响全塞进 index——那些留给正文八节。宁短勿长。
 - **不要**手动在内容页里加 `comments.js` / `search.js` / `index-button.js` / `i18n-tts.js` / `lightbox.js`（GitHub Action 自动注入，含右上角中英切换药丸 + TTS 朗读 + 图片/内联 SVG 点开放大）；也别硬写 `← Hub`。（index 页可硬写这些脚本，与姊妹站一致。）**图只管照常写 `<figure><svg>…</svg><figcaption>`，注入的 `lightbox.js` 会自动让每张图可点开、滚轮缩放、拖拽平移——不用你加任何 class 或 onclick。**
-- **TTS 走浏览器 Web Speech，不做 Azure 烘焙**：`i18n-tts.js` 没有 mp3 时会自动回退成读 `h1/h2/h3/p` 的浏览器语音——所以**别加 `data-tts` 属性、别建 `audio/` 目录、别恢复 bake-tts**。朗读效果由浏览器语音决定，够用即可。
+- **TTS 由 CI 自动烘焙（Azure → R2），你不用管**：`.github/workflows/bake-tts.yml` 在每次 push 到 `main` 且改动 `*.html` 时运行 `bake-tts.py`，按 `<h2>` 分段、对每段可朗读文本取 sha1 当 hash，生成 mp3 传到 R2 并把 `data-tts=<hash>` 写回 HTML（bot 提交，带 `[skip bake]` 防循环）。**你自己别手写 `data-tts`、别建 `audio/` 目录、别手跑 bake-tts。** 段内可朗读文本一字不变则 hash 不变、直接跳过——这条性质是下面 §2.5 交叉引用能「零重烘」回填的基础。
 - 用 `./publish.sh` 发布：自动 add/commit/push 到 `main`，并校验体量、index 引用、div 平衡、重复编号、TOPICS 未被改、无硬写四脚本等。
 - git：`user.name=BigCat` / `user.email=chengchen0802@gmail.com`。
 
