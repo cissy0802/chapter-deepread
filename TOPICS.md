@@ -13,6 +13,46 @@ BigCat 人工维护的计算机 / 软件经典书清单。**按书成簇、簇�
 >   PushNotification 请 BigCat 续单（加新书 / 新章）、本次不发布。
 > - 要加书：在下面另起一个 `## 书名 · 作者 · 年份` 簇，簇内按原书章节顺序一行一章；别打散到别处。
 
+> **当前优先级：先写 Alex Xu 两卷（Vol 1 → Vol 2），写完再往下走。**
+> 2026-09-04 由 BigCat 指定，所以这两簇被提到清单最顶——routine 取的是「从顶往下第一个未做的 slug」，
+> 之后往下面任何书簇里补章都不会插到 Xu 前面。Xu 写完后顺序自然回到 DDIA → CD → SRE → … 的原序列。
+
+## System Design Interview Vol 1 — An Insider's Guide · Alex Xu · 2020
+系统设计面试的通行底本。**与本仓其他书最大的不同：它是案例制不是概念制**——每章从需求澄清一路走到 API、数据模型、组件演进，示范的是「怎么把一道开放题做完」。精读时保留这条主线，别拆成概念清单。（跳过 Ch16「学习的延续」——收尾励志章、无实质内容。）
+### Part I · 方法与基础（Ch1–3）
+- **Ch1 从零到百万用户** — Scale From Zero To Millions Of Users — 单机怎么一步步长成分层集群：加缓存、加从库、加负载均衡、拆数据层，每一步解决的到底是哪个瓶颈（slug: `sdi1-ch01-scale-to-millions`）· xref: `sd:scalability-day1`, `sd:caching-day2`, `sd:sharding-day4`
+- **Ch2 粗略估算** — Back-of-the-Envelope Estimation — 2 的幂、延迟数字、可用性九位数：怎么在白板上把 QPS / 存储 / 带宽算到量级正确（slug: `sdi1-ch02-back-of-envelope-estimation`）· xref: `sd:capacity-estimation-day26`, `sd:cost-capacity-engineering-day27`
+- **Ch3 系统设计面试框架** — A Framework for System Design Interviews — 四步法：澄清需求 → 高层设计 → 深挖 → 收尾，以及面试官到底在评估什么（slug: `sdi1-ch03-interview-framework`）· xref: `sd:system-design-interview-day25`, `sd:capacity-estimation-day26`
+### Part II · 系统案例（Ch4–15）
+- **Ch4 设计限流器** — Design a Rate Limiter — 令牌桶 / 漏桶 / 滑动窗口各挡住什么，以及限流器该放在哪一层、分布式下的竞态怎么处理（slug: `sdi1-ch04-rate-limiter`）· xref: `sd:rate-limiting-day10`, `sd:api-design-day9`
+- **Ch5 设计一致性哈希** — Design Consistent Hashing — 取模分片一加机器就全盘搬迁，一致性哈希用环 + 虚拟节点把搬迁量降到 1/N（slug: `sdi1-ch05-consistent-hashing`）· xref: `sd:sharding-day4`, `sd:replication-day5`
+- **Ch6 设计键值存储** — Design a Key-Value Store — Dynamo 那一整套：quorum NWR、向量时钟、Merkle 树反熵、gossip 与 hinted handoff 怎么拼成一个无主存储（slug: `sdi1-ch06-key-value-store`）· xref: `sd:database-selection-day3`, `sd:consistency-day6`, `sd:storage-engine-day47`
+- **Ch7 设计分布式唯一 ID** — Design a Unique ID Generator — 为什么自增主键在分布式下不成立，Snowflake 的时间戳 + 机器号 + 序列号怎么换来有序且无协调（slug: `sdi1-ch07-unique-id-generator`）· xref: `sd:unique-id-generation-day11`
+- **Ch8 设计短网址服务** — Design a URL Shortener — 读多写少的极端形态：ID 编码成 base62、缓存命中率决定成本、301 与 302 的分析权衡（slug: `sdi1-ch08-url-shortener`）· xref: `sd:unique-id-generation-day11`, `sd:caching-day2`, `sd:rate-limiting-day10`
+- **Ch9 设计网页爬虫** — Design a Web Crawler — URL frontier 的礼貌队列 + 优先级队列双层设计、robots.txt、内容去重与爬虫陷阱（slug: `sdi1-ch09-web-crawler`）· xref: `sd:search-system-day12`, `sd:message-queue-day8`, `sd:rate-limiting-day10`
+- **Ch10 设计通知系统** — Design a Notification System — 可靠性全押在你控制不了的第三方通道（APNs / FCM / SMS）上：扇出、重试、去重与限流怎么设计（slug: `sdi1-ch10-notification-system`）· xref: `sd:message-queue-day8`, `sd:reliability-day23`, `sd:chat-system-day15`
+- **Ch11 设计信息流** — Design a News Feed System — 写时扇出 vs 读时扇出，以及名人账号为什么必须走混合策略（slug: `sdi1-ch11-news-feed`）· xref: `sd:feed-system-day14`, `sd:caching-day2`
+- **Ch12 设计聊天系统** — Design a Chat System — 长连接接入层、消息 ID 的有序性、已读回执与离线推送，1v1 与群聊的存储差别（slug: `sdi1-ch12-chat-system`）· xref: `sd:chat-system-day15`, `sd:realtime-systems-day34`
+- **Ch13 设计搜索自动补全** — Design a Search Autocomplete System — Trie 怎么撑住每敲一个字母一次查询：前缀缓存、Top-k 预存、离线聚合与 trie 分片（slug: `sdi1-ch13-search-autocomplete`）· xref: `sd:search-system-day12`, `sd:caching-day2`, `sd:cdn-edge-day28`
+- **Ch14 设计 YouTube** — Design YouTube — 转码流水线的 DAG 分解、分片上传、CDN 分层与冷热内容的成本取舍（slug: `sdi1-ch14-youtube`）· xref: `sd:video-streaming-day16`, `sd:cdn-edge-day28`, `sd:object-storage-day29`
+- **Ch15 设计 Google Drive** — Design Google Drive — 文件同步这一层：块级切分与去重、增量同步、修订历史，以及多端离线后的冲突怎么收敛（slug: `sdi1-ch15-google-drive`）· xref: `sd:object-storage-day29`, `sd:collaborative-editing-day45`, `sd:consistency-day6`
+
+## System Design Interview Vol 2 · Alex Xu & Sahn Lam · 2022
+第二卷全部是案例，且比第一卷更深、更贴近真实工程——**造轮子的内部构造**（自己实现消息队列 / 对象存储）与**低延迟确定性系统**（交易所撮合）是它独有的两条线，本仓其他书都没有。
+- **Ch1 设计附近服务** — Proximity Service — 把球面切成可索引的格子：geohash / 四叉树 / S2 各自的边界问题与半径查询（slug: `sdi2-ch01-proximity-service`）· xref: `sd:geo-system-day19`, `sd:sharding-day4`
+- **Ch2 设计附近的好友** — Nearby Friends — 从静态兴趣点到高频移动的活人：位置流的发布订阅、Redis pub/sub 的扇出与陈旧位置的过期（slug: `sdi2-ch02-nearby-friends`）· xref: `sd:geo-system-day19`, `sd:chat-system-day15`, `sd:realtime-systems-day34`
+- **Ch3 设计 Google Maps** — Google Maps — 地图瓦片的分级预渲染、路网图上的最短路与 contraction hierarchies、ETA 与实时导航重算（slug: `sdi2-ch03-google-maps`）· xref: `sd:geo-system-day19`, `sd:cdn-edge-day28`
+- **Ch4 设计分布式消息队列** — Distributed Message Queue — 亲手造一个 Kafka：分段日志的磁盘布局、ISR 副本同步、消费者 rebalance 与元数据存哪（slug: `sdi2-ch04-distributed-message-queue`）· xref: `sd:message-queue-day8`, `sd:storage-engine-day47`, `sd:replication-day5`
+- **Ch5 设计监控告警系统** — Metrics Monitoring and Alerting System — 时序数据的写入放大与降采样、拉 vs 推的采集模型、告警规则引擎与去重收敛（slug: `sdi2-ch05-metrics-monitoring`）· xref: `sd:observability-day21`, `sd:low-base-rate-alerting-day51`, `sd:data-processing-day20`
+- **Ch6 设计广告点击聚合** — Ad Click Event Aggregation — 钱挂在聚合结果上时的流处理：点击去重、迟到数据回补、对账，以及大广告主的热点分片（slug: `sdi2-ch06-ad-click-aggregation`）· xref: `sd:data-processing-day20`, `sd:data-lakehouse-day38`, `sd:message-queue-day8`
+- **Ch7 设计酒店预订系统** — Hotel Reservation System — 有限库存的并发争抢：超卖怎么防、悲观锁 vs 乐观版本号、临时占位与幂等下单（slug: `sdi2-ch07-hotel-reservation`）· xref: `sd:distributed-transactions-day7`, `sd:consistency-day6`, `sd:api-design-day9`
+- **Ch8 设计分布式邮箱服务** — Distributed Email Service — 海量小对象的元数据难题：邮件正文与附件分离存储、按用户分区的收件箱索引与全文检索（slug: `sdi2-ch08-distributed-email`）· xref: `sd:object-storage-day29`, `sd:search-system-day12`, `sd:sharding-day4`
+- **Ch9 设计对象存储** — S3-like Object Storage — 数据面与元数据面分离、纠删码怎么用 1.5 倍空间换 11 个 9、大对象分片上传与版本控制（slug: `sdi2-ch09-object-storage`）· xref: `sd:object-storage-day29`, `sd:replication-day5`, `sd:consistency-day6`
+- **Ch10 设计实时排行榜** — Real-time Gaming Leaderboard — Redis sorted set 撑到多大就撑不住了：按分数分桶分片、查排名的近似解与精确解的代价差（slug: `sdi2-ch10-gaming-leaderboard`）· xref: `sd:database-selection-day3`, `sd:sharding-day4`, `sd:caching-day2`
+- **Ch11 设计支付系统** — Payment System — 支付进出账的双向流、幂等键、与第三方 PSP 的对账，以及失败重试怎么不重复扣款（slug: `sdi2-ch11-payment-system`）· xref: `sd:payments-day17`, `sd:distributed-transactions-day7`, `sd:reliability-day23`
+- **Ch12 设计数字钱包** — Digital Wallet — 从分布式事务一路推到事件溯源 + CQRS + Raft 复制状态机：让账本可重放、可审计、可恢复（slug: `sdi2-ch12-digital-wallet`）· xref: `sd:payments-day17`, `sd:consensus-coordination-day46`, `sd:distributed-transactions-day7`
+- **Ch13 设计证券交易所** — Stock Exchange — 全书最反直觉的一章：订单簿 + 单线程确定性撮合 + 定序器，靠不分布式换微秒级与可重放（slug: `sdi2-ch13-stock-exchange`）· xref: `sd:realtime-systems-day34`, `sd:networking-fundamentals-day48`, `sd:observability-day21`
+
 ## DDIA — Designing Data-Intensive Applications · Martin Kleppmann · 2017
 
 数据密集型应用设计。围绕**可靠、可扩展、可维护**三条主线，把「数据系统怎么选型、怎么权衡」讲
@@ -108,42 +148,6 @@ DDIA 的自然续集，往下钻一层：数据库**存储引擎**与**分布式
 - **Ch12 反熵与传播** — Anti-Entropy and Dissemination — gossip、Merkle 树、读修复（slug: `dbinternals-ch12-anti-entropy-and-dissemination`）
 - **Ch13 分布式事务** — Distributed Transactions — 2PC/3PC、Percolator、Calvin（slug: `dbinternals-ch13-distributed-transactions`）
 - **Ch14 共识** — Consensus — Paxos、Raft、Zab、拜占庭共识（slug: `dbinternals-ch14-consensus`）
-
-## System Design Interview Vol 1 — An Insider's Guide · Alex Xu · 2020
-系统设计面试的通行底本。**与本仓其他书最大的不同：它是案例制不是概念制**——每章从需求澄清一路走到 API、数据模型、组件演进，示范的是「怎么把一道开放题做完」。精读时保留这条主线，别拆成概念清单。（跳过 Ch16「学习的延续」——收尾励志章、无实质内容。）
-### Part I · 方法与基础（Ch1–3）
-- **Ch1 从零到百万用户** — Scale From Zero To Millions Of Users — 单机怎么一步步长成分层集群：加缓存、加从库、加负载均衡、拆数据层，每一步解决的到底是哪个瓶颈（slug: `sdi1-ch01-scale-to-millions`）· xref: `sd:scalability-day1`, `sd:caching-day2`, `sd:sharding-day4`
-- **Ch2 粗略估算** — Back-of-the-Envelope Estimation — 2 的幂、延迟数字、可用性九位数：怎么在白板上把 QPS / 存储 / 带宽算到量级正确（slug: `sdi1-ch02-back-of-envelope-estimation`）· xref: `sd:capacity-estimation-day26`, `sd:cost-capacity-engineering-day27`
-- **Ch3 系统设计面试框架** — A Framework for System Design Interviews — 四步法：澄清需求 → 高层设计 → 深挖 → 收尾，以及面试官到底在评估什么（slug: `sdi1-ch03-interview-framework`）· xref: `sd:system-design-interview-day25`, `sd:capacity-estimation-day26`
-### Part II · 系统案例（Ch4–15）
-- **Ch4 设计限流器** — Design a Rate Limiter — 令牌桶 / 漏桶 / 滑动窗口各挡住什么，以及限流器该放在哪一层、分布式下的竞态怎么处理（slug: `sdi1-ch04-rate-limiter`）· xref: `sd:rate-limiting-day10`, `sd:api-design-day9`
-- **Ch5 设计一致性哈希** — Design Consistent Hashing — 取模分片一加机器就全盘搬迁，一致性哈希用环 + 虚拟节点把搬迁量降到 1/N（slug: `sdi1-ch05-consistent-hashing`）· xref: `sd:sharding-day4`, `sd:replication-day5`
-- **Ch6 设计键值存储** — Design a Key-Value Store — Dynamo 那一整套：quorum NWR、向量时钟、Merkle 树反熵、gossip 与 hinted handoff 怎么拼成一个无主存储（slug: `sdi1-ch06-key-value-store`）· xref: `sd:database-selection-day3`, `sd:consistency-day6`, `sd:storage-engine-day47`
-- **Ch7 设计分布式唯一 ID** — Design a Unique ID Generator — 为什么自增主键在分布式下不成立，Snowflake 的时间戳 + 机器号 + 序列号怎么换来有序且无协调（slug: `sdi1-ch07-unique-id-generator`）· xref: `sd:unique-id-generation-day11`
-- **Ch8 设计短网址服务** — Design a URL Shortener — 读多写少的极端形态：ID 编码成 base62、缓存命中率决定成本、301 与 302 的分析权衡（slug: `sdi1-ch08-url-shortener`）· xref: `sd:unique-id-generation-day11`, `sd:caching-day2`, `sd:rate-limiting-day10`
-- **Ch9 设计网页爬虫** — Design a Web Crawler — URL frontier 的礼貌队列 + 优先级队列双层设计、robots.txt、内容去重与爬虫陷阱（slug: `sdi1-ch09-web-crawler`）· xref: `sd:search-system-day12`, `sd:message-queue-day8`, `sd:rate-limiting-day10`
-- **Ch10 设计通知系统** — Design a Notification System — 可靠性全押在你控制不了的第三方通道（APNs / FCM / SMS）上：扇出、重试、去重与限流怎么设计（slug: `sdi1-ch10-notification-system`）· xref: `sd:message-queue-day8`, `sd:reliability-day23`, `sd:chat-system-day15`
-- **Ch11 设计信息流** — Design a News Feed System — 写时扇出 vs 读时扇出，以及名人账号为什么必须走混合策略（slug: `sdi1-ch11-news-feed`）· xref: `sd:feed-system-day14`, `sd:caching-day2`
-- **Ch12 设计聊天系统** — Design a Chat System — 长连接接入层、消息 ID 的有序性、已读回执与离线推送，1v1 与群聊的存储差别（slug: `sdi1-ch12-chat-system`）· xref: `sd:chat-system-day15`, `sd:realtime-systems-day34`
-- **Ch13 设计搜索自动补全** — Design a Search Autocomplete System — Trie 怎么撑住每敲一个字母一次查询：前缀缓存、Top-k 预存、离线聚合与 trie 分片（slug: `sdi1-ch13-search-autocomplete`）· xref: `sd:search-system-day12`, `sd:caching-day2`, `sd:cdn-edge-day28`
-- **Ch14 设计 YouTube** — Design YouTube — 转码流水线的 DAG 分解、分片上传、CDN 分层与冷热内容的成本取舍（slug: `sdi1-ch14-youtube`）· xref: `sd:video-streaming-day16`, `sd:cdn-edge-day28`, `sd:object-storage-day29`
-- **Ch15 设计 Google Drive** — Design Google Drive — 文件同步这一层：块级切分与去重、增量同步、修订历史，以及多端离线后的冲突怎么收敛（slug: `sdi1-ch15-google-drive`）· xref: `sd:object-storage-day29`, `sd:collaborative-editing-day45`, `sd:consistency-day6`
-
-## System Design Interview Vol 2 · Alex Xu & Sahn Lam · 2022
-第二卷全部是案例，且比第一卷更深、更贴近真实工程——**造轮子的内部构造**（自己实现消息队列 / 对象存储）与**低延迟确定性系统**（交易所撮合）是它独有的两条线，本仓其他书都没有。
-- **Ch1 设计附近服务** — Proximity Service — 把球面切成可索引的格子：geohash / 四叉树 / S2 各自的边界问题与半径查询（slug: `sdi2-ch01-proximity-service`）· xref: `sd:geo-system-day19`, `sd:sharding-day4`
-- **Ch2 设计附近的好友** — Nearby Friends — 从静态兴趣点到高频移动的活人：位置流的发布订阅、Redis pub/sub 的扇出与陈旧位置的过期（slug: `sdi2-ch02-nearby-friends`）· xref: `sd:geo-system-day19`, `sd:chat-system-day15`, `sd:realtime-systems-day34`
-- **Ch3 设计 Google Maps** — Google Maps — 地图瓦片的分级预渲染、路网图上的最短路与 contraction hierarchies、ETA 与实时导航重算（slug: `sdi2-ch03-google-maps`）· xref: `sd:geo-system-day19`, `sd:cdn-edge-day28`
-- **Ch4 设计分布式消息队列** — Distributed Message Queue — 亲手造一个 Kafka：分段日志的磁盘布局、ISR 副本同步、消费者 rebalance 与元数据存哪（slug: `sdi2-ch04-distributed-message-queue`）· xref: `sd:message-queue-day8`, `sd:storage-engine-day47`, `sd:replication-day5`
-- **Ch5 设计监控告警系统** — Metrics Monitoring and Alerting System — 时序数据的写入放大与降采样、拉 vs 推的采集模型、告警规则引擎与去重收敛（slug: `sdi2-ch05-metrics-monitoring`）· xref: `sd:observability-day21`, `sd:low-base-rate-alerting-day51`, `sd:data-processing-day20`
-- **Ch6 设计广告点击聚合** — Ad Click Event Aggregation — 钱挂在聚合结果上时的流处理：点击去重、迟到数据回补、对账，以及大广告主的热点分片（slug: `sdi2-ch06-ad-click-aggregation`）· xref: `sd:data-processing-day20`, `sd:data-lakehouse-day38`, `sd:message-queue-day8`
-- **Ch7 设计酒店预订系统** — Hotel Reservation System — 有限库存的并发争抢：超卖怎么防、悲观锁 vs 乐观版本号、临时占位与幂等下单（slug: `sdi2-ch07-hotel-reservation`）· xref: `sd:distributed-transactions-day7`, `sd:consistency-day6`, `sd:api-design-day9`
-- **Ch8 设计分布式邮箱服务** — Distributed Email Service — 海量小对象的元数据难题：邮件正文与附件分离存储、按用户分区的收件箱索引与全文检索（slug: `sdi2-ch08-distributed-email`）· xref: `sd:object-storage-day29`, `sd:search-system-day12`, `sd:sharding-day4`
-- **Ch9 设计对象存储** — S3-like Object Storage — 数据面与元数据面分离、纠删码怎么用 1.5 倍空间换 11 个 9、大对象分片上传与版本控制（slug: `sdi2-ch09-object-storage`）· xref: `sd:object-storage-day29`, `sd:replication-day5`, `sd:consistency-day6`
-- **Ch10 设计实时排行榜** — Real-time Gaming Leaderboard — Redis sorted set 撑到多大就撑不住了：按分数分桶分片、查排名的近似解与精确解的代价差（slug: `sdi2-ch10-gaming-leaderboard`）· xref: `sd:database-selection-day3`, `sd:sharding-day4`, `sd:caching-day2`
-- **Ch11 设计支付系统** — Payment System — 支付进出账的双向流、幂等键、与第三方 PSP 的对账，以及失败重试怎么不重复扣款（slug: `sdi2-ch11-payment-system`）· xref: `sd:payments-day17`, `sd:distributed-transactions-day7`, `sd:reliability-day23`
-- **Ch12 设计数字钱包** — Digital Wallet — 从分布式事务一路推到事件溯源 + CQRS + Raft 复制状态机：让账本可重放、可审计、可恢复（slug: `sdi2-ch12-digital-wallet`）· xref: `sd:payments-day17`, `sd:consensus-coordination-day46`, `sd:distributed-transactions-day7`
-- **Ch13 设计证券交易所** — Stock Exchange — 全书最反直觉的一章：订单簿 + 单线程确定性撮合 + 定序器，靠不分布式换微秒级与可重放（slug: `sdi2-ch13-stock-exchange`）· xref: `sd:realtime-systems-day34`, `sd:networking-fundamentals-day48`, `sd:observability-day21`
 
 ## Chaos Engineering — System Resiliency in Practice · Casey Rosenthal & Nora Jones · 2020
 混沌工程的正典，由创立这门学科的 Netflix 团队与同代实践者合写。**核心主张：可靠性不能靠「别出错」，只能靠主动制造故障去证伪你对系统的假设。** 前三章立原则，中间五章是 Slack / Google / 微软 / LinkedIn / Capital One 的一手实践，后半转向人的因素、投资回报与演进方向（持续验证、信息物理系统、安全混沌）。**全书 21 章全收，一章不跳。**
