@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview Vol 1 · Ch 1 · Scale From Zero To Millions Of Users — Book Deep Read 53</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">Book Deep Read · System Design Interview Vol 1 · Ch 1</p>
+<h1>Scale From Zero To Millions Of Users</h1>
+<p class="sub">System Design Interview: An Insider's Guide · Vol 1 · Ch 1 · Alex Xu · 2020</p>
+<p class="langbar"><a href="sdi1-ch01-scale-to-millions-book53.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>Whatever website or app you have open right now almost certainly started as <strong>one machine</strong> somebody rented. This chapter is about how that single machine grows into a whole server room. It opens Volume 1 of <em>System Design Interview</em>, and it is the only chapter in the book that <strong>designs no particular product</strong>. What it gives you instead is a route: on the way from zero to a few million users, what to change, and in what order.</p>
+<h2>An analogy first</h2>
+<p>Think of a website as a <strong>noodle shop</strong>. On opening day the owner does everything alone: take orders, cook, take payment, keep the ledger. Business booms — now what? The instinct is "hire a better owner." The real answer is <strong>division of labour</strong>: put a host at the door, add burners in the kitchen, pre-cook the popular dishes and keep them warm, hand a copy of the ledger to an accountant, pin delivery tickets to a wall for couriers to grab, and finally open branches across town. Every scaling step in this chapter maps onto one of those.</p>
+<h2>Why the old world was hard</h2>
+<p>When one machine stops coping, the cheap move is to buy a bigger machine. That road runs further than most people think — Stack Overflow served <strong>over two hundred million</strong> requests in a single day in 2016 on nine web servers and four databases. But it has one problem you cannot dodge: <strong>if that machine breaks, the site is simply gone. There is no substitute.</strong> So the real turning point is not "stronger" but "more" — a pile of ordinary machines, where losing one bothers nobody.</p>
+<h2>The mechanism: six things, in order</h2>
+<p><strong>① Put a host at the door.</strong> Guests no longer walk up to a particular waiter; the host sends them to whoever is free. When a waiter calls in sick, guests are still served.</p>
+<p><strong>② But waiters must not "remember" guests.</strong> If the order you placed with waiter #3 lives only in his head, you have to order again the moment his shift ends. Write "who ordered what" into one shared book at the front desk instead, and any waiter can pick you up — this is the <strong>master switch</strong> for adding and removing staff freely.</p>
+<p><strong>③ Copy the ledger.</strong> Far more people read the books than write in them. Let writes go only into the original and reads go to the copies; the original instantly gets easier.</p>
+<p><strong>④ Pre-cook the popular dishes.</strong> The best sellers do not need making from scratch every time — that is caching. Photos and videos go further: keep a copy in every city and serve whichever is nearest.</p>
+<p><strong>⑤ Turn slow work into tickets on a wall.</strong> Photo editing, sending notifications — do not make the guest wait. Write a ticket, drop it in the queue, let the kitchen work through it, and add cooks when it backs up.</p>
+<p><strong>⑥ Only when it truly will not fit, split the ledger.</strong> One book is full, so split it into four by surname. This is the last step, <strong>and the only one you can barely walk back</strong>: once split, things that used to be a single lookup ("sort every guest by first visit") suddenly become painful.</p>
+<h2>How to use it</h2>
+<p>The six are ordered by <strong>return on effort</strong>: the early ones are cheap, reversible and fast-acting; the last is expensive and hard to undo. So the question worth asking is never "what technology should we adopt," but <strong>"which part gives out first?"</strong></p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p>Scaling is not "buy a bigger machine." It is <strong>repeatedly moving the thing that gets remembered out of wherever it is blocking you</strong>: out of the waiter's head (stateless), onto copies (read replicas), closer to the guest (caching and edge delivery), into a queue (async) — and only then splitting it up (sharding).</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the numbers and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">You think this chapter teaches you how to make a system big. What it actually teaches is an <strong>order</strong>. Load balancers, caches, CDNs, shards — those parts are documented everywhere. What this chapter contributes is arranging them into a <strong>build sequence with falling returns and rising irreversibility</strong>, where each step removes exactly one bottleneck. Get the order wrong and you pay permanent complexity for a problem you do not have yet.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>QPS (queries per second)</strong>: requests handled per second — the most common yardstick for load.</li>
+<li><strong>DNS</strong>: the phone book that translates a domain name into a machine's IP address; the first hop of any web request.</li>
+<li><strong>Load balancer (LB)</strong>: a component sitting in front of a pool of servers that hands each incoming request to one of them.</li>
+<li><strong>Vertical scaling</strong>: swap in a more powerful single machine. <strong>Horizontal scaling</strong>: add more ordinary machines.</li>
+<li><strong>Replication</strong>: keeping the same data on several machines. The primary (the book calls it the master) takes writes; replicas hold copies and serve reads.</li>
+<li><strong>Cache</strong>: results kept in memory so the next request can skip the database; the <strong>hit rate</strong> is the share of requests answered straight from it.</li>
+<li><strong>CDN (content delivery network)</strong>: edge nodes around the world that serve static files from close to the user.</li>
+<li><strong>Session</strong>: the server-side record of who you are, whether you are logged in, what is in your cart.</li>
+<li><strong>Stateless</strong>: the server keeps no data across requests, so any machine can serve any request.</li>
+<li><strong>Message queue</strong>: a buffer in the middle — producers post tasks, consumers (workers) pick them up asynchronously.</li>
+<li><strong>Sharding</strong>: splitting one big table horizontally across several databases by a <strong>sharding key</strong>, each holding a subset of rows.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This is the first of the three chapters in Volume 1's Part I on method and fundamentals, and the <strong>only chapter in the book that designs no product</strong>. Ch 2 teaches you to get QPS, storage and bandwidth right to an order of magnitude on a whiteboard; Ch 3 teaches the four-step interview framework; Ch 1 first supplies the <strong>shared skeleton</strong> both of those operate on. The twelve case studies that follow — rate limiter, URL shortener, news feed, YouTube, Google Drive — are almost all additions to one layer of that skeleton.</p>
+<h2>The problem it solves</h2>
+<p>Ask an engineer "how many users can your system take" and the usual answer is a menu of names: we run Redis, Kafka, sharded databases. Names cannot answer <strong>why now, and why this one</strong>. What this chapter answers is a different question: <strong>which thing gives out next</strong>, and whether the money and complexity it costs are worth it.</p>
+<p>What goes wrong otherwise? <strong>Too early</strong>: five thousand users and you already run microservices, sharded databases and multi-region, so eighty percent of the team's time goes into infrastructure rather than product — and sharding is essentially not refundable. <strong>Too late</strong>: you only think about read replicas once your one database is pegged at 90% CPU, and now every change has to be made under live production traffic, at maximum risk.</p>
+<p>An anchor with real numbers: a content community with <strong>1M daily actives</strong>, each opening the app 10 times a day and pulling 20 items per open. That is roughly <code>10M reads/day</code>, about <strong>116 QPS</strong> averaged out, and <strong>350–600 QPS at peak</strong> if peak runs 3–5× the mean; writes are around one percent of reads. At that level one decent server plus one database genuinely still copes — what breaks first is not "volume" but <strong>one particular kind of request</strong> (the home-feed query joining three tables) and <strong>having no substitute</strong>. Which is exactly why the first move is usually a load balancer and a replica, not a shard.</p>
+<h2>The core, explained</h2>
+<h3>First, see how many hops a request actually takes</h3>
+<p>The starting shape: <strong>one server</strong> running the web app, the database and the cache together. A user types a domain → DNS returns the IP → the browser connects directly → the server returns HTML or JSON. Look at this path first, because <strong>every later step is essentially inserting one more hop into it</strong> — a load balancer, a cache, a CDN, a queue. Miss the path and all you can do is memorise part names.</p>
+<p>The first real separation is <strong>moving the database off the web server</strong>: the two want fundamentally different resources — web wants CPU and concurrent connections, databases want memory and disk I/O — so together they fight, and neither can scale on its own. On database choice the book's rule is plain: <strong>default to a relational database (RDBMS)</strong>, and only consider NoSQL when you need very low latency, the data is unstructured, no complex queries are required, or the volume is enormous — <strong>never pick it because it sounds more modern</strong>.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 340" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="a1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="a2" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="20">The layered end state: every tier scales on its own</text>
+<rect fill="rgba(91,157,249,0.1)" height="30" rx="6" stroke="#7c8593" width="96" x="24" y="34"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="72" y="53">Client / App</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="122" x2="160" y1="49" y2="49"></line>
+<rect fill="rgba(91,157,249,0.1)" height="30" rx="6" stroke="#7c8593" width="136" x="164" y="34"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="232" y="53">CDN (static assets)</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="302" x2="340" y1="49" y2="49"></line>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="6" stroke="#5b9df9" stroke-width="1.6" width="170" x="344" y="34"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="429" y="53">Load balancer (public IP)</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="429" y="80">routes traffic · drops dead nodes</text>
+<rect fill="none" height="52" rx="8" stroke="rgba(91,157,249,0.45)" stroke-dasharray="5 4" width="316" x="200" y="94"></rect>
+<text fill="#5b9df9" font-family="monospace" font-size="9.5" x="206" y="107">Stateless web pool — add / remove freely</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="88" x="212" y="112"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="256" y="129">Web 1</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="88" x="314" y="112"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="358" y="129">Web 2</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="88" x="416" y="112"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="460" y="129">Web 3</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="400" x2="270" y1="66" y2="110"></line>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="429" x2="358" y1="66" y2="110"></line>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="458" x2="458" y1="66" y2="110"></line>
+<rect fill="rgba(155,108,245,0.16)" height="42" rx="6" stroke="#9b6cf5" width="150" x="24" y="104"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="99" y="121">Session / state</text><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="99" y="137">shared store</text>
+<line marker-end="url(#a2)" stroke="#9b6cf5" stroke-dasharray="4 3" x1="210" x2="178" y1="125" y2="125"></line>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="6" stroke="#5b9df9" width="176" x="200" y="176"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="288" y="195">Cache tier (in-memory)</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="270" x2="284" y1="140" y2="174"></line>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="6" stroke="#5b9df9" width="140" x="420" y="176"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="490" y="195">Message queue</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="460" x2="486" y1="140" y2="174"></line>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="140" x="420" y="252"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="490" y="271">Worker pool</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="490" x2="490" y1="208" y2="250"></line>
+<rect fill="rgba(155,108,245,0.2)" height="30" rx="6" stroke="#9b6cf5" stroke-width="1.6" width="112" x="24" y="252"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="80" y="271">Primary (writes)</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="104" x="150" y="252"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="202" y="271">Replica A (reads)</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="104" x="268" y="252"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="320" y="271">Replica B (reads)</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="250" x2="110" y1="208" y2="250"></line>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="290" x2="290" y1="208" y2="250"></line>
+<line marker-end="url(#a2)" stroke="#9b6cf5" stroke-dasharray="4 3" x1="136" x2="148" y1="267" y2="267"></line>
+<text fill="#9b6cf5" font-family="monospace" font-size="9.5" x="24" y="302">replication →</text>
+<text fill="#7c8593" font-size="10" x="110" y="302">Writes hit the primary only; reads spread across replicas.</text>
+<text fill="#7c8593" font-size="10" x="24" y="322">Sharding is the last step below this tier. Layering is what makes each tier scale alone.</text>
+</svg>
+<figcaption>Fig. 1 · What one machine grows into: client → CDN → load balancer → stateless web pool → cache → primary and replicas, with slow work routed off to a queue and workers.</figcaption>
+</figure>
+<h3>Vertical vs horizontal: the turning point is "no substitute," not "not fast enough"</h3>
+<p>Vertical scaling means a beefier single box. Its upside is badly underrated: it is <strong>simple</strong> — the application barely changes and you face none of the distributed-systems tax. It has two problems: <strong>a hard ceiling</strong>, and <strong>no failover, no redundancy</strong>. <strong>The second is the decisive one.</strong> Plenty of teams believe they went horizontal because they were not fast enough; what actually forced them was not daring to run on one box.</p>
+<p>Horizontal scaling is a pile of ordinary machines with a <strong>load balancer</strong> in front. The LB owns the public IP and is all the client knows; the web servers behind it have <strong>private IPs only</strong> and talk over the internal network, never exposed directly. Two payoffs: when one dies, the LB sends traffic to the rest; when traffic grows, you add machines to the pool.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/scalability-day1.en.html" target="_blank" rel="noopener">System Design · Day 1 Scalability</a> — every rung from one box to ten million QPS, and what the real bottleneck is at each</aside>
+<h3>Replication: the cheapest lever when reads dominate</h3>
+<p>Adding web machines is easy because they store nothing. Databases are not so lucky. The first move is <strong>replication</strong>: one <strong>primary</strong> takes every write, while several <strong>replicas</strong> hold copies and serve reads only.</p>
+<p>It pays off because nearly every application <strong>reads far more than it writes</strong> — the community above runs about <code>100:1</code>. Spread reads over N replicas and read capacity grows close to linearly, while the application changes in exactly one way: <strong>reads to replicas, writes to the primary</strong>. You also get <strong>durability</strong> and <strong>availability</strong> for free (a dead replica means reads go elsewhere; a dead primary means promoting a replica).</p>
+<p>The honest cost: <strong>replication is usually asynchronous, so replicas lag</strong>. If the request right after a user posts happens to land on a replica that has not caught up, they will not see their own post. The usual remedy is to <strong>pin that user's reads to the primary</strong> for a short window after a write.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="b1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="b2" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="320" x2="320" y1="16" y2="236"></line>
+<text fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle" x="158" y="24">1. Normal: write primary, read replicas</text>
+<rect fill="rgba(91,157,249,0.14)" height="28" rx="6" stroke="#5b9df9" width="120" x="98" y="40"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="158" y="59">Web tier</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="126" x2="76" y1="70" y2="112"></line>
+<text fill="#9b6cf5" font-family="monospace" font-size="10" x="72" y="92">write</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="178" x2="208" y1="70" y2="112"></line>
+<text fill="#5b9df9" font-family="monospace" font-size="10" x="190" y="92">read</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="194" x2="264" y1="70" y2="158"></line>
+<rect fill="rgba(155,108,245,0.2)" height="30" rx="6" stroke="#9b6cf5" stroke-width="1.6" width="106" x="20" y="114"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="73" y="133">Primary (write)</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="82" x="170" y="114"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="211" y="133">Replica A</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="82" x="228" y="160"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="269" y="179">Replica B</text>
+<line marker-end="url(#b2)" stroke="#9b6cf5" stroke-dasharray="4 3" x1="128" x2="166" y1="129" y2="129"></line>
+<line marker-end="url(#b2)" stroke="#9b6cf5" stroke-dasharray="4 3" x1="112" x2="224" y1="142" y2="172"></line>
+<text fill="#9b6cf5" font-family="monospace" font-size="9.5" x="20" y="212">dashed = async replication (replicas lag)</text>
+<text fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle" x="480" y="24">2. Primary dies: promote a replica</text>
+<rect fill="rgba(91,157,249,0.14)" height="28" rx="6" stroke="#5b9df9" width="120" x="420" y="40"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="480" y="59">Web tier</text>
+<rect fill="rgba(224,107,107,0.18)" height="30" rx="6" stroke="#e06b6b" stroke-width="1.6" width="100" x="344" y="114"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="394" y="133">Old primary</text>
+<rect fill="rgba(155,108,245,0.22)" height="40" rx="6" stroke="#9b6cf5" stroke-width="2" width="112" x="466" y="108"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="522" y="124">New primary</text><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="522" y="139">(was replica A)</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="82" x="486" y="164"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="527" y="183">Replica B</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="470" x2="504" y1="70" y2="106"></line>
+<line marker-end="url(#b2)" stroke="#9b6cf5" stroke-dasharray="4 3" x1="516" x2="522" y1="150" y2="162"></line>
+<line stroke="#e06b6b" stroke-width="1.4" x1="352" x2="372" y1="119" y2="139"></line>
+<line stroke="#e06b6b" stroke-width="1.4" x1="372" x2="352" y1="119" y2="139"></line>
+<text fill="#7c8593" font-size="9.5" x="344" y="212">Cost: writes not yet replicated can be lost.</text>
+</svg>
+<figcaption>Fig. 2 · Replication: writes to the primary, reads across replicas. When the primary dies a replica is promoted — at the cost of any writes that had not replicated yet.</figcaption>
+</figure>
+<h3>Cache and CDN: move data closer to whoever wants it</h3>
+<p>The cache tier is a separate in-memory store (Redis, Memcached) between web and database. The common pattern is <em>cache-aside</em>: check the cache, return on a hit; only on a miss do you query the database, write the result back, and return it.</p>
+<p>One number explains why it works: reading from memory is <strong>microseconds</strong>, while a network round trip plus a database disk lookup is typically <strong>milliseconds</strong> — three orders of magnitude. At a <code>90%</code> hit rate the read load reaching the database drops to <strong>one tenth</strong>: the community peaking at 600 QPS leaves only 60 QPS hitting the database.</p>
+<p>The book's five considerations each correspond to a class of production incident. <strong>When to use it</strong> — only data that is read often and changed rarely is worth caching, and a cache is not durable storage; a restart empties it. <strong>Expiry (TTL)</strong> — too short and you may as well not have one, too long and the data goes stale. <strong>Consistency</strong> — cache and database are not updated in one transaction, so a window of disagreement is unavoidable. <strong>Single point of failure</strong> — with one cache server, losing it sends every read to the database in the same instant and usually kills it, so spread across several and leave headroom. <strong>Eviction</strong> — when it is full, who goes? <em>LRU</em> (least recently used) is the default, with <em>LFU</em> and <em>FIFO</em> as alternatives.</p>
+<p>A CDN is the same idea on a different axis: push <strong>static content</strong> out to edge nodes worldwide so users fetch it nearby. Caching saves <strong>backend computation</strong>; a CDN saves <strong>intercontinental round trips</strong> — a US-to-Asia round trip is typically <code>150–200</code> ms, and an edge node cuts that to low tens of milliseconds. Its pitfalls are just as concrete: you pay per byte served, so cold content on a CDN is pure waste; TTLs must match how often content changes; and updates only propagate via an invalidation API or a versioned URL (<code>?v=2</code>).</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/caching-day2.en.html" target="_blank" rel="noopener">System Design · Day 2 Caching</a> — the layers from browser to database, and how to defend against cache penetration, stampedes and avalanches</aside>
+<h3>A stateless web tier: the real switch behind "just add machines"</h3>
+<p>Saying "adding web machines is easy" quietly assumed something: <strong>a web server holding session data cannot be swapped out freely</strong>. The stateful version keeps user A's session in the memory of server 1, so <strong>every one</strong> of A's requests must be routed back to server 1 — a <em>sticky session</em>. The consequences chain: the LB's scheduling is nailed down, server 1 dying logs A out, and every scale event drops a batch of users. <strong>Autoscaling is simply off the table.</strong></p>
+<p>The fix takes one sentence but carries enormous weight: <strong>move sessions into a shared persistent store</strong> and let the web servers remember nothing. Now any box serves any request, and machines go from being assets with identities to <strong>disposable, freely replaceable resources</strong>. Every elastic capability that follows — autoscaling, multi-region, canary and blue-green releases — depends on this step. <strong>If you take one thing from this chapter, take this.</strong></p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 230" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="c1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="320" x2="320" y1="16" y2="216"></line>
+<text fill="#e8794b" font-size="12" font-weight="700" text-anchor="middle" x="160" y="24">1. Stateful: pinned to one box</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="66" x="20" y="60"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="53" y="77">User A</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="66" x="20" y="120"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="53" y="137">User B</text>
+<rect fill="rgba(224,107,107,0.16)" height="34" rx="6" stroke="#e06b6b" width="160" x="146" y="52"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="226" y="66">Web 1</text><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="226" y="79">holds A's session in RAM</text>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="160" x="146" y="112"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="226" y="126">Web 2</text><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="226" y="139">holds B's session</text>
+<line marker-end="url(#c1)" stroke="#e06b6b" x1="88" x2="142" y1="70" y2="70"></line>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="88" x2="142" y1="132" y2="132"></line>
+<text fill="#e8794b" font-family="monospace" font-size="9.5" x="20" y="180">Web 1 dies → A is logged out;</text>
+<text fill="#e8794b" font-family="monospace" font-size="9.5" x="20" y="196">every scale event drops users → no autoscaling</text>
+<text fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle" x="480" y="24">2. Stateless: any box serves anyone</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="66" x="340" y="60"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="373" y="77">User A</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="66" x="340" y="120"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="373" y="137">User B</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="5" stroke="#5b9df9" width="86" x="442" y="56"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="485" y="73">Web 1</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="5" stroke="#5b9df9" width="86" x="442" y="122"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="485" y="139">Web 2</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="408" x2="438" y1="70" y2="70"></line>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="408" x2="438" y1="128" y2="128"></line>
+<line marker-end="url(#c1)" stroke="#7c8593" stroke-dasharray="3 3" x1="408" x2="438" y1="74" y2="122"></line>
+<line marker-end="url(#c1)" stroke="#7c8593" stroke-dasharray="3 3" x1="408" x2="438" y1="124" y2="76"></line>
+<rect fill="rgba(155,108,245,0.2)" height="44" rx="6" stroke="#9b6cf5" stroke-width="1.6" width="74" x="544" y="83"></rect><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="581" y="100">Shared</text><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="581" y="115">session store</text>
+<line marker-end="url(#c1)" stroke="#9b6cf5" x1="530" x2="540" y1="76" y2="94"></line>
+<line marker-end="url(#c1)" stroke="#9b6cf5" x1="530" x2="540" y1="128" y2="116"></line>
+<text fill="#5b9df9" font-family="monospace" font-size="9.5" x="344" y="180">Any box can die without affecting anyone;</text>
+<text fill="#5b9df9" font-family="monospace" font-size="9.5" x="344" y="196">machines become disposable → autoscaling works</text>
+</svg>
+<figcaption>Fig. 3 · Stateful vs stateless: sessions in server memory make each machine an asset with an identity; moving them to a shared store makes machines freely replaceable.</figcaption>
+</figure>
+<h3>Multiple data centres and message queues</h3>
+<p><strong>Multiple data centres</strong>: <em>geoDNS</em> (DNS that resolves one domain to different IPs by the user's location) sends users to the nearest site, cutting latency and letting you drain traffic away when a whole site fails. The book names three difficulties in passing, and each is hard: <strong>traffic redirection</strong> (geoDNS changes are subject to DNS caching, so they do not take effect the moment you flip the switch), <strong>data synchronisation</strong> (keeping sites consistent — the hardest of the three), and <strong>test and deployment</strong>.</p>
+<p><strong>Message queues</strong>: producers post tasks, workers consume them asynchronously, and the value is <strong>decoupling</strong>. The book's example is photo processing — the user uploads, the web server drops "crop, sharpen, blur" into the queue and returns success immediately, and workers grind through it behind the scenes. The real gain is that <strong>the two sides scale independently</strong>: add workers when the queue backs up, remove them when it empties, with no effect on the web tier.</p>
+<h3>Sharding: the last step, and the only one you cannot really undo</h3>
+<p>Only when the database outgrows a single machine does sharding arrive: split one big table horizontally by a <strong>sharding key</strong> — the book's example is literally <code>user_id % 4</code>. <strong>The sharding key decides whether load is even, which makes it the most consequential and least revisable decision here.</strong> Three new problems come with it:</p>
+<ul>
+<li><strong>Resharding</strong>: growing from 4 shards to 8 means moving data while still serving traffic. With plain modulo, adding a machine reshuffles <strong>nearly everything</strong>; consistent hashing (the subject of Vol 1 Ch 5) exists to hold the movement down to <code>1/N</code>.</li>
+<li><strong>The celebrity problem (hot keys)</strong>: a handful of huge accounts landing on the same shard melts it while the others idle; in the extreme you give a single hot user their own shard.</li>
+<li><strong>Joins get hard</strong>: across databases, what was one SQL join becomes several queries stitched together in the application — or you <strong>denormalize</strong> and duplicate the fields that get read together into one table.</li>
+</ul>
+<p>So the conclusion of this section is not "how to shard" but <strong>"finish everything cheaper first, then consider sharding."</strong></p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="d1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="22">Split horizontally by user_id % 4</text>
+<rect fill="rgba(91,157,249,0.14)" height="28" rx="6" stroke="#5b9df9" width="150" x="245" y="36"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="320" y="55">Routing layer</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="320" y="78">hash(user_id) % 4</text>
+<rect fill="rgba(91,157,249,0.08)" height="60" rx="6" stroke="#7c8593" width="118" x="24" y="96"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="83" y="114">Shard 0</text>
+<rect fill="rgba(91,157,249,0.28)" height="20" width="98" x="34" y="126"></rect><text fill="#b9c0ca" font-family="monospace" font-size="9" text-anchor="middle" x="83" y="150">load ~25%</text>
+<rect fill="rgba(91,157,249,0.08)" height="60" rx="6" stroke="#7c8593" width="118" x="160" y="96"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="219" y="114">Shard 1</text>
+<rect fill="rgba(91,157,249,0.28)" height="20" width="98" x="170" y="126"></rect><text fill="#b9c0ca" font-family="monospace" font-size="9" text-anchor="middle" x="219" y="150">load ~25%</text>
+<rect fill="rgba(224,107,107,0.14)" height="60" rx="6" stroke="#e06b6b" stroke-width="1.8" width="118" x="296" y="96"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="355" y="114">Shard 2 · hot</text>
+<rect fill="rgba(224,107,107,0.5)" height="20" width="98" x="306" y="126"></rect><text fill="#e7ebf1" font-family="monospace" font-size="9" text-anchor="middle" x="355" y="150">load ~70%</text>
+<rect fill="rgba(91,157,249,0.08)" height="60" rx="6" stroke="#7c8593" width="118" x="432" y="96"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="491" y="114">Shard 3</text>
+<rect fill="rgba(91,157,249,0.28)" height="20" width="98" x="442" y="126"></rect><text fill="#b9c0ca" font-family="monospace" font-size="9" text-anchor="middle" x="491" y="150">load ~25%</text>
+<line marker-end="url(#d1)" stroke="#7c8593" x1="270" x2="98" y1="66" y2="94"></line>
+<line marker-end="url(#d1)" stroke="#7c8593" x1="300" x2="222" y1="66" y2="94"></line>
+<line marker-end="url(#d1)" stroke="#e06b6b" stroke-width="1.6" x1="340" x2="352" y1="66" y2="94"></line>
+<line marker-end="url(#d1)" stroke="#7c8593" x1="370" x2="480" y1="66" y2="94"></line>
+<text fill="#e06b6b" font-size="10" x="236" y="180">A few celebrities land on one shard → it melts while three idle</text>
+<text fill="#7c8593" font-size="10" x="24" y="204">Two more problems follow: growing 4 → 8 shards means moving data while serving traffic;</text>
+<text fill="#7c8593" font-size="10" x="24" y="224">and cross-shard joins become several queries stitched in the app, or denormalized copies.</text>
+</svg>
+<figcaption>Fig. 4 · Sharding and hot spots: modulo sharding looks even until celebrities cluster on one shard — choosing the key is the whole difficulty of this tier.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/sharding-day4.en.html" target="_blank" rel="noopener">System Design · Day 4 Database Sharding</a> — picking a key, resharding online, and which conveniences you give up once you shard</aside>
+<h3>Logging, metrics and automation</h3>
+<p>Past a certain size, <strong>invisible means unfixable</strong>. The book gives three levels of metrics: <strong>host level</strong> (CPU, memory, disk I/O), <strong>aggregated level</strong> (database tier performance, cache hit rate) and <strong>business level</strong> (daily actives, retention, revenue), plus centralised logging and automation. It is the step that turns everything above from "it runs" into "it keeps running."</p>
+<h2>Trade-offs and choices</h2>
+<p class="tcap">Table 1 · The scaling ladder: which bottleneck each step removes, what it costs, whether you can walk it back</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Step</th><th>Bottleneck removed</th><th>Typical gain</th><th>Cost</th><th>Reversible?</th></tr></thead>
+<tbody>
+<tr><th>① Split web and DB</th><td>Two resource profiles fighting</td><td>Each tier scales alone</td><td>One extra network hop (sub-ms)</td><td><strong>Easily</strong></td></tr>
+<tr><th>② LB + many web boxes</th><td><strong>Single point of failure</strong>; web CPU</td><td>Web tier scales near-linearly</td><td>One more component to operate</td><td><strong>Easily</strong></td></tr>
+<tr><th>③ Make web tier stateless</th><td>Sticky sessions freezing scheduling</td><td>Unlocks autoscaling / multi-region / canary</td><td>One hop for session reads and writes</td><td>Easily</td></tr>
+<tr><th>④ Read replicas</th><td>Read load; only one copy of the data</td><td>At <code>100:1</code> read/write, reads scale near-linearly</td><td><strong>Replication lag</strong> — you can read stale data</td><td>Easily</td></tr>
+<tr><th>⑤ Cache + CDN</th><td>Repeated queries; intercontinental RTT</td><td>90% hit rate → DB reads at <code>1/10</code>; RTT from <code>150ms+</code> to low tens of ms</td><td>Consistency window; <strong>a dead cache tier can kill the database</strong></td><td>Easily</td></tr>
+<tr><th>⑥ Queue + workers</th><td>Slow tasks holding the main path</td><td>Instant response; both sides scale alone</td><td>Eventual consistency; retries and duplicates</td><td>Moderately</td></tr>
+<tr><th>⑦ Shard the database</th><td>It no longer <strong>fits</strong> on one machine</td><td>Storage and write capacity keep scaling</td><td>Hot keys, resharding, cross-shard joins</td><td><strong>Barely</strong></td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · Cache / CDN / replica: all three keep an extra copy — what differs is what they store and what they save</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Cache</th><th>CDN</th><th>Replica</th></tr></thead>
+<tbody>
+<tr><th>Stores</th><td>Query results, hot objects</td><td>Static files (images / JS / video)</td><td>A <strong>full copy</strong> of the database</td></tr>
+<tr><th>Saves</th><td>Backend compute and DB queries</td><td><strong>Cross-region round trips</strong></td><td>Read load on the primary</td></tr>
+<tr><th>Freshness</th><td>Depends on TTL and invalidation</td><td>Worst — TTLs often in hours or days</td><td>Best — lag usually ms to seconds</td></tr>
+<tr><th>If it dies</th><td><strong>Most dangerous</strong>: all reads hit the DB at once</td><td>Falls back to origin — slow, not fatal</td><td>Reads move to the primary or another replica</td></tr>
+</tbody></table></div>
+<h2>Why it matters / in real systems</h2>
+<p>This chapter became the standard opening of system design interviews because it hands you a <strong>route you can recite</strong>. Asked "what if traffic grows ten times," the bad answer is a menu of names; the good one is: "look at which tier gives out first — if web CPU is saturated, add machines; if database reads are, add a cache and replicas; only when one machine can no longer hold the data do we discuss sharding." <strong>Being able to say, at each step, "here is where I am stuck, so here is what I add" wins most of the interview and most of the design review.</strong> And the route has a public record on both sides:</p>
+<div class="ev">
+<div class="evh">FIELD EVIDENCE · not the book's claims, but the companies' own</div>
+<ul>
+<li><strong>Instagram</strong> published its whole stack in 2011: past 14 million users in little over a year, on exactly this ladder — Django on EC2, nginx load balancing in front, PostgreSQL with replicas, memcached and Redis for caching and sessions. Their own stated principles were "keep it very simple," "don't re-invent the wheel," and "go with proven and solid technologies when you can" — <strong>positive evidence that a small team can walk the whole route</strong>. <span class="src"><a href="https://instagram-engineering.com/what-powers-instagram-hundreds-of-instances-dozens-of-technologies-adf2e22da2ad" rel="noopener" target="_blank">Instagram Engineering, "What Powers Instagram," 2011 ↗</a></span></li>
+<li><strong>Stack Overflow</strong>'s Nick Craver published exact figures: on 9 February 2016 they served <code>209,420,973</code> HTTP requests, <code>66,294,789</code> of them page loads, on <strong>9 primary web servers and 4 SQL Servers</strong>; he also writes that they are "down to <em>needing</em> only 1 web server," and have "unintentionally tested this, successfully, a few times" — <strong>counter-evidence: vertical scaling plus serious optimisation goes much further than people assume, and plenty of products never need a shard</strong>. <span class="src"><a href="https://nickcraver.com/blog/2016/02/17/stack-overflow-the-architecture-2016-edition/" rel="noopener" target="_blank">N. Craver, "Stack Overflow: The Architecture — 2016 Edition" ↗</a></span></li>
+<li><strong>Facebook</strong>'s NSDI 2013 paper describes assembling memcached into a distributed key-value store serving <strong>billions of requests per second over trillions of stored items</strong>; its longest sections are about <strong>consistency</strong> between cache and database and about cross-region replication — <strong>confirming that cache consistency is a genuine problem, not one line of code</strong>. <span class="src"><a href="https://www.usenix.org/conference/nsdi13/technical-sessions/presentation/nishtala" rel="noopener" target="_blank">R. Nishtala et al., "Scaling Memcache at Facebook," USENIX NSDI 2013 ↗</a></span></li>
+<li><strong>Discord</strong> published its sharding pain: 12 Cassandra nodes holding billions of messages in 2017 became <strong>177 nodes and trillions of messages</strong> by early 2022, and the worst problem was the <em>hot partition</em> — a very active channel in a large public server overwhelming one partition, making latency unpredictable and paging on-call repeatedly. <strong>That is the celebrity problem in the wild.</strong> <span class="src"><a href="https://discord.com/blog/how-discord-stores-trillions-of-messages" rel="noopener" target="_blank">Discord Blog, "How Discord Stores Trillions of Messages" ↗</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and disputes</h2>
+<ul>
+<li><strong>Treating the order as a checklist</strong>: the most common misreading is that all seven steps must happen. In the real world the overwhelming majority of products <strong>never reach sharding</strong> — Stack Overflow is the living proof. The route tells you what to do next, not what to do in total.</li>
+<li><strong>Sharding too early</strong>: it is the one nearly irreversible step, and after it joins, transactions, global ordering and global uniqueness all get harder. The test is strict: confirm that vertical scaling, read replicas and caching are all <strong>fully exhausted</strong> first.</li>
+<li><strong>Underrating statelessness</strong>: many teams treat it as "move the session somewhere else." It is in fact the <strong>sole precondition</strong> for autoscaling, multi-region and canary releases. Sticky sessions are debt, and it gets dearer the longer you carry it.</li>
+<li><strong>"We added a cache, so it is fast now"</strong>: caching lowers the average but <strong>stretches the tail</strong> — a miss now pays for two hops. Worse, when the cache tier dies the database absorbs ten times the read load in one instant. Always ask: <strong>if the cache vanished, would the database survive?</strong></li>
+<li><strong>The closing "split into microservices" deserves scepticism</strong>: the book offers it as a parting suggestion, whereas a decade of industry experience suggests microservices mainly solve an <strong>organisational</strong> scaling problem (letting teams ship independently) rather than a performance one; used as a performance tool they usually buy more network hops and harder debugging.</li>
+<li><strong>Terminology and period limits</strong>: the book says master / slave, while the industry has largely moved to <em>primary / replica</em> — use the current terms in documents and interviews. Written in 2020, its examples are of the IaaS era; serverless and managed databases with automatic sharding have since cut the cost of several steps — but "each step removes exactly one bottleneck, ordered by return" has not aged.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① This chapter is not a parts list, it is a <strong>build order</strong>: each step removes one bottleneck, with falling returns and rising irreversibility.</p>
+<p>② The first separation is <strong>pulling the database off the web server</strong>; default to a <strong>relational</strong> database, and reach for NoSQL only when very low latency, unstructured data, no complex queries and enormous volume all apply.</p>
+<p>③ The real reason to go horizontal is not "not fast enough" but <strong>"not willing to run on one box"</strong> — the single point of failure is the turning point.</p>
+<p>④ <strong>Statelessness is the master switch</strong>: with sessions in a shared store, machines stop being assets with identities and become disposable, and autoscaling becomes possible.</p>
+<p>⑤ When reads dominate, the cheapest lever is <strong>replication</strong>; the price is <strong>replication lag</strong> — a user may not see what they just wrote.</p>
+<p>⑥ Caching saves backend compute, a CDN saves intercontinental round trips; <strong>the cache tier is the most dangerous single point</strong>, since losing it dumps every read on the database at once.</p>
+<p>⑦ A message queue buys <strong>decoupling and independent scaling</strong>: slow work goes in the queue and returns immediately; add workers when it backs up.</p>
+<p>⑧ Sharding comes last, and brings <strong>resharding, celebrity hot spots and cross-shard joins</strong> with it — and you can barely walk it back.</p>
+<p>⑨ Finish with logging, three levels of metrics and automation — without them, everything above merely runs rather than keeps running.</p>
+</div>
+</div>
+<footer>Book Deep Read · Reading this page ≈ getting the core of the chapter; go to the book itself for the full cases and detail.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

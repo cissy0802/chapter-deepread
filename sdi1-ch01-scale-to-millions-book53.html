@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview 卷一 第 1 章 · 从零到百万用户 — 专业书籍精读 Book 53</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · System Design Interview 卷一 · 第 1 章</p>
+<h1>从零到百万用户</h1>
+<p class="sub">System Design Interview: An Insider's Guide · Vol 1 · Ch 1 · Alex Xu · 2020</p>
+<p class="langbar"><a href="sdi1-ch01-scale-to-millions-book53.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你现在打开的任何一个网站或 App，最早很可能只是某个人租的<strong>一台机器</strong>。这一章讲的就是：这一台机器怎么一步步长成一整个机房。它是《System Design Interview》第一卷的开场，也是全书唯一一章<strong>不设计任何具体产品</strong>——它给的是一条路线：用户从 0 涨到几百万的路上，每一次该改造哪里。</p>
+<h2>先打个比方</h2>
+<p>把网站想成一家<strong>面馆</strong>。开张时老板一个人：接单、下面、收钱、记账本全在一个铺子里。生意火了怎么办？直觉是「换个更能干的老板」，真正的解法却是<strong>分工</strong>：门口站个领位的、后厨多加几口锅、常点的几样先做好放保温柜、账本抄一份给会计、外卖单贴墙上让骑手自取、最后城东城西各开一家分店。这一章的每一步扩展，都对得上其中一件。</p>
+<h2>旧世界为什么难</h2>
+<p>一台机器扛不住时，最省事的办法是换更强的机器。这条路能走得比大多数人想的远——Stack Overflow 在 2016 年一天扛住 <strong>两亿多次</strong>请求，用的不过是九台网页服务器加四台数据库。但它有个躲不掉的问题：<strong>那台机器一坏，网站就整个没了，没有替补。</strong>所以真正的转折点不是「更强」而是「更多」——一堆普通机器，坏一台不影响别人。</p>
+<h2>核心机制：六件事，有先后</h2>
+<p><strong>① 门口站个领位的。</strong>客人不再直接找某个服务员，而是由领位的分派给当下空着的那个。某个服务员请假了，客人照样有人接。</p>
+<p><strong>② 但服务员不能「记住」客人。</strong>你在 3 号服务员那点的单只记在他脑子里，他一下班你就得重新点一遍。改成把「谁点了什么」统一写到前台一个共享的本子上，任何一个服务员就都能接手你——这是能自由加人减人的<strong>总开关</strong>。</p>
+<p><strong>③ 账本抄几份。</strong>看账的人远比记账的人多。让「记」只写进正本、「看」都去翻抄本，正本立刻轻松下来。</p>
+<p><strong>④ 常点的先做好放保温柜。</strong>热门那几样不必每次从头炒，直接从柜里取——这就是缓存。图片、视频这类更干脆在各个城市都存一份，谁近取谁的。</p>
+<p><strong>⑤ 慢活写成单子排队。</strong>修图、发通知这种要花时间的事别让客人干等：写张单子扔进队列，后厨慢慢消化，忙不过来就多叫两个。</p>
+<p><strong>⑥ 实在装不下，才把账本切开。</strong>一本记不下就按客人姓氏拆成四本。这是最后一步，<strong>也是唯一一步几乎回不了头的</strong>：拆开之后，很多原本一句话就能查的东西（比如「把所有客人按第一次来的时间排序」）会突然变得很麻烦。</p>
+<h2>该怎么用它</h2>
+<p>这六步是按<strong>性价比从高到低</strong>排的：前面几步便宜、可逆、见效快，最后一步又贵又难回头。所以真正该问的从来不是「我们该上什么技术」，而是<strong>「我现在是哪一处先撑不住？」</strong></p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>把系统做大不是「买更强的机器」，而是<strong>一次次把「记住的东西」从会挡路的地方搬走</strong>：搬出服务员的脑子（无状态）、搬到抄本上（读写分离）、搬到离客人更近的地方（缓存与就近分发）、搬进队列里（异步），最后才切开（分片）。</p>
+</div>
+<p class="switch-hint">想进到具体机制、量级和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">你以为这一章在教「怎么把系统做大」，其实它在教一个<strong>顺序</strong>。负载均衡、缓存、CDN、分片这些零件哪里都查得到，这一章真正给出的，是把它们排成一条<strong>性价比递减、不可逆性递增的施工路线</strong>——每一步只解决一个特定瓶颈。顺序排错，你会为一个还不存在的问题，付出永久的复杂度。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>QPS（queries per second）</strong>：每秒请求数，衡量系统压力最常用的尺子。</li>
+<li><strong>DNS（域名系统）</strong>：把域名翻译成机器 IP 的「电话簿」，访问任何网站的第一跳。</li>
+<li><strong>负载均衡器（load balancer, LB）</strong>：站在一堆服务器前面、把请求分派给其中一台的组件。</li>
+<li><strong>纵向扩展（vertical scaling）</strong>：换更强的单机。<strong>横向扩展（horizontal scaling）</strong>：加更多普通机器。</li>
+<li><strong>复制（replication）</strong>：同一份数据在多台机器各存一份。主库（原书称 master）接收写，从库（replica）持副本供读。</li>
+<li><strong>缓存（cache）</strong>：把查过的结果暂存在内存里，下次直接取；<strong>命中率（hit rate）</strong>即能直接拿到结果的请求占比。</li>
+<li><strong>CDN（内容分发网络）</strong>：全球各地的边缘节点，把静态文件就近发给用户。</li>
+<li><strong>会话（session）</strong>：服务端记住「你是谁、登录了没、购物车里有什么」的那份数据。</li>
+<li><strong>无状态（stateless）</strong>：服务器不保存跨请求的数据，任何一台都能处理任何一个请求。</li>
+<li><strong>消息队列（message queue）</strong>：居中的缓冲区，生产者往里发任务，消费者（worker）异步取走。</li>
+<li><strong>分片（sharding）</strong>：把一张大表按<strong>分片键（sharding key）</strong>水平切成多个库，各存一部分行。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>本章是卷一 Part I「方法与基础」三章的第一章，也是<strong>全书唯一不设计具体产品的一章</strong>：Ch2 教怎么把 QPS、存储、带宽在白板上算到量级正确，Ch3 教四步面试框架，而 Ch1 先给出这两者要作用其上的<strong>公共骨架</strong>。后面十二个案例——限流器、短网址、信息流、YouTube、Google Drive——几乎都是在这张骨架的某一层上做加法。</p>
+<h2>这章要解决什么</h2>
+<p>「你的系统能扛多少用户」，工程师最常见的答法是报菜名：我们上了 Redis、Kafka、分库分表。但名词回答不了<strong>为什么是现在、为什么是这个</strong>。这一章要解决的是另一个问题：<strong>下一个会先撑不住的是哪个东西</strong>，以及为它花的钱和复杂度值不值。</p>
+<p>不解决会怎样？<strong>做早了</strong>：用户五千人就上微服务加分库分表加多活，团队八成时间在维护基础设施而不是做产品，而分片几乎收不回来。<strong>做晚了</strong>：等唯一那台数据库 CPU 打到 90% 才想起读写分离，此时任何改造都得带着生产流量做，风险最高。</p>
+<p>拿个场景当锚：一个内容社区，<strong>日活 100 万</strong>，人均每天打开 10 次、每次拉 20 条。读请求约 <code>1000 万次/天</code>，摊平后<strong>约 116 QPS</strong>，按峰值是均值的 3–5 倍算，<strong>峰值 350–600 QPS</strong>；写约是读的百分之一。这个量级下一台像样的服务器加一个数据库其实还撑得住——先出问题的不是「总量」，而是<strong>某一类请求</strong>（比如首页那条要连接三张表的查询）和<strong>没有替补</strong>。这就解释了为什么第一步往往是负载均衡加从库，而不是分片。</p>
+<h2>核心内容，讲透</h2>
+<h3>先看清一次请求走了哪几跳</h3>
+<p>最初的形态：<strong>一台服务器</strong>同时跑 web 应用、数据库和缓存。用户输入域名 → 问 DNS 拿到 IP → 浏览器直连 → 服务器返回 HTML 或 JSON。先看清这条链路，是因为<strong>后面每一步扩展本质上都是往里插一个新的跳</strong>——插负载均衡、插缓存、插 CDN、插队列。看不清它，后面就只能死记零件名。</p>
+<p>第一次真正的分家，是<strong>把数据库从 web 服务器上搬走</strong>：两者要的资源根本不同——web 吃 CPU 和并发连接，数据库吃内存和磁盘 IO，挤在一起互相抢，也没法各自独立扩。选型上原书的判据很朴素：<strong>默认选关系型数据库（RDBMS）</strong>，只有超低延迟、数据非结构化、无需复杂查询、数据量极大时才考虑 NoSQL——<strong>别因为它听起来更现代就选</strong>。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 340" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="a1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="a2" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="20">分层后的全景：每一层都能单独加机器</text>
+<rect fill="rgba(91,157,249,0.1)" height="30" rx="6" stroke="#7c8593" width="108" x="24" y="34"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="78" y="53">浏览器 / App</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="134" x2="186" y1="49" y2="49"></line>
+<rect fill="rgba(91,157,249,0.1)" height="30" rx="6" stroke="#7c8593" width="118" x="190" y="34"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="249" y="53">CDN（静态资源）</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="310" x2="362" y1="49" y2="49"></line>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="6" stroke="#5b9df9" stroke-width="1.6" width="150" x="366" y="34"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="441" y="53">负载均衡器（公网 IP）</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="441" y="80">分派 · 摘除故障节点</text>
+<rect fill="none" height="52" rx="8" stroke="rgba(91,157,249,0.45)" stroke-dasharray="5 4" width="316" x="200" y="94"></rect>
+<text fill="#5b9df9" font-family="monospace" font-size="9.5" x="206" y="107">无状态 Web 服务器池（可随意增删）</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="88" x="212" y="112"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="256" y="129">Web 1</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="88" x="314" y="112"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="358" y="129">Web 2</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="88" x="416" y="112"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="460" y="129">Web 3</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="420" x2="270" y1="66" y2="110"></line>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="441" x2="358" y1="66" y2="110"></line>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="462" x2="458" y1="66" y2="110"></line>
+<rect fill="rgba(155,108,245,0.16)" height="42" rx="6" stroke="#9b6cf5" width="140" x="24" y="104"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="94" y="121">会话 / 状态</text><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="94" y="137">共享存储</text>
+<line marker-end="url(#a2)" stroke="#9b6cf5" stroke-dasharray="4 3" x1="210" x2="168" y1="125" y2="125"></line>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="6" stroke="#5b9df9" width="164" x="200" y="176"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="282" y="195">缓存层（内存）</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="270" x2="278" y1="140" y2="174"></line>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="6" stroke="#5b9df9" width="130" x="430" y="176"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="495" y="195">消息队列</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="460" x2="490" y1="140" y2="174"></line>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="130" x="430" y="252"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="495" y="271">Worker 池</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="495" x2="495" y1="208" y2="250"></line>
+<rect fill="rgba(155,108,245,0.2)" height="30" rx="6" stroke="#9b6cf5" stroke-width="1.6" width="104" x="24" y="252"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="76" y="271">主库（写）</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="94" x="142" y="252"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="189" y="271">从库 A（读）</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="94" x="250" y="252"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="297" y="271">从库 B（读）</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="250" x2="110" y1="208" y2="250"></line>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="290" x2="280" y1="208" y2="250"></line>
+<line marker-end="url(#a2)" stroke="#9b6cf5" stroke-dasharray="4 3" x1="128" x2="140" y1="267" y2="267"></line>
+<text fill="#9b6cf5" font-family="monospace" font-size="9.5" x="24" y="302">复制 →</text>
+<text fill="#7c8593" font-size="10" x="86" y="302">写只进主库；读摊到从库。分片是这一层再往下的最后一步。</text>
+<text fill="#7c8593" font-size="10" x="24" y="322">每一层都可独立增减机器 —— 这正是「分层」换来的东西。</text>
+</svg>
+<figcaption>图 1 · 一台机器长成的最终形态：客户端 → CDN → 负载均衡 → 无状态 Web 池 → 缓存 → 主从数据库，慢活旁路走队列与 Worker。</figcaption>
+</figure>
+<h3>纵向 vs 横向：转折点不是「不够强」，是「没有替补」</h3>
+<p>纵向扩展就是换更强的单机。它的好处被严重低估：<strong>简单</strong>——应用几乎不用改，不用面对分布式的任何麻烦。问题有两条：<strong>有硬天花板</strong>，以及<strong>没有故障转移、没有冗余</strong>。<strong>第二条才是决定性的</strong>：很多团队以为自己是因为「不够快」才转横向，真正逼他们转的其实是「不敢只有一台」。</p>
+<p>横向扩展 = 一堆普通机器 + 前面站一个<strong>负载均衡器</strong>。LB 持有公网 IP，客户端只认得它；后面的 web 服务器<strong>只有私网 IP</strong>，走内网通信、不直接暴露给公网。收益有二：一台挂了流量分给其余的；流量涨了把新机器加进池子即可。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/scalability-day1.html" target="_blank" rel="noopener">System Design · Day 1 可扩展性基础</a> — 从单机到千万 QPS 每一档的做法，以及各档位真正的瓶颈在哪</aside>
+<h3>数据库复制：读多写少下最便宜的那根杠杆</h3>
+<p>web 层加机器容易，因为它们不存东西；数据库不行。第一招是<strong>复制</strong>：一个<strong>主库</strong>接收所有写，若干<strong>从库</strong>持有副本、只提供读。</p>
+<p>它划算，是因为绝大多数应用<strong>读远多于写</strong>——前面那个社区的读写比约 <code>100:1</code>。把读摊到 N 个从库上，读能力近乎线性增长，应用侧的改动只有一件事：<strong>读走从库、写走主库</strong>。附带白拿<strong>可靠性</strong>与<strong>可用性</strong>（从库挂了读切别处，主库挂了提升一个从库顶上）。</p>
+<p>诚实的代价：<strong>复制通常是异步的，从库会滞后</strong>。用户刚发的帖，若下一个请求恰好落到还没同步上的从库，他会「看不到自己刚写的东西」。常见对策是写后一小段时间内把该用户的读<strong>钉在主库上</strong>。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="b1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="b2" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="320" x2="320" y1="16" y2="236"></line>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="158" y="24">① 正常：写进主库，读摊到从库</text>
+<rect fill="rgba(91,157,249,0.14)" height="28" rx="6" stroke="#5b9df9" width="120" x="98" y="40"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="158" y="59">Web 层</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="126" x2="74" y1="70" y2="112"></line>
+<text fill="#9b6cf5" font-family="monospace" font-size="10" x="76" y="90">写</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="178" x2="212" y1="70" y2="112"></line>
+<text fill="#5b9df9" font-family="monospace" font-size="10" x="192" y="90">读</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="194" x2="268" y1="70" y2="112"></line>
+<rect fill="rgba(155,108,245,0.2)" height="30" rx="6" stroke="#9b6cf5" stroke-width="1.6" width="86" x="26" y="114"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="69" y="133">主库（写）</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="76" x="170" y="114"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="208" y="133">从库 A</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="76" x="228" y="160"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="266" y="179">从库 B</text>
+<line marker-end="url(#b2)" stroke="#9b6cf5" stroke-dasharray="4 3" x1="112" x2="166" y1="129" y2="129"></line>
+<line marker-end="url(#b2)" stroke="#9b6cf5" stroke-dasharray="4 3" x1="106" x2="224" y1="140" y2="172"></line>
+<text fill="#9b6cf5" font-family="monospace" font-size="9.5" x="110" y="204">虚线 = 异步复制（从库会滞后）</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="480" y="24">② 主库挂了：提升一个从库顶上</text>
+<rect fill="rgba(91,157,249,0.14)" height="28" rx="6" stroke="#5b9df9" width="120" x="420" y="40"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="480" y="59">Web 层</text>
+<rect fill="rgba(224,107,107,0.18)" height="30" rx="6" stroke="#e06b6b" stroke-width="1.6" width="100" x="344" y="114"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="400" y="133">旧主库</text>
+<rect fill="rgba(155,108,245,0.22)" height="40" rx="6" stroke="#9b6cf5" stroke-width="2" width="118" x="462" y="108"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="521" y="124">新主库</text><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="521" y="139">（原从库 A）</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="76" x="490" y="160"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="528" y="179">从库 B</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="470" x2="504" y1="70" y2="106"></line>
+<line marker-end="url(#b2)" stroke="#9b6cf5" stroke-dasharray="4 3" x1="516" x2="522" y1="150" y2="158"></line>
+<line stroke="#e06b6b" stroke-width="1.4" x1="356" x2="376" y1="119" y2="139"></line>
+<line stroke="#e06b6b" stroke-width="1.4" x1="376" x2="356" y1="119" y2="139"></line>
+<text fill="#7c8593" font-size="9.5" x="352" y="204">切换有代价：可能丢掉尚未复制过去的最新写入</text>
+</svg>
+<figcaption>图 2 · 主从复制：写走主库、读摊到从库；主库故障时提升一个从库顶上，代价是可能丢掉还没复制过去的那部分写。</figcaption>
+</figure>
+<h3>缓存与 CDN：把数据搬到离「要它的人」更近的地方</h3>
+<p>缓存层是一个独立的内存存储（如 Redis、Memcached），插在 web 层和数据库之间。最常见的用法叫 <em>cache-aside（旁路缓存）</em>：先查缓存，命中就返回；未命中才查数据库，把结果写回缓存再返回。</p>
+<p>给个量级就知道为什么有效：从内存读一条数据是<strong>微秒级</strong>，走一次网络加数据库磁盘查询通常是<strong>毫秒级</strong>——差三个数量级。命中率做到 <code>90%</code>，库上读压力直接掉到<strong>十分之一</strong>：前面那个峰值 600 QPS 的社区，只剩 60 QPS 落到库上。</p>
+<p>原书列的五个考量，每个背后都是一类线上事故：<strong>何时该用</strong>——只有读频繁、改动很少的数据才值得缓存，且缓存不是持久存储、重启即空；<strong>过期策略（TTL）</strong>——太短等于白设，太长则长期陈旧；<strong>一致性</strong>——缓存与库的更新不在同一事务里，必然有窗口期不一致；<strong>单点故障</strong>——只有一台缓存服务器的话，它一挂所有读会在同一瞬间全砸到库上、通常直接把库打死，对策是多台分担且容量留冗余；<strong>淘汰策略</strong>——满了扔谁，<em>LRU</em>（扔最久没用到的）最常用，另有 <em>LFU</em> 和 <em>FIFO</em>。</p>
+<p>CDN 是同一思想换个维度：把<strong>静态内容</strong>推到全球各地的边缘节点，用户就近取。缓存省的是<strong>后端计算</strong>，CDN 省的是<strong>跨洲的网络往返</strong>——一次美国到亚洲的往返常在 <code>150–200</code> 毫秒量级，边缘节点能压到十几毫秒。坑同样具体：按流量计费，冷门内容放上去只是白花钱；TTL 要按更新频率调；内容更新得靠失效 API 或改 URL 版本号（<code>?v=2</code>）才推得下去。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/caching-day2.html" target="_blank" rel="noopener">System Design · Day 2 缓存</a> — 从浏览器到数据库的多层缓存，以及缓存穿透 / 击穿 / 雪崩各自的防法</aside>
+<h3>无状态 Web 层：这才是「随便加机器」的真正开关</h3>
+<p>前面说「web 层加机器容易」，有个前提一直没兑现：<strong>如果 web 服务器上存了用户的会话数据，它就不能被随便替换</strong>。有状态的做法是：用户 A 的 session 存在服务器 1 的内存里，于是 A 的<strong>每一个</strong>请求都必须路由回服务器 1——这叫<em>粘性会话（sticky session）</em>。后果一环扣一环：LB 调度被绑死、服务器 1 一挂 A 就掉线重登、每次加减机器都踢掉一批用户，<strong>自动伸缩根本无从谈起</strong>。</p>
+<p>解法一句话说得完，意义却极大：<strong>把 session 搬到共享的持久存储里</strong>，web 服务器自己什么都不记。于是任何一台都能处理任何一个请求，机器从「有身份的资产」变成<strong>可随意增删的一次性资源</strong>。后面所有弹性能力——自动伸缩、多活、灰度发布——全以此为前提。<strong>这一章若只带走一条，带走它。</strong></p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 230" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="c1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="320" x2="320" y1="16" y2="216"></line>
+<text fill="#e8794b" font-size="12.5" font-weight="700" text-anchor="middle" x="158" y="24">① 有状态：请求被钉死在某一台</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="66" x="26" y="60"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="59" y="77">用户 A</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="66" x="26" y="120"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="59" y="137">用户 B</text>
+<rect fill="rgba(224,107,107,0.16)" height="34" rx="6" stroke="#e06b6b" width="128" x="158" y="52"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="222" y="66">Web 1</text><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="222" y="79">内存里存着 A 的会话</text>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="128" x="158" y="112"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="222" y="126">Web 2</text><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="222" y="139">存着 B 的会话</text>
+<line marker-end="url(#c1)" stroke="#e06b6b" x1="94" x2="154" y1="70" y2="70"></line>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="94" x2="154" y1="132" y2="132"></line>
+<text fill="#e8794b" font-family="monospace" font-size="9.5" x="30" y="176">Web 1 一挂 → A 掉线重登；</text>
+<text fill="#e8794b" font-family="monospace" font-size="9.5" x="30" y="192">加减机器都会踢掉一批人 → 无法自动伸缩</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="480" y="24">② 无状态：任何一台都能接任何一个人</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="66" x="346" y="60"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="379" y="77">用户 A</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="66" x="346" y="120"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="379" y="137">用户 B</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="5" stroke="#5b9df9" width="86" x="446" y="56"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="489" y="73">Web 1</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="5" stroke="#5b9df9" width="86" x="446" y="122"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="489" y="139">Web 2</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="414" x2="442" y1="70" y2="70"></line>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="414" x2="442" y1="128" y2="128"></line>
+<line marker-end="url(#c1)" stroke="#7c8593" stroke-dasharray="3 3" x1="414" x2="442" y1="74" y2="122"></line>
+<line marker-end="url(#c1)" stroke="#7c8593" stroke-dasharray="3 3" x1="414" x2="442" y1="124" y2="76"></line>
+<rect fill="rgba(155,108,245,0.2)" height="44" rx="6" stroke="#9b6cf5" stroke-width="1.6" width="70" x="552" y="83"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="587" y="100">共享</text><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="587" y="116">会话存储</text>
+<line marker-end="url(#c1)" stroke="#9b6cf5" x1="534" x2="548" y1="76" y2="94"></line>
+<line marker-end="url(#c1)" stroke="#9b6cf5" x1="534" x2="548" y1="128" y2="116"></line>
+<text fill="#5b9df9" font-family="monospace" font-size="9.5" x="350" y="176">任一台挂掉不影响任何人；</text>
+<text fill="#5b9df9" font-family="monospace" font-size="9.5" x="350" y="192">机器变成可随意增删的一次性资源 → 自动伸缩成立</text>
+</svg>
+<figcaption>图 3 · 有状态 vs 无状态：会话留在服务器内存里，机器就成了「有身份的资产」；搬进共享存储，机器才真正可随意增删。</figcaption>
+</figure>
+<h3>多数据中心与消息队列：跨地域，以及把慢活挪出主链路</h3>
+<p><strong>多数据中心</strong>：用 <em>geoDNS</em>（按地理位置把同一域名解析到不同 IP）把用户导到最近的机房，延迟更低，且一个机房整体故障时能把流量全导走。原书点到即止的三个难点每个都硬：<strong>流量重定向</strong>（受 DNS 缓存存活时长影响，不是按下开关就生效）、<strong>数据同步</strong>（跨机房怎么保持一致，最难的一条）、<strong>测试与部署</strong>。</p>
+<p><strong>消息队列</strong>：生产者把任务发进队列，Worker 异步取走处理，价值在<strong>解耦</strong>。原书的例子是图片处理：用户上传照片，web 服务器把「裁剪、锐化、模糊」扔进队列就立刻返回成功，Worker 在后面慢慢消化。真正的好处是<strong>两侧各自独立扩</strong>：队列积压了就加 Worker，空了就减，web 层完全不受影响。</p>
+<h3>分片：最后一步，也是唯一近乎不可逆的一步</h3>
+<p>只有当数据库大到单机装不下了，才轮到分片：把一张大表按<strong>分片键</strong>水平切成多个库，原书的例子就是 <code>user_id % 4</code>。<strong>分片键决定了负载是否均匀，是整件事里最关键、也最难回头改的决定。</strong>随之而来三个新问题：</p>
+<ul>
+<li><strong>重分片（resharding）</strong>：从 4 片扩到 8 片得边服务边搬数据。用简单取模的话，加一台机器几乎<strong>所有数据都得重排</strong>；一致性哈希（卷一 Ch5 的主题）就是为了把搬迁量压到 <code>1/N</code>。</li>
+<li><strong>名人问题（celebrity problem，即热点键）</strong>：几个超级大 V 恰好落在同一分片上，那一片被读爆而其余闲着；极端情况下只能给单个热点用户单独开一片。</li>
+<li><strong>连接（join）变难</strong>：跨了库，原来一句 SQL 的 join 得拆成多次查询加应用层拼接，或干脆<strong>反规范化（denormalize）</strong>——把要一起读的字段冗余进同一张表。</li>
+</ul>
+<p>所以这一节的结论不是「怎么分片」，而是<strong>「把前面所有便宜的事都做完，再考虑分片」</strong>。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="d1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="22">按 user_id % 4 水平切成四个分片</text>
+<rect fill="rgba(91,157,249,0.14)" height="28" rx="6" stroke="#5b9df9" width="150" x="245" y="36"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="320" y="55">应用层路由</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="320" y="78">hash(user_id) % 4</text>
+<rect fill="rgba(91,157,249,0.08)" height="60" rx="6" stroke="#7c8593" width="118" x="24" y="96"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="83" y="114">分片 0</text>
+<rect fill="rgba(91,157,249,0.28)" height="20" width="98" x="34" y="126"></rect><text fill="#b9c0ca" font-family="monospace" font-size="9" text-anchor="middle" x="83" y="150">负载 ~25%</text>
+<rect fill="rgba(91,157,249,0.08)" height="60" rx="6" stroke="#7c8593" width="118" x="160" y="96"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="219" y="114">分片 1</text>
+<rect fill="rgba(91,157,249,0.28)" height="20" width="98" x="170" y="126"></rect><text fill="#b9c0ca" font-family="monospace" font-size="9" text-anchor="middle" x="219" y="150">负载 ~25%</text>
+<rect fill="rgba(224,107,107,0.14)" height="60" rx="6" stroke="#e06b6b" stroke-width="1.8" width="118" x="296" y="96"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="355" y="114">分片 2 · 热点</text>
+<rect fill="rgba(224,107,107,0.5)" height="20" width="98" x="306" y="126"></rect><text fill="#e7ebf1" font-family="monospace" font-size="9" text-anchor="middle" x="355" y="150">负载 ~70%</text>
+<rect fill="rgba(91,157,249,0.08)" height="60" rx="6" stroke="#7c8593" width="118" x="432" y="96"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="491" y="114">分片 3</text>
+<rect fill="rgba(91,157,249,0.28)" height="20" width="98" x="442" y="126"></rect><text fill="#b9c0ca" font-family="monospace" font-size="9" text-anchor="middle" x="491" y="150">负载 ~25%</text>
+<line marker-end="url(#d1)" stroke="#7c8593" x1="270" x2="98" y1="66" y2="94"></line>
+<line marker-end="url(#d1)" stroke="#7c8593" x1="300" x2="222" y1="66" y2="94"></line>
+<line marker-end="url(#d1)" stroke="#e06b6b" stroke-width="1.6" x1="340" x2="352" y1="66" y2="94"></line>
+<line marker-end="url(#d1)" stroke="#7c8593" x1="370" x2="480" y1="66" y2="94"></line>
+<text fill="#e06b6b" font-size="10.5" x="296" y="180">几个大 V 落在同一片 → 它被打爆，其余三片闲着</text>
+<text fill="#7c8593" font-size="10" x="24" y="204">另两个跟着来的问题：① 从 4 片扩到 8 片要边服务边搬数据（重分片）；</text>
+<text fill="#7c8593" font-size="10" x="24" y="224">② 跨片的 join 只能拆成多次查询 + 应用层拼接，或反规范化冗余字段。</text>
+</svg>
+<figcaption>图 4 · 分片与热点：取模分片看似均匀，一旦「名人」集中在同一片上负载立刻失衡——分片键的选择就是这一层的全部难点。</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/sharding-day4.html" target="_blank" rel="noopener">System Design · Day 4 数据库分片</a> — 分片键怎么挑、重分片怎么在线做，以及分片后你会失去哪些理所当然的能力</aside>
+<h3>日志、指标与自动化</h3>
+<p>系统一旦上了规模，<strong>「看不见」就等于「修不了」</strong>。原书给的是三层指标：<strong>主机级</strong>（CPU、内存、磁盘 IO）、<strong>聚合级</strong>（数据库层整体性能、缓存命中率）、<strong>业务级</strong>（日活、留存、收入），再加日志集中化与自动化。它是把前面所有改造从「能跑」变成「能持续跑」的那一步。</p>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 1 · 扩展阶梯：每一步解决哪个瓶颈、代价多大、能不能回头（本章的主线）</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>步骤</th><th>解决的瓶颈</th><th>典型收益量级</th><th>代价</th><th>可逆性</th></tr></thead>
+<tbody>
+<tr><th>① 拆开 Web 与 DB</th><td>两类资源互抢</td><td>两层各自独立伸缩</td><td>多一跳网络（亚毫秒级）</td><td><strong>易回退</strong></td></tr>
+<tr><th>② 负载均衡 + 多 Web</th><td><strong>单点故障</strong>；Web 算力不足</td><td>Web 层近乎线性可扩</td><td>多一个组件要运维</td><td><strong>易回退</strong></td></tr>
+<tr><th>③ Web 层无状态化</th><td>粘性会话锁死调度与伸缩</td><td>解锁自动伸缩 / 多活 / 灰度发布</td><td>会话读写多一跳</td><td>易回退</td></tr>
+<tr><th>④ 主从复制</th><td>库读压力；数据只有一份</td><td>读写比 <code>100:1</code> 时读能力近乎线性增长</td><td><strong>复制滞后</strong>——可能读到旧数据</td><td>易回退</td></tr>
+<tr><th>⑤ 缓存 + CDN</th><td>重复的库查询；跨洲往返</td><td>命中率 90% → 库读压力降到 <code>1/10</code>；跨洲 RTT 从 <code>150ms+</code> 降到十几毫秒</td><td>一致性窗口；<strong>缓存挂掉会瞬间打死库</strong></td><td>易回退</td></tr>
+<tr><th>⑥ 消息队列 + Worker</th><td>慢任务占着主链路</td><td>响应立刻返回；两侧各自独立扩</td><td>最终一致；要处理重试与重复消费</td><td>中等</td></tr>
+<tr><th>⑦ 数据库分片</th><td>单机<strong>装不下</strong>了</td><td>存储与写入能力可持续扩</td><td>热点、重分片、跨片 join 全部变难</td><td><strong>近乎不可逆</strong></td></tr>
+</tbody></table></div>
+<p class="tcap">表 2 · 缓存 / CDN / 从库：三者都是「多存一份」，区别在存什么、省什么</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>缓存</th><th>CDN</th><th>从库</th></tr></thead>
+<tbody>
+<tr><th>存的是</th><td>查询结果、热点对象</td><td>静态文件（图片 / JS / 视频）</td><td>数据库的<strong>完整副本</strong></td></tr>
+<tr><th>省的是</th><td>后端计算与库查询</td><td><strong>跨地域网络往返</strong></td><td>主库的读负载</td></tr>
+<tr><th>新鲜度</th><td>受 TTL 与失效策略影响</td><td>最差——TTL 常以小时 / 天计</td><td>最好——滞后通常毫秒到秒级</td></tr>
+<tr><th>它挂了</th><td><strong>最危险</strong>：读压力瞬间全砸向数据库</td><td>可回源，慢但不致命</td><td>读切回主库或别的从库</td></tr>
+</tbody></table></div>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>这一章成了系统设计面试的通行开场，是因为它给了一条<strong>可复述的路线</strong>。面试官问「用户涨了十倍怎么办」，糟糕的答案是报菜名，好的答案是：「先看哪一层先撑不住——Web 层 CPU 满了就加机器；数据库读满了先上缓存和从库；只有单机装不下了才谈分片。」<strong>能对每一步说清「我卡在哪、所以我加这个」，面试和架构评审就赢了一大半。</strong>这条路线正反两面都有公开记录：</p>
+<div class="ev">
+<div class="evh">大厂实证 · 这些不是书里说的，是公司自己公开说的</div>
+<ul>
+<li><strong>Instagram</strong> 2011 年公开过整套栈：一年多长到 1400 万以上用户，走的正是本章这条阶梯——EC2 上的 Django、前面挂 nginx 做负载均衡、PostgreSQL 主从复制、memcached 与 Redis 做缓存与会话。他们自定的三条原则是「保持极简」「别重新发明轮子」「能用久经考验的成熟技术就用」——<strong>正面验证了这条路线小团队也走得完</strong>。<span class="src"><a href="https://instagram-engineering.com/what-powers-instagram-hundreds-of-instances-dozens-of-technologies-adf2e22da2ad" rel="noopener" target="_blank">Instagram Engineering「What Powers Instagram」, 2011 ↗</a></span></li>
+<li><strong>Stack Overflow</strong> 的 Nick Craver 公布过精确数字：2016 年 2 月 9 日单日 <code>209,420,973</code> 次 HTTP 请求、其中 <code>66,294,789</code> 次页面加载，跑在 <strong>9 台主力 Web 服务器 + 4 台 SQL Server</strong> 上；他还写道「我们已经降到只<em>需要</em> 1 台 Web 服务器」，且「无意中成功验证过几次」——<strong>反证：纵向扩展加认真优化能走得比大多数人以为的远，很多产品这辈子用不上分片</strong>。<span class="src"><a href="https://nickcraver.com/blog/2016/02/17/stack-overflow-the-architecture-2016-edition/" rel="noopener" target="_blank">N. Craver「Stack Overflow: The Architecture — 2016 Edition」↗</a></span></li>
+<li><strong>Facebook</strong> 在 NSDI 2013 的论文里描述了怎么把 memcached 拼成分布式键值存储，支撑<strong>每秒数十亿次请求、存放万亿级条目</strong>；篇幅最大的部分正是缓存与库之间的<strong>一致性</strong>与跨区域复制——<strong>验证了「缓存一致性是真难题，不是加一行代码」</strong>。<span class="src"><a href="https://www.usenix.org/conference/nsdi13/technical-sessions/presentation/nishtala" rel="noopener" target="_blank">R. Nishtala et al.「Scaling Memcache at Facebook」, USENIX NSDI 2013 ↗</a></span></li>
+<li><strong>Discord</strong> 公开过他们的分片之痛：2017 年 12 个 Cassandra 节点存数十亿条消息，2022 年初变成 <strong>177 个节点、数万亿条消息</strong>，而最折磨人的正是<em>热分区</em>——大型公开服务器里的高活跃频道把某个分区打爆，延迟不可预测、on-call 被反复叫醒——<strong>这就是本章「名人问题」的真实版本</strong>。<span class="src"><a href="https://discord.com/blog/how-discord-stores-trillions-of-messages" rel="noopener" target="_blank">Discord Blog「How Discord Stores Trillions of Messages」↗</a></span></li>
+</ul>
+</div>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>把「顺序」当成「清单」</strong>：本章最常见的误读，是以为七步都得做。真实世界里绝大多数产品<strong>永远走不到分片那一步</strong>，Stack Overflow 就是活证据。路线的意义是「下一步做什么」。</li>
+<li><strong>过早分片</strong>：它是唯一近乎不可逆的一步，分下去之后 join、事务、全局排序、全局唯一约束全部变难。判据很硬：先确认纵向扩展、读写分离、缓存这三招都<strong>榨干了</strong>。</li>
+<li><strong>无状态被当成小事</strong>：很多团队以为它只是「把 session 挪个地方」，实际上它是自动伸缩、多活、灰度发布的<strong>唯一前提</strong>。粘性会话是技术债，越晚还越贵。</li>
+<li><strong>「加了缓存就快了」</strong>：缓存压低平均延迟，却<strong>放大尾部</strong>——未命中的请求要走缓存和数据库两跳；更要命的是缓存层一挂，数据库要在同一瞬间承受十倍读压力。设计时必须问：<strong>缓存全挂了，数据库扛得住吗？</strong></li>
+<li><strong>最后那条「拆成微服务」值得存疑</strong>：原书作为收尾建议一笔带过，而业界这十年的经验倾向于认为，微服务主要解决<strong>组织扩展</strong>问题（多团队独立发布）而非性能问题；当性能手段用，换来的常是更多网络跳数和更难排查的故障。</li>
+<li><strong>术语与时代局限</strong>：原书用 master / slave，业界现已普遍改称 <em>primary / replica</em>（文档和面试用新词）。本书 2020 年成书、案例偏 IaaS 时代，此后 Serverless 与托管数据库的自动分片把好几步的成本大幅降低——但「每一步只解决一个瓶颈」的判断方法没过时。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 这一章不是零件清单，是<strong>施工顺序</strong>：每一步只解决一个瓶颈，且性价比递减、不可逆性递增。</p>
+<p>② 第一次分家是<strong>把数据库和 Web 拆开</strong>；数据库默认选<strong>关系型</strong>，只有超低延迟、非结构化、无需复杂查询、数据量极大同时成立才考虑 NoSQL。</p>
+<p>③ 从纵向转横向的真正理由不是「不够快」，而是<strong>「不敢只有一台」</strong>——单点故障才是转折点。</p>
+<p>④ <strong>无状态是总开关</strong>：会话搬进共享存储，机器才从「有身份的资产」变成一次性资源，自动伸缩才成立。</p>
+<p>⑤ 读多写少下最便宜的杠杆是<strong>主从复制</strong>，代价是<strong>复制滞后</strong>——用户可能看不到自己刚写的东西。</p>
+<p>⑥ 缓存省后端计算、CDN 省跨洲往返；<strong>缓存层是最危险的单点</strong>，它一挂读压力会瞬间全砸向数据库。</p>
+<p>⑦ 消息队列的价值是<strong>解耦与各自独立扩</strong>：慢活扔进队列立刻返回，积压了就加 Worker。</p>
+<p>⑧ 分片留到最后：随之而来<strong>重分片、名人热点、跨片 join</strong> 三个新问题，且几乎回不了头。</p>
+<p>⑨ 最后配上日志、三层指标与自动化——没有它们，前面所有改造只是「能跑」而非「能持续跑」。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
