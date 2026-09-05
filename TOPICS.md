@@ -88,8 +88,10 @@ BigCat 人工维护的计算机 / 软件经典书清单。**按书成簇、簇�
 - **Ch4 测试策略** — Implementing a Testing Strategy — 测试象限与金字塔，自动化到什么程度（slug: `contdelivery-ch04-testing-strategy`）
 ### Part II. 部署流水线
 - **Ch5 部署流水线剖析** — Anatomy of the Deployment Pipeline — 从提交到生产的自动化关卡设计（全书核心）（slug: `contdelivery-ch05-deployment-pipeline`）
+- **Ch6 构建与部署脚本化** — Build and Deployment Scripting — 构建脚本本身就是生产代码：分层组织、幂等、跨环境复用，别让部署变成一堆一次性 shell（slug: `contdelivery-ch06-build-and-deployment-scripting`） · xref: `sd:deployment-release-day22`, `sd:container-orchestration-day49`
 - **Ch7 提交阶段** — The Commit Stage — 快速反馈：编译、单测、静态分析（slug: `contdelivery-ch07-commit-stage`）
 - **Ch8 自动化验收测试** — Automated Acceptance Testing — 面向业务的端到端自动化测试（slug: `contdelivery-ch08-automated-acceptance-testing`）
+- **Ch9 非功能需求测试** — Testing Non-Functional Requirements — 容量、性能、安全这些「-ility」怎么变成流水线里能跑的自动化测试，以及压测环境的失真问题（slug: `contdelivery-ch09-testing-nonfunctional-requirements`） · xref: `sd:capacity-estimation-day26`, `sd:reliability-day23`
 - **Ch10 部署与发布** — Deploying and Releasing Applications — 蓝绿 / 金丝雀、回滚、发布与部署解耦（slug: `contdelivery-ch10-deploying-and-releasing`）
 ### Part III. 交付生态
 - **Ch11 管理基础设施与环境** — Managing Infrastructure and Environments — 基础设施即代码的雏形，环境一致性（slug: `contdelivery-ch11-managing-infrastructure`）
@@ -101,19 +103,30 @@ BigCat 人工维护的计算机 / 软件经典书清单。**按书成簇、簇�
 Google 怎么用软件工程的方法跑生产系统。**核心是把「可靠性」变成可量化、可预算的工程目标**（SLO + error budget），而不是靠英雄主义救火——云上大规模服务的运维底本。（精读技术/原则核心章，略去纯管理与组织章。）
 
 - **Ch1 引论** — Introduction — SRE 是什么：用软件工程手段做运维，与传统 ops 的根本区别（slug: `sre-ch01-introduction`）
+- **Ch2 Google 的生产环境（SRE 视角）** — The Production Environment at Google, from the Viewpoint of an SRE — Borg、GFS/Colossus、Chubby、Stubby 拼成的那台「机器」长什么样——后面所有实践的物理前提（slug: `sre-ch02-production-environment-at-google`） · xref: `sd:container-orchestration-day49`, `sd:scalability-day1`
 - **Ch3 拥抱风险** — Embracing Risk — 100% 可靠既不现实也不划算，如何用错误预算（error budget）给可靠性定价（slug: `sre-ch03-embracing-risk`）
 - **Ch4 服务质量目标** — Service Level Objectives — SLI / SLO / SLA 到底怎么定、怎么用来做决策（slug: `sre-ch04-service-level-objectives`）
 - **Ch5 消除琐务** — Eliminating Toil — 什么是 toil、为什么要自动化掉、上限该设多少（slug: `sre-ch05-eliminating-toil`）
 - **Ch6 监控分布式系统** — Monitoring Distributed Systems — 四个黄金信号（延迟/流量/错误/饱和度），告警基于症状还是原因（slug: `sre-ch06-monitoring-distributed-systems`）
+- **Ch7 Google 自动化的演进** — The Evolution of Automation at Google — 自动化的层级阶梯与它的代价：自动化把人从操作里移出去，也把人从理解里移出去（slug: `sre-ch07-evolution-of-automation`） · xref: `sd:guardrails-before-scale-day41`, `sd:container-orchestration-day49`
 - **Ch8 发布工程** — Release Engineering — 可复现、自动化、一致的构建与发布：Google 的 CI/CD 观（slug: `sre-ch08-release-engineering`）
 - **Ch9 简单性** — Simplicity — 可靠性的敌人是复杂度，如何主动做减法（slug: `sre-ch09-simplicity`）
+- **Ch10 实用告警：从时序数据出发** — Practical Alerting from Time-Series Data — Borgmon 的时序模型：把告警建立在可聚合的指标规则上，而不是逐台机器的阈值（slug: `sre-ch10-practical-alerting`） · xref: `sd:observability-day21`, `sd:low-base-rate-alerting-day51`
 - **Ch12 有效排障** — Effective Troubleshooting — 系统化定位故障的方法论，而非拍脑袋猜（slug: `sre-ch12-effective-troubleshooting`）
 - **Ch15 事后复盘文化** — Postmortem Culture — 无指责（blameless）复盘：从失败里学习、不追人（slug: `sre-ch15-postmortem-culture`）
+- **Ch17 为可靠性做测试** — Testing for Reliability — 从单测一路到生产探针与灾难演练：测试的层级怎么对应可靠性的层级（slug: `sre-ch17-testing-for-reliability`） · xref: `sd:chaos-engineering-day44`, `sd:chaos-correctness-oracle-day52`
+- **Ch18 SRE 中的软件工程** — Software Engineering in SRE — SRE 自己写产品级软件：以容量规划工具 Auxon 为例，说明为什么运维团队需要工程产出（slug: `sre-ch18-software-engineering-in-sre`） · xref: `sd:cost-capacity-engineering-day27`, `sd:capacity-estimation-day26`
+- **Ch19 前端负载均衡** — Load Balancing at the Frontend — DNS、任播（anycast）与 Maglev：流量在进入数据中心之前是怎么被分派的（slug: `sre-ch19-load-balancing-frontend`） · xref: `sd:cdn-edge-day28`, `sd:networking-fundamentals-day48`
+- **Ch20 数据中心内的负载均衡** — Load Balancing in the Datacenter — 子集化、加权轮询与「跛脚鸭」状态：为什么最少连接数在真实后端上会失效（slug: `sre-ch20-load-balancing-datacenter`） · xref: `sd:scalability-day1`, `sd:networking-fundamentals-day48`
 - **Ch21 处理过载** — Handling Overload — 优雅降级、负载脱落（load shedding）、客户端节流（slug: `sre-ch21-handling-overload`）
 - **Ch22 应对级联失效** — Addressing Cascading Failures — 一个组件拖垮全局的机理与防线（slug: `sre-ch22-addressing-cascading-failures`）
 - **Ch23 管理关键状态** — Managing Critical State: Distributed Consensus — 用分布式共识做可靠的状态复制（slug: `sre-ch23-managing-critical-state`）
+- **Ch24 分布式周期任务调度** — Distributed Periodic Scheduling with Cron — 把 cron 做成分布式服务：跨机器不重复不漏跑，靠 Paxos 存状态与「宁可漏跑不可重跑」的取舍（slug: `sre-ch24-distributed-cron`） · xref: `sd:workflow-engine-day39`, `sd:consensus-coordination-day46`
 - **Ch25 数据处理管线** — Data Processing Pipelines — 批 / 流管线的可靠性设计（slug: `sre-ch25-data-processing-pipelines`）
 - **Ch26 数据完整性** — Data Integrity — 「读到的就是写进的」：备份、恢复与静默损坏防护（slug: `sre-ch26-data-integrity`）
+### 合辑（把多章浓缩成一篇）
+- **合辑 · 值班与事故响应** — On-Call and Incident Response — 覆盖 Ch11, 13, 14, 16。把 Ch11/13/14/16 合起来看：值班健康度、事故指挥体系（IC/OL/通讯）、故障追踪——SRE 里唯一无法自动化的那部分（slug: `sre-digest01-oncall-and-incident-response`） · xref: `sd:observability-day21`, `sd:low-base-rate-alerting-day51`, `sd:fail-obviously-day54`
+- **合辑 · SRE 的组织与协作** — SRE as an Organization — 覆盖 Part IV · Ch28–32。把 Part IV（Ch28–32）合起来看：新人如何被带到能值班、中断怎么管、运维过载怎么救、SRE 与开发的接洽模型怎么演化（slug: `sre-digest02-organization-and-collaboration`） · xref: `sd:guardrails-before-scale-day41`
 
 ## Accelerate — The Science of Lean Software and DevOps · Nicole Forsgren, Jez Humble, Gene Kim · 2018
 
@@ -125,8 +138,13 @@ Google 怎么用软件工程的方法跑生产系统。**核心是把「可靠�
 - **Ch4 技术实践** — Technical Practices — 持续交付的哪些实践真正驱动效能（slug: `accelerate-ch04-technical-practices`）
 - **Ch5 架构** — Architecture — 松耦合架构与团队自治如何解放交付速度（slug: `accelerate-ch05-architecture`）
 - **Ch6 把安全融入交付** — Integrating Infosec — 左移安全（shift-left），别让安全成为最后的瓶颈（slug: `accelerate-ch06-integrating-infosec`）
+- **Ch7 软件的管理实践** — Management Practices for Software — 精益管理的四要素（限制在制品、可视化、监控反馈、授权变更）如何被证明预测交付效能（slug: `accelerate-ch07-management-practices`） · xref: `sd:cost-capacity-engineering-day27`
+- **Ch8 产品开发** — Product Development — 精益产品开发：小批量、可见的客户价值流、团队自主试验——技术实践与产品实践互为因果（slug: `accelerate-ch08-product-development`） · xref: `sd:deployment-release-day22`
 - **Ch9 让工作可持续** — Making Work Sustainable — 减少部署痛苦与倦怠（burnout）（slug: `accelerate-ch09-making-work-sustainable`）
+- **Ch10 员工满意度、认同与投入** — Employee Satisfaction, Identity, and Engagement — eNPS 与倦怠不是软指标：技术实践改善工作体验，工作体验又反过来预测组织绩效（slug: `accelerate-ch10-employee-satisfaction`） · xref: `sd:fail-obviously-day54`
 - **Ch11 领导者与管理者** — Leaders and Managers — 变革型领导如何放大技术实践的效果（slug: `accelerate-ch11-leaders-and-managers`）
+### 合辑（把多章浓缩成一篇）
+- **合辑 · 研究方法篇** — The Research — 覆盖 Part II · Ch12–15。把 Part II（Ch12–15）合起来看：这本书的结论凭什么可信——潜变量、心理测量学、为什么用问卷、样本怎么取（slug: `accelerate-digest01-the-research`） · xref: `sd:low-base-rate-alerting-day51`, `sd:fat-tailed-risk-day53`
 
 ## Database Internals — A Deep Dive into How Distributed Data Systems Work · Alex Petrov · 2019
 
@@ -211,9 +229,14 @@ DDIA 的自然续集，往下钻一层：数据库**存储引擎**与**分布式
 - **Ch9 合还是分** — Better Together or Better Apart? — 何时该合并、何时该拆分：判据不是行数（slug: `aposd-ch09-better-together-or-apart`）
 - **Ch10 把错误定义掉** — Define Errors Out of Existence — 最反直觉的一招：让异常情况在语义上不存在，而不是到处 try/catch（slug: `aposd-ch10-define-errors-out-of-existence`）
 - **Ch11 设计两次** — Design it Twice — 第一版方案几乎从不是最好的，逼自己出第二套（slug: `aposd-ch11-design-it-twice`）
+- **Ch12 为什么要写注释？四个借口** — Why Write Comments? The Four Excuses — 拆穿「好代码自解释」「没时间」「注释会过期」「读过的注释都没用」这四条借口（slug: `aposd-ch12-why-write-comments`）
 - **Ch13 注释写「不明显」的东西** — Comments Should Describe Things That Aren't Obvious — 好注释补充代码说不出的信息，而非复述代码（slug: `aposd-ch13-comments-non-obvious`）
 - **Ch14 命名** — Choosing Names — 名字是最小单位的抽象，含糊的名字预示设计有问题（slug: `aposd-ch14-choosing-names`）
+- **Ch15 先写注释** — Write The Comments First — 把写注释提到写代码之前，让它变成设计工具——接口注释难写，往往说明接口本身有问题（slug: `aposd-ch15-write-comments-first`）
+- **Ch16 修改已有代码** — Modifying Existing Code — 每次改动都问「如果一开始就知道这个需求，系统会长什么样」——战略式改动 vs 战术式打补丁（slug: `aposd-ch16-modifying-existing-code`）
+- **Ch17 一致性** — Consistency — 一致性本身是一种抽象：「我有更好的想法」不足以构成打破既有约定的理由（slug: `aposd-ch17-consistency`）
 - **Ch18 代码应当一目了然** — Code Should be Obvious — 「显而易见」是读者判定的，不是作者（slug: `aposd-ch18-code-should-be-obvious`）
+- **Ch19 软件趋势** — Software Trends — 用「复杂度」这把尺子重新评估敏捷、TDD、设计模式、getter/setter——哪些真的降低了复杂度（slug: `aposd-ch19-software-trends`）
 - **Ch20 为性能而设计** — Designing for Performance — 简洁与快通常同向；何时才该为性能牺牲清晰（slug: `aposd-ch20-designing-for-performance`）
 
 ## Software Engineering at Google · Titus Winters, Tom Manshreck, Hyrum Wright · 2020
@@ -233,13 +256,17 @@ Google 二十年工程实践的公开总结。**核心命题：软件工程 = �
 - **Ch15 废弃** — Deprecation — 怎么体面地下线一个被广泛依赖的系统（slug: `swegoogle-ch15-deprecation`）
 ### Part IV. 工具
 - **Ch16 版本控制与分支管理** — Version Control and Branch Management — 为什么 Google 选单体仓 + 主干开发（slug: `swegoogle-ch16-version-control`）
+- **Ch17 代码搜索** — Code Search — 在几十亿行单体仓里做秒级搜索：它为什么是 Google 工程师最高频的工具，以及索引怎么建（slug: `swegoogle-ch17-code-search`） · xref: `sd:search-system-day12`
 - **Ch18 构建系统与构建哲学** — Build Systems and Build Philosophy — 基于制品的构建、可复现与远端缓存（Bazel 之道）（slug: `swegoogle-ch18-build-systems`）
+- **Ch19 Critique：Google 的代码评审工具** — Critique: Google's Code Review Tool — 把评审流程固化进工具：差异呈现、分析结果内联、LGTM 与所有权的权限模型（slug: `swegoogle-ch19-critique-code-review-tool`） · xref: `sd:code-review-signal-detection-day50`
 - **Ch20 静态分析** — Static Analysis — 让静态分析在开发流里真正被接受的条件（slug: `swegoogle-ch20-static-analysis`）
 - **Ch21 依赖管理** — Dependency Management — 菱形依赖、语义化版本的局限、活在 HEAD（slug: `swegoogle-ch21-dependency-management`）
 - **Ch22 大规模变更** — Large-Scale Changes — 怎么在几百万文件上安全地做一次全局改动（slug: `swegoogle-ch22-large-scale-changes`）
 - **Ch23 持续集成** — Continuous Integration — CI 在超大规模下的形态与取舍（slug: `swegoogle-ch23-continuous-integration`）
 - **Ch24 持续交付** — Continuous Delivery — 小步、频繁、可回滚：把发布做成非事件（slug: `swegoogle-ch24-continuous-delivery`）
 - **Ch25 计算即服务** — Compute as a Service — 从 Borg 到托管计算：把机器当抽象资源（slug: `swegoogle-ch25-compute-as-a-service`）
+### 合辑（把多章浓缩成一篇）
+- **合辑 · 文化篇** — Culture — 覆盖 Ch2–7。把 Part 2（Ch2–7）合起来看：谦逊/尊重/信任三支柱、知识共享、公平性工程、带团队与规模化领导、工程效能怎么度量（slug: `swegoogle-digest01-culture`） · xref: `sd:code-review-signal-detection-day50`
 
 ## Fundamentals of Software Architecture · Mark Richards & Neal Ford · 2020
 
@@ -254,6 +281,7 @@ Google 二十年工程实践的公开总结。**核心命题：软件工程 = �
 - **Ch6 度量与治理架构特征** — Measuring and Governing Architecture Characteristics — 让特征可测量、用适应度函数持续守护（slug: `fosa-ch06-measuring-and-governing`）
 - **Ch7 架构特征的作用域** — Scope of Architecture Characteristics — 架构量子：特征的边界不等于整个系统（slug: `fosa-ch07-scope-of-characteristics`）
 - **Ch8 组件化思维** — Component-Based Thinking — 组件怎么划分、粒度多大、与领域怎么对齐（slug: `fosa-ch08-component-based-thinking`）
+- **Ch9 架构风格的基础** — Foundations — 所有风格的共同底座：大泥球、单体 vs 分布式的根本分野，以及分布式计算的八个谬误（slug: `fosa-ch09-foundations`） · xref: `sd:scalability-day1`, `sd:reliability-day23`
 ### Part II. 架构风格
 - **Ch10 分层架构** — Layered Architecture Style — 最常见的单体分层：优点、隔离层与「污水池」反模式（slug: `fosa-ch10-layered-architecture`）
 - **Ch11 管道架构** — Pipeline Architecture Style — 管道与过滤器：ETL 与数据处理的经典骨架（slug: `fosa-ch11-pipeline-architecture`）
@@ -261,10 +289,13 @@ Google 二十年工程实践的公开总结。**核心命题：软件工程 = �
 - **Ch13 基于服务的架构** — Service-Based Architecture Style — 粗粒度服务 + 共享库：微服务的务实折中（slug: `fosa-ch13-service-based-architecture`）
 - **Ch14 事件驱动架构** — Event-Driven Architecture Style — 中介 vs 代理拓扑、异步的威力与代价（slug: `fosa-ch14-event-driven-architecture`）
 - **Ch15 空间架构** — Space-Based Architecture Style — 用内存网格去掉数据库瓶颈，应对极端并发（slug: `fosa-ch15-space-based-architecture`）
+- **Ch16 编排驱动的面向服务架构** — Orchestration-Driven Service-Oriented Architecture — 被时代淘汰的那一种 SOA：ESB 与「重用至上」怎么把耦合推到了不可维护的极点（slug: `fosa-ch16-orchestration-driven-soa`） · xref: `sd:workflow-engine-day39`
 - **Ch17 微服务架构** — Microservices Architecture — 边界上下文、粒度陷阱、数据隔离与通信（slug: `fosa-ch17-microservices-architecture`）
 - **Ch18 如何选择架构风格** — Choosing the Appropriate Architecture Style — 按架构特征反推风格的决策路径（slug: `fosa-ch18-choosing-architecture-style`）
 ### Part III. 技术
 - **Ch19 架构决策** — Architecture Decisions — ADR：把决策与理由固化下来，反模式「掩耳盗铃」（slug: `fosa-ch19-architecture-decisions`）
 - **Ch20 分析架构风险** — Analyzing Architecture Risk — 风险矩阵、风险风暴与持续评估（slug: `fosa-ch20-analyzing-architecture-risk`）
+### 合辑（把多章浓缩成一篇）
+- **合辑 · 架构师的表达与职业** — The Architect's Craft and Career — 覆盖 Ch21–24。把 Ch21–24 合起来看：画图与讲架构、让团队高效、谈判与影响力、职业路径的 20 分钟法则（slug: `fosa-digest01-architect-soft-skills`）
 
 <!-- 下一本书从这里另起：## 书名 · 作者 · 年份 —— routine 只读不改本文件 -->
