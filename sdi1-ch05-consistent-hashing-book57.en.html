@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview Vol 1 · Ch 5 · Design Consistent Hashing — Book Deep Read 57</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOK DEEP READ · System Design Interview Vol 1 · Ch 5</p>
+<h1>Design Consistent Hashing</h1>
+<p class="sub">System Design Interview: An Insider's Guide · Vol 1 · Ch 5 · Alex Xu · 2020</p>
+<p class="langbar"><a href="sdi1-ch05-consistent-hashing-book57.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>Your parcels pass through a sorting hub. A handful of warehouses sit there, and every parcel is routed to one of them by its tracking number. The sorting rule has to do two things: be <strong>fast</strong> (one glance at the number tells you the warehouse — no ledger lookup) and be <strong>stable</strong> (next time you look for that parcel, the rule sends you to the same warehouse). This chapter is about that rule, and about what happens to it when <strong>the number of warehouses changes</strong>.</p>
+<h2>Something strange first</h2>
+<p>You would assume that going from four warehouses to five means moving roughly a fifth of the goods into the new one. <strong>With the most common rule, you have to physically move about eighty percent of everything</strong> — and not into the new warehouse, but from one old warehouse to a different old warehouse. Open one building, and the whole city's freight has to move.</p>
+<h2>Why the old world was hard</h2>
+<p>That common rule is: <strong>divide the tracking number by the number of warehouses and look at the remainder.</strong> Four warehouses, remainders 0 to 3, one each. Simple and fast. The trouble is that <strong>"the number of warehouses" is baked into the formula</strong>. Go from four to five and the divisor changes, so nearly every parcel gets a different answer. They do not mostly stay put with a few moving to the new building — they <strong>all shuffle at once</strong>.</p>
+<p>The consequence is immediate, because the sorting hub is really a cache. Normally almost everyone is served nearby; the moment the warehouse count changes, everybody looks in the wrong place, and the requests slam into the slow, expensive central store behind it. <strong>What kills the system is not the machine you added — it is the move itself.</strong></p>
+<h2>The core idea: stand the warehouses in a circle</h2>
+<p>Try another way. Imagine every possible tracking number laid out on a <strong>circular running track</strong> whose end joins its start. Each parcel lands somewhere on the track according to its number; each warehouse also lands somewhere according to its name. The rule becomes one sentence: <strong>walk forward from where the parcel landed, and the first warehouse you meet owns it.</strong></p>
+<p>The beauty is that "how many warehouses" has vanished from the formula. Opening one is just dropping a new point onto the track — <strong>only the parcels lying in the short stretch behind that new point have to move</strong>, and everything else on the track stays exactly where it is. Closing one is the mirror image: its stretch is handed forward to the next warehouse, and nobody else notices.</p>
+<h2>It still needs a patch</h2>
+<p>That alone is not even enough. Warehouses land on the track at random, so three may cluster together and leave one enormous gap belonging to the fourth — which then gets crushed. The patch is crude and effective: <strong>let every warehouse open dozens or hundreds of "branches" on the track</strong>, each with a numbered name and its own landing spot. With enough branches, the long and short stretches get chopped up and averaged out, so each warehouse ends up with roughly its fair share. Those branches are called <em>virtual nodes</em>.</p>
+<p>One honest cost: <strong>more branches is not simply better</strong> — the more little stretches a warehouse's goods are scattered across, the more neighbours it is entangled with, so the day two warehouses fail together, the damage reaches further.</p>
+<h2>Remember this one line</h2>
+<div class="tl">
+<p>The old rule wrote "number of warehouses" into the formula, so changing that number moves the whole city. Consistent hashing stands the warehouses in a circle and <strong>lets each parcel take the nearest one clockwise</strong>, so adding or removing one disturbs a single stretch. Then give every warehouse a pile of branches to even out the uneven arcs.</p>
+</div>
+<p class="switch-hint">Want the algorithm, the numbers and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think consistent hashing is "a better hash function." In fact it <strong>does not make data any more evenly distributed</strong> — that job belongs to the patch bolted on afterwards (virtual nodes). It buys exactly one thing: <strong>it drops the amount of data you must move when the cluster resizes from "nearly all of it" to "1/N."</strong> This is the most algorithm-like chapter in the book, and the idea worth keeping is broader than the algorithm: <strong>any scheme that writes the machine count into its routing formula detonates the moment you add a machine.</strong></p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Hash function</strong> — squeezes any input (a string, a key) into a fixed-length number. The same input always yields the same output, and different inputs spread out as widely as possible.</li>
+<li><strong>Key</strong> — the name of a piece of data, e.g. <code>user:8613</code>. The system uses it to decide which machine holds that data.</li>
+<li><strong>Sharding / partitioning</strong> — when one dataset no longer fits or no longer copes, you cut it into pieces, one per machine. "Routing" means deciding which piece a key belongs to.</li>
+<li><strong>Modulo</strong> — the remainder of a division, written <code>%</code>. <code>hash(key) % 4</code> means "divide by 4, take the remainder," always 0–3.</li>
+<li><strong>Rehashing</strong> — recomputing every key's owner and physically relocating the data after the machine count changes.</li>
+<li><strong>Cache hit rate</strong> — the share of requests served straight from cache. When it drops, the pressure passes through to the database untouched.</li>
+<li><strong>SHA-1</strong> — a common hash function producing 160 bits (a number between <code>0</code> and <code>2^160-1</code>). This chapter borrows only its "spreads out well" property.</li>
+<li><strong>Virtual node</strong> — one physical machine's multiple stand-in positions on the ring, used to chop its share into many small arcs. Cassandra calls them <strong>tokens</strong>.</li>
+<li><strong>Standard deviation</strong> — how far apart a set of numbers sit. Here it measures how unequal the machines' data volumes are; smaller is more even.</li>
+<li><strong>Replica</strong> — the same data stored on several machines so a single failure does not lose it.</li>
+<li><strong>Hot key</strong> — one single key hammered by traffic, like a celebrity's profile. There is only ever one copy of it.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The second case study of Part II, and the shortest, most component-like chapter in the book: no API, no data model, just an algorithm. It picks up exactly where Ch4's rate limiter left off — <strong>dozens of stateless limiters, and the question of how their quota state is spread across several caches</strong>. Looking forward, it is the first brick of Ch6, "Design a Key-Value Store": the whole Dynamo kit is built on this ring. In the real world: data partitioning in Dynamo and Cassandra, edge-node selection in CDNs, Google's Maglev load balancer, and any multi-node cache tier.</p>
+<h2>The problem it solves</h2>
+<p>It is one sentence: <strong>the number of machines changes, and the most intuitive routing formula cannot survive that.</strong></p>
+<p>That formula is <code>serverIndex = hash(key) % N</code> — N servers, one remainder, done. It is fast, it is stable (no routing table to maintain), and it distributes evenly. Its only flaw: <strong>N appears in the formula.</strong></p>
+<p>Do the arithmetic on how big that flaw is. Four cache servers, one dies, N goes from 4 to 3: only about <code>1/4</code> of keys still land on their original machine, so <strong>the other 75% change owners</strong> — when ideally only the dead machine's own share, 25%, should have moved. Adding is just as bad: 4 servers to 5 relocates roughly 80% of keys, against an ideal of 20%.</p>
+<p><strong>What if you do not solve it?</strong> Cost it out. A cache tier absorbing <code>100,000</code> QPS at a <code>99%</code> hit rate lets only <code>1,000</code> requests per second through to the database. One cache dies, clients recompute the modulo against the new N, and instantly ~75% of keys are asking the wrong machine. The hit rate collapses toward 25% and database traffic becomes <code>75,000</code> requests per second — <strong>roughly a 75× amplification</strong>. Connection pools fill, latency climbs, timeout retries pile a second wave on top: the cache has not even recovered and the backend is already down. The book calls this a <em>cache miss storm</em>. <strong>What kills the system is not the machine that died — it is the global reshuffle that follows.</strong></p>
+<h2>The core, explained properly</h2>
+<h3>1. Take N out of the formula</h3>
+<p>This is the chapter's only real idea; everything else is engineering around it. Use a locating scheme that <strong>does not need to know how many machines exist</strong>: put both machines and keys at positions in the same fixed coordinate space, and let ownership follow from <strong>relative position</strong> rather than from the total. Adding or removing a machine is then just adding or removing one point — every other point stays exactly where it was.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 240" xmlns="http://www.w3.org/2000/svg">
+<text fill="#e06b6b" font-size="12.5" font-weight="700" x="18" y="22">1. Modulo routing: 4 servers become 3</text>
+<text fill="#7c8593" font-size="10.5" x="18" y="40">about 9 of these 12 keys change machine</text>
+<rect fill="rgba(224,107,107,0.22)" height="26" rx="4" stroke="#e06b6b" width="34" x="18" y="52"></rect>
+<rect fill="rgba(224,107,107,0.22)" height="26" rx="4" stroke="#e06b6b" width="34" x="56" y="52"></rect>
+<rect fill="rgba(224,107,107,0.22)" height="26" rx="4" stroke="#e06b6b" width="34" x="94" y="52"></rect>
+<rect fill="rgba(224,107,107,0.22)" height="26" rx="4" stroke="#e06b6b" width="34" x="132" y="52"></rect>
+<rect fill="rgba(224,107,107,0.22)" height="26" rx="4" stroke="#e06b6b" width="34" x="170" y="52"></rect>
+<rect fill="rgba(224,107,107,0.22)" height="26" rx="4" stroke="#e06b6b" width="34" x="208" y="52"></rect>
+<rect fill="rgba(224,107,107,0.22)" height="26" rx="4" stroke="#e06b6b" width="34" x="246" y="52"></rect>
+<rect fill="rgba(224,107,107,0.22)" height="26" rx="4" stroke="#e06b6b" width="34" x="284" y="52"></rect>
+<rect fill="rgba(224,107,107,0.22)" height="26" rx="4" stroke="#e06b6b" width="34" x="322" y="52"></rect>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="34" x="360" y="52"></rect>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="34" x="398" y="52"></rect>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="34" x="436" y="52"></rect>
+<text fill="#e06b6b" font-size="11" x="482" y="70">red = must move</text>
+<text fill="#e7ebf1" font-family="monospace" font-size="11.5" x="18" y="102">keys moved ≈ 75%      ideal is 25%</text>
+<line stroke="rgba(120,120,130,0.3)" x1="18" x2="620" y1="118" y2="118"></line>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="18" y="146">2. Consistent hashing: same 4 become 3</text>
+<text fill="#7c8593" font-size="10.5" x="18" y="164">only the dead machine's own share moves</text>
+<rect fill="rgba(224,107,107,0.22)" height="26" rx="4" stroke="#e06b6b" width="34" x="18" y="176"></rect>
+<rect fill="rgba(224,107,107,0.22)" height="26" rx="4" stroke="#e06b6b" width="34" x="56" y="176"></rect>
+<rect fill="rgba(224,107,107,0.22)" height="26" rx="4" stroke="#e06b6b" width="34" x="94" y="176"></rect>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="34" x="132" y="176"></rect>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="34" x="170" y="176"></rect>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="34" x="208" y="176"></rect>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="34" x="246" y="176"></rect>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="34" x="284" y="176"></rect>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="34" x="322" y="176"></rect>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="34" x="360" y="176"></rect>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="34" x="398" y="176"></rect>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="4" stroke="#5b9df9" width="34" x="436" y="176"></rect>
+<text fill="#8fbaff" font-size="11" x="482" y="194">blue = stays put</text>
+<text fill="#e7ebf1" font-family="monospace" font-size="11.5" x="18" y="226">keys moved = 25%      exactly the ideal</text>
+</svg>
+<figcaption>Fig 1 · The same 4-to-3 event. Modulo relocates about three quarters of all keys; consistent hashing touches only the dead machine's share. Those 50 percentage points are the distance between a cache stampede and a quiet scale-down.</figcaption>
+</figure>
+<h3>2. The hash ring: swap division for "find the neighbour"</h3>
+<p>That fixed coordinate space is the <strong>hash ring</strong>. Take a hash function (the book uses SHA-1) whose output spans <code>0</code> to <code>2^160-1</code>, then join the two ends of that line into a circle. Three steps follow:</p>
+<ul>
+<li><strong>Place the servers</strong> — hash each server's IP or hostname to a point on the ring.</li>
+<li><strong>Place the keys</strong> — hash each key to a point on the ring too. Note that there is <strong>no modulo here</strong>: keys land on the ring, not on a machine.</li>
+<li><strong>Look up the owner</strong> — walk <strong>clockwise</strong> from the key's position; the first server you meet owns it.</li>
+</ul>
+<p>Add a server s4 and it slots into some position on the ring. <strong>Only the keys in the range running counter-clockwise from s4 back to the previous server</strong> change hands; the rest of the ring is untouched. Removal is the mirror image: the departing server's range is handed clockwise to the next one.</p>
+<p>This is precisely the property Karger et al. gave in their 1997 paper: <strong>when the hash table is resized, only <code>k/n</code> keys need to be remapped on average</strong> (k keys, n slots) — in plain terms, "add a machine, move 1/n of the data."</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="cw" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+<marker id="ccw" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#e0a44b"></path></marker>
+</defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="160" y="22">Lookup: first server clockwise</text>
+<circle cx="160" cy="160" fill="none" r="96" stroke="rgba(91,157,249,0.45)" stroke-width="1.6"></circle>
+<circle cx="160" cy="64" fill="#5b9df9" r="7"></circle>
+<text fill="#8fbaff" font-size="11" text-anchor="middle" x="160" y="50">s0</text>
+<circle cx="256" cy="160" fill="#5b9df9" r="7"></circle>
+<text fill="#8fbaff" font-size="11" x="270" y="164">s1</text>
+<circle cx="160" cy="256" fill="#5b9df9" r="7"></circle>
+<text fill="#8fbaff" font-size="11" text-anchor="middle" x="160" y="276">s2</text>
+<circle cx="64" cy="160" fill="#5b9df9" r="7"></circle>
+<text fill="#8fbaff" font-size="11" text-anchor="end" x="50" y="164">s3</text>
+<circle cx="228" cy="92" fill="#9b6cf5" r="4.5"></circle>
+<text fill="#b9c0ca" font-size="10" x="238" y="88">k0</text>
+<path d="M232,100 A 96 96 0 0 1 250,146" fill="none" marker-end="url(#cw)" stroke="#9b6cf5" stroke-width="1.6"></path>
+<circle cx="214" cy="230" fill="#9b6cf5" r="4.5"></circle>
+<text fill="#b9c0ca" font-size="10" x="224" y="238">k1</text>
+<path d="M208,236 A 96 96 0 0 1 172,252" fill="none" marker-end="url(#cw)" stroke="#9b6cf5" stroke-width="1.6"></path>
+<circle cx="92" cy="228" fill="#9b6cf5" r="4.5"></circle>
+<text fill="#b9c0ca" font-size="10" text-anchor="end" x="82" y="236">k2</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="160" y="152">k0 → s1</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="160" y="170">k1 → s2</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="160" y="188">k2 → s3</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="470" y="22">Add s4: one arc is disturbed</text>
+<path d="M470,64 A 96 96 0 0 0 374,160" fill="none" stroke="#e0a44b" stroke-width="7"></path>
+<circle cx="470" cy="160" fill="none" r="96" stroke="rgba(91,157,249,0.45)" stroke-width="1.6"></circle>
+<circle cx="470" cy="64" fill="#5b9df9" r="7"></circle>
+<text fill="#8fbaff" font-size="11" text-anchor="middle" x="470" y="50">s0</text>
+<circle cx="566" cy="160" fill="#5b9df9" r="7"></circle>
+<text fill="#8fbaff" font-size="11" x="580" y="164">s1</text>
+<circle cx="470" cy="256" fill="#5b9df9" r="7"></circle>
+<text fill="#8fbaff" font-size="11" text-anchor="middle" x="470" y="276">s2</text>
+<circle cx="374" cy="160" fill="#5b9df9" r="7"></circle>
+<text fill="#8fbaff" font-size="11" text-anchor="end" x="360" y="164">s3</text>
+<circle cx="402" cy="92" fill="#e0a44b" r="8"></circle>
+<text fill="#e0a44b" font-size="11" font-weight="700" text-anchor="end" x="392" y="84">s4</text>
+<path d="M396,100 A 96 96 0 0 0 378,146" fill="none" marker-end="url(#ccw)" stroke="#e0a44b" stroke-width="1.6"></path>
+<text fill="#e0a44b" font-size="10.5" text-anchor="middle" x="470" y="150">affected range =</text>
+<text fill="#e0a44b" font-size="10.5" text-anchor="middle" x="470" y="168">s4 counter-clockwise to s3</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="470" y="192">these keys move from s0 to s4</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="470" y="210">the other three arcs: nothing moves</text>
+</svg>
+<figcaption>Fig 2 · Left: a key walks clockwise to its first server. Right: inserting s4 disturbs only the range running counter-clockwise from s4 to the previous server — the same formula real systems use to compute a migration range.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/sharding-day4.en.html" rel="noopener" target="_blank">System Design · Day 4 Database Sharding</a> — choosing a shard key, range vs hash partitioning, and why "the end of sharding is regret"</aside>
+<h3>3. Two flaws in the basic ring</h3>
+<p>Use the ring exactly as described and you hit two problems, both rooted in randomness. The book names them side by side:</p>
+<p><strong>Flaw one: partitions are not the same size.</strong> Server positions come out of a hash, which amounts to scattering points at random, so the arcs between neighbours differ wildly. Worse, it degrades as the cluster changes: <strong>remove a server and its arc merges into its neighbour, which may suddenly carry twice what anyone else carries.</strong></p>
+<p><strong>Flaw two: keys are not evenly distributed either.</strong> Even with perfectly equal arcs, the keys themselves can cluster into one small stretch. In the extreme, one machine owns a densely populated range while another is handed no keys at all.</p>
+<p>Notice these are two faces of one fact: <strong>basic consistent hashing guarantees only that moving is cheap. It never guaranteed even distribution.</strong> Conflating those two is the most common misreading of this chapter.</p>
+<h3>4. Virtual nodes: crush the variance with volume</h3>
+<p>The patch: <strong>one physical server no longer occupies a single point on the ring, but many.</strong> Server s0 sends out <code>s0_0</code>, <code>s0_1</code>, <code>s0_2</code>… each hashed and placed independently. The lookup rule is unchanged (walk clockwise to the first virtual node), except that at the end you map the virtual node back to the physical machine behind it.</p>
+<p>The intuition in one line: <strong>a machine no longer bets its whole existence on the length of one arc; it bets on the average of two hundred small ones.</strong> One bet has enormous variance; two hundred bets get flattened by the law of large numbers. The book cites an experiment: with <strong>100 virtual nodes the standard deviation of load is about 10% of the mean, and with 200 it is about 5%</strong>. The cost the book gives is <strong>storage</strong> — more points on the ring means a bigger mapping table and slightly slower lookups. (The costlier one it omits is in "Pitfalls" below.)</p>
+<p>Virtual nodes also solve a problem the Dynamo paper stresses and the book leaves aside: <strong>heterogeneity</strong>. Machines in a cluster are rarely equal, and virtual nodes make "give the strong one more work" trivial — <strong>hand it more stand-ins</strong>. Weight is expressed purely as a count, and not a line of routing logic changes.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 290" xmlns="http://www.w3.org/2000/svg">
+<text fill="#e06b6b" font-size="12.5" font-weight="700" text-anchor="middle" x="160" y="22">One point per server: arcs vary wildly</text>
+<circle cx="160" cy="150" fill="none" r="86" stroke="rgba(120,120,130,0.3)" stroke-width="1.4"></circle>
+<path d="M160,64 A 86 86 0 0 1 236,190" fill="none" stroke="#5b9df9" stroke-width="8"></path>
+<path d="M236,190 A 86 86 0 0 1 108,229" fill="none" stroke="#9b6cf5" stroke-width="8"></path>
+<path d="M108,229 A 86 86 0 0 1 160,64" fill="none" stroke="#e0a44b" stroke-width="8"></path>
+<circle cx="160" cy="64" fill="#e7ebf1" r="5"></circle>
+<circle cx="236" cy="190" fill="#e7ebf1" r="5"></circle>
+<circle cx="108" cy="229" fill="#e7ebf1" r="5"></circle>
+<text fill="#5b9df9" font-size="11" x="248" y="112">s0 ≈ 42%</text>
+<text fill="#9b6cf5" font-size="11" text-anchor="middle" x="160" y="264">s1 ≈ 36%</text>
+<text fill="#e0a44b" font-size="11" text-anchor="end" x="72" y="112">s2 ≈ 22%</text>
+<text fill="#e06b6b" font-size="11" text-anchor="middle" x="160" y="150">busiest carries nearly</text>
+<text fill="#e06b6b" font-size="11" text-anchor="middle" x="160" y="168">2x the lightest</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="470" y="22">Virtual nodes: interleaved, evened out</text>
+<circle cx="470" cy="150" fill="none" r="86" stroke="rgba(120,120,130,0.3)" stroke-width="1.4"></circle>
+<path d="M470,64 A 86 86 0 0 1 526,85" fill="none" stroke="#5b9df9" stroke-width="8"></path>
+<path d="M526,85 A 86 86 0 0 1 553,126" fill="none" stroke="#9b6cf5" stroke-width="8"></path>
+<path d="M553,126 A 86 86 0 0 1 549,180" fill="none" stroke="#e0a44b" stroke-width="8"></path>
+<path d="M549,180 A 86 86 0 0 1 512,222" fill="none" stroke="#5b9df9" stroke-width="8"></path>
+<path d="M512,222 A 86 86 0 0 1 462,236" fill="none" stroke="#9b6cf5" stroke-width="8"></path>
+<path d="M462,236 A 86 86 0 0 1 412,218" fill="none" stroke="#e0a44b" stroke-width="8"></path>
+<path d="M412,218 A 86 86 0 0 1 386,176" fill="none" stroke="#5b9df9" stroke-width="8"></path>
+<path d="M386,176 A 86 86 0 0 1 389,120" fill="none" stroke="#9b6cf5" stroke-width="8"></path>
+<path d="M389,120 A 86 86 0 0 1 470,64" fill="none" stroke="#e0a44b" stroke-width="8"></path>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="470" y="142">s0 / s1 / s2, three stand-ins each</text>
+<text fill="#8fbaff" font-size="11" text-anchor="middle" x="470" y="164">colours interleave, shares converge</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="470" y="270">100 stand-ins: std dev ≈ 10% of mean. 200: ≈ 5%.</text>
+</svg>
+<figcaption>Fig 3 · Left: one point per server, arc length left to luck, and the busiest machine can carry nearly double the lightest. Right: many interleaved stand-ins per server let long and short arcs cancel out, so shares converge.</figcaption>
+</figure>
+<h3>5. Computing the affected key range</h3>
+<p>The book gives this its own section, because "knowing how much moves" and "knowing which keys move" are different things. The rule is short: <strong>when adding a node, the affected range runs counter-clockwise from the new node's position back to the previous node; when removing one, it runs counter-clockwise from the departing node back to the previous node, and those keys are handed clockwise to the next node.</strong></p>
+<p>Why get it exactly right? Real systems move data by <strong>range-scanning a token interval and streaming it</strong> — that is precisely what a Cassandra bootstrap does. Compute the range too narrow and you skip keys, losing data permanently; compute it too wide and you have a full scan that can saturate cluster I/O for hours.</p>
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 1 · Three routing schemes: movement, evenness, control</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Scheme</th><th>Data moved per node change</th><th>Evenness</th><th>Metadata cost</th><th>Handles heterogeneity?</th><th>Fits</th></tr></thead>
+<tbody>
+<tr><th>Modulo <code>hash % N</code></th><td><strong>≈ everything</strong> (4→3 moves 75%)</td><td>Good</td><td><strong>Zero</strong>; the client just computes it</td><td>No</td><td>A shard count that <strong>never changes</strong>, or a rebuild you can take downtime for</td></tr>
+<tr><th>Consistent hashing + virtual nodes</th><td><strong>1/N</strong>, the theoretical optimum</td><td>Depends on stand-in count (100 ≈ 10% std dev)</td><td>V tokens per node, gossiped across the cluster</td><td><strong>Yes</strong> — hand out more stand-ins</td><td>Peer-to-peer clusters with no coordinator: Dynamo, Cassandra, cache tiers</td></tr>
+<tr><th>Central lookup table (fixed slots)</th><td>Move whichever block you like — <strong>fully controlled</strong></td><td><strong>Best</strong>; you can rebalance deliberately</td><td>One authoritative map plus a way to distribute it</td><td>Yes, by slot allocation</td><td>Precise placement control: Redis Cluster (<code>16384</code> slots), Vitess</td></tr>
+</tbody></table></div>
+<p>The third row deserves a second look: <strong>consistent hashing is not the only answer, and plenty of mature systems chose "a big pile of fixed slots plus a mapping table" instead.</strong> The price is a control plane — who owns that table, how it reaches every client — and what you buy is that placement is decided by a human: hot blocks can be moved by hand, expansions can be staged. <strong>Consistent hashing's advantage is that it needs no centre; its cost is that you cannot direct it either.</strong></p>
+<p class="tcap">Table 2 · Choosing the number of virtual nodes (figures from Apache Cassandra's production guidance)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Tokens per node</th><th>Evenness</th><th>Expansion flexibility</th><th>Availability impact</th><th>What Cassandra says</th></tr></thead>
+<tbody>
+<tr><th>1</th><td>Worst</td><td>Poor: you must <strong>double</strong> the cluster to stay balanced</td><td><strong>Best</strong> — data shared with the fewest peers</td><td>"Maximum availability, maximum cluster size, fewest peers"</td></tr>
+<tr><th>4</th><td>Medium</td><td>Good: roughly +20% nodes per step</td><td>Good</td><td>Recommended for clusters that will exceed 30 nodes</td></tr>
+<tr><th>8</th><td>Better (~10% variance)</td><td>Good</td><td>Fairly good</td><td>"Minimal impact on performance"</td></tr>
+<tr><th>16 (current default)</th><td>Good</td><td><strong>Best</strong>, for clusters that grow and shrink often</td><td>Weaker</td><td><strong>"Not recommended for clusters over 50 nodes"</strong></td></tr>
+</tbody></table></div>
+<p class="tcap">Table 3 · What consistent hashing solves, and what it does not</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Content</th></tr></thead>
+<tbody>
+<tr><th>Solves</th><td>Cuts <strong>data movement</strong> on resize to 1/N; gives <strong>coordinator-free routing</strong> — every client computes the owner locally, asking nobody; expresses <strong>machine weight</strong> through stand-in counts</td></tr>
+<tr><th>Does not solve</th><td>A <strong>single hot key</strong> (there is one copy; whichever machine holds it burns); <strong>cross-shard queries and transactions</strong>; <strong>replica placement</strong> (skipping same-rack, same-datacentre); <strong>where reads and writes go mid-migration</strong></td></tr>
+</tbody></table></div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/replication-day5.en.html" rel="noopener" target="_blank">System Design · Day 5 Replication</a> — "the next N nodes clockwise" is only the start of replica placement; the hard part is the one failover</aside>
+<h2>Why it matters / in real systems</h2>
+<p>This algorithm is the entry ticket to <strong>coordinator-free distributed storage</strong>: if you want a system where the client alone can work out where data lives, you cannot avoid it. It is also a very high-frequency interview follow-up — and what separates candidates is never the phrase "ring plus virtual nodes," but <strong>how you compute the affected range, and why more virtual nodes is not simply better</strong>.</p>
+<div class="ev">
+<div class="evh">EVIDENCE FROM THE FIELD · these are the companies' own public claims, not the book's</div>
+<ul>
+<li><strong>Amazon</strong> states plainly in the Dynamo paper that basic consistent hashing has two problems — <strong>the random position assignment of each node on the ring leads to non-uniform data and load distribution</strong>, and <strong>the basic algorithm is oblivious to the heterogeneity in node performance</strong> — and that the fix is assigning each node multiple positions on the ring, i.e. virtual nodes. The paper adds a third benefit: <strong>how many virtual nodes a machine takes can be decided by its capacity</strong>. <strong>This is the original source of both "flaws" and the patch in this chapter.</strong> <span class="src"><a href="https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf" rel="noopener" target="_blank">Dynamo: Amazon's Highly Available Key-value Store, SOSP 2007 ↗</a></span></li>
+<li><strong>Apache Cassandra</strong>'s production guidance supplies the half-sentence the book omits: vnodes make expansion smoother, <strong>"however, more tokens leads to sharing data with more peers, and results in decreased availability,"</strong> and the two must be balanced against the cluster's read/write profile. Its current default is <code>num_tokens: 16</code>, and it says outright that 16 is <strong>"not recommended for clusters over 50 nodes."</strong> <strong>That is the most direct rebuttal available to "more virtual nodes is better."</strong> <span class="src"><a href="https://github.com/apache/cassandra/blob/trunk/doc/modules/cassandra/pages/getting-started/production.adoc" rel="noopener" target="_blank">Apache Cassandra docs, "Production recommendations · Tokens" ↗</a></span></li>
+<li><strong>Discord</strong> published its own scale and its own pain: 12 Cassandra nodes holding billions of messages in 2017 grew to <strong>177 nodes and trillions of messages</strong> by early 2022, and the worst problem was the <strong>hot partition</strong> — one very active channel in a large public server overwhelming a single partition, making latency unpredictable and paging on-call repeatedly. <strong>Consistent hashing spreads keys evenly; it cannot spread the traffic on one key. Here is the live counterexample.</strong> <span class="src"><a href="https://discord.com/blog/how-discord-stores-trillions-of-messages" rel="noopener" target="_blank">Discord Blog, "How Discord Stores Trillions of Messages" ↗</a></span></li>
+<li><strong>Google</strong>'s Maglev — the software network load balancer that has carried Google's public traffic since 2008 — took a different route: <strong>it implements consistent hashing with a fixed-size lookup table</strong>, aiming beyond "minimal disruption when nodes change" at better evenness than a naive ring gives. <strong>The ring is not the only implementation; "minimal disruption" and "evenness" can be balanced with another structure.</strong> <span class="src">Eisenbud et al., "Maglev: A Fast and Reliable Software Network Load Balancer," USENIX NSDI 2016</span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/dynamo-paper54.en.html" rel="noopener" target="_blank">Paper Deep Read · Dynamo: Amazon's Highly Available Key-value Store</a> — what gets built on top of this ring: quorum NWR, vector clocks, Merkle-tree anti-entropy and hinted handoff</aside>
+<h2>Pitfalls and open questions</h2>
+<ul>
+<li><strong>Mistaking "cheap to move" for "evenly spread."</strong> The basic ring guarantees <strong>only</strong> the former. Evenness comes from virtual nodes, and only probabilistically — at 100 stand-ins the standard deviation is still 10%, so the busiest machine routinely carries a tenth more than average. <strong>Capacity-plan against the busiest node, not the mean.</strong></li>
+<li><strong>Assuming more virtual nodes is always better.</strong> The book mentions only the storage cost and misses the expensive one: the more stand-ins, the more peers a machine's data is entangled with, so <strong>any two simultaneous failures are likelier to take out every replica of some piece of data</strong> — availability drops. Cassandra walking its default down from 256 to 16 is exactly this. "More is more even" holds on paper and traps you in production.</li>
+<li><strong>Thinking consistent hashing cures hot spots.</strong> The book says it mitigates the hot-key problem and cites celebrity accounts; read that carefully. What it evens out is <strong>the distribution of many keys</strong>. If traffic concentrates on <strong>one single key</strong>, that key has one home and that home burns. The real fixes live elsewhere: split the hot key into N with a random suffix, or add a client-side local cache.</li>
+<li><strong>Agonising over the hash function.</strong> SHA-1 is just an example; MD5 and MurmurHash work and are faster. Nothing here needs cryptographic properties — only that the output <strong>spreads well</strong> and that <strong>every client computes the same value</strong>. The iron rule runs the other way: <strong>changing the hash function means moving everything</strong>, just as painful as changing N in a modulo, so it is a near-irreversible decision.</li>
+<li><strong>Forgetting replicas.</strong> Real storage does not use "the first server clockwise" but "the next N clockwise, skipping the same host and the same rack" — that is what Dynamo's preference list does. Without it the ring is a routing algorithm, not a system that can hold data.</li>
+<li><strong>Forgetting the migration window.</strong> The book explains which keys move but not where reads and writes go while they are moving. The new node has not finished syncing — who serves the read? Cassandra uses pending ranges so requests hit both old and new locations during a migration. <strong>The most laborious step between algorithm and system sits just outside the book's frame.</strong></li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. The root cause in one line: <code>hash(key) % N</code> <strong>writes the machine count into the routing formula</strong>, so changing N relocates almost every key. Four servers down to three moves about <strong>75%</strong> of keys; the ideal is 25%.</p>
+<p>2. The cost is a stampede, not an inconvenience: at <code>100,000</code> QPS and a 99% hit rate, one global rehash takes database traffic from 1,000 to 75,000 requests per second — <strong>roughly 75×</strong>.</p>
+<p>3. One idea fixes it: <strong>take N out of the formula</strong>. Join the hash space into a ring, place servers and keys on it, and let <strong>the first server clockwise</strong> own the key. Adding or removing one moves <code>1/N</code> — the <code>k/n</code> property from Karger's 1997 paper, and the theoretical optimum.</p>
+<p>4. The basic ring has two flaws, both from random placement: <strong>uneven arcs</strong> (a neighbour can double its load when a node leaves) and <strong>key clustering</strong>. Remember: the ring guarantees cheap movement, <strong>never even distribution</strong>.</p>
+<p>5. Virtual nodes are the patch: many stand-ins per machine, variance crushed by the law of large numbers. 100 stand-ins gives ~10% standard deviation, 200 gives ~5%; as a bonus it expresses <strong>machine strength</strong> — stronger boxes get more stand-ins.</p>
+<p>6. The ring is not the only answer: Redis Cluster uses <code>16384</code> fixed slots plus a mapping table, paying for a control plane and buying full control over what moves where.</p>
+<p>7. But stand-ins are not free: <strong>Cassandra states that more tokens reduce availability</strong>, its default is 16, and it does not recommend that even for clusters above 50 nodes. The production answer is in the teens, not the hundreds.</p>
+<p>8. What it does not solve: <strong>a single hot key</strong> (Discord's hot partitions are the live case), cross-shard transactions, replica placement, and routing during migration. Being able to state <strong>how the affected range is computed</strong> and <strong>what virtual nodes cost in availability</strong> is what "understanding this chapter" means in an interview.</p>
+</div>
+</div>
+<footer>Book Deep Read · Finish this page ≈ own the core of the chapter. For the full case study and the details, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
