@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview 卷一 第 4 章 · 设计限流器 — 专业书籍精读 Book 56</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · System Design Interview 卷一 · 第 4 章</p>
+<h1>设计限流器</h1>
+<p class="sub">System Design Interview: An Insider's Guide · Vol 1 · Ch 4 · Alex Xu · 2020</p>
+<p class="langbar"><a href="sdi1-ch04-rate-limiter-book56.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>网上很多服务都会给你一个「用量上限」：这个软件的免费版一天只让你转 5 次文件，那个网站不让你一分钟连发二十条评论。这一章讲的就是这个上限背后的那个小零件——<strong>限流器</strong>：一个坐在大门口的检票员，规定「每人每分钟最多进几次」，超了就把人拦在门外。</p>
+<h2>先说个怪事</h2>
+<p>你大概以为这道门是用来防坏人的。<strong>其实它拦下来的，多半是好人。</strong>更准确地说，是好人写错的一段程序——某个客户的软件里有个循环忘了停，一秒钟朝你发几千次请求；他自己不知道，也没恶意，可效果和攻击一模一样。限流器真正的日常工作，是<strong>不让一个人的失手，变成所有人的事故</strong>。</p>
+<h2>旧世界为什么难</h2>
+<p>没有这道门，一切按「先到先得」运转：谁喊得响谁被服务。听着公平，实际很残酷——一个失控的程序几秒内就能把服务的处理能力全部吃光，剩下成千上万个规规矩矩的用户，同时被挡在外面。还有一笔更直接的账：很多服务背后要调别人家的收费接口，按次算钱，一个转不停的循环一夜就能烧光一个月的预算。</p>
+<h2>核心机制：四种守门的姿势</h2>
+<p><strong>① 发糖法（令牌桶）。</strong>门口摆一个碗，每秒往碗里放 2 颗糖，碗最多装 40 颗。想进门，先从碗里拿一颗；碗空了就进不去。妙处在于：你安静了一阵子，碗里就攒满了糖，这时候可以一口气进 40 个人——<strong>它容得下短时间的一阵猛冲，但拉长了看，平均还是每秒 2 个</strong>。</p>
+<p><strong>② 排队法（漏桶）。</strong>门口只放一条队，无论外面涌来多少人，里面永远每秒放 2 个进去，一个不多。好处是里面的节奏永远平稳；代价是队伍一旦被挤满，后来的人连队都排不上，直接被劝走。</p>
+<p><strong>③ 整点清零法（固定窗口）。</strong>门卫拿个计数器，每到整分钟清零，这一分钟数满 5 个就不放了。最省事，但有个漏洞：<strong>如果 5 个人在 0 分 55 秒挤进来，另外 5 个在 1 分 05 秒又进来，那么这中间的短短十几秒里，实际上进去了 10 个——是规定的两倍。</strong></p>
+<p><strong>④ 往回看一分钟（滑动窗口）。</strong>把「这一分钟」改成「从现在往回数的一分钟」，整点漏洞就补上了。代价是门卫得记住每个人进门的时刻，人一多这本账就又厚又贵。折中办法是不记流水账，只把上一分钟的人数按重叠比例折算一部分进来——不完全准，但便宜得多。</p>
+<h2>该怎么选</h2>
+<p>想给用户留一点「偶尔手快」的余地，用发糖法；要求下游节奏绝对平稳，用排队法；只想快速上一个粗糙的挡板，整点清零法半小时就写完了。</p>
+<p>诚实说一句代价：这道门自己也可能出问题——它坏了，是该把所有人都放进去，还是把所有人都挡在外面？<strong>这个问题没有标准答案，但每个上线限流的团队都必须先想清楚。</strong></p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>限流器是门口的检票员，防的主要不是坏人，是<strong>一个人的失手拖垮所有人</strong>。四种守门姿势：发糖（容得下突发）、排队（节奏平稳）、整点清零（省事但边界漏水）、往回看一分钟（准但贵）。选哪种，取决于你愿不愿意容忍突发。</p>
+</div>
+<p class="switch-hint">想进到具体算法、量级和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">你以为限流器（rate limiter）是一堵「防攻击的墙」，其实它是一份<strong>容量的分配合同</strong>——它要回答的第一个问题不是「怎么挡住坏人」，而是<strong>「当资源不够分时，先饿死谁」</strong>。这一章的价值也不在那五个算法本身：算法是死的，真正难的是三件事——<strong>限多少、在哪一层限、以及怎么让几十台无状态的限流器对同一个计数器数得对</strong>。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>限流 / 节流（rate limiting / throttling）</strong>：给「单位时间内允许多少次请求」设一个上限，超过就拒绝或延后。</li>
+<li><strong>QPS（queries per second）</strong>：每秒请求数，衡量流量最常用的单位。</li>
+<li><strong>API 网关（API gateway）</strong>：所有外部请求进入系统前统一经过的那一层，通常顺便做鉴权、SSL 卸载、IP 白名单、限流。</li>
+<li><strong>中间件（middleware）</strong>：夹在客户端与业务服务之间、对每个请求做统一处理的一层代码或组件。</li>
+<li><strong>Redis</strong>：把数据放在内存里的键值存储，读写在<strong>亚毫秒</strong>级；本章用它当计数器，因为够快、且原生支持「到点自动过期」。</li>
+<li><strong>原子操作（atomic operation）</strong>：一个「要么整个做完、要么完全没做」的动作，中途不会被别的请求插进来。Redis 的 <code>INCR</code>（计数加一并返回新值）就是原子的。</li>
+<li><strong>竞态条件（race condition）</strong>：两个操作并发地「读—改—写」同一份数据，后写的覆盖先写的，一次更新凭空消失。</li>
+<li><strong>HTTP 429</strong>：状态码 <code>429 Too Many Requests</code>，服务端用它告诉客户端「你被限流了」。</li>
+<li><strong>DoS（拒绝服务攻击）</strong>：用海量请求耗光服务资源，让正常用户用不了。</li>
+<li><strong>突发流量（burst）</strong>：短时间内远超平均水平的一阵流量，如秒杀开抢的头几秒。</li>
+<li><strong>粘性会话（sticky session）</strong>：负载均衡把同一个客户端的请求固定发给同一台服务器。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>这是卷一 Part II「系统案例」的开篇。<strong>Ch1 给零件、Ch2 给尺子、Ch3 给顺序，Ch4 是这三样第一次合起来用</strong>——而且题目故意选得很小：一个限流器没有复杂业务，四十分钟能从需求聊到分布式竞态，正适合当范本。往后看，Ch5 的一致性哈希会回答本章留下的尾巴（限流状态怎么分到多台机器上），Ch10 的通知系统、Ch9 的爬虫都会再次用到限流。对应到现实：任何对外开放的 API（Stripe、GitHub、Twitter 的接口都有明码标价的配额），以及微服务之间的过载保护。</p>
+<h2>这章要解决什么</h2>
+<p>原书开门见山给了三个理由：<strong>防止资源被吃干</strong>（不限流，少数几个调用方就能占满整个服务的处理能力，其余人集体不可用）；<strong>省钱</strong>（很多请求背后要调按次计费的第三方接口——信用查询、支付、健康档案，限流是给账单封顶的第一道闸）；<strong>防止服务器过载</strong>（把机器人和异常用户挡在门外）。Twitter 限制每 3 小时最多发 300 条推文，Google Docs 的接口默认每用户每 60 秒最多 300 次读请求——<strong>这些数字不是随便定的，是「一个人最多能占多少公共资源」的明码标价</strong>。</p>
+<p><strong>不解决会怎样？</strong>算一笔具体的账：一个 API 平时稳定在 <code>5,000</code> QPS，某个客户的重试逻辑写错了——失败就立刻重发、不退避——他那一侧的错误在几秒内滚成 <code>50,000</code> QPS 打进来。数据库连接池被占满，剩下 99% 的正常客户一起收到 503。<strong>压垮系统的不是攻击，是一段没写退避的循环。</strong></p>
+<p>原书在「明确设计范围」这一步列出的条件值得原样记住，它们直接决定了后面的取舍：<strong>准确挡住超额请求；延迟要低（它在每个请求的关键路径上）；少占内存；支持分布式（多台限流器共享同一份配额）；给被拒的用户清楚提示；高容错——限流器自己出问题时，不能把整个系统一起拖下水。</strong>最后一条最容易被忽略，也最要命。</p>
+<h2>核心内容，讲透</h2>
+<h3>先决定：这道门装在哪一层</h3>
+<p>原书给了三个位置，并直接否掉了第一个。<strong>客户端限流不可靠</strong>——代码可以被改、请求可以被伪造，把配额交给调用方自己管等于没管。<strong>服务端限流</strong>放在业务代码里，上下文最全，但每个服务都要重新实现一遍。<strong>中间件限流</strong>把这一层抽出来单独坐在客户端和业务服务之间——微服务架构里这个位置通常就是 <strong>API 网关</strong>：它本来就要做鉴权、SSL 卸载、IP 白名单，顺手把限流一起做了最自然。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 280" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="a1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="a1r" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#e06b6b"></path></marker>
+</defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="18" y="20">判定在中间件，计数在共享缓存</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#7c8593" width="150" x="170" y="34"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="245" y="54">限流规则（配置缓存）</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="245" x2="245" y1="64" y2="86"></line>
+<rect fill="rgba(91,157,249,0.14)" height="64" rx="8" stroke="#5b9df9" stroke-width="2" width="150" x="170" y="90"></rect>
+<text fill="#e7ebf1" font-size="12" text-anchor="middle" x="245" y="114">限流中间件</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="245" y="134">（常在 API 网关）</text>
+<rect fill="rgba(255,255,255,0.02)" height="36" rx="6" stroke="#7c8593" width="88" x="18" y="104"></rect>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="62" y="127">客户端</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="108" x2="164" y1="122" y2="122"></line>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="136" y="114">请求</text>
+<rect fill="rgba(155,108,245,0.14)" height="36" rx="6" stroke="#9b6cf5" width="138" x="176" y="196"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="245" y="219">Redis 计数器</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="245" x2="245" y1="156" y2="192"></line>
+<text fill="#7c8593" font-family="monospace" font-size="10" x="254" y="178">INCR / EXPIRE</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="322" x2="390" y1="110" y2="110"></line>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="356" y="102">放行</text>
+<rect fill="none" height="118" rx="8" stroke="rgba(91,157,249,0.35)" stroke-dasharray="5 4" width="150" x="396" y="62"></rect>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="471" y="79">API 服务集群</text>
+<rect fill="rgba(91,157,249,0.08)" height="26" rx="5" stroke="#7c8593" width="122" x="410" y="88"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="471" y="106">API 服务 1</text>
+<rect fill="rgba(91,157,249,0.08)" height="26" rx="5" stroke="#7c8593" width="122" x="410" y="120"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="471" y="138">API 服务 2</text>
+<rect fill="rgba(91,157,249,0.08)" height="26" rx="5" stroke="#7c8593" width="122" x="410" y="152"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="471" y="170">API 服务 3</text>
+<path d="M172,148 C 140,186 88,186 63,148" fill="none" marker-end="url(#a1r)" stroke="#e06b6b" stroke-dasharray="4 3"></path>
+<text fill="#e06b6b" font-size="10.5" text-anchor="middle" x="106" y="200">429 + Retry-After</text>
+</svg>
+<figcaption>图 1 · 限流器的位置：请求先过中间件，计数读写在共享的 Redis 上，通过则转发、超限则直接回 429，业务服务完全不感知。</figcaption>
+</figure>
+<p>怎么选？原书的判据很务实：先看现有技术栈支不支持、要的算法这一层能不能实现；<strong>已经上了微服务、已经有网关在做鉴权，那就在网关上加</strong>；打算自建就要认清「造一个限流服务是要花时间的」——第三方网关是拿钱换时间。</p>
+<h3>令牌桶：唯一容得下突发的那个</h3>
+<p>一个能装 <em>b</em> 个令牌的桶，系统按固定速率往里放令牌，放满就不再放。每个请求进来先取走一个令牌，取得到就放行，取不到就丢弃。<strong>两个参数：桶容量（决定最大突发量）和填充速率（决定长期平均速率）。</strong></p>
+<p>关键直觉在这句：<strong>桶里攒下的令牌，就是你允许的突发额度。</strong>一个客户安静了 20 秒，桶就攒满了，他可以在下一秒一口气打出 40 个请求——但只要拉长时间看，他的平均速率永远被填充速率牢牢锁住。这正是绝大多数公开 API 想要的行为：用户偶尔手快没关系，别一直快就行。</p>
+<p>桶怎么分？原书列了三种粒度，各有各的用途：<strong>按 API 端点各一个桶</strong>（发帖比读帖珍贵，配额自然不同）；<strong>按 IP 各一个桶</strong>（用于未登录的匿名流量）；<strong>全局一个桶</strong>（例如整个系统最多扛 <code>10,000</code> QPS，这是保护自己的最后一道闸）。真实系统往往三层叠着用。</p>
+<h3>漏桶：把节奏拉平，代价是不容突发</h3>
+<p>漏桶用一个<strong>先进先出队列</strong>实现：请求到达时，队列没满就入队、满了就丢弃；另一头以<strong>恒定速率</strong>从队列取出请求去处理。两个参数：队列大小和流出速率。</p>
+<p>它和令牌桶的差别一句话说清：<strong>令牌桶管「你能不能进来」，漏桶管「里面的处理节奏」。</strong>令牌桶允许一次冲进来 40 个然后同时处理；漏桶无论外面怎么涌，里面永远每秒 2 个。所以当下游吞吐固定、经不起冲击（一台老数据库、一个按并发计费的第三方接口）时，漏桶更合适。</p>
+<p>代价原书写得很直白：<strong>一阵突发会把队列塞满旧请求</strong>，这些旧请求处理不过来，后面刚到的、可能更有价值的新请求就会被拒——<strong>队列变成了一个「优先服务过期数据」的装置</strong>，而用户那头看到的是等了 8 秒才回来的响应。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="320" x2="320" y1="14" y2="288"></line>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="160" y="24">令牌桶 token bucket</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="160" y="46">每秒补 2 个令牌，最多存 40 个</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="160" x2="160" y1="52" y2="74"></line>
+<path d="M106,78 L106,168 L214,168 L214,78" fill="rgba(91,157,249,0.08)" stroke="#5b9df9" stroke-width="1.8"></path>
+<circle cx="128" cy="154" fill="rgba(155,108,245,0.5)" r="7" stroke="#9b6cf5"></circle>
+<circle cx="150" cy="154" fill="rgba(155,108,245,0.5)" r="7" stroke="#9b6cf5"></circle>
+<circle cx="172" cy="154" fill="rgba(155,108,245,0.5)" r="7" stroke="#9b6cf5"></circle>
+<circle cx="194" cy="154" fill="rgba(155,108,245,0.5)" r="7" stroke="#9b6cf5"></circle>
+<circle cx="139" cy="138" fill="rgba(155,108,245,0.5)" r="7" stroke="#9b6cf5"></circle>
+<circle cx="161" cy="138" fill="rgba(155,108,245,0.5)" r="7" stroke="#9b6cf5"></circle>
+<circle cx="183" cy="138" fill="rgba(155,108,245,0.5)" r="7" stroke="#9b6cf5"></circle>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="40" x2="100" y1="112" y2="112"></line>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="38" y="108">请求</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="220" x2="284" y1="112" y2="112"></line>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="252" y="104">取 1 个令牌</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="160" y="188">攒下的令牌 = 允许的突发量</text>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="160" y="212">桶空 → 丢弃</text>
+<text fill="#9b6cf5" font-family="monospace" font-size="11.5" font-weight="700" text-anchor="middle" x="160" y="248">允许突发 · 平均受控</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="160" y="270">Stripe / AWS API Gateway 用它</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="480" y="24">漏桶 leaky bucket</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="480" y="46">先进先出队列，出口速率恒定</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="480" x2="480" y1="52" y2="74"></line>
+<rect fill="rgba(91,157,249,0.08)" height="90" rx="4" stroke="#5b9df9" stroke-width="1.8" width="108" x="426" y="78"></rect>
+<rect fill="rgba(155,108,245,0.35)" height="14" rx="3" stroke="#9b6cf5" width="88" x="436" y="86"></rect>
+<rect fill="rgba(155,108,245,0.35)" height="14" rx="3" stroke="#9b6cf5" width="88" x="436" y="106"></rect>
+<rect fill="rgba(155,108,245,0.35)" height="14" rx="3" stroke="#9b6cf5" width="88" x="436" y="126"></rect>
+<rect fill="rgba(155,108,245,0.35)" height="14" rx="3" stroke="#9b6cf5" width="88" x="436" y="146"></rect>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="480" x2="480" y1="170" y2="194"></line>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="480" y="212">每秒固定流出 2 个</text>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="480" y="236">队列满 → 丢弃</text>
+<text fill="#9b6cf5" font-family="monospace" font-size="11.5" font-weight="700" text-anchor="middle" x="480" y="262">出口平稳 · 不容突发</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="480" y="284">Shopify Admin API 用它</text>
+</svg>
+<figcaption>图 2 · 令牌桶 vs 漏桶：前者攒令牌、允许一次性冲刺；后者排队、把出口节奏死死拉平。两者都省内存，差别全在「容不容突发」。</figcaption>
+</figure>
+<h3>三种计数窗口：从最省事到最精确</h3>
+<p><strong>固定窗口计数器</strong>最直观：把时间切成整分钟（或整小时），每个窗口配一个计数器，请求来了加一，加到阈值就拒绝，到下一个窗口清零。省内存、好理解、易实现。</p>
+<p>它的毛病出在<strong>边界</strong>上，原书给的例子极其清楚：阈值 5 次/分钟，如果有 5 个请求落在 <code>2:00:30–2:01:00</code>、另外 5 个落在 <code>2:01:00–2:01:30</code>，那么在 <code>2:00:30–2:01:30</code> 这个滚动的一分钟里，实际放进去了 <strong>10 次，正好是配额的两倍</strong>。攻击者只要把流量对准整点两侧，就能稳定拿到双倍额度。</p>
+<p><strong>滑动窗口日志</strong>把这个洞堵死：不按整点分桶，而是把<strong>每个请求的时间戳</strong>记下来（通常用 Redis 的有序集合 sorted set）。新请求到达时先删掉窗口起点之前的旧时间戳，再把当前时间戳加进去，剩下的条数没超阈值就放行。<strong>任意滚动窗口内都不会超额，这是唯一真正精确的算法。</strong>代价很扎眼：内存和请求数成正比——而且原书特别点出，<strong>请求即使被拒，它的时间戳仍留在集合里</strong>。对一个正在被刷的接口来说，这个性质相当危险：<strong>内存恰好在最不该涨的时候跟着涨</strong>。</p>
+<p><strong>滑动窗口计数器</strong>是二者的混血，也是工程上最常用的折中：只保留前一个和当前两个窗口的计数，按重叠比例折算——<code>当前窗口计数 + 前一窗口计数 × 重叠比例</code>。原书的例子：阈值 7 次/分钟，前一分钟来了 7 次、当前分钟已来 5 次，此刻处在当前窗口的 30% 处，折算值 = <code>5 + 7 × 70% = 9.7</code>，向下取整为 9，大于 7，拒绝。</p>
+<p>它省内存（每个 key 只存两个数），也能抹平尖峰，但<strong>它是个近似</strong>：公式默认前一个窗口里的请求均匀分布，而真实流量从来不均匀。这个近似有多不准？下面 Cloudflare 给了实测数字。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 306" xmlns="http://www.w3.org/2000/svg">
+<text fill="#e06b6b" font-size="13" font-weight="700" x="18" y="22">① 固定窗口：跨界的那一分钟能漏进 2 倍配额</text>
+<circle cx="262" cy="42" fill="#9b6cf5" r="4"></circle>
+<circle cx="276" cy="42" fill="#9b6cf5" r="4"></circle>
+<circle cx="290" cy="42" fill="#9b6cf5" r="4"></circle>
+<circle cx="303" cy="42" fill="#9b6cf5" r="4"></circle>
+<circle cx="315" cy="42" fill="#9b6cf5" r="4"></circle>
+<circle cx="325" cy="42" fill="#9b6cf5" r="4"></circle>
+<circle cx="337" cy="42" fill="#9b6cf5" r="4"></circle>
+<circle cx="349" cy="42" fill="#9b6cf5" r="4"></circle>
+<circle cx="361" cy="42" fill="#9b6cf5" r="4"></circle>
+<circle cx="373" cy="42" fill="#9b6cf5" r="4"></circle>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="4" stroke="rgba(91,157,249,0.5)" width="200" x="120" y="54"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="220" y="76">窗口 A 计数 5（用满）</text>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="4" stroke="rgba(91,157,249,0.5)" width="200" x="320" y="54"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="420" y="76">窗口 B 计数 5（清零重来）</text>
+<line stroke="#7c8593" x1="40" x2="604" y1="96" y2="96"></line>
+<line stroke="#7c8593" x1="120" x2="120" y1="90" y2="102"></line>
+<line stroke="#7c8593" x1="320" x2="320" y1="90" y2="102"></line>
+<line stroke="#7c8593" x1="520" x2="520" y1="90" y2="102"></line>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="120" y="116">2:00</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="320" y="116">2:01</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="520" y="116">2:02</text>
+<path d="M220,128 L220,138 L420,138 L420,128" fill="none" stroke="#e06b6b" stroke-width="1.6"></path>
+<text fill="#e06b6b" font-size="10.5" text-anchor="middle" x="320" y="154">滚动的这 1 分钟里实际放进 10 次 = 配额的 2 倍</text>
+<text fill="#5b9df9" font-size="13" font-weight="700" x="18" y="192">② 滑动窗口计数器：按重叠比例折算前一窗口</text>
+<rect fill="rgba(120,120,130,0.16)" height="34" rx="4" stroke="#7c8593" width="180" x="120" y="210"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="210" y="232">前一分钟：7 次</text>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="4" stroke="#5b9df9" width="180" x="300" y="210"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="390" y="232">当前分钟：5 次</text>
+<rect fill="none" height="46" rx="4" stroke="#9b6cf5" stroke-dasharray="5 4" stroke-width="2" width="180" x="174" y="204"></rect>
+<line stroke="#9b6cf5" stroke-dasharray="3 3" x1="354" x2="354" y1="198" y2="258"></line>
+<text fill="#9b6cf5" font-size="10" x="360" y="206">此刻</text>
+<text fill="#9b6cf5" font-size="10" text-anchor="middle" x="264" y="270">滚动的「最近 1 分钟」</text>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="320" y="294">折算 = 5 + 7 × 70% = 9.7 → 取 9 &gt; 阈值 7 → 拒绝</text>
+</svg>
+<figcaption>图 3 · 上：固定窗口在整点两侧留了个能拿双倍配额的洞。下：滑动窗口计数器只存两个数，把前一窗口按重叠比例折算进来，用一点精度换内存。</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/rate-limiting-day10.html" rel="noopener" target="_blank">System Design · Day 10 限流</a> — 各算法的边界误差怎么算、限流放在哪一层，以及分布式限流下的时钟与竞态问题</aside>
+<h3>分布式下的两根硬骨头：竞态与同步</h3>
+<p>单机限流是道送分题，一上多机就变味。原书点出的两个问题，才是这一章真正的深挖点。</p>
+<p><strong>竞态条件。</strong>朴素实现是「读计数 → 加一 → 写回」三步。两个请求几乎同时到达：都读到 3，都算出 4，都写回 4——<strong>来了两个请求，计数只涨了一。</strong>高并发下这种丢失持续发生，阈值形同虚设。解法见下面表 3，这里只强调一句：<strong>加锁是最直觉但最差的那个——原书直言它会显著拖慢系统</strong>，而限流器恰恰坐在每个请求的关键路径上。</p>
+<p><strong>同步问题。</strong>限流器要水平扩展就得无状态；可同一客户端的请求会被负载均衡打到不同的限流器上，各自记各自的账，配额自然超发。原书明确否掉了粘性会话这个偷懒方案——<strong>「既不可扩展也不灵活」</strong>：机器一挂，绑在它上面的状态全丢；扩缩容时流量重新分配，配额会突然错乱。正确答案是把状态挪进<strong>集中式存储</strong>（Redis），让所有限流器读写同一份计数。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 200" xmlns="http://www.w3.org/2000/svg">
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="322" x2="322" y1="14" y2="192"></line>
+<text fill="#e06b6b" font-size="12.5" font-weight="700" x="18" y="22">① 读—改—写：并发下丢计数</text>
+<rect fill="rgba(255,255,255,0.02)" height="26" rx="5" stroke="#7c8593" width="280" x="24" y="34"></rect>
+<text fill="#b9c0ca" font-family="monospace" font-size="10.5" x="36" y="52">t1  限流器 A 读到计数 = 3</text>
+<rect fill="rgba(255,255,255,0.02)" height="26" rx="5" stroke="#7c8593" width="280" x="24" y="66"></rect>
+<text fill="#b9c0ca" font-family="monospace" font-size="10.5" x="36" y="84">t2  限流器 B 也读到 3</text>
+<rect fill="rgba(255,255,255,0.02)" height="26" rx="5" stroke="#7c8593" width="280" x="24" y="98"></rect>
+<text fill="#b9c0ca" font-family="monospace" font-size="10.5" x="36" y="116">t3  A 写回 4</text>
+<rect fill="rgba(224,107,107,0.16)" height="26" rx="5" stroke="#e06b6b" width="280" x="24" y="130"></rect>
+<text fill="#e7ebf1" font-family="monospace" font-size="10.5" x="36" y="148">t4  B 写回 4 ← A 那次被抹掉</text>
+<text fill="#e06b6b" font-size="11" text-anchor="middle" x="164" y="180">两个请求，计数只涨 1</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="344" y="22">② 原子自增 / Lua 脚本</text>
+<rect fill="rgba(91,157,249,0.08)" height="26" rx="5" stroke="#5b9df9" width="278" x="344" y="34"></rect>
+<text fill="#b9c0ca" font-family="monospace" font-size="10.5" x="356" y="52">t1  A: INCR key → 返回 4</text>
+<rect fill="rgba(91,157,249,0.08)" height="26" rx="5" stroke="#5b9df9" width="278" x="344" y="66"></rect>
+<text fill="#b9c0ca" font-family="monospace" font-size="10.5" x="356" y="84">t2  B: INCR key → 返回 5</text>
+<rect fill="rgba(255,255,255,0.02)" height="26" rx="5" stroke="#7c8593" width="278" x="344" y="98"></rect>
+<text fill="#b9c0ca" font-size="10.5" x="356" y="116">读、改、写在 Redis 内合成一步</text>
+<rect fill="rgba(255,255,255,0.02)" height="26" rx="5" stroke="#7c8593" width="278" x="344" y="130"></rect>
+<text fill="#b9c0ca" font-size="10.5" x="356" y="148">也可用 sorted set 存请求时间戳</text>
+<text fill="#8fbaff" font-size="11" text-anchor="middle" x="483" y="180">谁也丢不了 · 无需加锁</text>
+</svg>
+<figcaption>图 4 · 分布式限流的核心难点：把「读—改—写」变成一次原子操作。加锁能解决，但会把延迟加在每个请求上，是最不该选的那个。</figcaption>
+</figure>
+<h3>规则、响应与可观测性</h3>
+<p>限流规则通常写成<strong>磁盘上的配置文件</strong>，由后台 worker 定期拉取、放进缓存供中间件读取（原书样例格式取自 Lyft 开源的限流组件：一条规则声明「域 = 认证、键 = 登录、每分钟 5 次」）。这样调阈值不用改代码、不用重启。</p>
+<p>请求被拒时返回 <code>429 Too Many Requests</code>；业务允许延后处理的话，也可以把请求丢进队列稍后再执行。更重要的是<strong>三个响应头</strong>——限流器和调用方之间的契约：<code>X-Ratelimit-Limit</code>（配额多少）、<code>X-Ratelimit-Remaining</code>（还剩几次）、<code>X-Ratelimit-Retry-After</code>（多久后可再来）。<strong>没有它们，客户端只能靠撞墙发现自己被限了；有了它们，规矩的客户端会主动减速。</strong></p>
+<p>监控要盯两件事：<strong>规则是不是太严（大量正常请求被误杀），以及算法在突发下是不是失效</strong>——闪购期间正常用户被大面积拒绝，就说明该换成令牌桶了。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/api-design-day9.html" rel="noopener" target="_blank">System Design · Day 9 API 设计</a> — 错误码、限流响应头这类契约一旦公开就改不动了，代价由所有调用方承担</aside>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 1 · 五种限流算法：精度、内存与突发容忍度的三角</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>算法</th><th>怎么工作</th><th>内存</th><th>容突发</th><th>主要代价</th><th>适合</th></tr></thead>
+<tbody>
+<tr><th>令牌桶</th><td>按速率补令牌，请求取一个</td><td>每 key 两个数，<strong>极省</strong></td><td><strong>是</strong>（攒多少放多少）</td><td>桶容量 + 填充速率两个参数不好调</td><td>公开 API 的默认选择</td></tr>
+<tr><th>漏桶</th><td>FIFO 队列 + 恒定流出</td><td>队列长度封顶，省</td><td>否</td><td>突发会用旧请求塞满队列，新请求被拒、延迟被拉长</td><td>下游吞吐固定、要求平稳</td></tr>
+<tr><th>固定窗口</th><td>整点分桶计数，到点清零</td><td><strong>最省</strong></td><td>否</td><td><strong>边界能漏进 2 倍配额</strong></td><td>粗糙的挡板；配额按自然周期结算的场景</td></tr>
+<tr><th>滑动窗口日志</th><td>存每个请求的时间戳，按窗口清理</td><td><strong>最贵</strong>，与请求数成正比；被拒的请求也占内存</td><td>否</td><td>被刷时内存跟着涨，正好在最不该涨的时候</td><td>配额必须一次都不能超（计费、合规）</td></tr>
+<tr><th>滑动窗口计数器</th><td>当前窗口 + 前一窗口 × 重叠比例</td><td>每 key 两个数，省</td><td>部分（尖峰被抹平）</td><td><strong>是近似</strong>：假设前一窗口内均匀分布</td><td>大规模通用场景，精度要求不极端</td></tr>
+</tbody></table></div>
+<p class="tcap">表 2 · 这道门装在哪一层</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>位置</th><th>能拿到什么</th><th>代价 / 风险</th><th>结论</th></tr></thead>
+<tbody>
+<tr><th>客户端</th><td>零服务端开销，能提前避免无谓请求</td><td><strong>可被伪造、可被绕过</strong>，配额交给对方自己管</td><td>只能当「善意提示」，<strong>不能当防线</strong></td></tr>
+<tr><th>服务端应用内</th><td>完整业务上下文（哪个用户、哪个资源、多贵）</td><td>每个服务重复实现一遍；配额分散、难统一调</td><td>需要按业务语义精细限流时用</td></tr>
+<tr><th>中间件 / API 网关</th><td>统一入口，顺带鉴权与 IP 白名单；业务无感知</td><td>多一跳延迟；网关自身成为关键路径</td><td><strong>微服务下的默认答案</strong></td></tr>
+<tr><th>网络层（如 iptables）</th><td>在 IP 层就把包丢掉，开销最低</td><td>看不见用户身份，只能按 IP；NAT 后面会误伤</td><td>抗量级冲击的补充手段，不能替代应用层</td></tr>
+</tbody></table></div>
+<p class="tcap">表 3 · 分布式下解竞态的四种做法</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>做法</th><th>正确性</th><th>延迟代价</th><th>说明</th></tr></thead>
+<tbody>
+<tr><th>分布式锁</th><td>正确</td><td><strong>最高</strong>——每个请求多一轮加锁解锁</td><td>原书直接点名它「会显著拖慢系统」；限流器在关键路径上，最不该选</td></tr>
+<tr><th>原子自增（<code>INCR</code>）</th><td>正确</td><td>一次往返，<strong>亚毫秒</strong></td><td>固定窗口的标准解；配合 <code>EXPIRE</code> 让计数到点自动消失</td></tr>
+<tr><th>Lua 脚本</th><td>正确</td><td>一次往返</td><td>把「判断 + 写入」打包成一次原子执行，复杂算法（令牌桶）也能一步做完</td></tr>
+<tr><th>有序集合（sorted set）</th><td>正确且精确</td><td>一次往返，但内存随请求数涨</td><td>滑动窗口日志的天然载体：按时间戳区间删旧、统计条数一步到位</td></tr>
+</tbody></table></div>
+<p>还有一组书末点到、但值得单独拎出来的选择：<strong>硬限流 vs 软限流</strong>。硬限流是「一次都不许超」；软限流允许在短时间内小幅越线。计费和合规场景必须硬限流，用户体验场景往往软一点更好——为了 1% 的越线把用户挡在门外，通常不划算。</p>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>限流器几乎是每个后端工程师迟早都要碰、却很少有人第一次就做对的组件。做对它意味着三件事同时成立：<strong>算法接得住业务的流量形状、状态在多机之间数得对、它自己坏掉时不会带走整个系统</strong>。今天你用的每个公开 API 背后都有它——而各家的选择相当不一样，这恰恰说明「没有最优算法，只有匹配的算法」。</p>
+<div class="ev">
+<div class="evh">大厂实证 · 这些主张不是书里说的，是公司自己公开说的</div>
+<ul>
+<li><strong>Stripe</strong> 在工程博客里详述了自家的限流体系：以令牌桶为底，<strong>串起四种限流器</strong>——按身份限每秒请求数的「请求速率限流器」、限并发在途请求数的「并发限流器」，以及两种在系统吃紧时主动丢低优先级流量的降载器——<strong>验证了「令牌桶是公开 API 的默认选择」，也补上了书里没讲的「一种限流器不够用」</strong>。<span class="src"><a href="https://stripe.com/blog/rate-limiters" rel="noopener" target="_blank">Stripe「Scaling your API with rate limiters」↗</a></span></li>
+<li><strong>Cloudflare</strong> 公开了他们为支撑数百万域名选的正是<strong>滑动窗口计数器</strong>，并给出这个近似到底有多准的实测：在来自 27 万个来源的 <code>4 亿</code> 次请求上，<strong>只有 0.003% 被错误放行或错误限流</strong>——<strong>用一个数字证明了「近似算法在真实流量下足够好」</strong>。<span class="src"><a href="https://blog.cloudflare.com/counting-things-a-lot-of-different-things/" rel="noopener" target="_blank">Cloudflare「How we built rate limiting capable of scaling to millions of domains」, 2017 ↗</a></span></li>
+<li><strong>Shopify</strong> 的公开文档写明 Admin API 用的是<strong>漏桶</strong>：REST 接口每应用每店铺桶容量 <code>40</code> 次、以每秒 <code>2</code> 次回填，超限返回 <code>429</code> 并附 <code>Retry-After</code>——<strong>「漏桶适合要求平稳出口的场景」的一份逐字可查的实例</strong>。<span class="src"><a href="https://shopify.dev/docs/api/admin-rest/usage/rate-limits" rel="noopener" target="_blank">Shopify Dev Docs「REST Admin API rate limits」↗</a></span></li>
+<li><strong>Amazon</strong> 的 API Gateway 文档直言「用<strong>令牌桶算法</strong>节流，一个令牌算一次请求」，默认额度是账户级每区域稳态 <code>10,000</code> 次/秒、突发容量 <code>5,000</code> 次——<strong>「填充速率定长期平均、桶容量定突发上限」在这两个数字上一目了然</strong>。<span class="src"><a href="https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-request-throttling.html" rel="noopener" target="_blank">AWS 文档「Throttle requests to your REST APIs」↗</a></span></li>
+<li><strong>GitHub</strong> 把配额和响应头都写进公开文档：认证请求每小时 <code>5,000</code> 次，超限返回 <code>403</code> 或 <code>429</code>，并用 <code>x-ratelimit-remaining</code> 随时告知余量——<strong>「用响应头把配额变成契约」的现成范本</strong>。<span class="src"><a href="https://docs.github.com/en/rest/using-the-rest-api/rate-limits-for-the-rest-api" rel="noopener" target="_blank">GitHub Docs「Rate limits for the REST API」↗</a></span></li>
+</ul>
+</div>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>把限流当安全防线。</strong>它挡得住一个失控客户端，挡不住来自几十万个 IP、每个只发几次的分布式攻击——那是 WAF 和网络层的活。原书把 iptables 这类 IP 层手段单列为「另一个层次的限流」，正说明应用层限流只是其中一环。</li>
+<li><strong>按 IP 限流两头落空。</strong>一家公司几千人共用一个出口 IP，按 IP 限就是集体误伤；反过来移动网络 IP 频繁漂移，同一个人换个 IP 就重置了配额。<strong>能按用户 / API key 限，就别按 IP 限</strong>；IP 只用于兜不住身份的匿名流量。</li>
+<li><strong>限流器自己成了单点。</strong>原书把「高容错」列进设计要求，却没展开真实系统必须回答的那个问题：<strong>计数存储挂了，是全放行（fail open）还是全拒绝（fail closed）？</strong>业界主流选 fail open——宁可短暂失去保护，也不要因为一个辅助组件打死主链路；但计费和合规类配额的答案可能相反。这是书外的补充，不是书里的结论。</li>
+<li><strong>近似不是万能的。</strong>滑动窗口计数器假设前一窗口内请求均匀分布。Cloudflare 的 0.003% 说明真实混合流量下够用，但在「一次都不能超」的计费或合规配额上不可接受——那里得上滑动窗口日志，认下内存代价。</li>
+<li><strong>429 之后的重试风暴。</strong>被拒的客户端若立刻重试，所有人的重试会在同一秒对齐，形成第二波冲击。<code>Retry-After</code> 只是最低要求，真正需要的是<strong>指数退避 + 随机抖动</strong>。原书提到了退避与客户端缓存，但「重试同步化」这个二阶效应值得单独警惕。</li>
+<li><strong>时代局限。</strong>本书成于 2020 年，讲的是<strong>静态阈值</strong>：数字由人拍板、写进配置。此后的趋势是把限流下沉到服务网格的 sidecar，以及<strong>自适应限流</strong>——按下游实际延迟和排队情况自动调整放行量。五个算法仍是这些新方案的底层零件，但「阈值该由谁定」的答案已经在变。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 一句话：限流器不是防攻击的墙，是<strong>资源不够时决定先饿死谁</strong>的分配合同；它日常拦下的多是失控的重试循环，不是攻击者。</p>
+<p>② 三个理由：防 DoS 式的资源饥饿、给按次计费的第三方调用封顶、防服务器过载。设计要求里最容易忘的一条是：<strong>限流器自己出问题时不能拖垮整个系统</strong>。</p>
+<p>③ 位置三选一：客户端<strong>不可信</strong>、服务端应用内上下文最全、中间件 / API 网关是微服务下的默认答案。</p>
+<p>④ 令牌桶：桶容量定<strong>突发上限</strong>、填充速率定<strong>长期平均</strong>；唯一天然容得下突发的算法，Stripe 与 AWS API Gateway 都用它。</p>
+<p>⑤ 漏桶：FIFO 队列 + 恒定流出，出口平稳但不容突发，<strong>突发会用旧请求塞满队列</strong>；Shopify 用它。</p>
+<p>⑥ 固定窗口最省事，但<strong>整点两侧能漏进 2 倍配额</strong>；滑动窗口日志最精确也最贵（被拒的请求也占内存）；滑动窗口计数器是折中，Cloudflare 实测误判率仅 <code>0.003%</code>。</p>
+<p>⑦ 分布式两大坑：<strong>竞态</strong>（读—改—写丢计数，用原子自增 / Lua 脚本解，别用锁）和<strong>同步</strong>（别用粘性会话，把状态放进集中式 Redis）。</p>
+<p>⑧ 契约要给全：<code>429</code> + <code>X-Ratelimit-Limit</code> / <code>-Remaining</code> / <code>-Retry-After</code>；规则存配置、后台拉取，改阈值不用发版。面试里最值钱的一句是说清<strong>你选这个算法是因为业务允不允许突发</strong>，而不是背出五个算法的名字。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
