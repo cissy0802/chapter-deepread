@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview Vol 1 · Ch 6 · Design a Key-Value Store — Books Deep Read Book 58</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOKS DEEP READ · SYSTEM DESIGN INTERVIEW VOL 1 · CH 6</p>
+<h1>Design a Key-Value Store</h1>
+<p class="sub">System Design Interview: An Insider's Guide · Ch 6 · Alex Xu · 2020</p>
+<p class="langbar"><a href="sdi1-ch06-key-value-store-book58.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep read</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>When you add an item to a shopping cart, the record of "what is in this cart right now" has to live somewhere. It is about as simple as data gets — <strong>one name, one piece of content</strong>, like an enormous address book. This chapter teaches you to turn that address book from "one notebook held by one person" into "something thousands of machines keep together, and that still works when several of them break."</p>
+<h2>Start with something odd</h2>
+<p>Amazon's early shopping cart had a famous quirk: an item you deleted would <strong>come back a little later</strong>. That was not a bug, it was a deliberate trade — better to occasionally carry one extra item than to let "add to cart" fail even once. The whole design in this chapter exists to buy one sentence: <strong>writes always go through.</strong></p>
+<h2>Why the old world was hard</h2>
+<p>With a single keeper, everything is easy: you ask, they answer, and the answer is always current. But that person gets tired (cannot hold that much), calls in sick (the machine crashes), goes unreachable (the network cable breaks) — and in that moment the whole shop stops. Hand the job to a group instead, and a new problem arrives immediately: <strong>when you ask, whose copy did you get?</strong> What if that one is still the version from three minutes ago?</p>
+<h2>The core idea: keep three copies, get two signatures, ask two people</h2>
+<p>The fix is startlingly plain: <strong>give the same record to three keepers</strong>. When writing you do not wait for all three — <strong>two signatures counts as written</strong>. When reading you do not ask everyone either — <strong>ask any two</strong>, and believe whichever copy is dated later.</p>
+<p>The beauty is this: pick two out of three to sign, then pick two out of three to ask, and <strong>at least one person must appear in both groups</strong>. That person signed for the newest copy with their own hand, and you happened to ask them. So "do not wait for everyone" and "always see the newest value" hold at the same time. The one who missed the write gets quietly caught up afterwards.</p>
+<p>What if someone is out sick? Three moves, each heavier than the last. <strong>Gossip</strong>: nobody takes a central roll call — everyone chats with a few random colleagues and passes on what they heard, so within seconds the whole shop knows who is out and who is back. <strong>Ask the neighbour to hold it</strong>: if one of the three is missing, hand the item to the neighbour with <strong>a sticky note</strong> saying "holding this for so-and-so", and when they return the neighbour hands it over. <strong>Compare the table of contents</strong>: if they were out so long the note expired and the two ledgers have drifted badly, you do not check page by page — first compare only the <strong>table of contents</strong>; identical means everything is identical, done. Different means you go one level deeper, narrowing each time, until you carry over only the pages that genuinely disagree.</p>
+<h2>What it buys you, and when to pick it</h2>
+<p>What you get is a dial you can turn: <strong>how many signatures to wait for, how many people to ask</strong> — you decide, and waiting for more is safer but slower. Carts, like counts, user sessions — anything where "slightly off once in a while is fine" — suit it beautifully. <strong>But for an account balance, where a single cent matters, do not use this</strong>: by construction it lets you read a stale value in the worst case, and even lets deleted things come back.</p>
+<h2>Remember this one line</h2>
+<div class="tl">
+<p>Give the same data to <strong>three keepers</strong>, treat two signatures as a write and two answers as a read, and lean on "the two groups must overlap" to guarantee you see the newest value. When someone is out, <strong>hand it to the neighbour with a note</strong>; when they are out too long, <strong>compare tables of contents</strong> to reconcile. You buy "writes always go through" and you pay in occasional stale reads.</p>
+</div>
+<p class="switch-hint">Want the actual mechanisms, notation and diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think this chapter is about designing <em>how to store</em>; in fact nine tenths of it is about <strong>what to do when machines die</strong>. It is the only chapter in the book that designs no product and instead <strong>builds a database</strong>, breaking Amazon's Dynamo <strong>leaderless</strong> design into six independently replaceable parts: partitioning, replication, quorums, conflict resolution, failure handling, storage engine. The idea worth taking away: <strong>the moment you give up "one leader decides", correctness has to be rebuilt piece by piece</strong> — and every piece is paid for in consistency.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Key-value store</strong>: a database supporting only <code>put(key, value)</code> and <code>get(key)</code> — no joins, no multi-field queries.</li>
+<li><strong>Replica</strong> / <strong>replication factor N</strong>: how many copies of the same data the cluster keeps. <code>N=3</code> is the industry default.</li>
+<li><strong>Coordinator</strong>: the node a client connects to, which forwards the request to that key's replicas and collects the answers. In a leaderless system <strong>any node can coordinate</strong>.</li>
+<li><strong>Quorum</strong>: how many replicas must acknowledge before an operation counts. The write threshold is <code>W</code>, the read threshold is <code>R</code>.</li>
+<li><strong>Eventual consistency</strong>: no promise that what you read right now is the newest, but a promise that once writes stop, the replicas converge on one value.</li>
+<li><strong>Anti-entropy</strong>: the background process that keeps comparing replicas and repairing differences.</li>
+<li><strong>Gossip protocol</strong>: nodes randomly pair off and exchange "who I believe is alive", spreading state across the cluster like rumour, with no central coordinator.</li>
+<li><strong>Memtable / SSTable / commit log</strong>: a write is appended sequentially to an on-disk log (the commit log) for durability and also lands in a sorted in-memory table (the memtable); once full, the batch is flushed to an immutable sorted file on disk (an SSTable).</li>
+<li><strong>Bloom filter</strong>: a tiny probabilistic structure that answers "this key is <em>definitely not</em> in this file" very fast, saving a disk read. It can say "maybe present" wrongly, but it never misses something that is present.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This is the third case study in Part II of Volume 1. The previous chapter (Ch 5, consistent hashing) delivered <strong>one component</strong>; this one bolts that component into <strong>a whole machine</strong> — the only time the book walks you inside a database rather than around a product. It maps to the entire "Dynamo family" in the real world: Amazon DynamoDB, Apache Cassandra, Riak, Voldemort, and later arrivals such as ScyllaDB. Ch 7 (distributed unique IDs) continues the same infrastructure-building thread.</p>
+<h2>What problem it solves</h2>
+<p>A single-node key-value store is absurdly easy to write: an in-memory hash table is the whole thing. There is exactly one real problem — <strong>it does not fit, and it does go down</strong>. A quick order-of-magnitude check: a billion user sessions at 1 KB each is <code>1 TB</code>, and a 128 GB machine is off by a factor of 8. The single-node optimisations the book offers (compression, hot data in memory, cold data on disk) buy time but not another order of magnitude. Worse is the second problem: <strong>without distribution, your write availability equals one machine's availability</strong> — in the thirty seconds that machine reboots, nobody on the site can add to a cart, which for Amazon is revenue lost outright.</p>
+<p>So the real question in this chapter is not "how do I store it" but: <strong>once data is copied several times across machines that die at random, what does "read the correct value" even mean?</strong></p>
+<h2>The core content, properly</h2>
+<h3>1. CAP: the fork in the road</h3>
+<p>CAP says you cannot have all of consistency, availability and partition tolerance (the network splitting the cluster into halves that cannot talk). The key insight: <strong>P is not an option, it is a fact</strong> — machines talk over a network, and networks break. So the real choice is between C and A, and <strong>only during a partition</strong>.</p>
+<p>The book's example is blunt: three replicas n1/n2/n3, and n3 goes unreachable. <strong>Choose CP</strong> (a bank transfer): refuse the write, because two versions of a balance is worse than an error. <strong>Choose AP</strong> (a shopping cart): accept it and reconcile when n3 returns. Dynamo chose AP for a reason stated in the paper — <strong>"add to cart" must never fail</strong>. Every mechanism that follows in this chapter exists to clean up after that choice.</p>
+<h3>2. Partitioning and replication: putting the last chapter to work</h3>
+<p>Partitioning reuses Ch 5's consistent hashing ring directly: a key hashes to a point on the ring, and the first node clockwise owns it. Replication is the same walk continued — <strong>from the key's landing point keep going clockwise and take the first N nodes you meet</strong>.</p>
+<p>One detail you must remember: the ring holds <strong>virtual nodes</strong>, and one physical machine occupies hundreds of positions on it. So the walk must <strong>skip physical machines already taken</strong>, or all three replicas can land on the same box and vanish together in one power cut. For the same reason production requires those N nodes to sit in <strong>different racks or availability zones</strong> — Netflix's Cassandra clusters run <code>N=3</code> spread across three AWS availability zones.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 285" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="r1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<circle cx="180" cy="145" fill="none" r="95" stroke="rgba(91,157,249,0.35)" stroke-width="1.5"></circle>
+<path d="M212,56 A95,95 0 0 1 172,240" fill="none" marker-end="url(#r1)" stroke="#9b6cf5" stroke-width="2.4"></path>
+<circle cx="212" cy="56" fill="#9b6cf5" r="6"></circle>
+<text fill="#9b6cf5" font-size="11.5" font-weight="700" text-anchor="middle" x="234" y="36">key "cart:42"</text>
+<circle cx="258" cy="90" fill="#5b9df9" r="6.5"></circle>
+<text fill="#e7ebf1" font-size="11" text-anchor="start" x="270" y="82">A#1 ✓</text>
+<circle cx="275" cy="153" fill="#5b9df9" r="6.5"></circle>
+<text fill="#e7ebf1" font-size="11" text-anchor="start" x="288" y="157">B#1 ✓</text>
+<circle cx="241" cy="218" fill="#4a5160" r="6.5"></circle>
+<text fill="#7c8593" font-size="11" text-anchor="start" x="252" y="238">A#2 skip</text>
+<circle cx="172" cy="240" fill="#5b9df9" r="6.5"></circle>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="166" y="264">C#1 ✓</text>
+<circle cx="91" cy="178" fill="#4a5160" r="6.5"></circle>
+<text fill="#7c8593" font-size="11" text-anchor="end" x="80" y="190">D#1</text>
+<circle cx="98" cy="98" fill="#4a5160" r="6.5"></circle>
+<text fill="#7c8593" font-size="11" text-anchor="end" x="87" y="90">B#2</text>
+<circle cx="155" cy="53" fill="#4a5160" r="6.5"></circle>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="140" y="36">C#2</text>
+<text fill="#5b9df9" font-family="monospace" font-size="10.5" text-anchor="middle" x="180" y="150">hash ring</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="180" y="167">(virtual nodes)</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="352" y="52">Take the first N=3 distinct machines</text>
+<text fill="#b9c0ca" font-size="11.5" x="358" y="82">1. A#1 → take it, we have A</text>
+<text fill="#b9c0ca" font-size="11.5" x="358" y="106">2. B#1 → take it, we have B</text>
+<text fill="#7c8593" font-size="11.5" x="358" y="130">3. A#2 → same box as A, skip</text>
+<text fill="#b9c0ca" font-size="11.5" x="358" y="154">4. C#1 → take it, we have C</text>
+<rect fill="rgba(91,157,249,0.1)" height="52" rx="8" stroke="#5b9df9" width="266" x="352" y="176"></rect>
+<text fill="#e7ebf1" font-size="11.5" x="366" y="198">Replica set = A / B / C</text>
+<text fill="#7c8593" font-size="10.5" x="366" y="217">production also spreads them across zones</text>
+</svg>
+<figcaption>Fig 1 · Replica placement: walk clockwise from the key and take the first N <strong>distinct physical machines</strong> — skip that step and all three copies can share one box.</figcaption>
+</figure>
+<h3>3. Quorum NWR: consistency becomes three dials</h3>
+<p>With N copies, "the write succeeded" needs redefining. Dynamo's answer is three numbers: <code>N</code> replicas, <code>W</code> acknowledgements needed for a write, <code>R</code> replicas consulted for a read. The coordinator sends to all N but returns to the client as soon as W (or R) reply.</p>
+<p>The central result is <code>W + R &gt; N</code>. <strong>In plain words: pick W out of N to sign and R out of N to ask, and if the two numbers add up to more than N, the two groups must share at least one member</strong> (the pigeonhole principle). That shared replica both wrote the newest value and was read by you, so you cannot miss it. Dynamo's most common production setting is exactly <code>(N,R,W) = (3,2,2)</code>: <code>2+2 &gt; 3</code> holds.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<rect fill="rgba(155,108,245,0.08)" height="230" rx="10" stroke="rgba(155,108,245,0.4)" stroke-dasharray="5 4" width="128" x="268" y="12"></rect>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="24" y="36">Write, W=2: return once 2 have acked</text>
+<rect fill="rgba(91,157,249,0.2)" height="34" rx="7" stroke="#5b9df9" stroke-width="2" width="112" x="140" y="52"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="196" y="74">replica 1 ✓</text>
+<rect fill="rgba(91,157,249,0.2)" height="34" rx="7" stroke="#5b9df9" stroke-width="2" width="112" x="276" y="52"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="332" y="74">replica 2 ✓</text>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="7" stroke="#4a5160" width="112" x="412" y="52"></rect>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="468" y="74">replica 3 slow</text>
+<text fill="#7c8593" font-size="10.5" x="534" y="74">→ return now</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="24" y="182">Read, R=2: ask any 2, keep the newest</text>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="7" stroke="#4a5160" width="112" x="140" y="196"></rect>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="196" y="218">replica 1 unasked</text>
+<rect fill="rgba(91,157,249,0.2)" height="34" rx="7" stroke="#5b9df9" stroke-width="2" width="112" x="276" y="196"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="332" y="218">replica 2 ✓</text>
+<rect fill="rgba(91,157,249,0.2)" height="34" rx="7" stroke="#5b9df9" stroke-width="2" width="112" x="412" y="196"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="468" y="218">replica 3 ✓</text>
+<text fill="#9b6cf5" font-size="12" font-weight="700" text-anchor="middle" x="332" y="120">overlap</text>
+<text fill="#9b6cf5" font-size="11" text-anchor="middle" x="332" y="140">replica 2 both</text>
+<text fill="#9b6cf5" font-size="11" text-anchor="middle" x="332" y="158">wrote and was read</text>
+<text fill="#7c8593" font-family="monospace" font-size="11" x="24" y="120">W + R &gt; N</text>
+<text fill="#7c8593" font-size="10.5" x="24" y="140">2 + 2 &gt; 3</text>
+<text fill="#7c8593" font-size="10.5" x="24" y="158">→ must intersect</text>
+</svg>
+<figcaption>Fig 2 · Pigeonhole: with 3 replicas, writing 2 and reading 2 forces the two sets to overlap, so a read always catches the latest write.</figcaption>
+</figure>
+<p>Note the limits of that guarantee: it promises <strong>"you will see the latest write", not linearizability</strong>. There is no global order, no atomicity, no isolation level — a quorum says nothing about which of two concurrent writes came first. Which leads straight to the next problem.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/consistency-day6.en.html" target="_blank" rel="noopener">System Design · Day 6 Consistency</a> — the full spectrum from linearizable to eventual, and exactly which rung a quorum guarantee lands on</aside>
+<h3>4. Conflicts: version numbers are not enough, you need causality</h3>
+<p>In a leaderless store two clients can write the same key on two different replicas in the same millisecond, and <strong>neither is "later"</strong>. A monotonically increasing version number fails here because it assumes a single global timeline.</p>
+<p>Dynamo's answer is the <strong>vector clock</strong>: every value carries a list of <code>[node, counter]</code> pairs, and a node bumps its own slot each time it writes. Compare two clocks — if every slot of one is at least as large as the other's, it is strictly later and can simply overwrite. If <strong>each is larger in some slot</strong>, these are genuinely concurrent branches: <strong>the system has detected a conflict but cannot settle it</strong>, and hands both versions to the client.</p>
+<p>Amazon's cart merges by taking the <strong>union</strong>, which is precisely where "deleted items come back" originates: a delete loses to an add at merge time. Two more costs: clients are forced to carry merge logic, and the clock list grows as more nodes participate in writes, so Dynamo truncates it past a threshold. The measured data is reassuring though — over 24 hours in production, <strong>99.94% of Dynamo requests saw exactly one version</strong>, making conflicts rare enough to stop worrying about.</p>
+<p>Notably, Cassandra did <strong>not</strong> adopt vector clocks, falling back to the simplest rule, <em>last-write-wins by timestamp</em>: trivial to implement, zero client burden, at the cost of silently discarding one of two concurrent writes and depending on accurate machine clocks. It is a telling split within one family of systems.</p>
+<h3>5. Failure handling, layered by timescale</h3>
+<p><strong>(a) Detection: gossip.</strong> The naive approach is all-to-all heartbeats, but <code>n</code> nodes means <code>O(n²)</code> links, which collapses in the hundreds. Gossip instead has each node keep a membership list (who, heartbeat counter, last update) and periodically <strong>pick a few random peers</strong> to exchange lists with, keeping the fresher entry for each row. Information spreads logarithmically, converging across the cluster in seconds with no single point. A counter that stops advancing marks a node suspect, and confirmation from several nodes declares it down.</p>
+<p><strong>(b) Temporary failure: sloppy quorum plus hinted handoff.</strong> Insisting on "W acks from the proper N nodes" means two dead machines block all writes — which defeats the whole "always writable" premise. A <em>sloppy quorum</em> relaxes this to <strong>the first W healthy nodes found walking the ring</strong>, even ones that should not hold this key. That stand-in attaches a <em>hint</em> — "this is being held for C" — and once C returns it replays the data to C and drops the hint. Cassandra keeps hints for at most three hours by default; past that, the next layer takes over.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="h1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="28">1. While C is down: write to stand-in D with a hint</text>
+<rect fill="rgba(155,108,245,0.18)" height="32" rx="7" stroke="#9b6cf5" width="94" x="20" y="52"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="67" y="73">coordinator</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="6" stroke="#5b9df9" width="80" x="192" y="40"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="232" y="60">replica A ✓</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="6" stroke="#5b9df9" width="80" x="192" y="80"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="232" y="100">replica B ✓</text>
+<rect fill="rgba(224,107,107,0.16)" height="30" rx="6" stroke="#e06b6b" stroke-dasharray="4 3" width="80" x="192" y="120"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="232" y="140">replica C ✕</text>
+<line marker-end="url(#h1)" stroke="#7c8593" x1="116" x2="188" y1="62" y2="55"></line>
+<line marker-end="url(#h1)" stroke="#7c8593" x1="116" x2="188" y1="68" y2="95"></line>
+<line marker-end="url(#h1)" stroke="#7c8593" x1="116" x2="188" y1="74" y2="150"></line>
+<rect fill="rgba(155,108,245,0.16)" height="46" rx="7" stroke="#9b6cf5" width="164" x="334" y="112"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="416" y="131">stand-in node D</text>
+<text fill="#9b6cf5" font-size="10" text-anchor="middle" x="416" y="149">hint: holding this for C</text>
+<line marker-end="url(#h1)" stroke="#9b6cf5" stroke-dasharray="4 3" x1="276" x2="330" y1="135" y2="135"></line>
+<text fill="#7c8593" font-size="10.5" x="512" y="130">W=2 healthy acks</text>
+<text fill="#7c8593" font-size="10.5" x="512" y="148">is enough to return</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="196">2. When C returns: D replays the data, then drops the hint</text>
+<rect fill="rgba(155,108,245,0.16)" height="30" rx="6" stroke="#9b6cf5" width="164" x="334" y="208"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="416" y="228">stand-in node D</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="6" stroke="#5b9df9" width="80" x="192" y="208"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="232" y="228">replica C ✓</text>
+<line marker-end="url(#h1)" stroke="#5b9df9" x1="330" x2="276" y1="223" y2="223"></line>
+<text fill="#7c8593" font-size="10.5" x="512" y="228">past 3h, anti-entropy takes over</text>
+</svg>
+<figcaption>Fig 3 · Sloppy quorum plus hinted handoff: park the data elsewhere with a note during an outage and replay it on return — short-term misplacement bought in exchange for "writes always go through".</figcaption>
+</figure>
+<p><strong>(c) Permanent failure: anti-entropy with Merkle trees.</strong> A node down long enough (or fitted with a fresh disk) can diverge far past what hints cover, and comparing a billion keys one by one is hopeless. A <em>Merkle tree</em> splits the key space into buckets, hashes each bucket as a leaf, and makes every parent the hash of its children up to a single root. Two replicas compare <strong>root hashes</strong> first: equal means the entire tree matches and one comparison ends it; unequal means descending only along the branches whose hashes differ. <strong>The cost scales with the size of the difference, not the size of the dataset</strong> — that is its entire value.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 240" xmlns="http://www.w3.org/2000/svg">
+<text fill="#7c8593" font-family="monospace" font-size="11" text-anchor="middle" x="150" y="20">Merkle tree on node A</text>
+<text fill="#7c8593" font-family="monospace" font-size="11" text-anchor="middle" x="490" y="20">Merkle tree on node B</text>
+<line stroke="rgba(120,120,130,0.3)" stroke-dasharray="4 4" x1="320" x2="320" y1="10" y2="230"></line>
+<rect fill="rgba(155,108,245,0.22)" height="26" rx="6" stroke="#9b6cf5" stroke-width="2" width="80" x="110" y="34"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="150" y="52">root h=7f2</text>
+<rect fill="rgba(91,157,249,0.1)" height="24" rx="5" stroke="#4a5160" width="66" x="45" y="96"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="78" y="113">a1 same</text>
+<rect fill="rgba(155,108,245,0.22)" height="24" rx="5" stroke="#9b6cf5" stroke-width="2" width="66" x="189" y="96"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="222" y="113">a2 differs</text>
+<line stroke="#4a5160" x1="132" x2="78" y1="60" y2="94"></line>
+<line stroke="#9b6cf5" stroke-width="2" x1="168" x2="222" y1="60" y2="94"></line>
+<rect fill="rgba(91,157,249,0.08)" height="22" rx="4" stroke="#4a5160" width="58" x="160" y="158"></rect>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="189" y="173">bucket 3</text>
+<rect fill="rgba(155,108,245,0.28)" height="22" rx="4" stroke="#9b6cf5" stroke-width="2" width="58" x="228" y="158"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="257" y="173">bucket 4</text>
+<line stroke="#4a5160" x1="210" x2="189" y1="120" y2="156"></line>
+<line stroke="#9b6cf5" stroke-width="2" x1="234" x2="257" y1="120" y2="156"></line>
+<rect fill="rgba(155,108,245,0.22)" height="26" rx="6" stroke="#9b6cf5" stroke-width="2" width="80" x="450" y="34"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="490" y="52">root h=c9d</text>
+<rect fill="rgba(91,157,249,0.1)" height="24" rx="5" stroke="#4a5160" width="66" x="385" y="96"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="418" y="113">a1 same</text>
+<rect fill="rgba(155,108,245,0.22)" height="24" rx="5" stroke="#9b6cf5" stroke-width="2" width="66" x="529" y="96"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="562" y="113">a2 differs</text>
+<line stroke="#4a5160" x1="472" x2="418" y1="60" y2="94"></line>
+<line stroke="#9b6cf5" stroke-width="2" x1="508" x2="562" y1="60" y2="94"></line>
+<rect fill="rgba(91,157,249,0.08)" height="22" rx="4" stroke="#4a5160" width="58" x="500" y="158"></rect>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="529" y="173">bucket 3</text>
+<rect fill="rgba(155,108,245,0.28)" height="22" rx="4" stroke="#9b6cf5" stroke-width="2" width="58" x="568" y="158"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="597" y="173">bucket 4</text>
+<line stroke="#4a5160" x1="550" x2="529" y1="120" y2="156"></line>
+<line stroke="#9b6cf5" stroke-width="2" x1="574" x2="597" y1="120" y2="156"></line>
+<text fill="#9b6cf5" font-size="11.5" font-weight="700" text-anchor="middle" x="320" y="208">roots differ → descend only the differing branch → ship bucket 4 only</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="320" y="228">equal roots settle the whole tree in one comparison</text>
+</svg>
+<figcaption>Fig 4 · Merkle-tree anti-entropy: compare the root, narrow level by level, and transfer only the buckets that truly disagree — traffic proportional to the difference.</figcaption>
+</figure>
+<h3>6. Write path and read path: what happens on one machine</h3>
+<p>With the previous five parts assembled, what remains is how each node puts bytes on disk. The book follows Cassandra here. <strong>Write</strong>: append sequentially to the commit log (which replays after a crash), then write into the in-memory memtable; once the memtable hits its threshold, the whole batch is sorted and flushed as an immutable SSTable. There are <strong>no random writes anywhere</strong>, which is why write throughput is so high. <strong>Read</strong>: check the memtable first and return on a hit; on a miss, use <strong>Bloom filters</strong> to eliminate the vast majority of SSTables that cannot contain the key, and read only the one or two that might.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 240" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="w1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line stroke="rgba(120,120,130,0.3)" stroke-dasharray="4 4" x1="320" x2="320" y1="10" y2="230"></line>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="155" y="24">Write path</text>
+<rect fill="rgba(155,108,245,0.18)" height="28" rx="6" stroke="#9b6cf5" width="104" x="103" y="40"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="155" y="59">put(k, v)</text>
+<rect fill="rgba(91,157,249,0.12)" height="28" rx="6" stroke="#5b9df9" width="164" x="73" y="92"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="155" y="111">append to commit log</text>
+<rect fill="rgba(91,157,249,0.12)" height="28" rx="6" stroke="#5b9df9" width="164" x="73" y="144"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="155" y="163">memtable in memory</text>
+<rect fill="rgba(91,157,249,0.06)" height="28" rx="6" stroke="#4a5160" width="164" x="73" y="196"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="155" y="215">when full → flush SSTable</text>
+<line marker-end="url(#w1)" stroke="#7c8593" x1="155" x2="155" y1="70" y2="90"></line>
+<line marker-end="url(#w1)" stroke="#7c8593" x1="155" x2="155" y1="122" y2="142"></line>
+<line marker-end="url(#w1)" stroke="#7c8593" x1="155" x2="155" y1="174" y2="194"></line>
+<text fill="#9b6cf5" font-family="monospace" font-size="10" text-anchor="middle" x="278" y="130">no random writes</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="485" y="24">Read path</text>
+<rect fill="rgba(155,108,245,0.18)" height="28" rx="6" stroke="#9b6cf5" width="104" x="433" y="40"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="485" y="59">get(k)</text>
+<rect fill="rgba(91,157,249,0.12)" height="28" rx="6" stroke="#5b9df9" width="164" x="403" y="92"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="485" y="111">check memtable first</text>
+<rect fill="rgba(91,157,249,0.12)" height="28" rx="6" stroke="#5b9df9" width="164" x="403" y="144"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="485" y="163">Bloom filter rules files out</text>
+<rect fill="rgba(91,157,249,0.06)" height="28" rx="6" stroke="#4a5160" width="164" x="403" y="196"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="485" y="215">read only possible SSTables</text>
+<line marker-end="url(#w1)" stroke="#7c8593" x1="485" x2="485" y1="70" y2="90"></line>
+<line marker-end="url(#w1)" stroke="#7c8593" x1="485" x2="485" y1="122" y2="142"></line>
+<line marker-end="url(#w1)" stroke="#7c8593" x1="485" x2="485" y1="174" y2="194"></line>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="398" y="111">hit → return</text>
+</svg>
+<figcaption>Fig 5 · The single-node storage engine: commit log plus memtable plus SSTable turn random writes into sequential ones, and Bloom filters spare most pointless disk reads.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/storage-engine-day47.en.html" target="_blank" rel="noopener">System Design · Day 47 Storage Engines</a> — LSM-tree compaction strategies, write and read amplification, and how it really compares to a B-tree on the same workload</aside>
+<h2>Key trade-offs and how to choose</h2>
+<p>The soul of this chapter lives in the dials. First, how to set NWR:</p>
+<p class="tcap">Table 1 · Four NWR settings at the same N=3</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Setting</th><th>Character</th><th>Cost</th><th>Fits</th></tr></thead>
+<tbody>
+<tr><th><code>R=1, W=3</code></th><td><strong>Very fast reads</strong>, one answer is enough</td><td>Writes wait for every replica; one slow or dead node blocks writing</td><td>Config data, mostly-read metadata</td></tr>
+<tr><th><code>W=1, R=3</code></th><td><strong>Very fast writes</strong>, one ack returns</td><td>Reads wait for every replica, so latency is set by the slowest one</td><td>Logs and telemetry — write-heavy, read-light</td></tr>
+<tr><th><code>R=2, W=2</code></th><td>Satisfies <code>W+R&gt;N</code>, so you <strong>see the latest write</strong>, and both paths survive one dead node</td><td>Both latencies are set by the second-fastest replica</td><td><strong>The default for most workloads</strong>; Dynamo's common production value</td></tr>
+<tr><th><code>R=1, W=1</code></th><td>Fastest and most available on both paths</td><td><code>1+1 &lt; 3</code>, so <strong>no guarantee of reading the latest write</strong></td><td>Where stale is tolerable: counters, caches, location pings</td></tr>
+</tbody></table></div>
+<p>Then, how conflicts end — the sharpest split within this family of systems:</p>
+<p class="tcap">Table 2 · Three conflict-resolution strategies</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Strategy</th><th>How</th><th>The honest cost</th><th>Who uses it</th></tr></thead>
+<tbody>
+<tr><th>Last-write-wins</th><td>Compare write timestamps, larger wins</td><td><strong>One of two concurrent writes is silently dropped</strong>; depends on accurate clocks, so drift becomes data loss</td><td>Cassandra (default)</td></tr>
+<tr><th>Vector clocks</th><td>Track causality, distinguishing "later" from "truly concurrent"</td><td>Only <strong>detects</strong> conflicts, never resolves them; multiple versions land on the client; the clock list grows and needs truncating</td><td>Dynamo, Riak</td></tr>
+<tr><th>Application merge / CRDTs</th><td>Define merge semantics per data type (union a cart, sum a counter)</td><td>Must be designed per type, and semantics can surprise — <strong>a union-merged cart resurrects deleted items</strong></td><td>Amazon cart, Riak data types</td></tr>
+</tbody></table></div>
+<p>Finally, the question worth asking first — <strong>should you use any of this at all</strong>:</p>
+<p class="tcap">Table 3 · CP or AP, anchored to real workloads</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Workload</th><th>Pick</th><th>Why</th></tr></thead>
+<tbody>
+<tr><th>Account balances, inventory</th><td><strong>CP</strong> (a relational store, or Spanner-class)</td><td>A stale read is an oversell or a wrong number. Better to refuse service during a partition</td></tr>
+<tr><th>Carts, sessions, saved lists</th><td><strong>AP</strong> — this chapter's design</td><td>A failed write costs far more than an occasional extra item</td></tr>
+<tr><th>Like counts, view counts, telemetry</th><td><strong>AP</strong>, even <code>W=1</code></td><td>These are approximations already; throughput beats precision</td></tr>
+<tr><th>Anything queried by several fields</th><td><strong>Neither</strong></td><td>A key-value store only has <code>get/put</code>; do not force it</td></tr>
+</tbody></table></div>
+<h2>Why it matters / in real systems</h2>
+<p>This chapter is the <strong>meta-question</strong> of system design interviews. Unlike a rate limiter or a URL shortener, it does not map to one product — it strings partitioning, replication, consistency, failure detection and storage engines onto a single thread. When an interviewer asks you to design a key-value store, they are checking all five at once. In the real world it is the shared blueprint of <strong>Amazon DynamoDB, Apache Cassandra, Riak, Voldemort and ScyllaDB</strong>; Kafka's partition replicas and Elasticsearch's shard allocation map onto the same parts.</p>
+<div class="ev">
+<div class="evh">FIELD EVIDENCE · not the book's claims, but what these companies said publicly</div>
+<ul>
+<li><strong>Amazon</strong> published its production settings in the Dynamo paper: the common <code>(N,R,W)</code> is <code>(3,2,2)</code>, SLAs are set at the <code>99.9th</code> percentile rather than the mean, and over 24 hours <strong>99.94% of requests saw exactly one version</strong> — <strong>confirming that the multiple versions vector clocks expose are genuinely rare in practice</strong>. <span class="src"><a href="https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf" rel="noopener" target="_blank">Dynamo paper, SOSP 2007 ↗</a></span></li>
+<li><strong>Netflix</strong> ran <strong>288 EC2 instances</strong> across three availability zones plus 60 client machines and sustained <strong>1.1 million client writes per second</strong>; going from 48 to 96 to 144 to 288 nodes left per-node load essentially unchanged — <strong>measuring linear horizontal scaling of a leaderless store on a production configuration</strong>. <span class="src"><a href="https://netflixtechblog.com/benchmarking-cassandra-scalability-on-aws-over-a-million-writes-per-second-39f45f066c9e" rel="noopener" target="_blank">Netflix Tech Blog, 2011 ↗</a></span></li>
+<li><strong>Discord</strong> is the counter-example: at trillions of messages they abandoned Cassandra over <strong>hot partitions</strong> and <strong>JVM garbage-collection pauses</strong> — chained pauses left nodes unresponsive until an engineer rebooted them by hand. After moving to the C++ ScyllaDB, <code>p99</code> read latency fell from <strong>40–125 ms to 15 ms</strong> — <strong>showing this architecture's ceiling is often the runtime, not the algorithm</strong>. <span class="src"><a href="https://discord.com/blog/how-discord-stores-trillions-of-messages" rel="noopener" target="_blank">Discord Blog, "How Discord Stores Trillions of Messages", 2023 ↗</a></span></li>
+<li><strong>Apache Cassandra's own documentation</strong> states its consistency levels are an implementation of Dynamo's <code>R+W&gt;N</code>, and that hinted handoff retains hints for at most three hours by default (<code>max_hint_window</code>), after which repair falls to anti-entropy — <strong>corroborating this chapter's split of failures across three timescales</strong>. <span class="src"><a href="https://cassandra.apache.org/doc/latest/cassandra/managing/operating/hints.html" rel="noopener" target="_blank">Apache Cassandra Documentation · Hints ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/database-selection-day3.en.html" target="_blank" rel="noopener">System Design · Day 3 Database Selection</a> — which workloads genuinely need a Dynamo-style leaderless store, and when one PostgreSQL with read replicas is plenty</aside>
+<h2>Common mistakes and open debates</h2>
+<ul>
+<li><strong>The one most often missed</strong>: <em>a sloppy quorum breaks the <code>W+R&gt;N</code> guarantee.</em> It collects "any W healthy nodes", not "W of the N that should hold this key" — writes can land entirely on stand-ins while reads consult the real replicas, and the two sets never intersect. It buys availability, not consistency. Raising this unprompted carries real weight in an interview.</li>
+<li><strong><code>W+R&gt;N</code> is not strong consistency.</strong> It only promises you see the latest write; it offers no global ordering, no atomicity and no isolation levels. Calling it linearizable is the most common error here.</li>
+<li><strong>Vector clocks do not resolve conflicts, they reveal them.</strong> They tell you two versions are concurrent; what to do next is entirely the application's problem.</li>
+<li><strong>The popular version of CAP misleads.</strong> Even Eric Brewer, who proposed it, revised "pick two of three" in his 2012 essay <em>CAP Twelve Years Later</em>: partitions are rare, the C-versus-A choice only binds <em>during</em> one, and the rest of the time you can have both.</li>
+<li><strong>Dated in places.</strong> The book was written in 2020; DynamoDB has since added cross-item transactions and Cassandra has been moving toward stronger consistency, and the book never mentions CRDTs, the modern route to conflicts that converge automatically. Read this chapter as a clean cross-section of the Dynamo family, not as the state of the art in 2026.</li>
+<li><strong>Do not treat it as general-purpose storage.</strong> Only <code>get/put</code> — no secondary indexes, no range queries, no cross-key transactions. The moment the product needs "find by the second field", the design needs revisiting.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. This chapter designs no product — it <strong>builds a database</strong>, and once the leader is gone, correctness has to be rebuilt one mechanism at a time.</p>
+<p>2. <strong>In CAP, P is not a choice</strong>: networks do break, so the real decision is C versus A during a partition. Dynamo chose AP because "add to cart" must not fail.</p>
+<p>3. <strong>Partitioning</strong> reuses the consistent hashing ring; <strong>replication</strong> walks clockwise and takes the first N <strong>distinct physical machines</strong>, skipping same-box virtual nodes and spreading across zones.</p>
+<p>4. <strong>Quorum NWR</strong>: <code>W+R&gt;N</code> forces the read and write sets to overlap by the pigeonhole principle, so a read always catches the latest write; <code>(3,2,2)</code> is the production norm.</p>
+<p>5. But <code>W+R&gt;N</code> <strong>is not strong consistency</strong>, and a <strong>sloppy quorum breaks even that guarantee</strong> — the single most worthwhile trap to remember.</p>
+<p>6. <strong>Conflicts</strong>: concurrent writes have no order, and vector clocks can only <strong>detect</strong> them; Cassandra opts for last-write-wins instead — simpler, but it drops writes silently.</p>
+<p>7. <strong>Failures are handled at three timescales</strong>: gossip for detection (avoiding <code>O(n²)</code> all-to-all), hinted handoff for short outages (three hours by default), Merkle-tree anti-entropy for permanent divergence (cost proportional to the difference, not the dataset).</p>
+<p>8. <strong>Single-node storage</strong>: commit log plus memtable plus SSTable turn random writes sequential, and Bloom filters spare pointless disk reads.</p>
+<p>9. <strong>Choosing, in one line</strong>: use it where stale values are tolerable (carts, sessions, counters); avoid it where a cent cannot be wrong (balances, inventory); and never reach for it when you need queries across several fields.</p>
+</div>
+</div>
+<footer>Books Deep Read · Finish this page and you have the chapter's core; go to the book itself for the full case studies.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

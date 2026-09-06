@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview 卷一 第 6 章 · 设计键值存储 — 专业书籍精读 Book 58</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · System Design Interview 卷一 · 第 6 章</p>
+<h1>设计键值存储</h1>
+<p class="sub">System Design Interview: An Insider's Guide · Ch 6 · Alex Xu · 2020</p>
+<p class="langbar"><a href="sdi1-ch06-key-value-store-book58.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你往购物车里加一件商品，「购物车里现在有什么」这条记录得存在某处。它简单得不能再简单——<strong>一个名字对应一份内容</strong>，就像一本超大的通讯录。这一章教你把这本通讯录，从「一个人拿着的一个本子」，变成「几千台机器一起保管、坏掉几台照样能用」的东西。</p>
+<h2>先说个怪事</h2>
+<p>亚马逊早年的购物车有个著名毛病：你删掉的商品，隔一会儿<strong>自己又回来了</strong>。这不是 bug，是刻意的取舍——宁可偶尔多一件商品，也绝不让「加入购物车」失败一次。这一章的整套设计，就是为了换来这句话：<strong>永远写得进去。</strong></p>
+<h2>旧世界为什么难</h2>
+<p>只有一个保管员时一切都好办：你问他、他答你，答案一定是最新的。可这个人会累（记不下那么多）、会请假（机器宕机）、会失联（网线断了）——那一刻整间店就停摆。换成一群人保管，新麻烦立刻来了：<strong>你去问，问到的是哪一份？</strong>万一他手里还是三分钟前的旧版本呢？</p>
+<h2>核心机制：抄三份，写等两个、读问两个</h2>
+<p>办法出奇地朴素：<strong>同一份记录抄给三个人保管</strong>。写的时候不用等三个人都签收，<strong>其中两个签收就算写成功</strong>；读的时候也不用问全部，<strong>随便问其中两个</strong>，谁手里的日期新就信谁。</p>
+<p>妙就妙在：三个人里挑两个签收、再挑两个来问，<strong>这两拨人一定至少有一个是同一个</strong>——他既亲手签收过最新那份，又正好被你问到了。于是「不等所有人」和「一定读得到最新的」这两件看似矛盾的事同时成立了。剩下那个没签收的，事后会被悄悄补上。</p>
+<p>那有人请假怎么办？三招，一招比一招重。<strong>互相打听</strong>：谁请假了、谁回来了没有中央点名的人，大家各自随机找几个同事聊两句、再把听来的传出去，几秒内全店都知道。<strong>找隔壁代管</strong>：三个人里少一个，就把东西交给隔壁，并<strong>贴张便条</strong>写清「这是替某某收的」，等他回来照条交还。<strong>比对总目录页</strong>：万一他请假太久、便条都过期了，两边账差一大截——这时不必一页页核对，先只比<strong>总目录页</strong>，一样就说明全都一样、直接收工；不一样再往下翻，一层层缩小，最后只搬真正对不上的那几页。</p>
+<h2>带来了什么 / 该怎么选</h2>
+<p>这套东西给你一个可以拧的旋钮：<strong>等几个人签收、问几个人</strong>，你自己定——等得越多越保险也越慢。购物车、点赞数、用户会话这类「偶尔差一点没关系」的东西非常适合它；<strong>而账户余额这种少一分都不行的，就别用这套</strong>——它天生允许你在极端情况下读到旧值，甚至让你删掉的东西自己回来。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>把同一份数据<strong>抄给三个人</strong>，写只等两个签收、读只问两个，靠「两拨人必有重叠」保证读得到最新的；有人请假就<strong>找隔壁代管 + 留张便条</strong>，久了就<strong>比总目录页</strong>把账补齐。换来的是「永远写得进去」，代价是偶尔会读到旧值。</p>
+</div>
+<p class="switch-hint">想进到具体机制、记号和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">你以为这一章在设计「怎么存」，其实它九成篇幅在讲<strong>「机器挂了怎么办」</strong>。这是全书唯一一章不设计产品、而是<strong>造一个数据库</strong>——它把 Amazon Dynamo 那套<strong>无主（leaderless）</strong>设计拆成六个可独立替换的零件：分区、复制、quorum、冲突解决、故障处理、存储引擎。真正要带走的认知是：<strong>一旦你放弃了「有一个主节点说了算」，正确性就得靠这些机制一件件补回来</strong>——而每一件都要你先付出一点一致性。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>键值存储（key-value store）</strong>：只支持 <code>put(key, value)</code> 和 <code>get(key)</code> 两个动作的数据库，不支持表连接、多字段查询。</li>
+<li><strong>副本（replica）</strong> / <strong>复制因子 N</strong>：同一份数据在集群里存的份数。业界默认 <code>N=3</code>。</li>
+<li><strong>协调者（coordinator）</strong>：客户端连上的那个节点，负责替它把请求转发给该 key 的所有副本、收齐回复。无主系统里<strong>任何节点都能当协调者</strong>。</li>
+<li><strong>quorum（法定人数）</strong>：一次操作必须得到多少个副本确认才算数。写的门槛记作 <code>W</code>，读的门槛记作 <code>R</code>。</li>
+<li><strong>最终一致性（eventual consistency）</strong>：不保证你现在读到的是最新的，但保证「只要不再写入，副本们迟早会收敛到同一个值」。</li>
+<li><strong>反熵（anti-entropy）</strong>：后台不断比对副本、把差异补齐的修复过程。</li>
+<li><strong>gossip 协议</strong>：节点之间随机两两交换「我知道谁还活着」的信息，像传八卦一样把状态扩散到全集群，不需要中心节点点名。</li>
+<li><strong>memtable / SSTable / commit log</strong>：写入先顺序追加到磁盘上的日志（commit log）保命，同时进内存里的有序表（memtable），攒满了整批刷成磁盘上一个只读有序文件（SSTable）。</li>
+<li><strong>布隆过滤器（Bloom filter）</strong>：一个很小的概率结构，能极快地回答「这个 key <em>肯定不在</em>这个文件里」，从而免掉一次磁盘读；它可能误报「在」，但绝不漏报「不在」。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>本章是卷一 Part II「系统案例」的第 3 篇。上一章（Ch5 一致性哈希）交付的是<strong>一个零件</strong>，这一章是把那个零件装进<strong>一台整机</strong>——全书唯一一次带你走进数据库内部而不是产品外部。对应现实里 Amazon DynamoDB、Apache Cassandra、Riak、Voldemort 这一整族「Dynamo 系」存储，以及 ScyllaDB 这样的后来者。下启 Ch7（分布式唯一 ID），仍在「造基础设施」这条线上。</p>
+<h2>这章要解决什么</h2>
+<p>单机键值存储好写得离谱：一个内存哈希表就是全部。真正的问题只有一个——<strong>装不下，也挂得起</strong>。粗算个量级：10 亿个用户会话、每条 1 KB 就是 <code>1 TB</code>，一台 128 GB 内存的机器差着 8 倍；书里给的单机优化（压缩、热数据留内存、冷数据落盘）能顶一阵，但顶不过下一个数量级。更要命的是第二件事：<strong>不做分布式，写入可用性就等于一台机器的可用性</strong>——那台机器重启的三十秒里全站没人能加购物车，对亚马逊来说这是直接的营收损失。</p>
+<p>所以这一章真正的题目不是「怎么存」，而是：<strong>当数据被抄成好几份、分散在会随时宕机的机器上时，「读到正确的值」这句话还是什么意思？</strong></p>
+<h2>核心内容，讲透</h2>
+<h3>一、CAP：这一章真正的分岔口</h3>
+<p>CAP 说的是一致性（Consistency）、可用性（Availability）、分区容忍性（Partition tolerance，指网络把集群切成互不相通的两半时系统还能不能工作）三者不可兼得。关键在于：<strong>P 不是一个选项，是一个事实</strong>——只要机器之间靠网络说话，网络就会断。所以真正的选择只在 C 和 A 之间，而且<strong>只在网络分区发生的那一刻才需要选</strong>。</p>
+<p>书里的例子很干脆：三个副本 n1/n2/n3，n3 失联了。<strong>选 CP</strong>（如银行转账）：拒绝写入，宁可报错也不让余额出现两个版本。<strong>选 AP</strong>（如购物车）：照收不误，等 n3 回来再对账。Dynamo 选 AP，理由写在论文里——<strong>「加入购物车」这个动作永远不能失败</strong>。本章后面所有机制，都是在为这个选择擦屁股。</p>
+<h3>二、分区与复制：把上一章的环用起来</h3>
+<p>分区直接复用 Ch5 的一致性哈希环：key 哈希后落到环上某点，顺时针遇到的第一个节点就是它的归属。复制则是同一个动作再多走几步——<strong>从落点继续顺时针走，收下遇到的前 N 个节点</strong>。</p>
+<p>这里有个必须记住的细节：环上是<strong>虚拟节点（virtual node）</strong>，同一台物理机在环上有上百个位置，所以走的时候要<strong>跳过已经收过的物理机</strong>，否则三份副本可能挤在同一台机器上、一停电全没了。同理，生产环境还会要求这 N 个节点分布在<strong>不同机房 / 可用区</strong>——Netflix 的 Cassandra 集群就是 <code>N=3</code> 且横跨 3 个 AWS 可用区。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 285" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="r1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<circle cx="190" cy="145" fill="none" r="95" stroke="rgba(91,157,249,0.35)" stroke-width="1.5"></circle>
+<path d="M222,56 A95,95 0 0 1 182,240" fill="none" marker-end="url(#r1)" stroke="#9b6cf5" stroke-width="2.4"></path>
+<circle cx="222" cy="56" fill="#9b6cf5" r="6"></circle>
+<text fill="#9b6cf5" font-size="11.5" font-weight="700" text-anchor="middle" x="238" y="36">key「cart:42」</text>
+<circle cx="268" cy="90" fill="#5b9df9" r="6.5"></circle>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="292" y="78">A#1 ✓</text>
+<circle cx="285" cy="153" fill="#5b9df9" r="6.5"></circle>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="310" y="157">B#1 ✓</text>
+<circle cx="251" cy="218" fill="#4a5160" r="6.5"></circle>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="272" y="240">A#2 跳过</text>
+<circle cx="182" cy="240" fill="#5b9df9" r="6.5"></circle>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="176" y="264">C#1 ✓</text>
+<circle cx="101" cy="178" fill="#4a5160" r="6.5"></circle>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="76" y="190">D#1</text>
+<circle cx="108" cy="98" fill="#4a5160" r="6.5"></circle>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="84" y="90">B#2</text>
+<circle cx="165" cy="53" fill="#4a5160" r="6.5"></circle>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="150" y="36">C#2</text>
+<text fill="#5b9df9" font-family="monospace" font-size="10.5" text-anchor="middle" x="190" y="150">一致性哈希环</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="190" y="167">（环上是虚拟节点）</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="366" y="52">顺时针收下前 N=3 个不同物理机</text>
+<text fill="#b9c0ca" font-size="11.5" x="372" y="82">① A#1 → 收下，得到 A</text>
+<text fill="#b9c0ca" font-size="11.5" x="372" y="106">② B#1 → 收下，得到 B</text>
+<text fill="#7c8593" font-size="11.5" x="372" y="130">③ A#2 → 同属 A，跳过</text>
+<text fill="#b9c0ca" font-size="11.5" x="372" y="154">④ C#1 → 收下，得到 C</text>
+<rect fill="rgba(91,157,249,0.1)" height="52" rx="8" stroke="#5b9df9" width="252" x="366" y="176"></rect>
+<text fill="#e7ebf1" font-size="11.5" x="380" y="198">副本集 = A / B / C</text>
+<text fill="#7c8593" font-size="10.5" x="380" y="217">生产环境再要求它们落在不同可用区</text>
+</svg>
+<figcaption>图 1 · 副本放置：从 key 的落点顺时针走，收下前 N 个<strong>不同物理机</strong>——不跳过同机虚拟节点，三份副本可能挤在一台机器上。</figcaption>
+</figure>
+<h3>三、Quorum NWR：把一致性变成三个可调旋钮</h3>
+<p>有了 N 份副本，「写成功」就得重新定义。Dynamo 的答案是三个数字：<code>N</code> 副本数、<code>W</code> 一次写要等几个副本确认、<code>R</code> 一次读要问几个副本。协调者把请求发给全部 N 个，但只要凑够 W（或 R）个回复就返回客户端。</p>
+<p>核心结论是 <code>W + R &gt; N</code>——<strong>白话讲就是：在 N 个副本里挑 W 个签收、再挑 R 个来问，只要这两个数加起来超过 N，两拨人就一定至少有一个重合</strong>（抽屉原理）。那个重合的副本既亲手写下了最新值、又被你读到了，所以你一定看得见最新的写入。Dynamo 生产中最常用的配置就是 <code>(N,R,W) = (3,2,2)</code>：<code>2+2 &gt; 3</code>，成立。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<rect fill="rgba(155,108,245,0.08)" height="230" rx="10" stroke="rgba(155,108,245,0.4)" stroke-dasharray="5 4" width="128" x="268" y="12"></rect>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="24" y="36">写入 W=2：凑够 2 个确认就返回</text>
+<rect fill="rgba(91,157,249,0.2)" height="34" rx="7" stroke="#5b9df9" stroke-width="2" width="112" x="140" y="52"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="196" y="74">副本 1 ✓写</text>
+<rect fill="rgba(91,157,249,0.2)" height="34" rx="7" stroke="#5b9df9" stroke-width="2" width="112" x="276" y="52"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="332" y="74">副本 2 ✓写</text>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="7" stroke="#4a5160" width="112" x="412" y="52"></rect>
+<text fill="#7c8593" font-size="11.5" text-anchor="middle" x="468" y="74">副本 3 慢/挂</text>
+<text fill="#7c8593" font-size="10.5" x="540" y="74">→ 立即返回</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="24" y="182">读取 R=2：随便问 2 个，取版本最新的</text>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="7" stroke="#4a5160" width="112" x="140" y="196"></rect>
+<text fill="#7c8593" font-size="11.5" text-anchor="middle" x="196" y="218">副本 1 未问</text>
+<rect fill="rgba(91,157,249,0.2)" height="34" rx="7" stroke="#5b9df9" stroke-width="2" width="112" x="276" y="196"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="332" y="218">副本 2 ✓读</text>
+<rect fill="rgba(91,157,249,0.2)" height="34" rx="7" stroke="#5b9df9" stroke-width="2" width="112" x="412" y="196"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="468" y="218">副本 3 ✓读</text>
+<text fill="#9b6cf5" font-size="12" font-weight="700" text-anchor="middle" x="332" y="120">重叠</text>
+<text fill="#9b6cf5" font-size="11" text-anchor="middle" x="332" y="140">副本 2 既写过</text>
+<text fill="#9b6cf5" font-size="11" text-anchor="middle" x="332" y="158">又被读到</text>
+<text fill="#7c8593" font-family="monospace" font-size="11" x="24" y="120">W + R &gt; N</text>
+<text fill="#7c8593" font-size="10.5" x="24" y="140">2 + 2 &gt; 3</text>
+<text fill="#7c8593" font-size="10.5" x="24" y="158">→ 必有交集</text>
+</svg>
+<figcaption>图 2 · 抽屉原理：3 个副本里写 2 个、读 2 个，两个集合必然重叠，所以读一定撞得上最新的那次写。</figcaption>
+</figure>
+<p>注意这条保证的边界：它保证的是<strong>「读得到最新的那次写」，而不是线性一致（linearizability）</strong>。没有全局顺序、没有原子性、没有隔离级别——两个并发写谁在前谁在后，quorum 一个字都没说。这就直接引出下一件事。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/consistency-day6.html" target="_blank" rel="noopener">System Design · Day 6 一致性</a> — 从线性一致到最终一致的整条光谱，以及 quorum 保证的到底落在光谱上的哪一格</aside>
+<h3>四、冲突：版本号不够用，得记因果</h3>
+<p>无主系统里，两个客户端可以在同一毫秒往两个不同的副本写同一个 key，<strong>谁也不比谁「后」</strong>。单调递增的版本号在这里失效了，因为它假设了一条全局时间线。</p>
+<p>Dynamo 的解法是<strong>向量时钟（vector clock）</strong>：每份值都带一串 <code>[节点, 计数]</code> 对，某个节点每改一次就把自己那格加一。比较两串时钟，如果一串的每一格都不小于另一串，说明它是后来的、可以直接覆盖；如果<strong>互有大小</strong>，说明这是两个真正并发的分支——<strong>系统检测到了冲突，但解不了</strong>，只能把两个版本一起交给客户端。</p>
+<p>亚马逊购物车的合并策略就是取<strong>并集</strong>，这正是「删掉的商品会复活」的来源：删除在合并时打不过添加。代价还有两条：客户端被迫承担合并逻辑；时钟串会随参与写入的节点变多而变长，Dynamo 用截断阈值控制。不过实测数据很能安慰人——Dynamo 生产上 24 小时内 <strong>99.94% 的请求只看到一个版本</strong>，冲突罕见到几乎不用担心。</p>
+<p>值得注意的是，Cassandra <strong>没有</strong>采用向量时钟，而是退回最简单的<em>「写入时间戳大的赢」（last-write-wins）</em>：实现简单、客户端零负担，代价是并发写会被静默丢弃一个，且依赖机器时钟准确。这是同一族系统里很有代表性的一处分歧。</p>
+<h3>五、故障处理：按三个时间尺度分层</h3>
+<p><strong>（1）检测：gossip。</strong>最朴素的做法是所有节点互相心跳，但 <code>n</code> 个节点就是 <code>O(n²)</code> 条链路，几百台就撑不住。gossip 改成：每个节点维护一张成员表（谁、心跳计数、最后更新时间），周期性<strong>随机挑几个同伴</strong>交换这张表，取每一项里更新的那份。信息像流言一样以对数级速度扩散全网，几秒内收敛，且没有单点。某项心跳计数长时间不涨，就先标记为可疑，再由多个节点确认后判定下线。</p>
+<p><strong>（2）临时故障：sloppy quorum + hinted handoff。</strong>如果严格要求「前 N 个节点里凑够 W 个」，那么挂掉两台就写不进去了——这违背了「永远可写」的初衷。<em>宽松 quorum（sloppy quorum）</em>改成：从环上顺着往下找，<strong>凑够 W 个健康节点就行</strong>，哪怕它本来不该存这个 key。这个临时代管的节点会给这份数据附一张<em>提示（hint）</em>，写明「这是替 C 收的」；等 C 回来，它把数据回放给 C，然后删掉提示。Cassandra 的 hint 默认最多保留 3 小时，超时就交给下一层。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="h1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="28">① C 宕机时：写给临时代管者 D，附一张提示</text>
+<rect fill="rgba(155,108,245,0.18)" height="32" rx="7" stroke="#9b6cf5" width="94" x="20" y="52"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="67" y="73">协调者</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="6" stroke="#5b9df9" width="76" x="192" y="40"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="230" y="60">副本 A ✓</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="6" stroke="#5b9df9" width="76" x="192" y="80"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="230" y="100">副本 B ✓</text>
+<rect fill="rgba(224,107,107,0.16)" height="30" rx="6" stroke="#e06b6b" stroke-dasharray="4 3" width="76" x="192" y="120"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="230" y="140">副本 C ✕</text>
+<line marker-end="url(#h1)" stroke="#7c8593" x1="116" x2="188" y1="62" y2="55"></line>
+<line marker-end="url(#h1)" stroke="#7c8593" x1="116" x2="188" y1="68" y2="95"></line>
+<line marker-end="url(#h1)" stroke="#7c8593" x1="116" x2="188" y1="74" y2="150"></line>
+<rect fill="rgba(155,108,245,0.16)" height="46" rx="7" stroke="#9b6cf5" width="150" x="330" y="112"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="405" y="131">代管节点 D</text>
+<text fill="#9b6cf5" font-size="10" text-anchor="middle" x="405" y="149">提示：这份是替 C 收的</text>
+<line marker-end="url(#h1)" stroke="#9b6cf5" stroke-dasharray="4 3" x1="272" x2="326" y1="135" y2="135"></line>
+<text fill="#7c8593" font-size="10.5" x="498" y="130">凑够 W=2 个</text>
+<text fill="#7c8593" font-size="10.5" x="498" y="148">健康节点即返回</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="196">② C 恢复后：D 照提示把数据交还，再删提示</text>
+<rect fill="rgba(155,108,245,0.16)" height="30" rx="6" stroke="#9b6cf5" width="150" x="330" y="208"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="405" y="228">代管节点 D</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="6" stroke="#5b9df9" width="76" x="192" y="208"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="230" y="228">副本 C ✓</text>
+<line marker-end="url(#h1)" stroke="#5b9df9" x1="326" x2="272" y1="223" y2="223"></line>
+<text fill="#7c8593" font-size="10.5" x="498" y="228">超时（默认 3h）则交给反熵</text>
+</svg>
+<figcaption>图 3 · 宽松 quorum + hinted handoff：宕机期间数据先寄存在别处并附提示，节点回来后回放补齐——用短期的位置错放，换「永远写得进去」。</figcaption>
+</figure>
+<p><strong>（3）永久故障：Merkle 树反熵。</strong>节点下线太久（或换了块新盘），差异可能大到没法靠提示补。逐条比对 10 亿个 key 显然不可行。<em>Merkle 树</em>把 key 空间切成桶，每个桶算一个哈希作叶子，父节点是子节点哈希的哈希，一路收拢到根。两个副本先比<strong>根哈希</strong>：一样就说明整棵树完全一致、一次比较收工；不一样就往下走，只沿着哈希不同的那条路下钻。<strong>同步的代价与差异量成正比，而不是与数据总量成正比</strong>——这是它全部的价值所在。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 240" xmlns="http://www.w3.org/2000/svg">
+<text fill="#7c8593" font-family="monospace" font-size="11" text-anchor="middle" x="150" y="20">节点 A 的 Merkle 树</text>
+<text fill="#7c8593" font-family="monospace" font-size="11" text-anchor="middle" x="490" y="20">节点 B 的 Merkle 树</text>
+<line stroke="rgba(120,120,130,0.3)" stroke-dasharray="4 4" x1="320" x2="320" y1="10" y2="230"></line>
+<rect fill="rgba(155,108,245,0.22)" height="26" rx="6" stroke="#9b6cf5" stroke-width="2" width="72" x="114" y="34"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="150" y="52">根 h=7f2</text>
+<rect fill="rgba(91,157,249,0.1)" height="24" rx="5" stroke="#4a5160" width="64" x="46" y="96"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="78" y="113">a1 ✔同</text>
+<rect fill="rgba(155,108,245,0.22)" height="24" rx="5" stroke="#9b6cf5" stroke-width="2" width="64" x="190" y="96"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="222" y="113">a2 ✕异</text>
+<line stroke="#4a5160" x1="132" x2="78" y1="60" y2="94"></line>
+<line stroke="#9b6cf5" stroke-width="2" x1="168" x2="222" y1="60" y2="94"></line>
+<rect fill="rgba(91,157,249,0.08)" height="22" rx="4" stroke="#4a5160" width="54" x="162" y="158"></rect>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="189" y="173">桶3 同</text>
+<rect fill="rgba(155,108,245,0.28)" height="22" rx="4" stroke="#9b6cf5" stroke-width="2" width="54" x="230" y="158"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="257" y="173">桶4 异</text>
+<line stroke="#4a5160" x1="210" x2="189" y1="120" y2="156"></line>
+<line stroke="#9b6cf5" stroke-width="2" x1="234" x2="257" y1="120" y2="156"></line>
+<rect fill="rgba(155,108,245,0.22)" height="26" rx="6" stroke="#9b6cf5" stroke-width="2" width="72" x="454" y="34"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="490" y="52">根 h=c9d</text>
+<rect fill="rgba(91,157,249,0.1)" height="24" rx="5" stroke="#4a5160" width="64" x="386" y="96"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="418" y="113">a1 ✔同</text>
+<rect fill="rgba(155,108,245,0.22)" height="24" rx="5" stroke="#9b6cf5" stroke-width="2" width="64" x="530" y="96"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="562" y="113">a2 ✕异</text>
+<line stroke="#4a5160" x1="472" x2="418" y1="60" y2="94"></line>
+<line stroke="#9b6cf5" stroke-width="2" x1="508" x2="562" y1="60" y2="94"></line>
+<rect fill="rgba(91,157,249,0.08)" height="22" rx="4" stroke="#4a5160" width="54" x="502" y="158"></rect>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="529" y="173">桶3 同</text>
+<rect fill="rgba(155,108,245,0.28)" height="22" rx="4" stroke="#9b6cf5" stroke-width="2" width="54" x="570" y="158"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="597" y="173">桶4 异</text>
+<line stroke="#4a5160" x1="550" x2="529" y1="120" y2="156"></line>
+<line stroke="#9b6cf5" stroke-width="2" x1="574" x2="597" y1="120" y2="156"></line>
+<text fill="#9b6cf5" font-size="11.5" font-weight="700" text-anchor="middle" x="320" y="208">根哈希不同 → 只沿不同的分支下钻 → 最后只同步「桶 4」</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="320" y="228">若根哈希相同，一次比较就能断定两边完全一致</text>
+</svg>
+<figcaption>图 4 · Merkle 树反熵：先比根，再逐层缩小范围，最终只搬运真正不一致的那几个桶——传输量与差异量成正比。</figcaption>
+</figure>
+<h3>六、写路径与读路径：单机上那点事</h3>
+<p>把上面五件事拼好，剩下的就是每台机器自己怎么落盘。这里书里跟的是 Cassandra 的路子。<strong>写</strong>：先顺序追加到 commit log（宕机后靠它重放），再写进内存里的 memtable；memtable 攒到阈值，整批排好序刷成一个只读的 SSTable。全程<strong>没有随机写</strong>，所以写吞吐极高。<strong>读</strong>：先查 memtable，命中就返回；不命中就用<strong>布隆过滤器</strong>快速排除掉绝大多数不可能含有这个 key 的 SSTable，只去真正可能的那一两个文件里取。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 240" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="w1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line stroke="rgba(120,120,130,0.3)" stroke-dasharray="4 4" x1="320" x2="320" y1="10" y2="230"></line>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="155" y="24">写路径</text>
+<rect fill="rgba(155,108,245,0.18)" height="28" rx="6" stroke="#9b6cf5" width="104" x="103" y="40"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="155" y="59">put(k, v)</text>
+<rect fill="rgba(91,157,249,0.12)" height="28" rx="6" stroke="#5b9df9" width="152" x="79" y="92"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="155" y="111">commit log 顺序追加</text>
+<rect fill="rgba(91,157,249,0.12)" height="28" rx="6" stroke="#5b9df9" width="152" x="79" y="144"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="155" y="163">memtable 内存有序表</text>
+<rect fill="rgba(91,157,249,0.06)" height="28" rx="6" stroke="#4a5160" width="152" x="79" y="196"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="155" y="215">攒满 → 刷成 SSTable</text>
+<line marker-end="url(#w1)" stroke="#7c8593" x1="155" x2="155" y1="70" y2="90"></line>
+<line marker-end="url(#w1)" stroke="#7c8593" x1="155" x2="155" y1="122" y2="142"></line>
+<line marker-end="url(#w1)" stroke="#7c8593" x1="155" x2="155" y1="174" y2="194"></line>
+<text fill="#9b6cf5" font-family="monospace" font-size="10" text-anchor="middle" x="270" y="130">全程无随机写</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="485" y="24">读路径</text>
+<rect fill="rgba(155,108,245,0.18)" height="28" rx="6" stroke="#9b6cf5" width="104" x="433" y="40"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="485" y="59">get(k)</text>
+<rect fill="rgba(91,157,249,0.12)" height="28" rx="6" stroke="#5b9df9" width="152" x="409" y="92"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="485" y="111">先查 memtable</text>
+<rect fill="rgba(91,157,249,0.12)" height="28" rx="6" stroke="#5b9df9" width="152" x="409" y="144"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="485" y="163">布隆过滤器排除文件</text>
+<rect fill="rgba(91,157,249,0.06)" height="28" rx="6" stroke="#4a5160" width="152" x="409" y="196"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="485" y="215">只读可能命中的 SSTable</text>
+<line marker-end="url(#w1)" stroke="#7c8593" x1="485" x2="485" y1="70" y2="90"></line>
+<line marker-end="url(#w1)" stroke="#7c8593" x1="485" x2="485" y1="122" y2="142"></line>
+<line marker-end="url(#w1)" stroke="#7c8593" x1="485" x2="485" y1="174" y2="194"></line>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="404" y="111">命中即返回</text>
+</svg>
+<figcaption>图 5 · 单机存储引擎：写靠 commit log + memtable + SSTable 把随机写变成顺序写；读靠布隆过滤器免掉绝大多数无谓的磁盘访问。</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/storage-engine-day47.html" target="_blank" rel="noopener">System Design · Day 47 存储引擎</a> — LSM-tree 的合并策略、写放大与读放大，以及它和 B-tree 在同一份负载上的真实差距</aside>
+<h2>关键权衡与选型</h2>
+<p>这一章的灵魂全在旋钮上。先看 NWR 怎么调：</p>
+<p class="tcap">表 1 · 同一个 N=3，四种 NWR 配置的性格</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>配置</th><th>性格</th><th>代价</th><th>适合</th></tr></thead>
+<tbody>
+<tr><th><code>R=1, W=3</code></th><td><strong>读极快</strong>，问一个就返回</td><td>写要等全部副本，任何一台慢或挂就写不进</td><td>配置项、只读为主的元数据</td></tr>
+<tr><th><code>W=1, R=3</code></th><td><strong>写极快</strong>，一个确认就返回</td><td>读要等全部副本，读延迟被最慢的那台决定</td><td>日志、埋点这类写重读轻的负载</td></tr>
+<tr><th><code>R=2, W=2</code></th><td>满足 <code>W+R&gt;N</code>，<strong>读得到最新写</strong>，读写都能容忍挂一台</td><td>读写延迟都由「第 2 快」的副本决定</td><td><strong>绝大多数场景的默认</strong>；Dynamo 生产常用值</td></tr>
+<tr><th><code>R=1, W=1</code></th><td>读写都最快、可用性最高</td><td><code>1+1 &lt; 3</code>，<strong>不保证读到最新写</strong></td><td>能容忍陈旧值：计数器、缓存、位置上报</td></tr>
+</tbody></table></div>
+<p>再看冲突怎么收场——这是同一族系统里分歧最大的地方：</p>
+<p class="tcap">表 2 · 三种冲突解决策略</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>策略</th><th>怎么做</th><th>诚实的代价</th><th>谁在用</th></tr></thead>
+<tbody>
+<tr><th>时间戳取胜<br/>last-write-wins</th><td>比较写入时间戳，大的赢</td><td><strong>并发写会被静默丢弃一个</strong>；依赖机器时钟准确，时钟漂移直接变成丢数据</td><td>Cassandra（默认）</td></tr>
+<tr><th>向量时钟<br/>vector clock</th><td>记录因果关系，能区分「后写」和「真并发」</td><td>只能<strong>发现</strong>冲突、不能解决；多版本抛给客户端；时钟串会变长，需截断</td><td>Dynamo、Riak</td></tr>
+<tr><th>应用层合并 / CRDT</th><td>按业务语义定义合并规则（如购物车取并集、计数器求和）</td><td>要为每种数据类型单独设计；语义可能反直觉——<strong>购物车取并集会让删掉的商品复活</strong></td><td>Amazon 购物车、Riak 数据类型</td></tr>
+</tbody></table></div>
+<p>最后是那个真正该先问的问题——<strong>这套东西你到底该不该用</strong>：</p>
+<p class="tcap">表 3 · CP 还是 AP：拿业务当锚</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>场景</th><th>选</th><th>为什么</th></tr></thead>
+<tbody>
+<tr><th>账户余额、库存扣减</th><td><strong>CP</strong>（关系库 / Spanner 这类）</td><td>读到旧值就是超卖、就是钱错。宁可分区期间拒绝服务</td></tr>
+<tr><th>购物车、用户会话、收藏夹</th><td><strong>AP</strong>（本章这套）</td><td>写入失败的损失远大于偶尔多一件商品</td></tr>
+<tr><th>点赞数、播放量、埋点</th><td><strong>AP</strong>，甚至 <code>W=1</code></td><td>本来就是近似值，吞吐比精确重要</td></tr>
+<tr><th>需要按多个字段查询</th><td><strong>都不选</strong></td><td>键值存储只有 <code>get/put</code>，做不了查询；别硬套</td></tr>
+</tbody></table></div>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>这一章是系统设计面试里的<strong>「元题」</strong>：它不像限流器、短链那样只对应一类产品，而是把分区、复制、一致性、故障检测、存储引擎五件事串在一根线上——面试官问「设计一个 KV 存储」，实际是在一次性检查你这五块知识是否成体系。落到真实世界，它就是 <strong>Amazon DynamoDB、Apache Cassandra、Riak、Voldemort、ScyllaDB</strong> 这一族系统的共同蓝图；Kafka 的分区副本、Elasticsearch 的分片分配，也都能在这套零件里找到对应。</p>
+<div class="ev">
+<div class="evh">大厂实证 · 这些主张不是书里说的，是公司自己公开说的</div>
+<ul>
+<li><strong>Amazon</strong> 在 Dynamo 论文里给出生产配置：最常用的 <code>(N,R,W)</code> 就是 <code>(3,2,2)</code>，SLA 按 <code>99.9</code> 百分位而非平均值定；并披露 24 小时内 <strong>99.94% 的请求只看到一个版本</strong>——<strong>验证了向量时钟带来的多版本在实践中确实罕见</strong>。<span class="src"><a href="https://www.allthingsdistributed.com/files/amazon-dynamo-sosp2007.pdf" rel="noopener" target="_blank">Dynamo 论文, SOSP 2007 ↗</a></span></li>
+<li><strong>Netflix</strong> 用 <strong>288 台 EC2 实例</strong>（横跨 3 个可用区）+ 60 台压测客户端，跑出 <strong>110 万次客户端写入/秒</strong>；把节点数从 48 → 96 → 144 → 288 时单机负载几乎不变——<strong>用生产配置实测了无主架构的线性水平扩展</strong>。<span class="src"><a href="https://netflixtechblog.com/benchmarking-cassandra-scalability-on-aws-over-a-million-writes-per-second-39f45f066c9e" rel="noopener" target="_blank">Netflix Tech Blog, 2011 ↗</a></span></li>
+<li><strong>Discord</strong> 是反例：他们在万亿条消息规模上放弃了 Cassandra，原因是<strong>热分区</strong>与 <strong>JVM 垃圾回收停顿</strong>——停顿连成串时节点直接失去响应、要工程师手动重启。迁到 C++ 写的 ScyllaDB 后，<code>p99</code> 读延迟从 <strong>40–125 ms 降到 15 ms</strong>——<strong>说明这套架构的瓶颈最终常常落在运行时而非算法上</strong>。<span class="src"><a href="https://discord.com/blog/how-discord-stores-trillions-of-messages" rel="noopener" target="_blank">Discord Blog「How Discord Stores Trillions of Messages」, 2023 ↗</a></span></li>
+<li><strong>Apache Cassandra 官方文档</strong>明确说自己的一致性级别就是 Dynamo <code>R+W&gt;N</code> 的实现；并写明 hinted handoff 的提示默认最多保留 3 小时（<code>max_hint_window</code>），超时就只能靠反熵修复——<strong>印证了本章「三个时间尺度分层处理故障」的分工</strong>。<span class="src"><a href="https://cassandra.apache.org/doc/latest/cassandra/managing/operating/hints.html" rel="noopener" target="_blank">Apache Cassandra Documentation · Hints ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/database-selection-day3.html" target="_blank" rel="noopener">System Design · Day 3 数据库选型</a> — 什么样的负载真的需要 Dynamo 系无主存储，什么时候一台 PostgreSQL 加只读从库就够了</aside>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>最容易被漏掉的一条</strong>：<em>sloppy quorum 会破坏 <code>W+R&gt;N</code> 的保证。</em>宽松 quorum 收的是「任意 W 个健康节点」，不是「该存这个 key 的前 N 个里的 W 个」——写可能全落在临时代管者身上，读却在真正的 N 个副本里做，两个集合根本不重叠。它换来的是可用性，不是一致性。面试里能主动点出这一条，分量很重。</li>
+<li><strong><code>W+R&gt;N</code> ≠ 强一致。</strong>它只保证「读得到最新的那次写」，不提供全局顺序、原子性和隔离级别。把它说成「线性一致」是最常见的错误。</li>
+<li><strong>向量时钟不解决冲突，只发现冲突。</strong>它告诉你「这两个版本是并发的」，接下来怎么办完全是应用的事。</li>
+<li><strong>CAP 的通俗版有误导。</strong>「三选二」这个说法连提出者 Eric Brewer 本人都在 2012 年的《CAP Twelve Years Later》里做过修正：分区并不常发生，只有在分区<em>期间</em>才需要在 C 和 A 之间取舍，其余时间两者都能拿到。</li>
+<li><strong>时代局限。</strong>本书 2020 年成书，此后 DynamoDB 已支持跨项事务、Cassandra 也在往更强的一致性走；书里也完全没提 CRDT 这条「让冲突自动收敛」的现代路线。把这一章当作「Dynamo 系的经典切面」读，而不是当作 2026 年的技术现状。</li>
+<li><strong>别把它当万能存储。</strong>只有 <code>get/put</code>，没有二级索引、没有范围查询、没有跨键事务。业务一旦需要「按第二个字段找」，这套设计就该重新评估。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 这章不是在设计产品，是在<strong>造一个数据库</strong>——放弃主节点之后，正确性得靠一堆机制一件件补回来。</p>
+<p>② <strong>CAP 里 P 不是选项</strong>：网络一定会断，真正的选择只在分区发生时的 C 与 A 之间。Dynamo 选 AP，因为「加入购物车不能失败」。</p>
+<p>③ <strong>分区</strong>复用一致性哈希环，<strong>复制</strong>是顺时针收下前 N 个<strong>不同物理机</strong>（跳过同机虚拟节点，并跨可用区）。</p>
+<p>④ <strong>Quorum NWR</strong>：<code>W+R&gt;N</code> 靠抽屉原理保证读写集合必有重叠，所以一定读得到最新写；生产常用 <code>(3,2,2)</code>。</p>
+<p>⑤ 但 <code>W+R&gt;N</code> <strong>不等于强一致</strong>，且 <strong>sloppy quorum 会把这条保证打破</strong>——这是最值得记住的一个坑。</p>
+<p>⑥ <strong>冲突</strong>：并发写没有先后，向量时钟只能<strong>发现</strong>冲突；Cassandra 干脆用时间戳取胜，简单但会静默丢写。</p>
+<p>⑦ <strong>故障按三个尺度分层</strong>：gossip 检测（避开 <code>O(n²)</code> 全互联）→ hinted handoff 顶临时宕机（默认 3 小时）→ Merkle 树反熵修永久差异（代价与差异量而非数据量成正比）。</p>
+<p>⑧ <strong>单机存储</strong>：commit log + memtable + SSTable 把随机写变顺序写，读靠布隆过滤器免掉无谓磁盘访问。</p>
+<p>⑨ <strong>选型一句话</strong>：能容忍陈旧值的（购物车、会话、计数）用它；一分钱都不能错的（余额、库存）别用；要按多字段查的，根本不该考虑它。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
