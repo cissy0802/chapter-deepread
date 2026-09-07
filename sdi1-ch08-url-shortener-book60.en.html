@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview Vol 1 Ch 8 · Design a URL Shortener — Books Deep-Read Book 60</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOKS DEEP-READ · SYSTEM DESIGN INTERVIEW VOL 1 · CH 8</p>
+<h1>Design a URL Shortener</h1>
+<p class="sub">System Design Interview Vol 1 · Ch 8 · Alex Xu · 2020</p>
+<p class="langbar"><a href="sdi1-ch08-url-shortener-book60.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>When you paste a monstrously long link into a social app, what comes out the other side is usually a seven-or-eight-character stub. Chapter 8 of <em>System Design Interview</em> asks you to build that service from scratch: <strong>turn a long address into a short one, and send whoever clicks it back to the original</strong>. The problem statement is small enough to look like homework, but its skeleton is the clearest in the book — one lookup table, one number issuer, one cache layer. All three big pieces of a large system, in miniature.</p>
+<h2>An analogy</h2>
+<p>Think of a <strong>coat check</strong> at a theater. You hand over a bulky coat (the long URL) and get back a small <strong>numbered tag</strong> (the short URL). The tag carries no information about the coat — it is a thin slip of cardboard. Everything depends on the <strong>ledger</strong> behind the counter that pairs each number with each coat. So the whole business comes down to two things: <strong>the rule for handing out numbers</strong>, and <strong>a ledger you can never afford to lose</strong>.</p>
+<h2>The hard part was never "make it short"</h2>
+<p>The difficulty is that three requirements have to hold at once. The tag must be <strong>short enough to copy by hand</strong> (about seven characters). Over ten years, hundreds of billions of tags must include <strong>no duplicate number, ever</strong>. And the several counters handing out tags <strong>should not have to consult each other</strong> — every round trip costs time.</p>
+<p>There is also a property that is easy to miss: this business is <strong>write once, read many</strong>, in the extreme. A link is registered once and may be clicked tens of thousands of times. So the design weight naturally falls on the click side, not the creation side.</p>
+<h2>Two ways to hand out numbers</h2>
+<p>The first: <strong>take a fingerprint of the coat</strong>. Compute a characteristic value from the long URL and keep the first seven characters as the tag. Fast — but two different coats can fingerprint to the same value, and when that happens you tweak the input and recompute until it stops colliding.</p>
+<p>The second: <strong>take a sequence number, then rewrite it</strong>. The counter hands out 1, 2, 3, and so on, and you rewrite that decimal number in a more compact notation that uses 62 symbols — <code>0-9</code>, <code>a-z</code>, <code>A-Z</code>. (This is the same trick as writing a decimal number in hexadecimal: more symbols means fewer digits.) Seven positions over 62 symbols covers roughly three and a half trillion tags, which lasts centuries.</p>
+<h2>The stack of common tags on the counter</h2>
+<p>Since roughly ten thousand clicks follow every one registration, the counter <strong>does not need to open the ledger every time</strong>. Keep a copy of the most frequently requested number-to-coat pairs within arm's reach; almost everyone gets an answer on the spot, and only the obscure numbers require a trip to the ledger. That stack is the <strong>cache</strong> — and <strong>the fraction of requests it can answer is very nearly your server bill</strong>.</p>
+<h2>One choice hidden in the details</h2>
+<p>When you send someone on their way, you can say one of two things. Say <strong>"this address moved permanently"</strong> and the browser remembers it — next time the visitor flies straight there without passing through you, and you save machines. But you also <strong>never get to count that click</strong>. Say <strong>"go over there for now"</strong> and every click still comes through you, so you can record exactly who clicked what and when — at the cost of carrying all of that traffic yourself. Data or cheap servers: pick one.</p>
+<p>And one honest cost: you have to keep that ledger alive <strong>forever</strong> — the day the service shuts down, every short link scattered across the internet dies at once.</p>
+<h2>Remember this one thing</h2>
+<div class="tl">
+<p>A URL shortener is fundamentally <strong>a ledger you cannot lose</strong>: tags must be short and never repeat, reads vastly outnumber writes so the cache decides the cost, and saying "permanent" versus "temporary" on the redirect is a straight choice between <strong>cheaper servers</strong> and <strong>click data</strong>.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the notation and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">The point of this problem is <strong>not "how do you make it short"</strong>: it is the smallest complete instance of "one key-to-value table + one ID issuer + one cache layer". Put the numbers on the table — 100 million links a day, a 10:1 read-to-write ratio, 365 billion rows over ten years — and <strong>the code length, the need for a cache and the sharding plan all fall out of the arithmetic</strong>. Meanwhile the single status code you return, <code>301</code> or <code>302</code>, decides whether you save servers or keep your click data.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Short URL / long URL</strong>: the short URL is a compact identifier (say <code>tiny.url/2TX</code>) that carries <em>none</em> of the original address's information. It is only a key into a lookup table.</li>
+<li><strong>Redirect</strong>: instead of returning content, the server returns a status code plus a <code>Location</code> header, telling the browser "the real thing is over there, go fetch it yourself."</li>
+<li><strong><code>301</code> / <code>302</code></strong>: two redirect status codes. 301 means moved permanently (the browser may cache the redirect); 302 means temporary (the browser asks you again every time).</li>
+<li><strong>base62</strong>: writing numbers with the 62 symbols <code>0-9 a-z A-Z</code>. More symbols means fewer digits for the same value — the same idea as writing decimal in hexadecimal.</li>
+<li><strong>Hash function</strong>: a function that squeezes any input into a fixed-length value (MD5, SHA-1, CRC32). A <strong>collision</strong> is when two different inputs produce the same value.</li>
+<li><strong>Unique ID generator</strong>: a component that hands out non-repeating numbers in a distributed setting, such as Snowflake (timestamp + machine id + sequence) — the subject of the previous chapter.</li>
+<li><strong>Bloom filter</strong>: a very memory-efficient set-membership structure. Asked "is this key present?", it <em>may falsely say yes but never falsely says no</em> — so it can absorb the vast majority of database lookups that were doomed to find nothing.</li>
+<li><strong>Cache hit ratio</strong>: the share of requests answered straight from cache; only the misses reach the database.</li>
+<li><strong>Stateless</strong>: the server keeps no session data locally, so any machine can serve any request — which is why you can scale by simply adding machines.</li>
+<li><strong>QPS</strong>: queries per second, the basic unit of load.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This chapter belongs to Part II, "System Case Studies", and follows directly from Chapter 7 on distributed unique IDs — <strong>the IDs issued there are exactly the raw material this chapter encodes into short codes</strong>. It is also the best small problem for running the four-step framework end to end (clarify requirements, high-level design, deep dive, wrap up) before the larger problems in Chapters 11 and 12. In the real world it maps to link services like bit.ly and t.co, and to the internal <code>go/</code> links companies run on their own networks.</p>
+<h2>What problem the chapter solves</h2>
+<p>The first move is turning the prompt into numbers, and <strong>that step is the real skeleton of the chapter</strong>. The book's assumptions: <code>100 million</code> short URLs created per day, a read-to-write ratio of <code>10:1</code>, at least <code>10</code> years of service, and about <code>100</code> bytes per record. From those:</p>
+<ul>
+<li><strong>Write QPS</strong> = 100M ÷ 86,400 ≈ <code>1,160</code>/s; <strong>read QPS</strong> ≈ <code>11,600</code>/s.</li>
+<li><strong>Ten-year volume</strong> = 100M × 365 × 10 = <code>365 billion</code> records.</li>
+<li><strong>Storage</strong> = 365 billion × 100 B ≈ <code>36.5 TB</code>.</li>
+</ul>
+<p>Each number forces a constraint you cannot dodge. <strong>365 billion</strong> sets the minimum addressable space for the short code (the next section shows 6 characters fall short and 7 fit). <strong>11,600 reads per second, all primary-key point lookups</strong>, makes a cache layer mandatory. <strong>36.5 TB</strong> means one machine will not hold it, so you shard.</p>
+<p>Skip this step and you will guess "six characters ought to do" and hit exhaustion somewhere past the fifteen-billionth link, or point 11,600 QPS straight at the database and buy ten times the hardware for something a cache gives away. <strong>It looks like a hash-function question; it is a capacity-estimation question.</strong></p>
+<h2>The core content, properly</h2>
+<h3>Two APIs, and what actually happens on a click</h3>
+<p>The service exposes exactly two endpoints: <code>POST /api/v1/data/shorten</code> (takes a long URL, returns a short one) and <code>GET /api/v1/{shortUrl}</code> (takes a short URL, returns a redirect). The write path runs 100 million times a day; the read path runs a billion. <strong>The two paths differ by an order of magnitude in frequency, and your design attention should differ by an order of magnitude too.</strong></p>
+<figure>
+<svg viewBox="0 0 640 262" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="m1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text x="14" y="22" fill="#5b9df9" font-size="12.5" font-weight="700">WRITE PATH · create one link (~1,160/s)</text>
+<rect x="10" y="40" width="84" height="32" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="52" y="60" fill="#b9c0ca" font-size="11" text-anchor="middle">Client</text>
+<rect x="118" y="40" width="92" height="32" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="164" y="60" fill="#b9c0ca" font-size="11" text-anchor="middle">Web tier</text>
+<rect x="234" y="40" width="100" height="32" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"></rect><text x="284" y="60" fill="#e7ebf1" font-size="10.5" text-anchor="middle">ID / hash</text>
+<rect x="358" y="40" width="96" height="32" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"></rect><text x="406" y="60" fill="#e7ebf1" font-size="11" text-anchor="middle">base62</text>
+<rect x="478" y="40" width="108" height="32" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="532" y="60" fill="#b9c0ca" font-size="10.5" text-anchor="middle">Mapping DB</text>
+<line x1="96" x2="114" y1="56" y2="56" stroke="#7c8593" marker-end="url(#m1)"></line>
+<line x1="212" x2="230" y1="56" y2="56" stroke="#7c8593" marker-end="url(#m1)"></line>
+<line x1="336" x2="354" y1="56" y2="56" stroke="#7c8593" marker-end="url(#m1)"></line>
+<line x1="456" x2="474" y1="56" y2="56" stroke="#7c8593" marker-end="url(#m1)"></line>
+<text x="52" y="88" fill="#7c8593" font-size="9.5" text-anchor="middle">long URL</text>
+<text x="284" y="88" fill="#7c8593" font-size="9.5" text-anchor="middle">unique ID</text>
+<text x="406" y="88" fill="#7c8593" font-size="9.5" text-anchor="middle">7-char code</text>
+<text x="532" y="88" fill="#7c8593" font-size="9.5" text-anchor="middle">code to long URL</text>
+<line x1="10" x2="630" y1="104" y2="104" stroke="rgba(120,120,130,0.25)"></line>
+<text x="14" y="126" fill="#5b9df9" font-size="12.5" font-weight="700">READ PATH · every click (~11,600/s, 10x more)</text>
+<rect x="10" y="146" width="84" height="32" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="52" y="166" fill="#b9c0ca" font-size="11" text-anchor="middle">Browser</text>
+<rect x="118" y="146" width="92" height="32" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="164" y="166" fill="#b9c0ca" font-size="11" text-anchor="middle">Web tier</text>
+<rect x="234" y="146" width="84" height="32" rx="6" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"></rect><text x="276" y="166" fill="#e7ebf1" font-size="11" text-anchor="middle">Cache</text>
+<rect x="358" y="146" width="108" height="32" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="412" y="166" fill="#b9c0ca" font-size="10.5" text-anchor="middle">Mapping DB</text>
+<line x1="96" x2="114" y1="162" y2="162" stroke="#7c8593" marker-end="url(#m1)"></line>
+<line x1="212" x2="230" y1="162" y2="162" stroke="#7c8593" marker-end="url(#m1)"></line>
+<line x1="320" x2="354" y1="162" y2="162" stroke="#7c8593" marker-end="url(#m1)"></line>
+<text x="276" y="196" fill="#8fbaff" font-size="9.5" text-anchor="middle">hit: return now</text>
+<text x="412" y="196" fill="#7c8593" font-size="9.5" text-anchor="middle">only on a miss</text>
+<line x1="164" x2="164" y1="180" y2="212" stroke="#7c8593" marker-end="url(#m1)"></line>
+<rect x="74" y="216" width="182" height="30" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"></rect><text x="165" y="235" fill="#e7ebf1" font-size="10.5" text-anchor="middle">301 / 302 + Location</text>
+<line x1="258" x2="322" y1="231" y2="231" stroke="#7c8593" marker-end="url(#m1)"></line>
+<text x="290" y="224" fill="#7c8593" font-size="9" text-anchor="middle">browser jumps</text>
+<rect x="326" y="216" width="140" height="30" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="396" y="235" fill="#b9c0ca" font-size="10.5" text-anchor="middle">Destination site</text>
+</svg>
+<figcaption>Fig 1 · The two paths of a short link: the write path runs once (issue an ID, base62-encode it, persist), the read path runs tens of thousands of times (cache first, table only on a miss), ending in a redirect that hands the browser to the destination.</figcaption>
+</figure>
+<h3>Where the 7 characters come from: length derived from capacity</h3>
+<p>The code uses <em>base62</em> — <code>0-9 a-z A-Z</code>, 62 symbols. Why not base64? Because base64's <code>+</code> and <code>/</code> must be percent-escaped inside a URL, which makes the result longer and harder to copy by hand.</p>
+<p>What remains is arithmetic. You need 365 billion distinct codes. <code>62⁶ ≈ 56.8 billion</code> — <strong>not enough</strong>. <code>62⁷ ≈ 3.5 trillion</code> — enough, with nearly ten times the headroom. So the code is <strong>7 characters</strong>. That 7 is not a guess; it is read back off the ten-year capacity figure.</p>
+<figure>
+<svg viewBox="0 0 640 214" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<text x="14" y="20" fill="#5b9df9" font-size="12" font-weight="700">1 · How many characters? Derive it</text>
+<text x="66" y="63" fill="#b9c0ca" font-size="11" text-anchor="end">5 ch</text>
+<rect x="72" y="50" width="42" height="18" rx="3" fill="rgba(120,120,130,0.35)"></rect><text x="120" y="63" fill="#7c8593" font-size="10">916 M</text>
+<text x="66" y="95" fill="#b9c0ca" font-size="11" text-anchor="end">6 ch</text>
+<rect x="72" y="82" width="125" height="18" rx="3" fill="rgba(120,120,130,0.35)"></rect><text x="203" y="95" fill="#7c8593" font-size="10">56.8 B</text>
+<text x="66" y="127" fill="#e7ebf1" font-size="11" text-anchor="end">7 ch</text>
+<rect x="72" y="114" width="207" height="18" rx="3" fill="rgba(91,157,249,0.4)" stroke="#5b9df9"></rect><text x="272" y="127" fill="#e7ebf1" font-size="10" text-anchor="end">3.5 T</text>
+<line x1="234" x2="234" y1="44" y2="140" stroke="#9b6cf5" stroke-dasharray="4 4"></line>
+<text x="230" y="158" fill="#9b6cf5" font-size="9.5" text-anchor="middle">need: 365 B in 10 yrs</text>
+<text x="150" y="180" fill="#7c8593" font-size="9.5" text-anchor="middle">6 ch lands left of the need line: too small</text>
+<line x1="312" x2="312" y1="14" y2="200" stroke="rgba(120,120,130,0.25)"></line>
+<text x="332" y="20" fill="#5b9df9" font-size="12" font-weight="700">2 · Decimal ID to base62 code</text>
+<text x="332" y="48" fill="#b9c0ca" font-size="11" font-family="monospace">11157 / 62 = 179 rem 59 -&gt; X</text>
+<text x="332" y="70" fill="#b9c0ca" font-size="11" font-family="monospace">  179 / 62 =   2 rem 55 -&gt; T</text>
+<text x="332" y="92" fill="#b9c0ca" font-size="11" font-family="monospace">    2 / 62 =   0 rem  2 -&gt; 2</text>
+<text x="332" y="118" fill="#8fbaff" font-size="10.5">read remainders bottom-up</text>
+<rect x="500" y="103" width="70" height="24" rx="5" fill="rgba(155,108,245,0.22)" stroke="#9b6cf5"></rect><text x="535" y="120" fill="#e7ebf1" font-size="12" font-weight="700" text-anchor="middle" font-family="monospace">2TX</text>
+<text x="332" y="146" fill="#7c8593" font-size="9.5">symbols: 0-9 to 0-9 | 10-35 to a-z | 36-61 to A-Z</text>
+<text x="332" y="172" fill="#7c8593" font-size="9.5">the short link: tiny.url/2TX</text>
+</svg>
+<figcaption>Fig 2 · Left: the capacity ladder by code length, with the requirement line falling between 6 and 7 characters, which is why the answer is 7. Right: divide the decimal ID by 62 repeatedly and read the remainders bottom-up to get the code (the book's example, 11157 to 2TX).</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/unique-id-generation-day11.en.html" target="_blank" rel="noopener">System Design · Day 11 Unique ID Generation</a> — where the raw material comes from: Snowflake's bit layout, clock rollback, and how monotonic IDs cut both ways for index locality and guessability</aside>
+<h3>Two ways to issue a code: truncated hash vs base62 of an ID</h3>
+<p><strong>Route A: hash plus collision resolution.</strong> Run CRC32 / MD5 / SHA-1 over the long URL and keep the first 7 characters. The trouble is <em>collisions</em>: different long URLs can truncate to the same string. The book's fix is to <strong>append a predefined string to the long URL and rehash</strong>, looping until the code is free. That means <strong>every issued code costs a database lookup</strong> to confirm it is unused — which is precisely where a Bloom filter earns its keep, absorbing the overwhelming majority of lookups that were never going to find anything.</p>
+<p><strong>Route B: unique ID converted to base62.</strong> Ask the ID generator (Snowflake, from the previous chapter) for a globally unique ID and convert it to base62. <strong>Collisions cannot happen, so no lookup is needed</strong> and the write path is a single insert. The price: IDs increase monotonically, so the codes are <em>enumerable</em>, and their length grows with the ID rather than staying a tidy 7.</p>
+<p>There is one more detail the book raises in its deep-dive flow, and interviewers love to press on it: <strong>if the same long URL is submitted twice, should you return the same code?</strong> Route A is idempotent for free (identical input, identical hash). Route B only gets there by maintaining an extra <code>long URL → code</code> reverse index, which costs storage and one more write per creation.</p>
+<h3>The read path: your cache hit ratio is your bill</h3>
+<p>The read-side load profile could hardly be friendlier: <strong>primary-key point lookups, values that essentially never change, and heavily skewed access</strong> (a small number of links absorb most clicks). Because a mapping is immutable once written, you can set a very long expiry and simply evict cold entries by LRU — no cache-invalidation problem to speak of.</p>
+<p>Do the arithmetic and the layer's value is obvious. At <code>11,600</code> read QPS, a <code>90%</code> hit ratio leaves the database <code>1,160</code> QPS. Let the ratio slip to <code>50%</code> and the database is suddenly carrying <code>5,800</code> QPS — <strong>same hardware, 40 points of hit ratio, five times the database load</strong>. The cost curve of a URL shortener is basically that hit-ratio curve.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/caching-day2.en.html" target="_blank" rel="noopener">System Design · Day 2 Caching</a> — penetration, stampede and avalanche across cache layers, and how to size a cache under skewed hot keys</aside>
+<h3><code>301</code> or <code>302</code>: one status code, two businesses</h3>
+<p>This is the choice most often dismissed as a detail, and it decides the business model. <code>301</code> tells the browser the move is permanent, so the browser <strong>caches the redirect</strong> — from the second click on, the request never reaches your server. Load drops sharply, and <strong>you lose every subsequent click</strong>. <code>302</code> says the redirect is temporary, so each click comes back to you and you capture the full click stream — timestamp, referrer, geography — while carrying every bit of that traffic.</p>
+<figure>
+<svg viewBox="0 0 640 262" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="m3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text x="14" y="18" fill="#5b9df9" font-size="12" font-weight="700">301 permanent</text>
+<rect x="14" y="28" width="70" height="24" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="49" y="45" fill="#b9c0ca" font-size="10" text-anchor="middle">Browser</text>
+<rect x="106" y="28" width="78" height="24" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="145" y="45" fill="#b9c0ca" font-size="10" text-anchor="middle">Shortener</text>
+<rect x="204" y="28" width="76" height="24" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="242" y="45" fill="#b9c0ca" font-size="10" text-anchor="middle">Target</text>
+<line x1="49" x2="49" y1="54" y2="238" stroke="rgba(120,120,130,0.3)" stroke-dasharray="3 3"></line>
+<line x1="145" x2="145" y1="54" y2="238" stroke="rgba(120,120,130,0.3)" stroke-dasharray="3 3"></line>
+<line x1="242" x2="242" y1="54" y2="238" stroke="rgba(120,120,130,0.3)" stroke-dasharray="3 3"></line>
+<text x="14" y="74" fill="#9b6cf5" font-size="9.5">1st click</text>
+<line x1="49" x2="141" y1="90" y2="90" stroke="#7c8593" marker-end="url(#m3)"></line><text x="95" y="85" fill="#7c8593" font-size="9" text-anchor="middle">GET short link</text>
+<line x1="145" x2="53" y1="114" y2="114" stroke="#7c8593" marker-end="url(#m3)"></line><text x="99" y="109" fill="#8fbaff" font-size="9" text-anchor="middle">301 + Location</text>
+<line x1="49" x2="238" y1="138" y2="138" stroke="#7c8593" marker-end="url(#m3)"></line><text x="143" y="133" fill="#7c8593" font-size="9" text-anchor="middle">open long URL</text>
+<text x="14" y="172" fill="#9b6cf5" font-size="9.5">2nd click</text>
+<line x1="49" x2="238" y1="190" y2="190" stroke="#9b6cf5" marker-end="url(#m3)"></line><text x="143" y="185" fill="#9b6cf5" font-size="9" text-anchor="middle">straight from browser cache</text>
+<text x="14" y="216" fill="#e8794b" font-size="9.5">Shortener never touched:</text>
+<text x="14" y="232" fill="#e8794b" font-size="9.5">cheaper, but this click is uncounted</text>
+<line x1="300" x2="300" y1="10" y2="248" stroke="rgba(120,120,130,0.25)"></line>
+<text x="326" y="18" fill="#5b9df9" font-size="12" font-weight="700">302 temporary</text>
+<rect x="326" y="28" width="70" height="24" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="361" y="45" fill="#b9c0ca" font-size="10" text-anchor="middle">Browser</text>
+<rect x="418" y="28" width="78" height="24" rx="5" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"></rect><text x="457" y="45" fill="#e7ebf1" font-size="10" text-anchor="middle">Shortener</text>
+<rect x="514" y="28" width="76" height="24" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="552" y="45" fill="#b9c0ca" font-size="10" text-anchor="middle">Target</text>
+<line x1="361" x2="361" y1="54" y2="238" stroke="rgba(120,120,130,0.3)" stroke-dasharray="3 3"></line>
+<line x1="457" x2="457" y1="54" y2="238" stroke="rgba(120,120,130,0.3)" stroke-dasharray="3 3"></line>
+<line x1="552" x2="552" y1="54" y2="238" stroke="rgba(120,120,130,0.3)" stroke-dasharray="3 3"></line>
+<text x="326" y="74" fill="#9b6cf5" font-size="9.5">1st click</text>
+<line x1="361" x2="453" y1="90" y2="90" stroke="#7c8593" marker-end="url(#m3)"></line><text x="407" y="85" fill="#7c8593" font-size="9" text-anchor="middle">GET short link</text>
+<line x1="457" x2="365" y1="114" y2="114" stroke="#7c8593" marker-end="url(#m3)"></line><text x="411" y="109" fill="#8fbaff" font-size="9" text-anchor="middle">302 + Location</text>
+<line x1="361" x2="548" y1="138" y2="138" stroke="#7c8593" marker-end="url(#m3)"></line><text x="455" y="133" fill="#7c8593" font-size="9" text-anchor="middle">open long URL</text>
+<text x="326" y="172" fill="#9b6cf5" font-size="9.5">2nd click</text>
+<line x1="361" x2="453" y1="190" y2="190" stroke="#9b6cf5" marker-end="url(#m3)"></line><text x="407" y="185" fill="#9b6cf5" font-size="9" text-anchor="middle">back to origin</text>
+<line x1="457" x2="548" y1="212" y2="212" stroke="#7c8593" marker-end="url(#m3)"></line><text x="503" y="207" fill="#7c8593" font-size="9" text-anchor="middle">302 again</text>
+<text x="326" y="238" fill="#8fbaff" font-size="9.5">every click passes through: full click stream</text>
+</svg>
+<figcaption>Fig 3 · 301 and 302 differ only from the second click onward: 301 routes the browser around you (cheaper, no data), 302 keeps every click coming back to origin (data, but you carry the traffic).</figcaption>
+</figure>
+<h3>Three things the wrap-up must not skip</h3>
+<p><strong>Rate limiting.</strong> Leave the create endpoint unthrottled and a script will eat your code space and your storage within the hour; limiting per IP or per API key is the standard answer in this chapter's wrap-up. <strong>Stateless scaling.</strong> The web tier holds no session, so you add machines; the only genuinely stateful pieces are the ID generator and the database. <strong>Sharding.</strong> 36.5 TB does not fit on one machine, and hashing on the short code is enough — every read is a point lookup and nothing needs a range scan, which makes this among the easiest workloads to shard.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/rate-limiting-day10.en.html" target="_blank" rel="noopener">System Design · Day 10 Rate Limiting</a> — token bucket vs leaky bucket, the boundary error in sliding windows, and clocks and races under distributed throttling</aside>
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 1 · Two ways to issue a code: truncated hash vs unique ID in base62</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Hash + collision resolution</th><th>Unique ID → base62</th></tr></thead>
+<tbody>
+<tr><th>Code length</th><td><strong>Fixed at 7</strong>, uniform</td><td>Grows with the ID: short early, longer later</td></tr>
+<tr><th>Write cost</th><td>A <strong>lookup per issue</strong> to confirm the code is free (a Bloom filter absorbs most)</td><td><strong>No lookup</strong>; a single insert</td></tr>
+<tr><th>Collisions</th><td>Must be handled: append a fixed string, rehash, repeat</td><td>Impossible — the ID is already unique</td></tr>
+<tr><th>Guessability</th><td>Codes are scattered and <strong>not sequentially guessable</strong></td><td><strong>Monotonic IDs make codes enumerable</strong>; the next one is derivable</td></tr>
+<tr><th>Idempotence</th><td>Free: one long URL always maps to one code</td><td>Needs an extra <code>long URL → code</code> reverse index</td></tr>
+<tr><th>Dependencies</th><td>Only a hash function</td><td>A working <strong>distributed ID generator</strong> (Ch 7)</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · <code>301</code> vs <code>302</code>: one status code, two businesses</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th><code>301</code> permanent</th><th><code>302</code> temporary</th></tr></thead>
+<tbody>
+<tr><th>Browser behaviour</th><td><strong>Caches the redirect</strong>; never asks you again</td><td>Comes back to your server on every click</td></tr>
+<tr><th>Server load</th><td><strong>Drops sharply</strong>, most of all on popular links</td><td>You absorb every click</td></tr>
+<tr><th>Click analytics</th><td><strong>Largely lost</strong> — only the first click is counted</td><td><strong>Full click stream</strong>: time, referrer, geography</td></tr>
+<tr><th>Changing the target</th><td>Hard — cached browsers may not come back for a long time</td><td>Change any time; effective on the next click</td></tr>
+<tr><th>Fits</th><td>Internal <code>go/</code> links, pure navigation, no analytics need</td><td>Commercial shorteners, marketing campaigns, abuse monitoring</td></tr>
+</tbody></table></div>
+<ul>
+<li><strong>Storage choice</strong>: the mapping is a pure key-to-value point lookup. A relational database can do it, but a key-value store (Redis, Cassandra, DynamoDB) is cheaper for this access pattern — at the cost of losing transactions and secondary indexes, so the reverse index becomes your problem to build.</li>
+<li><strong>Custom codes</strong>: letting users claim <code>tiny.url/mycompany</code> introduces namespace contention and squatting, and needs its own reservation and moderation path. The book's baseline design does not include that layer.</li>
+<li><strong>Enumerable codes</strong> and <strong>the lookup you saved on the write path</strong> are two sides of one coin: choosing route B buys write simplicity and pays for it in guessability.</li>
+</ul>
+<h2>Why it matters / in real systems</h2>
+<p>The URL shortener is among the most frequently asked "small" interview problems, and what it tests is not small at all: <strong>the interviewer is watching whether you derive the design from the numbers, not whether you can recite base62</strong>. It is also one of the few problems that fits a complete four-step pass into 45 minutes and still has real trade-offs to dig into.</p>
+<p>In production this skeleton is the core of link services such as bit.ly and t.co: one enormous mapping table, one high-hit-ratio cache, one ID issuer, and an analytics business built on the click stream. And <strong>the most underrated property is that a short link's entire value rests on the durability of that table</strong> — the code itself carries no information, so once the service stops, the link is just a meaningless string.</p>
+<div class="ev">
+<div class="evh">EVIDENCE FROM INDUSTRY · claims these companies published themselves</div>
+<ul>
+<li><strong>Google</strong> retired its own goo.gl shortener and announced that goo.gl links would stop responding (in the end it preserved links still showing activity) — <strong>public confirmation that the mapping table is a permanent liability: when the operator stops, links scattered across the web die together</strong>. <span class="src"><a href="https://developers.googleblog.com/en/google-url-shortener-links-will-no-longer-be-available/" rel="noopener" target="_blank">Google Developers Blog, "Google URL Shortener links will no longer be available" ↗</a></span></li>
+<li><strong>X (Twitter)</strong> states in its official developer documentation that <strong>all</strong> links posted on the platform, direct messages included, are wrapped by t.co, in order to protect users from malicious sites while yielding insight into link engagement — <strong>confirming why commercial shorteners sit on the "every click returns to origin" side: both analytics and abuse defence require the traffic to pass through you</strong>. <span class="src"><a href="https://developer.x.com/en/docs/tco" rel="noopener" target="_blank">X Developer Platform · t.co links documentation ↗</a></span></li>
+<li><strong>The counter-evidence from research</strong>: Georgiev and Shmatikov brute-force scanned the 5- and 6-character token space of bit.ly, goo.gl and similar services and reached large numbers of private OneDrive documents and driving-direction histories — <strong>a direct refutation of the common assumption that "unguessable therefore private"</strong>. <span class="src"><a href="https://arxiv.org/abs/1604.02734" rel="noopener" target="_blank">"Gone in Six Characters: Short URLs Considered Harmful for Cloud Services", arXiv 2016 ↗</a></span></li>
+</ul>
+</div>
+<h2>Common mistakes and open questions</h2>
+<ul>
+<li><strong>Treating a short link as access control.</strong> Seven base62 characters look random, but codes derived from monotonic IDs are <em>consecutive</em> and cheap to scan. Real secrecy requires authorization on the resource; it can never rest on "nobody will guess it".</li>
+<li><strong>Assuming truncated hashes "basically never collide".</strong> Pack 365 billion records into 3.5 trillion slots and the load factor is about <code>10%</code> — collisions are not rare events but something you hit roughly <strong>once every ten issues</strong>. Collision handling is the main path, not an edge case.</li>
+<li><strong>A <code>301</code> is hard to take back.</strong> Browsers may hold the cached redirect for a long time, so later changes of target, or a safety interstitial you want to add, will never reach those users.</li>
+<li><strong>Counting only the raw data.</strong> <code>36.5 TB</code> is bare records; the primary-key index, and the <code>long URL → code</code> reverse table route B needs, are both extra.</li>
+<li><strong>Scope and period limits.</strong> Written in 2020, the chapter sticks to the skeleton and does not develop custom domains, QR codes, malicious-link detection, or the tension between click tracking and privacy regulation such as GDPR — which today is the most concrete constraint on commercial shorteners.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. A URL shortener is, at bottom, a <code>code → long URL</code> table. The code carries <strong>none</strong> of the original address, so the entire value rests on that table's durability.</p>
+<p>2. Every design decision is derived from the estimate: 100M/day → <code>1,160</code> write QPS; 10:1 read ratio → <code>11,600</code> read QPS; <code>365 billion</code> rows over ten years; <code>36.5 TB</code>.</p>
+<p>3. Seven characters is computed, not chosen: <code>62⁶ ≈ 56.8 billion</code> is too small, <code>62⁷ ≈ 3.5 trillion</code> fits. base62 rather than base64 because <code>+</code> and <code>/</code> must be escaped in URLs.</p>
+<p>4. Two issuing routes: <strong>truncated hash with collision resolution</strong> (fixed length, idempotent for free, a lookup every time) vs <strong>unique ID in base62</strong> (no collisions, no lookup, but enumerable and variable-length).</p>
+<p>5. The read path is the ideal cache workload — <strong>point lookups, immutable values, skewed access</strong>; letting the hit ratio slide from 90% to 50% multiplies database load by five.</p>
+<p>6. <code>301</code> vs <code>302</code> is the chapter's most overlooked business decision: cheaper servers or click data, pick one.</p>
+<p>7. Three wrap-up items: <strong>rate limit</strong> the create endpoint, keep the web tier <strong>stateless</strong> so it scales by addition, and <strong>shard by code hash</strong> to hold 36.5 TB.</p>
+<p>8. The biggest misconception is treating the code as a secret — by construction a shortener offers no confidentiality, and security must come from the destination's own authorization.</p>
+</div>
+</div>
+<footer>Books Deep-Read · Read this page ≈ get the core of the chapter; for the full case studies, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
