@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview 卷一 第 7 章 · 设计分布式唯一 ID — 专业书籍精读 Book 59</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -53,7 +54,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </style></head><body>
 <div class="container">
 <p class="top">专业书籍精读 · System Design Interview 卷一 · 第 7 章</p>
-<h1>设计分布式唯一 ID 生成器</h1>
+<h1 data-tts="3036525fb8412045">设计分布式唯一 ID 生成器</h1>
 <p class="sub">System Design Interview Vol 1 · Ch 7 · Alex Xu · 2020</p>
 <p class="langbar"><a href="sdi1-ch07-unique-id-generator-book59.en.html">EN →</a></p>
 <div class="modebar">
@@ -61,29 +62,29 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <button data-mode="deep">精读版</button>
 </div>
 <div class="mode mode-pop">
-<h2>这一章讲什么？</h2>
+<h2 data-tts="6a59ba72ef7fd867">这一章讲什么？</h2>
 <p>你下的每一单、发的每一条消息，系统都得给它一个<strong>编号</strong>——不能重、最好还能一眼看出谁先谁后。一台机器的时候，这事儿简单到不用想：数据库自己「从 1 开始往上加」就行。这一章讲的是：<strong>当后台变成几百台机器，这个「往上加 1」为什么会塌，以及怎么重新做一个。</strong></p>
-<h2>打个比方</h2>
+<h2 data-tts="f0d7ed8a797abd18">打个比方</h2>
 <p>把它想成一家<strong>连锁店的取号机</strong>。只有一家店时，取号机从 1 数上去，从不出错。开到 32 家分店以后，麻烦来了：每家店都从 1 开始数，全国就会冒出 32 个「3 号」——顾客拿着号来取货，店员不知道该给谁。</p>
-<h2>三条看似顺理成章的路，都走不通</h2>
+<h2 data-tts="4da2d094198338bc">三条看似顺理成章的路，都走不通</h2>
 <p><strong>一、让所有分店都打电话回总部要号。</strong>号是不重了，可每发一个号都要打一次电话，慢；更糟的是总部一停电，全国 32 家店都发不出号。</p>
 <p><strong>二、每家店自己抽一串超长的随机乱码。</strong>确实撞不上，但这串码又长又看不出先后——你没法从两个编号里读出「哪单先下的」。</p>
 <p><strong>三、各店跳着数</strong>：1 号店数 1、33、65……，2 号店数 2、34、66……。听着挺妙，可一旦新开一家店或关掉一家，全国的数法都得重排一遍。</p>
-<h2>核心机制：把编号拆成三段拼起来</h2>
+<h2 data-tts="521e05a6b8f2144b">核心机制：把编号拆成三段拼起来</h2>
 <p>Twitter 想出的办法，是<strong>不再向任何人要号，而是用三样「本来就唯一」的东西现场拼一个</strong>：前一段写<strong>现在是几点几分几秒几毫秒</strong>，中间一段写<strong>我是哪家分店</strong>，最后一段写<strong>这一毫秒里我这家店发的第几个</strong>。</p>
 <p>三段一拼，谁也不用问谁：不同毫秒，第一段就不一样；同一毫秒不同店，第二段不一样；同店同毫秒，第三段不一样。而且因为<strong>时间放在最前面</strong>，编号从小到大排，差不多就是从早到晚排——「有序」是白送的。这台「取号机」每家店每毫秒能发 4096 个号，够全国用 69 年。</p>
-<h2>代价是什么</h2>
+<h2 data-tts="f9a9b08c1941cf79">代价是什么</h2>
 <p>这套编号的正确性，<strong>整个押在「每台机器的钟走得准」上</strong>：万一某台机器的时间被往回拨了一下，它就会把刚才那一毫秒重过一遍、把已经发过的号再发一次。</p>
-<h2>一句话记住</h2>
+<h2 data-tts="f7840832fad19766">一句话记住</h2>
 <div class="tl">
 <p>分布式编号的难点从来不是「别重复」——随便抽个长随机数就不会重。难的是<strong>又要不重、又要短、又要看得出先后，还不许机器之间互相打招呼</strong>。答案是把编号切成「<strong>时间 + 我是谁 + 这一刻的第几个</strong>」三段，用时间换掉了商量。</p>
 </div>
 <p class="switch-hint">想进到具体机制、记号和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
 </div>
 <div class="mode mode-deep" hidden="">
-<h2>一句话</h2>
+<h2 data-tts="8df7da6c459dfba9">一句话</h2>
 <p class="lead">你以为分布式唯一 ID 难在「别重复」，其实<strong>不重复是四个约束里最容易的一个</strong>——一个足够长的随机数就够了。真正难的是让<strong>不重复、够短（塞进 64 位）、按时间大致有序、生成时不和任何机器商量</strong>这四件事同时成立。本章把四条路摆上桌逐一淘汰，最后落到 Twitter 的 Snowflake：<strong>把 64 位当预算，切成「时间戳 + 机器号 + 序列号」三段</strong>——有序性由「时间戳占最高位」白送，唯一性由「同机同毫秒序列号不重」保证，代价是整套正确性押在机器时钟上。</p>
-<h2>Glossary · 术语表</h2>
+<h2 data-tts="35f1456f4c1ae924">Glossary · 术语表</h2>
 <div class="glossary">
 <ul>
 <li><strong>唯一 ID / 主键（primary key）</strong>：一行数据在全系统里的身份证号，重了就意味着两条数据抢同一个身份。</li>
@@ -98,19 +99,19 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>B-tree 索引局部性</strong>：数据库索引按键值排好序存放；键值接近的新行落在同一批磁盘页上，插入就快，反之要到处捅页、频繁分裂。</li>
 </ul>
 </div>
-<h2>坐标</h2>
+<h2 data-tts="2198f71499ec8ba5">坐标</h2>
 <p>卷一 Part II 案例章的第 4 道题。上承 Ch5 一致性哈希与 Ch6 键值存储——那两章回答「这条数据放哪台机器」，这一章回答「<strong>这条数据叫什么名字</strong>」，三章共用同一条主线：<strong>怎么在没有中心协调的前提下把事办了</strong>。下启 Ch8 短网址，那一章要把这里生成的 ID 用 base62 再编一次码。现实对应：订单号、消息 ID、Feed 条目 ID、日志 trace ID——凡是分库分表之后还想要一个全局主键的地方。</p>
-<h2>这章要解决什么</h2>
+<h2 data-tts="ebf2fe60dc78b087">这章要解决什么</h2>
 <p>本章在需求澄清阶段敲定了五条：<strong>唯一、纯数字、能塞进 64 位、按日期有序、每秒 1 万个</strong>。这五条把答案空间收得极窄，也正是它们让最顺手的两个方案当场出局。</p>
 <p><strong>为什么 <code>auto_increment</code> 不成立？</strong>因为那个计数器是<strong>某一个数据库实例的私有状态</strong>。分库分表之后，两个库都从 1 开始数，第 10001 号订单会有两个。不解决会怎样：主键冲突 → 后写的那单覆盖先写的那单，两个用户的订单指向同一行数据，而且这种错误<strong>不会报警、只会静默地丢数据</strong>。</p>
 <p><strong>那直接上 UUID 呢？</strong>撞车概率确实可以忽略——v4 的 122 个随机位，要生成大约 <code>10¹⁸</code> 个才有 50% 的机会碰一次。但它<strong>违反了另外三条需求</strong>：128 位不是 64 位、带横杠不是纯数字、随机值完全无序。最后这条代价最贵：随机主键<strong>没有时间局部性</strong>，每插一行都往 B-tree 的随机位置捅一刀，页分裂和随机 I/O 全都来了——这不是理论洁癖，是实测能差出一个数量级的写入吞吐（见 §「落到真实系统」里 RFC 9562 的原话）。</p>
-<h2>核心内容，讲透</h2>
-<h3>四条路，以及它们各自死在哪</h3>
+<h2 data-tts="0cfa727733263d92">核心内容，讲透</h2>
+<h3 data-tts="f34c8f2211c7eeb3">四条路，以及它们各自死在哪</h3>
 <p><strong>① 多主复制（multi-master replication）自增。</strong>让 k 台数据库都开自增，但把<em>步长</em>设成 k、起点错开：1 号库数 1、4、7……，2 号库数 2、5、8……。机制成立，唯一性也成立。死穴在<strong>伸缩</strong>：加一台机器就要把所有库的步长和起点重排一遍；而且跨机房时，ID 的数值大小和真实时间顺序完全对不上。本质上它还是<strong>把数据库当发号器用</strong>，写入天花板没变。</p>
 <p><strong>② UUID。</strong>各机器独立生成、零协调、零单点，是本章唯一「完全不需要通信」的方案，思路上最接近正确答案。但它把「够短」和「有序」两条需求整个牺牲掉了。</p>
 <p><strong>③ 票据服务器（ticket server）。</strong>Flickr 的做法：单独一台 MySQL 什么业务都不干，专门跑一列 <code>auto_increment</code>，谁要号谁来取。ID 又短又严格递增，实现只要几十行。死穴是<strong>单点</strong>：它一停，全站发不出 ID；做成两台主备，「两台之间怎么不撞」的老问题又回来了。而且<strong>每发一个 ID 就是一次网络往返</strong>，毫秒级的延迟直接加在每一次下单上。</p>
 <p><strong>④ Snowflake。</strong>不问任何人，靠三样<strong>本来就唯一</strong>的东西现场拼一个：现在的时刻、我是谁、我这一刻发到第几个。</p>
-<h3>Snowflake：把 64 位当预算来花</h3>
+<h3 data-tts="e73fcce016dd8515">Snowflake：把 64 位当预算来花</h3>
 <figure>
 <svg font-family="-apple-system,sans-serif" viewbox="0 0 640 210" xmlns="http://www.w3.org/2000/svg">
 <rect fill="rgba(120,120,130,0.18)" height="40" rx="3" stroke="#7c8593" width="9.4" x="20" y="60"></rect>
@@ -138,11 +139,11 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </figure>
 <p>逐段看，每一段都在回答一个具体问题。<strong>符号位</strong>恒为 0——Java 之类语言的 <code>long</code> 是有符号的，最高位一置就成了负数，主键变负号很多系统都受不了。<strong>41 位毫秒时间戳</strong>不从 Unix 纪元 1970 年算起，而是从<em>自定义纪元</em>算起（Twitter 用 <code>1288834974657</code>，即 2010-11-04）——把服务上线之前那四十年的位数全省下来，<code>2⁴¹</code> 毫秒才够撑 <strong>69.7 年</strong>。<strong>5+5 位机器号</strong>给出 32 个数据中心 × 每个 32 台 = <strong>1024 台</strong>上限，且<strong>在启动时静态分配、运行期不许变</strong>——中途改号就可能和别人撞。<strong>12 位序列号</strong>在同一台机器的同一毫秒内自增，<strong>4096 个</strong>封顶，跨到下一毫秒清零；真撞满了就自旋等下一毫秒。</p>
 <p>关键洞察只有一句：<strong>时间戳在最高位，所以按数值大小排序就约等于按生成时间排序</strong>——「有序」这条需求是<strong>白送的，不花任何一次网络通信</strong>。但要说准：它只是<em>大致有序（k-sorted）</em>。两台机器在同一毫秒发的号，谁大谁小由机器号决定，和真实先后毫无关系；Twitter 在自己的 README 里承诺的也正是「1 秒内 k-sorted」。</p>
-<aside class="xref"><a href="https://hub.cissychen.com/system-design/unique-id-generation-day11.html" target="_blank" rel="noopener">System Design · Day 11 唯一 ID 生成</a> — 时间、随机与索引的三角博弈：同一道题从主题视角再看一遍，含各方案在索引写入上的实测差异</aside>
-<h3>位预算怎么分：三个诉求抢 63 位</h3>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/unique-id-generation-day11.html" rel="noopener" target="_blank">System Design · Day 11 唯一 ID 生成</a> — 时间、随机与索引的三角博弈：同一道题从主题视角再看一遍，含各方案在索引写入上的实测差异</aside>
+<h3 data-tts="36afa80349da13c9">位预算怎么分：三个诉求抢 63 位</h3>
 <p>这是本章最值得带走的一层：<strong>1 / 41 / 10 / 12 不是标准答案，是一张预算表。</strong>时间位换<strong>服务寿命</strong>，机器位换<strong>集群规模</strong>，序列位换<strong>单机峰值</strong>——三者相加恒等于 63，多给谁就得从另外两个身上扣。</p>
 <p>算一笔具体的账：12 位序列意味着单机理论上限 <code>4096 × 1000 = 409.6 万</code> 个/秒，而<strong>本章白纸黑字的需求只有 1 万个/秒</strong>——差了 400 倍。也就是说，照搬 12 位序列的人，等于白扔了 8 位预算；那 8 位挪去时间戳，寿命能从 69 年变成一万多年；挪去机器号，集群上限能从 1024 台变成 26 万台。面试里能算出这笔账，比背出位布局有说服力得多。</p>
-<h3>号段模式：把「向中心要号」的频率降到 1/N</h3>
+<h3 data-tts="ffcfd67c2750775a">号段模式：把「向中心要号」的频率降到 1/N</h3>
 <p>票据服务器并非只能被淘汰——它的死穴是「<strong>每发一个 ID 都要一次网络往返</strong>」，而这个死穴可以单独治。<em>号段（segment）模式</em>把零售改成<strong>批发</strong>：应用一次向数据库申请一整段 <code>[8001, 9000]</code>，把段号记在本地内存里，之后 999 个 ID 全在进程内自增发出，段用完了再来领下一段。</p>
 <figure>
 <svg font-family="-apple-system,sans-serif" viewbox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
@@ -174,7 +175,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <figcaption>图 2 · 同一个中心发号器，改成「一次领一段、本地慢慢发」，数据库 QPS 直接掉两三个数量级。</figcaption>
 </figure>
 <p>代价要诚实写：实例重启会<strong>丢掉没用完的那半段</strong>，ID 序列出现空洞；多个实例并发领段之后，ID <strong>只在实例内有序、跨实例乱序</strong>——「有序」这条需求打了折。</p>
-<h3>时钟：整套方案的地基</h3>
+<h3 data-tts="76b9609c844d1a5e">时钟：整套方案的地基</h3>
 <p>Snowflake 的唯一性证明只有一句话：「同一台机器在同一毫秒内序列号不重复，不同毫秒时间戳不同。」这句话<strong>只在时钟单调递增时成立</strong>。而 NTP 校正、闰秒、虚拟机时钟漂移、有人手工改时间，都会把本地时钟<strong>往回拨</strong>——一旦回拨，这台机器就会把刚过去的那一毫秒<strong>重过一遍</strong>，序列号也从 0 重来，于是发出和历史上一模一样的 ID。</p>
 <figure>
 <svg font-family="-apple-system,sans-serif" viewbox="0 0 640 235" xmlns="http://www.w3.org/2000/svg">
@@ -215,8 +216,8 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <figcaption>图 3 · 时钟回拨 1 毫秒，机器就把那一毫秒重过一遍，序列号也从 0 重来——唯一性当场失效。</figcaption>
 </figure>
 <p>工程上有三种处理，取向截然不同：<strong>① 检测到回拨就拒绝发号</strong>、直接抛异常（宁可服务不可用，也不发错号）；<strong>② 回拨幅度很小（几毫秒）就自旋等待</strong>，等真实时间追上再继续；<strong>③ 把「本机用过的最大时间戳」持久化到外部</strong>（美团 Leaf 用 ZooKeeper 记录），重启后不敢往回走。请注意第 ① 条背后的取向：<strong>Snowflake 在时钟出问题时选择牺牲可用性来保正确性</strong>——这和 Ch6 那个无主键值存储「先写下去再慢慢收敛」的取向正好相反。</p>
-<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/time-clocks-ordering-paper31.html" target="_blank" rel="noopener">论文精读 · Time, Clocks, and the Ordering of Events</a> — Lamport 论证了物理时钟为何不可作为分布式排序的依据，以及「顺序」真正该由因果关系而非墙上时钟定义</aside>
-<h2>关键权衡与选型</h2>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/time-clocks-ordering-paper31.html" rel="noopener" target="_blank">论文精读 · Time, Clocks, and the Ordering of Events</a> — Lamport 论证了物理时钟为何不可作为分布式排序的依据，以及「顺序」真正该由因果关系而非墙上时钟定义</aside>
+<h2 data-tts="8dc553965e907510">关键权衡与选型</h2>
 <p class="tcap">表 1 · 五种发号方案：什么场景该选什么</p>
 <div class="tblwrap"><table class="cmp">
 <thead><tr><th>方案</th><th>机制一句话</th><th>形态</th><th>时间有序</th><th>要不要协调</th><th>主要代价</th></tr></thead>
@@ -236,7 +237,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <tr><th>Baidu UidGenerator</th><td>28（秒）</td><td><strong>22</strong></td><td>13</td><td>≈ 8.5 年</td><td><strong>419 万节点</strong></td><td>8192/秒</td></tr>
 </tbody></table></div>
 <p>三家拿同样的 64 位，按各自业务把预算重分了一遍：Sony 要更多机器、更长寿命，就把单机峰值砍到 1/160；百度做容器化，机器号一给就是 22 位（容器来去频繁、号要够撒），代价是寿命只有 8.5 年、必须定期换纪元。<strong>这张表本身就是本章的答案：位分配是设计参数，不是常数。</strong></p>
-<h2>为什么重要 / 落到真实系统</h2>
+<h2 data-tts="8d0ae62c8dfa11ab">为什么重要 / 落到真实系统</h2>
 <p>Snowflake 是「<strong>无协调设计</strong>」最短、最好讲的一道样板题——它示范了一种通用手法：<strong>当你需要全局唯一但不想全局通信时，就把「全局唯一」拆成几个各自天然唯一的本地事实，再拼起来</strong>。这个手法在幂等键、分布式追踪的 trace ID、对象存储的对象名上到处可见。</p>
 <p>今天真实系统里到处是它的影子：Discord 的所有对象 ID 都是 snowflake（42 位时间戳 + 5 位 worker + 5 位进程 + 12 位自增，纪元定在 2015 年），MongoDB 的 <code>ObjectId</code> 是同一思路的 12 字节版（4 字节秒级时间戳 + 5 字节进程随机值 + 3 字节自增计数器）。更值得注意的是标准化那一步：<strong>UUIDv7 在 2024 年被写进 RFC 9562</strong>，把「时间戳放最高位」从工程土办法变成了行业标准，PostgreSQL 18 已内置 <code>uuidv7()</code>——代价仍然是 128 位而不是 64 位。</p>
 <div class="ev">
@@ -249,7 +250,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>IETF</strong> 在 RFC 9562（2024）里把 UUIDv7 定义为「48 位大端 Unix 毫秒时间戳」打头，并写明 UUIDv4 这类非时间有序的版本「数据库索引局部性差」，而时间有序 UUID 的索引性能优势「可以达到一个数量级或更多」——<strong>本章「时间戳放最高位」的直觉，已经进了标准</strong>。<span class="src"><a href="https://github.com/ietf-wg-uuidrev/rfc4122bis" rel="noopener" target="_blank">IETF uuidrev 工作组 · RFC 9562 草案仓库 ↗</a></span></li>
 </ul>
 </div>
-<h2>易错点与争议</h2>
+<h2 data-tts="ae99302c20777b93">易错点与争议</h2>
 <ul>
 <li><strong>把「有序」当成「严格单调递增」</strong>：Snowflake 只保证 k-sorted。同一毫秒内跨机器的大小由机器号决定，和真实先后无关——拿 ID 大小去判断「谁先下的单」是错的。要严格先后，只能上票据服务器或共识，代价是协调。</li>
 <li><strong>把 ID 当秘密</strong>：时间戳明文摆在最高位，任何人都能从订单号反推下单时刻；连号还能让人用「德国坦克问题」式的估计推算你一天的总量。要防就别把 Snowflake ID 直接暴露给外部——这正是 Ch8 短网址要再编一次码的动机之一。</li>
@@ -258,7 +259,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>时代局限</strong>：本书 2020 年成书时 UUIDv7 尚未标准化。今天很多场景可以直接用数据库内置的 <code>uuidv7()</code>，省掉整套自建发号服务与机器号管理，代价是 128 位而不是 64 位。<strong>「一定要自建 Snowflake」已经不是默认答案了。</strong></li>
 <li><strong>照搬位布局不算懂</strong>：书里的需求只有 1 万/秒，而 12 位序列给的是 409.6 万/秒。能指出「这里超配了 8 位、可以挪去延长寿命或扩大集群」，才是把这一章读透的标志。</li>
 </ul>
-<h2>要点</h2>
+<h2 data-tts="3b7e68b60144a42d">要点</h2>
 <div class="tl">
 <p>① 真正的题面不是「别重复」，而是<strong>不重复 + 够短（64 位）+ 按时间有序 + 零协调</strong>四条同时成立；四条互相打架，所以答案必然是取舍。</p>
 <p>② <code>auto_increment</code> 死在「计数器是单个数据库实例的私有状态」；UUID 活下来但违反了另外三条，尤其<strong>随机主键破坏 B-tree 索引局部性</strong>。</p>
