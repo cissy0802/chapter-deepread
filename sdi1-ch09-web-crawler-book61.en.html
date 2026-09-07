@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview Vol 1 Ch 9 · Design a Web Crawler — Books Deep-Read Book 61</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOKS DEEP-READ · SYSTEM DESIGN INTERVIEW VOL 1 · CH 9</p>
+<h1>Design a Web Crawler</h1>
+<p class="sub">System Design Interview Vol 1 · Ch 9 · Alex Xu · 2020</p>
+<p class="langbar"><a href="sdi1-ch09-web-crawler-book61.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You type two words into a search box and ten thousand results appear in half a second. Those pages obviously were not read while you were typing — a program had already copied them down, one by one, and filed them away. That program is a <strong>web crawler</strong>, and chapter 9 of <em>System Design Interview</em> asks you to build one from scratch.</p>
+<h2>An analogy</h2>
+<p>Think of the crawler as a <strong>copyist</strong> holding nothing but a <strong>list of addresses</strong>. He goes to the first address, copies down everything he finds there, and notices that the text mentions twenty other addresses — so he appends those twenty to the end of his list. Then on to the next address, and around again.</p>
+<p>The strange part is that <strong>the list keeps getting longer</strong>. The more he copies, the longer it grows. That is how the entire web gets pulled in, one loop at a time.</p>
+<h2>The hard part is not copying — it is queueing</h2>
+<p>Downloading a page is the easy step. The hard question is <strong>where to go next</strong>, and there are tens of billions of addresses waiting. Two things go wrong.</p>
+<p>First, <strong>addresses come in clumps</strong>. Most links on a page point back at <em>the same site</em> — navigation bars, sidebars, related articles. So if you simply work through the list in order, you get hundreds of consecutive addresses belonging to one host, and your copyist sprints over and hammers on their door hundreds of times. They get annoyed and lock you out, and now you can copy nothing at all.</p>
+<p>Second, <strong>not all addresses deserve equal treatment</strong>. A news home page changes every hour; a static page nobody has touched in ten years needs copying once. A list that ignores importance will spend its best hours in the least useful corners of the web.</p>
+<h2>The core idea: queue twice</h2>
+<p>The soul of this chapter is one move: <strong>split "who goes first" and "whom must we not pester" into two separate rows of queues</strong>.</p>
+<p><strong>The front row sorts by importance</strong> — pages that matter, and pages that change often, get called sooner. <strong>The back row sorts by street address</strong>: every site gets its own private queue, <strong>only one messenger is sent per site, and he has to wait a while between knocks</strong>. Two requirements that pull against each other, solved by two rows of queues instead of one.</p>
+<p>The honest cost: <strong>politeness is slowness</strong>. The better behaved you are, the longer a full sweep of the web takes — and the only way to speed up is to work on more sites at once, never to knock harder on any one of them.</p>
+<h2>Two potholes along the way</h2>
+<p>One is <strong>copying the same thing twice</strong>. The same article often hangs off several addresses. So the copyist needs two checkpoints: before setting out, "have I been to this address?"; after copying, "do I already have this text?"</p>
+<p>The other is <strong>walking into a maze</strong>. Some sites can generate directory levels forever, and a copyist who wanders in never comes out. The cheapest defence is to <strong>cap the address length</strong> and refuse anything longer; the rest has to be a hand-maintained blacklist of known mazes.</p>
+<h2>Remember this</h2>
+<div class="tl">
+<p>A crawler is hard not because downloading is hard but because <strong>queueing is</strong>. Two tiers of queues separate "fetch the important things first" from "do not knock any one site over"; then two dedup checkpoints — one before fetching, one before storing — throw away addresses you have visited and text you already hold.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the notation and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">This looks like a question about downloading pages; it is really a question about <strong>scheduling</strong>. The URL frontier uses a two-tier structure — <strong>front queues own priority, back queues own politeness</strong> — to satisfy two constraints that actively fight each other: fetch the valuable pages first, and never overwhelm anyone's server. Everything else (robots.txt, DNS caching, two dedup gates, trap defences) is protective plumbing around that spine. <strong>A naive breadth-first search does not survive one minute on the real web</strong>, and the entire engineering content of this chapter is the work of making it production-worthy.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Web crawler (spider, bot)</strong>: a program that walks hyperlinks and downloads pages automatically. Every search engine's raw material comes from one.</li>
+<li><strong>Seed URL</strong>: the crawler's starting addresses, usually chosen by domain or topic.</li>
+<li><strong>URL frontier</strong>: the set of queues holding URLs that have been discovered but not yet downloaded — the core component of this chapter.</li>
+<li><strong>BFS / DFS</strong>: two orders for walking a graph. Breadth-first expands ring by ring and is implemented with a FIFO (first-in, first-out) queue; depth-first drills down one path.</li>
+<li><strong>Host</strong>: the domain part of a URL. One host is roughly one of somebody else's servers.</li>
+<li><strong>Politeness</strong>: not firing many requests at one host in a short window, so you neither crush it nor get banned.</li>
+<li><strong>robots.txt</strong>: a text file at a site's root declaring which paths crawlers may and may not fetch.</li>
+<li><strong>DNS resolution</strong>: turning a domain name into an IP address. Required before every fetch, slow, and synchronous by default.</li>
+<li><strong>Bloom filter</strong>: a very memory-cheap set-membership structure. Asked "have I seen this?", it <em>may falsely answer yes but never falsely answers no</em>.</li>
+<li><strong>Checksum / content hash</strong>: a fixed-length fingerprint of a whole page, used to tell quickly whether two pages are the same.</li>
+<li><strong>Spider trap</strong>: a page structure that can generate new URLs forever (calendars, unbounded directory nesting), so the crawler never gets out.</li>
+<li><strong>QPS / PB</strong>: queries per second; 1 PB = 1024 TB, roughly a million GB.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The chapter belongs to Part II, the case studies, and it is <strong>the first problem in the volume that is not request/response shaped</strong>. From the rate limiter in Ch 4 through the URL shortener in Ch 8 there is always a user on the other side waiting for an answer. Here there is no user at all — only <strong>a pipeline that feeds itself in a loop</strong>. You do not judge it by p99 latency but by throughput, coverage, and whether it has made enemies. Its output is the raw material for Ch 13's autocomplete and for the whole search stack. In the real world it is Googlebot, Bingbot, the Internet Archive's Heritrix, and the public Common Crawl dataset.</p>
+<h2>What the chapter is solving</h2>
+<p>As always, turn the problem into numbers first. The book assumes <strong>1 billion pages downloaded per month</strong>, an average page of <code>500 KB</code>, and data retained for <code>5</code> years. Therefore:</p>
+<ul>
+<li><strong>Average throughput</strong> = 1B ÷ 30 ÷ 24 ÷ 3600 ≈ <code>400</code> pages/sec; <strong>peak</strong> at 2× ≈ <code>800</code> pages/sec.</li>
+<li><strong>Storage added per month</strong> = 1B × 500 KB = <code>500 TB</code>.</li>
+<li><strong>Five-year total</strong> = 500 TB × 12 × 5 = <code>30 PB</code>.</li>
+</ul>
+<p>And yet <strong>none of those three numbers is the hard part</strong>. Thirty petabytes goes into object storage and is forgotten; 400 pages/sec is not even a demanding rate for one machine. The difficulty hides somewhere counter-intuitive: <strong>which 400 of tens of billions of candidates do you fetch this second?</strong></p>
+<p>Skip that design and here is what happens. You push discovered URLs into one FIFO queue, start a hundred threads, and within the first second you have fired a thousand requests at a single domain — which either gets your IP banned or takes their site down (and is, in plain terms, a denial-of-service attack). <strong>It looks like a fetching problem and is a scheduling problem. Of the book's four design goals — scalability, robustness, politeness, extensibility — politeness is the only one whose constraint comes from outside your system and must be obeyed unconditionally.</strong></p>
+<h2>The core, explained</h2>
+<h3>The skeleton: a loop that leaves the seeds and returns to them</h3>
+<p>A crawler is a <strong>closed loop</strong>, not a pipeline. Seed URLs enter the <em>URL frontier</em>; the HTML downloader takes them (resolving DNS first); the parser validates and cleans each page; the content passes a <em>content-seen</em> gate before being stored; links extracted from that page pass a filter (dropping uninteresting file types and blacklisted domains) and a <em>URL-seen</em> gate, and whatever survives <strong>flows back into the frontier</strong> — closing the loop.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 280" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="c1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="14" y="20">A loop that feeds itself · clockwise</text>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="76" x="14" y="44"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="52" y="65">Seed URLs</text>
+<rect fill="rgba(91,157,249,0.18)" height="34" rx="6" stroke="#5b9df9" stroke-width="2" width="110" x="112" y="44"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="167" y="65">URL frontier</text>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="104" x="244" y="44"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="296" y="65">HTML downloader</text>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="96" x="370" y="44"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="418" y="65">Content parser</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="90" x2="108" y1="61" y2="61"></line>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="222" x2="240" y1="61" y2="61"></line>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="348" x2="366" y1="61" y2="61"></line>
+<rect fill="rgba(255,255,255,0.03)" height="22" rx="5" stroke="rgba(120,120,130,0.45)" stroke-dasharray="3 3" width="152" x="220" y="92"></rect><text fill="#7c8593" font-size="9.5" text-anchor="middle" x="296" y="107">DNS resolution (cache it)</text>
+<line stroke="rgba(120,120,130,0.45)" stroke-dasharray="3 3" x1="296" x2="296" y1="78" y2="92"></line>
+<path d="M466,61 L530,61 L530,126" fill="none" marker-end="url(#c1)" stroke="#7c8593"></path>
+<rect fill="rgba(155,108,245,0.18)" height="34" rx="6" stroke="#9b6cf5" width="124" x="468" y="130"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="530" y="151">Content-seen gate</text>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="110" x="300" y="130"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="355" y="151">URL extractor</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="464" x2="414" y1="147" y2="147"></line>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="530" x2="530" y1="164" y2="212"></line>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="124" x="468" y="216"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="530" y="237">Content store 30 PB</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="355" x2="355" y1="164" y2="212"></line>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="110" x="300" y="216"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="355" y="237">URL filter</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="296" x2="274" y1="233" y2="233"></line>
+<rect fill="rgba(155,108,245,0.18)" height="34" rx="6" stroke="#9b6cf5" width="120" x="150" y="216"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="210" y="237">URL-seen gate</text>
+<path d="M150,233 L120,233 L120,84" fill="none" marker-end="url(#c1)" stroke="#5b9df9"></path>
+<text fill="#8fbaff" font-size="8.5" text-anchor="middle" x="66" y="160">new URLs loop back</text>
+</svg>
+<figcaption>Fig. 1 · The crawler is a closed loop: fetch, parse, two dedup gates (violet), and surviving URLs flow back into the frontier (blue). The frontier is the only part that needs real design.</figcaption>
+</figure>
+<h3>Why BFS, and why naive BFS dies in a minute</h3>
+<p>Treat pages as a graph and links as edges and there are only two ways to walk it. <strong>Depth-first is unusable</strong>: link depth can be enormous or unbounded, and you never come back up. <strong>Breadth-first</strong> — expanding ring by ring out of a FIFO queue — is what every real crawler uses. But the book immediately names its two fatal flaws.</p>
+<p>First, <strong>links on a page are heavily same-host</strong>: nearly all outbound links come from navigation, sidebars and related articles, so the queue fills with hundreds of consecutive same-domain URLs, a pool of workers pulls them at once, and you have run a small DoS attack. Second, <strong>BFS has no notion of priority</strong> — every URL is treated alike, while real pages differ in value by orders of magnitude.</p>
+<p>Running the arithmetic backwards makes it concrete. Suppose you honour the common politeness line of <strong>at most one request per second per host</strong>. To sustain <code>400</code> pages/sec on average, <strong>you must have at least 400 distinct hosts in flight at any instant</strong>. In other words, a crawler's throughput does not come from adding threads to one site; it comes from <strong>spreading across more hosts</strong> — and that single sentence determines the entire structure of the frontier.</p>
+<h3>The URL frontier: front queues for priority, back queues for politeness</h3>
+<p>The fix is to split the two demands into two tiers joined by a <strong>host → queue</strong> mapping table.</p>
+<p><strong>The upper tier — front queues — owns priority.</strong> A <em>prioritizer</em> scores each URL from signals such as PageRank, site traffic and update frequency, and the score decides which of <code>f1…fn</code> it lands in. To dequeue, a <em>front-queue selector</em> picks a queue at random but <strong>biased</strong> toward the higher-priority ones. The bias is deliberate rather than a strict ordering: strict priority would starve low-priority URLs forever.</p>
+<p><strong>The lower tier — back queues — owns politeness.</strong> URLs leaving the front tier go to a <em>back-queue router</em>, which consults the mapping table: if the host already has a dedicated queue it joins it, otherwise a new one is created. The key property is that <strong>each back queue holds URLs for exactly one host and is served by exactly one worker thread</strong>, and that thread <strong>waits a fixed delay</strong> after finishing one URL before taking the next. So the rule "at most one in-flight request per host, with a gap between requests" is <strong>guaranteed by the shape of the data structure — no locks, no global counters</strong>. That is the prettiest move in the chapter.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 322" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="c2" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="11.5" font-weight="700" x="14" y="18">Upper tier: what to fetch first</text>
+<text fill="#7c8593" font-size="9" text-anchor="end" x="626" y="18">scored on PageRank · site traffic · update frequency</text>
+<text fill="#9b6cf5" font-size="11" font-weight="700" x="14" y="158">Lower tier: whom not to overwhelm</text>
+<rect fill="rgba(91,157,249,0.16)" height="26" rx="6" stroke="#5b9df9" width="150" x="245" y="28"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="320" y="46">Prioritizer</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="86" x="109" y="76"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="152" y="93">f1 highest</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="86" x="221" y="76"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="264" y="93">f2</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="86" x="333" y="76"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="376" y="93">f3</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="86" x="445" y="76"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="488" y="93">f4 lowest</text>
+<line marker-end="url(#c2)" stroke="#7c8593" x1="300" x2="160" y1="54" y2="72"></line>
+<line marker-end="url(#c2)" stroke="#7c8593" x1="312" x2="266" y1="54" y2="72"></line>
+<line marker-end="url(#c2)" stroke="#7c8593" x1="328" x2="374" y1="54" y2="72"></line>
+<line marker-end="url(#c2)" stroke="#7c8593" x1="340" x2="480" y1="54" y2="72"></line>
+<rect fill="rgba(91,157,249,0.16)" height="26" rx="6" stroke="#5b9df9" width="248" x="196" y="122"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="320" y="140">Front-queue selector · biased random</text>
+<line marker-end="url(#c2)" stroke="#7c8593" x1="158" x2="292" y1="102" y2="118"></line>
+<line marker-end="url(#c2)" stroke="#7c8593" x1="266" x2="308" y1="102" y2="118"></line>
+<line marker-end="url(#c2)" stroke="#7c8593" x1="374" x2="332" y1="102" y2="118"></line>
+<line marker-end="url(#c2)" stroke="#7c8593" x1="482" x2="348" y1="102" y2="118"></line>
+<rect fill="rgba(155,108,245,0.2)" height="26" rx="6" stroke="#9b6cf5" width="256" x="192" y="164"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="320" y="182">Back-queue router · host-to-queue map</text>
+<line marker-end="url(#c2)" stroke="#7c8593" x1="320" x2="320" y1="148" y2="160"></line>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="104" x="82" y="212"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="134" y="229">b1 · site A</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="104" x="206" y="212"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="258" y="229">b2 · site B</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="104" x="330" y="212"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="382" y="229">b3 · site C</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="104" x="454" y="212"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="506" y="229">b4 · site D</text>
+<line marker-end="url(#c2)" stroke="#7c8593" x1="290" x2="140" y1="190" y2="208"></line>
+<line marker-end="url(#c2)" stroke="#7c8593" x1="310" x2="260" y1="190" y2="208"></line>
+<line marker-end="url(#c2)" stroke="#7c8593" x1="330" x2="380" y1="190" y2="208"></line>
+<line marker-end="url(#c2)" stroke="#7c8593" x1="350" x2="500" y1="190" y2="208"></line>
+<rect fill="rgba(155,108,245,0.14)" height="24" rx="5" stroke="#9b6cf5" width="104" x="82" y="262"></rect><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="134" y="278">worker 1</text>
+<rect fill="rgba(155,108,245,0.14)" height="24" rx="5" stroke="#9b6cf5" width="104" x="206" y="262"></rect><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="258" y="278">worker 2</text>
+<rect fill="rgba(155,108,245,0.14)" height="24" rx="5" stroke="#9b6cf5" width="104" x="330" y="262"></rect><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="382" y="278">worker 3</text>
+<rect fill="rgba(155,108,245,0.14)" height="24" rx="5" stroke="#9b6cf5" width="104" x="454" y="262"></rect><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="506" y="278">worker 4</text>
+<line marker-end="url(#c2)" stroke="#7c8593" x1="134" x2="134" y1="238" y2="258"></line>
+<line marker-end="url(#c2)" stroke="#7c8593" x1="258" x2="258" y1="238" y2="258"></line>
+<line marker-end="url(#c2)" stroke="#7c8593" x1="382" x2="382" y1="238" y2="258"></line>
+<line marker-end="url(#c2)" stroke="#7c8593" x1="506" x2="506" y1="238" y2="258"></line>
+<text fill="#8fbaff" font-size="9" text-anchor="middle" x="320" y="304">one queue per host · one thread per queue · forced delay between fetches = politeness by construction</text>
+</svg>
+<figcaption>Fig. 2 · The two-tier URL frontier: front queues split by priority (biased random selection, so low priority never starves), back queues split by host (one thread each, forced delay — rate limiting for free).</figcaption>
+</figure>
+<p>Two more concerns hang off the frontier. <strong>Freshness</strong>: already-fetched URLs are rescheduled by their <em>observed update history</em> — a daily news page is worth revisiting constantly, a page untouched for years is wasted effort. <strong>Storage</strong>: hundreds of millions of URLs are too expensive to hold in memory and too slow to hold entirely on disk, so the real answer is <strong>hybrid</strong> — the bulk lives on disk with an in-memory buffer at each end (enqueue and dequeue) syncing periodically.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/message-queue-day8.en.html" rel="noopener" target="_blank">System Design · Day 8 Message Queues</a> — what a queue actually buys you: peak shaving, decoupling, delivery semantics, and why partitioning consumers by key is the same trick as one-queue-per-host here</aside>
+<h3>The downloader: one brake, three accelerators</h3>
+<p><strong>The brake is robots.txt.</strong> Before fetching anything from a site, read its <code>robots.txt</code> and respect the paths it forbids. The book's practical note matters: <strong>cache that file and refresh it periodically</strong>, or you add one extra request per page fetched and end up less polite, not more.</p>
+<p>The three accelerators:</p>
+<ul>
+<li><strong>Distributed crawling</strong>: partition the URL space across many fetch servers, each multi-threaded. It is the only way throughput scales at all.</li>
+<li><strong>Cache DNS results</strong>: the book gives <code>10–200 ms</code> per DNS request, and the standard resolver interface is <strong>synchronous and blocking</strong>. Do the arithmetic: at 100 ms a lookup, one thread resolves 10 domains a second, so sustaining 400 pages/sec would park roughly <code>40</code> threads on DNS alone. A local domain-to-IP cache with periodic refresh is close to free performance.</li>
+<li><strong>Locality and short timeouts</strong>: put fetch servers geographically near their targets, and give every request a hard timeout — abandon the slow ones. <strong>A crawler owes no particular request good service; trading a stalled connection for a different page is always a win.</strong></li>
+</ul>
+<p>On robustness the book names three more: use <em>consistent hashing</em> to assign downloaders so machines can be added and removed (see Ch 5); <strong>checkpoint crawl state to disk</strong> so a crash resumes rather than restarting from the seeds; and handle exceptions and validate data so one malformed page cannot take a worker down.</p>
+<h3>Two dedup gates, guarding different costs</h3>
+<p>Beginners collapse these into one thing. They defend <strong>entirely different budgets</strong>.</p>
+<p><strong>URL dedup (URL Seen?) sits before the fetch</strong>, blocking addresses already fetched or already queued, and <strong>what it saves is bandwidth and crawl budget</strong>. At tens of billions of entries an exact hash table will not fit, so the standard answer is a <em>Bloom filter</em>: orders of magnitude less memory, at the price of <strong>a tiny chance of falsely deciding "seen" and permanently losing a page</strong>. That is a consciously accepted trade — missing one page is far cheaper than refetching a hundred million.</p>
+<p><strong>Content dedup (Content Seen?) sits before the store</strong>, blocking pages whose text you already hold (one article on several addresses, mirror sites, the same page with tracking parameters), and <strong>what it saves is storage and indexing cost</strong>. It works by checksumming the page body. The book cites a study putting <strong>about 29% of web pages at duplicate content</strong> — nearly a third of your storage and indexing bill.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 244" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="c3" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker><marker id="c4" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#e8794b"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="14" y="20">Two gates, different positions, different savings</text>
+<text fill="#9b6cf5" font-family="monospace" font-size="9" text-anchor="middle" x="163" y="58">URL Seen?</text>
+<text fill="#9b6cf5" font-family="monospace" font-size="9" text-anchor="middle" x="481" y="58">Content Seen?</text>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="86" x="6" y="66"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="49" y="87">Candidate URL</text>
+<rect fill="rgba(155,108,245,0.2)" height="34" rx="6" stroke="#9b6cf5" stroke-width="2" width="110" x="108" y="66"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="163" y="87">URL-seen gate</text>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="70" x="238" y="66"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="273" y="87">Fetch</text>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="70" x="328" y="66"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="363" y="87">Parse</text>
+<rect fill="rgba(155,108,245,0.2)" height="34" rx="6" stroke="#9b6cf5" stroke-width="2" width="126" x="418" y="66"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="481" y="87">Content-seen gate</text>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="70" x="564" y="66"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="599" y="87">Store</text>
+<line marker-end="url(#c3)" stroke="#7c8593" x1="92" x2="104" y1="83" y2="83"></line>
+<line marker-end="url(#c3)" stroke="#7c8593" x1="218" x2="234" y1="83" y2="83"></line>
+<line marker-end="url(#c3)" stroke="#7c8593" x1="308" x2="324" y1="83" y2="83"></line>
+<line marker-end="url(#c3)" stroke="#7c8593" x1="398" x2="414" y1="83" y2="83"></line>
+<line marker-end="url(#c3)" stroke="#7c8593" x1="544" x2="560" y1="83" y2="83"></line>
+<line marker-end="url(#c4)" stroke="#e8794b" x1="163" x2="163" y1="100" y2="140"></line>
+<line marker-end="url(#c4)" stroke="#e8794b" x1="481" x2="481" y1="100" y2="140"></line>
+<text fill="#e8794b" font-size="10" text-anchor="middle" x="163" y="158">dropped: already-fetched URLs</text>
+<text fill="#e8794b" font-size="10" text-anchor="middle" x="481" y="158">dropped: duplicate content</text>
+<text fill="#8fbaff" font-size="10" text-anchor="middle" x="163" y="180">saves bandwidth and crawl budget</text>
+<text fill="#8fbaff" font-size="10" text-anchor="middle" x="481" y="180">saves storage and indexing cost</text>
+<text fill="#7c8593" font-size="9" text-anchor="middle" x="163" y="201">Bloom filter: tiny memory, rare false positives</text>
+<text fill="#7c8593" font-size="9" text-anchor="middle" x="481" y="201">checksum: the book cites ~29% duplicates</text>
+<line stroke="rgba(120,120,130,0.25)" x1="30" x2="610" y1="217" y2="217"></line>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="320" y="235">Common Crawl, April 2025: 2.74B pages fetched, only 838M URLs never seen in any prior crawl</text>
+</svg>
+<figcaption>Fig. 3 · The two dedup gates guard different budgets: URL dedup saves bandwidth before the fetch, content dedup saves storage before the write. Neither is optional.</figcaption>
+</figure>
+<h3>Traps and noise</h3>
+<p><strong>Spider traps</strong> are structures that mint URLs forever — the classic being a calendar whose "next month" link never runs out, or unbounded directory nesting. The book's remedy is blunt: <strong>cap the maximum URL length</strong> (crude and cheap, at the cost of losing legitimately deep links), plus a hand-maintained blacklist of known traps. This is one of the few places in the chapter with no elegant answer, only operations. <strong>Data noise</strong> — ads, code fragments, spam pages — is excluded at parse time and never reaches storage.</p>
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 1 · Three traversal strategies, and why the answer is "BFS plus two tiers"</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Depth-first</th><th>Naive breadth-first</th><th>BFS + two-tier frontier</th></tr></thead>
+<tbody>
+<tr><th>Implementation</th><td>Stack / recursion</td><td>One FIFO queue</td><td>Front queues (priority) + back queues (host)</td></tr>
+<tr><th>Fatal flaw</th><td><strong>Depth can be unbounded</strong></td><td>Same-host link clumping → <strong>hammering one host</strong></td><td>None — one tier per demand</td></tr>
+<tr><th>Priority</th><td>None</td><td>None; all URLs alike</td><td>Scored by PageRank / traffic / update rate</td></tr>
+<tr><th>Politeness</th><td>None</td><td>None; needs extra machinery</td><td><strong>Guaranteed by the structure</strong>, no locking</td></tr>
+<tr><th>Cost</th><td>—</td><td>—</td><td>More components, large state, frontier must spill to disk</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · Three grades of politeness: the better behaved, the longer a full sweep takes</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>No limiting</th><th>Global rate limit</th><th>Per-host queue + delay</th></tr></thead>
+<tbody>
+<tr><th>Mechanism</th><td>Fetch whatever you dequeue, on as many threads as you can start</td><td>One fixed overall QPS ceiling</td><td>One queue and one thread per host, forced gap between fetches</td></tr>
+<tr><th>How it feels to them</th><td><strong>Indistinguishable from a DoS</strong>; IP banned in minutes</td><td>Can still concentrate on one site</td><td>Load on any single site is bounded and steady</td></tr>
+<tr><th>How to add throughput</th><td>Add threads (then get banned)</td><td>Raise the global ceiling (treats the symptom)</td><td><strong>Spread across more hosts</strong>: 400 pages/sec needs ≥400 active hosts</td></tr>
+<tr><th>Cost</th><td>Cannot crawl for more than a few days</td><td>Hard to tune, too coarse</td><td><strong>Slow</strong>: small sites are inherently slow to crawl; queue and map state</td></tr>
+<tr><th>Who uses it</th><td>—</td><td>Toy crawlers</td><td>Googlebot, Heritrix and other production crawlers</td></tr>
+</tbody></table></div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/rate-limiting-day10.en.html" rel="noopener" target="_blank">System Design · Day 10 Rate Limiting</a> — the other side of the same coin: token bucket vs leaky bucket vs sliding window and which of them tolerates bursts, plus clocks and races in distributed rate limiting</aside>
+<ul>
+<li><strong>Bloom filter vs exact hash table</strong> (URL dedup): the former uses orders of magnitude less memory but can misjudge an unfetched URL as seen and <strong>lose it permanently</strong>; the latter never loses a page but cannot hold tens of billions of entries. At this scale the choice makes itself.</li>
+<li><strong>Exact content hash vs approximate fingerprint</strong>: a checksum only catches <em>byte-identical</em> pages, so a changed timestamp defeats it. Catching near-duplicates needs something like simhash — more accurate, and a tier more expensive to compute and compare.</li>
+<li><strong>Freshness vs coverage</strong>: crawl budget spent revisiting known pages is budget not spent finding new ones. Common Crawl gives a real ratio: of 2.74 billion pages in the April 2025 archive, only 838 million URLs had never appeared in any prior crawl — <strong>roughly seven-tenths of the budget went to revisits</strong>.</li>
+</ul>
+<h2>Why it matters / in real systems</h2>
+<p>What makes this question valuable in an interview is that <strong>it is one of the rare system design problems where you do not get to decide the answer alone</strong>. In earlier chapters you can always add machines and caches; here you must yield to somebody else's server. Whether a candidate volunteers robots.txt, per-host rate limiting and "throughput comes from more hosts, not more threads" is close to the dividing line between having read about crawlers and having thought about them.</p>
+<p>This skeleton is the shared shape of Googlebot, Bingbot, Heritrix and Common Crawl. It has also acquired a new relevance: gathering training corpora for large language models runs on exactly the same frontier-plus-politeness-plus-dedup machinery.</p>
+<div class="ev">
+<div class="evh">EVIDENCE FROM INDUSTRY · claims these companies published themselves</div>
+<ul>
+<li><strong>Google</strong>'s crawling documentation states that Googlebot is designed to be a good citizen of the web and uses a <em>crawl capacity limit</em> — the number of simultaneous parallel connections plus the delay between fetches — to avoid overloading a site, raising the limit when a site responds quickly and lowering it when the site slows down or returns errors. <strong>That directly confirms this chapter's per-host limiting and forced delay, and goes one step further than the book: the rate is adaptive.</strong> <span class="src"><a href="https://developers.google.com/crawling/docs/crawl-budget" rel="noopener" target="_blank">Google Search Central · Crawl Budget Management ↗</a></span></li>
+<li><strong>The Internet Archive</strong>'s open-source crawler Heritrix documents that <strong>at any given time only one URI from any given host is being processed</strong>, with <code>delayFactor</code> / <code>minDelayMs</code> / <code>maxDelayMs</code> controlling the interval between requests. <strong>A production crawler with twenty years of service independently confirms the book's back-queue design: one queue per host, one thread per queue, a delay between requests.</strong> <span class="src"><a href="https://github.com/internetarchive/heritrix3/wiki/Politeness-parameters" rel="noopener" target="_blank">Heritrix3 Wiki · Politeness parameters ↗</a></span></li>
+<li><strong>IETF / Google</strong>: two years after this book was published, robots.txt became a Standards Track RFC (RFC 9309, September 2022), authored by Google's Koster, Illyes, Zeller and Sassman. The standard turns the book's vague "cache it" into hard numbers — <strong>cached copies must not be used for more than 24 hours</strong>, parsers must accept at least <code>500 KiB</code> — and states plainly that <strong>robots.txt is not a security measure</strong>, since listing a path there publishes it. <span class="src"><a href="https://datatracker.ietf.org/doc/html/rfc9309" rel="noopener" target="_blank">RFC 9309 · Robots Exclusion Protocol, 2022 ↗</a></span></li>
+<li><strong>Common Crawl</strong> published the shape of its April 2025 archive: <code>2.74 billion</code> pages, <code>468 TiB</code> of uncompressed content, drawn from <code>47.5 million</code> hosts, of which only <code>838 million</code> URLs had never been visited in any prior crawl. <strong>Two things confirmed with real numbers: the host count dwarfs what one machine's queues can hold, and the URL-seen gate is filtering out the large majority of traffic.</strong> <span class="src"><a href="https://commoncrawl.org/blog/april-2025-crawl-archive-now-available" rel="noopener" target="_blank">Common Crawl Blog · April 2025 Crawl Archive ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/search-system-day12.en.html" rel="noopener" target="_blank">System Design · Day 12 Search Systems</a> — what happens to crawled pages next: how the inverted index is built, how retrieval and ranking are layered, and where semantic search plugs in</aside>
+<h2>Common mistakes and open questions</h2>
+<ul>
+<li><strong>Treating politeness as "add a sleep".</strong> A global sleep does not stop a pool of workers all landing on one host at once. Politeness has to live in the <strong>host-partitioned queue structure</strong>, or some concurrent path will always route around it.</li>
+<li><strong>Assuming throughput comes from threads.</strong> Under a politeness constraint, per-host fetch rate has a hard ceiling and total throughput ≈ active hosts × per-host rate. <strong>More threads do not buy you more pages; they buy you more banned IPs.</strong></li>
+<li><strong>Conflating the two dedup gates.</strong> URL dedup saves bandwidth, content dedup saves storage; you need both. Do only the first and you will store all ten mirrors of the same article.</li>
+<li><strong>Expecting traps to be detected automatically.</strong> "Cap the URL length plus a manual blacklist" is still the mainstream answer. It is inelegant, but there is no better general solution, and inventing an automatic one in an interview reads as bluffing.</li>
+<li><strong>Limits of its time.</strong> Written in 2020, the chapter mentions server-side rendering only in the wrap-up. Today a great deal of content lives behind JavaScript rendering, so a real crawler runs headless browsers at one or two orders of magnitude more cost than fetching static HTML — and <strong>the relationship between crawlers and sites has moved from a matter of technical politeness to a legal and commercial contest</strong> (paywalls, anti-bot systems, disputes over licensing training data). None of that layer appears in the book.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① Capacity draws the boundaries: 1B pages/month → <code>400</code> pages/sec (peak <code>800</code>); <code>500 KB</code> per page → <code>500 TB</code>/month; <code>30 PB</code> over five years. None of those numbers is the hard part.</p>
+<p>② The hard part is <strong>scheduling</strong>: which 400 out of tens of billions of candidates. Of the four design goals, <strong>politeness</strong> is the only constraint imposed from outside the system and owed unconditional obedience.</p>
+<p>③ DFS is unusable (unbounded depth) and BFS is the base, but <strong>naive BFS has two fatal flaws</strong>: same-host link clumping hammers a single host, and it has no priority at all.</p>
+<p>④ The answer is the URL frontier's <strong>two tiers</strong>: front queues split by priority (biased random selection so low priority never starves), back queues split by host (<strong>one queue per host, one thread per queue, a forced delay between requests</strong>) — politeness guaranteed by structure.</p>
+<p>⑤ Throughput ≈ <strong>active hosts × per-host rate</strong>: at one request per second per host, 400 pages/sec needs 400 hosts in flight. <strong>Adding threads does nothing; spreading across hosts does everything.</strong></p>
+<p>⑥ The downloader has one brake and three accelerators: robots.txt (cache it); distributed crawling, <strong>DNS caching</strong> (<code>10–200 ms</code> per lookup, synchronous and blocking), locality plus short timeouts.</p>
+<p>⑦ The two dedup gates guard different budgets: <strong>URL dedup before the fetch saves bandwidth</strong> (Bloom filter, tolerating a rare permanent page loss); <strong>content dedup before the store saves storage</strong> (the book cites ~29% of pages as duplicates).</p>
+<p>⑧ Traps have only blunt answers: cap URL length plus a manual blacklist. Spill the frontier to disk and checkpoint crawl state, so a crash resumes instead of restarting from the seeds.</p>
+</div>
+</div>
+<footer>Books Deep-Read · Read this page ≈ get the core of the chapter; for the full case studies, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
