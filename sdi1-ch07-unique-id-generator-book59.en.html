@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview Vol 1 Ch 7 · Unique ID Generator — Books Deep-Read Book 59</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOKS DEEP-READ · SYSTEM DESIGN INTERVIEW VOL 1 · CH 7</p>
+<h1>Design a Unique ID Generator in Distributed Systems</h1>
+<p class="sub">System Design Interview Vol 1 · Ch 7 · Alex Xu · 2020</p>
+<p class="langbar"><a href="sdi1-ch07-unique-id-generator-book59.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>Every order you place and every message you send needs a <strong>number</strong> — one that is never handed out twice, and ideally one you can glance at to tell what came first. On a single machine this is a non-problem: the database just counts up from 1. This chapter is about what happens when the back end becomes a few hundred machines, <strong>why "just count up by 1" collapses, and how to rebuild it</strong>.</p>
+<h2>An analogy</h2>
+<p>Think of a <strong>ticket dispenser in a chain of shops</strong>. With one shop, the dispenser counts 1, 2, 3 and never gets it wrong. Open 32 branches and the trouble starts: if every branch counts from 1, the country now has 32 different customers holding ticket "3", and the clerk has no idea which one to serve.</p>
+<h2>Three obvious fixes, all of which fail</h2>
+<p><strong>One: make every branch phone head office for a number.</strong> No duplicates — but every single ticket now costs a phone call, which is slow, and if head office loses power, all 32 branches stop dispensing.</p>
+<p><strong>Two: let each branch pick a very long random string.</strong> Collisions become vanishingly unlikely, but the string is long and tells you nothing about order — you cannot look at two of them and say which came first.</p>
+<p><strong>Three: have each branch count in steps.</strong> Branch 1 counts 1, 33, 65…; branch 2 counts 2, 34, 66…. Clever — until you open a new branch or close one, at which point the whole country has to be renumbered.</p>
+<h2>The idea: build the number out of three pieces</h2>
+<p>Twitter's answer was to <strong>stop asking anyone for a number and instead assemble one on the spot out of three things that are already unique</strong>: the first piece records <strong>what time it is, down to the millisecond</strong>; the middle piece records <strong>which branch I am</strong>; the last piece records <strong>how many I have handed out during this particular millisecond</strong>.</p>
+<p>Put the three together and nobody has to ask anybody: different millisecond, the first piece differs; same millisecond but different branch, the second differs; same branch and millisecond, the third differs. And because <strong>time sits at the front</strong>, sorting the numbers from small to large is roughly sorting them from earliest to latest — the ordering comes for free. This dispenser can hand out 4,096 tickets per millisecond per branch, and the scheme lasts 69 years.</p>
+<h2>What it costs</h2>
+<p>The whole thing rests on <strong>every machine's clock moving forward</strong>: if one machine's time gets nudged backwards, it will live that millisecond over again and hand out numbers it has already given away.</p>
+<h2>Remember this</h2>
+<div class="tl">
+<p>The hard part of distributed IDs was never "don't repeat" — any long random number does that. The hard part is being <strong>unique and short and visibly ordered, without machines ever talking to each other</strong>. The answer is to cut the ID into <strong>time + who I am + which one this instant</strong>, trading a clock for a conversation.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the notation and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think the hard part of distributed unique IDs is avoiding duplicates. In fact <strong>uniqueness is the easiest of the four constraints</strong> — a long enough random number settles it. The hard part is satisfying all four at once: <strong>unique, short enough to fit in 64 bits, roughly ordered by time, and generated without talking to any other machine</strong>. This chapter puts four approaches on the table, eliminates them one by one, and lands on Twitter's Snowflake: <strong>treat 64 bits as a budget and spend it on timestamp + machine id + sequence</strong>. Ordering comes free from putting the timestamp in the high bits; uniqueness comes from "same machine, same millisecond, different sequence"; the price is that correctness now rests entirely on the machine's clock.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Unique ID / primary key</strong>: a row's identity across the whole system. A duplicate means two pieces of data claiming the same identity.</li>
+<li><strong>auto_increment</strong>: the database keeps a counter and bumps it on every insert — a counter that <strong>exists inside exactly one database instance</strong>.</li>
+<li><strong>Coordination</strong>: having to check with somebody (a central service, or the other machines) before you can produce an ID. Coordination means a network round trip plus a single point of failure; eliminating it is the whole point of this chapter.</li>
+<li><strong>SPOF (single point of failure)</strong>: one component whose death stops the entire path.</li>
+<li><strong>Bits and 64-bit integers</strong>: a signed 64-bit integer tops out near <code>9.2×10¹⁸</code>. "How do I spend these 64 zeroes and ones" is the design question of this chapter.</li>
+<li><strong>UUID</strong>: a 128-bit (16-byte) universally unique identifier; the common v4 flavour is almost all random bits, e.g. <code>09c93e62-50b4-468d-bf8a-c07e1040bfb2</code>.</li>
+<li><strong>Epoch</strong>: the zero point a timestamp counts from. Unix epoch is 1970-01-01; ID generators usually pick a later custom epoch to save bits.</li>
+<li><strong>NTP</strong>: the protocol machines use to sync their clocks against a time server. Syncing can push the local clock <strong>backwards</strong> — a <em>clock rollback</em>.</li>
+<li><strong>k-sorted</strong>: not strictly ascending, but any out-of-order pair is within a known window (say, one second).</li>
+<li><strong>B-tree index locality</strong>: a database index stores keys in sorted order, so rows with nearby keys land on the same disk pages and insert cheaply. Random keys do the opposite — scattered writes and constant page splits.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This is the fourth case study of Vol 1's Part II. It follows Ch5 (consistent hashing) and Ch6 (key-value store) — those two answer "which machine does this row live on", while this one answers "<strong>what is this row called</strong>" — and all three share one spine: <strong>getting something done without a central coordinator</strong>. It sets up Ch8, the URL shortener, which takes the ID produced here and base62-encodes it. In the real world this is order numbers, message ids, feed item ids, trace ids — anywhere you still want one global primary key after sharding the database.</p>
+<h2>The problem it solves</h2>
+<p>The requirements pinned down during clarification are five: <strong>unique, numeric only, fits in 64 bits, ordered by date, 10,000 IDs per second</strong>. Those five narrow the answer space brutally, and they are exactly what knocks out the two most obvious candidates.</p>
+<p><strong>Why <code>auto_increment</code> fails.</strong> That counter is <strong>private state inside one database instance</strong>. Shard the database and both shards start at 1, so order number 10001 exists twice. Left unsolved: a primary key collision means the later write silently overwrites the earlier one, and two customers' orders point at one row — <strong>an error that raises no alarm and simply loses data</strong>.</p>
+<p><strong>Why not just use UUIDs?</strong> The collision risk really is negligible — with v4's 122 random bits you need roughly <code>10¹⁸</code> of them before there is a 50% chance of one clash. But UUIDs <strong>violate the other three requirements</strong>: 128 bits not 64, hyphenated not numeric, and completely unordered. That last one is the expensive part: a random primary key has <strong>no temporal locality</strong>, so every insert stabs a random spot in the B-tree, triggering page splits and random I/O. This is not purism — the measured gap in insert throughput is an order of magnitude (see RFC 9562's own words under "In real systems" below).</p>
+<h2>The core content, properly</h2>
+<h3>Four roads, and where each one dies</h3>
+<p><strong>① Multi-master replication.</strong> Let k databases all auto-increment, but set the <em>step</em> to k with staggered starts: server 1 counts 1, 4, 7…; server 2 counts 2, 5, 8…. It works, and it is unique. It dies on <strong>elasticity</strong>: adding one machine forces you to re-plan every server's step and offset, and across data centres the numeric order of IDs has nothing to do with real time. Fundamentally it is still <strong>using the database as the dispenser</strong>, so the write ceiling never moved.</p>
+<p><strong>② UUID.</strong> Every machine generates independently — zero coordination, zero single point. It is the only option here that never communicates, and conceptually it is closest to the right answer. But it throws away "short" and "ordered" entirely.</p>
+<p><strong>③ Ticket server.</strong> Flickr's approach: one dedicated MySQL box that does nothing but hold a single <code>auto_increment</code> column, and everyone comes to it for a number. The IDs are short and strictly increasing, and the implementation is a few dozen lines. It dies on being a <strong>single point</strong>: when it stops, nothing in the site can mint an ID; make it an active/standby pair and you are back to "how do these two not collide". It also spends <strong>one network round trip per ID</strong>, putting milliseconds of latency on every checkout.</p>
+<p><strong>④ Snowflake.</strong> Ask nobody. Assemble an ID from three facts that are <strong>already unique on their own</strong>: the current instant, who I am, and how far I have counted this instant.</p>
+<h3>Snowflake: spending 64 bits as a budget</h3>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 210" xmlns="http://www.w3.org/2000/svg">
+<rect fill="rgba(120,120,130,0.18)" height="40" rx="3" stroke="#7c8593" width="9.4" x="20" y="60"></rect>
+<rect fill="rgba(91,157,249,0.16)" height="40" rx="4" stroke="#5b9df9" stroke-width="1.6" width="384" x="29.4" y="60"></rect>
+<rect fill="rgba(155,108,245,0.18)" height="40" rx="4" stroke="#9b6cf5" width="47" x="413.4" y="60"></rect>
+<rect fill="rgba(155,108,245,0.10)" height="40" rx="4" stroke="#9b6cf5" width="47" x="460.4" y="60"></rect>
+<rect fill="rgba(143,186,255,0.14)" height="40" rx="4" stroke="#8fbaff" width="112.5" x="507.4" y="60"></rect>
+<text fill="#7c8593" font-family="monospace" font-size="9" text-anchor="middle" x="24.7" y="85">0</text>
+<text fill="#e7ebf1" font-size="12" text-anchor="middle" x="221" y="85">41 bits · millisecond timestamp</text>
+<text fill="#e7ebf1" font-family="monospace" font-size="11" text-anchor="middle" x="437" y="85">5</text>
+<text fill="#e7ebf1" font-family="monospace" font-size="11" text-anchor="middle" x="484" y="85">5</text>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="563" y="85">12 · seq</text>
+<text fill="#5b9df9" font-family="monospace" font-size="10.5" x="20" y="44">high ←—————————— 64 bits ——————————→ low</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="24">Snowflake ID layout: three pieces in one 64-bit integer</text>
+<rect fill="rgba(120,120,130,0.18)" height="10" width="10" x="24" y="124"></rect>
+<text fill="#b9c0ca" font-size="11" x="42" y="133">1 bit sign — always 0, so the ID stays positive</text>
+<rect fill="rgba(91,157,249,0.16)" height="10" stroke="#5b9df9" width="10" x="24" y="146"></rect>
+<text fill="#b9c0ca" font-size="11" x="42" y="155">41 bits timestamp — ms since a custom epoch; 2^41 ms ≈ 69 years</text>
+<rect fill="rgba(155,108,245,0.18)" height="10" stroke="#9b6cf5" width="10" x="24" y="168"></rect>
+<text fill="#b9c0ca" font-size="11" x="42" y="177">5 bits datacenter + 5 bits machine — 32 × 32 = 1024 nodes, assigned at startup</text>
+<rect fill="rgba(143,186,255,0.14)" height="10" stroke="#8fbaff" width="10" x="24" y="190"></rect>
+<text fill="#b9c0ca" font-size="11" x="42" y="199">12 bits sequence — 4096 per machine per ms, reset each millisecond</text>
+</svg>
+<figcaption>Fig 1 · Snowflake cuts 64 bits into four fields. The timestamp occupying the high bits is the entire secret behind "sort by value ≈ sort by time".</figcaption>
+</figure>
+<p>Each field answers a concrete question. The <strong>sign bit</strong> stays 0 because a <code>long</code> is signed in languages like Java, and flipping the top bit turns your primary key negative. The <strong>41-bit millisecond timestamp</strong> counts not from the Unix epoch but from a <em>custom epoch</em> (Twitter used <code>1288834974657</code>, i.e. 2010-11-04), which reclaims the four decades before the service launched — <code>2⁴¹</code> milliseconds is only <strong>69.7 years</strong>. The <strong>5+5 machine bits</strong> cap you at 32 data centres × 32 machines = <strong>1024 nodes</strong>, and they are <strong>assigned statically at startup and never changed at runtime</strong>, because renumbering mid-flight risks colliding with someone else. The <strong>12-bit sequence</strong> increments within one machine within one millisecond, tops out at <strong>4096</strong>, and resets on the next millisecond; if you really exhaust it, you spin until the clock ticks.</p>
+<p>The key insight is one line: <strong>the timestamp sits in the high bits, so sorting by numeric value is approximately sorting by generation time</strong> — the "ordered" requirement is satisfied <strong>for free, without a single network message</strong>. But state it accurately: the result is only <em>k-sorted</em>. Two machines minting IDs in the same millisecond are ordered by machine id, which has nothing to do with what actually happened first. Twitter's own README promises exactly this: k-sorted within one second.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/unique-id-generation-day11.en.html" target="_blank" rel="noopener">System Design · Day 11 Unique ID Generation</a> — the same problem from the topic side: the three-way pull between time, randomness and index behaviour, with measured insert costs per scheme</aside>
+<h3>How to spend the budget: three demands fighting over 63 bits</h3>
+<p>Here is the layer worth taking away: <strong>1 / 41 / 10 / 12 is not a standard answer, it is a budget sheet.</strong> Timestamp bits buy <strong>service lifetime</strong>, machine bits buy <strong>cluster size</strong>, sequence bits buy <strong>per-node peak rate</strong> — and the three always sum to 63, so any bit you give one is taken from the others.</p>
+<p>Do the arithmetic: 12 sequence bits mean a theoretical ceiling of <code>4096 × 1000 = 4.096 million</code> IDs per second per node, while <strong>the chapter's stated requirement is 10,000 per second</strong> — a factor of 400 in slack. Anyone who copies 12 sequence bits verbatim is throwing away 8 bits. Move those 8 into the timestamp and the lifetime goes from 69 years to over ten thousand; move them into the machine id and the cluster ceiling goes from 1,024 nodes to 262,144. Being able to do that arithmetic in an interview is worth far more than reciting the layout.</p>
+<h3>Segments: cutting the trips to the centre to 1/N</h3>
+<p>The ticket server does not have to be discarded — its fatal flaw is "<strong>one round trip per ID</strong>", and that flaw can be treated on its own. The <em>segment</em> (number-range) model switches from retail to <strong>wholesale</strong>: the application claims a whole range <code>[8001, 9000]</code> from the database in one call, keeps it in local memory, and mints the next 999 IDs in-process before coming back for another range.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="s2a" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line stroke="rgba(120,120,130,0.3)" stroke-dasharray="4 4" x1="320" x2="320" y1="14" y2="240"></line>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="160" y="26">Ticket server: retail</text>
+<rect fill="rgba(91,157,249,0.12)" height="28" rx="6" stroke="#5b9df9" width="130" x="95" y="44"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="160" y="63">App instance</text>
+<line marker-end="url(#s2a)" stroke="#7c8593" x1="160" x2="160" y1="72" y2="128"></line>
+<text fill="#9b6cf5" font-size="10.5" x="170" y="96">1 ID</text>
+<text fill="#9b6cf5" font-size="10.5" x="170" y="112">= 1 round trip</text>
+<rect fill="rgba(155,108,245,0.14)" height="28" rx="6" stroke="#9b6cf5" width="180" x="70" y="130"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="160" y="149">Central DB · auto_increment</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="160" y="200">Mint latency ≈ milliseconds</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="160" y="220">The DB is a SPOF: it stops, nothing gets an ID</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="480" y="26">Segment model: wholesale</text>
+<rect fill="rgba(91,157,249,0.12)" height="28" rx="6" stroke="#5b9df9" width="130" x="415" y="44"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="480" y="63">App instance</text>
+<line marker-end="url(#s2a)" stroke="#7c8593" x1="480" x2="480" y1="72" y2="86"></line>
+<rect fill="rgba(143,186,255,0.12)" height="28" rx="6" stroke="#8fbaff" stroke-dasharray="4 3" width="210" x="375" y="88"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="480" y="107">In-memory range [8001, 9000]</text>
+<line marker-end="url(#s2a)" stroke="#7c8593" stroke-dasharray="4 3" x1="480" x2="480" y1="116" y2="128"></line>
+<rect fill="rgba(155,108,245,0.14)" height="28" rx="6" stroke="#9b6cf5" width="210" x="375" y="130"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="480" y="149">Central DB · max_id += 1000</text>
+<text fill="#9b6cf5" font-size="10.5" text-anchor="middle" x="480" y="176">only when the range runs out</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="480" y="200">Local mint ≈ microseconds · DB load cut to 1/1000</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="480" y="220">Cost: restart drops half a range · no global order</text>
+</svg>
+<figcaption>Fig 2 · The same central dispenser, changed to "claim a range, mint locally": database QPS drops by two to three orders of magnitude.</figcaption>
+</figure>
+<p>State the cost honestly: a restart <strong>throws away the unused half of the range</strong>, leaving gaps in the ID sequence; and once several instances hold ranges concurrently, IDs are <strong>ordered only within an instance and unordered across them</strong> — the "ordered" requirement has been quietly discounted.</p>
+<h3>The clock is the foundation of the whole thing</h3>
+<p>Snowflake's uniqueness proof is one sentence: "within one machine within one millisecond the sequence never repeats, and across milliseconds the timestamp differs." That sentence <strong>only holds while the clock moves forward</strong>. NTP corrections, leap seconds, VM clock drift and someone setting the time by hand can all push a local clock <strong>backwards</strong> — and the moment it does, the machine <strong>relives a millisecond it has already used</strong>, with the sequence back at 0, and emits an ID identical to one it minted before.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 235" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="s3a" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="s3r" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#e06b6b"></path></marker>
+</defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="22">After the clock steps backwards, one machine emits duplicate IDs</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" x="20" y="48">1. local clock reading (ms)</text>
+<rect fill="rgba(91,157,249,0.12)" height="28" rx="6" stroke="#5b9df9" width="90" x="60" y="58"></rect>
+<text fill="#e7ebf1" font-family="monospace" font-size="11.5" text-anchor="middle" x="105" y="77">1000</text>
+<rect fill="rgba(91,157,249,0.12)" height="28" rx="6" stroke="#5b9df9" width="90" x="210" y="58"></rect>
+<text fill="#e7ebf1" font-family="monospace" font-size="11.5" text-anchor="middle" x="255" y="77">1001</text>
+<rect fill="rgba(224,107,107,0.18)" height="28" rx="6" stroke="#e06b6b" stroke-width="1.6" width="90" x="360" y="58"></rect>
+<text fill="#e7ebf1" font-family="monospace" font-size="11.5" text-anchor="middle" x="405" y="77">1000</text>
+<rect fill="rgba(224,107,107,0.18)" height="28" rx="6" stroke="#e06b6b" stroke-width="1.6" width="90" x="510" y="58"></rect>
+<text fill="#e7ebf1" font-family="monospace" font-size="11.5" text-anchor="middle" x="555" y="77">1001</text>
+<line marker-end="url(#s3a)" stroke="#7c8593" x1="150" x2="206" y1="72" y2="72"></line>
+<path d="M300,72 Q330,102 358,74" fill="none" marker-end="url(#s3r)" stroke="#e06b6b" stroke-width="1.6"></path>
+<text fill="#e06b6b" font-size="10.5" text-anchor="middle" x="329" y="120">NTP steps the clock back 1 ms</text>
+<line marker-end="url(#s3a)" stroke="#7c8593" x1="450" x2="506" y1="72" y2="72"></line>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" x="20" y="140">2. IDs emitted by that machine (timestamp | machine | sequence)</text>
+<rect fill="rgba(255,255,255,0.03)" height="28" rx="6" stroke="#7c8593" width="114" x="48" y="150"></rect>
+<text fill="#b9c0ca" font-family="monospace" font-size="11" text-anchor="middle" x="105" y="169">1000 | 7 | 0</text>
+<rect fill="rgba(255,255,255,0.03)" height="28" rx="6" stroke="#7c8593" width="114" x="198" y="150"></rect>
+<text fill="#b9c0ca" font-family="monospace" font-size="11" text-anchor="middle" x="255" y="169">1001 | 7 | 0</text>
+<rect fill="rgba(224,107,107,0.14)" height="28" rx="6" stroke="#e06b6b" width="114" x="348" y="150"></rect>
+<text fill="#e7ebf1" font-family="monospace" font-size="11" text-anchor="middle" x="405" y="169">1000 | 7 | 0</text>
+<rect fill="rgba(224,107,107,0.14)" height="28" rx="6" stroke="#e06b6b" width="114" x="498" y="150"></rect>
+<text fill="#e7ebf1" font-family="monospace" font-size="11" text-anchor="middle" x="555" y="169">1001 | 7 | 0</text>
+<line stroke="rgba(120,120,130,0.5)" x1="105" x2="105" y1="86" y2="148"></line>
+<line stroke="rgba(120,120,130,0.5)" x1="255" x2="255" y1="86" y2="148"></line>
+<line stroke="rgba(120,120,130,0.5)" x1="405" x2="405" y1="86" y2="148"></line>
+<line stroke="rgba(120,120,130,0.5)" x1="555" x2="555" y1="86" y2="148"></line>
+<path d="M105,182 L105,198 L405,198 L405,182" fill="none" stroke="#e06b6b" stroke-dasharray="4 3"></path>
+<text fill="#e06b6b" font-size="11" text-anchor="middle" x="255" y="220">identical IDs → key collision, the later write silently wins</text>
+</svg>
+<figcaption>Fig 3 · Roll the clock back one millisecond and the machine lives that millisecond again with the sequence reset to zero — uniqueness is gone on the spot.</figcaption>
+</figure>
+<p>Three engineering responses exist, and they point in different directions: <strong>① detect the rollback and refuse to mint</strong>, throwing an exception (better unavailable than wrong); <strong>② if the rollback is tiny, spin and wait</strong> until real time catches up; <strong>③ persist "the largest timestamp this machine has used" outside the process</strong> (Meituan's Leaf records it in ZooKeeper) so a restart cannot walk backwards. Note what option ① implies: <strong>when the clock misbehaves, Snowflake sacrifices availability to preserve correctness</strong> — the exact opposite of the leaderless key-value store in Ch6, which writes first and converges later.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/time-clocks-ordering-paper31.en.html" target="_blank" rel="noopener">Paper deep-read · Time, Clocks, and the Ordering of Events</a> — Lamport's argument for why a physical clock cannot ground ordering in a distributed system, and why "order" belongs to causality rather than the wall clock</aside>
+<h2>Trade-offs and how to choose</h2>
+<p class="tcap">Table 1 · Five ways to mint an ID, and when each one is right</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Approach</th><th>Mechanism in one line</th><th>Shape</th><th>Time-ordered</th><th>Coordination</th><th>Main cost</th></tr></thead>
+<tbody>
+<tr><th>Multi-master</th><td>k databases auto-increment with step k, staggered starts</td><td>64-bit numeric</td><td>No (unordered across shards)</td><td>None at runtime (but statically planned)</td><td><strong>Adding or removing a node forces a full renumbering</strong>; write ceiling still the DB</td></tr>
+<tr><th>UUID v4</th><td>each machine draws 122 random bits</td><td>128-bit, hyphenated</td><td>No</td><td><strong>None at all</strong></td><td>Twice as long, not numeric; random keys <strong>wreck index locality</strong></td></tr>
+<tr><th>Ticket server</th><td>one dedicated MySQL running auto_increment</td><td>64-bit numeric</td><td><strong>Strictly increasing</strong></td><td>one round trip per ID</td><td><strong>SPOF</strong> plus milliseconds of latency on every request</td></tr>
+<tr><th>Segment model</th><td>claim 1000 at a time, mint locally from memory</td><td>64-bit numeric</td><td>Within an instance</td><td>one round trip per 1000</td><td>Restart drops half a range (gaps); unordered across instances</td></tr>
+<tr><th><strong>Snowflake</strong></th><td>assemble timestamp + machine id + sequence on the spot</td><td>64-bit numeric</td><td><strong>k-sorted</strong></td><td><strong>None when minting</strong> (moved to machine-id assignment at startup)</td><td><strong>Correctness rests on the clock</strong>; machine ids need managing; 69-year lifetime</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · The same 63 bits, budgeted three different ways (defaults from each project's public repository)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Implementation</th><th>Time bits</th><th>Machine bits</th><th>Sequence bits</th><th>Lifetime</th><th>Cluster ceiling</th><th>Per-node peak</th></tr></thead>
+<tbody>
+<tr><th>Twitter Snowflake</th><td>41 (ms)</td><td>10</td><td>12</td><td>≈ <strong>69 years</strong></td><td>1,024 nodes</td><td><strong>4.096M/sec</strong></td></tr>
+<tr><th>Sony Sonyflake</th><td>39 (10 ms units)</td><td><strong>16</strong></td><td>8</td><td>≈ <strong>174 years</strong></td><td><strong>65,536 nodes</strong></td><td>25,600/sec</td></tr>
+<tr><th>Baidu UidGenerator</th><td>28 (seconds)</td><td><strong>22</strong></td><td>13</td><td>≈ 8.5 years</td><td><strong>4.19M nodes</strong></td><td>8,192/sec</td></tr>
+</tbody></table></div>
+<p>Three companies took the same 64 bits and re-budgeted them for their own business: Sony wanted more machines and a longer life, so it cut per-node peak rate to about 1/160; Baidu runs containers, where instances come and go constantly, so it spent 22 bits on worker ids and accepted a lifetime of 8.5 years and a periodic epoch change. <strong>That table is the chapter's real answer: the bit split is a design parameter, not a constant.</strong></p>
+<h2>Why it matters / in real systems</h2>
+<p>Snowflake is the shortest, most teachable example of <strong>coordination-free design</strong>. It demonstrates a general move: <strong>when you need global uniqueness but not global communication, decompose "globally unique" into several facts that are already locally unique and concatenate them</strong>. The same move shows up in idempotency keys, distributed-tracing trace ids and object-storage key naming.</p>
+<p>Its fingerprints are everywhere in production today: every Discord object id is a snowflake (42-bit timestamp + 5-bit worker + 5-bit process + 12-bit increment, with the epoch set at 2015), and MongoDB's <code>ObjectId</code> is the same idea in 12 bytes (4-byte second-resolution timestamp + 5-byte per-process random value + 3-byte incrementing counter). The standardisation step matters more: <strong>UUIDv7 landed in RFC 9562 in 2024</strong>, turning "put the timestamp in the high bits" from a field trick into an industry standard, and PostgreSQL 18 ships <code>uuidv7()</code> built in — still at the price of 128 bits rather than 64.</p>
+<div class="ev">
+<div class="evh">EVIDENCE FROM INDUSTRY · claims these companies published themselves</div>
+<ul>
+<li><strong>Twitter</strong> states the motivation in Snowflake's README: "As we at Twitter move away from Mysql towards Cassandra, we've needed a new way to generate id numbers", along with hard targets — <strong>at least 10k ids per second per process, a response rate of 2 ms, and k-sorted within one second</strong> — and the 41 / 10 / 12 layout (69 years · 1024 machines · 4096 per machine per ms). <span class="src"><a href="https://github.com/twitter-archive/snowflake/tree/snowflake-2010" rel="noopener" target="_blank">twitter-archive/snowflake, 2010 ↗</a></span></li>
+<li><strong>Sony</strong> says plainly that Sonyflake re-budgets the same bits: 39 bits of time in 10 ms units + 8 sequence bits + 16 machine bits, giving "the lifetime (174 years) is longer than that of Snowflake (69 years)" and <code>2¹⁶</code> rather than <code>2¹⁰</code> machines, at the cost of only 256 ids per 10 ms — <strong>direct confirmation that the bit split is an adjustable budget</strong>. <span class="src"><a href="https://github.com/sony/sonyflake" rel="noopener" target="_blank">sony/sonyflake ↗</a></span></li>
+<li><strong>Baidu</strong>'s UidGenerator defaults to 28 / 22 / 13 and uses a pre-filled RingBuffer with cache-line padding to reach "over 6 million QPS" from a single instance — <strong>evidence that the bottleneck was never the bit arithmetic but the call path to the generator</strong>. <span class="src"><a href="https://github.com/baidu/uid-generator" rel="noopener" target="_blank">baidu/uid-generator ↗</a></span></li>
+<li><strong>Meituan</strong>'s Leaf ships both a segment mode and a snowflake mode, the latter using ZooKeeper to remember each machine's last timestamp and block rollbacks; their published benchmark is "QPS pressure test results are nearly 5w/s, TP999 1ms" on a 4-core 8 GB VM over the company RPC — <strong>two orders of magnitude below Baidu's 6 million, and the difference is exactly that one remote call</strong>: this is what turning ID minting into a service costs. <span class="src"><a href="https://github.com/Meituan-Dianping/Leaf" rel="noopener" target="_blank">Meituan-Dianping/Leaf ↗</a></span></li>
+<li><strong>IETF</strong> defines UUIDv7 in RFC 9562 (2024) as leading with a "48 bit big-endian unsigned number of Unix epoch timestamp in milliseconds", and states that non-time-ordered versions such as UUIDv4 "have poor database index locality", while for time-ordered UUIDs the index advantage "can be one order of magnitude or more" — <strong>this chapter's instinct, promoted to a standard</strong>. <span class="src"><a href="https://github.com/ietf-wg-uuidrev/rfc4122bis" rel="noopener" target="_blank">IETF uuidrev working group · RFC 9562 draft repo ↗</a></span></li>
+</ul>
+</div>
+<h2>Common mistakes and open arguments</h2>
+<ul>
+<li><strong>Reading "ordered" as "strictly monotonic".</strong> Snowflake guarantees only k-sorting. Within a millisecond, relative size across machines is decided by machine id and says nothing about what happened first — using ID comparison to decide "whose order came first" is simply wrong. Strict ordering means a ticket server or consensus, and the price is coordination.</li>
+<li><strong>Treating the ID as a secret.</strong> The timestamp sits in plain sight in the high bits, so anyone can recover the exact moment an order was placed, and consecutive ids let them estimate your daily volume the way the German tank problem estimates production. If that matters, do not expose raw Snowflake ids externally — which is one motivation for the re-encoding in Ch8.</li>
+<li><strong>Believing coordination actually disappeared.</strong> The 5-bit machine id lives in a config file. Once you containerise, instances come and go and "who is node 7" becomes a fresh coordination problem, so back come ZooKeeper, etcd or a database to hand out ids. <strong>Coordination did not vanish; it moved from every mint to every startup</strong> — an excellent trade, but one you should be able to state rather than pretend away.</li>
+<li><strong>69 years is not "forever".</strong> The custom epoch sets when the countdown starts, and changing the epoch makes old and new IDs incomparable. Implementations on second-resolution timestamps (Baidu's default 28 bits) get 8.5 years — technical debt you schedule on day one.</li>
+<li><strong>Dated in one respect.</strong> When the book was written in 2020, UUIDv7 was not yet standardised. Today many systems can use a built-in <code>uuidv7()</code> and skip the whole home-built generator plus machine-id management, at the cost of 128 bits instead of 64. <strong>"You must build your own Snowflake" is no longer the default answer.</strong></li>
+<li><strong>Copying the layout is not understanding it.</strong> The stated requirement is 10,000/sec; 12 sequence bits supply 4.096 million/sec. Noticing that 8 bits are over-provisioned and could buy lifetime or cluster size is the mark of having actually read this chapter.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. The real problem is not "no duplicates" but <strong>unique + short (64 bits) + time-ordered + coordination-free, all at once</strong>. The four constraints fight, so any answer is a trade-off.</p>
+<p>2. <code>auto_increment</code> dies because the counter is private state in one database instance; UUID survives that but breaks the other three requirements, above all by <strong>destroying B-tree index locality</strong>.</p>
+<p>3. The ticket server (Flickr) is short and strictly increasing but dies on <strong>a single point plus one round trip per ID</strong>; the segment model cuts the round trips to 1/1000 and recovers half of it, paying with dropped ranges and no cross-instance order.</p>
+<p>4. <strong>Snowflake = 1 sign + 41 timestamp + 5 datacenter + 5 machine + 12 sequence</strong>: 69 years, 1,024 nodes, 4,096 ids per machine per millisecond.</p>
+<p>5. All the ordering comes from <strong>the timestamp occupying the high bits</strong>, at zero communication cost — but it is only <strong>k-sorted</strong>, never strictly monotonic.</p>
+<p>6. <strong>The bit split is a budget, not a constant</strong>: time bits buy lifetime, machine bits buy scale, sequence bits buy peak rate, and the three share 63 bits. Sony (39/16/8, 174 years) and Baidu (28/22/13, 4.19M nodes) are two different answers.</p>
+<p>7. The deepest weakness is <strong>clock rollback</strong>: push the clock back and the machine replays a millisecond with a zeroed sequence, emitting identical IDs. The responses are refuse-to-mint, spin-and-wait, or persist the high-water timestamp — the first being <strong>availability traded for correctness</strong>.</p>
+<p>8. Coordination did not disappear; it moved from every mint to assigning machine ids at startup — a bill that got more expensive with containers, and the one most often ignored.</p>
+<p>9. The general move: <strong>decompose global uniqueness into locally unique facts and concatenate</strong>. UUIDv7 in RFC 9562 (2024) and <code>uuidv7()</code> in PostgreSQL 18 show that instinct becoming a standard.</p>
+</div>
+</div>
+<footer>Books Deep-Read · Read this page ≈ get the core of the chapter; for the full case studies, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
