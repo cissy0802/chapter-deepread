@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview Vol 1 Ch 10 · Design a Notification System — Books Deep-Read Book 62</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOKS DEEP-READ · SYSTEM DESIGN INTERVIEW VOL 1 · CH 10</p>
+<h1>Design a Notification System</h1>
+<p class="sub">System Design Interview Vol 1 · Ch 10 · Alex Xu · 2020</p>
+<p class="langbar"><a href="sdi1-ch10-notification-system-book62.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The line that pops onto your lock screen — "your parcel is out for delivery", "someone replied to you" — is the visible end of a whole <strong>notification system</strong>. Chapter 10 asks you to build one. It sounds like a small job. It is in fact the book's cleanest lesson in a hard truth: <strong>you are accountable for something whose most important step is not yours to control.</strong></p>
+<h2>An analogy: three couriers who don't take orders from you</h2>
+<p>Think of the system as a <strong>mail depot</strong>. You write the letters, but <strong>the last mile must be handed to three outside couriers</strong>: one for iPhones (Apple's), one for Android phones (Google's), one for text messages (the carriers). The catch is that each of them <strong>follows only its own house rules</strong>.</p>
+<p>Apple's courier says: if nobody is home, I keep <strong>only the most recent letter</strong> and throw the rest away. Google's says: I will hold at most <strong>100 letters</strong> per door, and if a 101st arrives I discard the lot; anything undelivered for four weeks I discard too. Neither gives you a signed receipt — only "I have taken the letter".</p>
+<h2>Why the obvious approach falls over</h2>
+<p>The obvious approach: as soon as the order goes through, your code knocks on the courier's door and waits for an answer before moving on. Three problems, each worse than the last. The courier takes an extra second and <strong>your checkout endpoint takes an extra second too</strong>. The one machine doing the errands dies and <strong>every pending notification evaporates</strong>. Sale day arrives, volume goes up fiftyfold, and there is nowhere to add hands.</p>
+<h2>The core move: put a conveyor belt in the middle</h2>
+<p>The fix is a <strong>conveyor belt</strong>. The business side just drops "what to send, to whom" onto the belt and walks away — a matter of milliseconds. At the far end stands a row of workers who pick items off and do the running around. However slow the courier is, that slowness never reaches your main flow.</p>
+<p>The crucial detail is that <strong>there is one belt per courier</strong>: one for Apple, one for Google, one for SMS, one for email. If the SMS courier jams today, only that one belt backs up while the other three keep moving; if SMS falls behind, you add workers to that belt alone. <strong>One blocked lane must not block the other three</strong> — that is the most valuable sentence in the chapter.</p>
+<h2>And three small things you must handle yourself</h2>
+<p>A belt alone is not enough. <strong>The switch</strong>: before sending, check whether this person wants this kind of notification at all. <strong>The serial number</strong>: stamp every letter with a unique number and have the worker check "have I sent this one already?" before running — because failed errands get retried, and retries always produce duplicates. <strong>The cap</strong>: at most N letters per person per day. The third is the one people skip, and its cost is the worst of the three: <strong>annoy someone into switching notifications off and you can no longer reach them at all — not even with "payment successful" — and that door usually stays shut.</strong></p>
+<p>The honest cost: once there is a belt, notifications are no longer instant — usually a few hundred milliseconds to a few seconds, and minutes when a lane backs up. And you can only promise "delivered at least once"; keeping duplicates out is on you, via the serial number.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p>A notification system is hard not because sending is hard, but because <strong>the last mile belongs to someone else</strong>: third-party channels guarantee neither delivery nor exactly-one delivery. All you truly control is your own side — a belt that separates business logic from delivery, a separate lane per channel, a serial number to absorb duplicates, and <strong>not annoying users into switching you off</strong>.</p>
+</div>
+<p class="switch-hint">Want the architecture, the delivery semantics and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">This chapter looks like a lesson in pushing a message to a phone. It is really a lesson in <strong>building reliability on top of a channel you do not control</strong>: the last hop belongs to APNs, FCM or an SMS gateway, none of which promise delivery or non-duplication. So every engineering lever moves <strong>back onto your side of the line</strong> — a message queue to decouple production from delivery, one queue per channel to contain failure, an idempotency key to absorb the duplicates that retries inevitably create, and preference checks plus rate caps to defend the one irreversible failure: a user who switches notifications off for good.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Push notification</strong>: a message the server delivers to a device without the user opening the app.</li>
+<li><strong>Device token</strong>: a unique address Apple or Google issues for one app on one device; the server needs it to know where to push. It breaks on reinstall, device change or uninstall.</li>
+<li><strong>APNs (Apple Push Notification service)</strong>: Apple's push channel; every notification to an iOS device goes through it.</li>
+<li><strong>FCM (Firebase Cloud Messaging)</strong>: Google's equivalent, for Android.</li>
+<li><strong>SMS gateway / email provider</strong>: Twilio, Nexmo for texts; SendGrid, Mailchimp for email — metered third parties.</li>
+<li><strong>Fan-out</strong>: one input amplified into many outputs. Here: one notification → a user's several devices → several provider calls.</li>
+<li><strong>Message queue</strong>: a buffer a producer writes to and returns from immediately, while consumers (workers) drain it at their own pace. It buys decoupling, peak smoothing and buffering.</li>
+<li><strong>Idempotency</strong>: doing an operation once and doing it many times give the same result. Usually implemented by tagging each operation with a unique id and discarding repeats.</li>
+<li><strong>At-least-once / exactly-once</strong>: delivery semantics. The former allows duplicates but never drops; the latter does neither — and is essentially unreachable in a distributed setting.</li>
+<li><strong>Dead letter queue (DLQ)</strong>: where a message goes after N failed retries — a bin for human inspection, not for further automatic retries.</li>
+<li><strong>Exponential backoff</strong>: retry intervals that double — 1s, 2s, 4s — so a crowd of clients retrying at once does not finish off the downstream.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This is the seventh case study in Part II of Volume 1. It continues the "large-scale read/write and scheduling" thread of Ch 8 (URL shortener) and Ch 9 (crawler), and sets up Ch 11 (news feed) — both are <strong>fan-out problems</strong>, differing in where the fan-out lands: here on third-party channels you do not control, in Ch 11 on inboxes you own. In the real world it maps to the <strong>notification platform</strong> that grows inside almost every consumer product: LinkedIn's ATC, Netflix's Pushy, every company's in-house messaging hub.</p>
+<h2>The problem it solves</h2>
+<p>Start with the scale. The book's estimate is roughly <code>5M</code> iOS pushes, <code>10M</code> Android pushes, <code>1M</code> SMS and <code>5M</code> emails per day — about <strong>21 million a day</strong>, which averages out to a mere <code>243 per second</code>. That sounds like nothing.</p>
+<p><strong>And the average is the least useful number here.</strong> Notification traffic is <em>spiky</em> by nature: a campaign push to 5 million users that must land within five minutes is <code>16,700 per second</code> — <strong>nearly 70× the average</strong>; a production alert must reach every on-call within 30 seconds. You design for the peak and pay for the average.</p>
+<p>Skip the design and it breaks in three concrete ways. <strong>It drags down the main flow</strong>: call APNs synchronously after checkout, and with a provider that normally takes <code>200ms</code> and occasionally <code>5s</code>, your checkout p99 gets dragged along. <strong>It loses silently</strong>: a notification that lives only in memory dies with the process restart, and that "payment successful" never existed — and <strong>nobody will notice</strong>, which makes lost notifications the quietest failure mode there is. <strong>It drives users away</strong>: sloppy retries send the same push five times, the user switches notifications off, and that is the one <strong>irreversible</strong> failure in the chapter.</p>
+<h2>The core content, explained</h2>
+<h3>The recipient is a device, not a user</h3>
+<p>Step one is collecting contact details: when a user installs the app or signs in, the client exchanges a token with APNs/FCM and hands it to the API server, which stores it. The model is one-to-many — a <code>user</code> table (<code>user_id</code>, email, phone) and a <code>device</code> table (<code>device_id</code>, <code>user_id</code>, <code>device_token</code>, last login).</p>
+<p>Hidden here is a point most people skip: <strong>push addresses devices, not people</strong>. A user with a phone, a tablet and an old handset means one notification fans out into three provider calls. So <strong>device count, not user count, is the real load parameter</strong> — sizing by users underestimates by two or three times.</p>
+<p>The other half is <strong>recycling</strong>. Tokens die on uninstall and device change; APNs answers <code>410 Unregistered</code>, FCM answers <code>UNREGISTERED</code>. <strong>You must use that receipt to delete dead tokens</strong>, or two things rot at once: wasted call quota, and a delivery rate diluted into meaninglessness — and delivery rate is your only external signal that a channel has broken.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m1" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="m1r" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#e06b6b"></path></marker></defs>
+<rect fill="rgba(155,108,245,0.18)" height="30" rx="6" stroke="#9b6cf5" width="112" x="12" y="76"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="68" y="96">One notification</text>
+<line marker-end="url(#m1)" stroke="#7c8593" x1="126" x2="150" y1="91" y2="91"></line>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="6" stroke="#5b9df9" width="82" x="154" y="76"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="195" y="96">User U</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="195" y="122">one-to-many</text>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="6" stroke="#7c8593" width="196" x="286" y="20"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="384" y="39">iPhone · token A</text>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="6" stroke="#7c8593" width="196" x="286" y="77"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="384" y="96">iPad · token B</text>
+<rect fill="rgba(224,107,107,0.14)" height="28" rx="6" stroke="#e06b6b" width="196" x="286" y="134"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="384" y="153">Old phone · token C (uninstalled)</text>
+<line marker-end="url(#m1)" stroke="#7c8593" x1="240" x2="282" y1="84" y2="38"></line>
+<line marker-end="url(#m1)" stroke="#7c8593" x1="240" x2="282" y1="91" y2="91"></line>
+<line marker-end="url(#m1)" stroke="#7c8593" x1="240" x2="282" y1="98" y2="146"></line>
+<line marker-end="url(#m1)" stroke="#7c8593" x1="486" x2="522" y1="34" y2="34"></line>
+<line marker-end="url(#m1)" stroke="#7c8593" x1="486" x2="522" y1="91" y2="91"></line>
+<line marker-end="url(#m1r)" stroke="#e06b6b" x1="486" x2="522" y1="148" y2="148"></line>
+<text fill="#8fbaff" font-size="10" x="526" y="38">delivered</text>
+<text fill="#8fbaff" font-size="10" x="526" y="95">delivered</text>
+<text fill="#e06b6b" font-size="10" x="526" y="152">410 → recycle</text>
+<text fill="#7c8593" font-size="9.5" x="12" y="184">One notification → 3 provider calls: devices, not users, are the real load parameter</text>
+</svg>
+<figcaption>Fig 1 · Push addresses devices, not people: one notification fans out into N calls, and dead tokens must be recycled from the provider's own receipt.</figcaption>
+</figure>
+<h3>Three fatal flaws in the naive version</h3>
+<p>The most direct design — business services → one notification server → providers → devices — dies in three places: a <strong>single point of failure</strong> (that server goes, all notifications stop), <strong>no room to scale</strong> (template rendering, media attachments and every provider SDK crammed onto one box), and <strong>tight coupling</strong> (a slow provider slows the upstream business).</p>
+<p>There is a counter-intuitive point worth doing the arithmetic on: <strong>what kills the naive version is usually not QPS but the provider's latency variance.</strong> With <code>200</code> concurrent threads on one box and a provider averaging <code>200ms</code>, theoretical throughput is <code>1,000/sec</code>. Let the SMS gateway wobble to <code>5s</code> and the same 200 threads deliver <code>40/sec</code> — <strong>a 25× collapse while the CPU sits idle</strong>. Every thread is parked on a wait. That is the structural disease of synchronous direct calls.</p>
+<h3>The skeleton: a queue between production and delivery</h3>
+<p>Three cuts. <strong>One</strong>: move the database and cache out of the notification server so it becomes <em>stateless</em> — only a stateless server scales horizontally and auto-scales. <strong>Two</strong>: insert a message queue between the server and the providers; the server returns the moment the write lands, and main-flow latency drops from "wait for a provider" to a <code>1–5ms</code> enqueue. <strong>Three</strong>: give every channel its own queue with its own pool of workers.</p>
+<p>Why <strong>one queue per channel</strong> rather than one big queue with a type field? Two reasons, both hard:</p>
+<ul>
+<li><strong>Failure containment</strong>: when the SMS gateway dies, the SMS queue backs up while APNs, FCM and email keep flowing. Share one queue and the stuck texts at the head block every other type behind them (<em>head-of-line blocking</em>).</li>
+<li><strong>Independent scaling</strong>: the four channels differ by an order of magnitude in latency (tens of milliseconds for push, hundreds for SMS, seconds for email), so they need entirely different worker counts. Only separate queues let you size them separately.</li>
+</ul>
+<p>The queue also hands you an <strong>observability handle</strong>: the book singles out <em>queue backlog</em> as the metric to watch. The operational rule is <code>backlog ÷ drain rate = time to clear</code> — once that exceeds your freshness target (say 60 seconds), scale out or shed load, rather than waiting for users to complain.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 330" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m2" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-family="monospace" font-size="9.5" text-anchor="middle" x="60" y="18">Services</text>
+<text fill="#5b9df9" font-family="monospace" font-size="9.5" text-anchor="middle" x="172" y="18">Notification service</text>
+<text fill="#5b9df9" font-family="monospace" font-size="9.5" text-anchor="middle" x="300" y="18">Per-channel queues</text>
+<text fill="#5b9df9" font-family="monospace" font-size="9.5" text-anchor="middle" x="425" y="18">Workers</text>
+<text fill="#5b9df9" font-family="monospace" font-size="9.5" text-anchor="middle" x="558" y="18">Providers, devices</text>
+<rect fill="rgba(155,108,245,0.16)" height="66" rx="6" stroke="#9b6cf5" width="88" x="16" y="98"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="60" y="126">Order / promo /</text>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="60" y="144">alerting</text>
+<rect fill="rgba(91,157,249,0.14)" height="112" rx="6" stroke="#5b9df9" width="102" x="121" y="75"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="172" y="97">appKey auth</text>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="172" y="117">opt-in check</text>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="172" y="137">rate cap</text>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="172" y="157">template render</text>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="172" y="177">assign event_id</text>
+<line marker-end="url(#m2)" stroke="#7c8593" x1="106" x2="117" y1="131" y2="131"></line>
+<rect fill="rgba(91,157,249,0.1)" height="24" rx="5" stroke="#7c8593" width="104" x="248" y="48"></rect>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="300" y="64">APNs queue</text>
+<rect fill="rgba(91,157,249,0.1)" height="24" rx="5" stroke="#7c8593" width="104" x="248" y="94"></rect>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="300" y="110">FCM queue</text>
+<rect fill="rgba(91,157,249,0.1)" height="24" rx="5" stroke="#7c8593" width="104" x="248" y="140"></rect>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="300" y="156">SMS queue</text>
+<rect fill="rgba(91,157,249,0.1)" height="24" rx="5" stroke="#7c8593" width="104" x="248" y="186"></rect>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="300" y="202">Email queue</text>
+<line marker-end="url(#m2)" stroke="#7c8593" x1="226" x2="244" y1="120" y2="62"></line>
+<line marker-end="url(#m2)" stroke="#7c8593" x1="226" x2="244" y1="126" y2="106"></line>
+<line marker-end="url(#m2)" stroke="#7c8593" x1="226" x2="244" y1="136" y2="152"></line>
+<line marker-end="url(#m2)" stroke="#7c8593" x1="226" x2="244" y1="142" y2="198"></line>
+<rect fill="rgba(91,157,249,0.14)" height="24" rx="5" stroke="#5b9df9" width="72" x="389" y="48"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="425" y="64">workers ×n</text>
+<rect fill="rgba(91,157,249,0.14)" height="24" rx="5" stroke="#5b9df9" width="72" x="389" y="94"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="425" y="110">workers ×n</text>
+<rect fill="rgba(91,157,249,0.14)" height="24" rx="5" stroke="#5b9df9" width="72" x="389" y="140"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="425" y="156">workers ×n</text>
+<rect fill="rgba(91,157,249,0.14)" height="24" rx="5" stroke="#5b9df9" width="72" x="389" y="186"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="425" y="202">workers ×n</text>
+<line marker-end="url(#m2)" stroke="#7c8593" x1="355" x2="385" y1="60" y2="60"></line>
+<line marker-end="url(#m2)" stroke="#7c8593" x1="355" x2="385" y1="106" y2="106"></line>
+<line marker-end="url(#m2)" stroke="#7c8593" x1="355" x2="385" y1="152" y2="152"></line>
+<line marker-end="url(#m2)" stroke="#7c8593" x1="355" x2="385" y1="198" y2="198"></line>
+<rect fill="rgba(155,108,245,0.14)" height="24" rx="5" stroke="#9b6cf5" width="120" x="498" y="48"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="558" y="64">APNs → iOS</text>
+<rect fill="rgba(155,108,245,0.14)" height="24" rx="5" stroke="#9b6cf5" width="120" x="498" y="94"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="558" y="110">FCM → Android</text>
+<rect fill="rgba(155,108,245,0.14)" height="24" rx="5" stroke="#9b6cf5" width="120" x="498" y="140"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="558" y="156">SMS gateway</text>
+<rect fill="rgba(155,108,245,0.14)" height="24" rx="5" stroke="#9b6cf5" width="120" x="498" y="186"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="558" y="202">Email provider</text>
+<line marker-end="url(#m2)" stroke="#7c8593" x1="463" x2="494" y1="60" y2="60"></line>
+<line marker-end="url(#m2)" stroke="#7c8593" x1="463" x2="494" y1="106" y2="106"></line>
+<line marker-end="url(#m2)" stroke="#7c8593" x1="463" x2="494" y1="152" y2="152"></line>
+<line marker-end="url(#m2)" stroke="#7c8593" x1="463" x2="494" y1="198" y2="198"></line>
+<rect fill="rgba(255,255,255,0.03)" height="30" rx="6" stroke="rgba(91,157,249,0.4)" stroke-dasharray="4 3" width="156" x="94" y="243"></rect>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="172" y="262">user / device / prefs tables</text>
+<line stroke="rgba(91,157,249,0.4)" stroke-dasharray="4 3" x1="172" x2="172" y1="189" y2="241"></line>
+<rect fill="rgba(255,255,255,0.03)" height="30" rx="6" stroke="rgba(91,157,249,0.4)" stroke-dasharray="4 3" width="164" x="343" y="243"></rect>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="425" y="262">notification log · retries · DLQ</text>
+<line stroke="rgba(91,157,249,0.4)" stroke-dasharray="4 3" x1="425" x2="425" y1="212" y2="241"></line>
+<text fill="#9b6cf5" font-family="monospace" font-size="10" x="94" y="300">Key metric: backlog ÷ drain rate = time to clear</text>
+<text fill="#7c8593" font-size="9.5" x="94" y="318">When the SMS gateway dies, only its queue backs up — the other three keep flowing</text>
+</svg>
+<figcaption>Fig 2 · The architecture: a stateless notification service decides whether to send; per-channel queues and workers decide how — so failure and scaling are both contained inside one channel.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/message-queue-day8.en.html" rel="noopener" target="_blank">System Design · Day 8 Message Queues</a> — what a queue actually buys you: peak smoothing, decoupling and delivery semantics, plus how to monitor backlog and scale consumer groups</aside>
+<h3>The reliability trio: don't lose, don't duplicate, don't annoy</h3>
+<p><strong>Don't lose — persist, then retry.</strong> Before enqueueing, write a <em>notification log</em> row recording <code>event_id</code>, recipient, channel and state; a worker that fails retries with exponential backoff (<code>1s / 2s / 4s…</code>) and lands in a dead letter queue with an alert after the cap. The honest cost: one notification goes from a single network call to "write, call, update state", roughly <strong>2–3× write amplification</strong>. What you buy is the ability to answer "did this one actually go out?" — without the log you have no starting point for the investigation.</p>
+<p><strong>Don't duplicate — via idempotency, because exactly-once is unreachable.</strong> On a timeout you cannot distinguish "the provider never got it" from "the provider got it and the response was lost", so retrying necessarily produces duplicates. The only fix is to take the responsibility onto your side: every notification carries a globally unique <code>event_id</code>, and the worker does one atomic "have I seen this?" check before sending (Redis <code>SET key NX EX</code>, or a unique index). The TTL must cover the entire retry window — a 24-hour retry window needs a 24-hour dedup key, and anything shorter is the same as no dedup at all.</p>
+<p><strong>Don't annoy — via preferences and rate caps.</strong> The preferences table is trivial (<code>user_id</code>, <code>channel</code>, <code>opt_in</code>); what matters is that <strong>the check moves ahead of the enqueue</strong>. Otherwise the queue fills with messages that should never be sent, and a user who flips the switch mid-flight still gets whatever is already queued. The book's reason for rate caps is blunt: <strong>annoy a user and they turn off system-level notifications, and that door rarely reopens</strong>. The pragmatic form is "coarse filter before enqueue, recheck before send", the latter catching preference changes from the last few seconds.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m3" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="m3o" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#e8a54b"></path></marker></defs>
+<rect fill="rgba(91,157,249,0.14)" height="26" rx="5" stroke="#5b9df9" width="112" x="12" y="14"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="68" y="31">Notification svc</text>
+<rect fill="rgba(91,157,249,0.14)" height="26" rx="5" stroke="#5b9df9" width="88" x="182" y="14"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="226" y="31">Queue</text>
+<rect fill="rgba(91,157,249,0.14)" height="26" rx="5" stroke="#5b9df9" width="88" x="342" y="14"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="386" y="31">Worker</text>
+<rect fill="rgba(155,108,245,0.16)" height="26" rx="5" stroke="#9b6cf5" width="112" x="500" y="14"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="556" y="31">Provider</text>
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="68" x2="68" y1="44" y2="282"></line>
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="226" x2="226" y1="44" y2="282"></line>
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="386" x2="386" y1="44" y2="282"></line>
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="556" x2="556" y1="44" y2="282"></line>
+<text fill="#b9c0ca" font-size="10" x="72" y="66">1. Log event_id, check prefs and rate cap, then enqueue</text>
+<line marker-end="url(#m3)" stroke="#7c8593" x1="68" x2="222" y1="74" y2="74"></line>
+<text fill="#b9c0ca" font-size="10" x="230" y="102">2. Worker pulls one message</text>
+<line marker-end="url(#m3)" stroke="#7c8593" x1="226" x2="382" y1="110" y2="110"></line>
+<rect fill="rgba(91,157,249,0.08)" height="26" rx="5" stroke="#5b9df9" stroke-dasharray="3 3" width="192" x="292" y="126"></rect>
+<text fill="#8fbaff" font-size="9.5" text-anchor="middle" x="388" y="143">3. Idempotency: event_id seen → drop</text>
+<text fill="#b9c0ca" font-size="10" x="390" y="176">4. Call push / SMS / email</text>
+<line marker-end="url(#m3)" stroke="#7c8593" x1="386" x2="552" y1="184" y2="184"></line>
+<text fill="#7c8593" font-size="10" text-anchor="end" x="548" y="206">5. 200 OK: the provider accepted it — not that the user saw it</text>
+<line stroke="#7c8593" stroke-dasharray="4 3" x1="556" x2="390" y1="214" y2="214"></line>
+<rect fill="rgba(232,165,75,0.1)" height="52" rx="6" stroke="#e8a54b" stroke-dasharray="4 3" width="364" x="240" y="228"></rect>
+<text fill="#e8a54b" font-size="10" x="250" y="248">6. Timeout = the grey zone: sent, or not sent? You cannot tell</text>
+<text fill="#b9c0ca" font-size="9.5" x="250" y="268">→ retry (at-least-once); step 3 absorbs duplicates; repeated failure → DLQ + alert</text>
+<line marker-end="url(#m3o)" stroke="#e8a54b" x1="386" x2="386" y1="220" y2="226"></line>
+</svg>
+<figcaption>Fig 3 · The life of one notification: a timeout is an undecidable state, so the semantics can only be at-least-once — and duplicates must be caught by the worker's idempotency check.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/reliability-day23.en.html" rel="noopener" target="_blank">System Design · Day 23 Reliability</a> — how retries, backoff with jitter, circuit breakers and degradation combine so one downstream wobble isn't amplified into an avalanche</aside>
+<h3>Templates, auth, tracking: the three an interview usually forgets</h3>
+<p><strong>Templates</strong>: one "your order has shipped" needs three languages × three channels = <code>9</code> variants; a template separates the fixed skeleton from the variable parameters so one edit propagates everywhere. <strong>Auth</strong>: calls to the notification API carry an <code>appKey</code> / <code>appSecret</code>, or anyone who reaches the internal endpoint can broadcast to your entire user base through your channels. <strong>Tracking</strong>: delivery, open and click rates go to analytics — and not only as a product requirement. A provider's <code>200</code> means only that it accepted the request; <strong>a sudden drop in delivery rate is your one external signal that a channel has broken</strong>.</p>
+<h2>Trade-offs and how to choose</h2>
+<p>The real choices in this chapter are not on the architecture diagram. They are two: <strong>which channel to use</strong>, and <strong>which side of the line owns the duplicates</strong>.</p>
+<p class="tcap">Table 1 · Choosing a channel: the certainty / cost / latency triangle</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Channel</th><th>Delivery certainty</th><th>Typical latency</th><th>Cost</th><th>Fits / costs</th></tr></thead>
+<tbody>
+<tr><th>Push (APNs / FCM)</th><td><strong>Weakest</strong>: no delivery guarantee, user can switch it off, hard cap on offline backlog</td><td>seconds</td><td>marginal cost ≈ 0</td><td>High-frequency, low-value, droppable content. <strong>Cost: one permission toggle voids the whole channel</strong></td></tr>
+<tr><th>SMS</th><td>Higher (carrier-side), but still no "user read it" receipt</td><td>seconds to tens of seconds</td><td><strong>Most expensive</strong>, priced per message</td><td>OTPs, account security, critical alerts. <strong>Cost: spend grows linearly with volume</strong></td></tr>
+<tr><th>Email</th><td>Medium: bounces give real receipts, but spam folders exist</td><td>seconds to minutes</td><td>very low</td><td>Invoices, receipts, long content. <strong>Cost: too slow for anything urgent</strong></td></tr>
+<tr><th>In-app inbox</th><td><strong>Highest — the only channel entirely under your control</strong></td><td>next time the user opens the app</td><td>one database write</td><td>Backstop and history. <strong>Cost: entirely passive; if they don't visit, nothing was sent</strong></td></tr>
+</tbody></table></div>
+<p>In practice this becomes <strong>tiering plus fallback</strong>: promotions go to push and the in-app inbox only; critical transactions (payment, security) go "push first, fall back to SMS if unclicked after N minutes"; and <strong>everything also lands in the in-app inbox</strong>, the only channel that guarantees the user can find it when they go looking.</p>
+<p class="tcap">Table 2 · Delivery semantics: where the responsibility sits decides how much code you write</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Semantics</th><th>How it's built</th><th>What goes wrong</th><th>Where it fits</th></tr></thead>
+<tbody>
+<tr><th>At-most-once</th><td>Send once, give up on failure, no retry</td><td><strong>Drops messages</strong>, and drops them silently</td><td>Pure promotion, content nobody misses</td></tr>
+<tr><th>At-least-once<br/>(this chapter's choice)</th><td>Persist + exponential backoff + DLQ</td><td><strong>Duplicates</strong></td><td>The default for almost everything</td></tr>
+<tr><th>At-least-once + idempotency</th><td>The above, plus <code>event_id</code> dedup (Redis <code>SET NX</code> / unique index)</td><td>One extra lookup; <strong>a dedup TTL shorter than the retry window is the same as no dedup</strong></td><td><strong>The engineering answer</strong> — behaviourally equivalent to exactly-once</td></tr>
+<tr><th>Exactly-once</th><td>Unreachable end to end: the last hop is a third party that doesn't promise it either</td><td>Chasing it makes the design more complex without making it more correct</td><td>In an interview, "you can't; use idempotency instead" <em>is</em> the right answer</td></tr>
+</tbody></table></div>
+<p>One more question that comes up: <strong>should the business call a notification API synchronously, or write to the queue directly?</strong> Writing directly is fastest, but validation then moves to the worker — by the time a bad parameter surfaces the message is already queued. Most teams call a deliberately <strong>thin</strong> notification API instead: validate and enqueue only, return in <code>1–5ms</code>, keeping bad data out without ever waiting on a provider.</p>
+<h2>Why it matters / in real systems</h2>
+<p>This skeleton is not a teaching model — it is the thing companies actually call a notification platform. Asked about notifications in an interview, saying these four things clearly gets you most of the way: <strong>one queue per channel (failure containment), <code>event_id</code> idempotency (duplicates are your responsibility), preference checks ahead of the enqueue, and backlog monitoring (the only useful health signal)</strong>. Real systems grow one more layer on top — the intelligence that decides whether a notification should be sent at all, which is where the serious effort goes.</p>
+<div class="ev">
+<div class="evh">EVIDENCE FROM THE FIELD · NOT THE BOOK'S CLAIMS, BUT THE COMPANIES' OWN</div>
+<ul>
+<li><strong>Apple</strong>'s APNs documentation states that with a nonzero <code>apns-expiration</code>, APNs <strong>stores the notification and tries to deliver it at least once</strong>, repeating as needed until that date; set it to <code>0</code> and APNs attempts delivery only once and does not store it — <strong>evidence that retry and discard policy is set by the provider, not by you</strong>. <span class="src"><a href="https://developer.apple.com/documentation/usernotifications/sending-notification-requests-to-apns" rel="noopener" target="_blank">Apple Developer Documentation, "Sending notification requests to APNs" ↗</a></span></li>
+<li><strong>Google</strong>'s FCM documentation gives a hard ceiling on offline backlog: at most <code>100</code> non-collapsible messages are stored for an offline device, and <strong>beyond that limit all stored messages are discarded</strong>; the default storage window is <code>4</code> weeks — <strong>confirming that push channels do not promise delivery</strong>. <span class="src"><a href="https://firebase.google.com/docs/cloud-messaging/customize-messages/collapsible-message-types" rel="noopener" target="_blank">Firebase Cloud Messaging docs, "Non-collapsible and collapsible messages" ↗</a></span></li>
+<li><strong>LinkedIn</strong>'s Air Traffic Controller (ATC) runs notifications through a Samza stream pipeline that decides each one against the "5 Rights" — right member, right message, right channel, right time, <strong>right frequency</strong> — merging duplicates and capping volume. <strong>Direct confirmation that preferences and rate limiting are not optional extras but the core logic of a notification system.</strong> <span class="src"><a href="https://www.linkedin.com/blog/engineering/messaging-notifications/air-traffic-controller-member-first-notifications-at-linkedin" rel="noopener" target="_blank">LinkedIn Engineering, "Air Traffic Controller: Member-First Notifications" ↗</a></span></li>
+<li><strong>Netflix</strong> took the other road: <strong>Pushy</strong>, an in-house WebSocket gateway that keeps persistent connections to devices and bypasses third-party channels entirely, now running at <strong>hundreds of millions of concurrent connections and around 300,000 messages per second</strong> — <strong>evidence that owning the channel is a real alternative at sufficient scale, paid for in connection management and operations</strong>. <span class="src"><a href="https://netflixtechblog.com/pushy-to-the-limit-evolving-netflixs-websocket-proxy-for-the-future-b468bc0ff658" rel="noopener" target="_blank">Netflix TechBlog, "Pushy to the Limit", 2024 ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/chat-system-day15.en.html" rel="noopener" target="_blank">System Design · Day 15 Chat Systems</a> — what owning the channel looks like: holding tens of millions of WebSockets, ordering messages, and falling back to push when the device goes offline</aside>
+<h2>Common mistakes and open questions</h2>
+<ul>
+<li><strong>Reading "provider returned 200" as "the user got it"</strong> — the most common misconception. <code>200</code> means APNs or FCM accepted the request. Whether the device was offline, the message collapsed or discarded, or permissions revoked, you never learn.</li>
+<li><strong>Chasing exactly-once</strong>: the last hop lives in someone else's system, so end-to-end exactly-once is unreachable. The answer is always at-least-once plus an idempotency key.</li>
+<li><strong>Not recycling dead tokens</strong>: it wastes quota and dilutes your delivery-rate metric — which then misleads you about a channel's health.</li>
+<li><strong>Checking preferences only in the worker</strong>: the queue fills with messages that should not be sent, and preference changes cannot reach what is already queued. Filter coarsely before enqueue, recheck before send.</li>
+<li><strong>The two things the book leaves out are the hardest parts of a real system</strong>: the intelligence deciding <em>whether</em> to send (relevance scoring, bundling, timing — LinkedIn's ATC layer), and <strong>cross-channel fallback and dedup</strong> (fall back to SMS when a push goes unopened — then what if the push is seen afterwards).</li>
+<li><strong>Dated in one respect</strong>: the book is from 2020. Since then GDPR and comparable privacy laws have turned explicit consent for marketing notifications into a compliance line rather than a product feature, and Web Push and RCS have become additional channels. The skeleton holds; the constraints on <em>whether to send</em> are much harder than the book suggests.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. The thesis: the difficulty is not sending, it is that <strong>the last mile is not yours</strong> — third-party channels guarantee neither delivery nor non-duplication, so every lever moves back onto your side.</p>
+<p>2. The recipient granularity is a <strong>device, not a user</strong>: several devices per person means one notification becomes N calls, so size capacity by devices; dead tokens must be recycled from receipts like <code>410</code>.</p>
+<p>3. The naive synchronous design dies of three things — single point, no room to scale, tight coupling — and <strong>what kills it is the provider's latency variance, not QPS</strong> (200ms wobbling to 5s collapses single-box throughput 25×).</p>
+<p>4. Three cuts to the skeleton: make the server stateless, insert a queue, and give <strong>each channel its own queue</strong> — the last buys failure containment and independent scaling, so a dead SMS gateway never touches push.</p>
+<p>5. The metric to watch is <strong>queue backlog</strong>: backlog ÷ drain rate exceeding your freshness target means scale out or shed load.</p>
+<p>6. The reliability trio: <strong>don't lose</strong> (persist + backoff + DLQ, at 2–3× write amplification), <strong>don't duplicate</strong> (<code>event_id</code> idempotency, with a TTL covering the whole retry window), <strong>don't annoy</strong> (preferences ahead of the enqueue, plus rate caps).</p>
+<p>7. The semantics can only be <strong>at-least-once plus idempotency</strong>; end-to-end exactly-once is unreachable, and saying so proves more understanding than drawing the diagram correctly.</p>
+<p>8. Channel choice is a certainty / cost / latency triangle: push is cheapest and least certain, SMS the most expensive and most immediate, and <strong>the in-app inbox is the only backstop you fully control</strong>. The most expensive failure is the irreversible one — a user who switches notifications off can no longer be reached even with an OTP, which makes rate caps a reliability control rather than product fastidiousness.</p>
+</div>
+</div>
+<footer>Books Deep-Read · Read this page ≈ get the core of the chapter; for the full case studies, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
