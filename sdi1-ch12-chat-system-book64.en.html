@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview Vol 1 · Ch 12 · Design a Chat System — Books Deep-Read Book 64</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOKS DEEP-READ · SYSTEM DESIGN INTERVIEW VOL 1 · CH 12</p>
+<h1>Design a Chat System</h1>
+<p class="sub">System Design Interview Vol 1 · Ch 12 · Alex Xu · 2020</p>
+<p class="langbar"><a href="sdi1-ch12-chat-system-book64.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You send someone a message on WhatsApp and it lands with a ping. This chapter is about building that ping. It looks simpler than the news feed — surely it is just carrying one sentence from A to B — but underneath sits a more basic obstacle: <strong>under the rules the web actually runs on, a server has no way to come find you.</strong></p>
+<h2>A comparison: the post office only answers when you walk in</h2>
+<p>Think of the server as a post office with one rigid rule: <strong>it answers only when you walk in and ask "is there anything for me?"</strong> It will never knock on your door. So <em>sending</em> is no trouble at all — walk in, hand the letter over. <em>Receiving</em> is the hard part: how do you know when something has arrived?</p>
+<h2>Why the obvious ways hurt</h2>
+<p>The crudest approach is <strong>walking to the post office every few seconds to ask</strong>. It doesn't tire you; it tires the post office. With tens of millions of people asking, it fields tens of millions of questions a second, and ninety-nine times out of a hundred the answer is "nothing". A slight improvement is <strong>to ask and then refuse to leave</strong> — stand at the counter and wait, get your letter the moment it arrives, and if nothing comes, be sent home after a while so you can walk back. Fewer wasted trips, but you still shuttle back and forth constantly — and the clerk still cannot tell whether you went home or collapsed on the way.</p>
+<h2>The core idea: run a phone line that never hangs up</h2>
+<p>The modern answer is a third one: <strong>run a line between you and the post office that is never hung up.</strong> You still place the call (the rule is not broken), but once the line is open, either end can simply start talking — <strong>the post office can finally speak first.</strong> Messages arrive with a ping because that line is always open, so nothing has to be dialled again.</p>
+<h2>Three more things to manage around that line</h2>
+<p><strong>One: what if you're not there.</strong> The line drops, so the message is kept on the server in an inbox that belongs to you; you collect it whenever you next come online. If it really can't wait, it goes out as a phone push notification — and that road belongs to somebody else.</p>
+<p><strong>Two: group chat.</strong> For a small group, the cheapest thing is to make N copies: one message, one copy dropped into every member's inbox. With few members the arithmetic is fine. With many, it collapses completely.</p>
+<p><strong>Three: knowing who is still there.</strong> You cannot call someone offline the instant their line drops — one wobble in a subway tunnel and their avatar goes grey, comes back, and flickers the whole way. So real systems use a <strong>heartbeat</strong>: whoever is online chirps every few seconds, and only after tens of seconds of silence are they treated as gone.</p>
+<p>The honest cost: that always-open line is not free. The server must hold memory for every person online, one machine tops out at a few million lines — and when that machine needs a restart, everyone on it turns around and reconnects in the same second.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p>The hard part of a chat system is never sending, it is receiving. Sending is no different from loading a web page; but <strong>to let the server reach you first, you must first run it a line that never hangs up</strong> — and everything that follows (which machine that line lands on, where messages go while it is down, how a group copies them, how you tell someone is still there) is cleanup after that one line.</p>
+</div>
+<p class="switch-hint">Want the stateful edge layer, message-ID ordering and the real numbers? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">The protagonist of this chapter is not the message, it is the <strong>connection</strong>. It starts from one fact about the protocol — HTTP can only be opened by the client, a server cannot go and find you — and derives the shape of the whole architecture: the edge layer must hold a long-lived WebSocket, which makes it <strong>stateful</strong>, and stateful drags in the entire chain of consequences: service discovery (which box do I connect to), heartbeats (is it still there), inboxes (where messages sit while it isn't), and a message ID that rises monotonically within a conversation (how you order what arrives). <strong>The hard part of a chat system is never "send", it is "receive".</strong></p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Persistent connection</strong>: a network channel that stays open after being established, so either end can write into it at any time.</li>
+<li><strong>WebSocket</strong>: a bidirectional persistent protocol upgraded out of an HTTP handshake. It runs over ports 80/443, so it passes most firewalls.</li>
+<li><strong>Polling / long polling</strong>: the first asks "anything new?" at a fixed interval; the second asks once and the server <strong>withholds its answer</strong>, holding the request until a message arrives or it times out.</li>
+<li><strong>Stateless service</strong>: any machine can serve any request, so you can add boxes and restart them freely.</li>
+<li><strong>Stateful service</strong>: a request must land on <strong>one specific box</strong>, because that box holds this client's state — such as its open connection.</li>
+<li><strong>Service discovery</strong>: the mechanism that tells a client which server to connect to. This chapter uses <strong>ZooKeeper</strong> (a distributed service for coordination data) to register every available chat server.</li>
+<li><strong>Heartbeat</strong>: a tiny periodic signal proving the client is still alive; miss enough of them and it is declared offline.</li>
+<li><strong>Message sync queue / inbox</strong>: a per-recipient list of messages. Senders drop into it; the recipient collects once online.</li>
+<li><strong>Key-value store</strong>: a database that fetches a row by one key (HBase, Cassandra). Easy to scale out and fast on random reads, weak on complex queries.</li>
+<li><strong>Partition key</strong>: the field that decides which shard a row lands on. Rows sharing a partition key sit together, so a query touches one shard.</li>
+<li><strong>Snowflake</strong>: Twitter's 64-bit ID scheme, packing a timestamp, a machine number and a sequence into one value that is <strong>globally unique and time-sortable</strong>.</li>
+<li><strong>Push notification</strong>: an alert delivered through Apple's APNs or Google's FCM to a phone with the app closed. That channel is not yours.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The ninth case study in Part II of Volume 1. It follows Ch11, the news feed — both distribute content to many people, but a feed is <strong>one-to-many broadcast that tolerates minutes of skew</strong>, while chat is <strong>bidirectional, expected within a second, and not allowed to drop anything</strong>. It also follows Ch10, notifications: the moment a user goes offline, chat degrades into a notification problem. It leads into Ch13, search autocomplete. In the wild it is WhatsApp, Messenger, Slack, Discord, WeChat, and every product with a support window in the corner.</p>
+<h2>What problem is it solving</h2>
+<p>The chapter's scenario: <strong>50 million daily active users</strong>, 1-on-1 and group chat, a <strong>cap of 100 members per group</strong>, text only, <code>100,000</code> characters per message, chat history kept <strong>forever</strong>, one account signed in on several devices at once, plus presence and offline push.</p>
+<p>Start with message volume (what follows is derived from that scenario, not quoted from the book). At 20 messages per user per day that is <strong>1 billion messages/day ≈ 11,600/s</strong>, peaking near <code>35,000/s</code> at 3× — unremarkable for modern storage.</p>
+<p><strong>The pressure is not in the messages, it is in the connections.</strong> If 10% of the daily actives are online at once, that is <strong>5 million concurrent long-lived connections</strong>. The book puts a single connection at roughly <code>10 KB</code> of memory — a million connections is about <code>10 GB</code> of pure connection overhead, five million is <code>50 GB</code>, before a single byte of business data. <strong>A chat system's unit of capacity is "connections currently held open", not QPS</strong>, and that is the first instinct this chapter replaces.</p>
+<p>What happens if you don't solve it? Fall back to polling and 50 million users asking every 5 seconds is a standing <strong>10 million requests/s</strong>, nearly all of them answered "nothing new" — and the latency is still one polling interval.</p>
+<h2>The core content, properly</h2>
+<h3>First cut: sending and receiving are two different problems</h3>
+<p>The judgement worth keeping sits in the opening pages: <strong>sender and receiver are not symmetric.</strong> Sending is client-initiated, so an ordinary HTTP request suffices and nothing new appears. Receiving is not — HTTP's whole model is <strong>client asks, server answers</strong>, and the server has no legitimate way to knock first. Every structure in the rest of the chapter exists to route around that one fact.</p>
+<p>The book lays out three routes: <strong>polling</strong> (ask periodically; simple, but latency equals the interval and almost every answer is empty), <strong>long polling</strong> (ask, then let the server hold the request), and <strong>WebSocket</strong> (one HTTP handshake upgraded into a bidirectional persistent channel either end can write into). Long polling looks like the cheap compromise, but the book names three specific defects: <strong>sender and receiver may land on different servers</strong> (HTTP servers are usually stateless behind round-robin balancing, so the server does not know who to hand the message to), <strong>there is no good way to tell whether a client has disconnected</strong>, and <strong>users who never chat still reconnect periodically as requests time out</strong>. The table below lays all three side by side.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="-apple-system,sans-serif">
+<defs><marker id="b1" markerWidth="7" markerHeight="7" refX="5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#7c8593"></path></marker><marker id="b2" markerWidth="7" markerHeight="7" refX="5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#9b6cf5"></path></marker></defs>
+<text x="114" y="14" font-size="10.5" fill="#7c8593" text-anchor="middle" font-family="monospace">polling</text>
+<text x="324" y="14" font-size="10.5" fill="#7c8593" text-anchor="middle" font-family="monospace">long polling</text>
+<text x="534" y="14" font-size="10.5" fill="#5b9df9" text-anchor="middle" font-family="monospace">WebSocket</text>
+<text x="54" y="34" font-size="9" fill="#b9c0ca" text-anchor="middle">client</text>
+<text x="174" y="34" font-size="9" fill="#b9c0ca" text-anchor="middle">server</text>
+<line x1="54" y1="40" x2="54" y2="224" stroke="rgba(120,120,130,0.35)" stroke-dasharray="3 3"></line>
+<line x1="174" y1="40" x2="174" y2="224" stroke="rgba(120,120,130,0.35)" stroke-dasharray="3 3"></line>
+<text x="114" y="54" font-size="8" fill="#b9c0ca" text-anchor="middle">anything new?</text>
+<line x1="54" y1="60" x2="170" y2="60" stroke="#7c8593" marker-end="url(#b1)"></line>
+<text x="114" y="74" font-size="8" fill="#7c8593" text-anchor="middle">nothing</text>
+<line x1="174" y1="80" x2="58" y2="80" stroke="#7c8593" marker-end="url(#b1)"></line>
+<text x="114" y="98" font-size="8" fill="#b9c0ca" text-anchor="middle">anything new?</text>
+<line x1="54" y1="104" x2="170" y2="104" stroke="#7c8593" marker-end="url(#b1)"></line>
+<text x="114" y="118" font-size="8" fill="#7c8593" text-anchor="middle">nothing</text>
+<line x1="174" y1="124" x2="58" y2="124" stroke="#7c8593" marker-end="url(#b1)"></line>
+<text x="114" y="142" font-size="8" fill="#b9c0ca" text-anchor="middle">anything new?</text>
+<line x1="54" y1="148" x2="170" y2="148" stroke="#7c8593" marker-end="url(#b1)"></line>
+<text x="114" y="162" font-size="8" fill="#8fbaff" text-anchor="middle">at last, 1 message</text>
+<line x1="174" y1="168" x2="58" y2="168" stroke="#7c8593" marker-end="url(#b1)"></line>
+<text x="114" y="196" font-size="8.5" fill="#7c8593" text-anchor="middle">latency = the interval</text>
+<text x="114" y="212" font-size="8.5" fill="#7c8593" text-anchor="middle">almost all answers empty</text>
+<text x="264" y="34" font-size="9" fill="#b9c0ca" text-anchor="middle">client</text>
+<text x="384" y="34" font-size="9" fill="#b9c0ca" text-anchor="middle">server</text>
+<line x1="264" y1="40" x2="264" y2="224" stroke="rgba(120,120,130,0.35)" stroke-dasharray="3 3"></line>
+<line x1="384" y1="40" x2="384" y2="224" stroke="rgba(120,120,130,0.35)" stroke-dasharray="3 3"></line>
+<text x="324" y="54" font-size="8" fill="#b9c0ca" text-anchor="middle">ask, then hold</text>
+<line x1="264" y1="60" x2="380" y2="60" stroke="#7c8593" marker-end="url(#b1)"></line>
+<rect x="378" y="64" width="12" height="44" fill="rgba(155,108,245,0.3)" stroke="#9b6cf5"></rect>
+<text x="398" y="90" font-size="8" fill="#9b6cf5">held open</text>
+<text x="324" y="122" font-size="8" fill="#7c8593" text-anchor="middle">timeout, still nothing</text>
+<line x1="384" y1="128" x2="268" y2="128" stroke="#7c8593" marker-end="url(#b1)"></line>
+<text x="324" y="146" font-size="8" fill="#b9c0ca" text-anchor="middle">ask again at once</text>
+<line x1="264" y1="152" x2="380" y2="152" stroke="#7c8593" marker-end="url(#b1)"></line>
+<rect x="378" y="156" width="12" height="24" fill="rgba(155,108,245,0.3)" stroke="#9b6cf5"></rect>
+<text x="324" y="194" font-size="8" fill="#8fbaff" text-anchor="middle">1 message</text>
+<line x1="384" y1="186" x2="268" y2="186" stroke="#7c8593" marker-end="url(#b1)"></line>
+<text x="324" y="212" font-size="8.5" fill="#7c8593" text-anchor="middle">connections keep rebuilding</text>
+<text x="474" y="34" font-size="9" fill="#b9c0ca" text-anchor="middle">client</text>
+<text x="594" y="34" font-size="9" fill="#b9c0ca" text-anchor="middle">server</text>
+<line x1="474" y1="40" x2="474" y2="224" stroke="rgba(120,120,130,0.35)" stroke-dasharray="3 3"></line>
+<line x1="594" y1="40" x2="594" y2="224" stroke="rgba(120,120,130,0.35)" stroke-dasharray="3 3"></line>
+<text x="534" y="54" font-size="8" fill="#b9c0ca" text-anchor="middle">HTTP handshake: Upgrade</text>
+<line x1="474" y1="60" x2="590" y2="60" stroke="#7c8593" marker-end="url(#b1)"></line>
+<rect x="470" y="66" width="128" height="120" fill="rgba(91,157,249,0.07)" stroke="#5b9df9" stroke-dasharray="4 3" rx="5"></rect>
+<text x="534" y="84" font-size="8.5" fill="#8fbaff" text-anchor="middle">one always-open channel</text>
+<text x="534" y="102" font-size="8" fill="#9b6cf5" text-anchor="middle">server pushes</text>
+<line x1="594" y1="110" x2="478" y2="110" stroke="#9b6cf5" marker-end="url(#b2)"></line>
+<text x="534" y="128" font-size="8" fill="#b9c0ca" text-anchor="middle">client sends</text>
+<line x1="474" y1="136" x2="590" y2="136" stroke="#7c8593" marker-end="url(#b1)"></line>
+<text x="534" y="154" font-size="8" fill="#9b6cf5" text-anchor="middle">server pushes</text>
+<line x1="594" y1="162" x2="478" y2="162" stroke="#9b6cf5" marker-end="url(#b2)"></line>
+<text x="534" y="180" font-size="8" fill="#7c8593" text-anchor="middle">nothing re-dialled</text>
+<text x="534" y="204" font-size="8.5" fill="#8fbaff" text-anchor="middle">the server can speak first</text>
+<text x="534" y="220" font-size="8.5" fill="#7c8593" text-anchor="middle">cost: a stateful edge layer</text>
+<text x="14" y="252" font-size="10" fill="#9b6cf5">All three attack the same fact: in HTTP the server cannot speak first.</text>
+<text x="14" y="272" font-size="9.5" fill="#7c8593">Falling back to polling: 50M DAU asking every 5s is ~10M requests/s, for ~11.6K real messages/s.</text>
+<text x="14" y="290" font-size="9.5" fill="#7c8593">WebSocket does not buy bandwidth or speed. It buys the ability for the server to write first.</text>
+</svg>
+<figcaption>Fig 1 · Three ways to let a server speak first. Polling and long polling simulate push with repeated requests; WebSocket simply leaves the channel open.</figcaption>
+</figure>
+<h3>Once the edge layer is stateful, the architecture splits in three</h3>
+<p>Choosing WebSocket bills you immediately: <strong>the machine holding the connection becomes the only machine this client can use.</strong> So the book sorts services into three kinds: <strong>stateless services</strong> (signup, login, profile — behind a load balancer, any box will do), <strong>stateful services</strong> (the chat service, where each client holds a persistent connection on some box and does not move while that box lives), and <strong>third-party integration</strong> (push notifications).</p>
+<p>The first new component statefulness drags in is <strong>service discovery</strong>: a client coming online must first ask which box to connect to. The chapter registers every available chat server in ZooKeeper and picks one by geography and capacity. Without that layer, clients connect blind and load skews onto a few machines.</p>
+<p>Worse, the operational assumptions all change: <strong>restarting one stateless box goes unnoticed; restarting one stateful edge box means every connection on it drops, reconnects, re-authenticates and re-pulls history at the same instant.</strong> That is the reconnect storm — this layer's characteristic death is not being crushed by outside traffic, it is being crushed by its own recovery.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="-apple-system,sans-serif">
+<defs><marker id="c1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect x="14" y="118" width="94" height="48" rx="6" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"></rect>
+<text x="61" y="140" font-size="10.5" fill="#e7ebf1" text-anchor="middle">client</text>
+<text x="61" y="156" font-size="8.5" fill="#b9c0ca" text-anchor="middle">phone · web</text>
+<path d="M61,118 L61,34 L146,34" fill="none" stroke="#9b6cf5" stroke-dasharray="4 3" marker-end="url(#c1)"></path>
+<rect x="150" y="14" width="180" height="40" rx="6" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"></rect>
+<text x="240" y="32" font-size="10" fill="#e7ebf1" text-anchor="middle">service discovery (ZooKeeper)</text>
+<text x="240" y="47" font-size="8.5" fill="#b9c0ca" text-anchor="middle">which chat server to connect to</text>
+<path d="M108,132 L134,92 L146,92" fill="none" stroke="#7c8593" marker-end="url(#c1)"></path>
+<rect x="150" y="72" width="180" height="40" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="240" y="90" font-size="10" fill="#e7ebf1" text-anchor="middle">stateless services (behind LB)</text>
+<text x="240" y="105" font-size="8.5" fill="#b9c0ca" text-anchor="middle">signup · login · profile · friends</text>
+<line x1="108" y1="142" x2="146" y2="142" stroke="#7c8593" marker-end="url(#c1)"></line>
+<rect x="150" y="122" width="180" height="46" rx="6" fill="rgba(91,157,249,0.2)" stroke="#5b9df9"></rect>
+<text x="240" y="140" font-size="10" fill="#e7ebf1" text-anchor="middle">chat server (stateful)</text>
+<text x="240" y="156" font-size="8.5" fill="#8fbaff" text-anchor="middle">one WebSocket per client</text>
+<path d="M108,152 L134,198 L146,198" fill="none" stroke="#7c8593" marker-end="url(#c1)"></path>
+<rect x="150" y="178" width="180" height="40" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="240" y="196" font-size="10" fill="#e7ebf1" text-anchor="middle">presence service</text>
+<text x="240" y="211" font-size="8.5" fill="#b9c0ca" text-anchor="middle">heartbeats · status pub/sub</text>
+<line x1="330" y1="92" x2="372" y2="92" stroke="#7c8593" marker-end="url(#c1)"></line>
+<rect x="376" y="72" width="160" height="40" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="456" y="90" font-size="10" fill="#e7ebf1" text-anchor="middle">relational database</text>
+<text x="456" y="105" font-size="8.5" fill="#b9c0ca" text-anchor="middle">users · friends · settings</text>
+<line x1="330" y1="145" x2="372" y2="145" stroke="#7c8593" marker-end="url(#c1)"></line>
+<rect x="376" y="122" width="160" height="46" rx="6" fill="rgba(91,157,249,0.2)" stroke="#5b9df9"></rect>
+<text x="456" y="140" font-size="10" fill="#e7ebf1" text-anchor="middle">sync queue and KV store</text>
+<text x="456" y="156" font-size="8.5" fill="#8fbaff" text-anchor="middle">chat history · kept forever</text>
+<line x1="330" y1="198" x2="372" y2="198" stroke="#7c8593" marker-end="url(#c1)"></line>
+<rect x="376" y="178" width="160" height="40" rx="6" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"></rect>
+<text x="456" y="196" font-size="10" fill="#e7ebf1" text-anchor="middle">push: APNs / FCM</text>
+<text x="456" y="211" font-size="8.5" fill="#b9c0ca" text-anchor="middle">a channel you don't own</text>
+<rect x="544" y="122" width="82" height="46" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="585" y="140" font-size="9.5" fill="#e7ebf1" text-anchor="middle">ID generator</text>
+<text x="585" y="155" font-size="8" fill="#b9c0ca" text-anchor="middle">per-channel</text>
+<line x1="536" y1="145" x2="540" y2="145" stroke="#7c8593"></line>
+<text x="14" y="248" font-size="10" fill="#9b6cf5">One dividing line: wherever the long connection terminates, that layer is stateful.</text>
+<text x="14" y="268" font-size="9.5" fill="#7c8593">About 10 KB per connection: 1M is ~10 GB, 5M is ~50 GB — before any business data.</text>
+<text x="14" y="288" font-size="9.5" fill="#7c8593">The bill: restarting one box holding a million connections is a million simultaneous reconnects.</text>
+</svg>
+<figcaption>Fig 2 · Three kinds of service: stateless behind a load balancer, the stateful chat server holding the connection, third-party push outside the system. Service discovery steers each client to the right box.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/chat-system-day15.en.html" rel="noopener" target="_blank">System Design · Day 15 Chat System</a> — the edge layer at a billion users and 50 million concurrent connections: connection placement, graceful restarts and damping reconnect storms</aside>
+<h3>Where messages live, and how IDs get ordered</h3>
+<p>The book splits data in two. <strong>Generic data</strong> (profiles, settings, friend lists) is small and wants transactions, so it goes in a relational database. <strong>Chat history</strong> is enormous, so it goes in a key-value store. Three reasons: KV stores <strong>scale out easily</strong>, offer <strong>very low random-access latency</strong>, and <strong>relational databases handle the long tail badly</strong> — once indexes and data sets grow, random access gets expensive. The book names names: Messenger on HBase, Discord on Cassandra.</p>
+<p>The data model is the hard core of this section. One-on-one chat uses a message table whose <strong>primary key is <code>message_id</code></strong> — and <strong><code>created_at</code> cannot be the ordering key</strong>, because two messages can perfectly well land in the same millisecond. Group chat uses a <strong>composite key <code>(channel_id, message_id)</code></strong>, with <code>channel_id</code> as the <strong>partition key</strong>, because every query in a group chat happens inside one channel — all of a group's messages sit on one shard, and scrolling history touches one shard.</p>
+<p>A message ID must be both <strong>unique</strong> and <strong>time-sortable</strong>. Two ways: a global 64-bit sequence generator (Snowflake), or a <strong>local</strong> one guaranteeing monotonicity only within a single conversation. The book judges the second sufficient — <strong>a chat system does not need global ordering, only per-conversation ordering</strong>. This is the chapter's cheapest win: it shrinks "distributed global ordering", a genuinely hard problem, back into an increment inside one partition — and the partition key was already there, <code>channel_id</code>.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/unique-id-generation-day11.en.html" rel="noopener" target="_blank">System Design · Day 11 Unique ID Generation</a> — Snowflake's bit layout, handling clock skew, and what global ordering costs over local ordering</aside>
+<h3>The inbox model: 1-on-1, multi-device sync, small-group fan-out</h3>
+<p>The full one-on-one flow: A sends to chat server 1 → the server <strong>obtains a message ID</strong> → the message goes into the <strong>message sync queue</strong> → it is written to the key-value store → if B is online it is forwarded to B's chat server 2 and pushed down; if B is offline it goes to the push notification service. <strong>Storage happens before delivery</strong>, and that order cannot be flipped: only durability first makes "not dropped" meaningful.</p>
+<p>Multi-device sync is the prettiest design here. Each device keeps a <code>cur_max_message_id</code>, the highest ID it has seen; to fetch what's new, it queries for messages whose recipient is this user and whose ID is greater than <code>cur_max_message_id</code>. <strong>It is worth studying because it moves the bookkeeping of "how far did delivery get" off the server and onto the device.</strong> The server keeps no per-device cursor, so it never has to answer "where should a freshly installed device start"; reconnects, a new phone, several devices in parallel are all the same query. <strong>This is the real purpose of a monotonic message ID</strong> — not tidy sorting, but turning "what am I missing" into one range query.</p>
+<p>Group chat here uses <strong>fan-out on write</strong>: a group message is copied into every member's sync queue. Clients then read only their own inbox and the sync logic is identical to 1-on-1, and while groups are small, copying 100 times is negligible. The book draws the line itself: <strong>100 members per group</strong>, noting that WeChat caps groups at 500. <strong>This is the same accounting as Ch11's fan-out on write</strong> — cost is proportional to the number of recipients and collapses as that grows; a chat system simply gets to pin the number down with a product rule, which a news feed cannot, so a feed has to go hybrid instead.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="-apple-system,sans-serif">
+<defs><marker id="d1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect x="14" y="34" width="86" height="40" rx="5" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"></rect>
+<text x="57" y="50" font-size="9.5" fill="#e7ebf1" text-anchor="middle">user A</text>
+<text x="57" y="65" font-size="8" fill="#b9c0ca" text-anchor="middle">sends</text>
+<line x1="100" y1="54" x2="112" y2="54" stroke="#7c8593" marker-end="url(#d1)"></line>
+<rect x="116" y="34" width="86" height="40" rx="5" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"></rect>
+<text x="159" y="50" font-size="9.5" fill="#e7ebf1" text-anchor="middle">chat server 1</text>
+<text x="159" y="65" font-size="8" fill="#b9c0ca" text-anchor="middle">A's connection</text>
+<line x1="202" y1="54" x2="214" y2="54" stroke="#7c8593" marker-end="url(#d1)"></line>
+<rect x="218" y="34" width="86" height="40" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="261" y="50" font-size="9.5" fill="#e7ebf1" text-anchor="middle">get message ID</text>
+<text x="261" y="65" font-size="8" fill="#b9c0ca" text-anchor="middle">rising per channel</text>
+<line x1="304" y1="54" x2="316" y2="54" stroke="#7c8593" marker-end="url(#d1)"></line>
+<rect x="320" y="34" width="86" height="40" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="363" y="50" font-size="9.5" fill="#e7ebf1" text-anchor="middle">sync queue</text>
+<text x="363" y="65" font-size="8" fill="#b9c0ca" text-anchor="middle">recipient inbox</text>
+<line x1="406" y1="54" x2="418" y2="54" stroke="#7c8593" marker-end="url(#d1)"></line>
+<rect x="422" y="34" width="86" height="40" rx="5" fill="rgba(91,157,249,0.2)" stroke="#5b9df9"></rect>
+<text x="465" y="50" font-size="9.5" fill="#e7ebf1" text-anchor="middle">KV store</text>
+<text x="465" y="65" font-size="8" fill="#8fbaff" text-anchor="middle">store before push</text>
+<path d="M508,46 L524,26 L534,26" fill="none" stroke="#7c8593" marker-end="url(#d1)"></path>
+<rect x="538" y="10" width="88" height="34" rx="5" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"></rect>
+<text x="582" y="24" font-size="9" fill="#e7ebf1" text-anchor="middle">B online</text>
+<text x="582" y="37" font-size="8" fill="#b9c0ca" text-anchor="middle">pushed via server 2</text>
+<path d="M508,62 L524,84 L534,84" fill="none" stroke="#7c8593" marker-end="url(#d1)"></path>
+<rect x="538" y="68" width="88" height="34" rx="5" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"></rect>
+<text x="582" y="82" font-size="9" fill="#e7ebf1" text-anchor="middle">B offline</text>
+<text x="582" y="95" font-size="8" fill="#b9c0ca" text-anchor="middle">goes to push service</text>
+<rect x="14" y="122" width="612" height="130" rx="8" fill="rgba(91,157,249,0.03)" stroke="rgba(91,157,249,0.4)" stroke-dasharray="4 3"></rect>
+<text x="26" y="140" font-size="9.5" fill="#5b9df9" font-family="monospace">multi-device sync: the device does the bookkeeping</text>
+<rect x="30" y="154" width="150" height="46" rx="6" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"></rect>
+<text x="105" y="172" font-size="9.5" fill="#e7ebf1" text-anchor="middle">B's messages in the KV store</text>
+<text x="105" y="188" font-size="8" fill="#8fbaff" text-anchor="middle">message_id rises monotonically</text>
+<line x1="180" y1="168" x2="240" y2="156" stroke="#7c8593" marker-end="url(#d1)"></line>
+<line x1="180" y1="177" x2="240" y2="192" stroke="#7c8593" marker-end="url(#d1)"></line>
+<line x1="180" y1="186" x2="240" y2="228" stroke="#7c8593" marker-end="url(#d1)"></line>
+<rect x="244" y="142" width="140" height="28" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="314" y="160" font-size="9" fill="#b9c0ca" text-anchor="middle">phone cur_max = 1005</text>
+<rect x="244" y="178" width="140" height="28" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="314" y="196" font-size="9" fill="#b9c0ca" text-anchor="middle">tablet cur_max = 990</text>
+<rect x="244" y="214" width="140" height="28" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="314" y="232" font-size="9" fill="#b9c0ca" text-anchor="middle">new device cur_max = 0</text>
+<text x="400" y="162" font-size="9" fill="#8fbaff">each pulls ids &gt; its own cur_max</text>
+<text x="400" y="182" font-size="9" fill="#7c8593">no per-device cursor on the server</text>
+<text x="400" y="202" font-size="9" fill="#7c8593">reconnect · new phone · new device</text>
+<text x="400" y="222" font-size="9" fill="#7c8593">all one and the same range query</text>
+<text x="14" y="278" font-size="10" fill="#9b6cf5">What a monotonic ID is really for: turning "what am I missing" into one range query.</text>
+<text x="14" y="296" font-size="9.5" fill="#7c8593">Group chat copies one message into N inboxes; here N is at most 100 (WeChat caps at 500).</text>
+</svg>
+<figcaption>Fig 3 · The 1-on-1 flow (store first, then branch on presence), and multi-device sync: each device pulls its own delta using cur_max_message_id.</figcaption>
+</figure>
+<h3>Presence: the corner where things go quadratic</h3>
+<p>Presence is maintained separately by presence servers over WebSocket: on login, status and <code>last_active_at</code> are written to the key-value store; on logout they flip back. The awkward case is <strong>an abnormal disconnect</strong> — networks are unreliable by nature, and declaring someone offline the instant their link drops makes avatars flicker for a whole commute. The fix is a <strong>heartbeat</strong>: online clients emit a periodic event (the book's example is <strong>every 5 seconds, offline after 30 seconds of silence</strong>).</p>
+<p>How does that status reach others? The book uses <strong>publish-subscribe</strong>: <strong>a channel per pair of friends</strong>, so when A's status changes it publishes into A-B, A-C, A-D. Clean at small scale, but the cost hides in the count — <strong>the number of channels is proportional to the number of friend pairs, an N² quantity</strong>, which is directly related to WeChat capping friends at 5,000. So the book leaves an escape hatch: <strong>above some group size, stop broadcasting and fetch presence only when a user enters the group or refreshes manually</strong>. That is the second time this chapter converts a push into a pull, for exactly the reason a feed pulls for celebrities.</p>
+<p>One more thing worth noting: <strong>the heartbeat is itself a sizeable system</strong>. Five million connections at one heartbeat every 5 seconds is <strong>1 million events/s</strong> — nearly two orders of magnitude above the real message rate of roughly <code>11,600/s</code>. <strong>The biggest traffic in a chat system is often not the messages.</strong></p>
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 1 · Three ways to let the server speak first</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Option</th><th>Mechanism</th><th>Latency</th><th>Server cost</th><th>Fatal flaw</th><th>Still good for</th></tr></thead>
+<tbody>
+<tr><th>Polling</th><td>client asks on a timer</td><td><strong>equals the interval</strong></td><td>50M DAU / 5s ≈ 10M requests/s</td><td>ten million empty answers to serve ~11.6K real messages/s</td><td>status checks tolerating minutes of lag</td></tr>
+<tr><th>Long polling</th><td>ask, held open until a message or timeout</td><td>near real time</td><td>connections rebuilt constantly; each held request occupies one too</td><td>sender and receiver may land on different servers; no way to detect a dead client; non-chatters still reconnect on timeout</td><td>environments where WebSocket is unavailable</td></tr>
+<tr><th>WebSocket<br/>(the chapter's pick)</th><td>HTTP handshake upgraded to a bidirectional channel</td><td><strong>lowest</strong>: nothing re-dialled</td><td>~<code>10 KB</code> per connection; 5M connections ≈ <code>50 GB</code></td><td><strong>the edge layer becomes stateful</strong>: service discovery, heartbeats, and a reconnect storm on every restart</td><td><strong>anything needing server-initiated push</strong></td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · Four forks you must answer yourself after this chapter</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Fork</th><th>This chapter's pick</th><th>Cost / when to switch</th></tr></thead>
+<tbody>
+<tr><th>Message ID ordering</th><td><strong>monotonic within a conversation</strong>, no global order</td><td>skips global coordination; IDs are incomparable across conversations, so global search or a cross-group timeline needs Snowflake as well</td></tr>
+<tr><th>Group fan-out</th><td><strong>fan-out on write</strong>: a copy per member, capped at 100</td><td>cost scales with membership. Channels of tens of thousands must move to fan-out on read (fetch on entry), which makes reads expensive</td></tr>
+<tr><th>Presence propagation</th><td><strong>push</strong> via per-pair pub/sub; <strong>pull</strong> on entry inside groups</td><td>push means an N² number of channels; pull means status can be tens of seconds stale. Related to WeChat's 5,000-friend cap</td></tr>
+<tr><th>Where history lives</th><td><strong>key-value store</strong> (HBase / Cassandra)</td><td>buys horizontal scale and fast random reads; costs cross-row transactions, and complex queries and full-text search need separate systems</td></tr>
+</tbody></table></div>
+<p>One more frequent follow-up: <strong>how are connections assigned to machines?</strong> On the way in, service discovery picks by capacity and geography — but the real trap is on the way <em>out</em>. Removing a box means first refusing new connections, then draining the old ones gradually, with randomised backoff on client reconnects; skip that and you manufacture a reconnect storm yourself.</p>
+<h2>Why it matters / in real systems</h2>
+<p>Asked to design a chat system in an interview, laying out this chain is essentially the whole answer: <strong>send and receive are asymmetric → receiving needs a long-lived connection → the edge layer is therefore stateful → hence service discovery, heartbeats, inboxes and per-conversation monotonic IDs</strong>. Conversely, opening with "use WebSocket" and being unable to name the statefulness it buys is no answer at all.</p>
+<div class="ev">
+<div class="evh">EVIDENCE FROM INDUSTRY · these are the companies' own public claims, not the book's</div>
+<ul>
+<li><strong>WhatsApp</strong> published its measured per-machine connection counts: <strong>1 million concurrent TCP connections on a single server</strong> in 2011, pushed to <strong>2 million+</strong> the following year, on FreeBSD and Erlang. <strong>This settles the "capacity is measured in connections, not QPS" judgement</strong> — the connection itself is the object being optimised. <span class="src"><a href="https://blog.whatsapp.com/1-million-is-so-2011" rel="noopener" target="_blank">WhatsApp Blog, "1 million is so 2011", 2012 ↗</a></span></li>
+<li><strong>Meta (Facebook)</strong> published the Messages selection process in 2010: after benchmarking MySQL, Cassandra and HBase, the conclusion was that <strong>MySQL "did not handle the long tail of data well — as indexes and data sets grew large, performance suffered"</strong>. They chose HBase, used ZooKeeper for user discovery, and were storing <strong>over 135 billion messages a month</strong>. <strong>The three reasons this chapter gives for putting chat history in a key-value store originate here.</strong> <span class="src"><a href="https://engineering.fb.com/2010/11/15/core-infra/the-underlying-technology-of-messages/" rel="noopener" target="_blank">Engineering at Meta, "The Underlying Technology of Messages", 2010 ↗</a></span></li>
+<li><strong>Discord</strong> published its message schema: the primary key is <code>((channel_id, bucket), message_id)</code>, where <code>bucket</code> is a static time window of about 10 days, and <strong>every ID is a Snowflake, hence chronologically sortable by construction</strong>. <strong>That is this chapter's composite key in the wild</strong>, with one extra layer of bucketing so a single busy channel cannot blow out a partition. In 2017 twelve Cassandra nodes held billions of messages; by 2022 it was 177 nodes and trillions. <span class="src"><a href="https://medium.com/discord-engineering/how-discord-stores-billions-of-messages-7fa6ec7ee4c7" rel="noopener" target="_blank">Discord Engineering, "How Discord Stores Billions of Messages", 2017 ↗</a> · <a href="https://discord.com/blog/how-discord-stores-trillions-of-messages" rel="noopener" target="_blank">"How Discord Stores Trillions of Messages", 2022 ↗</a></span></li>
+<li><strong>Slack</strong> turned the price of a stateful edge layer into a dedicated system, <strong>Flannel</strong>: an application-level cache deployed at edge points of presence that <strong>sits astride the WebSocket connection</strong>, serving <strong>4 million simultaneous connections at peak and 600K client queries per second</strong>. One of its stated purposes is <strong>reducing the impact of reconnect storms on the backend</strong> — freshly reconnected users are served straight from the edge cache. <strong>The chapter writes one word, "stateful"; this is what that word grows into.</strong> <span class="src"><a href="https://slack.engineering/flannel-an-application-level-edge-cache-to-make-slack-scale/" rel="noopener" target="_blank">Engineering at Slack, "Flannel: An Application-Level Edge Cache to Make Slack Scale", 2017 ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/realtime-systems-day34.en.html" rel="noopener" target="_blank">System Design · Day 34 Real-Time Systems</a> — real-time shapes beyond a long-connection edge: SSE versus WebSocket, terminating at the edge, and holding state consistent within 100ms</aside>
+<h2>Common mistakes and open questions</h2>
+<ul>
+<li><strong>Treating WebSocket as "faster HTTP"</strong>: what it buys is neither bandwidth nor speed, it is <strong>the server's ability to write first</strong>. Without that sentence you cannot explain why the statefulness bill is worth paying.</li>
+<li><strong>Counting message QPS but not connections</strong>: ~<code>11,600 messages/s</code> sounds easy, yet 5 million concurrent connections is <code>50 GB</code> of memory and heartbeats add <code>1 million events/s</code>. <strong>Capacity must be planned against connections and heartbeats.</strong></li>
+<li><strong>Ignoring reconnect storms</strong>: this layer's typical death is not outside traffic but its own clients hitting it at once after a restart. Reconnects need randomised backoff; removals need draining first.</li>
+<li><strong>Ordering by <code>created_at</code>, or chasing global order</strong>: same-millisecond collisions are ordinary and client clocks are worse, so ordering can only rest on a monotonic <code>message_id</code>; and since chat needs order only <strong>within a conversation</strong>, promoting it to global ordering adds a distributed problem for nothing.</li>
+<li><strong>Reading "at least once" as "exactly once"</strong>: retransmission under jitter is unavoidable, so clients must dedupe idempotently on <code>message_id</code>.</li>
+<li><strong>The book files end-to-end encryption as an optional extension</strong>: adopt E2E for real and server-side search, cloud history and multi-device sync all have to be rebuilt — WhatsApp and Signal both pay for separate key and device-sync machinery. That is this chapter's <strong>scoping decision</strong>, not a claim that it is unimportant.</li>
+<li><strong>A limit of scale</strong>: capping groups at 100 is what makes fan-out on write always worthwhile. Today's public Discord channels and Telegram supergroups run to tens of thousands, and at that size fan-out on write fails outright — you must return to fan-out on read, fetching on entry. <strong>The chapter's answer is right for small groups, and that 100-member premise is the entire reason it holds.</strong></li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① The core claim: a chat system's shape is dictated by one protocol fact — <strong>only the client can open an HTTP conversation</strong>. Sending is trivial; the entire backend is rebuilt for receiving.</p>
+<p>② Three ways round it: polling (latency equals the interval, drowning in empty answers), long polling (sender and receiver may differ, dead clients undetectable, still reconnecting), and <strong>WebSocket</strong> (one bidirectional persistent channel).</p>
+<p>③ Choosing WebSocket splits the architecture in three: <strong>stateless services</strong>, the <strong>stateful chat server</strong>, and <strong>third-party push</strong>. Statefulness is the source of everything that follows, including service discovery and reconnect storms.</p>
+<p>④ Capacity is measured in <strong>connections</strong>, not QPS: ~<code>10 KB</code> each, 5 million concurrent ≈ <code>50 GB</code>; heartbeats run ~<code>1 million/s</code>, nearly two orders of magnitude above the real message rate.</p>
+<p>⑤ Generic data goes relational, chat history goes into a <strong>key-value store</strong>; group chat uses the composite key <code>(channel_id, message_id)</code> with <code>channel_id</code> as partition key.</p>
+<p>⑥ Message IDs need only be <strong>monotonic within a conversation</strong>, never globally ordered — the chapter's cheapest downgrade of a hard problem. <code>created_at</code> cannot be the ordering key.</p>
+<p>⑦ Multi-device sync has each device pull its delta with its own <code>cur_max_message_id</code>, <strong>moving delivery bookkeeping onto the device</strong>; reconnects, new phones and new devices share one query.</p>
+<p>⑧ Presence uses a <strong>heartbeat</strong> (every 5s, offline after 30s) to avoid false negatives; per-pair pub/sub is an N² quantity, so groups switch to <strong>fetch on entry</strong> — the same move a feed makes for celebrity accounts.</p>
+</div>
+</div>
+<footer>Books Deep-Read · Reading this page ≈ getting the chapter's core; for the full case study, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

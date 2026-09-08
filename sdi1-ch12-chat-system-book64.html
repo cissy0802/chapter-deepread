@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview 卷一 第 12 章 · 设计聊天系统 — 专业书籍精读 Book 64</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · System Design Interview 卷一 · 第 12 章</p>
+<h1>设计聊天系统</h1>
+<p class="sub">System Design Interview Vol 1 · Ch 12 · Alex Xu · 2020</p>
+<p class="langbar"><a href="sdi1-ch12-chat-system-book64.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你在微信、WhatsApp 上跟人说话，消息「叮」一下就到了。这一章讲的就是怎么把这个「叮」造出来。它看上去比信息流简单——不就是把一句话从 A 送到 B——其实底下压着一个更基础的麻烦：<strong>在互联网最常用的那套规矩里，服务器根本没办法主动来找你。</strong></p>
+<h2>打个比方：邮局只认「你来问」</h2>
+<p>把服务器想成一个邮局，它的规矩很死：<strong>你走进去问一句「有我的信吗」，它才会回答你</strong>。它不会主动敲你家的门。所以「寄信」毫无问题——走进去把信交给柜台就行；难的是「收信」：你怎么知道什么时候有信？</p>
+<h2>旧办法为什么难受</h2>
+<p>最笨的办法是<strong>每隔几秒跑一趟邮局问一次</strong>。你不累，邮局累：几千万人都这么问，它每秒要应付上千万次问询，而九成九的回答是「没有」。改良一点是<strong>去了就赖着不走</strong>——问完不回家，站在柜台前等，有信立刻给你，实在没有就过一阵请你先回去、你再来一趟。空跑少了，可你还是得反复来回；而且邮局也说不清你到底是回了家，还是在半路上晕倒了。</p>
+<h2>核心机制：接一根不挂断的电话线</h2>
+<p>今天的做法是第三种：<strong>你和邮局之间接一根一直不挂断的电话线。</strong>接通那一下依然是你打过去的（规矩没破），但线一旦通了，两头谁想说话都能直接说——<strong>邮局终于能主动开口了。</strong>消息之所以「叮」一下就到，就是因为这根线一直开着，不用每次重新拨号。</p>
+<h2>这根线之外，还得管三件事</h2>
+<p><strong>一、人不在线怎么办。</strong>线断了，消息先存在服务器上，摆进一个专属于你的收件箱；你什么时候上线，什么时候来取。实在等不了就改走手机推送通知——那已经是别人家的地盘了。</p>
+<p><strong>二、群聊怎么发。</strong>人少的群，最省事的办法是抄 N 份：一条消息往每个人的收件箱各放一份。人少时这笔账很划算，人一多就彻底不行。</p>
+<p><strong>三、怎么知道谁还在。</strong>不能一断线就判「离线」——你钻进地铁网抖一下，头像就灰了，出来又亮，一路闪。所以真实系统靠<strong>心跳</strong>：在线的人每隔几秒吱一声，连着几十秒没吱声，才算真下线。</p>
+<p>诚实的代价：这根一直开着的线不是白来的——服务器要为每个在线的人留一块内存，一台机器撑到几百万根就到顶；更麻烦的是它一旦要重启，上面所有人会在同一秒一起回头重连。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>聊天系统真正难的不是「发」，是「收」。发消息跟你平时打开网页没区别；可<strong>要让服务器能主动找到你，就得先跟它接一根不挂断的线</strong>——之后所有复杂度：这根线接到哪台机器、断了消息存哪儿、群里怎么抄、怎么判断你还在——全是在为这一根线善后。</p>
+</div>
+<p class="switch-hint">想进到长连接接入层、消息 ID 定序与在线状态的具体量级？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">这一章的主角不是消息，是<strong>连接</strong>。它从一条协议事实出发——HTTP 只能由客户端开口，服务端无法主动找人——推出整个架构的形状：接入层必须握着一条长期不断开的 WebSocket，于是变成<strong>有状态的</strong>；有状态就带来服务发现（该连哪台）、心跳（还在不在）、收件箱（不在时消息存哪）、会话内单调的消息 ID（收到后怎么排序）这一整串连锁代价。<strong>聊天系统里最难的从来不是「发」，是「收」。</strong></p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>长连接（persistent connection）</strong>：建立后长期不关闭的网络通道，两端随时可以往里写数据。</li>
+<li><strong>WebSocket</strong>：从 HTTP 握手升级而来的双向长连接协议，走 80 / 443 端口，能穿过大多数防火墙。</li>
+<li><strong>轮询（polling）/ 长轮询（long polling）</strong>：前者每隔一段时间主动问一次「有新东西吗」；后者问一次之后服务器<strong>先不回答</strong>，挂着直到有消息或超时。</li>
+<li><strong>无状态服务（stateless）</strong>：任何一台机器都能处理任何一次请求，可以随意加机器、随意重启。</li>
+<li><strong>有状态服务（stateful）</strong>：请求必须落到<strong>特定那一台</strong>，因为那台机器上存着这个客户端的状态——比如那条长连接。</li>
+<li><strong>服务发现（service discovery）</strong>：告诉客户端「你该连哪一台」的机制。本章用 <strong>ZooKeeper</strong>（一个专存协调信息的分布式服务）登记所有可用的聊天服务器。</li>
+<li><strong>心跳（heartbeat）</strong>：客户端周期性发一个极小的信号证明自己还活着；超时没收到就判它掉线。</li>
+<li><strong>消息同步队列 / 收件箱（message sync queue）</strong>：为每个接收者预留的消息列表，发送方投进去，接收者上线后来取。</li>
+<li><strong>键值存储（key-value store）</strong>：按一个 key 直接取一条数据的数据库（如 HBase、Cassandra），易扩展、随机读快，不擅长复杂查询。</li>
+<li><strong>分区键（partition key）</strong>：决定一行数据落到哪个分片的字段。同一分区键的数据存在一起，查询只访问一个分片。</li>
+<li><strong>Snowflake</strong>：Twitter 提出的 64 位 ID 方案，把时间戳、机器号、序列号拼起来，做到<strong>全局唯一且按时间递增</strong>。</li>
+<li><strong>推送通知（push notification）</strong>：经苹果 APNs / 谷歌 FCM 把提醒送到没打开应用的手机上，通道不在你手里。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>本章是卷一 Part II「系统案例」的第 9 篇。上承 Ch11 信息流——两章都要把内容分发给多个人，但信息流是<strong>一对多广播、可容忍分钟级先后差</strong>，聊天是<strong>双向、要求秒内送达且不能丢</strong>；也上承 Ch10 通知系统——用户一旦离线，聊天就退化成通知问题。下启 Ch13 搜索自动补全。现实里对应 WhatsApp、Messenger、Slack、Discord、微信，以及任何带客服窗口的产品。</p>
+<h2>这章要解决什么</h2>
+<p>书里的场景：<strong>5000 万日活</strong>、一对一与群聊、<strong>群成员上限 100 人</strong>、纯文本、单条上限 <code>10 万字符</code>、聊天记录<strong>永久保存</strong>、一个账号多设备同时在线、要在线状态与离线推送。</p>
+<p>先算消息量（以下是按这个场景做的推算，不是书里的数字）：人均每天 20 条，就是 <strong>10 亿条 / 天 ≈ 1.16 万条 / 秒</strong>，峰值按 3 倍算约 <code>3.5 万条 / 秒</code>——对现代存储不算吓人。</p>
+<p><strong>真正的压力不在消息，在连接。</strong>假设同一时刻有 10% 的日活在线，就是 <strong>500 万条并发长连接</strong>。书里给了单条连接约 <code>10 KB</code> 内存的量级——100 万条连接光连接本身就吃掉约 <code>10 GB</code>，500 万条就是 <code>50 GB</code>，还没算任何业务数据。<strong>聊天系统的容量单位是「同时挂着的连接数」，不是 QPS</strong>，这是本章第一个要换掉的直觉。</p>
+<p>不解决会怎样？退回轮询的话，5000 万人每 5 秒问一次就是 <strong>1000 万次请求 / 秒</strong> 的常压，绝大多数返回「没有新消息」，而延迟仍然是轮询间隔那么大。</p>
+<h2>核心内容，讲透</h2>
+<h3>第一刀：发和收是两个完全不同的问题</h3>
+<p>本章最该记住的判断在最开头：<strong>发送方与接收方并不对称。</strong>发消息是客户端主动发起的动作，一次普通 HTTP 请求就够了。可「收」不行——HTTP 的整个模型是<strong>客户端问、服务端答</strong>，服务端没有任何合法途径主动敲门。整章后面所有结构，都是为了绕过这一条。</p>
+<p>书里摆了三种绕法：<strong>轮询</strong>（定期问，简单但延迟等于间隔、空答占绝大多数）、<strong>长轮询</strong>（问了先挂着，有消息再回）、<strong>WebSocket</strong>（一次 HTTP 握手升级成双向持久通道，两端都能主动写）。长轮询看着是个便宜的折中，书却点名了三个具体毛病：<strong>收发双方可能连到不同的服务器</strong>（HTTP 服务器通常无状态、由负载均衡轮转分配，服务端不知道该把消息交给谁）、<strong>判断不出客户端是否已经断开</strong>、以及<strong>不聊天的用户也会因超时而周期性重连</strong>。下面的对比表把三者摊开。</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="-apple-system,sans-serif">
+<defs><marker id="b1" markerWidth="7" markerHeight="7" refX="5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#7c8593"></path></marker><marker id="b2" markerWidth="7" markerHeight="7" refX="5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="#9b6cf5"></path></marker></defs>
+<text x="114" y="14" font-size="10.5" fill="#7c8593" text-anchor="middle" font-family="monospace">轮询 polling</text>
+<text x="324" y="14" font-size="10.5" fill="#7c8593" text-anchor="middle" font-family="monospace">长轮询 long polling</text>
+<text x="534" y="14" font-size="10.5" fill="#5b9df9" text-anchor="middle" font-family="monospace">WebSocket</text>
+<text x="54" y="34" font-size="9" fill="#b9c0ca" text-anchor="middle">客户端</text>
+<text x="174" y="34" font-size="9" fill="#b9c0ca" text-anchor="middle">服务器</text>
+<line x1="54" y1="40" x2="54" y2="224" stroke="rgba(120,120,130,0.35)" stroke-dasharray="3 3"></line>
+<line x1="174" y1="40" x2="174" y2="224" stroke="rgba(120,120,130,0.35)" stroke-dasharray="3 3"></line>
+<text x="114" y="54" font-size="8" fill="#b9c0ca" text-anchor="middle">有新的吗</text>
+<line x1="54" y1="60" x2="170" y2="60" stroke="#7c8593" marker-end="url(#b1)"></line>
+<text x="114" y="74" font-size="8" fill="#7c8593" text-anchor="middle">没有</text>
+<line x1="174" y1="80" x2="58" y2="80" stroke="#7c8593" marker-end="url(#b1)"></line>
+<text x="114" y="98" font-size="8" fill="#b9c0ca" text-anchor="middle">有新的吗</text>
+<line x1="54" y1="104" x2="170" y2="104" stroke="#7c8593" marker-end="url(#b1)"></line>
+<text x="114" y="118" font-size="8" fill="#7c8593" text-anchor="middle">没有</text>
+<line x1="174" y1="124" x2="58" y2="124" stroke="#7c8593" marker-end="url(#b1)"></line>
+<text x="114" y="142" font-size="8" fill="#b9c0ca" text-anchor="middle">有新的吗</text>
+<line x1="54" y1="148" x2="170" y2="148" stroke="#7c8593" marker-end="url(#b1)"></line>
+<text x="114" y="162" font-size="8" fill="#8fbaff" text-anchor="middle">终于有 1 条</text>
+<line x1="174" y1="168" x2="58" y2="168" stroke="#7c8593" marker-end="url(#b1)"></line>
+<text x="114" y="196" font-size="8.5" fill="#7c8593" text-anchor="middle">延迟 = 问的间隔</text>
+<text x="114" y="212" font-size="8.5" fill="#7c8593" text-anchor="middle">九成九是空答</text>
+<text x="264" y="34" font-size="9" fill="#b9c0ca" text-anchor="middle">客户端</text>
+<text x="384" y="34" font-size="9" fill="#b9c0ca" text-anchor="middle">服务器</text>
+<line x1="264" y1="40" x2="264" y2="224" stroke="rgba(120,120,130,0.35)" stroke-dasharray="3 3"></line>
+<line x1="384" y1="40" x2="384" y2="224" stroke="rgba(120,120,130,0.35)" stroke-dasharray="3 3"></line>
+<text x="324" y="54" font-size="8" fill="#b9c0ca" text-anchor="middle">问，然后挂住</text>
+<line x1="264" y1="60" x2="380" y2="60" stroke="#7c8593" marker-end="url(#b1)"></line>
+<rect x="378" y="64" width="12" height="44" fill="rgba(155,108,245,0.3)" stroke="#9b6cf5"></rect>
+<text x="404" y="90" font-size="8" fill="#9b6cf5">挂着不答</text>
+<text x="324" y="122" font-size="8" fill="#7c8593" text-anchor="middle">超时，仍无消息</text>
+<line x1="384" y1="128" x2="268" y2="128" stroke="#7c8593" marker-end="url(#b1)"></line>
+<text x="324" y="146" font-size="8" fill="#b9c0ca" text-anchor="middle">立刻再问一次</text>
+<line x1="264" y1="152" x2="380" y2="152" stroke="#7c8593" marker-end="url(#b1)"></line>
+<rect x="378" y="156" width="12" height="24" fill="rgba(155,108,245,0.3)" stroke="#9b6cf5"></rect>
+<text x="324" y="194" font-size="8" fill="#8fbaff" text-anchor="middle">有 1 条</text>
+<line x1="384" y1="186" x2="268" y2="186" stroke="#7c8593" marker-end="url(#b1)"></line>
+<text x="324" y="212" font-size="8.5" fill="#7c8593" text-anchor="middle">连接仍要反复重建</text>
+<text x="474" y="34" font-size="9" fill="#b9c0ca" text-anchor="middle">客户端</text>
+<text x="594" y="34" font-size="9" fill="#b9c0ca" text-anchor="middle">服务器</text>
+<line x1="474" y1="40" x2="474" y2="224" stroke="rgba(120,120,130,0.35)" stroke-dasharray="3 3"></line>
+<line x1="594" y1="40" x2="594" y2="224" stroke="rgba(120,120,130,0.35)" stroke-dasharray="3 3"></line>
+<text x="534" y="54" font-size="8" fill="#b9c0ca" text-anchor="middle">HTTP 握手 Upgrade</text>
+<line x1="474" y1="60" x2="590" y2="60" stroke="#7c8593" marker-end="url(#b1)"></line>
+<rect x="470" y="66" width="128" height="120" fill="rgba(91,157,249,0.07)" stroke="#5b9df9" stroke-dasharray="4 3" rx="5"></rect>
+<text x="534" y="84" font-size="8.5" fill="#8fbaff" text-anchor="middle">一条一直开着的双向连接</text>
+<text x="534" y="102" font-size="8" fill="#9b6cf5" text-anchor="middle">服务端主动推</text>
+<line x1="594" y1="110" x2="478" y2="110" stroke="#9b6cf5" marker-end="url(#b2)"></line>
+<text x="534" y="128" font-size="8" fill="#b9c0ca" text-anchor="middle">客户端发</text>
+<line x1="474" y1="136" x2="590" y2="136" stroke="#7c8593" marker-end="url(#b1)"></line>
+<text x="534" y="154" font-size="8" fill="#9b6cf5" text-anchor="middle">服务端主动推</text>
+<line x1="594" y1="162" x2="478" y2="162" stroke="#9b6cf5" marker-end="url(#b2)"></line>
+<text x="534" y="180" font-size="8" fill="#7c8593" text-anchor="middle">不用重新拨号</text>
+<text x="534" y="204" font-size="8.5" fill="#8fbaff" text-anchor="middle">服务端终于能主动开口</text>
+<text x="534" y="220" font-size="8.5" fill="#7c8593" text-anchor="middle">代价：接入层变成有状态</text>
+<text x="14" y="252" font-size="10" fill="#9b6cf5">三种办法解决的是同一件事：HTTP 里服务端不能先开口。</text>
+<text x="14" y="272" font-size="9.5" fill="#7c8593">退回轮询：5000 万日活每 5 秒问一次 ≈ 1000 万次请求 / 秒，只为了约 1.16 万条 / 秒 的真实消息。</text>
+<text x="14" y="290" font-size="9.5" fill="#7c8593">WebSocket 换来的不是带宽或速度，而是「服务端可以主动写」这一条能力。</text>
+</svg>
+<figcaption>图 1 · 三种「让服务端能主动说话」的办法。轮询与长轮询都在用重复的请求模拟推送，WebSocket 直接把通道留着。</figcaption>
+</figure>
+<h3>接入层一旦有状态，架构就被劈成三块</h3>
+<p>选了 WebSocket，代价立刻落到架构上：<strong>握着连接的那台机器，成了这个客户端唯一能用的机器。</strong>于是书把服务分成三类：<strong>无状态服务</strong>（注册、登录、资料，摆在负载均衡后面，任意一台都行）、<strong>有状态服务</strong>（聊天服务，客户端在某台机器上挂着持久连接，只要那台还活着就不换）、<strong>第三方集成</strong>（推送通知）。</p>
+<p>有状态带来的第一个新组件是<strong>服务发现</strong>：客户端上线得先问「我该连哪一台」，本章用 ZooKeeper 登记所有可用的聊天服务器，按地理位置与容量挑一台推荐给它。没有这一层，客户端只能盲连，负载会歪到某几台上。</p>
+<p>更要命的是运维假设全变了：<strong>无状态服务重启一台没人察觉；有状态接入层重启一台，就是上面所有连接同时断开、同时重连、同时重新鉴权、同时重拉历史。</strong>这就是「重连风暴」——这一层最典型的死法不是被外部流量打垮，是被自己恢复时的那一下打垮。</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="-apple-system,sans-serif">
+<defs><marker id="c1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect x="14" y="118" width="94" height="48" rx="6" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"></rect>
+<text x="61" y="140" font-size="10.5" fill="#e7ebf1" text-anchor="middle">客户端</text>
+<text x="61" y="156" font-size="8.5" fill="#b9c0ca" text-anchor="middle">手机 · 网页</text>
+<path d="M61,118 L61,34 L146,34" fill="none" stroke="#9b6cf5" stroke-dasharray="4 3" marker-end="url(#c1)"></path>
+<rect x="150" y="14" width="180" height="40" rx="6" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"></rect>
+<text x="240" y="32" font-size="10" fill="#e7ebf1" text-anchor="middle">服务发现 ZooKeeper</text>
+<text x="240" y="47" font-size="8.5" fill="#b9c0ca" text-anchor="middle">你该连哪一台 chat server</text>
+<path d="M108,132 L134,92 L146,92" fill="none" stroke="#7c8593" marker-end="url(#c1)"></path>
+<rect x="150" y="72" width="180" height="40" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="240" y="90" font-size="10" fill="#e7ebf1" text-anchor="middle">无状态服务（负载均衡后）</text>
+<text x="240" y="105" font-size="8.5" fill="#b9c0ca" text-anchor="middle">注册 · 登录 · 资料 · 好友</text>
+<line x1="108" y1="142" x2="146" y2="142" stroke="#7c8593" marker-end="url(#c1)"></line>
+<rect x="150" y="122" width="180" height="46" rx="6" fill="rgba(91,157,249,0.2)" stroke="#5b9df9"></rect>
+<text x="240" y="140" font-size="10" fill="#e7ebf1" text-anchor="middle">chat server（有状态）</text>
+<text x="240" y="156" font-size="8.5" fill="#8fbaff" text-anchor="middle">每个客户端一条 WebSocket</text>
+<path d="M108,152 L134,198 L146,198" fill="none" stroke="#7c8593" marker-end="url(#c1)"></path>
+<rect x="150" y="178" width="180" height="40" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="240" y="196" font-size="10" fill="#e7ebf1" text-anchor="middle">presence 服务</text>
+<text x="240" y="211" font-size="8.5" fill="#b9c0ca" text-anchor="middle">心跳 · 在线状态 pub/sub</text>
+<line x1="330" y1="92" x2="372" y2="92" stroke="#7c8593" marker-end="url(#c1)"></line>
+<rect x="376" y="72" width="160" height="40" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="456" y="90" font-size="10" fill="#e7ebf1" text-anchor="middle">关系型数据库</text>
+<text x="456" y="105" font-size="8.5" fill="#b9c0ca" text-anchor="middle">用户 · 好友 · 设置</text>
+<line x1="330" y1="145" x2="372" y2="145" stroke="#7c8593" marker-end="url(#c1)"></line>
+<rect x="376" y="122" width="160" height="46" rx="6" fill="rgba(91,157,249,0.2)" stroke="#5b9df9"></rect>
+<text x="456" y="140" font-size="10" fill="#e7ebf1" text-anchor="middle">同步队列 → 键值存储</text>
+<text x="456" y="156" font-size="8.5" fill="#8fbaff" text-anchor="middle">聊天记录 · 永久保存</text>
+<line x1="330" y1="198" x2="372" y2="198" stroke="#7c8593" marker-end="url(#c1)"></line>
+<rect x="376" y="178" width="160" height="40" rx="6" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"></rect>
+<text x="456" y="196" font-size="10" fill="#e7ebf1" text-anchor="middle">推送通知 APNs / FCM</text>
+<text x="456" y="211" font-size="8.5" fill="#b9c0ca" text-anchor="middle">通道不在你手里</text>
+<rect x="544" y="122" width="82" height="46" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="585" y="140" font-size="9.5" fill="#e7ebf1" text-anchor="middle">ID 生成器</text>
+<text x="585" y="155" font-size="8" fill="#b9c0ca" text-anchor="middle">会话内递增</text>
+<line x1="536" y1="145" x2="540" y2="145" stroke="#7c8593"></line>
+<text x="14" y="248" font-size="10" fill="#9b6cf5">分界线只有一条：长连接在哪一层终结，哪一层就是有状态的。</text>
+<text x="14" y="268" font-size="9.5" fill="#7c8593">单连接约 10 KB 内存：100 万条 ≈ 10 GB，500 万条 ≈ 50 GB —— 还没算任何业务数据。</text>
+<text x="14" y="288" font-size="9.5" fill="#7c8593">有状态的账单：重启一台挂着百万连接的机器 = 百万次同时重连 + 重新鉴权 + 重拉历史。</text>
+</svg>
+<figcaption>图 2 · 三类服务：无状态的走负载均衡、有状态的 chat server 握着长连接、第三方推送在系统之外。服务发现负责把客户端引到正确的那台。</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/chat-system-day15.html" rel="noopener" target="_blank">System Design · Day 15 聊天系统</a> — 10 亿用户、5000 万并发长连接下的接入层工程：连接分配、优雅重启与重连风暴的抑制</aside>
+<h3>消息存哪、ID 怎么定序</h3>
+<p>本章把数据分成两类：<strong>通用数据</strong>（用户资料、设置、好友列表）量小、要事务，放关系型数据库；<strong>聊天记录</strong>量极大，放键值存储。三条理由：键值存储<strong>水平扩展容易</strong>、<strong>随机访问延迟低</strong>，而<strong>关系型数据库处理长尾数据不好</strong>——索引和数据集一大，随机访问就变贵。书还点了名：Messenger 用 HBase，Discord 用 Cassandra。</p>
+<p>数据模型是这一节的硬核。一对一聊天用一张消息表，<strong>主键是 <code>message_id</code></strong>——<strong>不能拿 <code>created_at</code> 当排序依据</strong>，两条消息完全可能落在同一毫秒。群聊用<strong>复合主键 <code>(channel_id, message_id)</code></strong>，<code>channel_id</code> 是<strong>分区键</strong>，因为群聊的所有查询都发生在一个频道之内——同一个群的消息全落在一个分片上，翻历史只访问一个分片。</p>
+<p>消息 ID 要同时满足<strong>唯一</strong>和<strong>按时间可排序</strong>。做法有二：全局的 64 位序列号生成器（Snowflake），或只在单个会话内保证递增的<strong>局部</strong>生成器。书的判断是后者就够——<strong>聊天系统不需要全局有序，只需要每个会话内有序</strong>。这是本章最省力的一次降级：把「分布式全局定序」这个真难题缩回成单分区内的自增问题，而分区键早就有了，就是 <code>channel_id</code>。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/unique-id-generation-day11.html" rel="noopener" target="_blank">System Design · Day 11 唯一 ID 生成</a> — Snowflake 的位分配、时钟回拨怎么处理，以及全局有序与局部有序的代价差在哪</aside>
+<h3>收件箱模型：一对一、多端同步、小群扇出</h3>
+<p>一对一的完整流程：A 把消息发给 chat server 1 → 服务器<strong>取一个消息 ID</strong> → 进<strong>消息同步队列</strong> → 落进键值存储 → B 在线就转给它所连的 chat server 2 推下去，离线则交给推送通知服务。<strong>存储发生在推送之前</strong>，这个顺序不能反：先落盘再投递，才谈得上「不丢」。</p>
+<p>多端同步是这一节最漂亮的设计。每台设备维护一个 <code>cur_max_message_id</code>，记着自己见过的最大消息 ID；要拉新消息，就查「收件人是我、且 ID 大于 <code>cur_max_message_id</code>」的那些。<strong>它值得单独学，是因为它把「送达到哪儿了」的记账责任从服务端搬给了设备自己。</strong>服务端不必为每个用户的每台设备维护游标，也就不必处理「新装一台设备该从哪开始」；断线重连、换手机、多端并行，全是同一条查询。<strong>这才是消息 ID 必须单调递增的真实用途</strong>——不是排序好看，是让「我还差哪些」变成一次范围查询。</p>
+<p>群聊在本章走<strong>写扩散</strong>：一条群消息复制进每个成员的消息同步队列。好处是客户端只查自己那一个收件箱、同步逻辑与一对一完全一致，而群小的时候复制 100 份的成本可以忽略。书自己划了界：<strong>群成员上限 100</strong>，并提到微信把群限制在 500 人。<strong>这与 Ch11 信息流的写时扇出是同一笔账</strong>——成本正比于接收者数量，人一多就崩；只不过聊天系统能直接用产品规则把这个数摁住，信息流没这个特权，只能做混合。</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 300" font-family="-apple-system,sans-serif">
+<defs><marker id="d1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect x="14" y="34" width="86" height="40" rx="5" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"></rect>
+<text x="57" y="50" font-size="9.5" fill="#e7ebf1" text-anchor="middle">用户 A</text>
+<text x="57" y="65" font-size="8" fill="#b9c0ca" text-anchor="middle">发出消息</text>
+<line x1="100" y1="54" x2="112" y2="54" stroke="#7c8593" marker-end="url(#d1)"></line>
+<rect x="116" y="34" width="86" height="40" rx="5" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"></rect>
+<text x="159" y="50" font-size="9.5" fill="#e7ebf1" text-anchor="middle">chat server 1</text>
+<text x="159" y="65" font-size="8" fill="#b9c0ca" text-anchor="middle">A 的长连接</text>
+<line x1="202" y1="54" x2="214" y2="54" stroke="#7c8593" marker-end="url(#d1)"></line>
+<rect x="218" y="34" width="86" height="40" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="261" y="50" font-size="9.5" fill="#e7ebf1" text-anchor="middle">取消息 ID</text>
+<text x="261" y="65" font-size="8" fill="#b9c0ca" text-anchor="middle">会话内递增</text>
+<line x1="304" y1="54" x2="316" y2="54" stroke="#7c8593" marker-end="url(#d1)"></line>
+<rect x="320" y="34" width="86" height="40" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="363" y="50" font-size="9.5" fill="#e7ebf1" text-anchor="middle">同步队列</text>
+<text x="363" y="65" font-size="8" fill="#b9c0ca" text-anchor="middle">收件人的收件箱</text>
+<line x1="406" y1="54" x2="418" y2="54" stroke="#7c8593" marker-end="url(#d1)"></line>
+<rect x="422" y="34" width="86" height="40" rx="5" fill="rgba(91,157,249,0.2)" stroke="#5b9df9"></rect>
+<text x="465" y="50" font-size="9.5" fill="#e7ebf1" text-anchor="middle">键值存储</text>
+<text x="465" y="65" font-size="8" fill="#8fbaff" text-anchor="middle">先落盘再投递</text>
+<path d="M508,46 L524,26 L534,26" fill="none" stroke="#7c8593" marker-end="url(#d1)"></path>
+<rect x="538" y="10" width="88" height="34" rx="5" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"></rect>
+<text x="582" y="24" font-size="9" fill="#e7ebf1" text-anchor="middle">B 在线</text>
+<text x="582" y="37" font-size="8" fill="#b9c0ca" text-anchor="middle">chat server 2 推下去</text>
+<path d="M508,62 L524,84 L534,84" fill="none" stroke="#7c8593" marker-end="url(#d1)"></path>
+<rect x="538" y="68" width="88" height="34" rx="5" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"></rect>
+<text x="582" y="82" font-size="9" fill="#e7ebf1" text-anchor="middle">B 离线</text>
+<text x="582" y="95" font-size="8" fill="#b9c0ca" text-anchor="middle">走推送通知</text>
+<rect x="14" y="122" width="612" height="130" rx="8" fill="rgba(91,157,249,0.03)" stroke="rgba(91,157,249,0.4)" stroke-dasharray="4 3"></rect>
+<text x="26" y="140" font-size="9.5" fill="#5b9df9" font-family="monospace">多端同步：把「收到哪了」的记账交给设备自己</text>
+<rect x="30" y="154" width="150" height="46" rx="6" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"></rect>
+<text x="105" y="172" font-size="9.5" fill="#e7ebf1" text-anchor="middle">B 在键值存储里的消息</text>
+<text x="105" y="188" font-size="8" fill="#8fbaff" text-anchor="middle">message_id 单调递增</text>
+<line x1="180" y1="168" x2="240" y2="156" stroke="#7c8593" marker-end="url(#d1)"></line>
+<line x1="180" y1="177" x2="240" y2="192" stroke="#7c8593" marker-end="url(#d1)"></line>
+<line x1="180" y1="186" x2="240" y2="228" stroke="#7c8593" marker-end="url(#d1)"></line>
+<rect x="244" y="142" width="140" height="28" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="314" y="160" font-size="9" fill="#b9c0ca" text-anchor="middle">手机 cur_max = 1005</text>
+<rect x="244" y="178" width="140" height="28" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="314" y="196" font-size="9" fill="#b9c0ca" text-anchor="middle">平板 cur_max = 990</text>
+<rect x="244" y="214" width="140" height="28" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="314" y="232" font-size="9" fill="#b9c0ca" text-anchor="middle">新设备 cur_max = 0</text>
+<text x="400" y="162" font-size="9" fill="#8fbaff">各自拉 id &gt; cur_max 的那些</text>
+<text x="400" y="182" font-size="9" fill="#7c8593">服务端不必记「谁收到哪了」</text>
+<text x="400" y="202" font-size="9" fill="#7c8593">断线重连 · 换机 · 新设备</text>
+<text x="400" y="222" font-size="9" fill="#7c8593">全都是同一条范围查询</text>
+<text x="14" y="278" font-size="10" fill="#9b6cf5">ID 单调递增的真实用途：让「我还差哪些消息」变成一次范围查询。</text>
+<text x="14" y="296" font-size="9.5" fill="#7c8593">群聊 = 同一条消息复制进 N 个收件箱；本章 N ≤ 100，微信限 500 —— 成本正比于接收者数量。</text>
+</svg>
+<figcaption>图 3 · 一对一消息流（先落盘、再按在线与否分叉），以及多端同步：每台设备用自己的 cur_max_message_id 去拉差量。</figcaption>
+</figure>
+<h3>在线状态：那个 N² 的角落</h3>
+<p>在线状态由 presence 服务经 WebSocket 单独维护：登录时把状态与 <code>last_active_at</code> 写进键值存储，登出时改回离线。麻烦的是<strong>异常断线</strong>——网络本来就不可靠，一断就判离线，用户头像会在通勤路上一路闪烁。解法是<strong>心跳</strong>：在线客户端周期性发一个心跳事件（书里举的量级是<strong>每 5 秒一次，超过 30 秒没收到才判离线</strong>）。</p>
+<p>状态怎么告诉别人？书用<strong>发布订阅</strong>：<strong>每一对好友维护一个频道</strong>，A 的状态一变就往 A-B、A-C、A-D 各发一条。小规模下干净利落，但代价藏在数量里——<strong>频道数正比于好友对的总数，是 N² 量级</strong>，微信把好友上限设在 5000 与此直接相关。所以书留了逃生口：<strong>群人数一多就不再广播，改成用户进入群或手动刷新时才拉一次</strong>。这是本章第二次「把推改成拉」，理由和信息流对大 V 的处理完全一样。</p>
+<p>还得记一笔：<strong>心跳本身就是一个不小的系统</strong>。500 万连接、每 5 秒一次，就是 <strong>100 万次 / 秒</strong> 的心跳事件——比真实消息量（约 <code>1.16 万条 / 秒</code>）高近两个数量级。<strong>聊天系统里流量最大的东西，往往不是消息。</strong></p>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 1 · 三种「让服务端能主动说话」的办法</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>方案</th><th>机制</th><th>消息延迟</th><th>服务端开销</th><th>致命缺点</th><th>还适合什么</th></tr></thead>
+<tbody>
+<tr><th>轮询 polling</th><td>客户端定期问</td><td><strong>等于轮询间隔</strong></td><td>5000 万日活 / 5 秒 ≈ 1000 万次 / 秒</td><td>为约 1.16 万条 / 秒 真消息付一千万次空答</td><td>可容忍分钟级延迟的状态查询</td></tr>
+<tr><th>长轮询 long polling</th><td>问了先挂住，有消息或超时才返回</td><td>接近实时</td><td>连接反复重建，挂起的请求也各占一个连接</td><td>收发可能落在不同服务器；判不出客户端已断；不聊天的人也周期性重连</td><td>用不了 WebSocket 的受限环境</td></tr>
+<tr><th>WebSocket<br/>（本章的选择）</th><td>HTTP 握手升级成双向持久通道</td><td><strong>最低</strong>：不用重新拨号</td><td>每连接约 <code>10 KB</code>；500 万连接 ≈ <code>50 GB</code></td><td><strong>接入层变成有状态</strong>：要服务发现、要心跳、重启即重连风暴</td><td><strong>所有要服务端主动推的实时场景</strong></td></tr>
+</tbody></table></div>
+<p class="tcap">表 2 · 本章之后必须自己回答的四个岔路</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>岔路</th><th>本章的选择</th><th>代价 / 什么时候要换</th></tr></thead>
+<tbody>
+<tr><th>消息 ID 怎么定序</th><td><strong>会话内局部递增</strong>，不追求全局有序</td><td>省掉全局协调；代价是跨会话不可比，全局搜索或跨群时间线要另配 Snowflake</td></tr>
+<tr><th>群聊怎么分发</th><td><strong>写扩散</strong>：复制进每个成员的收件箱，上限 100 人</td><td>成本正比于成员数。上万人的频道必须改读扩散（进群时现拉），代价是读侧变贵</td></tr>
+<tr><th>在线状态怎么传播</th><td>好友对 pub/sub <strong>推</strong>；群里改成进入时<strong>拉</strong></td><td>推的频道数是 N² 量级；拉的代价是状态陈旧几十秒。微信把好友上限设在 5000 与此有关</td></tr>
+<tr><th>聊天记录放哪</th><td><strong>键值存储</strong>（HBase / Cassandra）</td><td>换来水平扩展与低延迟随机读；代价是没有跨行事务，复杂查询与全文搜索都要另建系统</td></tr>
+</tbody></table></div>
+<p>还有个高频追问：<strong>连接该怎么分配给机器？</strong>上线时由服务发现按容量与地理位置推荐，但真正的坑在<strong>下线</strong>——摘一台机器要先停止接受新连接、再让老连接慢慢迁走，并给客户端的重连加随机退避，否则你会亲手制造一次重连风暴。</p>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>面试里被问到聊天系统，把这条链说清楚基本就过了：<strong>发和收不对称 → 收要靠长连接 → 接入层因此有状态 → 于是需要服务发现、心跳、收件箱、会话内单调 ID</strong>。反过来，一开口就是「用 WebSocket」却说不出它带来的状态代价，等于没答。</p>
+<div class="ev">
+<div class="evh">大厂实证 · 这些主张不是书里说的，是公司自己公开说的</div>
+<ul>
+<li><strong>WhatsApp</strong> 在自家工程博客公布过单机连接数实测：2011 年做到<strong>单台服务器 100 万条并发 TCP 连接</strong>，次年把纪录推到 <strong>200 万+</strong>，跑在 FreeBSD 与 Erlang 上。<strong>这坐实了「容量单位是连接数、不是 QPS」</strong>——连接本身就是被精心优化的对象。<span class="src"><a href="https://blog.whatsapp.com/1-million-is-so-2011" rel="noopener" target="_blank">WhatsApp Blog《1 million is so 2011》, 2012 ↗</a></span></li>
+<li><strong>Meta（Facebook）</strong> 在 2010 年公开了 Messages 的选型过程：实测 MySQL、Cassandra、HBase 之后，结论是 <strong>MySQL「处理数据长尾不好，索引和数据集一大性能就垮」</strong>，最终选 HBase，并用 ZooKeeper 做用户发现，当时量级是<strong>每月 1350 亿条以上消息</strong>。<strong>本章「聊天记录用键值存储」那三条理由，出处就在这里。</strong><span class="src"><a href="https://engineering.fb.com/2010/11/15/core-infra/the-underlying-technology-of-messages/" rel="noopener" target="_blank">Engineering at Meta《The Underlying Technology of Messages》, 2010 ↗</a></span></li>
+<li><strong>Discord</strong> 公开了消息表结构：主键 <code>((channel_id, bucket), message_id)</code>，<code>bucket</code> 是约 10 天的静态时间窗，<strong>所有 ID 都是 Snowflake、天然按时间可排序</strong>。<strong>这就是本章那个复合主键的现实版</strong>，只是多一层分桶防止热门频道把分区撑爆。2017 年 12 个 Cassandra 节点存十亿级消息，2022 年已是 177 个节点、万亿级。<span class="src"><a href="https://medium.com/discord-engineering/how-discord-stores-billions-of-messages-7fa6ec7ee4c7" rel="noopener" target="_blank">Discord Engineering《How Discord Stores Billions of Messages》, 2017 ↗</a> · <a href="https://discord.com/blog/how-discord-stores-trillions-of-messages" rel="noopener" target="_blank">《How Discord Stores Trillions of Messages》, 2022 ↗</a></span></li>
+<li><strong>Slack</strong> 把「有状态接入层」的代价做成了一个专门的系统 <strong>Flannel</strong>：部署在边缘节点、<strong>骑在 WebSocket 连接上</strong>的应用级缓存，峰值承载 <strong>400 万条并发连接、每秒 60 万次客户端查询</strong>，公开目的之一就是<strong>削减重连风暴对后端的冲击</strong>——刚重连的用户直接由边缘缓存供数据。<strong>本章只写了一句「有状态」，这篇告诉你它最终会长成什么。</strong><span class="src"><a href="https://slack.engineering/flannel-an-application-level-edge-cache-to-make-slack-scale/" rel="noopener" target="_blank">Engineering at Slack《Flannel: An Application-Level Edge Cache to Make Slack Scale》, 2017 ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/realtime-systems-day34.html" rel="noopener" target="_blank">System Design · Day 34 实时系统</a> — 长连接接入层之外的实时形态：SSE 与 WebSocket 怎么选、边缘终结、以及 100ms 内让状态一致的工程手段</aside>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>把 WebSocket 当成「更快的 HTTP」</strong>：它换来的既不是带宽也不是速度，而是<strong>服务端可以主动写</strong>这一条能力。说不出这句，就说不清为什么要付有状态的账。</li>
+<li><strong>只算消息 QPS、不算连接数</strong>：消息约 <code>1.16 万条 / 秒</code> 听着轻松，可 500 万并发连接光内存就 <code>50 GB</code>，心跳还有 <code>100 万次 / 秒</code>。<strong>容量必须按连接与心跳估。</strong></li>
+<li><strong>忽略重连风暴</strong>：接入层的典型死法不是被外部流量打垮，是重启后被自己的客户端同时打垮。重连必须带随机退避，下线必须先排空。</li>
+<li><strong>拿 <code>created_at</code> 排序，或追求全局有序</strong>：同毫秒会撞车、客户端时钟更不可信，排序只能靠单调的 <code>message_id</code>；而聊天只需要<strong>会话内</strong>有序，升格成全局定序是白加一个分布式难题。</li>
+<li><strong>把「至少一次」当成「恰好一次」</strong>：网络抖动下重发不可避免，客户端必须按 <code>message_id</code> 幂等去重。</li>
+<li><strong>书把端到端加密列为可选扩展</strong>：一旦真上 E2E，服务端搜索、云端历史、多端同步全要重做——WhatsApp 与 Signal 都为此付出了独立的密钥与设备同步机制。这是本章的<strong>范围限定</strong>，不代表它不重要。</li>
+<li><strong>规模上的局限</strong>：本章把群限在 100 人，于是写扩散永远划算。今天 Discord 的公开频道、Telegram 的超级群动辄上万人，那个规模下写扩散彻底失效，必须回到「不复制、进频道时现拉」的读扩散——<strong>本章的答案对小群是对的，而那个 100 人的前提就是它成立的全部理由。</strong></li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 核心命题：聊天系统的形状由一条协议事实决定——<strong>HTTP 只能由客户端开口</strong>。发消息毫无难度，为了「收」才要重建整个后端。</p>
+<p>② 三种绕法：轮询（延迟等于间隔、空答淹没）、长轮询（收发可能不同机、判不出断线、仍反复重连）、<strong>WebSocket</strong>（一条双向持久通道）。</p>
+<p>③ 选了 WebSocket，架构就劈成三块：<strong>无状态服务</strong>、<strong>有状态的 chat server</strong>、<strong>第三方推送</strong>。有状态是一切后续复杂度的源头，也带来服务发现与重连风暴。</p>
+<p>④ 容量单位是<strong>连接数</strong>不是 QPS：单连接约 <code>10 KB</code>，500 万并发 ≈ <code>50 GB</code>；心跳约 <code>100 万次 / 秒</code>，比真实消息量高近两个数量级。</p>
+<p>⑤ 通用数据进关系库，聊天记录进<strong>键值存储</strong>；群聊用复合主键 <code>(channel_id, message_id)</code>，<code>channel_id</code> 作分区键。</p>
+<p>⑥ 消息 ID 只需<strong>会话内单调递增</strong>，不需要全局有序——本章最省力的一次难题降级。<code>created_at</code> 不能当排序依据。</p>
+<p>⑦ 多端同步靠每台设备自己的 <code>cur_max_message_id</code> 拉差量，<strong>把「送达到哪了」的记账责任搬给设备</strong>；重连、换机、新设备共用同一条查询。</p>
+<p>⑧ 在线状态靠<strong>心跳</strong>（5 秒一次、30 秒判离线）避免误判；好友对 pub/sub 是 N² 量级，群里因此改成<strong>进入时才拉</strong>——与信息流对大 V 的处理是同一个动作。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
