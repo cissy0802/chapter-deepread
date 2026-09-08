@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview 卷一 第 11 章 · 设计信息流 — 专业书籍精读 Book 63</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · System Design Interview 卷一 · 第 11 章</p>
+<h1>设计信息流</h1>
+<p class="sub">System Design Interview Vol 1 · Ch 11 · Alex Xu · 2020</p>
+<p class="langbar"><a href="sdi1-ch11-news-feed-book63.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你打开朋友圈、微博、领英，往下一直刷——那一列不断冒出来的东西，就叫<strong>信息流</strong>。这一章讲怎么把它造出来。它看着只是「把朋友发的东西按时间排一排」，其实是全书里最能训练直觉的一道题：<strong>同一件事，你可以在写的时候干，也可以在读的时候干，成本会差出几十倍，而且没有哪一边永远划算。</strong></p>
+<h2>打个比方：报纸是提前印好，还是等你来了现拼？</h2>
+<p>把每个人的信息流想成<strong>一份专属报纸</strong>。造它有两种办法。</p>
+<p><strong>办法一，提前印。</strong>只要有人发了新东西，就立刻跑一趟，往他所有朋友的那份报纸上各补一行。你早上打开时，报纸早就印好躺在那儿，拿起来就走。</p>
+<p><strong>办法二，来了现拼。</strong>平时什么都不做。你打开的那一刻，编辑才跑去你关注的每个人那里，各抄最新几条回来，拼成一份给你。</p>
+<h2>旧办法为什么撑不住</h2>
+<p>「现拼」是最省事的写法，也是最先崩的。你关注了两百个人，每刷新一次就要跑两百趟；只要其中一趟慢了，你就得干等着——<strong>拼一份报纸的速度，由最慢的那一趟决定，不是由平均速度决定。</strong>用户刷一下要等好几秒，这个产品就没人用了。</p>
+<h2>核心机制：把活挪到没人等的时候干</h2>
+<p>所以主流做法是<strong>提前印</strong>。你发一条，系统马上去查你的好友名单，往每个人的报纸上补一行。读的时候只有一个动作：把印好的那份拿过来。<strong>刷新之所以能秒开，是因为工作早在你发帖那一刻就干完了</strong>——不是变快了，是挪走了。</p>
+<h2>但有一个要命的例外</h2>
+<p>这套办法有个软肋：<strong>印的份数等于粉丝数。</strong>一个有一亿粉丝的账号发一条，系统要往一亿份报纸上各补一行；就算每秒能印十万份，也要印十几分钟。更亏的是，这一亿人里今天真会来看的可能只有几百万——剩下的全白印了。</p>
+<p>于是真实系统<strong>按发布者分成两类人</strong>：普通人发的，提前印；大明星发的，不印，等你来了现拼。因为你关注的大明星撑死几十个，现拼几十趟很划算。你看到的那份 = <strong>提前印好的那一叠 + 现拼的明星那几条，按时间掺在一起</strong>。</p>
+<p>诚实的代价：提前印意味着同一条内容在系统里被抄了成百上千份，写入量和存储都翻上去了，而且绝大多数抄件永远不会有人看。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>信息流的全部设计，就是在回答一个问题：<strong>拼这份报纸的活，放在「有人发帖时」干，还是放在「有人来看时」干？</strong>前者读得飞快但写得要命，后者写得轻松但读得难受。答案不是二选一，是<strong>按发布者分开处理</strong>——普通人提前印，大明星现拼，最后掺在一起。</p>
+</div>
+<p class="switch-hint">想进到扇出策略、缓存分层与具体量级？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">这一章教的不是「怎么把好友的帖子按时间排一排」，而是一道<strong>把计算成本在写路径和读路径之间搬家的选择题</strong>：写时扇出（fan-out on write）把工作全压在发帖那一刻，换来毫秒级的刷新，代价是写放大等于粉丝数；读时扇出（fan-out on read）把工作全压在刷新那一刻，写入极省，代价是每次读都要发散查询、并被最慢的那个分片拖住尾延迟。真正的答案是<strong>按发布者分流的混合策略</strong>——而这个「分流键是发布者、不是用户也不是内容」的判断，才是本章最该带走的东西。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>信息流（news feed / timeline）</strong>：把你关注的人发布的内容聚合成一列展示给你。本章按<strong>时间倒序</strong>排（最新的在最上面）。</li>
+<li><strong>扇出（fan-out）</strong>：一次输入放大成多次输出。这里指「一条帖子 → 写进 N 个粉丝的收件箱」。</li>
+<li><strong>写时扇出 / push（fan-out on write）</strong>：发帖时就把这条帖子分发到所有粉丝的信息流里，预先物化好。</li>
+<li><strong>读时扇出 / pull（fan-out on read）</strong>：不预先分发，等用户刷新时才去各个关注对象那里现拉、现拼。</li>
+<li><strong>物化（materialize）</strong>：把「查询的结果」提前算好存下来，读的时候直接取，不再现算。</li>
+<li><strong>收件箱（inbox）</strong>：为每个用户预存的那一列帖子 ID，也就是「提前印好的报纸」。</li>
+<li><strong>社交图（social graph）</strong>：谁关注谁的关系数据，通常存在图数据库里。</li>
+<li><strong>热点键（hotkey）</strong>：某一个 key 的访问量或扇出量远高于其他 key，把某个分片单独打爆。粉丝上亿的账号就是典型热点键。</li>
+<li><strong>发散查询 / scatter-gather</strong>：一次请求拆成多个分片查询并发出去，再把结果合并。总耗时取决于<strong>最慢</strong>的那个分片。</li>
+<li><strong>水合（hydration）</strong>：手里只有一串 ID，再去各处把作者信息、正文、图片地址、点赞数补齐，拼成能渲染的完整对象。</li>
+<li><strong>p99 延迟</strong>：一百次请求里第 99 慢的那次的耗时。衡量「最差体验」，比平均值有用得多。</li>
+<li><strong>CDN</strong>：把图片、视频缓存到离用户近的节点，避免大文件每次都从源站取。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>本章是卷一 Part II「系统案例」的第 8 篇。它上承 Ch10 通知系统——两章都是<strong>扇出问题</strong>，区别在于扇出的终点：通知扇到你控制不了的第三方通道，信息流扇到你自己的存储；下启 Ch12 聊天系统，从「一对多广播」转到「一对一/群的实时投递」。现实里它对应 Twitter 的 home timeline、Facebook News Feed、LinkedIn feed、微博和朋友圈——几乎所有社交产品的心脏。</p>
+<h2>这章要解决什么</h2>
+<p>书里的场景设定是：<strong>1000 万日活</strong>、单个用户好友数上限 <code>5000</code>、信息流按时间倒序、内容含图片与视频、Web 与移动端都要支持。</p>
+<p>把量级摊开算一遍，问题立刻现形（下面是按这个场景做的推算，不是书里给的数字）。假设人均每天发 2 条，就是 <strong>2000 万条 / 天 ≈ 230 条 / 秒</strong>，峰值按 3 倍算约 <code>700 条 / 秒</code>——单看这个数，一台机器都够。</p>
+<p>但只要你选了「提前物化」，账就完全变了。人均好友按 <code>200</code> 算（远低于 5000 上限），每条帖子要写 200 份收件箱：<strong>2000 万 × 200 = 40 亿条写入 / 天 ≈ 4.6 万次写 / 秒</strong>，峰值逼近 <code>14 万次 / 秒</code>。而读这一侧呢？1000 万人每天刷 10 次，也才 <strong>1 亿次 / 天 ≈ 1160 次 / 秒</strong>。</p>
+<p>这就是本章第一个反直觉的地方：<strong>信息流看起来是个典型的读多写少产品，可一旦上了写时扇出，它立刻变成写多读少的系统——写读比约 <code>40:1</code>。</strong>容量规划要按扇出写入量估，按刷新次数估会低估两个数量级。</p>
+<p>两边都有崩法：不物化，刷新就是 200 次分片查询、耗时轻松到秒级；物化了，一个上亿粉丝的账号一发帖就是上亿次写入，把分片打成热点，连带拖垮普通用户的发帖延迟。</p>
+<h2>核心内容，讲透</h2>
+<h3>第一刀：先把它拆成两条互不相干的流</h3>
+<p>书里最先做的动作不是选技术，而是<strong>把系统切成两条流</strong>：<em>发布流</em>（feed publishing，用户发帖 → 内容落库 → 分发）和<em>读取流</em>（feed building，用户刷新 → 取回并渲染）。对应两个接口——<code>POST /v1/me/feed</code> 和 <code>GET /v1/me/feed</code>。</p>
+<p>为什么这一刀值得单独说？因为<strong>所有关于扇出的争论，本质都是在争「这两条流之间，工作量该怎么分配」</strong>。切开之后问题才变得可量化：写侧成本正比于<strong>粉丝数</strong>，读侧成本正比于<strong>关注数</strong>，你只是在这两个数之间选一个来承担。发布流内部则是：Web 服务器管鉴权与<strong>限流</strong>（书里明确把限流当作防刷屏手段），Post 服务把内容落库，<strong>扇出服务</strong>才是这一章真正的主角。</p>
+<figure>
+<svg viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<rect x="14" y="34" width="132" height="42" rx="6" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"/>
+<text x="80" y="52" font-size="10.5" fill="#e7ebf1" text-anchor="middle">客户端</text>
+<text x="80" y="68" font-size="8.5" fill="#b9c0ca" text-anchor="middle" font-family="monospace">POST /v1/me/feed</text>
+<line x1="146" y1="55" x2="160" y2="55" stroke="#7c8593" marker-end="url(#a1)"/>
+<rect x="164" y="34" width="120" height="42" rx="6" fill="rgba(91,157,249,0.12)" stroke="#7c8593"/>
+<text x="224" y="52" font-size="10.5" fill="#e7ebf1" text-anchor="middle">Web 服务器</text>
+<text x="224" y="68" font-size="9" fill="#b9c0ca" text-anchor="middle">鉴权 · 限流防刷</text>
+<line x1="284" y1="55" x2="298" y2="55" stroke="#7c8593" marker-end="url(#a1)"/>
+<rect x="302" y="34" width="132" height="42" rx="6" fill="rgba(91,157,249,0.12)" stroke="#7c8593"/>
+<text x="368" y="52" font-size="10.5" fill="#e7ebf1" text-anchor="middle">Post 服务</text>
+<text x="368" y="68" font-size="8.5" fill="#b9c0ca" text-anchor="middle">落 post 库 + 缓存</text>
+<line x1="434" y1="55" x2="448" y2="55" stroke="#7c8593" marker-end="url(#a1)"/>
+<rect x="452" y="34" width="174" height="42" rx="6" fill="rgba(91,157,249,0.2)" stroke="#5b9df9"/>
+<text x="539" y="52" font-size="10.5" fill="#e7ebf1" text-anchor="middle">扇出服务 fanout</text>
+<text x="539" y="68" font-size="9" fill="#8fbaff" text-anchor="middle">本章真正的主角</text>
+<line x1="539" y1="78" x2="539" y2="96" stroke="#7c8593" marker-end="url(#a1)"/>
+<rect x="14" y="100" width="612" height="80" rx="8" fill="rgba(91,157,249,0.03)" stroke="rgba(91,157,249,0.4)" stroke-dasharray="4 3"/>
+<text x="24" y="116" font-size="9" fill="#5b9df9" font-family="monospace">扇出服务内部</text>
+<rect x="26" y="120" width="136" height="40" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="94" y="136" font-size="9.5" fill="#e7ebf1" text-anchor="middle">① 取好友 ID</text>
+<text x="94" y="152" font-size="8.5" fill="#b9c0ca" text-anchor="middle">图数据库 · 上限 5000</text>
+<line x1="162" y1="140" x2="174" y2="140" stroke="#7c8593" marker-end="url(#a1)"/>
+<rect x="178" y="120" width="142" height="40" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="249" y="136" font-size="9.5" fill="#e7ebf1" text-anchor="middle">② 过滤</text>
+<text x="249" y="152" font-size="8.5" fill="#b9c0ca" text-anchor="middle">屏蔽 · 隐私 · 不活跃</text>
+<line x1="320" y1="140" x2="332" y2="140" stroke="#7c8593" marker-end="url(#a1)"/>
+<rect x="336" y="120" width="126" height="40" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="399" y="136" font-size="9.5" fill="#e7ebf1" text-anchor="middle">③ 入消息队列</text>
+<text x="399" y="152" font-size="8.5" fill="#b9c0ca" text-anchor="middle">削峰 · 可重试</text>
+<line x1="462" y1="140" x2="474" y2="140" stroke="#7c8593" marker-end="url(#a1)"/>
+<rect x="478" y="120" width="136" height="40" rx="5" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"/>
+<text x="546" y="136" font-size="9.5" fill="#e7ebf1" text-anchor="middle">④ worker 写入</text>
+<text x="546" y="152" font-size="8.5" fill="#b9c0ca" text-anchor="middle">批量 pipeline</text>
+<path d="M546,182 L546,214 L488,214" fill="none" stroke="#7c8593" marker-end="url(#a1)"/>
+<rect x="180" y="198" width="304" height="32" rx="6" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"/>
+<text x="332" y="218" font-size="10" fill="#e7ebf1" text-anchor="middle">信息流缓存：只存 &lt;post_id, user_id&gt;</text>
+<text x="14" y="250" font-size="10" fill="#7c8593">只存两个 ID、不存整条内容：同样每人 800 条 × 1000 万人 = 128 GB，存整对象要 8 TB</text>
+</svg>
+<figcaption>图 1 · 发布流：扇出服务取好友、过滤、经消息队列交给 worker 批量写入；收件箱里只放 ID，内容留在单一真相源。</figcaption>
+</figure>
+<h3>写时扇出：把账全记在写这一侧</h3>
+<p>发帖时就把帖子 ID 推进所有好友的收件箱。<strong>好处只有一个，但极其值钱：读变成一次缓存读</strong>，几毫秒到几十毫秒，与你关注了多少人无关。</p>
+<p>坏处是两个，书里都点了名。<strong>热点键问题</strong>：粉丝数极大的账号一发帖，扇出量爆炸——一个一亿粉丝的账号，一条内容就是 <code>1 亿</code> 次写入，即使你的扇出集群能吃 <code>10 万次 / 秒</code>，也要 <strong>约 17 分钟</strong> 才发完；这期间粉丝之间看到的时间还不一样。<strong>给僵尸用户白算</strong>：假设日活只占注册用户的 20%，那么<strong>八成的扇出写入是纯浪费</strong>——写进去、占着内存、直到被挤出去都没人读过。</p>
+<p>这里有条常被忽略的工程纪律：<strong>收件箱里只存 <code>&lt;post_id, user_id&gt;</code> 两个 ID，不存帖子内容</strong>。按 16 字节一条算，每人缓存最近 800 条、1000 万用户，总共 <code>128 GB</code>——一个内存集群装得下；换成存整个帖子对象（按 1 KB 算）就是 <code>8 TB</code>，<strong>差 64 倍</strong>。更重要的不是省内存：内容只有一份真相源，作者编辑或删除时改一处就行，否则你要去追杀几百上千份副本。</p>
+<h3>读时扇出：把账全记在读这一侧</h3>
+<p>反过来，什么都不预存，刷新时才去你关注的每个人的时间线上各取最新几条，归并成一列。<strong>写入成本降到极致</strong>（一条帖子只写一次），也彻底没有热点键——粉丝再多，发帖也只是一次写。</p>
+<p>代价全在读侧，而且是<strong>放大式</strong>的：关注 200 人就是每次刷新 200 次分片查询。用前面的量级算，<code>1160 次 / 秒</code> 的刷新会被放大成 <strong>约 23 万次 / 秒</strong> 的后端查询。更麻烦的是尾延迟——发散查询的总耗时由最慢的那个分片决定，200 个分片里只要有一个在做 GC 或磁盘抖动，这次刷新就慢了。<strong>分片越多，p99 越差，这是发散查询的固有性质，不是实现没写好。</strong></p>
+<figure>
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<line x1="320" y1="8" x2="320" y2="238" stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4"/>
+<text x="160" y="18" font-size="10.5" fill="#5b9df9" text-anchor="middle" font-family="monospace">写时扇出 push</text>
+<rect x="110" y="30" width="100" height="26" rx="5" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"/>
+<text x="160" y="48" font-size="10.5" fill="#e7ebf1" text-anchor="middle">作者发帖</text>
+<line x1="160" y1="58" x2="160" y2="82" stroke="#7c8593" marker-end="url(#a2)"/>
+<text x="168" y="74" font-size="10" fill="#9b6cf5">① 写时：扇出 N 次</text>
+<rect x="26" y="86" width="84" height="24" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="68" y="103" font-size="9.5" fill="#b9c0ca" text-anchor="middle">粉丝收件箱</text>
+<rect x="118" y="86" width="84" height="24" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="160" y="103" font-size="9.5" fill="#b9c0ca" text-anchor="middle">粉丝收件箱</text>
+<rect x="210" y="86" width="84" height="24" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="252" y="103" font-size="9.5" fill="#b9c0ca" text-anchor="middle">粉丝收件箱</text>
+<text x="160" y="126" font-size="10" fill="#7c8593" text-anchor="middle">…共 N 份，N = 粉丝数</text>
+<line x1="160" y1="132" x2="160" y2="152" stroke="#7c8593" marker-end="url(#a2)"/>
+<text x="168" y="147" font-size="10" fill="#5b9df9">② 读时：取 1 次</text>
+<rect x="26" y="156" width="268" height="26" rx="5" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"/>
+<text x="160" y="174" font-size="10" fill="#e7ebf1" text-anchor="middle">用户刷新 → 直接读自己那一份</text>
+<text x="160" y="200" font-size="10" fill="#8fbaff" text-anchor="middle">读 ≈ 一次缓存读，与关注数无关</text>
+<text x="476" y="18" font-size="10.5" fill="#9b6cf5" text-anchor="middle" font-family="monospace">读时扇出 pull</text>
+<rect x="426" y="30" width="100" height="26" rx="5" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"/>
+<text x="476" y="48" font-size="10.5" fill="#e7ebf1" text-anchor="middle">作者发帖</text>
+<line x1="476" y1="58" x2="476" y2="82" stroke="#7c8593" marker-end="url(#a2)"/>
+<text x="484" y="74" font-size="10" fill="#9b6cf5">① 写时：只写 1 份</text>
+<rect x="392" y="86" width="168" height="24" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="476" y="103" font-size="9.5" fill="#b9c0ca" text-anchor="middle">作者自己的时间线</text>
+<text x="476" y="128" font-size="10" fill="#5b9df9" text-anchor="middle">② 读时：向 M 位关注对象各取一次</text>
+<rect x="342" y="136" width="84" height="24" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="384" y="153" font-size="9.5" fill="#b9c0ca" text-anchor="middle">作者 A</text>
+<rect x="434" y="136" width="84" height="24" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="476" y="153" font-size="9.5" fill="#b9c0ca" text-anchor="middle">作者 B</text>
+<rect x="526" y="136" width="84" height="24" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="568" y="153" font-size="9.5" fill="#b9c0ca" text-anchor="middle">作者 M</text>
+<line x1="384" y1="162" x2="452" y2="182" stroke="#7c8593" marker-end="url(#a2)"/>
+<line x1="476" y1="162" x2="476" y2="182" stroke="#7c8593" marker-end="url(#a2)"/>
+<line x1="568" y1="162" x2="500" y2="182" stroke="#7c8593" marker-end="url(#a2)"/>
+<rect x="406" y="186" width="140" height="26" rx="5" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"/>
+<text x="476" y="204" font-size="10" fill="#e7ebf1" text-anchor="middle">按时间归并</text>
+<text x="476" y="230" font-size="10" fill="#8fbaff" text-anchor="middle">p99 由最慢的那次分片查询决定</text>
+<text x="14" y="258" font-size="10.5" fill="#9b6cf5">写侧成本 ∝ 粉丝数；读侧成本 ∝ 关注数。信息流的全部设计都在这两个数之间做选择。</text>
+<text x="14" y="280" font-size="10" fill="#7c8593">本章场景推算：push ≈ 4.6 万次写 / 秒；pull ≈ 1160 次刷新 / 秒 × 200 = 23 万次查询 / 秒</text>
+</svg>
+<figcaption>图 2 · 同一件事的两种记账方式：push 把工作前移到写路径，pull 留到读路径；成本没有消失，只是换了位置。</figcaption>
+</figure>
+<h3>混合：分流键是发布者，不是用户也不是内容</h3>
+<p>书给的答案是混合：<strong>绝大多数用户走 push，粉丝数极大的账号走 pull</strong>，读的时候把两边归并。这句话容易被记成「一半推一半拉」，那就抓错了重点——关键在于<strong>分流的依据是「谁发的」</strong>。</p>
+<p>为什么这个分法成立？因为两侧成本各自正比于不同的数，而这两个数的分布完全不同：<strong>粉丝数是极端长尾的</strong>（少数账号上亿，绝大多数只有几百），<strong>关注数却是有天花板的</strong>（你关注几千人已经算多，其中的大 V 更是只有几十个）。于是把长尾那一小撮从 push 里摘出来，一举消掉热点键；而它们改走 pull 之后带来的读放大，因为「每人关注的大 V 只有几十个」而完全可控。<strong>这是一次拿分布特性换成本的设计，不是折中。</strong></p>
+<figure>
+<svg viewBox="0 0 640 264" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<text x="114" y="18" font-size="10" fill="#5b9df9" text-anchor="middle" font-family="monospace">① 已物化列表（push 侧）</text>
+<rect x="14" y="28" width="200" height="52" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"/>
+<text x="114" y="50" font-size="10" fill="#e7ebf1" text-anchor="middle">收件箱里的 post_id</text>
+<text x="114" y="68" font-size="9" fill="#8fbaff" text-anchor="middle">最近约 800 条 · 一次读取</text>
+<text x="114" y="110" font-size="10" fill="#9b6cf5" text-anchor="middle" font-family="monospace">② 大 V 最近 N 条（pull 侧）</text>
+<rect x="14" y="120" width="200" height="52" rx="6" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"/>
+<text x="114" y="142" font-size="10" fill="#e7ebf1" text-anchor="middle">按作者分片的时间线</text>
+<text x="114" y="160" font-size="9" fill="#8fbaff" text-anchor="middle">你关注的大 V 只有几十个</text>
+<line x1="214" y1="56" x2="248" y2="88" stroke="#7c8593" marker-end="url(#a3)"/>
+<line x1="214" y1="146" x2="248" y2="112" stroke="#7c8593" marker-end="url(#a3)"/>
+<rect x="252" y="76" width="118" height="46" rx="6" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"/>
+<text x="311" y="95" font-size="10" fill="#e7ebf1" text-anchor="middle">按时间归并</text>
+<text x="311" y="112" font-size="9" fill="#8fbaff" text-anchor="middle">+ post_id 去重</text>
+<line x1="370" y1="99" x2="394" y2="99" stroke="#7c8593" marker-end="url(#a3)"/>
+<rect x="398" y="68" width="140" height="62" rx="6" fill="rgba(91,157,249,0.12)" stroke="#7c8593"/>
+<text x="468" y="88" font-size="10" fill="#e7ebf1" text-anchor="middle">水合 hydration</text>
+<text x="468" y="105" font-size="8.5" fill="#b9c0ca" text-anchor="middle">post 缓存 · 用户缓存</text>
+<text x="468" y="120" font-size="8.5" fill="#b9c0ca" text-anchor="middle">图片 / 视频走 CDN</text>
+<line x1="538" y1="99" x2="562" y2="99" stroke="#7c8593" marker-end="url(#a3)"/>
+<rect x="566" y="82" width="60" height="34" rx="6" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"/>
+<text x="596" y="104" font-size="10" fill="#e7ebf1" text-anchor="middle">返回</text>
+<text x="14" y="206" font-size="10.5" fill="#9b6cf5">分流键是「发布者」，不是用户、不是内容类型。</text>
+<text x="14" y="228" font-size="10" fill="#7c8593">账号跨过阈值时只改新内容的路径 → 同一作者可能两条路都有 → 去重必须按 post_id</text>
+<text x="14" y="250" font-size="10" fill="#7c8593">一亿粉丝的账号若走 push：一条内容 = 1 亿次写，10 万次 / 秒 也要约 17 分钟</text>
+</svg>
+<figcaption>图 3 · 读取路径：已物化的收件箱与大 V 的时间线在读时归并去重，再水合成可渲染的对象返回。</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/feed-system-day14.html" target="_blank" rel="noopener">System Design · Day 14 Feed 系统</a> — 1 亿 DAU 下扇出的完整工程账：阈值怎么定、归并与去重放在哪一层、冷热用户怎么分档</aside>
+<h3>缓存分五层，以及为什么必须分</h3>
+<p>书里把缓存拆成五层，每层的失效节奏完全不同，这才是分层的理由：<strong>信息流层</strong>（post ID 列表）、<strong>内容层</strong>（帖子对象，热门内容再单独放一份热缓存）、<strong>社交图层</strong>（关注关系）、<strong>行为层</strong>（是否点赞、是否回复过）、<strong>计数层</strong>（赞数、评论数、粉丝数）。</p>
+<p>为什么不能揉成一层？因为<strong>计数层每秒都在变，内容层几乎不变</strong>。揉在一起就得按变得最快的那层设过期时间，内容也跟着被反复回源，命中率被最不稳定的那一项拖垮。分开之后各设各的：内容缓存很久，计数异步聚合、容忍几秒误差——<strong>没人会因为赞数慢了 3 秒投诉，但所有人都会因为刷新慢了 3 秒投诉</strong>。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/caching-day2.html" target="_blank" rel="noopener">System Design · Day 2 缓存</a> — 多层缓存怎么分层、过期与失效策略怎么选，以及热点键和缓存击穿的常见解法</aside>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 1 · 三种扇出策略：成本放在哪一侧，就在哪一侧付账</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>策略</th><th>工作发生在</th><th>读延迟</th><th>写放大</th><th>会死在哪</th><th>适合</th></tr></thead>
+<tbody>
+<tr><th>写时扇出 push</th><td>写路径</td><td><strong>最低</strong>：一次缓存读，与关注数无关</td><td><strong>最高</strong>：× 粉丝数（本章场景 ≈ 4.6 万次写 / 秒）</td><td>热点键：一亿粉丝 = 一条内容 1 亿次写；且给不活跃用户白算八成</td><td>粉丝数分布均匀、读远多于写</td></tr>
+<tr><th>读时扇出 pull</th><td>读路径</td><td><strong>最高</strong>：M 次发散查询，p99 被最慢分片拖住</td><td>最低：一条帖子只写一次</td><td>读放大：1160 次刷新 / 秒 → 23 万次查询 / 秒</td><td>关注数有上限、排序算法要频繁迭代</td></tr>
+<tr><th>混合 hybrid<br/>（本章的选择）</th><td><strong>按发布者分流</strong></td><td>低：一次读 + 少量大 V 拉取后归并</td><td>中：长尾账号被摘出 push</td><td>复杂度：两条路径、阈值抖动、跨路径去重</td><td><strong>真实系统的默认答案</strong></td></tr>
+</tbody></table></div>
+<p class="tcap">表 2 · 混合策略落地时必须回答的四个问题</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>问题</th><th>常见做法</th><th>代价 / 坑</th></tr></thead>
+<tbody>
+<tr><th>阈值定在哪</th><td>按<strong>粉丝数</strong>分档（工程上常落在万级到十万级，取决于你的扇出集群吃得下多少），而不是按「是否认证名人」这类业务标签</td><td>阈值附近的账号会反复横跳，必须留一条滞后带（升上去要 10 万粉、掉下来要 8 万粉）</td></tr>
+<tr><th>账号跨过阈值时，存量怎么办</th><td>只改<strong>新内容</strong>的路径，已扇出的存量不回收也不回补</td><td>同一作者短期内一部分在收件箱、一部分靠拉取，<strong>读侧必须按 <code>post_id</code> 去重</strong>，否则用户看到重复</td></tr>
+<tr><th>归并在哪一层做</th><td>读取服务把「收件箱列表」与「大 V 最近 N 条」按时间归并</td><td>每次读多一次拉取；关注的大 V 越多越贵，通常要给这个数设上限</td></tr>
+<tr><th>不活跃用户要不要推</th><td>按最近登录时间过滤，长期不活跃的只保留 pull</td><td>省下大头写入（本章场景可省约八成），代价是用户回归时首刷要现拼、明显变慢</td></tr>
+</tbody></table></div>
+<p>还有一个高频追问：<strong>扇出要不要走消息队列？</strong>要。同步扇出意味着发帖接口的耗时正比于粉丝数——一个 5000 好友的用户发帖会明显比别人慢。入队后发帖接口只剩一次入队的 <code>1–5ms</code>，扇出在后台慢慢做；代价是<strong>信息流不再实时一致</strong>：粉丝之间会有秒级到分钟级的先后差，这在按时间倒序的产品里通常可接受，在实时互动场景里就不行了。</p>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>这套骨架不是教学模型，它就是各家 feed 团队真实在维护的东西。面试里被问到信息流，能把这四点说清楚基本就过了：<strong>先拆两条流、写读两侧的成本各正比于什么、混合的分流键是发布者、以及跨路径去重和阈值滞后这两个必然会踩的坑</strong>。</p>
+<div class="ev">
+<div class="evh">大厂实证 · 这些主张不是书里说的，是公司自己公开说的</div>
+<ul>
+<li><strong>Twitter</strong> 在 QCon 2012 的《Timelines at Scale》里公开了它的选择：主路径是<strong>写时扇出</strong>，把 tweet ID 推进 Redis 里的每个 home timeline，<strong>每个时间线只缓存最近约 800 条</strong>；公开数据是 home timeline 承受 <strong>超过 30 万次查询 / 秒</strong>，写入侧日均约 <strong>300 亿次时间线投递</strong>，而推文本身只有约 <code>5000 条 / 秒</code>（峰值 <code>1.2 万</code>）——<strong>写读比被扇出彻底反转，这正是本章那个「读多写少的产品变成写多读少的系统」的现实版</strong>。<span class="src"><a href="https://www.infoq.com/presentations/Twitter-Timeline-Scalability" target="_blank" rel="noopener">InfoQ《Twitter Timeline Scalability》· Raffi Krikorian, QCon 2012 ↗</a></span></li>
+<li><strong>LinkedIn</strong> 走了相反的路：2016 年上线的 <strong>FollowFeed</strong> 明确采用<strong>读时扇出</strong>——存储节点按作者 ID 分片、存作者的时间序列，读取时由 broker 发散查询再归并；结果是移动端信息流 p99 约 <code>140ms</code>、比上一代系统 Sensei <strong>快 5 倍</strong>，索引大 <code>20</code> 倍却只用一半机器。它给出的理由很实在：<strong>pull 让排序与相关性实验迭代得更快</strong>——因为不用回填已经物化的历史。<span class="src"><a href="https://engineering.linkedin.com/blog/2016/03/followfeed--linkedin-s-feed-made-faster-and-smarter" target="_blank" rel="noopener">LinkedIn Engineering《FollowFeed: LinkedIn's Feed Made Faster and Smarter》, 2016 ↗</a></span></li>
+<li><strong>Yahoo! Research</strong> 在 SIGMOD 2010 的《Feeding Frenzy》里把这件事做成了结论：最佳策略是<strong>逐「生产者–消费者对」决定推还是拉</strong>——高频生产者的内容在查询时现拉，低频生产者的内容提前物化。<strong>这为「混合的分流键是发布者」提供了本章之外的学术背书</strong>。<span class="src"><a href="https://jeffterrace.com/docs/feeding-frenzy-sigmod10-web.pdf" target="_blank" rel="noopener">Silberstein, Terrace, Cooper, Ramakrishnan《Feeding Frenzy: Selectively Materializing Users' Event Feeds》, SIGMOD 2010 ↗</a></span></li>
+<li><strong>Facebook</strong> 的 TAO 论文（USENIX ATC 2013）描述了支撑其社交图与信息流读取的存储层：一个为<strong>极端读多写少</strong>优化的图数据存储，公开量级是<strong>每秒十亿级读、百万级写</strong>——<strong>说明「读侧必须有一层专门的图/内容缓存」不是可选优化，而是这类系统的地基</strong>。<span class="src"><a href="https://www.usenix.org/system/files/conference/atc13/atc13-bronson.pdf" target="_blank" rel="noopener">Bronson et al.《TAO: Facebook's Distributed Data Store for the Social Graph》, USENIX ATC 2013 ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/recommendation-system-day13.html" target="_blank" rel="noopener">System Design · Day 13 推荐系统</a> — 当信息流不再按时间倒序：从十亿候选到二十条的召回、粗排、精排漏斗怎么搭</aside>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>把「读多写少」当成信息流的固有属性</strong>——一旦选了 push，系统立刻变成写多读少（本章场景约 <code>40:1</code>）。<strong>容量按扇出写入量估，不是按刷新次数估</strong>，这是最常见的估算错误。</li>
+<li><strong>把混合理解成「一半推一半拉」</strong>：分流键是<strong>发布者</strong>。按用户分、按内容类型分都会立刻失效，因为热点来自粉丝数的长尾分布，而不是来自用户或内容。</li>
+<li><strong>忘了跨路径去重</strong>：账号跨越阈值那一刻起，同一作者的内容会同时出现在两条路径上。不按 <code>post_id</code> 去重，用户就会看到重复条目——这是混合方案上线后最典型的线上 bug。</li>
+<li><strong>收件箱里存整个帖子对象</strong>：存储差 64 倍还是小事，真正的麻烦是作者编辑或删除后要去追杀成百上千份副本。只存 ID，让内容保持单一真相源。</li>
+<li><strong>拿 exactly-once 的心态要求扇出</strong>：扇出走队列必然是「至少一次」，重复写入靠收件箱按 <code>post_id</code> 幂等即可，追求端到端不重不漏只会把设计复杂化。</li>
+<li><strong>书里按时间倒序，真实系统几乎都在排序</strong>：书自己说明了这是为简化范围。加上排序模型后，pull 的相对优势会变大（不用回填历史就能改算法），LinkedIn 的选择正是这个逻辑。</li>
+<li><strong>时代局限</strong>：本书成于 2020 年，讨论的是<strong>以关注关系为主</strong>的信息流。此后 TikTok 式推荐流把「关注图」这个前提都拿掉了——候选来自全库召回而非好友列表，扇出问题在那种形态里几乎消失，取而代之的是召回与排序的算力问题。本章的骨架依然是<strong>关注型 feed</strong> 的正确答案，但它不再是唯一的产品形态。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 核心命题：信息流的设计就是<strong>决定「拼一份 feed」这份工作放在写路径还是读路径</strong>。成本不会消失，只会换位置。</p>
+<p>② 先把系统拆成<strong>发布流与读取流</strong>两条互不相干的流；所有扇出争论都是在争这两条流之间的工作量分配。</p>
+<p>③ 写侧成本 ∝ <strong>粉丝数</strong>，读侧成本 ∝ <strong>关注数</strong>。本章场景：push ≈ <code>4.6 万次写 / 秒</code>，pull ≈ <code>23 万次查询 / 秒</code>。</p>
+<p>④ push 一上，读多写少的产品立刻变成<strong>写读比 40:1</strong> 的系统——容量必须按扇出写入量估。</p>
+<p>⑤ push 死于<strong>热点键</strong>（一亿粉丝 = 一条内容 1 亿次写，10 万次 / 秒 也要约 17 分钟）和给不活跃用户白算；pull 死于<strong>读放大与尾延迟</strong>（p99 由最慢的分片决定）。</p>
+<p>⑥ 混合是答案，但<strong>分流键是发布者</strong>：粉丝数长尾、关注数有天花板——把长尾摘出去走 pull，是拿分布特性换成本，不是和稀泥。</p>
+<p>⑦ 三条工程纪律：收件箱<strong>只存 <code>&lt;post_id, user_id&gt;</code></strong>（128 GB vs 8 TB，且内容保持单一真相源）、扇出<strong>走消息队列</strong>（发帖接口耗时不再正比于好友数，代价是秒级不一致）、跨路径<strong>按 <code>post_id</code> 去重</strong>。</p>
+<p>⑧ 缓存要分五层（信息流 / 内容 / 社交图 / 行为 / 计数），理由是<strong>各层的变更节奏差几个数量级</strong>；揉成一层，命中率会被最不稳定的计数层拖垮。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

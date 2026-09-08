@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview Vol 1 · Ch 11 · Design a News Feed System — Books Deep-Read Book 63</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOKS DEEP-READ · SYSTEM DESIGN INTERVIEW VOL 1 · CH 11</p>
+<h1>Design a News Feed System</h1>
+<p class="sub">System Design Interview Vol 1 · Ch 11 · Alex Xu · 2020</p>
+<p class="langbar"><a href="sdi1-ch11-news-feed-book63.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>Open any social app and scroll. That endless column of things your friends posted is the <strong>news feed</strong>. Chapter 11 asks you to build one. It looks like nothing more than "sort your friends' posts by time", and it is in fact the book's best training ground for one instinct: <strong>the same work can be done when someone posts or when someone looks, the cost differs by tens of times, and neither side is always the cheaper one.</strong></p>
+<h2>A comparison: is the newspaper printed in advance, or assembled when you walk in?</h2>
+<p>Think of each person's feed as <strong>a personal newspaper</strong>. There are two ways to make it.</p>
+<p><strong>One: print ahead.</strong> The moment anyone posts, you run around and add a line to the newspaper of every single person who follows them. When you wake up, your paper is already printed and waiting. You pick it up and go.</p>
+<p><strong>Two: assemble on arrival.</strong> You do nothing in advance. The instant a reader shows up, an editor runs to each person they follow, copies down the newest few items, and staples a paper together on the spot.</p>
+<h2>Why the obvious way collapses</h2>
+<p>"Assemble on arrival" is the easier thing to build and the first thing to break. If you follow two hundred people, every refresh means two hundred errands — and if just one of them is slow, you wait. <strong>The time to assemble a paper is set by the slowest errand, not by the average one.</strong> A refresh that takes several seconds is a product nobody keeps using.</p>
+<h2>The core idea: move the work to a moment when nobody is waiting</h2>
+<p>So the mainstream answer is <strong>print ahead</strong>. You post, and the system immediately looks up your friend list and adds a line to each of their papers. Reading becomes a single action: pick up the copy that is already printed. <strong>Refresh feels instant not because anything got faster, but because the work was moved</strong> to the moment you hit "post".</p>
+<h2>Except for one very expensive case</h2>
+<p>Printing ahead has a soft spot: <strong>the number of copies equals the number of followers.</strong> An account with a hundred million followers posts once, and the system must add a line to a hundred million papers. Even printing a hundred thousand copies a second, that is over a quarter of an hour. Worse, only a few million of those people will actually look today — the rest were printed for nobody.</p>
+<p>So real systems <strong>split people by who did the posting</strong>. Ordinary accounts: print ahead. Huge accounts: don't print, assemble on arrival — because the number of huge accounts any one person follows is a few dozen at most, and a few dozen errands is a bargain. What you see is <strong>the pre-printed stack plus the freshly fetched celebrity items, shuffled together by time</strong>.</p>
+<p>The honest cost: printing ahead means the same post gets copied hundreds or thousands of times inside your system, the write volume and storage go up accordingly, and the vast majority of those copies will never be read by anyone.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p>Every design decision in a news feed answers one question: <strong>do you assemble the paper when somebody posts, or when somebody looks?</strong> The first reads instantly but writes brutally; the second writes cheaply but reads painfully. The answer is not to pick one — it is to <strong>split by publisher</strong>: print ahead for ordinary accounts, assemble on the fly for the huge ones, and merge the two at the end.</p>
+</div>
+<p class="switch-hint">Want the fan-out strategies, the cache layers and the real numbers? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">This chapter is not about sorting your friends' posts by time. It is a problem in <strong>moving compute between the write path and the read path</strong>: fan-out on write puts all the work at posting time and buys you a millisecond refresh, at the price of write amplification equal to the follower count; fan-out on read puts all the work at refresh time, costs almost nothing to write, and pays for it with a scatter-gather on every read whose tail latency is set by the slowest shard. The real answer is a <strong>hybrid split by publisher</strong> — and the judgement that <em>the routing key is the publisher, not the user and not the content</em> is the thing worth taking away.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>News feed / timeline</strong>: the aggregated column of posts from the people you follow. In this chapter it is ordered <strong>reverse-chronologically</strong> — newest first.</li>
+<li><strong>Fan-out</strong>: one input amplified into many outputs. Here: one post written into N followers' inboxes.</li>
+<li><strong>Fan-out on write (push)</strong>: at posting time, distribute the post into every follower's feed, materialised in advance.</li>
+<li><strong>Fan-out on read (pull)</strong>: distribute nothing; when a user refreshes, go and fetch from each account they follow and assemble on the spot.</li>
+<li><strong>Materialise</strong>: compute a query's result ahead of time and store it, so reads just fetch instead of computing.</li>
+<li><strong>Inbox</strong>: the per-user list of post IDs kept in advance — the "pre-printed paper".</li>
+<li><strong>Social graph</strong>: the who-follows-whom data, usually kept in a graph database.</li>
+<li><strong>Hotkey</strong>: one key whose traffic or fan-out dwarfs every other key and takes down its shard on its own. An account with 100M followers is the canonical hotkey.</li>
+<li><strong>Scatter-gather</strong>: split one request into many shard queries in parallel, then merge. Total time is set by the <strong>slowest</strong> shard.</li>
+<li><strong>Hydration</strong>: you hold a list of IDs; now go fetch author info, body text, media URLs and counters to build renderable objects.</li>
+<li><strong>p99 latency</strong>: the 99th slowest request out of a hundred. It measures the worst experience, which is far more useful than the average.</li>
+<li><strong>CDN</strong>: caches images and video close to the user so large files are not fetched from origin every time.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This is the eighth case study in Part II of Volume 1. It follows Ch10, the notification system — both are <strong>fan-out problems</strong>, differing in where the fan-out lands: notifications fan out to third-party channels you do not control, a feed fans out into storage you own. It leads into Ch12, chat, which moves from one-to-many broadcast to one-to-one and group real-time delivery. In the wild it is Twitter's home timeline, Facebook's News Feed, the LinkedIn feed — the beating heart of almost every social product.</p>
+<h2>What problem is it solving</h2>
+<p>The chapter's scenario: <strong>10 million daily active users</strong>, a cap of <code>5,000</code> friends per user, a reverse-chronological feed, posts containing images and video, both web and mobile.</p>
+<p>Spread the numbers out and the problem shows itself immediately (what follows is derived from that scenario, not quoted from the book). Say each user posts twice a day: <strong>20 million posts/day ≈ 230 posts/s</strong>, peaking around <code>700/s</code> at 3×. On that number alone, one machine would do.</p>
+<p>But the moment you choose to materialise, the accounting changes completely. At an average of <code>200</code> friends — well under the 5,000 cap — each post writes 200 inbox rows: <strong>20M × 200 = 4 billion writes/day ≈ 46,000 writes/s</strong>, with peaks near <code>140,000/s</code>. And the read side? Ten million people refreshing ten times a day is <strong>100 million reads/day ≈ 1,160 reads/s</strong>.</p>
+<p>Which is the first counter-intuitive thing in this chapter: <strong>a news feed looks like the textbook read-heavy product, yet the instant you adopt fan-out on write it becomes a write-heavy system — roughly <code>40:1</code> writes to reads.</strong> Capacity must be planned against fan-out writes, not against refreshes; estimating from refreshes is off by two orders of magnitude.</p>
+<p>Both sides have a failure mode: without materialisation, a refresh is 200 shard queries and easily lands in whole seconds; with it, one account with a hundred million followers posts and generates a hundred million writes, turning shards into hotspots and dragging every ordinary user's posting latency down with it.</p>
+<h2>The core content, properly</h2>
+<h3>First cut: split it into two independent flows</h3>
+<p>The first thing the book does is not pick a technology but <strong>split the system in two</strong>: <em>feed publishing</em> (user posts → content persisted → distributed) and <em>feed building</em> (user refreshes → fetch and render). Two endpoints: <code>POST /v1/me/feed</code> and <code>GET /v1/me/feed</code>.</p>
+<p>Why is that cut worth naming? Because <strong>every argument about fan-out is really an argument about how work is divided between those two flows</strong>. Once split, the question becomes quantitative: write-side cost is proportional to <strong>follower count</strong>, read-side cost to <strong>followee count</strong>, and you are simply choosing which of the two numbers to pay. Inside the publishing flow: web servers do authentication and <strong>rate limiting</strong> (the book names rate limiting explicitly as the anti-spam mechanism), the post service persists the content, and the <strong>fan-out service</strong> is the real subject of the chapter.</p>
+<figure>
+<svg viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="b1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<rect x="14" y="34" width="132" height="42" rx="6" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"/>
+<text x="80" y="52" font-size="10.5" fill="#e7ebf1" text-anchor="middle">Client</text>
+<text x="80" y="68" font-size="8.5" fill="#b9c0ca" text-anchor="middle" font-family="monospace">POST /v1/me/feed</text>
+<line x1="146" y1="55" x2="160" y2="55" stroke="#7c8593" marker-end="url(#b1)"/>
+<rect x="164" y="34" width="120" height="42" rx="6" fill="rgba(91,157,249,0.12)" stroke="#7c8593"/>
+<text x="224" y="52" font-size="10.5" fill="#e7ebf1" text-anchor="middle">Web servers</text>
+<text x="224" y="68" font-size="8.5" fill="#b9c0ca" text-anchor="middle">auth · rate limiting</text>
+<line x1="284" y1="55" x2="298" y2="55" stroke="#7c8593" marker-end="url(#b1)"/>
+<rect x="302" y="34" width="132" height="42" rx="6" fill="rgba(91,157,249,0.12)" stroke="#7c8593"/>
+<text x="368" y="52" font-size="10.5" fill="#e7ebf1" text-anchor="middle">Post service</text>
+<text x="368" y="68" font-size="8.5" fill="#b9c0ca" text-anchor="middle">post DB + cache</text>
+<line x1="434" y1="55" x2="448" y2="55" stroke="#7c8593" marker-end="url(#b1)"/>
+<rect x="452" y="34" width="174" height="42" rx="6" fill="rgba(91,157,249,0.2)" stroke="#5b9df9"/>
+<text x="539" y="52" font-size="10.5" fill="#e7ebf1" text-anchor="middle">Fan-out service</text>
+<text x="539" y="68" font-size="8.5" fill="#8fbaff" text-anchor="middle">the real subject of Ch11</text>
+<line x1="539" y1="78" x2="539" y2="96" stroke="#7c8593" marker-end="url(#b1)"/>
+<rect x="14" y="100" width="612" height="80" rx="8" fill="rgba(91,157,249,0.03)" stroke="rgba(91,157,249,0.4)" stroke-dasharray="4 3"/>
+<text x="24" y="116" font-size="9" fill="#5b9df9" font-family="monospace">inside the fan-out service</text>
+<rect x="26" y="120" width="136" height="40" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="94" y="137" font-size="9.5" fill="#e7ebf1" text-anchor="middle">1 · fetch friend IDs</text>
+<text x="94" y="152" font-size="8.5" fill="#b9c0ca" text-anchor="middle">graph DB · up to 5,000</text>
+<line x1="162" y1="140" x2="174" y2="140" stroke="#7c8593" marker-end="url(#b1)"/>
+<rect x="178" y="120" width="142" height="40" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="249" y="137" font-size="9.5" fill="#e7ebf1" text-anchor="middle">2 · filter</text>
+<text x="249" y="152" font-size="8.5" fill="#b9c0ca" text-anchor="middle">muted · privacy · inactive</text>
+<line x1="320" y1="140" x2="332" y2="140" stroke="#7c8593" marker-end="url(#b1)"/>
+<rect x="336" y="120" width="126" height="40" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="399" y="137" font-size="9.5" fill="#e7ebf1" text-anchor="middle">3 · enqueue</text>
+<text x="399" y="152" font-size="8.5" fill="#b9c0ca" text-anchor="middle">smoothing · retryable</text>
+<line x1="462" y1="140" x2="474" y2="140" stroke="#7c8593" marker-end="url(#b1)"/>
+<rect x="478" y="120" width="136" height="40" rx="5" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"/>
+<text x="546" y="137" font-size="9.5" fill="#e7ebf1" text-anchor="middle">4 · workers write</text>
+<text x="546" y="152" font-size="8.5" fill="#b9c0ca" text-anchor="middle">batched pipeline</text>
+<path d="M546,182 L546,214 L488,214" fill="none" stroke="#7c8593" marker-end="url(#b1)"/>
+<rect x="180" y="198" width="304" height="32" rx="6" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"/>
+<text x="332" y="218" font-size="10" fill="#e7ebf1" text-anchor="middle">News feed cache: only &lt;post_id, user_id&gt;</text>
+<text x="14" y="250" font-size="10" fill="#7c8593">IDs only, never the body: 800 entries × 10M users = 128 GB; whole objects would be 8 TB</text>
+</svg>
+<figcaption>Fig 1 · The publishing flow: the fan-out service fetches friends, filters them, and hands the list to workers through a queue; the inbox holds IDs only, the content stays in one source of truth.</figcaption>
+</figure>
+<h3>Fan-out on write: charge everything to the write side</h3>
+<p>At posting time, push the post ID into every friend's inbox. <strong>There is exactly one benefit, and it is worth a great deal: a read becomes one cache lookup</strong> — milliseconds to tens of milliseconds, independent of how many accounts you follow.</p>
+<p>The costs are two, and the book names both. <strong>The hotkey problem</strong>: an account with a huge following posts and the fan-out explodes — 100 million followers means <code>100 million</code> writes for one post; even at <code>100,000 writes/s</code> that is <strong>about 17 minutes</strong>, during which different followers see it at visibly different times. <strong>Wasted work on dormant users</strong>: if only 20% of registered users are active on a given day, <strong>four fifths of your fan-out writes are pure waste</strong> — written, occupying memory, evicted, never read.</p>
+<p>One engineering rule here gets skipped constantly: <strong>the inbox stores <code>&lt;post_id, user_id&gt;</code> and nothing else</strong>. At 16 bytes a row, 800 recent entries per user across 10 million users is <code>128 GB</code> — one memory cluster. Store whole post objects at ~1 KB and it is <code>8 TB</code>, <strong>64× more</strong>. And memory is the smaller point: with IDs only, the content has a single source of truth, so an edit or a delete touches one row instead of hunting down a thousand copies.</p>
+<h3>Fan-out on read: charge everything to the read side</h3>
+<p>The mirror image: store nothing in advance, and on refresh fetch the latest few items from each account the user follows, then merge. <strong>Write cost drops to the floor</strong> — one write per post — and the hotkey problem disappears entirely, because a huge following costs nothing at write time.</p>
+<p>The bill arrives on the read side, and it is <strong>amplified</strong>: 200 followees means 200 shard queries per refresh. On the numbers above, <code>1,160 refreshes/s</code> becomes roughly <strong>230,000 backend queries/s</strong>. Worse is the tail: a scatter-gather finishes when its slowest shard finishes, so one shard doing a GC pause or hitting disk contention slows the whole refresh. <strong>More shards means a worse p99 — that is inherent to scatter-gather, not a sign of a sloppy implementation.</strong></p>
+<figure>
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="b2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<line x1="320" y1="8" x2="320" y2="238" stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4"/>
+<text x="160" y="18" font-size="10.5" fill="#5b9df9" text-anchor="middle" font-family="monospace">fan-out on write (push)</text>
+<rect x="110" y="30" width="100" height="26" rx="5" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"/>
+<text x="160" y="48" font-size="10.5" fill="#e7ebf1" text-anchor="middle">author posts</text>
+<line x1="160" y1="58" x2="160" y2="82" stroke="#7c8593" marker-end="url(#b2)"/>
+<text x="168" y="74" font-size="10" fill="#9b6cf5">1 · write: N inserts</text>
+<rect x="26" y="86" width="84" height="24" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="68" y="103" font-size="9" fill="#b9c0ca" text-anchor="middle">follower inbox</text>
+<rect x="118" y="86" width="84" height="24" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="160" y="103" font-size="9" fill="#b9c0ca" text-anchor="middle">follower inbox</text>
+<rect x="210" y="86" width="84" height="24" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="252" y="103" font-size="9" fill="#b9c0ca" text-anchor="middle">follower inbox</text>
+<text x="160" y="126" font-size="10" fill="#7c8593" text-anchor="middle">… N copies, N = follower count</text>
+<line x1="160" y1="132" x2="160" y2="152" stroke="#7c8593" marker-end="url(#b2)"/>
+<text x="168" y="147" font-size="10" fill="#5b9df9">2 · read: 1 lookup</text>
+<rect x="26" y="156" width="268" height="26" rx="5" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"/>
+<text x="160" y="174" font-size="10" fill="#e7ebf1" text-anchor="middle">user refreshes → reads their own copy</text>
+<text x="160" y="200" font-size="10" fill="#8fbaff" text-anchor="middle">read ≈ one cache lookup, whatever you follow</text>
+<text x="476" y="18" font-size="10.5" fill="#9b6cf5" text-anchor="middle" font-family="monospace">fan-out on read (pull)</text>
+<rect x="426" y="30" width="100" height="26" rx="5" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"/>
+<text x="476" y="48" font-size="10.5" fill="#e7ebf1" text-anchor="middle">author posts</text>
+<line x1="476" y1="58" x2="476" y2="82" stroke="#7c8593" marker-end="url(#b2)"/>
+<text x="484" y="74" font-size="10" fill="#9b6cf5">1 · write: 1 insert</text>
+<rect x="392" y="86" width="168" height="24" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="476" y="103" font-size="9.5" fill="#b9c0ca" text-anchor="middle">the author's own timeline</text>
+<text x="476" y="128" font-size="10" fill="#5b9df9" text-anchor="middle">2 · read: one lookup per followee</text>
+<rect x="342" y="136" width="84" height="24" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="384" y="153" font-size="9.5" fill="#b9c0ca" text-anchor="middle">author A</text>
+<rect x="434" y="136" width="84" height="24" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="476" y="153" font-size="9.5" fill="#b9c0ca" text-anchor="middle">author B</text>
+<rect x="526" y="136" width="84" height="24" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"/>
+<text x="568" y="153" font-size="9.5" fill="#b9c0ca" text-anchor="middle">author M</text>
+<line x1="384" y1="162" x2="452" y2="182" stroke="#7c8593" marker-end="url(#b2)"/>
+<line x1="476" y1="162" x2="476" y2="182" stroke="#7c8593" marker-end="url(#b2)"/>
+<line x1="568" y1="162" x2="500" y2="182" stroke="#7c8593" marker-end="url(#b2)"/>
+<rect x="406" y="186" width="140" height="26" rx="5" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"/>
+<text x="476" y="204" font-size="10" fill="#e7ebf1" text-anchor="middle">merge by time</text>
+<text x="476" y="230" font-size="10" fill="#8fbaff" text-anchor="middle">p99 is set by the slowest of those lookups</text>
+<text x="14" y="258" font-size="10.5" fill="#9b6cf5">Write cost ∝ followers; read cost ∝ followees. Every feed design chooses between those two numbers.</text>
+<text x="14" y="280" font-size="10" fill="#7c8593">This chapter's numbers: push ≈ 46,000 writes/s; pull ≈ 1,160 refreshes/s × 200 = 230,000 queries/s</text>
+</svg>
+<figcaption>Fig 2 · Two ways of booking the same work: push moves it onto the write path, pull leaves it on the read path. The cost does not disappear, it relocates.</figcaption>
+</figure>
+<h3>Hybrid: the routing key is the publisher, not the user and not the content</h3>
+<p>The book's answer is a hybrid: <strong>the vast majority of users go through push, accounts with enormous followings go through pull</strong>, and the two are merged at read time. That is easy to remember as "half push, half pull", which misses the point — what matters is that <strong>the split is decided by who posted</strong>.</p>
+<p>Why does that split work? Because the two costs are proportional to two numbers with completely different distributions. <strong>Follower counts are extremely long-tailed</strong> (a handful of accounts have hundreds of millions; nearly everyone has a few hundred), while <strong>followee counts have a ceiling</strong> (following a few thousand accounts is already a lot, and only a few dozen of them are huge). Pulling that small tail out of push kills the hotkey outright, and the read amplification it introduces stays bounded precisely because nobody follows more than a few dozen giant accounts. <strong>This is trading on a distributional fact, not splitting the difference.</strong></p>
+<figure>
+<svg viewBox="0 0 640 264" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="b3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<text x="114" y="18" font-size="10" fill="#5b9df9" text-anchor="middle" font-family="monospace">1 · materialised inbox (push)</text>
+<rect x="14" y="28" width="200" height="52" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"/>
+<text x="114" y="50" font-size="10" fill="#e7ebf1" text-anchor="middle">post_ids in the inbox</text>
+<text x="114" y="68" font-size="9" fill="#8fbaff" text-anchor="middle">~800 most recent · one read</text>
+<text x="114" y="110" font-size="10" fill="#9b6cf5" text-anchor="middle" font-family="monospace">2 · huge accounts, latest N (pull)</text>
+<rect x="14" y="120" width="200" height="52" rx="6" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"/>
+<text x="114" y="142" font-size="10" fill="#e7ebf1" text-anchor="middle">author-sharded timelines</text>
+<text x="114" y="160" font-size="9" fill="#8fbaff" text-anchor="middle">only a few dozen you follow</text>
+<line x1="214" y1="56" x2="248" y2="88" stroke="#7c8593" marker-end="url(#b3)"/>
+<line x1="214" y1="146" x2="248" y2="112" stroke="#7c8593" marker-end="url(#b3)"/>
+<rect x="252" y="76" width="118" height="46" rx="6" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"/>
+<text x="311" y="95" font-size="10" fill="#e7ebf1" text-anchor="middle">merge by time</text>
+<text x="311" y="112" font-size="9" fill="#8fbaff" text-anchor="middle">+ dedupe by post_id</text>
+<line x1="370" y1="99" x2="394" y2="99" stroke="#7c8593" marker-end="url(#b3)"/>
+<rect x="398" y="68" width="140" height="62" rx="6" fill="rgba(91,157,249,0.12)" stroke="#7c8593"/>
+<text x="468" y="88" font-size="10" fill="#e7ebf1" text-anchor="middle">hydration</text>
+<text x="468" y="105" font-size="8.5" fill="#b9c0ca" text-anchor="middle">post cache · user cache</text>
+<text x="468" y="120" font-size="8.5" fill="#b9c0ca" text-anchor="middle">media served from CDN</text>
+<line x1="538" y1="99" x2="562" y2="99" stroke="#7c8593" marker-end="url(#b3)"/>
+<rect x="566" y="82" width="60" height="34" rx="6" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"/>
+<text x="596" y="104" font-size="10" fill="#e7ebf1" text-anchor="middle">return</text>
+<text x="14" y="206" font-size="10.5" fill="#9b6cf5">The routing key is the PUBLISHER — not the user, not the content type.</text>
+<text x="14" y="228" font-size="10" fill="#7c8593">Crossing the threshold changes only new posts → one author on both paths → dedupe by post_id</text>
+<text x="14" y="250" font-size="10" fill="#7c8593">100M followers on push: one post = 100M writes; even at 100k writes/s that is ~17 minutes</text>
+</svg>
+<figcaption>Fig 3 · The read path: the materialised inbox and the giant accounts' timelines are merged and deduped at read time, then hydrated into renderable objects.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/feed-system-day14.en.html" target="_blank" rel="noopener">System Design · Day 14 Feed Systems</a> — the full engineering account of fan-out at 100M DAU: where the threshold goes, which layer merges and dedupes, how hot and cold users are tiered</aside>
+<h3>Five cache layers, and why they must stay separate</h3>
+<p>The book splits the cache into five layers, and the reason they are split is that each one changes on a completely different clock: the <strong>news feed layer</strong> (lists of post IDs), the <strong>content layer</strong> (post objects, with hot content in its own cache), the <strong>social graph layer</strong> (follow relationships), the <strong>action layer</strong> (has this user liked or replied), and the <strong>counter layer</strong> (likes, replies, follower counts).</p>
+<p>Why not one layer? Because <strong>counters change every second while content barely changes at all</strong>. Merge them and you must set the TTL for the fastest-moving member, so content gets re-fetched from origin over and over and your hit rate is dragged down by the least stable item. Split, each gets its own policy: content cached for a long time, counters aggregated asynchronously with a few seconds of tolerated error — <strong>nobody complains that a like count was 3 seconds stale, and everybody complains that a refresh was 3 seconds slow</strong>.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/caching-day2.en.html" target="_blank" rel="noopener">System Design · Day 2 Caching</a> — how to layer caches, how to pick expiry and invalidation strategies, and the usual answers to hotkeys and cache stampedes</aside>
+<h2>Key trade-offs and how to choose</h2>
+<p class="tcap">Table 1 · Three fan-out strategies: whichever side holds the work is the side that pays</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Strategy</th><th>Work happens</th><th>Read latency</th><th>Write amplification</th><th>How it dies</th><th>Fits</th></tr></thead>
+<tbody>
+<tr><th>Fan-out on write</th><td>write path</td><td><strong>Lowest</strong>: one cache lookup, independent of followees</td><td><strong>Highest</strong>: × follower count (≈ 46,000 writes/s here)</td><td>Hotkey: 100M followers = 100M writes per post; plus ~80% written for dormant users</td><td>Even follower distribution, reads far above writes</td></tr>
+<tr><th>Fan-out on read</th><td>read path</td><td><strong>Highest</strong>: M scatter-gather queries, p99 held by the slowest shard</td><td>Lowest: one write per post</td><td>Read amplification: 1,160 refreshes/s → 230,000 queries/s</td><td>Bounded followee counts, ranking that changes often</td></tr>
+<tr><th>Hybrid<br/>(the book's choice)</th><td><strong>split by publisher</strong></td><td>Low: one read plus a few pulls, then merge</td><td>Medium: the long tail is lifted out of push</td><td>Complexity: two paths, threshold flapping, cross-path duplicates</td><td><strong>The default answer in real systems</strong></td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · Four questions a hybrid must answer before it ships</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Question</th><th>Usual answer</th><th>Cost / trap</th></tr></thead>
+<tbody>
+<tr><th>Where does the threshold go</th><td>By <strong>follower count</strong> (in practice somewhere between tens of thousands and hundreds of thousands, depending on what your fan-out cluster can absorb), not by a business label like "verified celebrity"</td><td>Accounts near the line flip back and forth; you need hysteresis — promote at 100k followers, demote only below 80k</td></tr>
+<tr><th>What happens to already-distributed posts when an account crosses</th><td>Change the path for <strong>new posts only</strong>; neither reclaim nor backfill what is already fanned out</td><td>For a while the same author is partly in inboxes and partly pulled, so <strong>the read path must dedupe by <code>post_id</code></strong> or users see doubles</td></tr>
+<tr><th>Which layer merges</th><td>The feed-building service merges the inbox list with the latest N from each huge account</td><td>One extra fetch per read, growing with how many huge accounts a user follows — usually capped</td></tr>
+<tr><th>Do dormant users get pushed to</th><td>Filter by last-login time; keep long-dormant users on pull only</td><td>Saves the bulk of the writes (~80% in this scenario) at the price of a visibly slow first refresh when someone returns</td></tr>
+</tbody></table></div>
+<p>One more question that always comes up: <strong>should fan-out go through a message queue?</strong> Yes. Synchronous fan-out makes the posting endpoint's latency proportional to friend count — a user with 5,000 friends posts noticeably slower than everyone else. Enqueue instead and the endpoint costs <code>1–5ms</code> while the fan-out proceeds in the background. The price is that <strong>the feed is no longer consistent in real time</strong>: followers see the post seconds to minutes apart. In a reverse-chronological feed that is usually fine; in a live interactive context it is not.</p>
+<h2>Why it matters / in real systems</h2>
+<p>This skeleton is not a teaching model — it is what feed teams actually run. Asked about a news feed in an interview, four points will carry you: <strong>split the two flows, know what each side's cost is proportional to, know that the hybrid's routing key is the publisher, and name the two traps you will certainly hit — cross-path duplicates and threshold flapping.</strong></p>
+<div class="ev">
+<div class="evh">EVIDENCE FROM THE FIELD · NOT THE BOOK'S CLAIMS, BUT THE COMPANIES' OWN</div>
+<ul>
+<li><strong>Twitter</strong> published its choice in "Timelines at Scale" at QCon 2012: the main path is <strong>fan-out on write</strong>, pushing tweet IDs into each home timeline held in Redis, with <strong>only the ~800 most recent entries cached per timeline</strong>. The published figures: home timelines served <strong>over 300,000 queries/s</strong> and roughly <strong>30 billion timeline deliveries a day</strong>, against only about <code>5,000 tweets/s</code> (peaking near <code>12,000</code>). <strong>Fan-out inverts the write/read ratio completely — the real-world version of this chapter's "a read-heavy product becomes a write-heavy system".</strong> <span class="src"><a href="https://www.infoq.com/presentations/Twitter-Timeline-Scalability" target="_blank" rel="noopener">InfoQ, "Twitter Timeline Scalability" · Raffi Krikorian, QCon 2012 ↗</a></span></li>
+<li><strong>LinkedIn</strong> went the other way. <strong>FollowFeed</strong>, launched in 2016, is explicitly <strong>fan-out on read</strong>: storage nodes are partitioned by author ID and hold time-sorted activity, and brokers scatter-gather across them at query time. The result was a mobile feed p99 of about <code>140ms</code>, <strong>five times faster</strong> than the previous Sensei system, with an index <code>20×</code> larger on half the servers. Their stated reason is practical: <strong>pull lets relevance and ranking experiments iterate faster</strong>, because nothing materialised has to be backfilled. <span class="src"><a href="https://engineering.linkedin.com/blog/2016/03/followfeed--linkedin-s-feed-made-faster-and-smarter" target="_blank" rel="noopener">LinkedIn Engineering, "FollowFeed: LinkedIn's Feed Made Faster and Smarter", 2016 ↗</a></span></li>
+<li><strong>Yahoo! Research</strong> turned the question into a result in "Feeding Frenzy" (SIGMOD 2010): the best policy is to decide push versus pull <strong>per producer–consumer pair</strong> — events from high-rate producers are fetched at query time, events from lower-rate producers are materialised in advance. <strong>That is independent academic backing for "the hybrid's routing key is the publisher".</strong> <span class="src"><a href="https://jeffterrace.com/docs/feeding-frenzy-sigmod10-web.pdf" target="_blank" rel="noopener">Silberstein, Terrace, Cooper, Ramakrishnan, "Feeding Frenzy: Selectively Materializing Users' Event Feeds", SIGMOD 2010 ↗</a></span></li>
+<li><strong>Facebook's</strong> TAO paper (USENIX ATC 2013) describes the store behind its social graph and feed reads: a graph data store tuned for an <strong>extremely read-dominated</strong> workload, at a published scale of <strong>a billion reads and millions of writes per second</strong>. <strong>It shows that a dedicated graph/content cache on the read side is not an optional optimisation but the foundation these systems stand on.</strong> <span class="src"><a href="https://www.usenix.org/system/files/conference/atc13/atc13-bronson.pdf" target="_blank" rel="noopener">Bronson et al., "TAO: Facebook's Distributed Data Store for the Social Graph", USENIX ATC 2013 ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/recommendation-system-day13.en.html" target="_blank" rel="noopener">System Design · Day 13 Recommendation Systems</a> — what happens when the feed stops being chronological: the retrieval, coarse-ranking and fine-ranking funnel from a billion candidates down to twenty</aside>
+<h2>Mistakes and open arguments</h2>
+<ul>
+<li><strong>Treating "read-heavy" as an intrinsic property of a feed.</strong> Choose push and the system becomes write-heavy on the spot (about <code>40:1</code> in this scenario). <strong>Plan capacity against fan-out writes, not refreshes</strong> — this is the single most common estimation error here.</li>
+<li><strong>Reading "hybrid" as "half push, half pull".</strong> The routing key is the <strong>publisher</strong>. Splitting by user or by content type fails immediately, because the hotspot comes from the long tail of follower counts, not from users or content.</li>
+<li><strong>Forgetting cross-path dedupe.</strong> From the moment an account crosses the threshold, its posts exist on both paths. Without a dedupe by <code>post_id</code>, users see duplicates — the classic production bug after a hybrid ships.</li>
+<li><strong>Storing whole post objects in the inbox.</strong> The 64× storage difference is the smaller problem; the real one is chasing down a thousand copies when an author edits or deletes. Store IDs and keep one source of truth.</li>
+<li><strong>Demanding exactly-once from fan-out.</strong> A queued fan-out is at-least-once by construction; make inbox writes idempotent on <code>post_id</code> and move on. Chasing end-to-end exactly-once only makes the design more complicated, not more correct.</li>
+<li><strong>The book is reverse-chronological; almost no real feed is.</strong> The book says plainly that this is a scoping simplification. Add a ranking model and pull's relative advantage grows, since you can change the algorithm without backfilling history — exactly LinkedIn's reasoning.</li>
+<li><strong>A limit of its time.</strong> The book is from 2020 and describes a <strong>follow-graph</strong> feed. The TikTok-style recommendation feed since then removes that premise entirely: candidates are retrieved from the whole corpus rather than a friend list, so fan-out nearly disappears as a problem and is replaced by the compute cost of retrieval and ranking. This chapter remains the right answer for follow-based feeds — it is simply no longer the only shape a feed can take.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. The core claim: designing a feed means <strong>deciding whether the assembly work happens on the write path or the read path</strong>. The cost never disappears, it only relocates.</p>
+<p>2. Split the system into <strong>publishing and building</strong> first; every fan-out argument is an argument about how work divides between those two flows.</p>
+<p>3. Write cost ∝ <strong>followers</strong>, read cost ∝ <strong>followees</strong>. In this scenario: push ≈ <code>46,000 writes/s</code>, pull ≈ <code>230,000 queries/s</code>.</p>
+<p>4. Adopt push and a read-heavy product becomes a <strong>40:1 write-heavy system</strong> — capacity must be planned against fan-out writes.</p>
+<p>5. Push dies of <strong>hotkeys</strong> (100M followers = 100M writes; ~17 minutes even at 100k writes/s) and of work done for dormant users; pull dies of <strong>read amplification and tail latency</strong> (p99 owned by the slowest shard).</p>
+<p>6. The hybrid is the answer, but <strong>the routing key is the publisher</strong>: follower counts are long-tailed, followee counts are capped — lifting the tail into pull trades on that asymmetry rather than splitting the difference.</p>
+<p>7. Three engineering rules: inboxes hold <strong><code>&lt;post_id, user_id&gt;</code> only</strong> (128 GB vs 8 TB, and one source of truth), fan-out goes <strong>through a queue</strong> (posting latency stops scaling with friend count, at the price of seconds of inconsistency), and reads <strong>dedupe by <code>post_id</code></strong>.</p>
+<p>8. Cache in five layers (feed / content / graph / action / counters), because <strong>their change rates differ by orders of magnitude</strong>; merged into one, the hit rate is dragged down by the counters.</p>
+</div>
+</div>
+<footer>Books Deep-Read · Read this page ≈ get the core of the chapter; for the full case studies, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
