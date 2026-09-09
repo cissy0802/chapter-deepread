@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview 卷一 第 13 章 · 设计搜索自动补全 — 专业书籍精读 Book 65</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -53,44 +54,36 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </style></head><body>
 <div class="container">
 <p class="top">专业书籍精读 · System Design Interview 卷一 · 第 13 章</p>
-<h1>设计搜索自动补全</h1>
+<h1 data-tts="92e0e0bf4b570af9">设计搜索自动补全</h1>
 <p class="sub">System Design Interview Vol 1 · Ch 13 · Alex Xu · 2020</p>
 <p class="langbar"><a href="sdi1-ch13-search-autocomplete-book65.en.html">EN →</a></p>
 <div class="modebar">
 <button data-mode="pop">科普版</button>
 <button data-mode="deep">精读版</button>
 </div>
-
 <div class="mode mode-pop">
-<h2>这一章讲什么？</h2>
+<h2 data-tts="db8bd2a218aabf28">这一章讲什么？</h2>
 <p>你在搜索框里刚敲下两个字母，下面立刻掉出一串候选词，点一下就走——这就是<strong>搜索自动补全</strong>。《系统设计面试》第 13 章要你把它从零设计出来。它看着最不起眼，却是全书里<strong>「读」和「写」悬殊得最厉害</strong>的一道题。</p>
-
-<h2>先说个怪事</h2>
+<h2 data-tts="f993ffe947bb5c99">先说个怪事</h2>
 <p>你以为自动补全是「一边打字一边帮你搜」。恰恰相反——<strong>它从来不搜</strong>。真要现搜一次，人早把整个词打完了。它做的是<strong>查一张早就排好的表</strong>：你敲的每一个字母，只是去表里认领一份写好的答案。</p>
-
-<h2>旧世界为什么难</h2>
+<h2 data-tts="bacb89562171c6d4">旧世界为什么难</h2>
 <p>难在<strong>量</strong>。一千万人每天各搜十次，就是一天一亿次搜索；可一次搜索平均要敲二十个字母，而<strong>每敲一下都是一次请求</strong>——后台一天就要接住二十亿次，平均每秒两万多次，高峰翻倍。而且每一次都得在<strong>一眨眼之内</strong>回来，慢一点下拉框就会一顿一顿地跳。让数据库现去几十亿条历史搜索里翻「以 tr 开头、最热门的五条」，一次都嫌慢，何况每秒两万次。</p>
-
-<h2>它是怎么做到的</h2>
+<h2 data-tts="a32afa88426648dd">它是怎么做到的</h2>
 <p>两个关键动作。</p>
 <p>第一，把所有历史搜索按字母<strong>排成一棵岔路树</strong>：敲 t 走一条岔路，再敲 r 又分一次岔——树上每个路口就代表一个开头。这样「走到 tr 这个路口」只跟你敲了几个字母有关，跟库里存着几亿还是几十亿条<strong>完全无关</strong>。</p>
 <p>第二步才是真正的窍门：<strong>在每个路口提前立一块路牌</strong>，写死「从这儿往下走，最热门的就是这五条」。于是查询彻底不用再往下走——走到路口，把牌子上的字抄给你就完事。牌子上写什么，是<strong>每周夜里</strong>把上一周的搜索日志重新统计、重排一遍写上去的，和白天的查询根本不打照面。</p>
-
-<h2>该怎么选</h2>
+<h2 data-tts="73d88f0210c56e6f">该怎么选</h2>
 <p>代价也很清楚：<strong>牌子是上周立的，昨天才火起来的新词今天补不出来</strong>——想让突发热词几分钟内进候选，就得另搭一条实时通道，复杂度和成本一起翻上去，多数场景并不值得。</p>
-
-<h2>一句话记住</h2>
+<h2 data-tts="c69b0e554357dafa">一句话记住</h2>
 <div class="tl">
 <p>自动补全不是搜索，是<strong>查表</strong>：把热门搜索排成一棵按字母分岔的树，在每个岔路口提前把「最热的五条」写死；白天只管取牌子，重写牌子的活留给每周一次的离线任务。</p>
 </div>
 <p class="switch-hint">想进到具体机制、量级和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
 </div>
-
 <div class="mode mode-deep" hidden="">
-<h2>一句话</h2>
+<h2 data-tts="4855b3bef0097d6c">一句话</h2>
 <p class="lead">这一章教你把一个看起来是「实时搜索」的功能，<strong>彻底改造成一次预计算查表</strong>。核心是三步：用<strong>前缀树（trie）</strong>把「按前缀定位」的代价和数据总量脱钩；在<strong>每个节点上预存 top-k</strong>，把查询从「遍历子树再排序」压成 <code>O(1)</code> 取值；再把系统劈成<strong>离线重建</strong>与<strong>在线只读</strong>两条互不干扰的路径。学会这三步，你拿到的是一整类问题的通用套路：极端读多写少、且延迟预算只有几十毫秒。</p>
-
-<h2>Glossary · 术语表</h2>
+<h2 data-tts="833a81a69c0bbf00">Glossary · 术语表</h2>
 <div class="glossary">
 <ul>
 <li><strong>自动补全（autocomplete / typeahead）</strong>：用户每敲一个字符，就返回若干条「以已输入内容开头」的候选查询。</li>
@@ -103,118 +96,108 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>AJAX</strong>：网页不整页刷新、只在后台发请求并局部更新的技术。</li>
 </ul>
 </div>
-
-<h2>坐标</h2>
+<h2 data-tts="c3ce79ad8add8d54">坐标</h2>
 <p>本章属于卷一 Part II「系统案例」，紧接第 12 章聊天系统之后。它把读写比推到了极端：<strong>写路径可以离线到以周计，读路径却要顶住每秒数万次、且每次都在百毫秒内返回</strong>。它对应各家的搜索框，也通向第 14、15 章共用的那套骨架——离线批量算好、在线只读服务。</p>
-
-<h2>这章要解决什么</h2>
+<h2 data-tts="21eecd28ee444788">这章要解决什么</h2>
 <p>先把量级算清楚，否则一切讨论都是空谈。按书里的假设：<strong>1000 万日活、人均每天 10 次搜索</strong>，即一天 1 亿次搜索；一条查询平均 20 个字符，而<strong>每敲一个字符就发一次补全请求</strong>——请求量被放大 20 倍，约 <strong>20 亿次 / 天 ≈ 24,000 QPS，峰值按两倍估约 48,000 QPS</strong>。书中还援引 Facebook typeahead 的公开说法：延迟要压在 <strong>100 毫秒</strong>上下，慢了就会出现肉眼可见的卡顿。</p>
 <p>两个数字并排一放，问题的形状就出来了：「写」——有人搜了一个新词——晚几小时甚至几天生效都无所谓；而「读」要在数万 QPS 下、每次几十毫秒内，从几十亿条历史查询里挑出前缀匹配且最热的 5 条。</p>
 <p>不解决会怎样？最直觉的做法是建一张 <code>frequency(query, frequency)</code> 表，再 <code>SELECT ... WHERE query LIKE 'tr%' ORDER BY frequency DESC LIMIT 5</code>。这在几万行上毫无问题；到几十亿行，前缀 <code>LIKE</code> 要扫掉索引一大段、再对结果集全量排序，单次几百毫秒起步——乘上 24,000 QPS，数据库当场躺平。<strong>所以这一章真正的命题不是「怎么查得更快」，而是「怎么让查询根本不必去查」。</strong></p>
-
-<h2>核心内容，讲透</h2>
-
-<h3>一、前缀树：把「按前缀找」和「库里有多少条」解耦</h3>
+<h2 data-tts="0cfa727733263d92">核心内容，讲透</h2>
+<h3 data-tts="f6389cbdac9977c5">一、前缀树：把「按前缀找」和「库里有多少条」解耦</h3>
 <p>trie 把所有历史查询按字符逐层分叉存起来：往下每层吃掉一个字符，从根走到某节点的路径就是一个前缀，节点上挂着以它为前缀的查询与频次。英文小写下每个节点最多 26 个孩子。</p>
 <p>第一个好处是<strong>走到前缀节点的代价只跟你敲了几个字符有关</strong>：敲 p 个字符走 p 步，记作 <code>O(p)</code>——库里存 100 万条还是 100 亿条都一样。再加一条工程约束：用户几乎不会输入超过 50 个字符，把最大前缀长度截在这个量级，<code>O(p)</code> 实际上就是常数。</p>
 <p>但<strong>只走到这一步，trie 还救不了你</strong>。找到 <code>tr</code> 这个节点之后，你要的是「以 tr 开头、最热的 5 条」，这意味着<strong>遍历它下面整棵子树</strong>收集候选、再按频次排序。设子树里有 c 条查询，代价是 <code>O(c + c log c)</code>——<strong>前缀越短，c 越大</strong>。用户敲下第一个字母 <code>t</code> 的那一刻，c 可能是上千万。最该快的那一次查询，恰恰是最慢的一次。</p>
-
 <figure>
-<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
 <defs>
-<marker id="a1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
-<marker id="a2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker>
+<marker id="a1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="a2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker>
 </defs>
-<text x="14" y="24" fill="#e8794b" font-size="13" font-weight="700">① 朴素 trie：走到前缀节点只是开始</text>
-<rect x="18" y="66" width="46" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="41" y="85" fill="#b9c0ca" font-size="11" text-anchor="middle">root</text>
-<line x1="64" y1="80" x2="84" y2="80" stroke="#7c8593" marker-end="url(#a1)"></line>
-<rect x="90" y="66" width="34" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="107" y="85" fill="#b9c0ca" font-size="11" text-anchor="middle">t</text>
-<line x1="124" y1="80" x2="144" y2="80" stroke="#7c8593" marker-end="url(#a1)"></line>
-<rect x="150" y="66" width="42" height="28" rx="6" fill="rgba(91,157,249,0.2)" stroke="#5b9df9" stroke-width="2"></rect><text x="171" y="85" fill="#e7ebf1" font-size="11" text-anchor="middle">tr</text>
-<line x1="192" y1="80" x2="246" y2="36" stroke="#7c8593"></line>
-<line x1="192" y1="80" x2="246" y2="64" stroke="#7c8593"></line>
-<line x1="192" y1="80" x2="246" y2="92" stroke="#7c8593"></line>
-<line x1="192" y1="80" x2="246" y2="120" stroke="#7c8593"></line>
-<rect x="250" y="25" width="104" height="22" rx="5" fill="rgba(255,255,255,0.03)" stroke="#5a6069"></rect><text x="302" y="40" fill="#9aa3ae" font-size="10.5" text-anchor="middle">travel</text>
-<rect x="250" y="53" width="104" height="22" rx="5" fill="rgba(255,255,255,0.03)" stroke="#5a6069"></rect><text x="302" y="68" fill="#9aa3ae" font-size="10.5" text-anchor="middle">trip</text>
-<rect x="250" y="81" width="104" height="22" rx="5" fill="rgba(255,255,255,0.03)" stroke="#5a6069"></rect><text x="302" y="96" fill="#9aa3ae" font-size="10.5" text-anchor="middle">tree</text>
-<rect x="250" y="109" width="104" height="22" rx="5" fill="rgba(255,255,255,0.03)" stroke="#5a6069"></rect><text x="302" y="124" fill="#9aa3ae" font-size="10.5" text-anchor="middle">true</text>
-<text x="302" y="146" fill="#7c8593" font-size="13" text-anchor="middle">⋮</text>
-<text x="374" y="62" fill="#b9c0ca" font-size="11.5">子树里可能挂着上百万条</text>
-<text x="374" y="82" fill="#b9c0ca" font-size="11.5">遍历 + 排序：前缀越短越慢</text>
-<text x="374" y="102" fill="#e8794b" font-size="11.5" font-family="monospace">O(c + c log c)</text>
-<line x1="14" y1="168" x2="626" y2="168" stroke="rgba(91,157,249,0.18)" stroke-dasharray="4 4"></line>
-<text x="14" y="196" fill="#5b9df9" font-size="13" font-weight="700">② 每个节点预存 top 5：查询变成取一份现成答案</text>
-<rect x="18" y="234" width="46" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="41" y="253" fill="#b9c0ca" font-size="11" text-anchor="middle">root</text>
-<line x1="64" y1="248" x2="84" y2="248" stroke="#7c8593" marker-end="url(#a1)"></line>
-<rect x="90" y="234" width="34" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="107" y="253" fill="#b9c0ca" font-size="11" text-anchor="middle">t</text>
-<line x1="124" y1="248" x2="144" y2="248" stroke="#7c8593" marker-end="url(#a1)"></line>
-<rect x="150" y="234" width="42" height="28" rx="6" fill="rgba(91,157,249,0.2)" stroke="#5b9df9" stroke-width="2"></rect><text x="171" y="253" fill="#e7ebf1" font-size="11" text-anchor="middle">tr</text>
-<line x1="192" y1="248" x2="242" y2="248" stroke="#5b9df9" marker-end="url(#a2)"></line>
-<rect x="248" y="224" width="216" height="48" rx="7" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect>
-<text x="260" y="243" fill="#e7ebf1" font-size="11">travel · trip · tree · true · trump</text>
-<text x="260" y="262" fill="#8fbaff" font-size="10.5" font-family="monospace">上周离线算好，直接返回</text>
-<text x="482" y="243" fill="#5b9df9" font-size="12" font-weight="700" font-family="monospace">O(1)</text>
-<text x="482" y="262" fill="#b9c0ca" font-size="11">不遍历、不排序</text>
+<text fill="#e8794b" font-size="13" font-weight="700" x="14" y="24">① 朴素 trie：走到前缀节点只是开始</text>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="6" stroke="#7c8593" width="46" x="18" y="66"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="41" y="85">root</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="64" x2="84" y1="80" y2="80"></line>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="6" stroke="#7c8593" width="34" x="90" y="66"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="107" y="85">t</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="124" x2="144" y1="80" y2="80"></line>
+<rect fill="rgba(91,157,249,0.2)" height="28" rx="6" stroke="#5b9df9" stroke-width="2" width="42" x="150" y="66"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="171" y="85">tr</text>
+<line stroke="#7c8593" x1="192" x2="246" y1="80" y2="36"></line>
+<line stroke="#7c8593" x1="192" x2="246" y1="80" y2="64"></line>
+<line stroke="#7c8593" x1="192" x2="246" y1="80" y2="92"></line>
+<line stroke="#7c8593" x1="192" x2="246" y1="80" y2="120"></line>
+<rect fill="rgba(255,255,255,0.03)" height="22" rx="5" stroke="#5a6069" width="104" x="250" y="25"></rect><text fill="#9aa3ae" font-size="10.5" text-anchor="middle" x="302" y="40">travel</text>
+<rect fill="rgba(255,255,255,0.03)" height="22" rx="5" stroke="#5a6069" width="104" x="250" y="53"></rect><text fill="#9aa3ae" font-size="10.5" text-anchor="middle" x="302" y="68">trip</text>
+<rect fill="rgba(255,255,255,0.03)" height="22" rx="5" stroke="#5a6069" width="104" x="250" y="81"></rect><text fill="#9aa3ae" font-size="10.5" text-anchor="middle" x="302" y="96">tree</text>
+<rect fill="rgba(255,255,255,0.03)" height="22" rx="5" stroke="#5a6069" width="104" x="250" y="109"></rect><text fill="#9aa3ae" font-size="10.5" text-anchor="middle" x="302" y="124">true</text>
+<text fill="#7c8593" font-size="13" text-anchor="middle" x="302" y="146">⋮</text>
+<text fill="#b9c0ca" font-size="11.5" x="374" y="62">子树里可能挂着上百万条</text>
+<text fill="#b9c0ca" font-size="11.5" x="374" y="82">遍历 + 排序：前缀越短越慢</text>
+<text fill="#e8794b" font-family="monospace" font-size="11.5" x="374" y="102">O(c + c log c)</text>
+<line stroke="rgba(91,157,249,0.18)" stroke-dasharray="4 4" x1="14" x2="626" y1="168" y2="168"></line>
+<text fill="#5b9df9" font-size="13" font-weight="700" x="14" y="196">② 每个节点预存 top 5：查询变成取一份现成答案</text>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="6" stroke="#7c8593" width="46" x="18" y="234"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="41" y="253">root</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="64" x2="84" y1="248" y2="248"></line>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="6" stroke="#7c8593" width="34" x="90" y="234"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="107" y="253">t</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="124" x2="144" y1="248" y2="248"></line>
+<rect fill="rgba(91,157,249,0.2)" height="28" rx="6" stroke="#5b9df9" stroke-width="2" width="42" x="150" y="234"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="171" y="253">tr</text>
+<line marker-end="url(#a2)" stroke="#5b9df9" x1="192" x2="242" y1="248" y2="248"></line>
+<rect fill="rgba(91,157,249,0.12)" height="48" rx="7" stroke="#5b9df9" width="216" x="248" y="224"></rect>
+<text fill="#e7ebf1" font-size="11" x="260" y="243">travel · trip · tree · true · trump</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10.5" x="260" y="262">上周离线算好，直接返回</text>
+<text fill="#5b9df9" font-family="monospace" font-size="12" font-weight="700" x="482" y="243">O(1)</text>
+<text fill="#b9c0ca" font-size="11" x="482" y="262">不遍历、不排序</text>
 </svg>
 <figcaption>图 1 · trie 本身并不快：让它快的是每个节点上预存好的 top-5，查询因此从「遍历子树 + 排序」退化成一次取值。</figcaption>
 </figure>
-
-<h3>二、把答案预先算好：每个节点缓存 top-5</h3>
+<h3 data-tts="7d7f0fa59eedcd7a">二、把答案预先算好：每个节点缓存 top-5</h3>
 <p>转折在这里：既然「以 tr 开头最热的 5 条」在两次离线重建之间<strong>根本不会变</strong>，为什么要当着用户的面现算？于是<strong>在每个节点上直接存一份 top-5</strong>。查询退化成两步——沿前缀走到节点（常数步）、把存好的列表返回（一步），整体 <code>O(1)</code>，与数据规模彻底无关。</p>
 <p>代价有两笔。一是<strong>空间</strong>：每个节点多存 5 个引用，内存占用显著上升，这也是后面必须分片的直接原因。二是<strong>写放大</strong>：某条查询的频次一变，从它到根这条路径上<strong>每个祖先节点</strong>的 top-5 都可能要重排——一次更新要往上改 p 个节点。这笔账在线上付不起，于是逼出了下一步。</p>
-<aside class="xref"><a href="https://hub.cissychen.com/system-design/search-system-day12.html" target="_blank" rel="noopener">System Design · Day 12 搜索系统</a> — 倒排索引怎么建、检索与排序怎么分层，以及补全为什么不该复用这条全文检索链路</aside>
-
-<h3>三、两条路径：把「重建」和「服务」彻底分开</h3>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/search-system-day12.html" rel="noopener" target="_blank">System Design · Day 12 搜索系统</a> — 倒排索引怎么建、检索与排序怎么分层，以及补全为什么不该复用这条全文检索链路</aside>
+<h3 data-tts="1c7f9c416ab079c2">三、两条路径：把「重建」和「服务」彻底分开</h3>
 <p>既然更新贵、而候选列表又不需要秒级新鲜，那就<strong>干脆不在线更新 trie</strong>。系统被劈成互不干扰的两半：</p>
 <p><strong>离线数据通道</strong>——查询日志持续落盘，聚合器按周把它压成一张 <code>(query, frequency)</code> 汇总表，构建 worker 依据它<strong>从头造一棵全新的 trie</strong>，造完整体替换线上快照。新旧两份在切换瞬间并存，所以<strong>重建全程不影响线上查询</strong>。</p>
 <p><strong>在线查询通道</strong>——击键 → 负载均衡 → API 服务 → 内存里的 trie 缓存直接返回 5 条；只有未命中（刚扩容、刚重启）才回落到持久化的 Trie DB。</p>
 <p>Trie DB 有两种常见落法：<strong>文档型</strong>（如 MongoDB）把整棵 trie 序列化成一份文档、重建时整份替换；或者<strong>键值型</strong>——把 trie <strong>压平成哈希表</strong>，键是前缀、值是那份 top-5。后者值得琢磨：一旦每个节点的答案都预存好，<strong>树形结构在读路径上已经没用了</strong>，剩下的只是一张 <code>前缀 → 五条候选</code> 的映射。<strong>trie 是构建期的脚手架，不是服务期的必需品。</strong></p>
-
 <figure>
-<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
 <defs>
-<marker id="b1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
-<marker id="b2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker>
-<marker id="b3" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+<marker id="b1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="b2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker>
+<marker id="b3" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
 </defs>
-<text x="14" y="24" fill="#9b6cf5" font-size="12.5" font-weight="700">离线通道 · 每周重建一次</text>
-<rect x="14" y="44" width="88" height="34" rx="6" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5"></rect><text x="58" y="66" fill="#d9dee5" font-size="11" text-anchor="middle">查询日志</text>
-<line x1="102" y1="61" x2="126" y2="61" stroke="#9b6cf5" marker-end="url(#b3)"></line>
-<rect x="132" y="44" width="80" height="34" rx="6" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5"></rect><text x="172" y="66" fill="#d9dee5" font-size="11" text-anchor="middle">聚合器</text>
-<line x1="212" y1="61" x2="236" y2="61" stroke="#9b6cf5" marker-end="url(#b3)"></line>
-<rect x="242" y="44" width="96" height="34" rx="6" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5"></rect><text x="290" y="66" fill="#d9dee5" font-size="11" text-anchor="middle">每周频次表</text>
-<line x1="338" y1="61" x2="362" y2="61" stroke="#9b6cf5" marker-end="url(#b3)"></line>
-<rect x="368" y="44" width="100" height="34" rx="6" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5"></rect><text x="418" y="66" fill="#d9dee5" font-size="11" text-anchor="middle">构建 worker</text>
-<line x1="468" y1="61" x2="492" y2="61" stroke="#9b6cf5" marker-end="url(#b3)"></line>
-<rect x="498" y="44" width="94" height="34" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2"></rect><text x="545" y="66" fill="#e7ebf1" font-size="11" text-anchor="middle">Trie DB</text>
-<text x="14" y="108" fill="#7c8593" font-size="10.5" font-family="monospace">重建期间新旧快照并存，切换瞬间生效 → 线上零影响</text>
-<line x1="14" y1="126" x2="626" y2="126" stroke="rgba(91,157,249,0.2)" stroke-dasharray="5 4"></line>
-<text x="14" y="152" fill="#5b9df9" font-size="12.5" font-weight="700">在线通道 · 每次击键走一趟</text>
-<rect x="14" y="172" width="88" height="34" rx="6" fill="rgba(91,157,249,0.10)" stroke="#5b9df9"></rect><text x="58" y="194" fill="#d9dee5" font-size="11" text-anchor="middle">用户击键</text>
-<line x1="102" y1="189" x2="126" y2="189" stroke="#5b9df9" marker-end="url(#b2)"></line>
-<rect x="132" y="172" width="96" height="34" rx="6" fill="rgba(91,157,249,0.10)" stroke="#5b9df9"></rect><text x="180" y="194" fill="#d9dee5" font-size="11" text-anchor="middle">负载均衡</text>
-<line x1="228" y1="189" x2="252" y2="189" stroke="#5b9df9" marker-end="url(#b2)"></line>
-<rect x="258" y="172" width="92" height="34" rx="6" fill="rgba(91,157,249,0.10)" stroke="#5b9df9"></rect><text x="304" y="194" fill="#d9dee5" font-size="11" text-anchor="middle">API 服务</text>
-<line x1="350" y1="189" x2="374" y2="189" stroke="#5b9df9" marker-end="url(#b2)"></line>
-<rect x="380" y="172" width="120" height="34" rx="6" fill="rgba(91,157,249,0.2)" stroke="#5b9df9" stroke-width="2"></rect><text x="440" y="194" fill="#e7ebf1" font-size="11" text-anchor="middle">Trie 缓存（内存）</text>
-<path d="M500 182 L545 182 L545 84" fill="none" stroke="#7c8593" stroke-dasharray="4 3" marker-end="url(#b1)"></path>
-<text x="512" y="140" fill="#7c8593" font-size="10.5" font-family="monospace">未命中才回源</text>
-<path d="M440 206 L440 246 L58 246 L58 212" fill="none" stroke="#5b9df9" marker-end="url(#b2)"></path>
-<text x="250" y="240" fill="#8fbaff" font-size="11" text-anchor="middle">返回 5 条候选 · 目标 p99 &lt; 100ms</text>
-<text x="14" y="278" fill="#7c8593" font-size="10.5" font-family="monospace">读路径全程只读内存，不碰写；写路径整批离线，不碰读</text>
+<text fill="#9b6cf5" font-size="12.5" font-weight="700" x="14" y="24">离线通道 · 每周重建一次</text>
+<rect fill="rgba(155,108,245,0.10)" height="34" rx="6" stroke="#9b6cf5" width="88" x="14" y="44"></rect><text fill="#d9dee5" font-size="11" text-anchor="middle" x="58" y="66">查询日志</text>
+<line marker-end="url(#b3)" stroke="#9b6cf5" x1="102" x2="126" y1="61" y2="61"></line>
+<rect fill="rgba(155,108,245,0.10)" height="34" rx="6" stroke="#9b6cf5" width="80" x="132" y="44"></rect><text fill="#d9dee5" font-size="11" text-anchor="middle" x="172" y="66">聚合器</text>
+<line marker-end="url(#b3)" stroke="#9b6cf5" x1="212" x2="236" y1="61" y2="61"></line>
+<rect fill="rgba(155,108,245,0.10)" height="34" rx="6" stroke="#9b6cf5" width="96" x="242" y="44"></rect><text fill="#d9dee5" font-size="11" text-anchor="middle" x="290" y="66">每周频次表</text>
+<line marker-end="url(#b3)" stroke="#9b6cf5" x1="338" x2="362" y1="61" y2="61"></line>
+<rect fill="rgba(155,108,245,0.10)" height="34" rx="6" stroke="#9b6cf5" width="100" x="368" y="44"></rect><text fill="#d9dee5" font-size="11" text-anchor="middle" x="418" y="66">构建 worker</text>
+<line marker-end="url(#b3)" stroke="#9b6cf5" x1="468" x2="492" y1="61" y2="61"></line>
+<rect fill="rgba(155,108,245,0.18)" height="34" rx="6" stroke="#9b6cf5" stroke-width="2" width="94" x="498" y="44"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="545" y="66">Trie DB</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" x="14" y="108">重建期间新旧快照并存，切换瞬间生效 → 线上零影响</text>
+<line stroke="rgba(91,157,249,0.2)" stroke-dasharray="5 4" x1="14" x2="626" y1="126" y2="126"></line>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="14" y="152">在线通道 · 每次击键走一趟</text>
+<rect fill="rgba(91,157,249,0.10)" height="34" rx="6" stroke="#5b9df9" width="88" x="14" y="172"></rect><text fill="#d9dee5" font-size="11" text-anchor="middle" x="58" y="194">用户击键</text>
+<line marker-end="url(#b2)" stroke="#5b9df9" x1="102" x2="126" y1="189" y2="189"></line>
+<rect fill="rgba(91,157,249,0.10)" height="34" rx="6" stroke="#5b9df9" width="96" x="132" y="172"></rect><text fill="#d9dee5" font-size="11" text-anchor="middle" x="180" y="194">负载均衡</text>
+<line marker-end="url(#b2)" stroke="#5b9df9" x1="228" x2="252" y1="189" y2="189"></line>
+<rect fill="rgba(91,157,249,0.10)" height="34" rx="6" stroke="#5b9df9" width="92" x="258" y="172"></rect><text fill="#d9dee5" font-size="11" text-anchor="middle" x="304" y="194">API 服务</text>
+<line marker-end="url(#b2)" stroke="#5b9df9" x1="350" x2="374" y1="189" y2="189"></line>
+<rect fill="rgba(91,157,249,0.2)" height="34" rx="6" stroke="#5b9df9" stroke-width="2" width="120" x="380" y="172"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="440" y="194">Trie 缓存（内存）</text>
+<path d="M500 182 L545 182 L545 84" fill="none" marker-end="url(#b1)" stroke="#7c8593" stroke-dasharray="4 3"></path>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" x="512" y="140">未命中才回源</text>
+<path d="M440 206 L440 246 L58 246 L58 212" fill="none" marker-end="url(#b2)" stroke="#5b9df9"></path>
+<text fill="#8fbaff" font-size="11" text-anchor="middle" x="250" y="240">返回 5 条候选 · 目标 p99 &lt; 100ms</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" x="14" y="278">读路径全程只读内存，不碰写；写路径整批离线，不碰读</text>
 </svg>
 <figcaption>图 2 · 系统被劈成两条互不干扰的路径：离线按周重建并整体替换快照，在线只读内存缓存。写路径慢到以周计，读路径快到以毫秒计。</figcaption>
 </figure>
-
-<h3>四、在线侧的三个便宜优化</h3>
+<h3 data-tts="9e87f0f40b286418">四、在线侧的三个便宜优化</h3>
 <p>这三条不动架构，却直接决定成本。</p>
 <p><strong>浏览器缓存</strong>。补全结果在小时级内几乎不变，那就让浏览器自己缓住。书里给的实证是 Google 的补全响应带着 <code>cache-control: private, max-age=3600</code>——<em>私有、缓一小时</em>：同一用户一小时内重复敲同样前缀，请求根本不出浏览器。</p>
 <p><strong>AJAX 请求</strong>。异步发出、只局部更新下拉框，不刷新整页——这是「每敲一键发一次请求」能被接受的前提。</p>
 <p><strong>日志采样</strong>。频次统计只为排序，就没必要每次请求都记：<strong>每 N 次只记 1 次</strong>。日志量降到 N 分之一，而热门查询之间的相对排序基本不受影响——典型的「用统计精度换存储与带宽」。</p>
-<aside class="xref"><a href="https://hub.cissychen.com/system-design/caching-day2.html" target="_blank" rel="noopener">System Design · Day 2 缓存</a> — 从浏览器到数据库的多层缓存怎么设 TTL、怎么失效，以及 <code>max-age</code> 与 <code>private</code> 各自挡住什么</aside>
-
-<h2>关键权衡与选型</h2>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/caching-day2.html" rel="noopener" target="_blank">System Design · Day 2 缓存</a> — 从浏览器到数据库的多层缓存怎么设 TTL、怎么失效，以及 <code>max-age</code> 与 <code>private</code> 各自挡住什么</aside>
+<h2 data-tts="632539121eb7f3e4">关键权衡与选型</h2>
 <p>「按前缀找最热的几条」有四种典型做法，代价差得很远：</p>
 <p class="tcap">表 1 · 四种前缀查询方案对比</p>
 <div class="tblwrap">
@@ -241,47 +224,44 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </table>
 </div>
 <p>分片这条最容易答错。单机放不下整棵 trie 之后，第一反应是<strong>按首字母分 26 片</strong>，不够就按前两个字母分 676 片；但字母频率天然倾斜，等分必有分片先被打爆。正解是引入 <strong>shard map manager</strong>——按历史分布维护一张「前缀区间 → 分片」的映射，它本身很小，可缓存在每台 API 服务上。</p>
-
 <figure>
-<svg viewBox="0 0 640 190" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
-<text x="14" y="22" fill="#e8794b" font-size="12.5" font-weight="700">按首字母等分 26 片 → 冷热极不均</text>
-<rect x="18" y="34" width="26" height="46" rx="3" fill="rgba(224,107,107,0.28)" stroke="#e06b6b"></rect><text x="31" y="94" fill="#9aa3ae" font-size="10" text-anchor="middle">s</text>
-<rect x="50" y="46" width="26" height="34" rx="3" fill="rgba(224,107,107,0.22)" stroke="#e06b6b"></rect><text x="63" y="94" fill="#9aa3ae" font-size="10" text-anchor="middle">c</text>
-<rect x="82" y="56" width="26" height="24" rx="3" fill="rgba(91,157,249,0.14)" stroke="#5a6069"></rect><text x="95" y="94" fill="#9aa3ae" font-size="10" text-anchor="middle">a</text>
-<rect x="114" y="62" width="26" height="18" rx="3" fill="rgba(91,157,249,0.14)" stroke="#5a6069"></rect><text x="127" y="94" fill="#9aa3ae" font-size="10" text-anchor="middle">m</text>
-<rect x="146" y="68" width="26" height="12" rx="3" fill="rgba(91,157,249,0.10)" stroke="#5a6069"></rect><text x="159" y="94" fill="#9aa3ae" font-size="10" text-anchor="middle">u</text>
-<rect x="178" y="71" width="26" height="9" rx="3" fill="rgba(91,157,249,0.10)" stroke="#5a6069"></rect><text x="191" y="94" fill="#9aa3ae" font-size="10" text-anchor="middle">v</text>
-<rect x="210" y="73" width="26" height="7" rx="3" fill="rgba(91,157,249,0.10)" stroke="#5a6069"></rect><text x="223" y="94" fill="#9aa3ae" font-size="10" text-anchor="middle">x</text>
-<rect x="242" y="75" width="26" height="5" rx="3" fill="rgba(91,157,249,0.10)" stroke="#5a6069"></rect><text x="255" y="94" fill="#9aa3ae" font-size="10" text-anchor="middle">z</text>
-<text x="288" y="56" fill="#e06b6b" font-size="11.5">最热的分片先被打爆，</text>
-<text x="288" y="76" fill="#e06b6b" font-size="11.5">最冷的分片几乎闲置</text>
-<text x="288" y="96" fill="#7c8593" font-size="10.5" font-family="monospace">柱高为示意，非真实分布</text>
-<line x1="14" y1="112" x2="626" y2="112" stroke="rgba(91,157,249,0.18)" stroke-dasharray="4 4"></line>
-<text x="14" y="136" fill="#5b9df9" font-size="12.5" font-weight="700">shard map manager 按历史分布切 → 每片负载相当</text>
-<rect x="18" y="148" width="96" height="28" rx="6" fill="rgba(91,157,249,0.18)" stroke="#5b9df9"></rect><text x="66" y="166" fill="#e7ebf1" font-size="10.5" text-anchor="middle">s → 独占一片</text>
-<rect x="122" y="148" width="96" height="28" rx="6" fill="rgba(91,157,249,0.18)" stroke="#5b9df9"></rect><text x="170" y="166" fill="#e7ebf1" font-size="10.5" text-anchor="middle">c → 独占一片</text>
-<rect x="226" y="148" width="112" height="28" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect><text x="282" y="166" fill="#e7ebf1" font-size="10.5" text-anchor="middle">a, b → 一片</text>
-<rect x="346" y="148" width="150" height="28" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect><text x="421" y="166" fill="#e7ebf1" font-size="10.5" text-anchor="middle">u, v, w, x, y, z → 一片</text>
-<text x="506" y="166" fill="#7c8593" font-size="10.5" font-family="monospace">… 依分布调整</text>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 190" xmlns="http://www.w3.org/2000/svg">
+<text fill="#e8794b" font-size="12.5" font-weight="700" x="14" y="22">按首字母等分 26 片 → 冷热极不均</text>
+<rect fill="rgba(224,107,107,0.28)" height="46" rx="3" stroke="#e06b6b" width="26" x="18" y="34"></rect><text fill="#9aa3ae" font-size="10" text-anchor="middle" x="31" y="94">s</text>
+<rect fill="rgba(224,107,107,0.22)" height="34" rx="3" stroke="#e06b6b" width="26" x="50" y="46"></rect><text fill="#9aa3ae" font-size="10" text-anchor="middle" x="63" y="94">c</text>
+<rect fill="rgba(91,157,249,0.14)" height="24" rx="3" stroke="#5a6069" width="26" x="82" y="56"></rect><text fill="#9aa3ae" font-size="10" text-anchor="middle" x="95" y="94">a</text>
+<rect fill="rgba(91,157,249,0.14)" height="18" rx="3" stroke="#5a6069" width="26" x="114" y="62"></rect><text fill="#9aa3ae" font-size="10" text-anchor="middle" x="127" y="94">m</text>
+<rect fill="rgba(91,157,249,0.10)" height="12" rx="3" stroke="#5a6069" width="26" x="146" y="68"></rect><text fill="#9aa3ae" font-size="10" text-anchor="middle" x="159" y="94">u</text>
+<rect fill="rgba(91,157,249,0.10)" height="9" rx="3" stroke="#5a6069" width="26" x="178" y="71"></rect><text fill="#9aa3ae" font-size="10" text-anchor="middle" x="191" y="94">v</text>
+<rect fill="rgba(91,157,249,0.10)" height="7" rx="3" stroke="#5a6069" width="26" x="210" y="73"></rect><text fill="#9aa3ae" font-size="10" text-anchor="middle" x="223" y="94">x</text>
+<rect fill="rgba(91,157,249,0.10)" height="5" rx="3" stroke="#5a6069" width="26" x="242" y="75"></rect><text fill="#9aa3ae" font-size="10" text-anchor="middle" x="255" y="94">z</text>
+<text fill="#e06b6b" font-size="11.5" x="288" y="56">最热的分片先被打爆，</text>
+<text fill="#e06b6b" font-size="11.5" x="288" y="76">最冷的分片几乎闲置</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" x="288" y="96">柱高为示意，非真实分布</text>
+<line stroke="rgba(91,157,249,0.18)" stroke-dasharray="4 4" x1="14" x2="626" y1="112" y2="112"></line>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="14" y="136">shard map manager 按历史分布切 → 每片负载相当</text>
+<rect fill="rgba(91,157,249,0.18)" height="28" rx="6" stroke="#5b9df9" width="96" x="18" y="148"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="66" y="166">s → 独占一片</text>
+<rect fill="rgba(91,157,249,0.18)" height="28" rx="6" stroke="#5b9df9" width="96" x="122" y="148"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="170" y="166">c → 独占一片</text>
+<rect fill="rgba(91,157,249,0.12)" height="28" rx="6" stroke="#5b9df9" width="112" x="226" y="148"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="282" y="166">a, b → 一片</text>
+<rect fill="rgba(91,157,249,0.12)" height="28" rx="6" stroke="#5b9df9" width="150" x="346" y="148"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="421" y="166">u, v, w, x, y, z → 一片</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" x="506" y="166">… 依分布调整</text>
 </svg>
 <figcaption>图 3 · 分片不能按字母等分：shard map manager 依据历史查询分布划定「前缀区间 → 分片」的映射，让热门字母独占分片、冷门字母合并。</figcaption>
 </figure>
-
-<h2>为什么重要 / 落到真实系统</h2>
+<h2 data-tts="04b0cbf055d47ddd">为什么重要 / 落到真实系统</h2>
 <p>这一章的价值不在「trie 怎么写」，而在它把一类问题的解法固定了下来：<strong>当读远多于写、且答案在两次更新之间不变时，就把答案预先算好，把系统劈成离线重建 + 在线只读两条路径。</strong> 这个骨架后面会反复撞见——第 11 章信息流的写时扇出、第 14 章视频的转码预生成，本质是同一招。</p>
 <p>书里还给了两条延伸：不同国家热门查询不同，可<strong>按国家分别建 trie、放到 CDN 就近服务</strong>；多语言则是把节点从 26 个字母扩到 Unicode 字符。</p>
-<aside class="xref"><a href="https://hub.cissychen.com/system-design/cdn-edge-day28.html" target="_blank" rel="noopener">System Design · Day 28 CDN 与 Edge</a> — 把静态产物和计算推到离用户最近的一跳，以及边缘缓存的失效与一致性代价</aside>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/cdn-edge-day28.html" rel="noopener" target="_blank">System Design · Day 28 CDN 与 Edge</a> — 把静态产物和计算推到离用户最近的一跳，以及边缘缓存的失效与一致性代价</aside>
 <div class="ev">
 <div class="evh">大厂实证</div>
 <ul>
-<li><strong>Google</strong> 在官方博客《How Google autocomplete works in Search》里说明：补全给出的是「预测（predictions）」而非建议，来源是<strong>真实发生过的搜索</strong>——取其中常见的、正在上升的、且与已输入字符相关的那些；并公开给出效果量级：平均<strong>减少约 25% 的键入</strong>，累计每天节省超过 200 年的打字时间。这正是本章「频次驱动排序 + 离线聚合」在产品侧的印证。<br/><span class="src">Google 官方博客 · <a href="https://blog.google/products-and-platforms/products/search/how-google-autocomplete-works-search/" target="_blank" rel="noopener">How Google autocomplete works in Search</a></span></li>
-<li><strong>LinkedIn</strong> 开源了支撑其补全的库 <strong>Cleo</strong>（Apache 2.0），自述为「a flexible software library for enabling rapid development of partial, out-of-order and real-time typeahead search」，服务于人脉、公司、群组、技能等多个补全入口。它把<strong>通用补全</strong>（全局排序、人人一样）与<strong>人脉补全</strong>（按社交关系过滤、因人而异）分成两类——正好标出本章「个性化」这条延伸线要额外付的工程代价。<br/><span class="src">LinkedIn 开源项目 · <a href="https://github.com/LinkedInAttic/cleo" target="_blank" rel="noopener">LinkedInAttic/cleo</a></span></li>
-<li><strong>Elastic</strong> 在官方博客《You Complete Me》里解释了为什么要专门做一个 completion suggester，而不复用前缀查询或 ngram：补全必须在<strong>几毫秒</strong>内出结果，而常规检索要考察的词项太多、不够快；因此改用常驻内存的 <strong>FST（有限状态转换器）</strong>结构存放候选。这是与本章 trie 同源的另一种落地：<strong>都是把「前缀检索」换成「预建的内存结构」。</strong><br/><span class="src">Elastic 官方博客 · <a href="https://www.elastic.co/blog/you-complete-me" target="_blank" rel="noopener">You Complete Me</a></span></li>
+<li><strong>Google</strong> 在官方博客《How Google autocomplete works in Search》里说明：补全给出的是「预测（predictions）」而非建议，来源是<strong>真实发生过的搜索</strong>——取其中常见的、正在上升的、且与已输入字符相关的那些；并公开给出效果量级：平均<strong>减少约 25% 的键入</strong>，累计每天节省超过 200 年的打字时间。这正是本章「频次驱动排序 + 离线聚合」在产品侧的印证。<br/><span class="src">Google 官方博客 · <a href="https://blog.google/products-and-platforms/products/search/how-google-autocomplete-works-search/" rel="noopener" target="_blank">How Google autocomplete works in Search</a></span></li>
+<li><strong>LinkedIn</strong> 开源了支撑其补全的库 <strong>Cleo</strong>（Apache 2.0），自述为「a flexible software library for enabling rapid development of partial, out-of-order and real-time typeahead search」，服务于人脉、公司、群组、技能等多个补全入口。它把<strong>通用补全</strong>（全局排序、人人一样）与<strong>人脉补全</strong>（按社交关系过滤、因人而异）分成两类——正好标出本章「个性化」这条延伸线要额外付的工程代价。<br/><span class="src">LinkedIn 开源项目 · <a href="https://github.com/LinkedInAttic/cleo" rel="noopener" target="_blank">LinkedInAttic/cleo</a></span></li>
+<li><strong>Elastic</strong> 在官方博客《You Complete Me》里解释了为什么要专门做一个 completion suggester，而不复用前缀查询或 ngram：补全必须在<strong>几毫秒</strong>内出结果，而常规检索要考察的词项太多、不够快；因此改用常驻内存的 <strong>FST（有限状态转换器）</strong>结构存放候选。这是与本章 trie 同源的另一种落地：<strong>都是把「前缀检索」换成「预建的内存结构」。</strong><br/><span class="src">Elastic 官方博客 · <a href="https://www.elastic.co/blog/you-complete-me" rel="noopener" target="_blank">You Complete Me</a></span></li>
 </ul>
 </div>
 <p>面试里的评分点也很集中：算不算得出「每键一请求」的 20 倍放大、说不说得出朴素 trie 恰恰在短前缀上最慢、分片时会不会掉进「平均分 26 片」的坑。</p>
-
-<h2>易错点与争议</h2>
+<h2 data-tts="484951fbeaf2f870">易错点与争议</h2>
 <ul>
 <li><strong>把它当成「搜索」来做</strong>。最常见的错误是上来就搬全文检索或 <code>LIKE</code> 前缀查询——补全的正确心智是<strong>查表</strong>。</li>
 <li><strong>以为 trie 本身就快</strong>。朴素 trie 在最需要快的短前缀上最慢；让它快的是节点上预存的 top-k，不是树结构本身。</li>
@@ -289,8 +269,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>书本身的范围与局限</strong>：拼写纠错、中间词匹配、个性化排序、多语言都被明确划在范围外，书也坦承<strong>当前设计不适合实时热点</strong>——昨天才爆的新闻，按周重建的 trie 补不出来。它给的方向（给近期查询加权、上流处理）只是提纲。</li>
 <li><strong>时代局限</strong>：本书 2020 年成书，此后补全排序普遍引入语义与个性化模型，纯频次排序更接近一条基线。但「预计算 + 只读服务」这个骨架没被推翻——变的是路牌上写什么，不是谁来写路牌。</li>
 </ul>
-
-<h2>要点</h2>
+<h2 data-tts="f50166bafcebe869">要点</h2>
 <div class="tl">
 <p>① 问题形状：1000 万 DAU × 每天 10 次搜索 × 每条 20 字符，<strong>每键一请求</strong>把量放大 20 倍 → 约 24,000 QPS、峰值约 48,000，且要在 100 毫秒内返回。</p>
 <p>② 核心命题不是「怎么查得更快」，而是<strong>让查询根本不必去查</strong>——补全是查表，不是搜索。</p>
@@ -302,7 +281,6 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <p>⑧ 分片别按首字母等分：字母分布倾斜，要用 <strong>shard map manager</strong> 按历史分布切。已知局限：实时热词、拼写纠错与个性化都不在这套设计里。</p>
 </div>
 </div>
-
 <footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
 </div>
 <script>
