@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview Vol 1 Ch 13 · Design a Search Autocomplete System — Books Deep-Read 65</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">Books Deep-Read · System Design Interview Vol 1 · Ch 13</p>
+<h1>Design a Search Autocomplete System</h1>
+<p class="sub">System Design Interview Vol 1 · Ch 13 · Alex Xu · 2020</p>
+<p class="langbar"><a href="sdi1-ch13-search-autocomplete-book65.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You type two letters into a search box and a list of suggestions drops down; you tap one and you're gone. That's <strong>search autocomplete</strong>. Chapter 13 of <em>System Design Interview</em> asks you to build it from scratch. It looks like the most modest problem in the book, and it has the most lopsided ratio between <strong>reading</strong> and <strong>writing</strong> of any chapter in it.</p>
+
+<h2>A strange thing first</h2>
+<p>You probably assume autocomplete is "searching for you while you type." It's the opposite — <strong>it never searches</strong>. If it actually ran a search, you'd have finished typing the word first. What it does is <strong>look up a table that was sorted long ago</strong>: every letter you press just collects an answer that was written down in advance.</p>
+
+<h2>Why this was hard</h2>
+<p>The difficulty is <strong>volume</strong>. Ten million people searching ten times a day is a hundred million searches; but one search takes about twenty keystrokes, and <strong>every keystroke is its own request</strong> — so the backend absorbs two billion requests a day, twenty thousand-odd per second, double that at peak. And each one has to come back <strong>in the blink of an eye</strong>; any slower and the dropdown visibly stutters. Asking a database to sift billions of past searches for "the five most popular ones starting with tr" is too slow even once, let alone twenty thousand times a second.</p>
+
+<h2>How it pulls this off</h2>
+<p>Two moves.</p>
+<p>First, arrange every past search into a <strong>tree of forks</strong>, letter by letter: press t and you take one fork, press r and it forks again — every junction in the tree stands for one beginning. Reaching the "tr" junction then depends only on how many letters you typed, and <strong>not at all</strong> on whether the store holds a hundred million rows or ten billion.</p>
+<p>The second move is the real trick: <strong>plant a signpost at every junction ahead of time</strong>, reading "from here on down, the five most popular are these." Now the query never has to walk any further — arrive at the junction, copy the sign, done. What gets written on the signs is recomputed <strong>overnight, once a week</strong>, from the previous week's search logs, and never crosses paths with the daytime queries at all.</p>
+
+<h2>What it costs you</h2>
+<p>The price is plain: <strong>the sign was planted last week, so a phrase that caught fire yesterday won't be suggested today</strong> — getting breaking terms in within minutes means building a second, real-time pipeline, and complexity and cost go up together. Most products don't need it.</p>
+
+<h2>One line to remember</h2>
+<div class="tl">
+<p>Autocomplete isn't search, it's a <strong>lookup</strong>: arrange popular searches into a tree that forks letter by letter, and write "the top five" into every junction ahead of time. Daytime just fetches signs; rewriting them is an offline job that runs once a week.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the numbers and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">This chapter teaches you to take a feature that looks like real-time search and <strong>turn it entirely into a precomputed lookup</strong>. Three steps: use a <strong>trie</strong> to decouple "locate by prefix" from the size of the corpus; <strong>precompute top-k at every node</strong> so a query collapses from "walk the subtree, then sort" into an <code>O(1)</code> fetch; then split the system into an <strong>offline rebuild</strong> path and an <strong>online read-only</strong> path that never touch each other. Those three steps are the general recipe for a whole class of problems: extreme read-heaviness under a latency budget of tens of milliseconds.</p>
+
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Autocomplete / typeahead</strong>: on each character the user types, return a handful of candidate queries that begin with what they've typed so far.</li>
+<li><strong>Prefix</strong>: the opening segment of a string. This chapter matches prefixes only — never the middle of a phrase.</li>
+<li><strong>Trie (prefix tree)</strong>: a tree that stores a set of strings by branching one character per level; the path from the root to a node spells out a prefix.</li>
+<li><strong>Top-k</strong>: the first k items after ranking by some score — here, historical query frequency. In this chapter k = 5.</li>
+<li><strong>QPS (queries per second)</strong>: request rate; the throughput measure.</li>
+<li><strong>p99</strong>: line requests up from fastest to slowest and take the 99th percentile — "how slow the unluckiest 1% are."</li>
+<li><strong>Sharding</strong>: when data no longer fits one machine, split it by some rule and spread the pieces across machines.</li>
+<li><strong>AJAX</strong>: a page issuing background requests and updating one region of itself, without a full reload.</li>
+</ul>
+</div>
+
+<h2>Where it sits</h2>
+<p>This is in Part II ("system case studies") of Volume 1, right after Chapter 12's chat system. It pushes the read/write ratio to an extreme: <strong>the write path may run offline on a weekly cadence, while the read path must absorb tens of thousands of requests per second and answer each in under a hundred milliseconds</strong>. Its real-world counterpart is every search box you use, and it leads directly into the skeleton Chapters 14 and 15 share — compute in bulk offline, serve read-only online.</p>
+
+<h2>What the chapter is solving</h2>
+<p>Get the magnitudes straight first, or the discussion is hollow. On the book's assumptions — <strong>10 million DAU, 10 searches per person per day</strong> — that's 100 million searches a day; a query averages 20 characters, and <strong>each character fires its own autocomplete request</strong>, so request volume is multiplied by 20: roughly <strong>2 billion/day ≈ 24,000 QPS, with peak estimated at 2× ≈ 48,000 QPS</strong>. The book also cites Facebook's published figure for typeahead: latency has to stay around <strong>100 ms</strong>, or the dropdown stutters visibly.</p>
+<p>Put those numbers side by side and the shape of the problem appears: a "write" — somebody searched a new phrase — can take hours or days to become visible without anyone caring; a "read" has to pick the five most popular prefix matches out of billions of historical queries, tens of thousands of times a second, in tens of milliseconds.</p>
+<p>What happens if you don't solve it? The obvious approach is a <code>frequency(query, frequency)</code> table and <code>SELECT ... WHERE query LIKE 'tr%' ORDER BY frequency DESC LIMIT 5</code>. That's fine over tens of thousands of rows; over billions, the prefix <code>LIKE</code> scans a large slice of the index and then sorts the whole result set — hundreds of milliseconds per call. Multiply by 24,000 QPS and the database is flat on its back. <strong>So the real proposition here isn't "how do we query faster" but "how do we make the query unnecessary."</strong></p>
+
+<h2>The core, explained</h2>
+
+<h3>1. The trie: decoupling "find by prefix" from "how much is stored"</h3>
+<p>A trie stores every historical query by branching one character per level: the path from the root to a node spells a prefix, and the node carries the queries under it along with their frequencies. In a lowercase-English setting each node has at most 26 children.</p>
+<p>The first payoff is that <strong>reaching the prefix node costs only as much as you typed</strong>: p characters, p steps — <code>O(p)</code> — whether the store holds a million rows or ten billion. Add one engineering constraint (users essentially never type more than about 50 characters, so cap the maximum prefix length) and <code>O(p)</code> is a constant in practice.</p>
+<p>But <strong>the trie alone doesn't save you</strong>. Having found the <code>tr</code> node, what you actually want is "the five most popular queries starting with tr" — which means <strong>walking its entire subtree</strong> to collect candidates and then sorting them by frequency. If the subtree holds c queries, that's <code>O(c + c log c)</code>, and <strong>the shorter the prefix, the larger c gets</strong>. The instant a user presses the first letter <code>t</code>, c may be in the tens of millions. The query that most needs to be fast is exactly the slowest one.</p>
+
+<figure>
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs>
+<marker id="a1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="a2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker>
+</defs>
+<text x="14" y="24" fill="#e8794b" font-size="13" font-weight="700">1 · Plain trie: reaching the prefix node is only the start</text>
+<rect x="18" y="66" width="46" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="41" y="85" fill="#b9c0ca" font-size="11" text-anchor="middle">root</text>
+<line x1="64" y1="80" x2="84" y2="80" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="90" y="66" width="34" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="107" y="85" fill="#b9c0ca" font-size="11" text-anchor="middle">t</text>
+<line x1="124" y1="80" x2="144" y2="80" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="150" y="66" width="42" height="28" rx="6" fill="rgba(91,157,249,0.2)" stroke="#5b9df9" stroke-width="2"></rect><text x="171" y="85" fill="#e7ebf1" font-size="11" text-anchor="middle">tr</text>
+<line x1="192" y1="80" x2="246" y2="36" stroke="#7c8593"></line>
+<line x1="192" y1="80" x2="246" y2="64" stroke="#7c8593"></line>
+<line x1="192" y1="80" x2="246" y2="92" stroke="#7c8593"></line>
+<line x1="192" y1="80" x2="246" y2="120" stroke="#7c8593"></line>
+<rect x="250" y="25" width="104" height="22" rx="5" fill="rgba(255,255,255,0.03)" stroke="#5a6069"></rect><text x="302" y="40" fill="#9aa3ae" font-size="10.5" text-anchor="middle">travel</text>
+<rect x="250" y="53" width="104" height="22" rx="5" fill="rgba(255,255,255,0.03)" stroke="#5a6069"></rect><text x="302" y="68" fill="#9aa3ae" font-size="10.5" text-anchor="middle">trip</text>
+<rect x="250" y="81" width="104" height="22" rx="5" fill="rgba(255,255,255,0.03)" stroke="#5a6069"></rect><text x="302" y="96" fill="#9aa3ae" font-size="10.5" text-anchor="middle">tree</text>
+<rect x="250" y="109" width="104" height="22" rx="5" fill="rgba(255,255,255,0.03)" stroke="#5a6069"></rect><text x="302" y="124" fill="#9aa3ae" font-size="10.5" text-anchor="middle">true</text>
+<text x="302" y="146" fill="#7c8593" font-size="13" text-anchor="middle">⋮</text>
+<text x="374" y="62" fill="#b9c0ca" font-size="11.5">Millions may hang below</text>
+<text x="374" y="82" fill="#b9c0ca" font-size="11.5">Walk + sort: shorter prefix, slower</text>
+<text x="374" y="102" fill="#e8794b" font-size="11.5" font-family="monospace">O(c + c log c)</text>
+<line x1="14" y1="168" x2="626" y2="168" stroke="rgba(91,157,249,0.18)" stroke-dasharray="4 4"></line>
+<text x="14" y="196" fill="#5b9df9" font-size="13" font-weight="700">2 · Top 5 stored at every node: the query becomes a fetch</text>
+<rect x="18" y="234" width="46" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="41" y="253" fill="#b9c0ca" font-size="11" text-anchor="middle">root</text>
+<line x1="64" y1="248" x2="84" y2="248" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="90" y="234" width="34" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="107" y="253" fill="#b9c0ca" font-size="11" text-anchor="middle">t</text>
+<line x1="124" y1="248" x2="144" y2="248" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="150" y="234" width="42" height="28" rx="6" fill="rgba(91,157,249,0.2)" stroke="#5b9df9" stroke-width="2"></rect><text x="171" y="253" fill="#e7ebf1" font-size="11" text-anchor="middle">tr</text>
+<line x1="192" y1="248" x2="242" y2="248" stroke="#5b9df9" marker-end="url(#a2)"></line>
+<rect x="248" y="224" width="216" height="48" rx="7" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect>
+<text x="258" y="243" fill="#e7ebf1" font-size="11">travel · trip · tree · true · trump</text>
+<text x="258" y="262" fill="#8fbaff" font-size="10.5" font-family="monospace">computed offline last week</text>
+<text x="482" y="243" fill="#5b9df9" font-size="12" font-weight="700" font-family="monospace">O(1)</text>
+<text x="482" y="262" fill="#b9c0ca" font-size="11">no walk, no sort</text>
+</svg>
+<figcaption>Fig 1 · The trie itself isn't what makes this fast: the precomputed top-5 at each node is. The query degenerates from "walk subtree, then sort" into a single fetch.</figcaption>
+</figure>
+
+<h3>2. Precompute the answer: cache top-5 at every node</h3>
+<p>Here's the turn: since "the five most popular queries starting with tr" <strong>cannot change</strong> between two offline rebuilds, why compute it in front of the user at all? So <strong>store a top-5 list directly on every node</strong>. The query collapses to two steps — walk the prefix to the node (constant), return the stored list (one step) — for <code>O(1)</code> overall, wholly independent of corpus size.</p>
+<p>Two costs, stated plainly. <strong>Space</strong>: every node carries five extra references, so memory rises noticeably — which is precisely why sharding becomes necessary later. And <strong>write amplification</strong>: change one query's frequency and the top-5 on <strong>every ancestor</strong> along its path to the root may need re-ranking — one update touches p nodes on the way up. That bill is unpayable online, which forces the next step.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/search-system-day12.en.html" target="_blank" rel="noopener">System Design · Day 12 Search Systems</a> — how inverted indexes are built and how retrieval and ranking are layered, and why autocomplete should not reuse that full-text path</aside>
+
+<h3>3. Two paths: separate "rebuild" from "serve"</h3>
+<p>Updates are expensive and the candidate lists don't need to be fresh by the second — so <strong>don't update the trie online at all</strong>. The system splits into two halves that never interfere:</p>
+<p><strong>The offline data path</strong> — query logs land continuously; an aggregator compresses a week of them into a <code>(query, frequency)</code> table; build workers use it to <strong>construct a brand-new trie from scratch</strong> and swap it in wholesale. Old and new snapshots coexist across the switch, so <strong>rebuilding never disturbs live queries</strong>.</p>
+<p><strong>The online query path</strong> — keystroke → load balancer → API server → an in-memory trie cache that returns five candidates directly. Only on a miss (fresh capacity, a restart) does it fall back to the persisted Trie DB.</p>
+<p>The Trie DB usually lands one of two ways: a <strong>document store</strong> (say MongoDB) holding the whole trie serialized into one document, replaced wholesale on rebuild; or a <strong>key-value store</strong> — flatten the trie into a hash table whose key is the prefix and whose value is that top-5. The second is worth dwelling on: once every node's answer is precomputed, <strong>the tree shape is useless on the read path</strong>; all that remains is a <code>prefix → five candidates</code> map. <strong>The trie is build-time scaffolding, not a serving-time necessity.</strong></p>
+
+<figure>
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs>
+<marker id="b1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="b2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker>
+<marker id="b3" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text x="14" y="24" fill="#9b6cf5" font-size="12.5" font-weight="700">Offline path · rebuilt once a week</text>
+<rect x="14" y="44" width="88" height="34" rx="6" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5"></rect><text x="58" y="66" fill="#d9dee5" font-size="11" text-anchor="middle">Query logs</text>
+<line x1="102" y1="61" x2="126" y2="61" stroke="#9b6cf5" marker-end="url(#b3)"></line>
+<rect x="132" y="44" width="86" height="34" rx="6" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5"></rect><text x="175" y="66" fill="#d9dee5" font-size="11" text-anchor="middle">Aggregator</text>
+<line x1="218" y1="61" x2="242" y2="61" stroke="#9b6cf5" marker-end="url(#b3)"></line>
+<rect x="248" y="44" width="104" height="34" rx="6" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5"></rect><text x="300" y="66" fill="#d9dee5" font-size="11" text-anchor="middle">Weekly counts</text>
+<line x1="352" y1="61" x2="376" y2="61" stroke="#9b6cf5" marker-end="url(#b3)"></line>
+<rect x="382" y="44" width="98" height="34" rx="6" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5"></rect><text x="431" y="66" fill="#d9dee5" font-size="11" text-anchor="middle">Build workers</text>
+<line x1="480" y1="61" x2="504" y2="61" stroke="#9b6cf5" marker-end="url(#b3)"></line>
+<rect x="510" y="44" width="86" height="34" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2"></rect><text x="553" y="66" fill="#e7ebf1" font-size="11" text-anchor="middle">Trie DB</text>
+<text x="14" y="108" fill="#7c8593" font-size="10.5" font-family="monospace">Old and new snapshots coexist; the swap is atomic - zero impact on live traffic</text>
+<line x1="14" y1="126" x2="626" y2="126" stroke="rgba(91,157,249,0.2)" stroke-dasharray="5 4"></line>
+<text x="14" y="152" fill="#5b9df9" font-size="12.5" font-weight="700">Online path · one round trip per keystroke</text>
+<rect x="14" y="172" width="88" height="34" rx="6" fill="rgba(91,157,249,0.10)" stroke="#5b9df9"></rect><text x="58" y="194" fill="#d9dee5" font-size="11" text-anchor="middle">Keystroke</text>
+<line x1="102" y1="189" x2="126" y2="189" stroke="#5b9df9" marker-end="url(#b2)"></line>
+<rect x="132" y="172" width="104" height="34" rx="6" fill="rgba(91,157,249,0.10)" stroke="#5b9df9"></rect><text x="184" y="194" fill="#d9dee5" font-size="11" text-anchor="middle">Load balancer</text>
+<line x1="236" y1="189" x2="260" y2="189" stroke="#5b9df9" marker-end="url(#b2)"></line>
+<rect x="266" y="172" width="92" height="34" rx="6" fill="rgba(91,157,249,0.10)" stroke="#5b9df9"></rect><text x="312" y="194" fill="#d9dee5" font-size="11" text-anchor="middle">API server</text>
+<line x1="358" y1="189" x2="382" y2="189" stroke="#5b9df9" marker-end="url(#b2)"></line>
+<rect x="388" y="172" width="122" height="34" rx="6" fill="rgba(91,157,249,0.2)" stroke="#5b9df9" stroke-width="2"></rect><text x="449" y="194" fill="#e7ebf1" font-size="11" text-anchor="middle">Trie cache (RAM)</text>
+<path d="M510 182 L553 182 L553 84" fill="none" stroke="#7c8593" stroke-dasharray="4 3" marker-end="url(#b1)"></path>
+<text x="512" y="140" fill="#7c8593" font-size="10.5" font-family="monospace">only on a miss</text>
+<path d="M449 206 L449 246 L58 246 L58 212" fill="none" stroke="#5b9df9" marker-end="url(#b2)"></path>
+<text x="250" y="240" fill="#8fbaff" font-size="11" text-anchor="middle">5 candidates back · target p99 &lt; 100 ms</text>
+<text x="14" y="278" fill="#7c8593" font-size="10.5" font-family="monospace">The read path only reads memory; the write path is batched offline</text>
+</svg>
+<figcaption>Fig 2 · The system splits into two non-interfering paths: rebuild weekly offline and swap the snapshot wholesale; serve online from a read-only in-memory cache. Writes run on a weekly clock, reads on a millisecond one.</figcaption>
+</figure>
+
+<h3>4. Three cheap wins on the online side</h3>
+<p>None of these change the architecture, and all of them move the bill.</p>
+<p><strong>Browser caching.</strong> Suggestions barely change within an hour, so let the browser hold them. The book's concrete evidence is that Google's autocomplete response carries <code>cache-control: private, max-age=3600</code> — <em>private, cache for an hour</em>: the same user retyping the same prefix within the hour never leaves the browser.</p>
+<p><strong>AJAX requests.</strong> Fire asynchronously and repaint only the dropdown, never the page — this is the precondition for "one request per keystroke" being tolerable at all.</p>
+<p><strong>Log sampling.</strong> Frequency counts exist only to rank, so there's no need to record every request: <strong>keep 1 in every N</strong>. Log volume drops to a fraction while the relative ordering of popular queries is essentially unaffected — the classic trade of statistical precision for storage and bandwidth.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/caching-day2.en.html" target="_blank" rel="noopener">System Design · Day 2 Caching</a> — setting TTLs and invalidation across the layers from browser to database, and what <code>max-age</code> and <code>private</code> each actually buy you</aside>
+
+<h2>The trade-offs, and what to pick</h2>
+<p>"Find the most popular entries with this prefix" has four typical answers, and their costs differ wildly:</p>
+<p class="tcap">Table 1 · Four ways to answer a prefix query</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Approach</th><th>Cost per query</th><th>Fits</th><th>What it costs you</th></tr></thead>
+<tbody>
+<tr><th>SQL table + LIKE 'p%'</th><td>Index prefix scan + full sort, <strong>hundreds of ms</strong></td><td>Tens of thousands of rows / internal tools</td><td>Any real QPS flattens the database</td></tr>
+<tr><th>Inverted index / full-text search</th><td>Tens of ms, but it's built to search documents</td><td>When you genuinely need infix or fuzzy matching</td><td>Heavy; still expensive at one query per keystroke</td></tr>
+<tr><th>Plain trie (no precompute)</th><td><code>O(p + c + c log c)</code>, <strong>slower the shorter the prefix</strong></td><td>Demos / small vocabularies</td><td>The short prefixes that most need speed are slowest</td></tr>
+<tr><th>Trie + per-node top-k</th><td><code>O(1)</code></td><td>Billion-row vocabularies, tens of thousands of QPS</td><td>Memory rises sharply; updates must go offline</td></tr>
+</tbody>
+</table>
+</div>
+<p>Once the approach is settled, three choices remain that an interviewer will press on:</p>
+<p class="tcap">Table 2 · Three decision points, and how to call them</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Decision</th><th>Option A</th><th>Option B</th><th>How to choose</th></tr></thead>
+<tbody>
+<tr><th>Update cadence</th><td><strong>Weekly offline rebuild</strong>: simple, stable, zero write pressure online</td><td><strong>Near-real-time streaming</strong>: breaking terms visible within minutes</td><td>A by default. Go to B only when trending terms <em>are</em> the product value (news, flash sales), and accept a whole stream-processing pipeline as the price</td></tr>
+<tr><th>Trie DB shape</th><td><strong>Document store, serialized whole</strong>: matches the tree, rebuild replaces it wholesale</td><td><strong>Flattened KV</strong> as <code>prefix → top-5</code>: simplest read path, easiest to scale out</td><td>Pure prefix autocomplete: B. If you still need subtree-level computation, keep the tree and take A</td></tr>
+<tr><th>Sharding rule</th><td><strong>26 shards by first letter</strong>: simplest to implement</td><td><strong>Shard map manager</strong>, split by historical distribution</td><td>Always B — letter frequency is wildly skewed, so an even split guarantees hot shards</td></tr>
+</tbody>
+</table>
+</div>
+<p>Sharding is where this question is most often answered wrong. Once one machine can't hold the whole trie, the reflex is <strong>26 shards by first letter</strong>, then 676 by the first two; but letter frequency is inherently skewed, so an even split leaves one shard to blow up first. The right move is a <strong>shard map manager</strong> — a map of "prefix range → shard" derived from the historical distribution. The map itself is tiny and can be cached on every API server.</p>
+
+<figure>
+<svg viewBox="0 0 640 190" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<text x="14" y="22" fill="#e8794b" font-size="12.5" font-weight="700">Even split into 26 shards by first letter → wildly uneven load</text>
+<rect x="18" y="34" width="26" height="46" rx="3" fill="rgba(224,107,107,0.28)" stroke="#e06b6b"></rect><text x="31" y="94" fill="#9aa3ae" font-size="10" text-anchor="middle">s</text>
+<rect x="50" y="46" width="26" height="34" rx="3" fill="rgba(224,107,107,0.22)" stroke="#e06b6b"></rect><text x="63" y="94" fill="#9aa3ae" font-size="10" text-anchor="middle">c</text>
+<rect x="82" y="56" width="26" height="24" rx="3" fill="rgba(91,157,249,0.14)" stroke="#5a6069"></rect><text x="95" y="94" fill="#9aa3ae" font-size="10" text-anchor="middle">a</text>
+<rect x="114" y="62" width="26" height="18" rx="3" fill="rgba(91,157,249,0.14)" stroke="#5a6069"></rect><text x="127" y="94" fill="#9aa3ae" font-size="10" text-anchor="middle">m</text>
+<rect x="146" y="68" width="26" height="12" rx="3" fill="rgba(91,157,249,0.10)" stroke="#5a6069"></rect><text x="159" y="94" fill="#9aa3ae" font-size="10" text-anchor="middle">u</text>
+<rect x="178" y="71" width="26" height="9" rx="3" fill="rgba(91,157,249,0.10)" stroke="#5a6069"></rect><text x="191" y="94" fill="#9aa3ae" font-size="10" text-anchor="middle">v</text>
+<rect x="210" y="73" width="26" height="7" rx="3" fill="rgba(91,157,249,0.10)" stroke="#5a6069"></rect><text x="223" y="94" fill="#9aa3ae" font-size="10" text-anchor="middle">x</text>
+<rect x="242" y="75" width="26" height="5" rx="3" fill="rgba(91,157,249,0.10)" stroke="#5a6069"></rect><text x="255" y="94" fill="#9aa3ae" font-size="10" text-anchor="middle">z</text>
+<text x="288" y="56" fill="#e06b6b" font-size="11.5">The hottest shard melts first,</text>
+<text x="288" y="76" fill="#e06b6b" font-size="11.5">the coldest sits nearly idle</text>
+<text x="288" y="96" fill="#7c8593" font-size="10.5" font-family="monospace">bar heights illustrative, not measured</text>
+<line x1="14" y1="112" x2="626" y2="112" stroke="rgba(91,157,249,0.18)" stroke-dasharray="4 4"></line>
+<text x="14" y="136" fill="#5b9df9" font-size="12.5" font-weight="700">Shard map manager splits by historical distribution → even load</text>
+<rect x="18" y="148" width="100" height="28" rx="6" fill="rgba(91,157,249,0.18)" stroke="#5b9df9"></rect><text x="68" y="166" fill="#e7ebf1" font-size="10.5" text-anchor="middle">s → own shard</text>
+<rect x="126" y="148" width="100" height="28" rx="6" fill="rgba(91,157,249,0.18)" stroke="#5b9df9"></rect><text x="176" y="166" fill="#e7ebf1" font-size="10.5" text-anchor="middle">c → own shard</text>
+<rect x="234" y="148" width="104" height="28" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect><text x="286" y="166" fill="#e7ebf1" font-size="10.5" text-anchor="middle">a, b → one shard</text>
+<rect x="346" y="148" width="152" height="28" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect><text x="422" y="166" fill="#e7ebf1" font-size="10.5" text-anchor="middle">u, v, w, x, y, z → one shard</text>
+<text x="508" y="166" fill="#7c8593" font-size="10.5" font-family="monospace">… tuned to data</text>
+</svg>
+<figcaption>Fig 3 · Shards can't be split evenly by letter: a shard map manager derives the "prefix range → shard" map from the historical query distribution, giving hot letters their own shard and merging cold ones.</figcaption>
+</figure>
+
+<h2>Why it matters / in real systems</h2>
+<p>The value of this chapter isn't "how to code a trie" — it's that it pins down the solution to a class of problems: <strong>when reads vastly outnumber writes and the answer can't change between updates, precompute the answer and split the system into an offline rebuild path and an online read-only path.</strong> You'll keep running into that skeleton — Chapter 11's fan-out-on-write feed, Chapter 14's pre-generated video transcodes; same move underneath.</p>
+<p>The book adds two extensions: different countries have different popular queries, so you can <strong>build a trie per country and push it to a CDN</strong>; multi-language support means widening nodes from 26 letters to Unicode characters.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/cdn-edge-day28.en.html" target="_blank" rel="noopener">System Design · Day 28 CDN and Edge</a> — pushing artifacts and compute to within one hop of the user, and what edge caching costs you in invalidation and consistency</aside>
+<div class="ev">
+<div class="evh">INDUSTRY EVIDENCE</div>
+<ul>
+<li><strong>Google</strong>, in its official post <em>How Google autocomplete works in Search</em>, explains that autocomplete offers "predictions" rather than suggestions, drawn from <strong>searches that actually happened</strong> — the common and trending ones relevant to what you've typed; and it publishes the magnitude of the effect: on average it <strong>cuts typing by about 25%</strong>, cumulatively saving over 200 years of typing time per day. That is the product-side confirmation of this chapter's "frequency-driven ranking, aggregated offline."<br/><span class="src">Google official blog · <a href="https://blog.google/products-and-platforms/products/search/how-google-autocomplete-works-search/" target="_blank" rel="noopener">How Google autocomplete works in Search</a></span></li>
+<li><strong>LinkedIn</strong> open-sourced the library behind its typeahead, <strong>Cleo</strong> (Apache 2.0), describing it in its own words as "a flexible software library for enabling rapid development of partial, out-of-order and real-time typeahead search," serving connections, companies, groups and skills. Its design separates <strong>generic typeahead</strong> (globally ranked, identical for everyone) from <strong>network typeahead</strong> (filtered by the member's social graph, different per person) — which marks exactly what this chapter's "personalization" extension costs in engineering.<br/><span class="src">LinkedIn open source · <a href="https://github.com/LinkedInAttic/cleo" target="_blank" rel="noopener">LinkedInAttic/cleo</a></span></li>
+<li><strong>Elastic</strong>, in its official blog post <em>You Complete Me</em>, explains why a dedicated completion suggester exists rather than reusing prefix queries or ngrams: suggestions must come back in <strong>a few milliseconds</strong>, and a normal search examines far too many terms to be fast enough; hence an in-memory <strong>FST (finite state transducer)</strong> holding the candidates. It's a sibling of this chapter's trie: <strong>both replace prefix retrieval with a prebuilt in-memory structure.</strong><br/><span class="src">Elastic official blog · <a href="https://www.elastic.co/blog/you-complete-me" target="_blank" rel="noopener">You Complete Me</a></span></li>
+</ul>
+</div>
+<p>The scoring points in an interview are equally concentrated: can you derive the 20× amplification from "one request per keystroke," can you point out unprompted that a plain trie is slowest on short prefixes, and do you avoid the "just split into 26 even shards" trap.</p>
+
+<h2>Pitfalls and open questions</h2>
+<ul>
+<li><strong>Treating it as "search."</strong> The most common error is reaching for full-text search or a <code>LIKE</code> prefix query — the right mental model for autocomplete is <strong>a lookup</strong>.</li>
+<li><strong>Assuming the trie is what's fast.</strong> A plain trie is slowest exactly where speed matters most. What makes it fast is the top-k stored at each node, not the tree.</li>
+<li><strong>Splitting shards evenly by first letter.</strong> Letter frequency is badly skewed; 26 equal shards guarantee a hot one.</li>
+<li><strong>The book's own scope and limits</strong>: spell correction, infix matching, personalized ranking and multi-language are all explicitly out of scope, and the book concedes that <strong>this design does not suit real-time trends</strong> — a story that broke yesterday won't be suggested by a trie rebuilt weekly. Its pointers (weight recent queries higher, move to stream processing) are an outline, not a design.</li>
+<li><strong>Dated in one respect</strong>: the book is from 2020, and suggestion ranking since then commonly layers in semantic and personalized models, making pure frequency ranking closer to a baseline. But the "precompute plus read-only serving" skeleton has not been overturned — what changed is what's written on the signpost, not who writes it.</li>
+</ul>
+
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1 · The shape of the problem: 10M DAU × 10 searches/day × 20 characters, and <strong>one request per keystroke</strong> multiplies it 20× — about 24,000 QPS, ~48,000 at peak, each answered inside 100 ms.</p>
+<p>2 · The proposition isn't "query faster," it's <strong>make the query unnecessary</strong> — autocomplete is a lookup, not a search.</p>
+<p>3 · A trie brings "locate by prefix" down to <code>O(p)</code>, independent of corpus size; cap the maximum prefix length and it's effectively constant.</p>
+<p>4 · But a plain trie is <strong>slowest on short prefixes</strong> (walk the whole subtree, then sort) — precisely the query that most needs to be fast.</p>
+<p>5 · The key move: <strong>precompute top-5 at every node</strong>, making the query <code>O(1)</code>; you pay in memory and in write amplification (one update rewrites a whole ancestor path).</p>
+<p>6 · Hence two paths: <strong>weekly offline rebuild with a wholesale snapshot swap</strong>, and an <strong>online read-only memory cache</strong>. Once precomputed, the read path can even flatten to a <code>prefix → top-5</code> hash table — <strong>the trie is only build-time scaffolding</strong>.</p>
+<p>7 · Three cheap wins: browser caching (Google uses <code>max-age=3600</code>), AJAX partial updates, and log sampling.</p>
+<p>8 · Don't shard evenly by first letter: the distribution is skewed, so use a <strong>shard map manager</strong> keyed on historical data. Known limits: real-time trends, spell correction and personalization are all outside this design.</p>
+</div>
+</div>
+
+<footer>Books Deep-Read · reading this page ≈ the core of this chapter; for full case studies and depth, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
