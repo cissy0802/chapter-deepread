@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview 卷一 第 15 章 · 设计 Google Drive — 专业书籍精读 Book 67</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · System Design Interview 卷一 · 第 15 章</p>
+<h1>设计 Google Drive</h1>
+<p class="sub">System Design Interview Vol 1 · Ch 15 · Alex Xu · 2020</p>
+<p class="langbar"><a href="sdi1-ch15-google-drive-book67.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你在电脑上改了一个文件，手机上一打开就是新的。这一章问：<strong>把这件事做给几千万人用，背后要建些什么？</strong>答案有点反直觉——存文件反而是最容易的一步，难的是让你那五台设备对「现在到底哪一版才算数」<strong>始终说法一致</strong>。</p>
+<h2>先说个怪事</h2>
+<p>你在一份两百页的文档里改了一个字，网盘并没有把这两百页重传一遍。它只补了改动落在的那一小段——在它眼里，你的文件早就被剪成了一叠小卡片，你动了哪张，它就补哪张。</p>
+<h2>旧世界为什么难</h2>
+<p>早年的做法是「整份重传」。文件小的时候没人在意，可一旦你天天改一个几百兆的设计稿、还开着手机热点，代价立刻变得荒唐：改一个字，传半小时。更麻烦的是设备<strong>从不同时在线</strong>——笔记本改完就合上，平板三天后才开机，中间两边可能各改过一次。系统必须替你把这笔糊涂账理清楚。</p>
+<h2>核心机制：三个直觉</h2>
+<p><strong>① 把文件剪成小卡片。</strong>上传前先切成大小差不多的小块，每块单独压缩、加密、存进仓库。以后改一处，只补那一张卡片。</p>
+<p><strong>② 货和账分开放。</strong>网盘其实是两套系统：一套放「货」（那些小块），一套记「账」（谁有哪些文件、第几版、由哪些块拼成）。你看到的目录、文件名、历史版本全在账本里。货那半边早就被云仓库解决了，<strong>剩下的难题几乎全在账上</strong>。</p>
+<p><strong>③ 谁先记上账，谁就算数。</strong>两台设备离线各改一次，最后同时上线——账本只认先到的那一版；后到的不会被悄悄盖掉，而是另存一份「冲突副本」摆在你面前，让你自己决定留哪个。</p>
+<h2>该怎么选</h2>
+<p>所有取舍最后都指向同一个问题：<strong>卡片切多大</strong>。切得太碎，账本上的条目会暴涨，光记账就把系统压垮；切得太大，改一个字又要重传一大坨。业界的答案落在几兆这个量级——大到账记得过来，小到重传不心疼。</p>
+<p>代价很诚实：<strong>省下来的是带宽，赔进去的是账本</strong>——文件一多，慢的往往不是传输，而是「算清楚这次到底该传哪几块」。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>网盘不是存储系统，是<strong>同步系统</strong>：文件切成块丢给云仓库，真功夫全在那本记着「谁有什么、第几版、由哪些块拼成」的账上。两边打架时，它选择让你看见冲突，而不是替你做决定。</p>
+</div>
+<p class="switch-hint">想进到具体机制、记号和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">你以为设计网盘是设计一个<strong>存储</strong>系统，其实存储那一半早被对象存储买断了——这一章真正在设计的是<strong>一本账</strong>：把文件切成不可变的块交给云存储，用一套元数据（metadata）记录「谁有哪些文件、第几版、由哪些块拼成」，再用增量同步（delta sync）压住带宽、用通知服务把多台设备拉回同一版本。全章的难点、一致性要求与成本，几乎全压在元数据这一面。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>块（block / chunk）</strong>：把一个文件切成的定长小段，各自独立存储、独立传输；本章取上限 <code>4 MB</code>。</li>
+<li><strong>对象存储（object storage）</strong>：像 Amazon S3 那样按「整个对象」存取的仓库——不能改中间一段，只能整个覆盖。</li>
+<li><strong>元数据（metadata）</strong>：关于文件本身的信息——文件名、大小、版本号、属于谁、由哪些块拼成，不含文件内容。</li>
+<li><strong>增量同步（delta sync）</strong>：只传改动过的那几个块，而不是整份文件。</li>
+<li><strong>去重（deduplication）</strong>：内容相同的块只存一份，靠对块内容取哈希来判定「相同」。</li>
+<li><strong>哈希（hash）</strong>：把任意内容压成一串定长指纹，内容一样指纹就一样。</li>
+<li><strong>长轮询（long polling）</strong>：客户端发一个请求挂在服务端不返回，等有事件才回；回完立刻再发一个——用普通 HTTP 模拟「服务端主动推」。</li>
+<li><strong>WebSocket</strong>：一条建立之后双向都能主动说话的长连接。</li>
+<li><strong>冷存储（cold storage）</strong>：给极少访问的数据用的便宜档位（如 Amazon S3 Glacier），单价低但取回慢、还要另收取回费。</li>
+<li><strong>强一致性（strong consistency）</strong>：写完之后任何一次读都能读到最新值，不会读到旧版本。</li>
+<li><strong>QPS</strong>：每秒请求数。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>本章是 Vol 1 案例部分的<strong>收官之作</strong>（Ch16 是收尾励志章、无实质内容），也是全书唯一一道<strong>客户端占一半戏份</strong>的题：前面几章的主角都是服务端集群，这里有相当一部分设计发生在你电脑上那个同步客户端里。它把 Ch6 键值存储的复制思路、Ch14 YouTube 的对象存储与分片上传都接了过来，对应现实里 Dropbox / Google Drive / OneDrive / iCloud Drive 这一类个人云存储。</p>
+<h2>这章要解决什么</h2>
+<p>先把规模摆出来（书里的口径）：<strong>5000 万注册用户、1000 万日活</strong>，每人 <code>10 GB</code> 免费空间，人均每天上传 2 个文件、平均 <code>500 KB</code>，读写比 <code>1:1</code>。算下来总存储 5000 万 × 10 GB = <strong>500 PB</strong>；上传接口 QPS 只有 1000 万 × 2 ÷ 86400 ≈ <strong>240</strong>，峰值按两倍算也就 <strong>480</strong>。</p>
+<p>这组数字本身就是题眼：<strong>QPS 低得离谱，存储量高得离谱</strong>。480 QPS 一台像样的机器就能扛住，可 500 PB 数据、上百亿个块的账，以及「一份文件在五台设备上都得是最新的」这件事，才是真正的工程量。不解决会怎样？账单和体验会同时崩：整份重传让一个几百兆的文件每改一次就吃掉几百兆上行带宽；没有版本与冲突处理，两台设备同时编辑就会<strong>静默丢数据</strong>——而本章把「绝不丢数据」列为第一条非功能需求，一次静默覆盖就足以让用户永久离开。</p>
+<h2>核心内容，讲透</h2>
+<h3>一、先把系统劈成两半：数据面与元数据面</h3>
+<p>起点是一台机器：Web 服务器收文件、写进本地目录、把文件名和大小记进 MySQL。它一定会撞墙——单机的盘装不下 500 PB。于是文件本体交给 <strong>Amazon S3</strong> 一类对象存储（靠跨区域复制换持久性与可用性），自家机器只留账本。</p>
+<p>这一刀劈下去，系统就长成了两条独立的路：<strong>数据面</strong>（客户端 → 块服务器 → 对象存储，走的是字节，量大、可异步、可重试）与<strong>元数据面</strong>（客户端 → API 服务器 → 元数据缓存 / 元数据库，走的是账，量小但要求强一致）。再补三个部件就是本章的完整骨架：<em>通知服务</em>（文件变了通知其它设备）、<em>离线备份队列</em>（设备不在线时把变更排着队，上线再消费）、<em>冷存储</em>（久无人问津的块挪去便宜档位）。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 268" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="m1" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker>
+<marker id="m2" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text fill="#5b9df9" font-size="12" font-weight="700" x="132" y="20">元数据面（账）· 量小 · 必须强一致</text>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" width="104" x="132" y="30"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="184" y="52">API 服务器</text>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="104" x="288" y="30"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="340" y="52">元数据缓存</text>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="104" x="444" y="30"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="496" y="52">元数据库</text>
+<line marker-end="url(#m1)" stroke="#5b9df9" x1="236" x2="284" y1="47" y2="47"></line>
+<line marker-end="url(#m1)" stroke="#5b9df9" x1="392" x2="440" y1="47" y2="47"></line>
+<rect fill="rgba(255,255,255,0.03)" height="42" rx="6" stroke="#8fbaff" stroke-width="1.6" width="94" x="16" y="112"></rect><text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="63" y="130">同步客户端</text><text fill="#7c8593" font-size="9.5" text-anchor="middle" x="63" y="145">（多台设备）</text>
+<line marker-end="url(#m1)" stroke="#5b9df9" x1="110" x2="150" y1="116" y2="68"></line>
+<line marker-end="url(#m2)" stroke="#9b6cf5" x1="110" x2="150" y1="150" y2="196"></line>
+<rect fill="rgba(155,108,245,0.1)" height="32" rx="6" stroke="#9b6cf5" stroke-dasharray="4 3" width="112" x="150" y="116"></rect><text fill="#cdb8f5" font-size="10.5" text-anchor="middle" x="206" y="136">通知服务</text>
+<line marker-end="url(#m1)" stroke="#5b9df9" x1="184" x2="184" y1="64" y2="112"></line>
+<line marker-end="url(#m1)" stroke="#5b9df9" x1="148" x2="114" y1="132" y2="132"></line>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="130" y="106">长轮询</text>
+<text fill="#9b6cf5" font-size="12" font-weight="700" x="132" y="178">数据面（货）· 量大 · 可异步重试</text>
+<rect fill="rgba(155,108,245,0.16)" height="42" rx="6" stroke="#9b6cf5" width="104" x="132" y="188"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="184" y="206">块服务器</text><text fill="#cdb8f5" font-size="9.5" text-anchor="middle" x="184" y="221">切块·压缩·加密</text>
+<rect fill="rgba(155,108,245,0.08)" height="42" rx="6" stroke="#7c8593" width="104" x="288" y="188"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="340" y="206">对象存储</text><text fill="#7c8593" font-size="9.5" text-anchor="middle" x="340" y="221">S3 · 跨区域复制</text>
+<rect fill="rgba(155,108,245,0.08)" height="42" rx="6" stroke="#7c8593" stroke-dasharray="4 3" width="104" x="444" y="188"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="496" y="206">冷存储</text><text fill="#7c8593" font-size="9.5" text-anchor="middle" x="496" y="221">久未访问的块</text>
+<line marker-end="url(#m2)" stroke="#9b6cf5" x1="236" x2="284" y1="209" y2="209"></line>
+<line marker-end="url(#m2)" stroke="#9b6cf5" stroke-dasharray="4 3" x1="392" x2="440" y1="209" y2="209"></line>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="320" y="252">两条路彼此异步：账先落到 pending，货落库后再回调改成 uploaded</text>
+</svg>
+<figcaption>图 1 · 本章的骨架：一刀劈成元数据面与数据面。上半条走「账」，量小却必须强一致；下半条走「货」，量大但可以慢慢来。</figcaption>
+</figure>
+<p>这个「劈两半」不是面试书的发明，而是大规模存储的通行结构：Google 的 Colossus 就是把元数据放进 BigTable、让数据在客户端与磁盘服务器之间直连（见 §6）。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/object-storage-day29.html" rel="noopener" target="_blank">System Design · Day 29 文件存储</a> — 对象存储为什么适合放这些不可变的块，以及分片上传、复制与纠删码怎么在成本和持久性之间取舍</aside>
+<h3>二、块级切分与增量同步：为什么偏偏是 4 MB</h3>
+<p>上传前，客户端（或块服务器）把文件切成上限 <code>4 MB</code> 的块，每块单独压缩（按文件类型挑算法）、加密，再送进对象存储。此后改动只重传受影响的那几块——这就是<strong>增量同步</strong>。</p>
+<p>给个量级感：一个 <code>300 MB</code> 的工程文件，你改掉其中一小段。全量重传要走 300 MB 上行；块级只需重传 1 个块，<strong>最多 4 MB，差了约两个数量级</strong>。在人均上行带宽只有几兆的年代，这是「能不能用」与「不能用」的区别。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 214" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m3" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#7c8593" font-size="11" x="20" y="20">一个文件被切成上限 4 MB 的块（写入后不可变）</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="5" stroke="#7c8593" width="88" x="20" y="30"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="64" y="50">块 1</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="5" stroke="#7c8593" width="88" x="120" y="30"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="164" y="50">块 2</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="5" stroke="#7c8593" width="88" x="220" y="30"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="264" y="50">块 3</text>
+<rect fill="rgba(155,108,245,0.28)" height="30" rx="5" stroke="#9b6cf5" stroke-width="2" width="88" x="320" y="30"></rect><text fill="#ffffff" font-size="11" text-anchor="middle" x="364" y="50">块 4 ✎</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="5" stroke="#7c8593" width="88" x="420" y="30"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="464" y="50">块 5</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="5" stroke="#7c8593" width="88" x="520" y="30"></rect><text fill="#b9c0ca" font-size="11" text-anchor="middle" x="564" y="50">块 6</text>
+<text fill="#cdb8f5" font-size="11" text-anchor="middle" x="364" y="80">你只改动了落在块 4 里的那一小段</text>
+<line marker-end="url(#m3)" stroke="#7c8593" x1="160" x2="160" y1="92" y2="116"></line>
+<line marker-end="url(#m3)" stroke="#7c8593" x1="440" x2="440" y1="92" y2="116"></line>
+<rect fill="rgba(224,107,107,0.10)" height="66" rx="8" stroke="#e06b6b" width="272" x="24" y="120"></rect>
+<text fill="#e7ebf1" font-size="12" font-weight="700" text-anchor="middle" x="160" y="142">全量同步：6 块全传</text>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="160" y="162">300 MB 的文件 → 上行 300 MB</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="160" y="178">改一个字也一样</text>
+<rect fill="rgba(91,157,249,0.10)" height="66" rx="8" stroke="#5b9df9" width="272" x="344" y="120"></rect>
+<text fill="#e7ebf1" font-size="12" font-weight="700" text-anchor="middle" x="480" y="142">增量同步：只传块 4</text>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="480" y="162">300 MB 的文件 → 上行 ≤ 4 MB</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="480" y="178">代价：元数据里多出一行块记录</text>
+</svg>
+<figcaption>图 2 · 增量同步：文件切块之后，一次编辑只重传受影响的块。省下的是带宽，赔进去的是元数据的体量与复杂度。</figcaption>
+</figure>
+<p>那为什么不切得更小？因为<strong>每个块在元数据库里都是一行</strong>，还带一个哈希。若切成 <code>4 KB</code>，500 PB 就意味着<strong>上百万亿行</strong>块记录——省下的带宽全赔在元数据的存储、索引与查询上。切得太大又退回全量重传。<code>4 MB</code> 是这两条曲线的交点，不是什么魔法数字：它是「账记得过来」与「重传不心疼」之间的那个折中。</p>
+<p>还有一条容易被略过、却支撑起整章的性质：<strong>块一旦写入就不再修改</strong>。改文件等于<em>写新块 + 在元数据里换指针</em>。不可变让去重、缓存、跨区域复制都变得简单（内容永不变，缓存就永不失效），代价是旧块会堆积，要靠版本策略和垃圾回收慢慢收。</p>
+<h3>三、元数据模型与上传流程：为什么是两个请求</h3>
+<p>元数据这一侧的表大致是：<code>user</code>（用户）、<code>device</code>（设备，用来推通知）、<code>namespace</code>（用户的根目录）、<code>file</code>（文件）、<code>file_version</code>（版本）、<code>block</code>（块，记录它属于哪个版本的第几块）。<strong>一个文件的内容 = 按顺序拼起来的一串块 id</strong>，这是整本账的核心一行。</p>
+<p>上传不是一个请求，而是<strong>两条并行的路</strong>：先 <code>POST</code> 一条文件元数据、状态标成 <em>pending（待确认）</em>，同时把变更块推给块服务器；块全部落进对象存储后回调 API 服务器，元数据状态才改成 <em>uploaded（已完成）</em>，再交给通知服务广播出去。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 244" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m4" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#8fbaff"></path></marker></defs>
+<text fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle" x="70" y="18">设备 A</text>
+<text fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle" x="270" y="18">API + 元数据库</text>
+<text fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle" x="440" y="18">块服务器</text>
+<text fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle" x="580" y="18">对象存储</text>
+<line stroke="rgba(120,130,145,0.4)" stroke-dasharray="4 4" x1="70" x2="70" y1="26" y2="230"></line>
+<line stroke="rgba(120,130,145,0.4)" stroke-dasharray="4 4" x1="270" x2="270" y1="26" y2="230"></line>
+<line stroke="rgba(120,130,145,0.4)" stroke-dasharray="4 4" x1="440" x2="440" y1="26" y2="230"></line>
+<line stroke="rgba(120,130,145,0.4)" stroke-dasharray="4 4" x1="580" x2="580" y1="26" y2="230"></line>
+<text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="170" y="46">① 写文件元数据 · status=pending</text>
+<line marker-end="url(#m4)" stroke="#8fbaff" x1="70" x2="266" y1="54" y2="54"></line>
+<text fill="#cdb8f5" font-size="10.5" text-anchor="middle" x="255" y="80">② 并行推送变更块（压缩 · 加密）</text>
+<line marker-end="url(#m4)" stroke="#9b6cf5" x1="70" x2="436" y1="88" y2="88"></line>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="510" y="110">③ 逐块落盘</text>
+<line marker-end="url(#m4)" stroke="#9b6cf5" x1="440" x2="576" y1="118" y2="118"></line>
+<text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="355" y="142">④ 全部落盘后回调</text>
+<line marker-end="url(#m4)" stroke="#8fbaff" x1="440" x2="274" y1="150" y2="150"></line>
+<text fill="#8fbaff" font-size="10.5" x="278" y="176">⑤ status=uploaded（此刻文件才算存在）</text>
+<path d="M270,160 q34,10 0,20" fill="none" marker-end="url(#m4)" stroke="#8fbaff"></path>
+<text fill="#cdb8f5" font-size="10.5" text-anchor="middle" x="170" y="206">⑥ 通知服务广播 → 设备 B/C 拉取新版本</text>
+<line marker-end="url(#m4)" stroke="#9b6cf5" x1="266" x2="74" y1="216" y2="216"></line>
+</svg>
+<figcaption>图 3 · 上传时序：元数据先落成 pending，块走另一条路进对象存储，回调之后才翻成 uploaded。pending 就是这条异步流水线的事务边界。</figcaption>
+</figure>
+<p>为什么非要 pending？因为两条路是异步的：<strong>没有它，系统就分不清「正在上传」和「上传失败」</strong>，别的设备还可能读到一条指向尚不存在的块的记录、下载时直接 404。pending 是把两条异步的路重新缝在一起的那一针。</p>
+<p>元数据这一侧还必须<strong>强一致</strong>：同一个文件在五台设备上显示的必须是同一版。所以缓存要在写入时同步失效、元数据库选带 ACID 的关系型。书里点破了一个很容易踩的坑：<strong>主从复制的异步滞后本身就会破坏强一致</strong>——从库返回旧版本，用户就会看见「文件回退了」，而在同步语义里，回退和丢数据是一回事。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/consistency-day6.html" rel="noopener" target="_blank">System Design · Day 6 一致性</a> — 从强一致到最终一致的整条光谱，以及复制滞后为什么会让「读到旧值」变成业务事故</aside>
+<h3>四、通知服务：为什么是长轮询而不是 WebSocket</h3>
+<p>需求很简单：设备 A 改了文件，其它在线设备要尽快知道。书的选择是<strong>长轮询</strong>，理由两条，都很朴素：一是这里的通信<strong>不是双向的</strong>——服务端要告诉客户端「变了」，客户端并不需要通过这条通道频繁回话；二是<strong>通知本身很稀疏</strong>——按前面的量级，一个用户一天也就两三次文件变更，不是聊天那种每秒好几条。WebSocket 的双向实时能力在这里用不上，却要付出连接管理与协议升级的复杂度。</p>
+<p>把它和 Ch12 聊天系统对照着看，是全书最值得记住的一次对比：<strong>同样是「服务端主动推」，负载性质不同，答案就完全不同</strong>——聊天必须 WebSocket，因为消息双向且高频；网盘用长轮询就够。面试里能主动做出这个对照，比背下任何一个结论都值钱。</p>
+<p>代价也要诚实说：长轮询同样要维持海量挂起连接，一个通知节点挂掉，挂在上面的客户端会<strong>同时重连</strong>，形成一次自制的惊群；离线设备错过的变更，则靠离线备份队列在它上线时补齐。</p>
+<h3>五、省空间的三招</h3>
+<p>500 PB 的账单会逼出三个动作：<strong>① 块级去重</strong>——对块内容取哈希，内容相同只存一份，一个热门安装包被一万人上传也只占一份；<strong>② 限制版本数</strong>——只留最近 N 个版本，别让「无限历史」变成无限账单；<strong>③ 冷热分层</strong>——几个月无人访问的块挪去 Glacier 这类冷档，单价低一个数量级，代价是取回慢、还按取回量另收费。三招都不动功能，只动成本曲线。</p>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 1 · 同步粒度：全量 vs 块级增量</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>全量同步</th><th>块级增量同步</th></tr></thead>
+<tbody>
+<tr><th>改一小段的上行量</th><td>整个文件（<code>300 MB</code>）</td><td><strong>一个块（≤ <code>4 MB</code>）</strong></td></tr>
+<tr><th>元数据体量</th><td>每个文件一行</td><td><strong>每个块一行——可达百亿量级</strong></td></tr>
+<tr><th>客户端复杂度</th><td>几乎没有</td><td>要切块、算哈希、比对差异、断点续传</td></tr>
+<tr><th>去重能力</th><td>只能整文件去重</td><td>跨文件、跨用户按块去重</td></tr>
+<tr><th>适用</th><td>小文件、原型阶段</td><td><strong>大文件反复编辑——网盘的主场景</strong></td></tr>
+</tbody></table></div>
+<p class="tcap">表 2 · 变更通知通道怎么选</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>长轮询（本章选择）</th><th>WebSocket</th><th>客户端定时轮询</th></tr></thead>
+<tbody>
+<tr><th>适合的负载</th><td><strong>稀疏、单向的服务端通知</strong></td><td>高频、双向（聊天、协同光标）</td><td>可容忍分钟级延迟</td></tr>
+<tr><th>延迟</th><td>秒级</td><td>亚秒级</td><td>取决于轮询间隔</td></tr>
+<tr><th>代价</th><td>海量挂起连接；节点故障引发重连风暴</td><td>连接管理与协议复杂度更高</td><td>空转请求浪费，间隔越短越浪费</td></tr>
+<tr><th>本章判据</th><td><strong>通信不双向 + 通知不频繁 → 选它</strong></td><td>Ch12 聊天系统才该选</td><td>规模一大就不划算</td></tr>
+</tbody></table></div>
+<p class="tcap">表 3 · 多端离线编辑撞车了怎么办</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>策略</th><th>做法</th><th>诚实代价</th></tr></thead>
+<tbody>
+<tr><th>先到先得 + 冲突副本<br/>（本章选择）</th><td>先被处理的版本成为当前版本；后到的不覆盖，另存一份冲突副本交给用户合并</td><td><strong>把决策推给了人</strong>；文件夹里会多出「冲突副本」这种噪声</td></tr>
+<tr><th>后写覆盖</th><td>直接以最后一次写入为准</td><td><strong>静默丢数据</strong>——网盘绝不能接受</td></tr>
+<tr><th>自动合并（OT / CRDT）</th><td>按文档结构合并两边的编辑</td><td>只对<strong>有结构的文档</strong>成立；通用文件是不透明字节，系统不知道语义</td></tr>
+</tbody></table></div>
+<p>第三行正是本章为何不自动合并的原因：网盘面对的是任意二进制文件，系统<strong>无从判断两处改动能否共存</strong>。能自动收敛的，只有把编辑建模成有语义操作的那条技术路线。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/collaborative-editing-day45.html" rel="noopener" target="_blank">System Design · Day 45 协作编辑系统</a> — OT 与 CRDT 怎么让并发编辑自动收敛，以及这套办法为什么只在结构化文档上成立</aside>
+<p>还有一处书在收尾时留下的开放权衡：<strong>切块该放客户端还是服务端</strong>。放客户端（直传对象存储）省掉一跳、更快也更省服务端带宽，代价是切块 / 压缩 / 加密要在每个平台各实现一遍，且客户端可被逆向、加密逻辑会暴露；放服务端则统一可控，但所有字节都得先过你的机器。</p>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>这一题的价值在于，它是全书唯一一道<strong>必须回答「客户端该做多少事」</strong>的题——当纯服务端题来答就答偏了。而它建立的那套心智——<em>数据面 / 元数据面分离、内容切成不可变块、状态机式的上传流程、按负载性质挑通知通道</em>——是所有同步类产品的通用骨架：备份工具、代码托管、照片流、离线优先的移动应用，结构都长得很像。</p>
+<div class="ev">
+<div class="evh">大厂实证 · 这些主张不是书里说的，是公司自己公开说的</div>
+<ul>
+<li><strong>Google</strong> 的 Colossus 正是「元数据面 / 数据面分离」的实物：文件元数据放进 BigTable，数据则在客户端与磁盘服务器之间直连——「把文件元数据存进 BigTable，让 Colossus 相比最大的 GFS 集群<strong>扩展了 100 倍以上</strong>」。<span class="src"><a href="https://cloud.google.com/blog/products/storage-data-transfer/a-peek-behind-colossus-googles-file-system" rel="noopener" target="_blank">Google Cloud Blog「Colossus under the hood」, 2021-04 ↗</a></span></li>
+<li><strong>Google Cloud Storage</strong> 把<strong>全部对象元数据迁到了 Spanner</strong>，只为拿到包括「列目录」在内的强一致：迁移前用 Megastore，list 操作只有最终一致——<strong>印证了本章「元数据面必须强一致」不是理论洁癖，而是真会掏钱解决的问题</strong>。<span class="src"><a href="https://cloud.google.com/blog/products/gcp/how-google-cloud-storage-offers-strongly-consistent-object-listing-thanks-to-spanner" rel="noopener" target="_blank">Google Cloud Blog「strongly consistent object listing thanks to Spanner」, 2018-02 ↗</a></span></li>
+<li><strong>Google Cloud Storage</strong> 对持久性的公开口径是设计目标 <code>11</code> 个 9：「我们总是在<strong>写入被确认成功之前</strong>把数据冗余地存到多个可用区」，并定期校验校验和、发现不匹配就用冗余自动修复——<strong>这正是本章敢把文件本体外包给对象存储的底气</strong>。<span class="src"><a href="https://cloud.google.com/blog/products/storage-data-transfer/understanding-cloud-storage-11-9s-durability-target" rel="noopener" target="_blank">Google Cloud Blog「11 nines of durability」, 2021-01 ↗</a></span></li>
+<li><strong>Dropbox</strong> 公开介绍过其自建存储系统按<strong>最大 4 MB 的块</strong>存放数据、块写入后不可变——本章那个 <code>4 MB</code> 就出自这一系谱。<span class="src">Dropbox 工程博客《Inside the Magic Pocket》, 2016（本次未能验证链接可达，故只留文字出处）</span></li>
+</ul>
+</div>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>把它当「存储题」答</strong>：只讲 S3、分片上传、CDN，不讲元数据模型与同步语义——这是本章最常见的翻车方式。存储是外包出去的那一半，同步才是要你设计的那一半。</li>
+<li><strong>以为块越小越省</strong>：忽略了元数据行数会跟着爆炸。带宽和元数据是一对此消彼长的成本，<code>4 MB</code> 是折中点而非最优解。</li>
+<li><strong>以为「强一致」自动就有</strong>：主从异步复制会破坏它；缓存不同步失效也会破坏它。强一致是要专门花代价买的。</li>
+<li><strong>把长轮询当通用答案</strong>：本章选它是因为「单向 + 稀疏」这个具体判据，换成高频双向就该换 WebSocket。记判据，别记结论。</li>
+<li><strong>去重的隐私副作用</strong>：跨用户块级去重会带来一个副信道——通过「上传是否秒传」可以探测某个文件是否已存在于系统中。这一点在安全研究里早有讨论，也促使一些厂商改成按用户去重。书里没展开，但面试里提一句是加分项。</li>
+<li><strong>时代局限</strong>：本书 2020 年成书，没覆盖端到端加密与去重的天然冲突（内容加密后哈希各不相同，跨用户去重直接失效），也没覆盖今天已成主流的「按需下载 / 占位文件」形态——本地只放一个占位符，双击才真正拉取。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 一句话：网盘不是存储系统而是<strong>同步系统</strong>；存储可以外包给对象存储，元数据与同步语义外包不掉。</p>
+<p>② 规模的题眼：<code>500 PB</code> 存储 vs 峰值仅 <code>480</code> QPS——难的从来不是并发，是数据量与多端一致。</p>
+<p>③ 骨架是一刀两断：<strong>数据面</strong>（块服务器 → 对象存储，量大可异步）与<strong>元数据面</strong>（API → 缓存 / 库，量小须强一致）。</p>
+<p>④ 文件切成上限 <code>4 MB</code> 的<strong>不可变块</strong>，改动只重传受影响的块；块大小是「带宽 vs 元数据行数」的折中。</p>
+<p>⑤ 上传是两条并行的路 + 一个 <em>pending → uploaded</em> 状态机；pending 是异步流水线的事务边界。</p>
+<p>⑥ 通知选<strong>长轮询</strong>，判据是「通信不双向 + 通知不频繁」；聊天系统换成 WebSocket，因为负载性质变了。</p>
+<p>⑦ 冲突处理是<strong>先到先得 + 冲突副本</strong>：宁可把决策还给用户，也绝不静默覆盖；自动合并只在结构化文档上成立。</p>
+<p>⑧ 省空间三招：<strong>块级去重、限制版本数、冷热分层</strong>；三招都只动成本曲线，不动功能。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
