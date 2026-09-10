@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview 卷二 第 1 章 · 设计附近服务 — 专业书籍精读 Book 68</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · System Design Interview 卷二 · 第 1 章</p>
+<h1>设计附近服务</h1>
+<p class="sub">System Design Interview Vol 2 · Ch 1 · Alex Xu &amp; Sahn Lam · 2022</p>
+<p class="langbar"><a href="sdi2-ch01-proximity-service-book68.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你在点评类 App 上按下「附近的餐厅」，一秒之内它从两亿家店里挑出你周围那几十家。这一章问：<strong>这件事到底怎么做到？</strong>答案有点反直觉——难点不在「搜」，在<strong>怎么提前给地球编好门牌号</strong>。</p>
+<h2>先说个怪事</h2>
+<p>系统其实从来不「量距离」。它不会拿你的坐标去跟两亿家店挨个算一遍谁远谁近。它早就把地球切成了一格一格、每格给了个编号，你按下按钮时它只问两句：<strong>你在哪一格？那一格里有谁？</strong></p>
+<h2>旧世界为什么难</h2>
+<p>位置是<strong>两个</strong>数——南北一个、东西一个。数据库很擅长按一个数排队找，就像字典按拼音排好了序；却很不擅长同时按两个数找。这就像在图书馆里找「书名在 A 到 C 之间、并且厚度在 3 到 5 厘米之间」的书：两条线索各自都能筛出一大堆，可要把两堆比对到一起，就得一本本过。两亿家店这么一过，慢得没法用。</p>
+<h2>核心机制：三个直觉</h2>
+<p><strong>① 把地球对折，折出门牌号。</strong>把世界对半分、再对半分、再对半分……每分一次就往编号后面添一个字。字越多，格子越小。妙处在于：<strong>编号开头一样，位置就一定挨得近</strong>——两个数就这样被压成了一串字，数据库又回到了它最擅长的「按一个键排队」。</p>
+<p><strong>② 半径不是用来算距离的，是用来挑格子大小的。</strong>你要找 500 米内的，就用小格子；找 20 公里内的，就换大格子。先用格子把候选从两亿家缩到几百家，真正的距离留到最后再算。</p>
+<p><strong>③ 顺手把邻居一起拿。</strong>你很可能正站在格子边上，最好吃的那家就在隔壁格里。所以系统从不只查你这一格，而是<strong>连着周围八格一起取</strong>，九格的店凑成一堆，再排序。</p>
+<h2>该怎么选</h2>
+<p>切格子有两派。一派是「全世界都切成一样大」——简单，商户开了关了改一行就行；另一派是「哪儿店多就在哪儿多切几刀」——市中心切得细、沙漠留一大格，每次取回来的数量更均匀，代价是店一变就得重算一大片。</p>
+<p>代价还得再诚实一句：<strong>格子是方的，你要的范围是圆的</strong>——九宫格必然多捞进一些其实在半径之外的店，最后还是得挨个算一次距离筛掉。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>「找附近」不是搜索题，是<strong>编门牌号</strong>题：把经纬度这一对二维坐标，提前压成一串一维的编号，让数据库用它最拿手的老办法（按顺序找、按开头找）去干活。剩下的功夫，都花在处理边界和「方格装圆」这两件小事上。</p>
+</div>
+<p class="switch-hint">想进到具体机制、记号和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">你以为「附近的餐厅」是一道<strong>搜索</strong>题，其实是一道<strong>降维</strong>题：这一章从头到尾只在做一件事——把经纬度这对二维坐标压成一个<strong>一维的键</strong>（geohash 字符串，或 S2 的 64 位整数），好让 B-tree 索引、键值存储、缓存这些「只会按一个键排队」的老工具重新变得可用。围绕这条主线，本章还甩出两个反直觉的结论：<strong>半径不是查询参数，是索引精度参数</strong>；<strong>数据只有几十 GB 而读 QPS 有 5000，所以该加副本、不该分片</strong>。</p>
+
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>经纬度（latitude / longitude）</strong>：定位一个点的两个数，纬度管南北（−90～90），经度管东西（−180～180）。</li>
+<li><strong>空间索引（spatial index）</strong>：为「按位置找东西」专门建的索引，作用是把候选从全量缩到一小撮。</li>
+<li><strong>geohash</strong>：把地球反复对半切，把「每次切在哪边」记成一串字符；字符串越长，代表的格子越小。</li>
+<li><strong>前缀匹配</strong>：按字符串开头查找，如「所有以 <code>wx4g</code> 开头的」。B-tree 索引天生擅长这个。</li>
+<li><strong>四叉树（quadtree）</strong>：把一块方形区域递归切成四块的树；哪儿数据密就在哪儿多切几层。</li>
+<li><strong>S2 / 希尔伯特曲线（Hilbert curve）</strong>：Google 的球面网格库，用一条走遍所有格子的折返曲线把二维格子串成一维编号。</li>
+<li><strong>读副本（read replica）</strong>：主库的只读拷贝，专门分担读流量，数据会有短暂滞后。</li>
+<li><strong>分片（sharding）</strong>：数据大到一台机器装不下时，按某个键切开放到多台机器上。</li>
+<li><strong>LBS（location-based service）</strong>：本章里专管「按位置查商户」的服务，无状态、可随意加减机器。</li>
+<li><strong>k 近邻（k-nearest neighbors）</strong>：返回离我最近的 k 个对象，不限定半径。</li>
+<li><strong>QPS</strong>：每秒请求数。</li>
+</ul>
+</div>
+
+<h2>坐标</h2>
+<p>本章是卷二的开篇，也是全书「地理三连」的第一环：<strong>Ch1 附近服务</strong>（不会动的店）→ <strong>Ch2 附近的好友</strong>（每几秒换一次位置的活人）→ <strong>Ch3 Google Maps</strong>（路网与导航）。三章共用同一套空间索引，变的只是数据的更新频率——所以这一章是地基，后两章都建在它上面。现实里它对应 Yelp / 大众点评 / Google Maps 的「附近」标签页，以及任何「按位置找东西」的需求。</p>
+
+<h2>这章要解决什么</h2>
+<p>先把规模摆出来（书里的口径）：<strong>1 亿日活、2 亿家商户</strong>，假设每人每天搜 5 次，搜索 QPS = 1 亿 × 5 ÷ 86400 ≈ <strong>5000</strong>。功能上只要三件事：按（经度、纬度、半径）返回附近商户；商户主能增删改自己的店，且<strong>不要求实时生效</strong>（第二天可见就行）；用户能看商户详情。</p>
+<p>题眼藏在「不解决会怎样」里。最朴素的写法是一行 SQL：<code>WHERE lat BETWEEN … AND lng BETWEEN …</code>。它在 2 亿行上跑不动，原因<strong>不是没建索引，而是两个索引用不到一块儿去</strong>：数据库通常只能挑一个索引走，比如先按纬度筛出一条横跨整个地球的窄带，再逐行回表核对经度。中间结果动辄百万行，而这题的延迟要求是几百毫秒。<strong>所以必须在查询之前，就把二维的邻近关系预先编码进某个一维的键里</strong>。</p>
+
+<h2>核心内容，讲透</h2>
+
+<h3>一、先把二维压成一维：所有方案的共同形状</h3>
+<p>最容易想到的补救是<strong>均匀网格</strong>：把地图切成边长固定的方格，每家店记下自己在哪一格。它确实做到了降维，但格子里的数量<strong>极不均匀</strong>——曼哈顿一格能塞几万家，太平洋上一格空着。</p>
+<p>真正好用的方案都有同一个形状：<strong>把平面递归地对半切，再把「每一刀切在哪边」按顺序写成一串码</strong>。二维的邻近关系于是被编码进了一维键的<strong>前缀</strong>里——共同前缀越长，说明两点被同一批刀切在了同一侧，也就越近。</p>
+<figure>
+<svg viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<text x="20" y="18" fill="#7c8593" font-size="11">每切一刀，编码就长一位；前缀相同 ⇒ 位置相近</text>
+<rect x="40" y="34" width="120" height="120" fill="rgba(91,157,249,0.05)" stroke="#7c8593"></rect>
+<line x1="100" y1="34" x2="100" y2="154" stroke="#7c8593"></line>
+<line x1="40" y1="94" x2="160" y2="94" stroke="#7c8593"></line>
+<rect x="100" y="34" width="60" height="60" fill="rgba(155,108,245,0.28)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="100" y="176" fill="#e7ebf1" font-size="11.5" text-anchor="middle">切 1 刀 · 码 1</text>
+<text x="100" y="192" fill="#7c8593" font-size="10" text-anchor="middle">四分之一个地球</text>
+<rect x="250" y="34" width="120" height="120" fill="rgba(91,157,249,0.05)" stroke="#7c8593"></rect>
+<line x1="280" y1="34" x2="280" y2="154" stroke="rgba(124,133,147,0.5)"></line>
+<line x1="310" y1="34" x2="310" y2="154" stroke="#7c8593"></line>
+<line x1="340" y1="34" x2="340" y2="154" stroke="rgba(124,133,147,0.5)"></line>
+<line x1="250" y1="64" x2="370" y2="64" stroke="rgba(124,133,147,0.5)"></line>
+<line x1="250" y1="94" x2="370" y2="94" stroke="#7c8593"></line>
+<line x1="250" y1="124" x2="370" y2="124" stroke="rgba(124,133,147,0.5)"></line>
+<rect x="340" y="34" width="30" height="30" fill="rgba(155,108,245,0.28)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="310" y="176" fill="#e7ebf1" font-size="11.5" text-anchor="middle">切 2 刀 · 码 11</text>
+<text x="310" y="192" fill="#7c8593" font-size="10" text-anchor="middle">范围缩到十六分之一</text>
+<rect x="460" y="34" width="120" height="120" fill="rgba(91,157,249,0.05)" stroke="#7c8593"></rect>
+<line x1="490" y1="34" x2="490" y2="154" stroke="rgba(124,133,147,0.35)"></line>
+<line x1="520" y1="34" x2="520" y2="154" stroke="rgba(124,133,147,0.5)"></line>
+<line x1="550" y1="34" x2="550" y2="154" stroke="rgba(124,133,147,0.35)"></line>
+<line x1="565" y1="34" x2="565" y2="64" stroke="#7c8593"></line>
+<line x1="460" y1="64" x2="580" y2="64" stroke="rgba(124,133,147,0.5)"></line>
+<line x1="460" y1="94" x2="580" y2="94" stroke="rgba(124,133,147,0.35)"></line>
+<line x1="460" y1="124" x2="580" y2="124" stroke="rgba(124,133,147,0.35)"></line>
+<line x1="550" y1="49" x2="580" y2="49" stroke="#7c8593"></line>
+<rect x="565" y="34" width="15" height="15" fill="rgba(155,108,245,0.28)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="520" y="176" fill="#e7ebf1" font-size="11.5" text-anchor="middle">切 3 刀 · 码 111</text>
+<text x="520" y="192" fill="#7c8593" font-size="10" text-anchor="middle">继续切下去…</text>
+<line x1="168" y1="94" x2="242" y2="94" stroke="#5b9df9" stroke-width="1.5"></line>
+<line x1="378" y1="94" x2="452" y2="94" stroke="#5b9df9" stroke-width="1.5"></line>
+<text x="320" y="222" fill="#8fbaff" font-size="11" text-anchor="middle">每 5 位二进制 → base32 的 1 个字符，这就是 geohash</text>
+<text x="320" y="240" fill="#7c8593" font-size="10.5" text-anchor="middle">码长 4 ≈ 39 km · 码长 5 ≈ 4.9 km · 码长 6 ≈ 1.2 km</text>
+</svg>
+<figcaption>图 1 · 降维的机制：递归对半切，把「切在哪边」写成一串码。二维的邻近关系被塞进了一维键的前缀里。</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/geo-system-day19.html" target="_blank" rel="noopener">System Design · Day 19 地理系统</a> — 把球面切成格子的几种切法、半径查询怎么落到索引上，以及地理数据分片的坑</aside>
+
+<h3>二、Geohash：半径其实是精度旋钮</h3>
+<p>Geohash 是上面那把刀的标准实现：经度区间与纬度区间交替对半分，每分一次记一位，再把二进制串按 5 位一组编成 base32 字符——<strong>编码每长一个字符，格子面积缩到约 1/32</strong>。量级：码长 4 约 <code>39 km × 20 km</code>，码长 5 约 <code>4.9 km × 4.9 km</code>，码长 6 约 <code>1.2 km × 0.6 km</code>。</p>
+<p>于是「半径 → 精度」就变成一张查表。书里给的对应是：<code>0.5 km → 6</code>、<code>1 km → 5</code>、<code>2 km → 5</code>、<code>5 km → 4</code>、<code>20 km → 4</code>。<strong>这正是那句「半径不是查询参数，是索引精度参数」的含义</strong>：你不拿半径去算距离，你拿它挑格子大小，先把候选集从 2 亿缩到几百，距离留到最后一步再精确算。</p>
+<p>书里点名了两个必踩的坑，都必须当场解决：</p>
+<p><strong>① 边界问题。</strong>两个点可能只隔几米，却被一刀切在两个格子里，前缀完全不同——极端情况是跨赤道或本初子午线，<em>第一个字符就不一样</em>。所以「前缀相同 ⇒ 位置相近」成立，但反过来<strong>「前缀不同 ⇒ 位置远」是错的</strong>。解法很朴素：查询时把<strong>自己这一格 + 周围 8 格</strong>一起取，共 9 格。</p>
+<p><strong>② 凑不够数。</strong>半径内的商户太少（郊区、或者叠加了「营业中」这类过滤之后）。解法同样朴素：<strong>去掉编码的最后一个字符</strong>，格子放大约 32 倍再查一次，不够就再去一个字符。</p>
+<figure>
+<svg viewBox="0 0 640 252" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<text x="20" y="18" fill="#8fbaff" font-size="11.5" font-weight="700">解法：取 9 格</text>
+<text x="352" y="18" fill="#8fbaff" font-size="11.5" font-weight="700">病因：边界</text>
+<rect x="40" y="34" width="180" height="180" fill="rgba(91,157,249,0.04)" stroke="#7c8593"></rect>
+<line x1="100" y1="34" x2="100" y2="214" stroke="#7c8593"></line>
+<line x1="160" y1="34" x2="160" y2="214" stroke="#7c8593"></line>
+<line x1="40" y1="94" x2="220" y2="94" stroke="#7c8593"></line>
+<line x1="40" y1="154" x2="220" y2="154" stroke="#7c8593"></line>
+<rect x="100" y="94" width="60" height="60" fill="rgba(91,157,249,0.22)" stroke="#5b9df9" stroke-width="2"></rect>
+<circle cx="130" cy="124" r="72" fill="none" stroke="#9b6cf5" stroke-width="1.6" stroke-dasharray="5 4"></circle>
+<circle cx="130" cy="124" r="4" fill="#8fbaff"></circle>
+<text x="130" y="112" fill="#e7ebf1" font-size="10.5" text-anchor="middle">我在这格</text>
+<text x="130" y="234" fill="#cdb8f5" font-size="10.5" text-anchor="middle">圆是要的范围，方是能查的单位</text>
+<text x="130" y="250" fill="#7c8593" font-size="10" text-anchor="middle">9 格一起取 → 最后再按距离筛</text>
+<rect x="352" y="40" width="112" height="110" fill="rgba(91,157,249,0.05)" stroke="#7c8593"></rect>
+<rect x="464" y="40" width="112" height="110" fill="rgba(91,157,249,0.05)" stroke="#7c8593"></rect>
+<line x1="464" y1="34" x2="464" y2="158" stroke="#e06b6b" stroke-width="2"></line>
+<circle cx="452" cy="96" r="4.5" fill="#8fbaff"></circle>
+<circle cx="476" cy="96" r="4.5" fill="#e06b6b"></circle>
+<text x="408" y="74" fill="#b9c0ca" font-size="10.5" text-anchor="middle">码 wx4g…</text>
+<text x="520" y="74" fill="#b9c0ca" font-size="10.5" text-anchor="middle">码 wx55…</text>
+<text x="464" y="176" fill="#e7ebf1" font-size="10.5" text-anchor="middle">实际只隔 20 米</text>
+<text x="464" y="196" fill="#e06b6b" font-size="10.5" text-anchor="middle">前缀却不同 → 只查自己那格就会漏掉它</text>
+<text x="464" y="222" fill="#7c8593" font-size="10" text-anchor="middle">最坏情况在赤道 / 本初子午线两侧：</text>
+<text x="464" y="238" fill="#7c8593" font-size="10" text-anchor="middle">第一个字符就对不上</text>
+</svg>
+<figcaption>图 2 · 左：查询取九宫格，因为圆形范围会溢出方格。右：边界问题——挨着的两点可能没有任何共同前缀。</figcaption>
+</figure>
+
+<h3>三、四叉树：让格子跟着密度走</h3>
+<p>Geohash 的格子是「按地球切」的，四叉树的格子是<strong>「按数据切」</strong>的：从整张地图起步，只要某个方块里的商户超过阈值（书里取 <code>100</code> 家），就把它切成四块，递归到每个叶子装不超过 100 家为止。曼哈顿会被切得很深，太平洋一个节点就够。<strong>好处是取回来的候选数量天然均匀</strong>，而且<strong>天然支持「返回最近的 k 家」</strong>——geohash 只回答「这格里有谁」，要 k 近邻还得自己一圈圈往外扩。</p>
+<p>关键区别是：它不是数据库里的表，而是<strong>每台 LBS 服务器启动时在内存里建的一棵树</strong>。书里的内存账：2 亿商户 ÷ 100 = <strong>200 万个叶子</strong>，内部节点约为叶子的 1/3、约 67 万个；每个叶子存 100 个 8 字节商户 id 即 800 字节，合计约 <strong>1.71 GB</strong>——一台机器装得下。</p>
+<p>代价全出在<strong>更新</strong>上：商户增删要动树形，实时更新得加锁、很难做对。书里的选择是<strong>每晚整棵重建 + 灰度上线</strong>，一次只把一小批服务器摘出轮转、重建、放回——因为建一棵 2 亿商户的树是<em>分钟级</em>的事，这期间那台机器不能服务。这也解释了需求里那句「商户更新不要求实时生效」：<strong>那条让步正是为了买下这个方案</strong>。</p>
+<figure>
+<svg viewBox="0 0 640 236" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<text x="30" y="18" fill="#7c8593" font-size="11.5">均匀网格：格子一样大，数量不均</text>
+<text x="370" y="18" fill="#8fbaff" font-size="11.5">四叉树：数据密的地方多切几刀</text>
+<rect x="30" y="30" width="180" height="150" fill="rgba(91,157,249,0.04)" stroke="#7c8593"></rect>
+<line x1="75" y1="30" x2="75" y2="180" stroke="rgba(124,133,147,0.6)"></line>
+<line x1="120" y1="30" x2="120" y2="180" stroke="rgba(124,133,147,0.6)"></line>
+<line x1="165" y1="30" x2="165" y2="180" stroke="rgba(124,133,147,0.6)"></line>
+<line x1="30" y1="67" x2="210" y2="67" stroke="rgba(124,133,147,0.6)"></line>
+<line x1="30" y1="105" x2="210" y2="105" stroke="rgba(124,133,147,0.6)"></line>
+<line x1="30" y1="142" x2="210" y2="142" stroke="rgba(124,133,147,0.6)"></line>
+<circle cx="40" cy="42" r="2.6" fill="#8fbaff"></circle><circle cx="52" cy="50" r="2.6" fill="#8fbaff"></circle><circle cx="64" cy="40" r="2.6" fill="#8fbaff"></circle><circle cx="46" cy="60" r="2.6" fill="#8fbaff"></circle><circle cx="60" cy="58" r="2.6" fill="#8fbaff"></circle><circle cx="68" cy="52" r="2.6" fill="#8fbaff"></circle><circle cx="38" cy="52" r="2.6" fill="#8fbaff"></circle><circle cx="56" cy="36" r="2.6" fill="#8fbaff"></circle>
+<circle cx="150" cy="160" r="2.6" fill="#8fbaff"></circle>
+<text x="120" y="200" fill="#e06b6b" font-size="10.5" text-anchor="middle">左上角一格塞满，其余格子空着</text>
+<text x="120" y="218" fill="#7c8593" font-size="10" text-anchor="middle">取一格 = 取到几万家，或者零家</text>
+<rect x="370" y="30" width="180" height="150" fill="rgba(91,157,249,0.04)" stroke="#7c8593"></rect>
+<line x1="460" y1="30" x2="460" y2="180" stroke="#7c8593"></line>
+<line x1="370" y1="105" x2="550" y2="105" stroke="#7c8593"></line>
+<line x1="415" y1="30" x2="415" y2="105" stroke="rgba(155,108,245,0.85)"></line>
+<line x1="370" y1="67" x2="460" y2="67" stroke="rgba(155,108,245,0.85)"></line>
+<line x1="392" y1="30" x2="392" y2="67" stroke="rgba(155,108,245,0.85)"></line>
+<line x1="370" y1="48" x2="415" y2="48" stroke="rgba(155,108,245,0.85)"></line>
+<circle cx="378" cy="38" r="2.6" fill="#cdb8f5"></circle><circle cx="386" cy="42" r="2.6" fill="#cdb8f5"></circle><circle cx="400" cy="38" r="2.6" fill="#cdb8f5"></circle><circle cx="408" cy="44" r="2.6" fill="#cdb8f5"></circle><circle cx="380" cy="58" r="2.6" fill="#cdb8f5"></circle><circle cx="396" cy="60" r="2.6" fill="#cdb8f5"></circle><circle cx="406" cy="56" r="2.6" fill="#cdb8f5"></circle><circle cx="390" cy="52" r="2.6" fill="#cdb8f5"></circle>
+<circle cx="500" cy="150" r="2.6" fill="#cdb8f5"></circle>
+<text x="460" y="200" fill="#8fbaff" font-size="10.5" text-anchor="middle">每个叶子 ≤ 100 家，取回来数量均匀</text>
+<text x="460" y="218" fill="#7c8593" font-size="10" text-anchor="middle">代价：商户一变，得重建树</text>
+</svg>
+<figcaption>图 3 · 同一份数据，两种切法。均匀网格好维护但数量失衡；四叉树按密度自适应，代价是更新困难，只能每晚重建。</figcaption>
+</figure>
+
+<h3>四、S2 与希尔伯特曲线：另一条一维化的路</h3>
+<p>S2 是 Google 的球面网格库，走的是第三条路：先把<strong>球面</strong>（而不是把地图当平面）投到一个外接立方体的六个面上，再用<strong>希尔伯特曲线</strong>——一条不断折返、走遍所有格子且相邻格子在曲线上也相邻的路径——把二维格子串成一条线，每个格子拿到一个 <code>64 位整数</code> cell id。降维的目的和 geohash 一样，只是刀法更讲究：它在球面上做，避免了把地球当平面的形变。</p>
+<p>它独有的能力是 <strong>region cover</strong>：任意形状的一片区域（一个行政区、一个配送范围）都能被<strong>一组大小不一的格子</strong>覆盖——大格子填中间，小格子贴边缘。这让「用户有没有进出某片不规则区域」这类地理围栏（geofencing）判断变得简单。代价是概念与实现都复杂得多，不是白板上现推得出来的东西。</p>
+
+<h3>五、存储、缓存与整体架构：这题反着来</h3>
+<p>表结构简单到出乎意料：一张 <code>business</code> 存商户详情，一张 <code>geospatial_index</code> 做空间索引，<strong>只有两列</strong>——<code>geohash</code> 和 <code>business_id</code>，一家店在一个 geohash 下就是一行。查询就是 <code>WHERE geohash IN (那九个格子)</code>。</p>
+<p>接着书给出一个<strong>跟卷一前几章都反着来</strong>的判断：<strong>这张表根本不用分片</strong>。两列、2 亿行，几十 GB 量级，一台像样的机器放得下；真正的压力是 5000 QPS 的<em>读</em>，不是容量。所以答案是<strong>加读副本</strong>——写走主库，读扇到 N 台副本，加机器就线性抬读吞吐。<strong>容量和流量是两个独立的旋钮，别拿分片去拧流量那个。</strong></p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/sharding-day4.html" target="_blank" rel="noopener">System Design · Day 4 数据库分片</a> — 什么时候才真的到了非分片不可的那一步，以及分片之后你要额外付出的那些代价</aside>
+<p>缓存这一层有个极容易写错的细节：<strong>缓存键必须是 geohash，绝不能是用户的经纬度</strong>。用户坐标精确到小数点后六位、走一步就变，拿它当键<strong>命中率恒为 0</strong>；而 geohash 是「一格」，同一格里的所有人共享同一份答案——这是把缓存从摆设变成主力的一行之差。缓存两类：<code>geohash → 商户 id 列表</code>，以及 <code>business_id → 商户详情</code>。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/caching-day2.html" target="_blank" rel="noopener">System Design · Day 2 缓存</a> — 缓存键怎么设计、多层缓存各挡掉什么，以及失效策略与热点键的处理</aside>
+<p>整套架构因此长成两条几乎不相干的路：<strong>读路</strong>（用户 → LBS → Redis → 索引表读副本）与<strong>写路</strong>（商户主 → 商户服务 → 主库 → 异步复制到副本）。LBS 无状态、只读，按峰值横向加机器即可；商户主的写 QPS 低到可以忽略。<strong>复制滞后带来的「改完没马上生效」，正好落在需求允许的范围内</strong>。</p>
+<figure>
+<svg viewBox="0 0 640 244" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs>
+<marker id="a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker>
+<marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text x="16" y="18" fill="#5b9df9" font-size="11.5" font-weight="700">读路 · 5000 QPS · 无状态可横向扩</text>
+<rect x="16" y="30" width="84" height="42" rx="6" fill="rgba(255,255,255,0.03)" stroke="#8fbaff" stroke-width="1.6"></rect>
+<text x="58" y="47" fill="#e7ebf1" font-size="11" text-anchor="middle">用户</text>
+<text x="58" y="62" fill="#7c8593" font-size="9.5" text-anchor="middle">经纬度 + 半径</text>
+<rect x="140" y="30" width="106" height="42" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="193" y="47" fill="#e7ebf1" font-size="11" text-anchor="middle">LBS 位置服务</text>
+<text x="193" y="62" fill="#8fbaff" font-size="9.5" text-anchor="middle">半径→精度，取 9 格</text>
+<rect x="286" y="30" width="106" height="42" rx="6" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
+<text x="339" y="47" fill="#b9c0ca" font-size="11" text-anchor="middle">Redis 缓存</text>
+<text x="339" y="62" fill="#7c8593" font-size="9.5" text-anchor="middle">键 = geohash</text>
+<rect x="432" y="30" width="192" height="42" rx="6" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect>
+<text x="528" y="47" fill="#b9c0ca" font-size="11" text-anchor="middle">geohash 索引表 · 读副本 ×N</text>
+<text x="528" y="62" fill="#7c8593" font-size="9.5" text-anchor="middle">两列 · 2 亿行 · 不分片</text>
+<line x1="100" y1="51" x2="136" y2="51" stroke="#5b9df9" marker-end="url(#a1)"></line>
+<line x1="246" y1="51" x2="282" y2="51" stroke="#5b9df9" marker-end="url(#a1)"></line>
+<line x1="392" y1="51" x2="428" y2="51" stroke="#5b9df9" marker-end="url(#a1)"></line>
+<text x="337" y="96" fill="#7c8593" font-size="10" text-anchor="middle">未命中才落到副本</text>
+<text x="16" y="132" fill="#9b6cf5" font-size="11.5" font-weight="700">写路 · QPS 极低 · 允许滞后</text>
+<rect x="16" y="144" width="84" height="42" rx="6" fill="rgba(255,255,255,0.03)" stroke="#cdb8f5" stroke-width="1.6"></rect>
+<text x="58" y="161" fill="#e7ebf1" font-size="11" text-anchor="middle">商户主</text>
+<text x="58" y="176" fill="#7c8593" font-size="9.5" text-anchor="middle">增 / 删 / 改</text>
+<rect x="140" y="144" width="106" height="42" rx="6" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"></rect>
+<text x="193" y="161" fill="#e7ebf1" font-size="11" text-anchor="middle">商户服务</text>
+<text x="193" y="176" fill="#cdb8f5" font-size="9.5" text-anchor="middle">同时供详情页读取</text>
+<rect x="286" y="144" width="106" height="42" rx="6" fill="rgba(155,108,245,0.10)" stroke="#7c8593"></rect>
+<text x="339" y="161" fill="#b9c0ca" font-size="11" text-anchor="middle">主库</text>
+<text x="339" y="176" fill="#7c8593" font-size="9.5" text-anchor="middle">唯一写入点</text>
+<line x1="100" y1="165" x2="136" y2="165" stroke="#9b6cf5" marker-end="url(#a2)"></line>
+<line x1="246" y1="165" x2="282" y2="165" stroke="#9b6cf5" marker-end="url(#a2)"></line>
+<path d="M392,158 L500,158 L500,78" fill="none" stroke="#9b6cf5" stroke-dasharray="4 3" marker-end="url(#a2)"></path>
+<text x="474" y="132" fill="#cdb8f5" font-size="10" text-anchor="end">异步复制</text>
+<text x="320" y="222" fill="#7c8593" font-size="10.5" text-anchor="middle">滞后几秒 = 商户改完没马上生效 → 需求里早就允许了</text>
+</svg>
+<figcaption>图 4 · 两条几乎不相干的路。读路吃掉全部流量、可无限加副本；写路 QPS 极低，且被允许滞后——这条让步买下了整条写路的简单。</figcaption>
+</figure>
+
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 1 · 四种做法的分野</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>做法</th><th>机制</th><th>强项</th><th>诚实代价</th></tr></thead>
+<tbody>
+<tr><th>二维范围查询</th><td>lat / lng 各建索引，SQL 里 <code>BETWEEN</code></td><td>零额外设施</td><td><strong>两个索引合不起来</strong>，中间结果百万行级，2 亿数据上不可用</td></tr>
+<tr><th>均匀网格</th><td>切成边长固定的方格，记格子号</td><td>实现最简单</td><td><strong>分布极不均</strong>，且格子号之间没有天然远近关系</td></tr>
+<tr><th>Geohash</th><td>递归对半切 + base32 编码，前缀即邻近</td><td><strong>简单、好更新、直接支持半径查询</strong></td><td>边界问题（要取 9 格）；格子固定大小，密区照样撑爆</td></tr>
+<tr><th>四叉树</th><td>按密度递归四分，叶子 ≤ 100 家</td><td><strong>数量均匀、天然支持 k 近邻</strong></td><td>常驻内存、要建树；<strong>更新极难，只能每晚重建 + 灰度上线</strong></td></tr>
+<tr><th>S2</th><td>球面 + 希尔伯特曲线 → 64 位整数</td><td><strong>任意区域覆盖、适合地理围栏</strong></td><td>概念与实现最复杂，面试里现推不出来</td></tr>
+</tbody></table></div>
+
+<p class="tcap">表 2 · 决赛圈：geohash vs 四叉树（本章的主对照）</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Geohash</th><th>四叉树</th></tr></thead>
+<tbody>
+<tr><th>住在哪里</th><td>数据库 / 键值存储里的一张表</td><td><strong>每台服务器的内存</strong>（本章约 <code>1.71 GB</code>）</td></tr>
+<tr><th>实现难度</th><td><strong>低，一个库 + 一列索引</strong></td><td>要自己建树、自己管生命周期</td></tr>
+<tr><th>增删一家店</th><td><strong>删一行 / 加一行</strong></td><td>动树形，实时更新要加锁；实践中每晚重建</td></tr>
+<tr><th>格子大小</th><td>精度定死后固定</td><td><strong>随密度自适应</strong></td></tr>
+<tr><th>k 近邻</th><td>不直接支持，要一圈圈扩</td><td><strong>天然支持</strong></td></tr>
+<tr><th>什么时候选它</th><td><strong>商户变动频繁、要半径查询——本章的主推</strong></td><td>密度极不均、且必须回答「最近的 k 家」</td></tr>
+</tbody></table></div>
+
+<p class="tcap">表 3 · 这一题为什么不分片</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>分片</th><th>加读副本（本章选择）</th></tr></thead>
+<tbody>
+<tr><th>解决的是</th><td>单机<strong>装不下</strong></td><td>单机<strong>读不过来</strong></td></tr>
+<tr><th>本题的事实</th><td>两列 × 2 亿行 ≈ 几十 GB，<strong>一台机器绰绰有余</strong></td><td>5000 QPS 读、写几乎为零</td></tr>
+<tr><th>代价</th><td>跨片查询、再平衡、热点片，全套复杂度白付</td><td><strong>复制滞后</strong>——但需求已明说可以</td></tr>
+</tbody></table></div>
+<p>把三张表拧成一句判据：<strong>商户会变、要半径查询 → geohash；密度悬殊、要 k 近邻 → 四叉树；要覆盖不规则区域 / 做地理围栏 → S2</strong>。而无论选哪个索引，最后一步都躲不掉：候选集取回来之后，<strong>必须按真实距离精确算一遍再排序</strong>——格子只负责把 2 亿缩到几百，不负责给答案。</p>
+
+<h2>为什么重要 / 落到真实系统</h2>
+<p>这一题的价值在于它示范了一个通法：<strong>当查询维度和索引结构对不上时，先想办法降维，而不是换数据库</strong>。同一手法反复出现——全文检索把文档降成词的倒排表，向量检索用 LSH 把高维向量降成哈希桶。geohash 只是它在地理上的一个实例。</p>
+<p>面试里，能主动说出<strong>「这里不该分片，该加副本」</strong>和<strong>「缓存键得用 geohash 不能用经纬度」</strong>这两句，比背下 geohash 的编码规则值钱得多——它们证明你在算负载，而不是在背方案。</p>
+<div class="ev">
+<div class="evh">大厂实证 · 这些主张不是书里说的，是公司自己公开说的</div>
+<ul>
+<li><strong>Google</strong> 在讲 BigQuery 空间聚簇时把降维说得最直白：「本质上，BigQuery 用 S2 索引把一个几何体<strong>映射成一个 64 位整数</strong>，然后就用已有的整数聚簇机制在那个整数上聚簇。」效果是「当你查询某个区域时，<strong>只有落在该区域内或靠近它的行会被扫描，而不是扫整个地球</strong>」——本章「二维压成一维、再用老索引」的工业级印证；同页还点明 S2「被 Google Maps 使用」。<span class="src"><a href="https://cloud.google.com/blog/products/data-analytics/best-practices-for-spatial-clustering-in-bigquery" target="_blank" rel="noopener">Google Cloud Blog「Spatial Clustering on BigQuery - Best Practices」, 2022-08 ↗</a></span></li>
+<li><strong>Uber</strong> 没沿用 geohash 的方格，而是开源了六边形网格 H3，自述为「一套使用<strong>六边形网格</strong>的地理空间索引系统，可以（近似地）细分成越来越细的六边形网格，<strong>把六边形网格的好处与 S2 的层级细分结合起来</strong>」——说明本章讲的「递归细分 + 一维编码」是通用骨架，方格只是其中一种刀法。<span class="src"><a href="https://github.com/uber/h3" target="_blank" rel="noopener">Uber 开源项目 H3, github.com/uber/h3 ↗</a></span></li>
+<li><strong>Amazon</strong> 曾公开发布过 DynamoDB 的地理库，自述「替你<strong>管理好那些 geohash 索引</strong>，以便快速高效地执行基于位置的查询」，并直接提供「盒查询」与「半径查询」两种接口——和本章的表结构几乎一一对应。诚实补一句：该仓库已于 <strong>2019 年归档只读</strong>。<span class="src"><a href="https://github.com/amazon-archives/dynamodb-geo" target="_blank" rel="noopener">Geo Library for Amazon DynamoDB, github.com/amazon-archives/dynamodb-geo ↗</a></span></li>
+</ul>
+</div>
+
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>把九宫格的结果当最终答案</strong>：格子是方的、范围是圆的，九格里必然混进半径之外的店。<strong>最后一步的精确距离过滤不能省</strong>——这是本章最常见的翻车点。</li>
+<li><strong>把「前缀相同 ⇒ 相近」反过来用</strong>：前缀不同完全可能只隔几米。整个边界问题就是从这个误解里长出来的。</li>
+<li><strong>把某个精度当固定答案</strong>：「用 5 位 geohash」不是结论，是「半径 → 精度」表里的一行；半径一变就得换。</li>
+<li><strong>条件反射式分片</strong>：这题数据小、QPS 高，分片是过度设计。判据是容量而不是流量。</li>
+<li><strong>忘了排序与分页</strong>：候选集拿回来还要按距离或评分排序、分页；「营业中」「评分 4 星以上」这类过滤也只能在这一步做——空间索引只按位置筛，别的一概不管。</li>
+<li><strong>隐私与合规</strong>：用户位置属于个人数据，GDPR / CCPA 下既要能删，也常要求留在本区域内。书里把它写进了非功能需求却没展开，面试里补一句是加分项。</li>
+<li><strong>时代局限与争议</strong>：本书把 geohash 当默认解，而工业界今天更常见的是 S2 与 H3；PostGIS、Elasticsearch 这类现成的空间索引也让「自己造一张 geohash 表」不再是唯一选项。另外，四叉树「每晚重建」一旦碰上要求实时更新的数据就直接不成立——下一章「附近的好友」正是如此，那里的位置每几秒就变一次。</li>
+</ul>
+
+<h2>要点</h2>
+<div class="tl">
+<p>① 一句话：「找附近」不是搜索题，是<strong>降维</strong>题——把经纬度压成一维的键，让普通索引和缓存重新可用。</p>
+<p>② 规模的题眼：<strong>1 亿日活、2 亿商户、搜索 QPS ≈ 5000</strong>，延迟要求几百毫秒。</p>
+<p>③ 朴素 SQL 死在<strong>两个索引合不起来</strong>：先按一维筛出百万行，再逐行核对另一维。</p>
+<p>④ Geohash = 递归对半切 + base32；<strong>码长 4 ≈ 39 km、5 ≈ 4.9 km、6 ≈ 1.2 km</strong>，每多一个字符面积缩到约 1/32。</p>
+<p>⑤ <strong>半径是索引精度旋钮</strong>，不是距离参数：先查表定码长，再取<strong>九宫格</strong>，最后才算真实距离。</p>
+<p>⑥ 两个必踩的坑：<strong>边界问题</strong>（取 8 个邻居）与<strong>凑不够数</strong>（去掉最后一个字符，放大重查）。</p>
+<p>⑦ 四叉树按密度自适应、天然支持 k 近邻，代价是<strong>常驻内存约 1.71 GB 且更新极难</strong>，只能每晚重建 + 灰度上线。</p>
+<p>⑧ 反直觉的两条工程判断：索引表<strong>加读副本而不是分片</strong>（几十 GB 装得下，压力在读）；缓存键<strong>必须是 geohash 而非经纬度</strong>（否则命中率恒为 0）。</p>
+</div>
+</div>
+
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
