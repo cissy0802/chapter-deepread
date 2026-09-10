@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview 卷二 第 3 章 · 设计 Google Maps — 专业书籍精读 Book 70</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · System Design Interview 卷二 · 第 3 章</p>
+<h1>设计 Google Maps</h1>
+<p class="sub">System Design Interview Vol 2 · Ch 3 · Alex Xu &amp; Sahn Lam · 2022</p>
+<p class="langbar"><a href="sdi2-ch03-google-maps-book70.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你在路口掏出手机打开地图，两秒钟街道就铺满屏幕；再点一下导航，它说「23 分钟到，走高架快 6 分钟」。这一章就是从零把这套东西造出来：地图是怎么出现的、路是怎么找的、那句「23 分钟」是哪来的。</p>
+<h2>先说个怪事</h2>
+<p>这个每天十亿人用的系统，里头<strong>大部分东西都不是现算的</strong>。你看到的地图，是一堆<strong>早就画好、搁在硬盘上的小方块图片</strong>——跟你是谁、几点打开，全无关系。真正必须现算的只有一件事：路上这会儿堵不堵。</p>
+<h2>旧世界为什么难</h2>
+<p>两个「装不下」。第一，整张世界地图要是做成一张图，它大到没有哪台手机下载得完；第二，全世界的路连起来是一张上亿个路口的大网，想在里面找最短路，这张网<strong>塞不进一台机器的内存</strong>。难处不在算得慢，在<strong>东西太大、搬不动</strong>。</p>
+<h2>核心的点子：切块 + 分层</h2>
+<p><strong>地图切成方块。</strong>把世界地图像切蛋糕一样切成一堆小方块，每块单存一张图。你屏幕就那么大，一次只要挨着你的那几块，几百 KB 就够，其余几百万块跟你无关。而且每种精细度各存一套：看整个省份时给你粗的那套（只有高速和大城市），放大到街区才换上细的。</p>
+<p><strong>找路也一样，先看大地图再看小地图。</strong>人问路就这么干：出门先琢磨怎么上高速（要看细节），上了高速一路开到目标城市（这一段只需要一张很粗的地图，没人关心沿途每条小巷），下了高速再看街道（又换回细节）。机器用的是同一招：中间那一大段只加载「只画了高速的粗地图」，所以它一辈子都不必把整张路网搬进内存。</p>
+<p><strong>堵不堵，是所有人的手机一起告诉它的。</strong>每台开着地图的手机匿名回报一句「我这会儿移动得多快」。成千上万个这样的点拼起来，就是一张实时路况图。Google 2009 年公开讲过这件事，他们自己的说法是：参与的人越多，结果对每个人就越准。</p>
+<h2>带来了什么 / 该怎么选</h2>
+<p>一句话：<strong>不变的东西提前画好、搬到离你最近的机房；会变的东西才现算</strong>。地图一年变不了几回，所以它能当静态图片发出去，便宜得几乎不花钱；路况每分钟都在变，所以它必须实时算，也只有它值得花这份钱。代价也得说清：那份好用的实时路况，是用所有人的位置换来的——做过匿名处理，但不等于没有代价。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>地图 = 一堆提前切好的方块图片 + 一张分了粗细层次、按需加载的路网 + 一份所有人共同贡献的实时路况。难点从来不是算法，而是<strong>怎么把大到搬不动的东西切小</strong>。</p>
+</div>
+<p class="switch-hint">想进到具体机制、量级和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">这一章造的不是「一个算最短路的服务」，而是一条<strong>把静态与动态彻底分开</strong>的流水线：地图几何与路网图都在离线阶段被切成<strong>瓦片（tile）</strong>烘好，当静态文件经 CDN 发给十亿人；只有路况与 ETA 值得实时计算。记住一句反直觉的话——Google Maps 的工程难点不在 Dijkstra，而在<strong>把装不下的东西切小、按需加载</strong>；同一个「瓦片」思想在这一章被用了两次，一次用在显示，一次用在路由。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>瓦片（tile）</strong>：把一整张大地图切成的固定尺寸小方块（典型 256×256 像素），按「缩放级别 + 行 + 列」编号、可单独存取。</li>
+<li><strong>缩放级别（zoom level）</strong>：同一片地区存多套精细度，级别越大越细；级别 0 是整个世界一张图。</li>
+<li><strong>墨卡托投影（Mercator projection）</strong>：把球面摊成平面的一种画法，好处是局部形状与方向不变形，代价是越靠两极面积被放得越大（格陵兰看着比非洲还大）。</li>
+<li><strong>栅格瓦片 / 矢量瓦片（raster / vector tile）</strong>：前者是服务端画好的图片，后者是「这条路从哪到哪、几级路、叫什么」这类几何数据，由客户端现场绘制。</li>
+<li><strong>地理编码（geocoding）</strong>：把「朝阳路 8 号」这样的地址翻译成经纬度。</li>
+<li><strong>路网图（road graph）</strong>：路口当节点、路段当边、通行时间当边权的图；找路就是在它上面求最短路。</li>
+<li><strong>Dijkstra / A*</strong>：两种最短路算法；A* 额外用一个「离终点还有多远」的估计值，剪掉明显绕远的搜索方向。</li>
+<li><strong>ETA</strong>：预计到达时间（estimated time of arrival）。</li>
+<li><strong>CDN（内容分发网络）</strong>：在全球各地放缓存节点，让用户就近取静态文件。</li>
+<li><strong>Cassandra / Kafka</strong>：前者是写入吞吐极高的分布式宽列存储；后者是把事件按顺序排好队、供下游多个消费者各自读取的日志系统。</li>
+<li><strong>QPS</strong>：每秒请求数。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>卷二第 3 章，紧接 Ch1「附近服务」与 Ch2「附近的好友」——三章都是地理题，但前两章只回答「谁在附近」，这一章第一次要<strong>画出地图本身、还要在路网上找路</strong>，是这组里最重的一道。对应现实里 Google Maps、Apple 地图、高德，以及 OpenStreetMap + OSRM 这一类开源栈。</p>
+<h2>这章要解决什么</h2>
+<p>作者把需求缩到三件事：<strong>位置上报、导航（含 ETA）、地图渲染</strong>。难的不是任何一件的逻辑，而是它们各自的量级彼此差了几个数量级——用一套方案去伺候它们必然失败。几个具体数字把难度摆出来：</p>
+<ul>
+<li><strong>渲染侧的存储</strong>：若把最细那一级（第 21 级）的瓦片全存下来，是 <code>4²¹</code> ≈ <strong>4.4 万亿张</strong>；每张 100KB 就是约 <strong>440PB</strong>，把 0–21 级加起来再多三分之一（等比和），接近 <strong>590PB</strong>。但地球表面大半是海洋、沙漠、无人区——<strong>不存没人看的地方</strong>，量级就落回几十 PB。这是本章第一个判断：存储问题是靠「别存」解决的，不是靠压缩。</li>
+<li><strong>上报侧的写入</strong>：按 10 亿 DAU、人均每周导航半小时上下来估，平均<strong>同时约有 350 万人在导航</strong>；客户端若每秒报一次位置，就是约 <strong>350 万次写/秒</strong>。改成客户端攒 15 秒批量发一次，写 QPS 落到 <strong>23 万</strong>量级——省下的不只是服务端 QPS，更是手机电量与流量。</li>
+<li><strong>计算侧的路由</strong>：一次跨省导航真正用到的也就几千条边，但整张洲际路网有上亿条。照搬「把图读进内存跑 Dijkstra」，一次请求的代价会被地球的大小绑定，而不是被路线的长度绑定。</li>
+</ul>
+<p>不解决会怎样？你会得到一个<strong>每次打开都要实时渲染、每次导航都要遍历全球路网</strong>的系统：成本和延迟都不可能成立。</p>
+<h2>核心内容，讲透</h2>
+<h3>一、瓦片与缩放级别：把「太大」变成「按需」</h3>
+<p>先用墨卡托投影把球面摊成一张正方形世界图。级别 0 是整张世界 = 1 张瓦片；每升一级，每边切两半，所以第 <code>z</code> 级有 <code>4ᶻ</code> 张瓦片——这就是「瓦片金字塔」。客户端拿自己的视口中心经纬度和当前级别，<strong>自己算出该要哪几张瓦片的 URL</strong>，直接向 CDN 取；一屏大约 6–10 张，传输量在百 KB 级。</p>
+<p>这里有个容易被跳过的设计后果：<strong>渲染这条路上根本不需要一个「瓦片服务」</strong>。没有服务端逻辑、不查数据库，就是一堆可被内容寻址的静态文件。于是同一片城区被千万人反复看时，缓存命中率可以做到极高，CDN 几乎吃掉全部流量，源站只在地图数据更新（通常以周 / 月计）时重新烘一批。<strong>十亿用户的读量，被一条「静态化」的判断消掉了绝大部分。</strong></p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 272" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m1" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="22">① 同一片地球，存多套精细度</text>
+<rect fill="rgba(91,157,249,0.10)" height="64" stroke="#5b9df9" width="64" x="36" y="42"></rect>
+<rect fill="rgba(91,157,249,0.10)" height="64" stroke="#5b9df9" width="64" x="132" y="42"></rect>
+<line stroke="rgba(91,157,249,0.55)" x1="164" x2="164" y1="42" y2="106"></line>
+<line stroke="rgba(91,157,249,0.55)" x1="132" x2="196" y1="74" y2="74"></line>
+<rect fill="rgba(91,157,249,0.10)" height="64" stroke="#5b9df9" width="64" x="228" y="42"></rect>
+<line stroke="rgba(91,157,249,0.4)" x1="244" x2="244" y1="42" y2="106"></line>
+<line stroke="rgba(91,157,249,0.4)" x1="260" x2="260" y1="42" y2="106"></line>
+<line stroke="rgba(91,157,249,0.4)" x1="276" x2="276" y1="42" y2="106"></line>
+<line stroke="rgba(91,157,249,0.4)" x1="228" x2="292" y1="58" y2="58"></line>
+<line stroke="rgba(91,157,249,0.4)" x1="228" x2="292" y1="74" y2="74"></line>
+<line stroke="rgba(91,157,249,0.4)" x1="228" x2="292" y1="90" y2="90"></line>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="68" y="124">级别 0 · 1 张</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="164" y="124">级别 1 · 4 张</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="260" y="124">级别 2 · 16 张</text>
+<text fill="#9b6cf5" font-family="monospace" font-size="10.5" x="36" y="150">…… 到第 21 级 ≈ 4.4 万亿张</text>
+<text fill="#7c8593" font-size="10.5" x="36" y="170">（只烘有人看的那部分）</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="360" y="22">② 客户端只取视口那几张</text>
+<rect fill="none" height="140" rx="10" stroke="#7c8593" width="116" x="372" y="40"></rect>
+<rect fill="rgba(91,157,249,0.08)" height="96" stroke="rgba(91,157,249,0.45)" width="96" x="382" y="56"></rect>
+<line stroke="rgba(91,157,249,0.45)" x1="414" x2="414" y1="56" y2="152"></line>
+<line stroke="rgba(91,157,249,0.45)" x1="446" x2="446" y1="56" y2="152"></line>
+<line stroke="rgba(91,157,249,0.45)" x1="382" x2="478" y1="88" y2="88"></line>
+<line stroke="rgba(91,157,249,0.45)" x1="382" x2="478" y1="120" y2="120"></line>
+<rect fill="rgba(155,108,245,0.28)" height="32" stroke="#9b6cf5" stroke-width="2" width="32" x="414" y="88"></rect>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="430" y="198">视口 ≈ 6–10 张 · 百 KB 级</text>
+<rect fill="rgba(91,157,249,0.12)" height="38" rx="6" stroke="#5b9df9" width="104" x="512" y="91"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="564" y="115">CDN 边缘节点</text>
+<line marker-end="url(#m1)" stroke="#7c8593" x1="510" x2="492" y1="110" y2="110"></line>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="564" y="150">静态文件</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="564" y="166">无服务端逻辑</text>
+<text fill="#9b6cf5" font-family="monospace" font-size="10.5" x="36" y="248">瓦片 URL = f（级别, 行, 列）：客户端自己算得出 → 渲染路径上不需要「瓦片服务」</text>
+</svg>
+<figcaption>图 1 · 瓦片金字塔与视口取图：地图被离线切成固定尺寸方块、每个缩放级别一套；客户端按视口自行算出 URL，直取 CDN。</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/geo-system-day19.html" rel="noopener" target="_blank">System Design · Day 19 地理系统</a> — 把球面切成可索引的格子：geohash、四叉树与 S2 的编号方式，以及格子边界附近的漏查问题</aside>
+<h3>二、栅格还是矢量：渲染放在哪一端</h3>
+<p>栅格瓦片是服务端画好的图片，客户端只管贴图；<strong>矢量瓦片</strong>传的是几何数据（这条路从哪到哪、属几级路、叫什么名），由客户端现场绘制。矢量的好处是一份数据能覆盖<strong>连续缩放与旋转</strong>——放大时路线与文字仍然锐利，不必为每个中间比例重新下载；体积更小，还顺手解决了夜间模式与多语言标注。代价是客户端得有绘图能力（移动端 GPU 本身够用），首屏多一次解析与绘制。Google Maps 在 2010 年 12 月的 Android 5.0 版本上公开转向矢量绘制，同时开始缓存常去区域、让弱网下也能用。</p>
+<p>判据一句话：<strong>要不要连续缩放，决定渲染该放在哪一端。</strong></p>
+<h3>三、路由瓦片与分层：最短路不是算法题</h3>
+<p>把路网当图：路口是节点、路段是边、边权是通行时间，导航就是求最短路。但直接在洲际路网上跑 Dijkstra，卡住的地方不是算法复杂度，而是<strong>图装不进内存、也不该装</strong>。</p>
+<p>做法是把「瓦片」思想搬过来一次：离线流水线把路网切成<strong>路由瓦片（routing tile）</strong>，并做成若干级——细的那级含所有街巷，粗的那级只留高速与主干道，瓦片之间互相记着「我和哪些瓦片相连」。最短路服务从起点所在的细瓦片开始搜，<strong>一离开起点足够远就切到粗瓦片</strong>，长途的中段只在高速层上走，接近终点再落回细瓦片。于是加载量跟<strong>路线长度</strong>成比例，而不是跟地球大小成比例。这正是人问路的顺序：先看门口街道，上了高速只需要一张省级图，下高速再换回街道。</p>
+<p>A* 这类启发式能剪掉方向明显不对的搜索，但<strong>真正的数量级收益来自分层与预处理，不是启发函数</strong>。工业界更激进的一手叫<em>收缩层次（contraction hierarchies，CH）</em>：离线按重要性逐个「收缩」节点、补上捷径边，查询时只往上走，洲际路线能压到毫秒级，开源路由器 OSRM 就是这么做的。代价很实在：<strong>预处理与边权绑定</strong>——边权一变（实时路况来了）就得重算，所以实时路况一般不直接塞进 CH，而是在它之上叠一层修正，或换用为「权重可换」而设计的变体。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 276" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m2" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="m3" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="22">分层路由瓦片：起点细 → 中段只走高速层 → 终点细</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" x="20" y="50">粗层 · 只有高速</text>
+<rect fill="rgba(155,108,245,0.16)" height="42" rx="6" stroke="#9b6cf5" width="96" x="170" y="58"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="218" y="84">高速瓦片 T1</text>
+<rect fill="rgba(155,108,245,0.16)" height="42" rx="6" stroke="#9b6cf5" width="96" x="276" y="58"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="324" y="84">高速瓦片 T2</text>
+<rect fill="rgba(155,108,245,0.16)" height="42" rx="6" stroke="#9b6cf5" width="96" x="382" y="58"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="430" y="84">高速瓦片 T3</text>
+<line marker-end="url(#m3)" stroke="#9b6cf5" x1="266" x2="274" y1="79" y2="79"></line>
+<line marker-end="url(#m3)" stroke="#9b6cf5" x1="372" x2="380" y1="79" y2="79"></line>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" x="20" y="142">细层 · 所有街巷</text>
+<rect fill="rgba(91,157,249,0.12)" height="42" rx="6" stroke="#5b9df9" width="62" x="44" y="150"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="75" y="176">街区 t1</text>
+<rect fill="rgba(91,157,249,0.12)" height="42" rx="6" stroke="#5b9df9" width="62" x="112" y="150"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="143" y="176">街区 t2</text>
+<rect fill="none" height="42" rx="6" stroke="rgba(120,120,130,0.45)" stroke-dasharray="5 4" width="256" x="192" y="150"></rect>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="320" y="176">中段的细瓦片 · 从不加载</text>
+<rect fill="rgba(91,157,249,0.12)" height="42" rx="6" stroke="#5b9df9" width="62" x="466" y="150"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="497" y="176">街区 t9</text>
+<rect fill="rgba(91,157,249,0.12)" height="42" rx="6" stroke="#5b9df9" width="62" x="534" y="150"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="565" y="176">街区 t10</text>
+<line marker-end="url(#m2)" stroke="#7c8593" x1="106" x2="110" y1="171" y2="171"></line>
+<line marker-end="url(#m2)" stroke="#7c8593" x1="528" x2="532" y1="171" y2="171"></line>
+<line marker-end="url(#m3)" stroke="#9b6cf5" x1="172" x2="200" y1="152" y2="104"></line>
+<text fill="#9b6cf5" font-size="10" x="136" y="128">升到粗层</text>
+<line marker-end="url(#m3)" stroke="#9b6cf5" x1="452" x2="480" y1="104" y2="148"></line>
+<text fill="#9b6cf5" font-size="10" x="478" y="128">落回细层</text>
+<circle cx="75" cy="224" fill="#5b9df9" r="8"></circle>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="75" y="250">起点</text>
+<line marker-end="url(#m2)" stroke="#7c8593" x1="75" x2="75" y1="214" y2="196"></line>
+<circle cx="565" cy="224" fill="#5b9df9" r="8"></circle>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="565" y="250">终点</text>
+<line marker-end="url(#m2)" stroke="#7c8593" x1="565" x2="565" y1="196" y2="212"></line>
+</svg>
+<figcaption>图 2 · 分层路由瓦片：搜索一离开起点就升到只含高速的粗层，中段沿途的街巷瓦片从不加载；加载量与路线长度成比例，而非与地球大小成比例。</figcaption>
+</figure>
+<h3>四、位置上报、路况与 ETA：唯一必须实时的那条路</h3>
+<p>客户端把位置攒成批（约 15 秒一发）上报；位置服务把它写进 Cassandra 这类高写入吞吐的存储，<strong>同时投进 Kafka</strong>，下游几路消费者各取所需：一路把同一路段上的若干匿名速度点聚合成「这段现在多快」，得到实时路况；一路喂 ETA 模型；还有一路做路网数据的长期修正（新修的路、标错的单行道）。<strong>Kafka 在这里的作用是「一次写入、多方派生」</strong>——这也是全书反复出现的模式。</p>
+<p>ETA 不是「距离 ÷ 限速」，而是一次<strong>预测</strong>：历史上这个时段这条路多快，叠上现在的实测。Google 与 DeepMind 在 2020 年公开的做法，是把路网切成<em>Supersegments</em>（共享车流量的相邻路段簇），用图神经网络预测通行时间。</p>
+<p>还有个容易漏掉的结论：导航在工程上<strong>是一条持续的会话，不是一次请求</strong>。客户端全程上报，服务端发现前方路况变差就重算、下发新路线——所谓「自适应重算」。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 278" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m4" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="m5" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="20">写路径：十亿部手机的位置 → 派生出路况</text>
+<rect fill="rgba(91,157,249,0.12)" height="46" rx="6" stroke="#5b9df9" width="96" x="20" y="34"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="68" y="54">客户端</text>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="68" y="70">15 秒批量上报</text>
+<line marker-end="url(#m4)" stroke="#7c8593" x1="118" x2="144" y1="57" y2="57"></line>
+<rect fill="rgba(91,157,249,0.12)" height="46" rx="6" stroke="#5b9df9" width="92" x="148" y="34"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="194" y="62">位置服务</text>
+<rect fill="rgba(255,255,255,0.03)" height="36" rx="6" stroke="#7c8593" width="108" x="268" y="12"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="322" y="34">Cassandra 位置库</text>
+<rect fill="rgba(155,108,245,0.16)" height="36" rx="6" stroke="#9b6cf5" width="108" x="268" y="64"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="322" y="86">Kafka 事件流</text>
+<line marker-end="url(#m4)" stroke="#7c8593" x1="242" x2="266" y1="48" y2="33"></line>
+<line marker-end="url(#m4)" stroke="#7c8593" x1="242" x2="266" y1="66" y2="80"></line>
+<rect fill="rgba(91,157,249,0.10)" height="32" rx="6" stroke="#5b9df9" width="124" x="404" y="22"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="466" y="42">实时路况聚合</text>
+<rect fill="rgba(255,255,255,0.03)" height="32" rx="6" stroke="#7c8593" width="124" x="404" y="64"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="466" y="84">ETA 模型训练</text>
+<rect fill="rgba(255,255,255,0.03)" height="32" rx="6" stroke="#7c8593" width="124" x="404" y="106"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="466" y="126">路网数据修正</text>
+<line marker-end="url(#m4)" stroke="#7c8593" x1="378" x2="402" y1="76" y2="40"></line>
+<line marker-end="url(#m4)" stroke="#7c8593" x1="378" x2="402" y1="82" y2="80"></line>
+<line marker-end="url(#m4)" stroke="#7c8593" x1="378" x2="402" y1="88" y2="120"></line>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="172">读路径：一次导航</text>
+<rect fill="rgba(91,157,249,0.12)" height="44" rx="6" stroke="#5b9df9" width="88" x="20" y="186"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="64" y="214">客户端</text>
+<line marker-end="url(#m4)" stroke="#7c8593" x1="110" x2="128" y1="208" y2="208"></line>
+<rect fill="rgba(91,157,249,0.12)" height="44" rx="6" stroke="#5b9df9" width="96" x="132" y="186"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="180" y="214">路线规划</text>
+<line marker-end="url(#m4)" stroke="#7c8593" x1="230" x2="248" y1="208" y2="208"></line>
+<rect fill="rgba(91,157,249,0.12)" height="44" rx="6" stroke="#5b9df9" width="116" x="252" y="186"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="310" y="206">最短路</text>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="310" y="222">（路由瓦片）</text>
+<line marker-end="url(#m4)" stroke="#7c8593" x1="370" x2="386" y1="208" y2="208"></line>
+<rect fill="rgba(91,157,249,0.12)" height="44" rx="6" stroke="#5b9df9" width="92" x="390" y="186"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="436" y="214">ETA 服务</text>
+<path d="M528,38 L576,38 L576,208 L486,208" fill="none" marker-end="url(#m5)" stroke="#9b6cf5" stroke-dasharray="5 4"></path>
+<text fill="#9b6cf5" font-size="10" x="584" y="124">实时路况</text>
+<text fill="#7c8593" font-size="10.5" x="20" y="266">导航全程持续上报 → 前方路况变差就重算、下发新路线（自适应重算）</text>
+</svg>
+<figcaption>图 3 · 写路径与读路径：位置上报先落到高写入吞吐存储并进 Kafka，派生出实时路况喂给 ETA；一次导航是「最短路 + ETA」的组合，且全程被持续重算。</figcaption>
+</figure>
+<h2>关键权衡与选型</h2>
+<p>这一章的灵魂是<strong>把三条路径按「变不变」分开定价</strong>：地图几何几乎不变 → 烘成静态文件、越靠边缘越好；路网图变得慢 → 离线预处理换查询延迟；路况每分钟都变 → 只有它配得上实时计算。</p>
+<p class="tcap">表 1 · 地图渲染：栅格瓦片 vs 矢量瓦片</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>栅格瓦片（服务端出图）</th><th>矢量瓦片（客户端绘制）</th></tr></thead>
+<tbody>
+<tr><th>传什么</th><td>画好的位图，客户端只贴图</td><td>几何 + 属性，客户端现场画</td></tr>
+<tr><th>连续缩放 / 旋转</th><td>每个比例都得另取一套，<strong>中间态会糊</strong></td><td><strong>一份数据覆盖连续缩放与旋转</strong>，文字始终锐利</td></tr>
+<tr><th>传输量</th><td>较大，且每级独立</td><td>较小，可跨级复用</td></tr>
+<tr><th>换皮（夜间 / 多语言）</th><td>要重烘整套瓦片</td><td>同一份几何换画法即可</td></tr>
+<tr><th>代价</th><td>存储与回源带宽</td><td>客户端算力与首屏绘制；实现复杂</td></tr>
+<tr><th>选它当</th><td>客户端很弱、或出图极度定制（卫星图、地形底图）</td><td><strong>移动端主流选择</strong>：要连续缩放、要省流量、要离线缓存</td></tr>
+</tbody></table></div>
+<p class="tcap">表 2 · 路由：四种做法的预处理 / 查询 / 动态性三角</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>做法</th><th>离线预处理</th><th>查询代价</th><th>对实时路况</th><th>适用</th></tr></thead>
+<tbody>
+<tr><th>全图 Dijkstra</th><td>无</td><td>随图规模爆炸，<strong>洲际不可用</strong></td><td>天然适应（边权随便改）</td><td>单城小图、教学</td></tr>
+<tr><th>A* 启发式</th><td>无</td><td>比 Dijkstra 少搜很多，但仍随距离线性退化</td><td>天然适应</td><td>中等规模、边权常变</td></tr>
+<tr><th>分层路由瓦片</th><td>中：切瓦片、建层级（以周 / 月为节奏重烘）</td><td><strong>与路线长度成比例</strong>，内存占用可控</td><td>较好：瓦片内边权可更新</td><td><strong>本章方案</strong>：全球规模 + 要跟路况</td></tr>
+<tr><th>收缩层次 CH</th><td>重：全图收缩 + 捷径边</td><td><strong>毫秒级</strong>，最快</td><td><strong>差</strong>：边权一变就要重算预处理</td><td>静态权重的离线 / 开源路由（如 OSRM）</td></tr>
+</tbody></table></div>
+<p class="tcap">表 3 · 位置上报：每秒直报 vs 批量上报</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>每秒一报（HTTP 长连接）</th><th>攒 15 秒批量发</th></tr></thead>
+<tbody>
+<tr><th>写 QPS（350 万并发导航）</th><td>约 <code>350 万</code>/秒</td><td>约 <code>23 万</code>/秒</td></tr>
+<tr><th>手机电量 / 流量</th><td><strong>最先垮的是电量</strong></td><td>显著省电省流</td></tr>
+<tr><th>路况新鲜度</th><td>最新</td><td>最多滞后 15 秒——<strong>对路况聚合完全够用</strong></td></tr>
+<tr><th>结论</th><td colspan="2">路况是<strong>统计量</strong>而非某人的精确轨迹，用新鲜度换成本明显划算；真正不能滞后的是「偏离路线 → 重新规划」，它走另一条更快的通路。</td></tr>
+</tbody></table></div>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>对着面试或架构评审，这一章最值钱的不是背出 A*，而是<strong>开口第一句就把静态与动态切开</strong>：十亿 DAU 的读量大头是静态瓦片，应该死死压在 CDN 上；真正要花服务端钱的只有位置写入与路况 / ETA。谁先说出这条分界线，谁就已经答对了一半。</p>
+<p>真实系统的对应也很清楚：<strong>Google Maps</strong>（瓦片金字塔 + CDN + 矢量客户端渲染 + 众包路况）、<strong>Mapbox</strong>（把矢量瓦片做成了事实标准 MVT）、<strong>OpenStreetMap + OSRM / Valhalla</strong>（开源路由，CH 与分层两条路线的公开实现）、<strong>Uber</strong>（ETA 预测与派单路径）。</p>
+<div class="ev">
+<div class="evh">大厂实证</div>
+<ul>
+<li><strong>Google（2009）</strong>把路况众包这件事讲得很直白：开启 My Location 后，手机会向 Google 匿名回传「你移动得多快」，成千上万台手机的速度拼起来就是实时路况；原文的说法是「<em>参与的人越多，大家得到的路况报告就越好</em>」。这是本章「位置上报 → 派生路况」那条链路的现实原型。<br/><span class="src">Official Google Blog · 2009-08 · <a href="https://googleblog.blogspot.com/2009/08/bright-side-of-sitting-in-traffic.html" rel="noopener" target="_blank">The bright side of sitting in traffic: Crowdsourcing road congestion data</a></span></li>
+<li><strong>Google（2020）</strong>给出了 ETA 这件事的量级与准确率：Google Maps 每天承载的导航里程超过 <strong>10 亿公里</strong>、覆盖 220 多个国家和地区，而它的 ETA「<em>在超过 97% 的行程上保持准确</em>」。同一篇还交代了一个很能说明「模型要跟着世界变」的细节：2020 年出行模式骤变后，他们把模型调整为更看重<strong>最近两到四周</strong>的历史路况。<br/><span class="src">Google · Maps 101 · 2020-09 · <a href="https://blog.google/products-and-platforms/products/maps/google-maps-101-how-ai-helps-predict-traffic-and-determine-routes/" rel="noopener" target="_blank">How AI helps predict traffic and determine routes</a></span></li>
+<li><strong>DeepMind（2020）</strong>公开了 ETA 模型的结构：把路网切成 <em>Supersegments</em>（共享车流量的相邻路段簇），用图神经网络做时空预测，在柏林、雅加达、圣保罗、悉尼、东京、华盛顿特区等城市把实时 ETA 的准确度<strong>提升最多 50%</strong>。注意这条印证的是「ETA 是预测问题、不是算术问题」。<br/><span class="src">Google DeepMind · 2020-09 · <a href="https://deepmind.google/blog/traffic-prediction-with-advanced-graph-neural-networks/" rel="noopener" target="_blank">Traffic prediction with advanced Graph Neural Networks</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/cdn-edge-day28.html" rel="noopener" target="_blank">System Design · Day 28 CDN 与 Edge</a> — 静态资源怎么被推到离用户 50 公里处：缓存键设计、回源收敛与边缘计算能接多少活</aside>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>把它当算法题答</strong>：一上来比较 Dijkstra 和 A* 的复杂度，基本答偏了。工程量在<strong>离线预处理、数据切分、按需加载</strong>，不在挑哪个搜索算法。</li>
+<li><strong>以为瓦片必须是图片</strong>：瓦片是一种「编号 + 切分」的约定，装栅格还是矢量都行；移动端主流早已是矢量。</li>
+<li><strong>以为 ETA 是距离 ÷ 限速</strong>：它是带历史模式与实时路况的预测；也因此它会在出行模式突变时失准——Google 自己就公开调整过历史窗口。</li>
+<li><strong>忘了墨卡托的代价</strong>：它保角不保面积，高纬度面积被放大（格陵兰显得比非洲大）；做面积统计、热力图时不能直接用投影后的像素面积。</li>
+<li><strong>把 CH 当万能加速</strong>：CH 的毫秒级是拿「边权不变」换来的，实时路况下必须另做修正；把它和「能跟路况」混为一谈是常见误解。</li>
+<li><strong>书的局限</strong>：2022 年成书，对<strong>隐私与合规</strong>几乎没展开——位置是最敏感的一类数据，真实系统里匿名化、聚合下限、保留期限都是硬约束而非可选项；而「参与的人越多越准」这套正向叙事与长期隐私代价之间的张力，至今仍有争论。</li>
+<li><strong>也别高估「众包万能」</strong>：新修的路、突发封路、灾害疏散时，历史模式失效、样本也稀疏，这正是地图产品最容易出错、也最需要人工与事件上报补位的时刻。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 一句话：这是一条<strong>把静态与动态分开</strong>的流水线——地图与路网离线烘成瓦片经 CDN 发出去，只有路况 / ETA 实时算。</p>
+<p>② 需求缩到三件事：位置上报、导航（含 ETA）、地图渲染；它们的量级差几个数量级，必须各用一套方案。</p>
+<p>③ 瓦片金字塔：第 <code>z</code> 级 <code>4ᶻ</code> 张；第 21 级约 4.4 万亿张 ≈ 440PB，<strong>靠「不存没人看的地方」压回几十 PB</strong>。</p>
+<p>④ 客户端能自己算出瓦片 URL，所以<strong>渲染路径上没有服务</strong>，只有 CDN 上的静态文件——十亿读量的大头就这样被消掉。</p>
+<p>⑤ 栅格 vs 矢量：要不要<strong>连续缩放与旋转</strong>决定渲染放哪端；移动端主流是矢量，还顺带解决换皮与离线。</p>
+<p>⑥ 路由的关键不是算法而是<strong>分层 + 按需加载</strong>：中段只走高速层，加载量随路线长度而非地球大小增长。</p>
+<p>⑦ CH 能把查询压到毫秒级，代价是<strong>预处理与边权绑定</strong>，实时路况下要另叠修正。</p>
+<p>⑧ 上报攒 15 秒批量发：写 QPS 从约 350 万降到 23 万，<strong>最大的收益是手机电量</strong>；路况是统计量，滞后 15 秒无妨。</p>
+<p>⑨ 位置进 Kafka 后「一次写入、多方派生」：实时路况、ETA 模型、路网修正各取一路。</p>
+<p>⑩ 导航是<strong>持续会话</strong>而非一次请求：全程上报、路况变差即重算下发；ETA 是预测问题（Google / DeepMind 的 Supersegments + 图神经网络）。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

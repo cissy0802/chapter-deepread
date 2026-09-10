@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview Vol 2 Ch 3 · Design Google Maps — Books Deep-Read 70</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOK DEEP READ · System Design Interview Vol 2 · Ch 3</p>
+<h1>Design Google Maps</h1>
+<p class="sub">System Design Interview Vol 2 · Ch 3 · Alex Xu &amp; Sahn Lam · 2022</p>
+<p class="langbar"><a href="sdi2-ch03-google-maps-book70.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You pull out your phone at an intersection, open the map, and within two seconds the streets fill the screen. Tap navigate and it says "23 minutes, and the freeway saves you 6." This chapter builds that from nothing: where the map comes from, how the route is found, and where that "23 minutes" actually comes from.</p>
+<h2>A strange thing first</h2>
+<p>A system used by a billion people a day, and <strong>most of what it shows you is not computed when you ask</strong>. The map on your screen is a pile of <strong>small square pictures drawn long ago and parked on a disk</strong> — they have nothing to do with who you are or when you opened the app. Exactly one thing genuinely has to be worked out live: how bad the traffic is right now.</p>
+<h2>Why the old way breaks</h2>
+<p>Two things that do not fit. First, if the world map were a single image, it would be far too large for any phone to download. Second, all the roads on Earth form one network with hundreds of millions of junctions, and to find a shortest path through it, that network <strong>will not fit in one machine's memory</strong>. The difficulty is not that the computing is slow. It is that the thing is too big to move.</p>
+<h2>The core idea: cut it up, then layer it</h2>
+<p><strong>Cut the map into squares.</strong> Slice the world map like a sheet cake and store each square as its own picture. Your screen is only so big, so you only ever need the few squares around you — a few hundred kilobytes — and the millions of other squares are none of your business. Each square is also kept at several levels of detail: looking at a whole province gets you the coarse set (freeways and big cities only), and only when you zoom into a block does the fine set arrive.</p>
+<p><strong>Finding a route works the same way: big map first, small map later.</strong> It is how people give directions. Work out how to get onto the freeway (that needs detail), drive the freeway all the way to the target city (for that stretch you only need a very coarse map — nobody cares about the side streets you pass), then exit and look at streets again. A machine does exactly this: for that long middle stretch it loads only "the map with nothing but freeways on it", so it never has to haul the whole road network into memory.</p>
+<p><strong>Whether it's jammed is something everyone's phones say together.</strong> Every phone with the map open reports, anonymously, "here's how fast I'm moving right now." Thousands of those dots, stitched together, are a live traffic picture. Google described this publicly back in 2009, and their own wording was that the more people take part, the better the traffic reports get for everybody.</p>
+<h2>What it buys you, and how to choose</h2>
+<p>One line: <strong>draw the things that don't change ahead of time and move them to the data centre nearest you; only compute the things that do change</strong>. A map barely changes in a year, so it can ship as static pictures for almost nothing. Traffic changes every minute, so it must be computed live — and it is the only part worth that money. The cost deserves saying plainly too: that useful live traffic is paid for with everyone's location data. It is anonymised, which is not the same as free.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p>A map service = a pile of pre-cut square pictures + a road network layered coarse-to-fine and loaded on demand + a traffic picture everyone contributes to. The hard part was never the algorithm. It is <strong>how you cut down something too big to move</strong>.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the numbers and the diagrams? <a data-mode="deep">→ switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">What this chapter builds is not "a service that computes shortest paths" but a pipeline that <strong>separates the static from the dynamic</strong>: map geometry and the road graph are both baked offline into <strong>tiles</strong> and shipped to a billion people as static files over a CDN, and only traffic and ETA are worth computing live. Hold on to the counter-intuitive line: the engineering in Google Maps is not in Dijkstra, it is in <strong>cutting down what doesn't fit and loading it on demand</strong> — and the same "tile" idea gets used twice here, once for display and once for routing.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Tile</strong>: a fixed-size square (typically 256×256 pixels) cut out of one huge map, addressed by "zoom level + row + column" and fetched on its own.</li>
+<li><strong>Zoom level</strong>: the same area kept at several levels of detail; higher means finer. Level 0 is the whole world in one image.</li>
+<li><strong>Mercator projection</strong>: one way of flattening a sphere onto a plane. Local shapes and bearings survive; the price is that area inflates toward the poles (Greenland looks bigger than Africa).</li>
+<li><strong>Raster vs vector tile</strong>: the first is a picture drawn server-side; the second is geometry ("this road runs here, it's a class-2 road, here's its name") drawn by the client on the spot.</li>
+<li><strong>Geocoding</strong>: turning an address like "8 Chaoyang Road" into a latitude/longitude pair.</li>
+<li><strong>Road graph</strong>: junctions as nodes, road segments as edges, travel time as edge weight. Routing is a shortest-path search over it.</li>
+<li><strong>Dijkstra / A*</strong>: two shortest-path algorithms. A* additionally uses an estimate of "how far is left to the destination" to prune search directions that clearly head the wrong way.</li>
+<li><strong>ETA</strong>: estimated time of arrival.</li>
+<li><strong>CDN</strong>: a content delivery network — caches placed around the world so users fetch static files from nearby.</li>
+<li><strong>Cassandra / Kafka</strong>: the first is a distributed wide-column store with very high write throughput; the second is a log that keeps events in order so several downstream consumers can each read them independently.</li>
+<li><strong>QPS</strong>: queries (requests) per second.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Chapter 3 of Volume 2, right after Ch1 "Proximity Service" and Ch2 "Nearby Friends". All three are geo problems, but the first two only answer "who is near me"; this is the first one that has to <strong>draw the map itself and find a path through a road network</strong>, which makes it the heaviest of the group. Its real-world counterparts are Google Maps, Apple Maps, and the OpenStreetMap + OSRM open-source stack.</p>
+<h2>What the chapter is solving</h2>
+<p>The authors narrow the requirements to three things: <strong>location updates, navigation (including ETA), and map rendering</strong>. What's hard is not the logic of any one of them — it's that their magnitudes differ by orders of magnitude, so one mechanism serving all three is guaranteed to fail. A few concrete numbers set the difficulty:</p>
+<ul>
+<li><strong>Storage on the render side.</strong> Keeping every tile at the finest level (21) means <code>4²¹</code> ≈ <strong>4.4 trillion tiles</strong>; at 100KB each that is roughly <strong>440PB</strong>, and summing levels 0–21 adds another third (geometric series), approaching <strong>590PB</strong>. But most of Earth's surface is ocean, desert and empty land — <strong>don't store what nobody looks at</strong> and the figure falls back to tens of petabytes. That is the chapter's first judgement call: the storage problem is solved by not storing, not by compressing.</li>
+<li><strong>Writes on the reporting side.</strong> At a billion DAU and something like half an hour of navigation per user per week, <strong>about 3.5 million people are navigating at any moment</strong> on average. If the client reports its position once a second, that is roughly <strong>3.5 million writes per second</strong>. Batch it into one send every 15 seconds and write QPS drops to the order of <strong>230K</strong> — and what's saved is not just server QPS but phone battery and data.</li>
+<li><strong>Compute on the routing side.</strong> A cross-country route really only touches a few thousand edges, while the continental road network has hundreds of millions. Naively reading the graph into memory and running Dijkstra binds the cost of one request to the size of the planet instead of the length of the route.</li>
+</ul>
+<p>What happens if you don't solve this? You get a system that <strong>renders on every open and traverses the whole planet on every navigation</strong> — neither the cost nor the latency can possibly work.</p>
+<h2>The core of it</h2>
+<h3>1. Tiles and zoom levels: turning "too big" into "on demand"</h3>
+<p>Start by flattening the sphere with a Mercator projection into one square world image. Level 0 is that whole world as a single tile; each level up halves every side, so level <code>z</code> holds <code>4ᶻ</code> tiles — the tile pyramid. The client takes its own viewport centre and current zoom and <strong>computes the URLs of the tiles it needs itself</strong>, then fetches them straight from a CDN. One screen is roughly 6–10 tiles, a few hundred kilobytes of transfer.</p>
+<p>There is a design consequence here that's easy to skim past: <strong>the render path needs no "tile service" at all</strong>. No server logic, no database query — just a pile of content-addressable static files. So when millions of people look at the same city block over and over, the cache hit rate can be enormous, the CDN absorbs practically all the traffic, and the origin only re-bakes a batch when the map data updates (typically on a weekly or monthly cadence). <strong>A single "make it static" decision eats the bulk of a billion users' read load.</strong></p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 272" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m1" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12" font-weight="700" x="20" y="22">1 · One Earth, many levels of detail</text>
+<rect fill="rgba(91,157,249,0.10)" height="64" stroke="#5b9df9" width="64" x="36" y="42"></rect>
+<rect fill="rgba(91,157,249,0.10)" height="64" stroke="#5b9df9" width="64" x="132" y="42"></rect>
+<line stroke="rgba(91,157,249,0.55)" x1="164" x2="164" y1="42" y2="106"></line>
+<line stroke="rgba(91,157,249,0.55)" x1="132" x2="196" y1="74" y2="74"></line>
+<rect fill="rgba(91,157,249,0.10)" height="64" stroke="#5b9df9" width="64" x="228" y="42"></rect>
+<line stroke="rgba(91,157,249,0.4)" x1="244" x2="244" y1="42" y2="106"></line>
+<line stroke="rgba(91,157,249,0.4)" x1="260" x2="260" y1="42" y2="106"></line>
+<line stroke="rgba(91,157,249,0.4)" x1="276" x2="276" y1="42" y2="106"></line>
+<line stroke="rgba(91,157,249,0.4)" x1="228" x2="292" y1="58" y2="58"></line>
+<line stroke="rgba(91,157,249,0.4)" x1="228" x2="292" y1="74" y2="74"></line>
+<line stroke="rgba(91,157,249,0.4)" x1="228" x2="292" y1="90" y2="90"></line>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="68" y="124">z0 · 1 tile</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="164" y="124">z1 · 4 tiles</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="260" y="124">z2 · 16 tiles</text>
+<text fill="#9b6cf5" font-family="monospace" font-size="10.5" x="36" y="150">… up to z21 ≈ 4.4 trillion</text>
+<text fill="#7c8593" font-size="10.5" x="36" y="170">(bake only what people look at)</text>
+<text fill="#5b9df9" font-size="12" font-weight="700" x="350" y="22">2 · The client takes only its viewport</text>
+<rect fill="none" height="140" rx="10" stroke="#7c8593" width="116" x="372" y="40"></rect>
+<rect fill="rgba(91,157,249,0.08)" height="96" stroke="rgba(91,157,249,0.45)" width="96" x="382" y="56"></rect>
+<line stroke="rgba(91,157,249,0.45)" x1="414" x2="414" y1="56" y2="152"></line>
+<line stroke="rgba(91,157,249,0.45)" x1="446" x2="446" y1="56" y2="152"></line>
+<line stroke="rgba(91,157,249,0.45)" x1="382" x2="478" y1="88" y2="88"></line>
+<line stroke="rgba(91,157,249,0.45)" x1="382" x2="478" y1="120" y2="120"></line>
+<rect fill="rgba(155,108,245,0.28)" height="32" stroke="#9b6cf5" stroke-width="2" width="32" x="414" y="88"></rect>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="430" y="198">viewport ≈ 6–10 tiles</text>
+<rect fill="rgba(91,157,249,0.12)" height="38" rx="6" stroke="#5b9df9" width="96" x="516" y="91"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="564" y="115">CDN edge</text>
+<line marker-end="url(#m1)" stroke="#7c8593" x1="514" x2="492" y1="110" y2="110"></line>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="564" y="150">static files</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="564" y="166">no server logic</text>
+<text fill="#9b6cf5" font-family="monospace" font-size="10.5" x="36" y="248">tile URL = f(zoom, row, col) — the client derives it, so no tile service sits on the render path</text>
+</svg>
+<figcaption>Figure 1 · The tile pyramid and viewport fetch: the map is cut offline into fixed-size squares, one set per zoom level; the client derives the URLs and pulls straight from the CDN.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/geo-system-day19.en.html" rel="noopener" target="_blank">System Design · Day 19 Geo Systems</a> — cutting the sphere into indexable cells: geohash, quadtrees and S2, and the misses that happen near cell boundaries</aside>
+<h3>2. Raster or vector: which end does the drawing</h3>
+<p>A raster tile is a picture drawn server-side; the client just blits it. A <strong>vector tile</strong> carries geometry instead (where this road runs, what class it is, what it's called) and the client draws it live. Vector wins because one payload covers <strong>continuous zoom and rotation</strong> — lines and labels stay crisp as you pinch, with no re-download for every intermediate scale — it's smaller on the wire, and it incidentally solves night mode and multilingual labels. The cost is that the client needs to be able to draw (mobile GPUs are fine) and pays one heavier parse-and-render on first paint. Google Maps publicly moved to vector rendering with version 5.0 on Android in December 2010, and began caching frequently visited areas so the app stayed usable on a weak connection.</p>
+<p>The test in one line: <strong>whether you need continuous zoom decides which end renders.</strong></p>
+<h3>3. Routing tiles and hierarchy: shortest path is not an algorithms question</h3>
+<p>Treat the roads as a graph — junctions as nodes, segments as edges, travel time as weight — and navigation is a shortest-path search. But running Dijkstra directly over a continental network does not stall on algorithmic complexity; it stalls because <strong>the graph does not fit in memory and should not be there in the first place</strong>.</p>
+<p>So the tile idea gets borrowed a second time. An offline pipeline cuts the road graph into <strong>routing tiles</strong> at several levels: the fine level holds every street, the coarse level keeps only freeways and arterials, and tiles record which other tiles they connect to. The shortest-path service starts in the fine tile around the origin, <strong>switches up to coarse tiles once it is far enough from the start</strong>, crosses the long middle on the highway layer alone, then drops back to fine tiles near the destination. What gets loaded is therefore proportional to <strong>the length of the route</strong>, not to the size of the planet. This is exactly the order humans give directions in: streets by your door, one province-level map for the freeway, streets again at the far end.</p>
+<p>A* and friends prune directions that clearly point the wrong way, but <strong>the order-of-magnitude win comes from hierarchy and preprocessing, not from the heuristic</strong>. Industry's more aggressive move is <em>contraction hierarchies</em> (CH): offline, nodes are "contracted" one by one in order of importance and shortcut edges are added, so a query only ever walks upward and a continental route drops to milliseconds — the open-source router OSRM works this way. The price is concrete: <strong>the preprocessing is bound to the edge weights</strong>. Change a weight (live traffic arrives) and it must be recomputed, which is why live traffic is usually not fed straight into CH but layered on top as a correction, or handled by variants designed for swappable weights.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 276" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m2" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="m3" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="12" font-weight="700" x="20" y="22">Hierarchical routing tiles: fine at both ends, highway layer through the middle</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" x="20" y="50">coarse · highways only</text>
+<rect fill="rgba(155,108,245,0.16)" height="42" rx="6" stroke="#9b6cf5" width="96" x="170" y="58"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="218" y="84">highway T1</text>
+<rect fill="rgba(155,108,245,0.16)" height="42" rx="6" stroke="#9b6cf5" width="96" x="276" y="58"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="324" y="84">highway T2</text>
+<rect fill="rgba(155,108,245,0.16)" height="42" rx="6" stroke="#9b6cf5" width="96" x="382" y="58"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="430" y="84">highway T3</text>
+<line marker-end="url(#m3)" stroke="#9b6cf5" x1="266" x2="274" y1="79" y2="79"></line>
+<line marker-end="url(#m3)" stroke="#9b6cf5" x1="372" x2="380" y1="79" y2="79"></line>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" x="20" y="142">fine · every street</text>
+<rect fill="rgba(91,157,249,0.12)" height="42" rx="6" stroke="#5b9df9" width="62" x="44" y="150"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="75" y="176">tile t1</text>
+<rect fill="rgba(91,157,249,0.12)" height="42" rx="6" stroke="#5b9df9" width="62" x="112" y="150"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="143" y="176">tile t2</text>
+<rect fill="none" height="42" rx="6" stroke="rgba(120,120,130,0.45)" stroke-dasharray="5 4" width="256" x="192" y="150"></rect>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="320" y="176">fine tiles in between · never loaded</text>
+<rect fill="rgba(91,157,249,0.12)" height="42" rx="6" stroke="#5b9df9" width="62" x="466" y="150"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="497" y="176">tile t9</text>
+<rect fill="rgba(91,157,249,0.12)" height="42" rx="6" stroke="#5b9df9" width="62" x="534" y="150"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="565" y="176">tile t10</text>
+<line marker-end="url(#m2)" stroke="#7c8593" x1="106" x2="110" y1="171" y2="171"></line>
+<line marker-end="url(#m2)" stroke="#7c8593" x1="528" x2="532" y1="171" y2="171"></line>
+<line marker-end="url(#m3)" stroke="#9b6cf5" x1="172" x2="200" y1="152" y2="104"></line>
+<text fill="#9b6cf5" font-size="10" x="124" y="128">up to coarse</text>
+<line marker-end="url(#m3)" stroke="#9b6cf5" x1="452" x2="480" y1="104" y2="148"></line>
+<text fill="#9b6cf5" font-size="10" x="478" y="128">back to fine</text>
+<circle cx="75" cy="224" fill="#5b9df9" r="8"></circle>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="75" y="250">start</text>
+<line marker-end="url(#m2)" stroke="#7c8593" x1="75" x2="75" y1="214" y2="196"></line>
+<circle cx="565" cy="224" fill="#5b9df9" r="8"></circle>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="565" y="250">end</text>
+<line marker-end="url(#m2)" stroke="#7c8593" x1="565" x2="565" y1="196" y2="212"></line>
+</svg>
+<figcaption>Figure 2 · Hierarchical routing tiles: the search climbs to the highways-only layer as soon as it leaves the origin, and the street tiles along the middle are never loaded. Load grows with route length, not with the size of the planet.</figcaption>
+</figure>
+<h3>4. Location updates, traffic and ETA: the one path that must be live</h3>
+<p>The client batches its positions (roughly one send per 15 seconds). The location service writes them into a high-write-throughput store like Cassandra and <strong>publishes them to Kafka at the same time</strong>, where several consumers each take what they need: one aggregates the anonymous speed points on a given road segment into "how fast this stretch is right now" — live traffic; one feeds the ETA model; one drives long-term corrections to the road graph (new roads, a one-way street recorded backwards). <strong>Kafka's job here is "write once, derive many ways"</strong> — a pattern that recurs throughout the book.</p>
+<p>ETA is not distance ÷ speed limit; it is a <strong>prediction</strong>: how fast this road usually is at this hour, adjusted by what's measured now. The approach Google and DeepMind published in 2020 cuts the network into <em>Supersegments</em> — runs of adjacent road segments that share traffic volume — and predicts travel time with a graph neural network.</p>
+<p>One more conclusion that's easy to miss: navigation is <strong>a continuing session, not a single request</strong>. The client reports throughout, and when the service sees traffic worsening ahead it recomputes and pushes a new route — adaptive rerouting.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 278" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m4" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="m5" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="12" font-weight="700" x="20" y="20">Write path: a billion phones' positions → derived traffic</text>
+<rect fill="rgba(91,157,249,0.12)" height="46" rx="6" stroke="#5b9df9" width="108" x="20" y="34"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="74" y="54">client</text>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="74" y="70">batched / 15s</text>
+<line marker-end="url(#m4)" stroke="#7c8593" x1="130" x2="144" y1="57" y2="57"></line>
+<rect fill="rgba(91,157,249,0.12)" height="46" rx="6" stroke="#5b9df9" width="100" x="148" y="34"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="198" y="62">location svc</text>
+<rect fill="rgba(255,255,255,0.03)" height="36" rx="6" stroke="#7c8593" width="124" x="268" y="12"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="330" y="34">Cassandra (positions)</text>
+<rect fill="rgba(155,108,245,0.16)" height="36" rx="6" stroke="#9b6cf5" width="124" x="268" y="64"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="330" y="86">Kafka event log</text>
+<line marker-end="url(#m4)" stroke="#7c8593" x1="250" x2="266" y1="48" y2="33"></line>
+<line marker-end="url(#m4)" stroke="#7c8593" x1="250" x2="266" y1="66" y2="80"></line>
+<rect fill="rgba(91,157,249,0.10)" height="32" rx="6" stroke="#5b9df9" width="140" x="404" y="22"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="474" y="42">live traffic aggregation</text>
+<rect fill="rgba(255,255,255,0.03)" height="32" rx="6" stroke="#7c8593" width="140" x="404" y="64"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="474" y="84">ETA model training</text>
+<rect fill="rgba(255,255,255,0.03)" height="32" rx="6" stroke="#7c8593" width="140" x="404" y="106"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="474" y="126">road graph fixes</text>
+<line marker-end="url(#m4)" stroke="#7c8593" x1="394" x2="402" y1="76" y2="40"></line>
+<line marker-end="url(#m4)" stroke="#7c8593" x1="394" x2="402" y1="82" y2="80"></line>
+<line marker-end="url(#m4)" stroke="#7c8593" x1="394" x2="402" y1="88" y2="120"></line>
+<text fill="#5b9df9" font-size="12" font-weight="700" x="20" y="172">Read path: one navigation</text>
+<rect fill="rgba(91,157,249,0.12)" height="44" rx="6" stroke="#5b9df9" width="88" x="20" y="186"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="64" y="214">client</text>
+<line marker-end="url(#m4)" stroke="#7c8593" x1="110" x2="128" y1="208" y2="208"></line>
+<rect fill="rgba(91,157,249,0.12)" height="44" rx="6" stroke="#5b9df9" width="96" x="132" y="186"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="180" y="214">route planner</text>
+<line marker-end="url(#m4)" stroke="#7c8593" x1="230" x2="248" y1="208" y2="208"></line>
+<rect fill="rgba(91,157,249,0.12)" height="44" rx="6" stroke="#5b9df9" width="116" x="252" y="186"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="310" y="206">shortest path</text>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="310" y="222">(routing tiles)</text>
+<line marker-end="url(#m4)" stroke="#7c8593" x1="370" x2="386" y1="208" y2="208"></line>
+<rect fill="rgba(91,157,249,0.12)" height="44" rx="6" stroke="#5b9df9" width="92" x="390" y="186"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="436" y="214">ETA service</text>
+<path d="M544,38 L578,38 L578,208 L486,208" fill="none" marker-end="url(#m5)" stroke="#9b6cf5" stroke-dasharray="5 4"></path>
+<text fill="#9b6cf5" font-size="10" x="582" y="128">traffic</text>
+<text fill="#7c8593" font-size="10.5" x="20" y="266">the client reports throughout → traffic worsens ahead, route is recomputed and pushed</text>
+</svg>
+<figcaption>Figure 3 · Write path and read path: positions land in a high-throughput store and in Kafka, from which live traffic is derived and fed to ETA; one navigation is "shortest path + ETA", recomputed continuously along the way.</figcaption>
+</figure>
+<h2>The trade-offs that matter</h2>
+<p>The soul of this chapter is <strong>pricing each of the three paths by how often it changes</strong>: map geometry barely changes → bake it static and push it as close to the edge as possible; the road graph changes slowly → trade offline preprocessing for query latency; traffic changes every minute → it alone deserves live computation.</p>
+<p class="tcap">Table 1 · Map rendering: raster vs vector tiles</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Raster (drawn server-side)</th><th>Vector (drawn client-side)</th></tr></thead>
+<tbody>
+<tr><th>What ships</th><td>A finished bitmap; the client blits it</td><td>Geometry + attributes; the client draws</td></tr>
+<tr><th>Continuous zoom / rotation</th><td>A separate set per scale; <strong>intermediate states look blurry</strong></td><td><strong>One payload covers zoom and rotation</strong>; labels stay crisp</td></tr>
+<tr><th>Bytes on the wire</th><td>Larger, and independent per level</td><td>Smaller, reusable across levels</td></tr>
+<tr><th>Restyling (night mode, languages)</th><td>Re-bake the whole tile set</td><td>Same geometry, different paint</td></tr>
+<tr><th>Cost</th><td>Storage and origin bandwidth</td><td>Client compute and first paint; more complex</td></tr>
+<tr><th>Pick it when</th><td>Clients are weak, or imagery is highly custom (satellite, terrain basemaps)</td><td><strong>The mobile default</strong>: continuous zoom, thrifty data, offline caching</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · Routing: the preprocessing / query / dynamism triangle</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Approach</th><th>Offline preprocessing</th><th>Query cost</th><th>With live traffic</th><th>Fits</th></tr></thead>
+<tbody>
+<tr><th>Plain Dijkstra</th><td>None</td><td>Explodes with graph size; <strong>unusable at continental scale</strong></td><td>Native — change weights freely</td><td>One city, teaching</td></tr>
+<tr><th>A* heuristic</th><td>None</td><td>Searches far less than Dijkstra, still degrades with distance</td><td>Native</td><td>Mid-size graphs with shifting weights</td></tr>
+<tr><th>Hierarchical routing tiles</th><td>Moderate: cut tiles, build levels (re-baked weekly/monthly)</td><td><strong>Proportional to route length</strong>, bounded memory</td><td>Good — weights inside a tile can be refreshed</td><td><strong>This chapter</strong>: global scale that must track traffic</td></tr>
+<tr><th>Contraction hierarchies</th><td>Heavy: contract the whole graph, add shortcuts</td><td><strong>Milliseconds</strong> — the fastest</td><td><strong>Poor</strong>: a weight change invalidates the preprocessing</td><td>Static weights, offline / open-source routers (OSRM)</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 3 · Location reporting: every second vs batched</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Once per second</th><th>Batched every 15s</th></tr></thead>
+<tbody>
+<tr><th>Write QPS (3.5M concurrent navigations)</th><td>about <code>3.5M</code>/s</td><td>about <code>230K</code>/s</td></tr>
+<tr><th>Phone battery / data</th><td><strong>Battery collapses first</strong></td><td>Markedly cheaper on both</td></tr>
+<tr><th>Freshness of traffic</th><td>Freshest</td><td>At most 15s behind — <strong>ample for aggregation</strong></td></tr>
+<tr><th>Verdict</th><td colspan="2">Traffic is a <strong>statistic</strong>, not anyone's exact trace, so trading freshness for cost is clearly worth it. What genuinely cannot lag is "off route → replan", and that travels a separate, faster path.</td></tr>
+</tbody></table></div>
+<h2>Why it matters / in real systems</h2>
+<p>In an interview or an architecture review, the valuable thing here is not reciting A*; it is <strong>splitting static from dynamic in your first sentence</strong>: the bulk of a billion DAU's reads are static tiles and belong pinned to a CDN, while the only things that really spend server money are location writes and traffic/ETA. Say that line first and you are already half right.</p>
+<p>The real-world mapping is clear too: <strong>Google Maps</strong> (tile pyramid + CDN + vector client rendering + crowdsourced traffic), <strong>Mapbox</strong> (whose vector tile format MVT became the de facto standard), <strong>OpenStreetMap + OSRM / Valhalla</strong> (open implementations of both the CH and the hierarchical route), and <strong>Uber</strong> (ETA prediction and dispatch routing).</p>
+<div class="ev">
+<div class="evh">FIELD EVIDENCE · not the book's claims, but each company's own public words</div>
+<ul>
+<li><strong>Google (2009)</strong> described crowdsourced traffic bluntly: with My Location enabled, your phone sends Google anonymous bits about how fast you're moving, and thousands of those speeds stitched together are live traffic. Their own wording: "<em>the more people that participate, the better the resulting traffic reports get for everybody</em>." That is the real-world original of this chapter's "location updates → derived traffic" path.<br/><span class="src">Official Google Blog · 2009-08 · <a href="https://googleblog.blogspot.com/2009/08/bright-side-of-sitting-in-traffic.html" rel="noopener" target="_blank">The bright side of sitting in traffic: Crowdsourcing road congestion data</a></span></li>
+<li><strong>Google (2020)</strong> gave both the scale and the accuracy of ETA: more than <strong>1 billion kilometres</strong> are driven with Google Maps every day across 220+ countries and territories, and its ETAs are "<em>consistently accurate for over 97% of trips</em>". The same post includes a telling detail about models having to follow the world: after travel patterns shifted abruptly in 2020, they retuned the models to weight the <strong>last two to four weeks</strong> of historical traffic more heavily.<br/><span class="src">Google · Maps 101 · 2020-09 · <a href="https://blog.google/products-and-platforms/products/maps/google-maps-101-how-ai-helps-predict-traffic-and-determine-routes/" rel="noopener" target="_blank">How AI helps predict traffic and determine routes</a></span></li>
+<li><strong>DeepMind (2020)</strong> published the structure of the ETA model: the road network is divided into <em>Supersegments</em> (runs of adjacent segments sharing traffic volume) and a graph neural network does the spatiotemporal prediction, improving live ETA accuracy by <strong>up to 50%</strong> in cities including Berlin, Jakarta, São Paulo, Sydney, Tokyo and Washington D.C. What this corroborates is that ETA is a prediction problem, not an arithmetic one.<br/><span class="src">Google DeepMind · 2020-09 · <a href="https://deepmind.google/blog/traffic-prediction-with-advanced-graph-neural-networks/" rel="noopener" target="_blank">Traffic prediction with advanced Graph Neural Networks</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/cdn-edge-day28.en.html" rel="noopener" target="_blank">System Design · Day 28 CDN and Edge</a> — how static assets get pushed to within 50km of the user: cache key design, origin collapsing, and how much work the edge can take on</aside>
+<h2>Mistakes and open questions</h2>
+<ul>
+<li><strong>Answering it as an algorithms question.</strong> Opening with the complexity of Dijkstra versus A* mostly misses. The engineering lives in <strong>offline preprocessing, data partitioning and on-demand loading</strong>, not in which search you pick.</li>
+<li><strong>Assuming tiles must be images.</strong> A tile is a convention for numbering and cutting; it can carry raster or vector. Mobile has long since gone vector.</li>
+<li><strong>Assuming ETA is distance ÷ speed limit.</strong> It is a prediction built on historical patterns plus live traffic — and therefore it degrades when travel patterns shift suddenly, as Google's own retuning of the historical window shows.</li>
+<li><strong>Forgetting what Mercator costs.</strong> It preserves angles, not areas, so high latitudes are inflated (Greenland dwarfs Africa). Never compute areas or heatmap densities from projected pixels.</li>
+<li><strong>Treating CH as free speed.</strong> Its millisecond queries are bought with the assumption that weights don't change; under live traffic a correction layer is mandatory. Conflating "fast" with "tracks traffic" is a common error.</li>
+<li><strong>The book's blind spot.</strong> Written in 2022, it barely opens up <strong>privacy and compliance</strong> — location is among the most sensitive data there is, and anonymisation, minimum aggregation thresholds and retention limits are hard constraints in a real system, not options. The tension between the cheerful "the more people take part, the better it gets" framing and the long-run privacy cost is still argued over.</li>
+<li><strong>Don't overrate crowdsourcing either.</strong> New roads, sudden closures and disaster evacuations are exactly when historical patterns fail and samples are thin — the moments a map product is most likely to be wrong and most in need of human and event reporting.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① One line: a pipeline that <strong>separates static from dynamic</strong> — map and road graph are baked offline into tiles and shipped via CDN; only traffic and ETA are computed live.</p>
+<p>② Requirements narrow to three: location updates, navigation (with ETA), map rendering — magnitudes apart, so each needs its own mechanism.</p>
+<p>③ The tile pyramid: <code>4ᶻ</code> tiles at level <code>z</code>; level 21 is ~4.4 trillion ≈ 440PB, pulled back to tens of PB by <strong>not storing what nobody looks at</strong>.</p>
+<p>④ The client derives tile URLs itself, so <strong>no service sits on the render path</strong> — just static files on a CDN. That's how the bulk of a billion users' reads disappears.</p>
+<p>⑤ Raster vs vector: <strong>whether you need continuous zoom and rotation</strong> decides which end renders. Mobile picks vector, which also buys restyling and offline.</p>
+<p>⑥ Routing's key is not the algorithm but <strong>hierarchy plus on-demand loading</strong>: the middle runs on the highway layer, so load grows with route length, not planet size.</p>
+<p>⑦ CH gets queries to milliseconds at the price of <strong>preprocessing bound to edge weights</strong>; live traffic needs a correction layer on top.</p>
+<p>⑧ Batching reports every 15s takes write QPS from ~3.5M to ~230K, and <strong>the bigger win is phone battery</strong>; traffic is a statistic, so 15s of lag is harmless.</p>
+<p>⑨ Once positions are in Kafka it's "write once, derive many ways": live traffic, ETA model, road-graph corrections each take a feed.</p>
+<p>⑩ Navigation is a <strong>continuing session</strong>, not one request: reporting throughout, recomputed and pushed when traffic worsens; ETA is prediction (Google/DeepMind's Supersegments + graph neural networks).</p>
+</div>
+</div>
+<footer>Books Deep-Read · reading this page ≈ the core of this chapter; for full case studies and depth, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
