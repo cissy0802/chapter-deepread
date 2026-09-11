@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview Vol 2 Ch 5 · Metrics Monitoring and Alerting System — Books Deep-Read 72</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOK DEEP READ · System Design Interview Vol 2 · Ch 5</p>
+<h1>Metrics Monitoring and Alerting System</h1>
+<p class="sub">System Design Interview Vol 2 · Ch 5 · Alex Xu &amp; Sahn Lam · 2022</p>
+<p class="langbar"><a href="sdi2-ch05-metrics-monitoring-book72.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>That wall-mounted dashboard at the office, packed with squiggly lines: how hot the machines are running, whether checkout got slower. And the phone call at 2am telling you a server is unwell. This chapter is about <strong>how those lines get collected, and about the thing that decides whether to wake you up</strong> — built from scratch.</p>
+<h2>A strange thing first</h2>
+<p>Your company's core storage system breaks. You open the monitoring dashboard to see what went wrong — and discover <strong>the monitoring system won't open either</strong>, because its data happens to live in the very storage system that just died.</p>
+<p>That is the first iron law of monitoring: <strong>the fire alarm cannot be wired to the burning building's electricity</strong>. It has to be sturdier and more independent than everything it watches. Google's own monitoring system keeps all its data in memory purely to escape this loop — absurdly expensive, and worth it.</p>
+<h2>Why the old world was hard</h2>
+<p>When one machine misbehaves, you log in and look. What about ten thousand? And these numbers <strong>never stop arriving</strong>: a hundred measurements per machine, reported every ten seconds, which adds up to a million fresh numbers every second, around the clock.</p>
+<p>Worse, the job has a strange shape: <strong>the incoming volume is enormous and utterly relentless, while almost nobody is reading</strong> — it keeps writing when nobody is watching the dashboard. Ordinary databases are designed for roughly balanced reads and writes, and get flattened here.</p>
+<h2>How it actually pulls this off</h2>
+<p><strong>1. Collecting.</strong> Either every machine keeps a little blackboard by its door with its current numbers, and <strong>a meter reader walks the route copying them down</strong> (if a door doesn't open, you've learned something about that house for free); or each machine sends a runner who <strong>drops a note at the mail room</strong> (the only option for machines hiding behind a firewall, or for jobs that don't live long enough to be visited).</p>
+<p><strong>2. Storing.</strong> Consecutive readings look remarkably alike: time ticks along evenly, and the values often don't budge at all. So <strong>don't transcribe each one in full — just record "how much this differs from the last"</strong>, the way a ledger says "unchanged, unchanged, plus one" instead of "10032, 10032, 10033". The same data gets more than ten times slimmer.</p>
+<p><strong>3. Old data.</strong> Nobody, a year later, cares what the CPU was doing at 3:07pm last Wednesday. So the last few days are kept verbatim, anything past a month is <strong>squeezed into one summary per minute</strong>, and older still into one per hour — like a diary gradually abbreviated into a year-end review. <em>The cost is real: a spike that flashed by once is gone forever after the summary smooths it away.</em></p>
+<p><strong>4. When to wake you.</strong> One data centre drops off the network and a thousand machines shout "I'm unwell" at once. Send each one and your phone rings a thousand times in thirty seconds — after which you silence it and miss the next real emergency. So before anyone gets woken, <strong>the thousand shouts about one event must be gathered into a single sentence</strong>.</p>
+<h2>How to remember it</h2>
+<p>A monitoring system is not "a website with charts on it". It is <strong>an assembly line running from a million devices to your phone</strong>: the first half is about swallowing a flood of numbers quickly and cheaply, the second about waking exactly one person when something is truly wrong — and not pestering them when it isn't.</p>
+<h2>One sentence to keep</h2>
+<div class="tl">
+<p>Monitoring is a peculiar <strong>write-heavy, read-light</strong> system: it shrinks data by recording only changes, holds costs down by abbreviating old data into summaries, and protects humans by folding a thousand duplicate shouts into one. Plus one iron law — <strong>it must never depend on the systems it is watching</strong>.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the numbers and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think of monitoring as a read system — it's just charts, isn't it? In fact it is one of the most <strong>relentlessly write-heavy systems a company runs</strong>: a million writes per second, forever, with reads arriving only in occasional bursts. This chapter decomposes "design a monitoring and alerting system" into a pipeline — <strong>collection, transport, storage, query, alerting, visualization</strong> — and every trade-off in it is driven by the same constraint: <strong>writes are enormous and constant, reads are sparse and bursty, and the whole thing must be more independent than everything it watches</strong>.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Metric</strong>: a numeric measurement that changes over time, e.g. "this machine's CPU usage is 0.73 right now". Its siblings are logs (discrete event records) and traces (one request's full path across services) — together the observability trio; this chapter covers metrics only.</li>
+<li><strong>Time series</strong>: a run of "(timestamp, value)" pairs for one measured thing.</li>
+<li><strong>Label / tag</strong>: a key-value pair attached to a time series, e.g. <code>host=i-001</code>, used to slice and aggregate after the fact.</li>
+<li><strong>Cardinality</strong>: the total number of distinct time series in the system; the more values a label can take, the faster it grows.</li>
+<li><strong>TSDB (time-series database)</strong>: a database optimised for "append by time, query by time range" — Prometheus, InfluxDB, OpenTSDB.</li>
+<li><strong>Service discovery</strong>: a live roster of "which machines should be monitored right now", maintained by etcd / ZooKeeper / Consul.</li>
+<li><strong>Downsampling</strong>: storing high-frequency raw data aggregated to a coarser grain (one value per minute, say), trading precision for storage; the companion <strong>retention policy</strong> says how long each grain is kept.</li>
+<li><strong>Dedupe / grouping</strong>: folding hundreds of alerts from one root cause into a single notification.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Chapter 5 of Volume 2, on the "internals of things you build yourself" thread — a relative of Chapter 4: that one builds Kafka, this one builds the whole Prometheus + Grafana + Alertmanager stack; Chapter 6 (ad click aggregation) later pushes the streaming pre-aggregation here much further. In the real world it maps onto any company's <strong>observability platform</strong>: Prometheus, Datadog, Google's Monarch, Uber's M3.</p>
+<h2>The problem this chapter attacks</h2>
+<p>Quantify the brief first, because nearly every design decision here is forced by <strong>magnitude</strong>. The book's scenario: the infrastructure of a company with 100 million daily active users — roughly <code>1,000</code> server pools, <code>100</code> machines each, <code>100</code> metrics per machine, or about <strong>10 million time series</strong>, sampled every <code>10</code> seconds. So:</p>
+<p style="text-align:center"><code>10,000,000 ÷ 10s = 1,000,000 writes / second</code></p>
+<p>A million data points per second, and this is <strong>the baseline, not the peak</strong> — it is the same at 3am, and must be retained for a year. The read side? A few dozen dashboard panels and an alert rule evaluation every minute: <strong>orders of magnitude smaller than the write load, but bursty</strong> (during an incident everyone digs through history at once).</p>
+<p>What happens if you don't solve it? Brute-force it with an ordinary relational database, one row per data point, and a year is on the order of <code>3×10¹³</code> rows, with indexes larger than the data; disk and invoice collapse first. Worse is <strong>the second failure mode</strong>: the system holds up, but the alerting is garbage — one flaky data centre emits a thousand notifications, and three months later the on-call engineer dismisses every alert on reflex. This chapter has to solve both: <strong>swallowing it</strong>, and <strong>speaking like a human</strong>.</p>
+<h2>The core, properly explained</h2>
+<h3>1. The data model: one time series = a name plus a set of labels</h3>
+<p>The model is almost embarrassingly plain: <strong>a metric name, a set of labels, and a run of (timestamp, value)</strong>. For instance</p>
+<p style="text-align:center"><code>cpu.load {host=i-001, env=prod, region=us-west}</code></p>
+<p>The crucial part: <strong>every distinct combination of name and labels is its own time series</strong>. Labels are where all the power lives — you don't know in advance how you'll want to slice things during an incident, so labels let you decide at query time whether to group by region or by instance type, with no pre-built rollup tables.</p>
+<p>The cost lives in the same place: <strong>cardinality is the product of each label's value count</strong>. <code>1,000</code> machines × <code>5</code> environments × <code>20</code> metrics = 100k series, fine; swap in a label that grows with your user base and there is no ceiling at all (see §7). <strong>Labels are for dimensions with bounded values that you will genuinely group by.</strong></p>
+<h3>2. Collection: pull or push, and who keeps the roster</h3>
+<p><strong>Pull</strong>: each monitored process exposes a <code>/metrics</code> HTTP endpoint emitting its current values as text, and collectors fetch them on a fixed interval. This is Prometheus's approach, and it throws in two things free: <strong>debugging is trivial</strong> (open the endpoint in a browser and read the raw numbers), and <strong>health checking comes along for the ride</strong> — a failed scrape means the instance is gone, no separate heartbeat needed.</p>
+<p>It must answer one question: <strong>who should I scrape?</strong> Machines scale up and down constantly, so the roster can't be hard-coded. The answer is a <em>service discovery</em> component (etcd / ZooKeeper / Consul) asked periodically for the live instances; when there are more targets than one collector can handle, make the collectors a cluster and shard targets across them with <strong>consistent hashing</strong>, each owning an arc of the ring, so scaling moves only a small fraction.</p>
+<p><strong>Push</strong>: an agent on each machine sends data in, and can pre-aggregate locally first. It wins in the three places pull cannot reach: targets <strong>behind a firewall or NAT</strong>, <strong>short-lived jobs</strong> (a batch job that exits after 30 seconds is gone before the scraper arrives — hence Prometheus's Pushgateway), and cases sensitive to <strong>reporting delay</strong>.</p>
+<figure>
+<svg viewBox="0 0 640 268" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="p1" markerWidth="8" markerHeight="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="p2" markerWidth="8" markerHeight="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<line x1="320" x2="320" y1="14" y2="256" stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4"></line>
+<text x="152" y="26" fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle">PULL · the collector reads the meters</text>
+<rect x="26" y="44" width="78" height="30" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect><text x="65" y="63" fill="#b9c0ca" font-size="10" text-anchor="middle">/metrics</text>
+<rect x="113" y="44" width="78" height="30" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect><text x="152" y="63" fill="#b9c0ca" font-size="10" text-anchor="middle">/metrics</text>
+<rect x="200" y="44" width="78" height="30" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect><text x="239" y="63" fill="#b9c0ca" font-size="10" text-anchor="middle">/metrics</text>
+<line x1="65" y1="140" x2="65" y2="78" stroke="#7c8593" marker-end="url(#p1)"></line>
+<line x1="152" y1="140" x2="152" y2="78" stroke="#7c8593" marker-end="url(#p1)"></line>
+<line x1="239" y1="140" x2="239" y2="78" stroke="#7c8593" marker-end="url(#p1)"></line>
+<rect x="56" y="142" width="192" height="32" rx="6" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"></rect><text x="152" y="162" fill="#e7ebf1" font-size="10" text-anchor="middle">collector cluster · consistent hashing</text>
+<rect x="46" y="196" width="212" height="28" rx="6" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"></rect><text x="152" y="215" fill="#cdd3db" font-size="10" text-anchor="middle">service discovery: who to scrape now</text>
+<line x1="152" y1="194" x2="152" y2="178" stroke="#9b6cf5" marker-end="url(#p2)"></line>
+<text x="152" y="248" fill="#7c8593" font-size="9.5" text-anchor="middle">no answer = instance is dead. Health check, free.</text>
+<text x="480" y="26" fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle">PUSH · agents deliver themselves</text>
+<rect x="354" y="44" width="78" height="30" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect><text x="393" y="63" fill="#b9c0ca" font-size="10" text-anchor="middle">app + agent</text>
+<rect x="441" y="44" width="78" height="30" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect><text x="480" y="63" fill="#b9c0ca" font-size="10" text-anchor="middle">app + agent</text>
+<rect x="528" y="44" width="82" height="30" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"></rect><text x="569" y="63" fill="#e7ebf1" font-size="10" text-anchor="middle">short-lived job</text>
+<line x1="393" y1="78" x2="393" y2="140" stroke="#7c8593" marker-end="url(#p1)"></line>
+<line x1="480" y1="78" x2="480" y2="140" stroke="#7c8593" marker-end="url(#p1)"></line>
+<line x1="569" y1="78" x2="569" y2="140" stroke="#9b6cf5" marker-end="url(#p2)"></line>
+<rect x="390" y="142" width="180" height="32" rx="6" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"></rect><text x="480" y="162" fill="#e7ebf1" font-size="10" text-anchor="middle">collector · needs no roster</text>
+<text x="480" y="200" fill="#7c8593" font-size="9.5" text-anchor="middle">Behind a firewall, or gone before the next scrape:</text>
+<text x="480" y="217" fill="#7c8593" font-size="9.5" text-anchor="middle">these can only deliver themselves.</text>
+<text x="480" y="248" fill="#7c8593" font-size="9.5" text-anchor="middle">Cost: silence is now unexplainable — dead, or never installed?</text>
+</svg>
+<figcaption>Fig 1 · Two directions of collection. Pull makes the roster an explicit dependency (service discovery) and gets health checking free; push discards the roster problem at the price of making "no data" impossible to interpret.</figcaption>
+</figure>
+<h3>3. Storage: why a purpose-built TSDB earns its keep</h3>
+<p>Storing each data point as a row in a relational database can work in theory; in practice, at a million writes per second, it demands very deep tuning expertise. A purpose-built TSDB wins on two things, and both are <strong>exploiting the shape of monitoring data itself</strong>.</p>
+<p><strong>First: compression.</strong> Monitoring data hands you two regularities for free — collection is <strong>scheduled</strong>, so the gap between consecutive timestamps is essentially constant; values are <strong>slow-moving</strong>, so disk usage this second usually equals last second's. So store differences rather than values: for timestamps record "how much later than the previous one", then "how much that gap differs from the previous gap" (<em>delta-of-delta</em>, almost always 0 under scheduled collection — one bit will do); for values, XOR each float against its predecessor, which is all zeros when unchanged and has only a few non-zero bits when barely changed, so only those bits travel. This squeezes a <code>16</code>-byte data point down to <strong>1.37 bytes</strong> on average (source in §6).</p>
+<p><strong>Second: tiered retention.</strong> Data value collapses fast with age, so split it by age:</p>
+<p class="tcap">Table 1 · Retention and downsampling tiers (the book's policy; relative volumes for 10M series at a 10-second interval)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Age</th><th>Grain</th><th>What it's for</th><th>Relative points</th></tr></thead>
+<tbody>
+<tr><th>Last 7 days</th><td>raw, <code>10</code>s</td><td>Debugging: you need the spikes and the jitter</td><td><strong>baseline 1×</strong></td></tr>
+<tr><th>7–30 days</th><td>rolled up to <code>1</code> min</td><td>Week-over-week, capacity trends</td><td><code>1/6</code></td></tr>
+<tr><th>30 days–1 year</th><td>rolled up to <code>1</code> hour</td><td>Quarterly capacity planning, cost accounting</td><td><code>1/360</code></td></tr>
+<tr><th>Beyond</th><td>cold storage / archive</td><td>Compliance retention; slow queries accepted</td><td>unit price an order of magnitude lower</td></tr>
+</tbody></table></div>
+<p>The two multiply. One concrete anchor — the InfluxDB benchmark the book cites: a single node with <code>8</code> cores and <code>32GB</code> of RAM sustains <strong>250,000 writes per second</strong>. Extrapolating, absorbing that steady 1M/s takes <code>4</code> such nodes as a floor, and with replicas and headroom on top, that is your real cluster size.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/storage-engine-day47.en.html" target="_blank" rel="noopener">System Design · Day 47 Database Internals and Storage Engines</a> — what a read and a write actually do on disk, and why LSM-tree's sequential appends suit an append-by-time, query-by-time workload so naturally</aside>
+<h3>4. The transport pipeline: why a Kafka goes in the middle</h3>
+<p>Wiring collectors straight into the TSDB runs, but has one fatal property: <strong>the moment the TSDB wobbles, collectors start dropping data</strong> — and the moment monitoring data most needs to survive is precisely when things are breaking. The standard answer is a <strong>queue</strong> (Kafka) in between: collectors only write to the queue; consumers read, aggregate, and land it in the TSDB. The queue is <strong>partitioned by metric name</strong> so that one metric always reaches the same consumer, which is what makes aggregation correct; when the TSDB dies the data piles up in the queue instead of evaporating, and catches up on recovery.</p>
+<figure>
+<svg viewBox="0 0 640 320" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="q1" markerWidth="8" markerHeight="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text x="294" y="42" fill="#9b6cf5" font-size="9.5" text-anchor="middle">absorbs bursts · decouples · survives a dead TSDB</text>
+<rect x="14" y="58" width="92" height="38" rx="7" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect><text x="60" y="74" fill="#b9c0ca" font-size="10" text-anchor="middle">metric sources</text><text x="60" y="89" fill="#7c8593" font-size="9" text-anchor="middle">apps / DB / queues</text>
+<rect x="132" y="58" width="96" height="38" rx="7" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect><text x="180" y="74" fill="#e7ebf1" font-size="10" text-anchor="middle">collectors</text><text x="180" y="89" fill="#7c8593" font-size="9" text-anchor="middle">pull / accept push</text>
+<rect x="254" y="58" width="80" height="38" rx="7" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"></rect><text x="294" y="74" fill="#e7ebf1" font-size="10" text-anchor="middle">Kafka</text><text x="294" y="89" fill="#7c8593" font-size="9" text-anchor="middle">by metric name</text>
+<rect x="360" y="58" width="96" height="38" rx="7" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect><text x="408" y="74" fill="#e7ebf1" font-size="10" text-anchor="middle">consumers</text><text x="408" y="89" fill="#7c8593" font-size="9" text-anchor="middle">stream pre-agg</text>
+<rect x="482" y="58" width="92" height="38" rx="7" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect><text x="528" y="74" fill="#e7ebf1" font-size="10" text-anchor="middle">TSDB</text><text x="528" y="89" fill="#7c8593" font-size="9" text-anchor="middle">compress + roll up</text>
+<line x1="108" y1="77" x2="128" y2="77" stroke="#7c8593" marker-end="url(#q1)"></line>
+<line x1="230" y1="77" x2="250" y2="77" stroke="#7c8593" marker-end="url(#q1)"></line>
+<line x1="336" y1="77" x2="356" y2="77" stroke="#7c8593" marker-end="url(#q1)"></line>
+<line x1="458" y1="77" x2="478" y2="77" stroke="#7c8593" marker-end="url(#q1)"></line>
+<rect x="256" y="114" width="152" height="28" rx="7" fill="rgba(255,255,255,0.03)" stroke="rgba(155,108,245,0.5)" stroke-dasharray="4 3"></rect><text x="332" y="133" fill="#cdd3db" font-size="9.5" text-anchor="middle">alert rules (YAML)</text>
+<line x1="332" y1="142" x2="332" y2="156" stroke="#7c8593" marker-end="url(#q1)"></line>
+<rect x="452" y="160" width="152" height="34" rx="7" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect><text x="528" y="182" fill="#e7ebf1" font-size="10" text-anchor="middle">query service (+ cache)</text>
+<rect x="256" y="160" width="152" height="34" rx="7" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"></rect><text x="332" y="182" fill="#e7ebf1" font-size="10" text-anchor="middle">alert manager</text>
+<rect x="60" y="160" width="152" height="34" rx="7" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect><text x="136" y="182" fill="#e7ebf1" font-size="10" text-anchor="middle">notification queue + workers</text>
+<line x1="528" y1="100" x2="528" y2="156" stroke="#7c8593" marker-end="url(#q1)"></line>
+<line x1="448" y1="177" x2="412" y2="177" stroke="#7c8593" marker-end="url(#q1)"></line>
+<line x1="252" y1="177" x2="216" y2="177" stroke="#7c8593" marker-end="url(#q1)"></line>
+<text x="430" y="214" fill="#7c8593" font-size="9" text-anchor="middle">evaluates rules each minute</text>
+<text x="228" y="214" fill="#7c8593" font-size="9" text-anchor="middle">after dedupe</text>
+<rect x="452" y="238" width="152" height="34" rx="7" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="528" y="260" fill="#b9c0ca" font-size="10" text-anchor="middle">dashboards · Grafana</text>
+<rect x="36" y="238" width="200" height="34" rx="7" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="136" y="260" fill="#b9c0ca" font-size="10" text-anchor="middle">email / SMS / PagerDuty / webhook</text>
+<line x1="528" y1="194" x2="528" y2="234" stroke="#7c8593" marker-end="url(#q1)"></line>
+<line x1="136" y1="194" x2="136" y2="234" stroke="#7c8593" marker-end="url(#q1)"></line>
+<text x="320" y="306" fill="#7c8593" font-size="9.5" text-anchor="middle">Left half: how to wake one person. Right half: how to show a person. Same data underneath.</text>
+</svg>
+<figcaption>Fig 2 · The whole architecture. The write path (top row) chases throughput; the read path (bottom) forks into alerting and visualization — same data, but one branch is run by machines every minute and the other by humans on demand.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/data-processing-day20.en.html" target="_blank" rel="noopener">System Design · Day 20 Batch and Stream Processing</a> — pre-aggregation windows, late-arriving data, and the "compute once or compute twice" trade-off</aside>
+<h3>5. Alerting: the rule engine, and the layer that protects humans</h3>
+<p>The skeleton is simple: <strong>rule config → alert manager → notification queue → sender workers</strong>. A rule is declarative config expressing three things: what to query, what counts as abnormal, and how long it must stay abnormal to count. In Prometheus style, roughly</p>
+<p style="text-align:center"><code>expr: up == 0　for: 5m　severity: page</code></p>
+<p>That <code>for: 5m</code> is the most underrated line in the chapter: <strong>the anomaly must persist five minutes to fire</strong>, trading a little latency for the elimination of most jitter-induced false alarms. The real engineering, though, sits in the <strong>alert manager</strong>, whose entire job is protecting people:</p>
+<ul>
+<li><strong>Dedupe</strong>: a rule evaluates true every minute for as long as the anomaly lasts, but you should be told once.</li>
+<li><strong>Grouping</strong>: a rack loses power, 100 machines hit <code>up == 0</code> together, and that should become one "100 instances unreachable on rack A".</li>
+<li><strong>Inhibition</strong>: when a data centre's network is down, suppress downstream "service X is slow" alerts and send only the root cause.</li>
+<li><strong>Retry</strong>: notification delivery must be <strong>at-least-once</strong> — better duplicated than lost; which in turn demands the receiving side tolerate duplicates, making dedupe a hard requirement rather than an optimisation.</li>
+</ul>
+<figure>
+<svg viewBox="0 0 640 216" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="r1" markerWidth="8" markerHeight="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text x="14" y="24" fill="#5b9df9" font-size="12" font-weight="700">One rack loses power — two possible endings</text>
+<rect x="14" y="42" width="136" height="118" rx="8" fill="rgba(224,107,107,0.08)" stroke="#e06b6b"></rect>
+<text x="82" y="62" fill="#e7ebf1" font-size="10" text-anchor="middle">100 instances</text>
+<text x="82" y="78" fill="#e7ebf1" font-size="10" text-anchor="middle">hit the rule at once</text>
+<text x="82" y="104" fill="#e06b6b" font-size="19" font-weight="700" text-anchor="middle">100</text>
+<text x="82" y="124" fill="#b9c0ca" font-size="9.5" text-anchor="middle">× re-evaluated each minute</text>
+<text x="82" y="144" fill="#b9c0ca" font-size="9.5" text-anchor="middle">× lasting 30 minutes</text>
+<line x1="154" y1="101" x2="188" y2="101" stroke="#7c8593" marker-end="url(#r1)"></line>
+<rect x="192" y="60" width="150" height="82" rx="8" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5"></rect>
+<text x="267" y="80" fill="#e7ebf1" font-size="10.5" text-anchor="middle">alert manager</text>
+<text x="267" y="99" fill="#cdd3db" font-size="9" text-anchor="middle">dedupe: tell me once</text>
+<text x="267" y="115" fill="#cdd3db" font-size="9" text-anchor="middle">group: fold by rack</text>
+<text x="267" y="131" fill="#cdd3db" font-size="9" text-anchor="middle">inhibit: mute downstream</text>
+<line x1="346" y1="101" x2="380" y2="101" stroke="#7c8593" marker-end="url(#r1)"></line>
+<rect x="384" y="60" width="242" height="82" rx="8" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect>
+<text x="505" y="84" fill="#8fbaff" font-size="19" font-weight="700" text-anchor="middle">1</text>
+<text x="505" y="106" fill="#e7ebf1" font-size="10" text-anchor="middle">"Rack A · 100 instances unreachable"</text>
+<text x="505" y="128" fill="#b9c0ca" font-size="9.5" text-anchor="middle">one phone call, with the affected list attached</text>
+<text x="320" y="190" fill="#7c8593" font-size="10" text-anchor="middle">Without this layer, three thousand notifications train the on-call to dismiss everything —</text>
+<text x="320" y="208" fill="#7c8593" font-size="10" text-anchor="middle">at which point monitoring still works correctly, and is already useless.</text>
+</svg>
+<figcaption>Fig 3 · Alert convergence. On the left, how often a rule evaluated true; on the right, how often a human should be interrupted. The whole value of the middle layer is keeping those two numbers different.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/low-base-rate-alerting-day51.en.html" target="_blank" rel="noopener">System Design · Day 51 Alerting at a Low Base Rate</a> — why even a 99%-accurate rule drowns in false positives when real incidents are rare, and how to budget for them</aside>
+<p>On <strong>visualization</strong>, the chapter is blunt: <strong>don't write your own</strong> — Grafana already speaks to Prometheus and InfluxDB directly. The "query service" is likewise optional: mainstream TSDBs ship query languages (PromQL, InfluxQL, Flux) that dashboards and the alert manager can use directly; that layer exists only to cache hot queries and centralise auth, and is <strong>not mandatory</strong>.</p>
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 2 · Direction of collection: pull vs push (the book's comparison, with each cost named)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Dimension</th><th>Pull</th><th>Push</th></tr></thead>
+<tbody>
+<tr><th>Debugging</th><td><strong>Wins</strong>: open <code>/metrics</code> in a browser, read the raw numbers</td><td>You dig through agent logs to learn what was sent</td></tr>
+<tr><th>Health check</th><td><strong>Wins</strong>: a failed scrape means the instance is dead, free</td><td>Silence can't distinguish "dead" from "agent never installed"</td></tr>
+<tr><th>Short-lived jobs</th><td>Loses: a <code>30</code>s batch job misses the scrape window entirely</td><td><strong>Wins</strong>: sends on exit (needs a Pushgateway to land it)</td></tr>
+<tr><th>Firewall / NAT</th><td>Loses: the collector must reach every target</td><td><strong>Wins</strong>: the target only needs one outbound address</td></tr>
+<tr><th>Target roster</th><td>Requires service discovery — one more dependency</td><td><strong>Wins</strong>: whoever shows up counts; no roster</td></tr>
+<tr><th>Reporting delay</th><td>Bounded by the scrape interval (say <code>10</code>s)</td><td><strong>Wins</strong>: sends as it happens</td></tr>
+<tr><th>Garbage defence</th><td><strong>Wins</strong>: the server decides who gets scraped</td><td>Loses: any process can flood it; a test job can swamp production</td></tr>
+</tbody></table></div>
+<p>The conclusion is not "pull is better" — the Prometheus maintainers' own phrasing is the honest one (see §6). Large platforms usually <strong>keep both</strong>: long-running services get pulled, short-lived jobs and edge devices push.</p>
+<p class="tcap">Table 3 · Where to aggregate (same "average CPU across us-west", computed in three places — same answer, very different costs)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Where</th><th>What it saves</th><th>What it costs</th><th>When to pick it</th></tr></thead>
+<tbody>
+<tr><th>At collection<br/>(on the agent)</th><td>Least bandwidth; point count drops at the source</td><td>Only simple within-host aggregation; nothing cross-machine</td><td>Huge per-host metric counts, tight egress</td></tr>
+<tr><th>In the pipeline<br/>(stream pre-agg)</th><td><strong>Order-of-magnitude drop in TSDB writes</strong>, often below <code>1/10</code></td><td>Needs stream processing (Flink et al.); <strong>raw points discarded never return</strong>; late data needs handling</td><td>Writes are already the bottleneck and the aggregation dimensions are fixed</td></tr>
+<tr><th>At query time</th><td>Most flexible — slice it any way later; all raw data kept</td><td>Highest storage and query cost; wide queries can take tens of seconds</td><td>Volume is still manageable, or debugging needs the raw jitter</td></tr>
+</tbody></table></div>
+<p>Mature platforms mostly <strong>mix</strong>: popular, fixed aggregations are computed in the pipeline, everything else stays raw and is computed at query time — the same idea as "keep recent data verbatim, keep old data as summaries", applied a second time.</p>
+<h2>Why it matters / in real systems</h2>
+<p>The weight of this chapter is that it describes <strong>the one system every other system depends on</strong> — and the moment it fails is exactly the moment you need it. That constraint reshapes its architecture; the second item below is the sharpest example.</p>
+<div class="ev">
+<p class="evh">FROM THE FIELD</p>
+<ul>
+<li><strong>Facebook / Gorilla (VLDB 2015)</strong>: streaming compression using delta-of-delta timestamps and XOR'd floating-point values takes a data point from <code>16</code> bytes to <strong>1.37 bytes</strong> on average; the paper reports this shrank the storage footprint about <code>10×</code>, letting the data live entirely in memory, and versus their previous HBase-backed time-series store it <strong>cut query latency by 73× and raised query throughput 14×</strong>. This chapter's compression and "hot data in memory" descend directly from it.<span class="src">Pelkonen et al., <a href="https://www.vldb.org/pvldb/vol8/p1816-teller.pdf" target="_blank" rel="noopener">Gorilla: A Fast, Scalable, In-Memory Time Series Database</a>, VLDB 2015</span></li>
+<li><strong>Google / Monarch (VLDB 2020)</strong>: the paper states the iron law outright — Monarch keeps monitoring data in memory "despite the high cost" because Bigtable, Colossus, Spanner, Blobstore and F1 all rely on Monarch for monitoring, so <strong>Monarch cannot use them on the alerting path without creating a potentially dangerous circular dependency</strong>; for the same reason it is regionalized, so each zone keeps working through transient outages of other zones, global components or underlying storage.<span class="src">Adams et al., <a href="https://www.vldb.org/pvldb/vol13/p3181-adams.pdf" target="_blank" rel="noopener">Monarch: Google's Planet-Scale In-Memory Time Series Database</a>, VLDB 2020</span></li>
+<li><strong>Prometheus official FAQ</strong>: an unusually restrained verdict on the pull-vs-push war — "pulling is slightly better than pushing, but <strong>it should not be considered a major point when considering a monitoring system</strong>"; where you genuinely must push, the project ships a Pushgateway. Worth pasting into the next argument about it.<span class="src">Prometheus documentation, <a href="https://prometheus.io/docs/introduction/faq/" target="_blank" rel="noopener">Frequently Asked Questions</a>; see also the project post <a href="https://prometheus.io/blog/2016/07/23/pull-does-not-scale-or-does-it/" target="_blank" rel="noopener">Pull doesn't scale — or does it?</a> (2016)</span></li>
+<li><strong>Uber / M3</strong>: operating figures from the engineering blog — M3 holds <strong>over 6.6 billion time series</strong>, aggregates <code>500</code> million metrics per second and persists <code>20</code> million per second to storage, each written to three replicas by quorum within a region; engineers configure per-metric retention (two days to five years) and granularity (one second to ten minutes). This is tiered retention plus pipeline pre-aggregation at real scale.<span class="src">Uber engineering blog, <a href="https://www.uber.com/us/en/blog/m3/" target="_blank" rel="noopener">M3: Uber's Open Source, Large-scale Metrics Platform for Prometheus</a> (2018)</span></li>
+</ul>
+</div>
+<h2>Pitfalls and open arguments</h2>
+<p><strong>Putting a high-cardinality field in a label.</strong> The classic one-shot incident: add a <code>user_id</code> or <code>request_id</code> label and time series jump from millions to billions, blowing out the TSDB's in-memory index — precisely when you have lost the tool you'd use to diagnose it. The test is simple: <strong>a label's value count must not grow with your user or request count</strong>. The chapter only glances at this; it is the system's true fragility.</p>
+<p><strong>Assuming downsampling is lossless.</strong> It is <strong>irreversible</strong>, and the trap is subtle: percentiles don't add up — you cannot recompute a day's <code>p99</code> from a pile of per-minute averages. Review an old incident six months later with only hourly averages and the three-minute spike that blew the SLO has been flattened into a straight line. Either <strong>pre-aggregate quantiles and maxima alongside</strong> when you downsample, or accept that detail vanishes past a certain date. That's a cost decision, not a technical detail.</p>
+<p><strong>Alerting on causes instead of symptoms.</strong> Put a threshold alert on every component and one failure floods you with hundreds, burying the thing that matters: "users can't check out". The classic Google SRE position is to <strong>alert on symptoms and leave causes to diagnosis</strong> — consistent in spirit with this chapter's focus on dedupe and grouping, though it never takes up alerting philosophy itself.</p>
+<p><strong>Period limitations.</strong> Written in 2022, this is a <strong>metrics-centric</strong> view; logs and traces are declared out of scope on page one. The "high-cardinality wide events" camp argues the opposite: rather than defining metrics up front, keep raw events with rich dimensions and slice at query time — because "reduce to metrics first, then downsample" discards exactly what you need to debug a <strong>novel</strong> problem. Both have costs: this chapter's route is cheap and predictable, the other is expensive but answers questions you didn't anticipate.</p>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① <strong>It's a write system</strong>: 1000 pools × 100 machines × 100 metrics ÷ 10s = a <strong>constant</strong> million writes per second, with reads orders of magnitude smaller but bursty — that asymmetry drives every decision.</p>
+<p>② <strong>Data model</strong>: one time series = metric name + labels. Labels buy you arbitrary slicing after the fact; the price is <strong>cardinality growing as a product</strong> — put a high-cardinality field in and you have an incident.</p>
+<p>③ <strong>Two directions of collection</strong>: pull gives free health checks and easy debugging but needs service discovery (and consistent hashing to shard targets across collectors); push handles firewalls and short-lived jobs at the price of making silence unexplainable. Mature platforms keep both.</p>
+<p>④ <strong>Storage wins on two tricks</strong>: delta + XOR compression (<code>16</code> bytes → <code>1.37</code> bytes), then tiered downsampling at "7 days raw / 30 days per minute / 1 year per hour" — and they multiply.</p>
+<p>⑤ <strong>Put a queue in the middle</strong> (Kafka, partitioned by metric name): absorbs bursts, decouples, and piles data up rather than dropping it when the TSDB dies — the moment monitoring data most needs to survive is the moment things break.</p>
+<p>⑥ <strong>Aggregation has three homes</strong> (agent / pipeline / query time): earlier is cheaper, later is more flexible, and <strong>raw points dropped in the pipeline never come back</strong>.</p>
+<p>⑦ <strong>The alert manager exists to protect humans</strong>: dedupe, group by root cause, inhibit downstream, deliver at-least-once; a duration condition like <code>for: 5m</code> kills most jitter false positives.</p>
+<p>⑧ <strong>The iron law</strong>: a monitoring system must not depend on what it monitors. Google's Monarch keeps everything in memory and regionalizes precisely to break that circular dependency. Visualization and query layers go the other way — Grafana on top of a TSDB is plenty; don't build your own.</p>
+</div>
+</div>
+<footer>Books Deep-Read · reading this page ≈ the core of this chapter; for full case studies and depth, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
