@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview 卷二 第 4 章 · 设计分布式消息队列 — 专业书籍精读 Book 71</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · System Design Interview 卷二 · 第 4 章</p>
+<h1>设计分布式消息队列</h1>
+<p class="sub">System Design Interview Vol 2 · Ch 4 · Alex Xu &amp; Sahn Lam · 2022</p>
+<p class="langbar"><a href="sdi2-ch04-distributed-message-queue-book71.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你在外卖 App 上点了「下单」。那一秒钟里，商家要收到单子、骑手系统要开始派单、库存要扣掉、优惠券要核销、风控要查一遍有没有薅羊毛、数据看板还要加上一笔。<strong>这一章讲的就是中间那根传话的管子</strong>——而且是教你亲手造一个。</p>
+<h2>先说个怪事</h2>
+<p>这个以「快」出名的东西，<strong>把每一条消息老老实实写到硬盘上</strong>，不是攒在内存里。更怪的是，它比很多只写内存的方案还能扛。</p>
+<h2>旧世界为什么难</h2>
+<p>不用这根管子行不行？下单服务挨个去喊：喊商家、喊骑手、喊库存、喊风控。<strong>麻烦有三层。</strong></p>
+<p>第一，下单服务得认识所有部门，新来一个部门就得改一次下单的代码。第二，风控那边一秒只处理得了五千件事，可大促零点一秒来五万单——喊也是白喊，还会把下单服务一起拖垮。第三，风控那台机器要是重启了，这几分钟的单子就永远没人查了，因为<strong>话喊出去就没了</strong>。</p>
+<h2>核心的点子：把「传话」改成「记账」</h2>
+<p>这根管子真正的样子，不是传声筒，是<strong>一本流水账</strong>。下单服务不喊任何人，只管往本子的最后一页添一行。谁想知道发生了什么，自己来翻本子，<strong>并且自己记住翻到第几行了</strong>。</p>
+<p>三个麻烦一起解决。下单服务只认识本子，不认识任何部门；风控慢就慢慢翻，本子不会催它；风控重启回来，从自己记的那一行接着翻——<strong>账还在，没有谁的消息是「错过了就没了」</strong>。新来一个部门更简单，自己从第一行开始翻就是，谁也不惊动。</p>
+<h2>为什么写硬盘反而快</h2>
+<p>因为它<strong>只往最后一页写</strong>。硬盘慢在「翻来翻去找页」，不慢在「一直往后添」。一本只增不改的账本，恰好把硬盘最不擅长的事完全绕开了——这就是它敢用硬盘的全部秘密。</p>
+<h2>一本不够用，就开好几本</h2>
+<p>一本账本只有一个人在最后一页写字，再快也有上限。办法是<strong>开好几本</strong>，按订单号分：尾号 0 到 3 的记第一本、4 到 6 记第二本，几个人同时开工。代价也就在这儿：<strong>同一本里的先后顺序绝对可靠，跨本子之间谁先谁后，就说不准了</strong>。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>消息队列不是传声筒，是<strong>一本只能往后添、谁读到哪儿自己记</strong>的流水账。它敢把消息写进硬盘，是因为只往末尾写；它能扩展，是因为一本拆成好几本——而拆开的那一刻，你手里就只剩「每本内部有序」这半句承诺了。</p>
+</div>
+<p class="switch-hint">想看磁盘布局、副本同步与投递语义的具体机制？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">你以为消息队列的难点是「怎么把消息可靠地送到」，其实这一章从头到尾在解决一个<strong>存储问题</strong>：一旦决定把消息落成磁盘上一条<strong>只能追加、不能修改的日志</strong>，剩下的东西——分区、副本、消费位点、重放，甚至「恰好一次」——全是从这个决定里顺势长出来的。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>生产者（producer）/ 消费者（consumer）</strong>：往队列里写消息的一方 / 从队列里读消息的一方。</li>
+<li><strong>主题（topic）</strong>：消息的分类名，如「订单创建」。<strong>broker</strong> 是真正存消息的服务器进程。</li>
+<li><strong>分区（partition）</strong>：一个 topic 被切成的若干条互相独立的日志，是扩展和并行的基本单位。</li>
+<li><strong>偏移量（offset）</strong>：一条消息在所属分区里的序号，从 0 开始只增不减；既是身份也是位置。</li>
+<li><strong>消费者组（consumer group）</strong>：一伙共同消费一个 topic 的消费者，组内分工，组间互不干扰。</li>
+<li><strong>追加日志（write-ahead log, WAL）</strong>：只在文件末尾添加、从不修改中间内容的磁盘结构。</li>
+<li><strong>顺序 I/O 与随机 I/O</strong>：前者一直往后写，后者跳着位置访问；机械盘上两者可差几个数量级。</li>
+<li><strong>副本（replica）与 leader / follower</strong>：同一分区在多台机器上的几份拷贝；一份当 leader 负责读写，其余只跟着抄。<strong>ISR</strong> 则是「跟得上 leader」的那批副本。</li>
+<li><strong>幂等（idempotent）</strong>：同一操作做一次和做多次结果一样——重复投递能不能被容忍，全看这一点。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>卷二第 4 章，是全书<strong>第一章「造轮子」</strong>：前三章都在拼装已有组件，从这一章起开始自己造基础设施。它也是后面的地基——第 5 章监控告警、第 6 章广告点击聚合都默认这根管子已经存在。现实里对标 Apache Kafka，以及 Pulsar、RocketMQ 这一支。</p>
+<h2>这章要解决什么</h2>
+<p>先把场景摆具体。一个电商的「下单成功」事件，下游有七个部门要知道：商家、配送调度、库存、优惠券、风控、推荐模型、数仓。如果下单服务直接挨个同步调用，三件事会立刻咬住你：</p>
+<p><strong>一是耦合</strong>：下单服务里硬编码了七个下游地址，第八个部门上线就得改它、测它、发它一次。<strong>二是快慢不匹配</strong>：大促峰值下单 <code>5 万</code> QPS，风控引擎满打满算只吃得下 <code>5 千</code> QPS。<strong>三是故障传染</strong>：任何一个下游响应时间从 20 毫秒涨到 2 秒，下单服务那 200 个线程十几秒就被占满，于是「风控变慢」演变成「下不了单」。</p>
+<p>那用传统消息中间件（RabbitMQ、ActiveMQ 这类）行不行？前三件解决了，还差两件：它们的语义是<strong>投递即删除</strong>，一条消息被消费掉就从队列里消失。这挡住了两个越来越常见的需求——<strong>同一条消息被多个互不相干的下游各读一遍</strong>（数仓和风控要读同一批订单，谁都不该把它「吃掉」），以及<strong>出 bug 之后把上周的数据重跑一遍</strong>。这一章要造的，正是一个把消息<strong>留着</strong>的队列。</p>
+<h2>核心内容，讲透</h2>
+<h3>存储：为什么是日志，不是数据库</h3>
+<p>最省事的做法是拿一张数据库表当队列：<code>insert</code> 写入、排序读一批、处理完 <code>delete</code>。每秒几百条完全能用，到几万条就塌，塌得有理有据：写要维护 B-tree 索引（随机 I/O），删会在页里留下空洞——偏偏队列表正是「疯狂插入 + 疯狂删除」这个最坏情形。</p>
+<p>这一章的答案是<strong>追加日志</strong>：一个普通磁盘文件，只做一件事——在末尾追加。文件切成固定大小的<strong>分段（segment）</strong>，只有最新那段可写，旧段一律只读、过期时<strong>整段删除</strong>（不做行级删除，所以没有空洞要清理）。</p>
+<p>性价比全在「顺序」二字上。Kafka 官方文档引用过一组经典测算：在一组 7200 转 SATA 盘上，<strong>顺序写约 600 MB/s，随机写只有约 100 KB/s</strong>——差了三个数量级还多。换句话说<strong>磁盘不慢，随机访问才慢</strong>，而只往末尾长的日志恰好把随机访问完整绕开了。再叠上操作系统的页缓存（page cache），刚写下的消息往往还没落到盘片就被消费者取走了。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 230" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="13" font-weight="700" x="20" y="22">一个分区 = 磁盘上一串只增不改的分段文件</text>
+<rect fill="rgba(155,108,245,0.14)" height="26" rx="6" stroke="#9b6cf5" width="88" x="26" y="36"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="70" y="53">生产者</text>
+<path d="M118,49 H524 V80" fill="none" marker-end="url(#a1)" stroke="#9b6cf5"></path>
+<text fill="#9b6cf5" font-size="11" text-anchor="middle" x="330" y="42">只往最末尾追加 · 磁头不回头</text>
+<rect fill="rgba(91,157,249,0.07)" height="50" rx="7" stroke="#7c8593" width="130" x="30" y="90"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="95" y="110">段 0 · 只读</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="95" y="128">offset 0–999</text>
+<rect fill="rgba(91,157,249,0.07)" height="50" rx="7" stroke="#7c8593" width="130" x="175" y="90"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="240" y="110">段 1 · 只读</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="240" y="128">offset 1000–1999</text>
+<rect fill="rgba(91,157,249,0.07)" height="50" rx="7" stroke="#7c8593" width="130" x="320" y="90"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="385" y="110">段 2 · 只读</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="385" y="128">offset 2000–2999</text>
+<rect fill="rgba(91,157,249,0.2)" height="50" rx="7" stroke="#5b9df9" stroke-width="2" width="130" x="465" y="90"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="530" y="110">活跃段 · 可写</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle" x="530" y="128">offset 3000–</text>
+<line stroke="#7c8593" stroke-dasharray="3 3" x1="240" x2="240" y1="140" y2="162"></line>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="240" y="178">消费者组 A · 位点 1200</text>
+<line stroke="#7c8593" stroke-dasharray="3 3" x1="520" x2="520" y1="140" y2="162"></line>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="520" y="178">消费者组 B · 位点 3100</text>
+<text fill="#7c8593" font-size="11" x="20" y="206">两个组各读各的、互不影响；旧段到期整段删掉，不做行级删除，所以没有空洞要回收。</text>
+</svg>
+<figcaption>图 1 · 分区的磁盘布局：写只发生在活跃段的末尾，读发生在任意位置，删除以整段为单位。</figcaption>
+</figure>
+<p class="tcap">表 1 · 拿数据库当队列 vs 拿追加日志当队列</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>数据库表</th><th>追加日志（本章选择）</th></tr></thead>
+<tbody>
+<tr><th>写入</th><td>插入 + 维护索引，<strong>随机 I/O</strong></td><td>末尾追加，<strong>顺序 I/O</strong>，可整批落盘</td></tr>
+<tr><th>删除</th><td>行级删除留下空洞，需 vacuum</td><td><strong>整段删除</strong>，代价近似 <code>rm</code> 一个文件</td></tr>
+<tr><th>重复消费</th><td>要自己建「谁读到哪」的表</td><td>每组记一个 <code>offset</code>，<strong>天然支持重放</strong></td></tr>
+<tr><th>适用</th><td>低频、需按任意字段查的任务表</td><td><strong>不能改单条</strong>；高吞吐、多订阅方的事件流</td></tr>
+</tbody></table></div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/storage-engine-day47.html" rel="noopener" target="_blank">System Design · Day 47 数据库内部与存储引擎</a> — 顺序写为什么压倒随机写、LSM-tree 与 B-tree 的写放大差在哪，以及页缓存在这条路径上到底做了什么</aside>
+<h3>分区：把一条日志切成好几条</h3>
+<p>一条日志的末尾只有一个写入点，吞吐天然有上限。<strong>分区</strong>就是把一个 topic 切成 N 条各自独立的日志，散在不同 broker 上各写各的——扩容从此是加分区、加 broker，而不是换更大的机器。</p>
+<p>代价当场就付：<code>offset</code> 只在分区内单调，<strong>跨分区没有任何全局顺序</strong>，「有序」这个承诺就此降级成「<strong>同一分区内有序</strong>」。工程上的标准用法是拿业务主键当分区键——同一订单号的事件必然哈希到同一分区，于是「这一单是有序的」你还握着，「全站订单的绝对先后」你放弃了，而后者你本来也不需要。</p>
+<p>消费侧是对称的规则：<strong>同组内，一个分区只能分给一个消费者</strong>。它同时给了你组内天然不重复消费，和一个硬天花板——<strong>消费者数超过分区数，多出来的纯闲着</strong>。所以分区数是你提前定下的并行度预算，经验法则是按单分区 <code>10 MB/s</code> 规划，要撑 <code>1 GB/s</code> 就得开 100 个分区上下。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 285" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="13" font-weight="700" x="20" y="22">topic「订单创建」→ 3 个分区 → 一个消费者组里的 3 个消费者</text>
+<rect fill="rgba(155,108,245,0.14)" height="40" rx="7" stroke="#9b6cf5" width="86" x="18" y="108"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="61" y="126">生产者</text>
+<text fill="#9b6cf5" font-family="monospace" font-size="9.5" text-anchor="middle" x="61" y="141">hash(订单号)</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="106" x2="164" y1="120" y2="66"></line>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="106" x2="164" y1="128" y2="128"></line>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="106" x2="164" y1="136" y2="190"></line>
+<rect fill="rgba(91,157,249,0.1)" height="40" rx="7" stroke="#5b9df9" width="186" x="170" y="46"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="263" y="64">分区 0 @ broker 1</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="263" y="78">offset 0,1,2,3 …</text>
+<rect fill="rgba(91,157,249,0.1)" height="40" rx="7" stroke="#5b9df9" width="186" x="170" y="108"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="263" y="126">分区 1 @ broker 2</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="263" y="140">offset 0,1,2,3 …</text>
+<rect fill="rgba(91,157,249,0.1)" height="40" rx="7" stroke="#5b9df9" width="186" x="170" y="170"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="263" y="188">分区 2 @ broker 3</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="263" y="202">offset 0,1,2,3 …</text>
+<rect fill="none" height="182" rx="9" stroke="rgba(155,108,245,0.55)" stroke-dasharray="5 4" width="196" x="424" y="36"></rect>
+<text fill="#9b6cf5" font-family="monospace" font-size="10" text-anchor="middle" x="522" y="52">消费者组 G</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="358" x2="438" y1="66" y2="76"></line>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="358" x2="438" y1="128" y2="130"></line>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="358" x2="438" y1="190" y2="184"></line>
+<rect fill="rgba(155,108,245,0.12)" height="32" rx="6" stroke="#9b6cf5" width="160" x="442" y="62"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="522" y="83">消费者 c1</text>
+<rect fill="rgba(155,108,245,0.12)" height="32" rx="6" stroke="#9b6cf5" width="160" x="442" y="116"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="522" y="137">消费者 c2</text>
+<rect fill="rgba(155,108,245,0.12)" height="32" rx="6" stroke="#9b6cf5" width="160" x="442" y="170"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="522" y="191">消费者 c3</text>
+<text fill="#b9c0ca" font-size="11" x="20" y="243">分区内严格有序，跨分区不保证；同一订单号永远落同一个分区，所以「这一单」是有序的。</text>
+<text fill="#7c8593" font-size="11" x="20" y="264">组内一个分区只给一个消费者 → 再加第 4 个消费者，它只能闲着。分区数 = 并行度上限。</text>
+</svg>
+<figcaption>图 2 · 分区是扩展的单位，也是顺序保证的边界；消费者组内的分配关系决定了并行度天花板。</figcaption>
+</figure>
+<h3>批量：吞吐是攒出来的</h3>
+<p>这类系统的高吞吐，有一大半不来自存储结构，来自<strong>批量</strong>贯穿三段路径：生产者把消息攒在本地缓冲区，攒满一批或等够一小段时间（<code>linger.ms</code>）再发；broker 把这批<strong>原样</strong>落盘，不拆开、不重新编码；消费者也整批地拉。一次网络往返、一次系统调用、一次磁盘追加，就这样摊给了成百上千条消息。</p>
+<p>这里藏着一个<strong>必须你自己拧的旋钮</strong>：<code>linger.ms</code> 从 0 调到 10，每条消息平白多等最多 10 毫秒，换来批次变大、吞吐可能翻几倍。低延迟与高吞吐在这里<strong>直接对立</strong>，没有两全。</p>
+<p>「原样落盘」还顺手换来一个红利：既然磁盘上的字节和发给消费者的字节完全一致，broker 就能让内核把页缓存的数据直接送进网卡、不经过用户态——这就是<strong>零拷贝（zero-copy）</strong>。它不是一个独立技巧，而是「不解包」这个设计的副产品。</p>
+<h3>推还是拉：为什么这一章选拉</h3>
+<p>broker 主动推给消费者，还是消费者自己来拉？这一章选<strong>拉（pull）</strong>，一句话的理由是：<strong>推模式逼着 broker 去关心它本不该关心的事</strong>——每个消费者的消化速度。速度交回消费者自己定，批量和重放就都是白送的（见下节表 2）。</p>
+<h3>复制与 ISR：副本不是备份，是在线的同伴</h3>
+<p>每个分区有 1 个 leader 和若干 follower，<strong>读写都只走 leader</strong>；follower 只做一件事——不停地从 leader 拉取并追加同一条日志。优雅之处在于：<strong>复制复用的就是那条日志本身</strong>，不需要另一套同步协议。跟得上进度的那批 follower 组成 <strong>ISR</strong>，落后太多就被临时踢出去。生产者的 <code>acks</code> 决定「写入算成功」的标准：<code>acks=0</code> 发出去就算、<code>acks=1</code> leader 写完就算（此刻宕机，没来得及复制的就没了）、<code>acks=all</code> 要 ISR 每一份都确认。</p>
+<p>还有一个常被跳过、面试却爱问的机制：<strong>高水位（high watermark）</strong>——所有 ISR 都已拥有的那个最大 offset，<strong>消费者只能读到这里为止</strong>。意义是：消费者永远看不见「只有 leader 有、随时可能跟着 leader 一起消失」的那几条，于是故障切换后<strong>不会出现「我明明读到过、现在却没了」的幽灵消息</strong>。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a3" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="13" font-weight="700" x="20" y="22"><tspan font-family="monospace">acks=all</tspan>：ISR 里每一份都写下了，才回「成功」</text>
+<rect fill="rgba(155,108,245,0.14)" height="36" rx="7" stroke="#9b6cf5" width="86" x="18" y="58"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="61" y="81">生产者</text>
+<line marker-end="url(#a3)" stroke="#7c8593" x1="106" x2="176" y1="70" y2="70"></line>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="141" y="62">① 写</text>
+<line marker-end="url(#a3)" stroke="#7c8593" x1="176" x2="108" y1="88" y2="88"></line>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="142" y="104">④ 回 ack</text>
+<rect fill="rgba(91,157,249,0.18)" height="52" rx="7" stroke="#5b9df9" stroke-width="2" width="146" x="182" y="52"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="255" y="72">分区 leader</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle" x="255" y="90">broker 1</text>
+<line marker-end="url(#a3)" stroke="#7c8593" x1="330" x2="416" y1="66" y2="52"></line>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="374" y="40">② 拉取复制</text>
+<line marker-end="url(#a3)" stroke="#7c8593" x1="330" x2="416" y1="92" y2="110"></line>
+<line marker-end="url(#a3)" stroke="#9b6cf5" stroke-dasharray="4 3" x1="416" x2="332" y1="66" y2="78"></line>
+<text fill="#9b6cf5" font-size="10" text-anchor="middle" x="380" y="126">③ 确认已落盘</text>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="182" x="422" y="34"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="513" y="56">follower A · 在 ISR 内</text>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="182" x="422" y="94"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="513" y="116">follower B · 在 ISR 内</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="164">高水位：消费者只看得到「所有 ISR 都有」的那一段</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="4" stroke="#5b9df9" width="52" x="30" y="178"></rect><text fill="#e7ebf1" font-family="monospace" font-size="10" text-anchor="middle" x="56" y="198">0</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="4" stroke="#5b9df9" width="52" x="86" y="178"></rect><text fill="#e7ebf1" font-family="monospace" font-size="10" text-anchor="middle" x="112" y="198">1</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="4" stroke="#5b9df9" width="52" x="142" y="178"></rect><text fill="#e7ebf1" font-family="monospace" font-size="10" text-anchor="middle" x="168" y="198">2</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="4" stroke="#5b9df9" width="52" x="198" y="178"></rect><text fill="#e7ebf1" font-family="monospace" font-size="10" text-anchor="middle" x="224" y="198">3</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="4" stroke="#5b9df9" width="52" x="254" y="178"></rect><text fill="#e7ebf1" font-family="monospace" font-size="10" text-anchor="middle" x="280" y="198">4</text>
+<rect fill="rgba(155,108,245,0.1)" height="30" rx="4" stroke="#9b6cf5" stroke-dasharray="4 3" width="52" x="310" y="178"></rect><text fill="#b9c0ca" font-family="monospace" font-size="10" text-anchor="middle" x="336" y="198">5</text>
+<rect fill="rgba(155,108,245,0.1)" height="30" rx="4" stroke="#9b6cf5" stroke-dasharray="4 3" width="52" x="366" y="178"></rect><text fill="#b9c0ca" font-family="monospace" font-size="10" text-anchor="middle" x="392" y="198">6</text>
+<text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="168" y="224">← 已提交 · 消费者可见</text>
+<text fill="#9b6cf5" font-size="10.5" text-anchor="middle" x="364" y="224">只有 leader 有 →</text>
+<text fill="#7c8593" font-size="11" x="20" y="248">所以 leader 挂掉换人时，消费者读过的内容不会凭空消失——它读过的，每个 ISR 都有。</text>
+</svg>
+<figcaption>图 3 · 复制走的还是那条日志；高水位把「随时可能消失的尾巴」挡在消费者视线之外。</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/replication-day5.html" rel="noopener" target="_blank">System Design · Day 5 复制（Replication）</a> — 同步复制与异步复制的那道分界线、主从切换时丢多少数据，以及为什么复制的真正目的是故障而不是读扩展</aside>
+<h3>位点和元数据存哪</h3>
+<p>两种状态性质完全不同。<strong>消费位点</strong>写得极其频繁——每个消费者每秒都可能提交一次。Kafka 早年把它存在 ZooKeeper 里，很快发现协调服务扛不住，于是搬进 broker 自己的一个内部 topic：<strong>用日志来存日志的进度</strong>，顺手复用了全套复制与持久化机制。而<strong>元数据</strong>——有哪些 topic、分区怎么分布、谁是 leader——写得少却必须强一致，还需要「选出一个 controller」的能力，这正是 ZooKeeper、etcd 的本职。</p>
+<p>最后是<strong>再平衡</strong>：消费者加入、退出、崩溃或分区数变了，协调者就要重新分配「谁读哪个分区」。经典实现是 stop-the-world——<strong>全组停止消费，重分配，再继续</strong>。组大、分区多时可能卡住几秒到几十秒，这是消费者组模型最实在的一笔代价。</p>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 2 · 推模式 vs 拉模式</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>推（push）</th><th>拉（pull，本章选择）</th></tr></thead>
+<tbody>
+<tr><th>节奏谁定</th><td>broker 定 —— 必须了解每个消费者的消化能力</td><td><strong>消费者自己定</strong> —— broker 不必关心</td></tr>
+<tr><th>慢消费者</th><td>会被压垮，得额外做背压</td><td>自然退化成「读得慢」，不会崩</td></tr>
+<tr><th>批量 / 重放</th><td>broker 猜多大合适；重放难，它不记得谁读到哪</td><td><strong>要多少拿多少；改一下位点就能重放</strong></td></tr>
+<tr><th>代价 / 典型</th><td>延迟低，消息一到就走。RabbitMQ push 模式</td><td>空轮询浪费，用长轮询补上。Kafka、Pulsar、RocketMQ</td></tr>
+</tbody></table></div>
+<p class="tcap">表 3 · 三种投递语义：怎么实现、代价多少、什么场景选</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>至多一次</th><th>至少一次</th><th>恰好一次</th></tr></thead>
+<tbody>
+<tr><th>怎么实现</th><td><code>acks=0</code>，不重试；<strong>消费前</strong>先提交位点</td><td><code>acks=all</code> + 重试；<strong>处理完再</strong>提交位点</td><td>幂等编号 + 事务：把「写结果」和「提交位点」绑成一笔</td></tr>
+<tr><th>会发生什么</th><td>网络一抖就丢，且你不会知道</td><td><strong>会重复</strong>：提交位点前崩溃，这批再来一遍</td><td>不重不丢，但只在系统边界内成立</td></tr>
+<tr><th>代价</th><td>几乎为零</td><td>下游必须<strong>自己做幂等</strong></td><td>吞吐下降、实现复杂</td></tr>
+<tr><th>选它的场景</th><td>日志、指标、埋点</td><td><strong>绝大多数业务</strong>：订单、通知、同步</td><td>广告计费、金融流水</td></tr>
+</tbody></table></div>
+<p><strong>顺序 vs 扩展</strong>是另一处必须当场表态的地方。想要一个 topic 全局有序？那它只能有一个分区，吞吐就此封顶在单写入点的量级（几十 MB/s）。绝大多数场景该做的是把要求改小：<strong>按业务主键分区，只保证「同一实体的事件有序」</strong>。面试里被问「怎么保证消息顺序」，标准答案不是某个开关，而是先反问一句「需要谁和谁之间有序」。</p>
+<p><strong>保留期</strong>则是拿存储换后悔的余地：留 1 天，出 bug 只能重跑今天；留 7 天，一周内的错都救得回来，代价是磁盘乘以 7。若只关心「每个 key 的最新值」，还有<strong>日志压实（log compaction）</strong>：同一 key 只留最后一条，日志就此变成一张能无限保存的快照表。</p>
+<h2>为什么重要 / 落到真实系统</h2>
+<p><strong>Apache Kafka</strong> 几乎逐条对应本章的设计。另外两条路也值得知道：<strong>Apache Pulsar</strong> 把 broker 和存储（Apache BookKeeper）拆开，扩容不必搬运数据；<strong>RocketMQ</strong> 补了事务消息和定时消息。而 <strong>AWS SQS</strong> 完全是另一支——真正的「消费即删除」队列，没有重放、没有分区顺序，换来的是你一点运维都不用管。<strong>选型的第一问永远是：你到底要不要「留着」？</strong></p>
+<p>面试里这一章的价值在于，它少有地能把「存储结构 → 扩展性 → 一致性语义」串成一条线。被问「Kafka 为什么快」，只答「顺序写加零拷贝」是在背答案；能说清「因为落盘格式和网络格式一致才能零拷贝」「因为分区内只有一个写入点才能保序」，才是真的理解了。</p>
+<div class="ev">
+<div class="evh">大厂实证 · 这些主张不是书里说的，是公司自己公开说的</div>
+<ul>
+<li><strong>LinkedIn</strong>（Kafka 的作者团队）公布过一组基准：<strong>三台廉价机器、3 副本，写入达到每秒约 200 万条</strong>（100 字节消息）——<strong>用数字坐实了「顺序追加 + 批量」这套组合在普通硬件上的上限有多高</strong>。<span class="src"><a href="https://www.linkedin.com/blog/engineering/open-source/benchmarking-apache-kafka-2-million-writes-second-three-cheap-machines" rel="noopener" target="_blank">J. Kreps「Benchmarking Apache Kafka」, LinkedIn Engineering, 2014 ↗</a></span></li>
+<li><strong>Netflix</strong> 的 Keystone 管道用 <strong>36 个 Kafka 集群、4000+ broker，每天 7000 亿条以上消息</strong>；他们明说在 EC2 上做到「零丢失」<strong>成本不划算</strong>，于是和各业务方谈定一个可接受的丢失预算，实际做到日丢失率低于 <code>0.01%</code>——<strong>一个反方向的实证：规模到了，可靠性是买来的，得先问价</strong>。<span class="src"><a href="https://netflixtechblog.com/kafka-inside-keystone-pipeline-dd5aeabaf6bb" rel="noopener" target="_blank">Netflix Tech Blog「Kafka Inside Keystone Pipeline」, 2016 ↗</a></span></li>
+<li><strong>Uber</strong> 的广告点击处理要求恰好一次，理由很直白：<strong>多数一次点击就是多收广告主一次钱</strong>。做法正是表 3 最右那栏——Kafka 事务 + 每条聚合结果带一个 UUID 幂等键，下游按该键去重。<span class="src"><a href="https://www.uber.com/us/en/blog/real-time-exactly-once-ad-event-processing/" rel="noopener" target="_blank">Uber Blog「Real-Time Exactly-Once Ad Event Processing」, 2021 ↗</a></span></li>
+<li><strong>Confluent</strong> 宣布恰好一次语义时同时讲清了它的<strong>边界</strong>：由生产者幂等编号加事务实现，覆盖「读 Kafka → 处理 → 写回 Kafka」这个闭环，<strong>跨出闭环的副作用不在保证范围内</strong>。<span class="src"><a href="https://www.confluent.io/blog/exactly-once-semantics-are-possible-heres-how-apache-kafka-does-it/" rel="noopener" target="_blank">N. Narkhede「Exactly-Once Semantics Are Possible」, Confluent, 2017 ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/message-queue-day8.html" rel="noopener" target="_blank">System Design · Day 8 消息队列</a> — 异步解耦的收益与代价、死信队列与重试退避怎么设计，以及什么时候根本不该引入队列</aside>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>把「恰好一次」当成端到端保证</strong>。最常见的误解：它只成立于「读 Kafka、处理、写回 Kafka」这个闭环内。一旦处理逻辑是发短信、扣款、调第三方接口，重复照样会发生——<strong>外部副作用的幂等，永远得你自己做</strong>。</li>
+<li><strong>以为分区越多越好</strong>。分区多了，文件句柄、元数据、端到端延迟都跟着涨，controller 故障切换也变慢。ZooKeeper 时代的社区经验值是单集群十万量级；到了这个尺度，「加分区」不再免费。</li>
+<li><strong>把消息队列当数据库用</strong>。日志压实能永久保留每个 key 的最新值，但它没有索引、没有事务查询、不能按条件更新。它是一条能重放的流，不是一张能查的表。</li>
+<li><strong>误解顺序保证的范围</strong>。「Kafka 保证消息有序」省略了最关键的三个字：<em>在分区内</em>。分区键选错（比如按时间戳哈希），同一订单的事件散到不同分区，顺序当场失效。</li>
+<li><strong>低估再平衡的杀伤力</strong>。滚动重启一个消费者组，可能触发 N 次全组停顿。Kafka 后来用增量协作式再平衡（2019 年的 KIP-429）缓解，但书里给的仍是经典模型。</li>
+<li><strong>本章的时代印记</strong>：它默认用 ZooKeeper 存元数据。而 Kafka 从 3.x 起用 KRaft 把共识自举进了自己内部，4.0 已彻底移除 ZooKeeper——<strong>该记住的结论是「元数据需要一个强一致的共识组件」，不是「必须外挂 ZooKeeper」</strong>。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 全章的选择都倒推自一个存储决定——<strong>把消息落成只能追加的日志</strong>；分区、副本、位点、重放全是它的推论。</p>
+<p>② 不用队列的代价是三样：<strong>耦合、快慢不匹配、故障传染</strong>（下游变慢 → 上游线程池打满 → 下不了单）。</p>
+<p>③ 不拿数据库当队列：写是随机 I/O、删留空洞，而队列恰是「疯狂插入 + 疯狂删除」的最坏情形。</p>
+<p>④ 敢写磁盘是因为<strong>只往末尾追加</strong>：顺序写约 600 MB/s vs 随机写约 100 KB/s——磁盘不慢，随机访问才慢。</p>
+<p>⑤ 分区是扩展单位，也是<strong>顺序保证的边界</strong>；同组内一个分区只给一个消费者 → <strong>分区数就是并行度天花板</strong>。</p>
+<p>⑥ 吞吐靠<strong>批量</strong>攒出来，<code>linger.ms</code> 是延迟换吞吐的旋钮；零拷贝是「落盘格式 = 网络格式」的副产品。</p>
+<p>⑦ 选拉不选推：消费者自己控速，<strong>批量与重放都是白送的</strong>。</p>
+<p>⑧ 复制复用同一条日志；<code>acks</code> 决定持久性档位；<strong>高水位</strong>保证消费者读过的不会在故障切换后消失。</p>
+<p>⑨ 位点写得频繁 → 存进内部 topic；元数据要强一致 → 交给共识组件。再平衡是 stop-the-world。</p>
+<p>⑩ 投递语义按业务选：埋点用至多一次，<strong>绝大多数业务用至少一次 + 自己做幂等</strong>，只有计费和金融流水值得付恰好一次的代价。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

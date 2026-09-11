@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview Vol 2 Ch 4 · Distributed Message Queue — Books Deep-Read 71</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOK DEEP READ · System Design Interview Vol 2 · Ch 4</p>
+<h1>Distributed Message Queue</h1>
+<p class="sub">System Design Interview Vol 2 · Ch 4 · Alex Xu &amp; Sahn Lam · 2022</p>
+<p class="langbar"><a href="sdi2-ch04-distributed-message-queue-book71.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You tap "Place order" in a food delivery app. In that one second, the restaurant has to get the ticket, dispatch has to start looking for a courier, inventory has to come down, the coupon has to be marked used, fraud detection wants a look, and the analytics dashboard wants a tally. <strong>This chapter is about the pipe in the middle</strong> — and it teaches you to build one yourself.</p>
+<h2>A strange thing first</h2>
+<p>This thing is famous for being fast, and yet <strong>it writes every single message onto a disk</strong> rather than keeping it in memory. Stranger still, it outperforms plenty of designs that never touch a disk at all.</p>
+<h2>Why the old way breaks</h2>
+<p>Could you skip the pipe? The order service could just call everyone in turn: call the restaurant, call dispatch, call inventory, call fraud. <strong>Three problems, stacked.</strong></p>
+<p>First, the order service has to know every department, so each new department means editing the order code again. Second, fraud detection can handle five thousand things a second, and at the start of a big sale fifty thousand orders arrive each second — calling it does no good and drags the order service down too. Third, if the fraud machine restarts, those few minutes of orders are never checked by anyone, because <strong>a shout, once shouted, is gone</strong>.</p>
+<h2>The core idea: stop shouting, start bookkeeping</h2>
+<p>What the pipe really is, is not a megaphone but <strong>a ledger</strong>. The order service calls nobody; it just adds a line to the last page of the book. Anyone who wants to know what happened comes and reads the book, <strong>and keeps track themselves of which line they got to</strong>.</p>
+<p>All three problems dissolve. The order service knows the book, not the departments. Fraud detection can read slowly; the book will not hurry it. And when fraud detection restarts, it picks up from the line it noted down — <strong>the record is still there, so nothing is ever "missed and gone"</strong>. A new department is easier still: it starts at line one and disturbs no one.</p>
+<h2>Why writing to disk is fast here</h2>
+<p>Because it <strong>only ever writes to the last page</strong>. A disk is slow at flipping back and forth hunting for a page; it is not slow at adding to the end. A ledger that only grows and never gets edited happens to avoid the one thing disks are worst at — and that is the entire secret behind daring to use a disk at all.</p>
+<h2>When one book isn't enough, open several</h2>
+<p>One ledger has one person writing on its last page, so however fast they are, there is a ceiling. The answer is <strong>several books</strong>, split by order number: numbers ending 0 to 3 go in the first book, 4 to 6 in the second, and several people write at once. The cost lands right there: <strong>within one book the order of events is perfectly reliable, but across books, who came first is anyone's guess</strong>.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p>A message queue is not a megaphone. It is <strong>a ledger that only grows at the end, where each reader tracks their own place</strong>. It dares to write to disk because it only writes at the end, and it scales because one book becomes several — and the moment you split it, all you still hold is the half-promise that each book is internally ordered.</p>
+</div>
+<p class="switch-hint">Want the disk layout, the replication protocol and the delivery semantics? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">You think the hard part of a message queue is delivering messages reliably. In fact this chapter is, start to finish, solving a <strong>storage</strong> problem: once you decide to land messages as a <strong>log on disk that can only be appended to and never modified</strong>, everything else — partitions, replicas, consumer offsets, replay, even "exactly once" — grows out of that single decision.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Producer / consumer</strong>: the side that writes messages into the queue / the side that reads them out.</li>
+<li><strong>Topic</strong>: the name of a category of message, such as "order created". A <strong>broker</strong> is the server process that actually stores them.</li>
+<li><strong>Partition</strong>: one of the several independent logs a topic is cut into; the unit of both scaling and parallelism.</li>
+<li><strong>Offset</strong>: a message's sequence number inside its partition, starting at 0 and only ever increasing — both its identity and its position.</li>
+<li><strong>Consumer group</strong>: a set of consumers reading one topic together; they divide the work among themselves, and different groups never interfere.</li>
+<li><strong>Append-only log (write-ahead log, WAL)</strong>: a disk structure that only ever adds at the end of the file and never edits what is already there.</li>
+<li><strong>Sequential vs random I/O</strong>: writing steadily onward vs jumping around to arbitrary positions; on spinning disks the two can differ by orders of magnitude.</li>
+<li><strong>Replica, leader and follower</strong>: several copies of one partition on different machines; one acts as leader and serves reads and writes, the rest merely copy it. The <strong>ISR</strong> is the subset of replicas currently keeping up with the leader.</li>
+<li><strong>Idempotent</strong>: doing the operation once and doing it many times give the same result — whether duplicate delivery is survivable comes down entirely to this.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Chapter 4 of Volume 2 is the book's <strong>first "build the wheel" chapter</strong>: the first three assembled existing components, and from here on you construct infrastructure yourself. It is also the floor the rest stands on — Chapter 5 on monitoring and Chapter 6 on ad click aggregation both assume this pipe already exists. The real-world counterpart is Apache Kafka, along with Pulsar and RocketMQ.</p>
+<h2>The problem it solves</h2>
+<p>Make the scenario concrete. One "order placed" event in an e-commerce system has seven downstream departments that need to know: the merchant, dispatch, inventory, coupons, fraud, the recommendation model, and the warehouse. If the order service calls each of them synchronously, three things bite immediately:</p>
+<p><strong>Coupling</strong>: seven downstream addresses are hardcoded into the order service, so an eighth department means editing, testing and shipping it again. <strong>Mismatched speeds</strong>: peak order volume in a big sale is <code>50k</code> QPS while the fraud engine can absorb at most <code>5k</code> QPS. <strong>Contagious failure</strong>: any downstream whose response time goes from 20 ms to 2 s will fill the order service's 200 threads within seconds, so "fraud got slow" becomes "nobody can order".</p>
+<p>So would a traditional broker (RabbitMQ, ActiveMQ) do? It fixes those three but leaves two more. Their semantics are <strong>deliver and delete</strong>: once a message is consumed it vanishes from the queue. That blocks two increasingly common needs — <strong>the same message being read independently by several unrelated consumers</strong> (the warehouse and fraud both want the same orders, and neither should "eat" them), and <strong>re-running last week's data after a bug</strong>. What this chapter builds is a queue that <strong>keeps</strong> its messages.</p>
+<h2>The core content, in depth</h2>
+<h3>Storage: why a log and not a database</h3>
+<p>The path of least effort is to use a database table as the queue: <code>insert</code> to write, read a sorted batch, <code>delete</code> when done. At a few hundred a second this works fine; at tens of thousands it collapses, and for good reasons. Writes maintain a B-tree index (random I/O), and deletes leave holes in pages — and a queue table is precisely the worst case of frantic inserting plus frantic deleting.</p>
+<p>The chapter's answer is an <strong>append-only log</strong>: an ordinary disk file that does one thing, add to the end. The file is cut into fixed-size <strong>segments</strong>; only the newest is writable, older ones are read-only and, when they expire, are <strong>deleted whole</strong> (never row by row, so there are no holes to reclaim).</p>
+<p>The whole bargain rides on that word "sequential". The Kafka documentation cites a classic measurement: on an array of 7200 rpm SATA disks, <strong>sequential writes run at roughly 600 MB/s while random writes manage only about 100 KB/s</strong> — more than three orders of magnitude apart. In other words <strong>disks are not slow; random access is</strong>, and a log that only grows at its end sidesteps random access completely. Layer the operating system's page cache on top and a freshly written message is often collected by a consumer before it ever reaches a platter.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 230" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b1" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="13" font-weight="700" x="20" y="22">One partition = a chain of append-only segment files on disk</text>
+<rect fill="rgba(155,108,245,0.14)" height="26" rx="6" stroke="#9b6cf5" width="88" x="26" y="36"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="70" y="53">Producer</text>
+<path d="M118,49 H524 V80" fill="none" marker-end="url(#b1)" stroke="#9b6cf5"></path>
+<text fill="#9b6cf5" font-size="11" text-anchor="middle" x="330" y="42">appends only at the very end — the head never seeks back</text>
+<rect fill="rgba(91,157,249,0.07)" height="50" rx="7" stroke="#7c8593" width="130" x="30" y="90"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="95" y="110">segment 0 · sealed</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="95" y="128">offset 0–999</text>
+<rect fill="rgba(91,157,249,0.07)" height="50" rx="7" stroke="#7c8593" width="130" x="175" y="90"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="240" y="110">segment 1 · sealed</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="240" y="128">offset 1000–1999</text>
+<rect fill="rgba(91,157,249,0.07)" height="50" rx="7" stroke="#7c8593" width="130" x="320" y="90"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="385" y="110">segment 2 · sealed</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="385" y="128">offset 2000–2999</text>
+<rect fill="rgba(91,157,249,0.2)" height="50" rx="7" stroke="#5b9df9" stroke-width="2" width="130" x="465" y="90"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="530" y="110">active · writable</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle" x="530" y="128">offset 3000–</text>
+<line stroke="#7c8593" stroke-dasharray="3 3" x1="240" x2="240" y1="140" y2="162"></line>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="240" y="178">group A · at offset 1200</text>
+<line stroke="#7c8593" stroke-dasharray="3 3" x1="520" x2="520" y1="140" y2="162"></line>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="520" y="178">group B · at offset 3100</text>
+<text fill="#7c8593" font-size="11" x="20" y="206">Each group reads at its own pace. Expired segments are dropped whole — never row by row, so no holes.</text>
+</svg>
+<figcaption>Fig 1 · A partition's disk layout: writes land only at the end of the active segment, reads happen anywhere, deletion is per segment.</figcaption>
+</figure>
+<p class="tcap">Table 1 · A database table as a queue vs an append-only log</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Database table</th><th>Append-only log (this chapter)</th></tr></thead>
+<tbody>
+<tr><th>Write</th><td>Insert plus index maintenance — <strong>random I/O</strong></td><td>Append at the end — <strong>sequential I/O</strong>, whole batches at once</td></tr>
+<tr><th>Delete</th><td>Row deletes leave holes; needs vacuum</td><td><strong>Whole segment dropped</strong>, about as cheap as <code>rm</code></td></tr>
+<tr><th>Re-reading</th><td>You must build your own "who read what" table</td><td>One <code>offset</code> per group; <strong>replay comes free</strong></td></tr>
+<tr><th>Fits</th><td>Low volume, query by arbitrary fields</td><td><strong>No editing single rows</strong>; high throughput, many subscribers</td></tr>
+</tbody></table></div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/storage-engine-day47.en.html" rel="noopener" target="_blank">System Design · Day 47 Database Internals and Storage Engines</a> — why sequential writes crush random ones, where LSM-trees and B-trees differ on write amplification, and what the page cache actually does on this path</aside>
+<h3>Partitions: cutting one log into several</h3>
+<p>A log has exactly one write point at its end, so throughput has a natural ceiling. <strong>Partitioning</strong> cuts a topic into N independent logs spread across brokers, each written separately — from then on you scale by adding partitions and brokers, not by buying a bigger machine.</p>
+<p>The cost is due immediately: <code>offset</code> is monotonic only within a partition, and <strong>across partitions there is no global order at all</strong>. The promise of "ordered" is downgraded to "<strong>ordered within a partition</strong>". The standard practice is to use a business key as the partition key — every event for one order number hashes to the same partition, so you keep "this order's events are in order" and give up "the absolute sequence of every order on the site", which you never needed.</p>
+<p>The consumer side mirrors this: <strong>within one group, a partition goes to exactly one consumer</strong>. That gives you both freedom from duplicate consumption inside the group and a hard ceiling — <strong>consumers beyond the partition count simply sit idle</strong>. So partition count is a parallelism budget you commit to in advance. A common rule of thumb is to plan around <code>10 MB/s</code> per partition, which puts <code>1 GB/s</code> at roughly 100 partitions.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 285" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b2" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="13" font-weight="700" x="20" y="22">Topic "order-created" → 3 partitions → 3 consumers in one group</text>
+<rect fill="rgba(155,108,245,0.14)" height="40" rx="7" stroke="#9b6cf5" width="86" x="18" y="108"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="61" y="126">Producer</text>
+<text fill="#9b6cf5" font-family="monospace" font-size="9.5" text-anchor="middle" x="61" y="141">hash(orderId)</text>
+<line marker-end="url(#b2)" stroke="#7c8593" x1="106" x2="164" y1="120" y2="66"></line>
+<line marker-end="url(#b2)" stroke="#7c8593" x1="106" x2="164" y1="128" y2="128"></line>
+<line marker-end="url(#b2)" stroke="#7c8593" x1="106" x2="164" y1="136" y2="190"></line>
+<rect fill="rgba(91,157,249,0.1)" height="40" rx="7" stroke="#5b9df9" width="186" x="170" y="46"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="263" y="64">partition 0 @ broker 1</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="263" y="78">offset 0,1,2,3 …</text>
+<rect fill="rgba(91,157,249,0.1)" height="40" rx="7" stroke="#5b9df9" width="186" x="170" y="108"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="263" y="126">partition 1 @ broker 2</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="263" y="140">offset 0,1,2,3 …</text>
+<rect fill="rgba(91,157,249,0.1)" height="40" rx="7" stroke="#5b9df9" width="186" x="170" y="170"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="263" y="188">partition 2 @ broker 3</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="263" y="202">offset 0,1,2,3 …</text>
+<rect fill="none" height="182" rx="9" stroke="rgba(155,108,245,0.55)" stroke-dasharray="5 4" width="196" x="424" y="36"></rect>
+<text fill="#9b6cf5" font-family="monospace" font-size="10" text-anchor="middle" x="522" y="52">consumer group G</text>
+<line marker-end="url(#b2)" stroke="#7c8593" x1="358" x2="438" y1="66" y2="76"></line>
+<line marker-end="url(#b2)" stroke="#7c8593" x1="358" x2="438" y1="128" y2="130"></line>
+<line marker-end="url(#b2)" stroke="#7c8593" x1="358" x2="438" y1="190" y2="184"></line>
+<rect fill="rgba(155,108,245,0.12)" height="32" rx="6" stroke="#9b6cf5" width="160" x="442" y="62"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="522" y="83">consumer c1</text>
+<rect fill="rgba(155,108,245,0.12)" height="32" rx="6" stroke="#9b6cf5" width="160" x="442" y="116"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="522" y="137">consumer c2</text>
+<rect fill="rgba(155,108,245,0.12)" height="32" rx="6" stroke="#9b6cf5" width="160" x="442" y="170"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="522" y="191">consumer c3</text>
+<text fill="#b9c0ca" font-size="11" x="20" y="243">Strict order inside a partition, none across them; one order id always lands in the same partition.</text>
+<text fill="#7c8593" font-size="11" x="20" y="264">One partition per consumer in a group → a 4th consumer would just sit idle. Partitions cap parallelism.</text>
+</svg>
+<figcaption>Fig 2 · Partitions are the unit of scale and also the boundary of the ordering guarantee; the group assignment sets the parallelism ceiling.</figcaption>
+</figure>
+<h3>Batching: throughput is accumulated, not conjured</h3>
+<p>More than half of the throughput in systems like this comes not from the storage structure but from <strong>batching</strong> across all three legs of the path. The producer accumulates messages in a local buffer and sends once a batch is full or a short wait has elapsed (<code>linger.ms</code>). The broker writes that batch to disk <strong>verbatim</strong>, neither unpacking nor re-encoding it. The consumer fetches in batches too. One network round trip, one system call, one disk append — amortised over hundreds or thousands of messages.</p>
+<p>Hidden in there is a dial <strong>you have to turn yourself</strong>: moving <code>linger.ms</code> from 0 to 10 costs every message up to 10 extra milliseconds and buys bigger batches and possibly several times the throughput. Low latency and high throughput are <strong>directly opposed</strong> here; there is no having both.</p>
+<p>Writing batches verbatim also pays a bonus. Since the bytes on disk are identical to the bytes owed to the consumer, the broker can have the kernel send page-cache data straight to the network card without passing through user space — that is <strong>zero-copy</strong>. It is not a standalone trick but a by-product of the decision not to unpack.</p>
+<h3>Push or pull</h3>
+<p>Does the broker push to consumers, or do consumers pull? This chapter picks <strong>pull</strong>, and the one-line reason is that <strong>push forces the broker to care about something it should not have to</strong>: how fast each consumer can digest. Hand pacing back to the consumer and batching and replay both come free (see Table 2).</p>
+<h3>Replication and the ISR: replicas are companions, not backups</h3>
+<p>Each partition has one leader and several followers, and <strong>all reads and writes go through the leader</strong>; a follower does one thing only, which is to keep pulling from the leader and appending the very same log. The elegance is there: <strong>replication reuses the log itself</strong> and needs no separate sync protocol. The followers keeping up form the <strong>ISR</strong>; one that falls too far behind is temporarily evicted. The producer's <code>acks</code> setting defines what counts as a successful write: <code>acks=0</code> means fire and forget, <code>acks=1</code> means the leader wrote it (and if it dies right then, whatever had not replicated is gone), <code>acks=all</code> means every ISR member confirmed.</p>
+<p>One more mechanism gets skipped often and asked about in interviews constantly: the <strong>high watermark</strong> — the largest offset every ISR member already holds, and <strong>the furthest a consumer is allowed to read</strong>. The point is that consumers never see the messages that only the leader has and that could vanish along with it, so after a failover there are <strong>no ghost messages that you demonstrably read and that no longer exist</strong>.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 260" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b3" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="13" font-weight="700" x="20" y="22"><tspan font-family="monospace">acks=all</tspan>: the write succeeds only once every ISR member has it</text>
+<rect fill="rgba(155,108,245,0.14)" height="36" rx="7" stroke="#9b6cf5" width="86" x="18" y="58"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="61" y="81">Producer</text>
+<line marker-end="url(#b3)" stroke="#7c8593" x1="106" x2="176" y1="70" y2="70"></line>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="141" y="62">① write</text>
+<line marker-end="url(#b3)" stroke="#7c8593" x1="176" x2="108" y1="88" y2="88"></line>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="142" y="104">④ ack</text>
+<rect fill="rgba(91,157,249,0.18)" height="52" rx="7" stroke="#5b9df9" stroke-width="2" width="146" x="182" y="52"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="255" y="72">partition leader</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle" x="255" y="90">broker 1</text>
+<line marker-end="url(#b3)" stroke="#7c8593" x1="330" x2="416" y1="66" y2="52"></line>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="374" y="40">② followers pull</text>
+<line marker-end="url(#b3)" stroke="#7c8593" x1="330" x2="416" y1="92" y2="110"></line>
+<line marker-end="url(#b3)" stroke="#9b6cf5" stroke-dasharray="4 3" x1="416" x2="332" y1="66" y2="78"></line>
+<text fill="#9b6cf5" font-size="10" text-anchor="middle" x="366" y="126">③ confirm written</text>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="182" x="422" y="34"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="513" y="56">follower A · in ISR</text>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="182" x="422" y="94"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="513" y="116">follower B · in ISR</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="164">High watermark: consumers see only what every ISR member holds</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="4" stroke="#5b9df9" width="52" x="30" y="178"></rect><text fill="#e7ebf1" font-family="monospace" font-size="10" text-anchor="middle" x="56" y="198">0</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="4" stroke="#5b9df9" width="52" x="86" y="178"></rect><text fill="#e7ebf1" font-family="monospace" font-size="10" text-anchor="middle" x="112" y="198">1</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="4" stroke="#5b9df9" width="52" x="142" y="178"></rect><text fill="#e7ebf1" font-family="monospace" font-size="10" text-anchor="middle" x="168" y="198">2</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="4" stroke="#5b9df9" width="52" x="198" y="178"></rect><text fill="#e7ebf1" font-family="monospace" font-size="10" text-anchor="middle" x="224" y="198">3</text>
+<rect fill="rgba(91,157,249,0.16)" height="30" rx="4" stroke="#5b9df9" width="52" x="254" y="178"></rect><text fill="#e7ebf1" font-family="monospace" font-size="10" text-anchor="middle" x="280" y="198">4</text>
+<rect fill="rgba(155,108,245,0.1)" height="30" rx="4" stroke="#9b6cf5" stroke-dasharray="4 3" width="52" x="310" y="178"></rect><text fill="#b9c0ca" font-family="monospace" font-size="10" text-anchor="middle" x="336" y="198">5</text>
+<rect fill="rgba(155,108,245,0.1)" height="30" rx="4" stroke="#9b6cf5" stroke-dasharray="4 3" width="52" x="366" y="178"></rect><text fill="#b9c0ca" font-family="monospace" font-size="10" text-anchor="middle" x="392" y="198">6</text>
+<text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="168" y="224">← committed · visible to consumers</text>
+<text fill="#9b6cf5" font-size="10.5" text-anchor="middle" x="364" y="224">leader only →</text>
+<text fill="#7c8593" font-size="11" x="20" y="248">So when the leader is replaced, nothing a consumer already read can disappear: every ISR member had it.</text>
+</svg>
+<figcaption>Fig 3 · Replication reuses the same log; the high watermark keeps the volatile tail out of consumers' sight.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/replication-day5.en.html" rel="noopener" target="_blank">System Design · Day 5 Replication</a> — the dividing line between synchronous and asynchronous replication, how much data a failover loses, and why replication is really about failure rather than read scaling</aside>
+<h3>Where offsets and metadata live</h3>
+<p>These two kinds of state have opposite characters. <strong>Consumer offsets</strong> are written constantly — every consumer may commit once a second. Kafka originally kept them in ZooKeeper, quickly found that a coordination service cannot absorb that write rate, and moved them into an internal topic on the brokers themselves: <strong>using a log to store a log's progress</strong>, which conveniently reuses the whole replication and durability machinery. <strong>Metadata</strong> — which topics exist, how partitions are distributed, who leads what — is written rarely but must be strongly consistent and needs the ability to elect a controller. That is exactly the job of ZooKeeper or etcd.</p>
+<p>Last comes <strong>rebalancing</strong>: when a consumer joins, leaves or crashes, or the partition count changes, the coordinator must reassign who reads which partition. The classic implementation is stop-the-world — <strong>the whole group halts, reassigns, then resumes</strong>. With a large group and many partitions that can stall for seconds to tens of seconds, which is the most tangible bill the consumer-group model presents.</p>
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 2 · Push vs pull</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Push</th><th>Pull (this chapter's choice)</th></tr></thead>
+<tbody>
+<tr><th>Who sets pace</th><td>The broker — it must know each consumer's capacity</td><td><strong>The consumer</strong> — the broker need not care</td></tr>
+<tr><th>Slow consumer</th><td>Gets overwhelmed; you must add back pressure</td><td>Simply reads slower; nothing falls over</td></tr>
+<tr><th>Batching / replay</th><td>Broker has to guess the batch size; replay is hard, it does not track readers</td><td><strong>Take what you ask for; rewind an offset to replay</strong></td></tr>
+<tr><th>Cost / examples</th><td>Low latency, messages leave on arrival. RabbitMQ push mode</td><td>Wasteful empty polls, fixed by long polling. Kafka, Pulsar, RocketMQ</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 3 · Three delivery semantics: how, at what cost, and when</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>At most once</th><th>At least once</th><th>Exactly once</th></tr></thead>
+<tbody>
+<tr><th>How</th><td><code>acks=0</code>, no retry; commit the offset <strong>before</strong> processing</td><td><code>acks=all</code> plus retries; commit the offset <strong>after</strong> processing</td><td>Idempotent producer ids plus transactions binding "write result" and "commit offset" into one</td></tr>
+<tr><th>What happens</th><td>One network blip loses data, and you never find out</td><td><strong>Duplicates</strong>: crash before committing and the batch arrives again</td><td>Neither lost nor duplicated — but only inside the system boundary</td></tr>
+<tr><th>Cost</th><td>Near zero</td><td>Downstream must be <strong>idempotent itself</strong></td><td>Lower throughput, more complexity</td></tr>
+<tr><th>Choose it for</th><td>Logs, metrics, telemetry</td><td><strong>Most business traffic</strong>: orders, notifications, syncs</td><td>Ad billing, financial ledgers</td></tr>
+</tbody></table></div>
+<p><strong>Ordering versus scale</strong> is the other place you must declare yourself. Want a topic ordered globally? Then it gets one partition, and throughput is capped at whatever a single write point sustains — tens of MB/s. What almost every situation should do instead is shrink the requirement: <strong>partition by business key and guarantee only that one entity's events are ordered</strong>. Asked in an interview how you guarantee message ordering, the right answer is not a setting but a question back: ordered between whom and whom?</p>
+<p><strong>Retention</strong> trades disk for the right to change your mind: keep one day and a bug can only be re-run for today; keep seven and a week of mistakes is recoverable, at seven times the disk. If all you care about is the latest value per key, there is also <strong>log compaction</strong>: keep only the last record for each key, and the log becomes a snapshot table you can retain indefinitely.</p>
+<h2>Why it matters / in the wild</h2>
+<p><strong>Apache Kafka</strong> maps onto this chapter's design almost line for line. Two other directions are worth knowing: <strong>Apache Pulsar</strong> separates brokers from storage (Apache BookKeeper), so scaling out moves no data, and <strong>RocketMQ</strong> adds transactional and scheduled messages. <strong>AWS SQS</strong> is another branch entirely — a genuine consume-and-delete queue with no replay and no partition ordering, in exchange for no operational work at all. <strong>The first question in any selection is always: do you need to keep the messages?</strong></p>
+<p>The interview value of this chapter is that it rarely fails to connect storage structure to scalability to consistency semantics in one line of reasoning. Asked "why is Kafka fast", answering "sequential writes and zero-copy" is reciting. Being able to say "zero-copy is possible because the disk format equals the wire format" and "ordering is possible because a partition has a single write point" is understanding.</p>
+<div class="ev">
+<div class="evh">Industry evidence · these claims are the companies' own, not the book's</div>
+<ul>
+<li><strong>LinkedIn</strong> (Kafka's authors) published a benchmark reaching <strong>about 2 million writes per second on three cheap machines with 3x replication</strong> (100-byte messages) — <strong>hard numbers for how far sequential append plus batching goes on ordinary hardware</strong>. <span class="src"><a href="https://www.linkedin.com/blog/engineering/open-source/benchmarking-apache-kafka-2-million-writes-second-three-cheap-machines" rel="noopener" target="_blank">J. Kreps, "Benchmarking Apache Kafka", LinkedIn Engineering, 2014 ↗</a></span></li>
+<li><strong>Netflix</strong>'s Keystone pipeline ran <strong>36 Kafka clusters, 4,000+ brokers and over 700 billion messages a day</strong>; they state plainly that lossless delivery on EC2 is <strong>cost-prohibitive</strong> at that scale, so they negotiated an acceptable loss budget with each consuming team and hold daily loss under <code>0.01%</code> — <strong>evidence pointing the other way: at scale, reliability is bought, so ask the price first</strong>. <span class="src"><a href="https://netflixtechblog.com/kafka-inside-keystone-pipeline-dd5aeabaf6bb" rel="noopener" target="_blank">Netflix Tech Blog, "Kafka Inside Keystone Pipeline", 2016 ↗</a></span></li>
+<li><strong>Uber</strong> requires exactly-once for ad click processing for a blunt reason: <strong>counting a click twice charges the advertiser twice</strong>. Their approach is precisely Table 3's rightmost column — Kafka transactions plus a UUID idempotency key on each aggregate that downstream systems dedupe on. <span class="src"><a href="https://www.uber.com/us/en/blog/real-time-exactly-once-ad-event-processing/" rel="noopener" target="_blank">Uber Blog, "Real-Time Exactly-Once Ad Event Processing", 2021 ↗</a></span></li>
+<li><strong>Confluent</strong> stated the <strong>boundary</strong> of exactly-once when announcing it: built from idempotent producer ids and transactions, it covers the "read from Kafka, process, write back to Kafka" loop, and <strong>side effects outside that loop are not covered</strong>. <span class="src"><a href="https://www.confluent.io/blog/exactly-once-semantics-are-possible-heres-how-apache-kafka-does-it/" rel="noopener" target="_blank">N. Narkhede, "Exactly-Once Semantics Are Possible", Confluent, 2017 ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/message-queue-day8.en.html" rel="noopener" target="_blank">System Design · Day 8 Message Queues</a> — what asynchrony buys and what it costs, how to design dead-letter queues and retry backoff, and when you should not introduce a queue at all</aside>
+<h2>Pitfalls and disputes</h2>
+<ul>
+<li><strong>Treating "exactly once" as end to end.</strong> The commonest misreading: it holds only inside the read-Kafka, process, write-back-to-Kafka loop. The moment your processing sends an SMS, charges a card or calls a third party, duplicates return — <strong>idempotency for external side effects is always yours to build</strong>.</li>
+<li><strong>Assuming more partitions is better.</strong> More partitions means more file handles, more metadata, higher end-to-end latency and slower controller failover. The community's pre-KRaft rule of thumb put a cluster in the low hundreds of thousands of partitions; at that scale, adding partitions stops being free.</li>
+<li><strong>Using a message queue as a database.</strong> Log compaction can retain the latest value per key forever, but there is no index, no transactional query and no conditional update. It is a replayable stream, not a queryable table.</li>
+<li><strong>Misreading the scope of ordering.</strong> "Kafka guarantees ordering" omits the decisive words <em>within a partition</em>. Pick the wrong partition key (hashing a timestamp, say) and one order's events scatter across partitions, killing ordering instantly.</li>
+<li><strong>Underestimating rebalances.</strong> Rolling-restarting a consumer group can trigger N full-group stalls. Kafka later softened this with incremental cooperative rebalancing (KIP-429, 2019), but the book presents the classic model.</li>
+<li><strong>The chapter's period marks</strong>: it assumes ZooKeeper holds the metadata. Kafka has since folded that consensus inside itself with KRaft from 3.x and removed ZooKeeper entirely in 4.0 — <strong>the lesson to keep is "metadata needs a strongly consistent consensus component", not "you must bolt on ZooKeeper"</strong>.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① Every choice in the chapter is reverse-engineered from one storage decision — <strong>land messages as an append-only log</strong>; partitions, replicas, offsets and replay are all corollaries.</p>
+<p>② Skipping the queue costs you three things: <strong>coupling, mismatched speeds, contagious failure</strong> (slow downstream → thread pool full → nobody can order).</p>
+<p>③ Don't use a database as a queue: writes are random I/O, deletes leave holes, and a queue is the worst case of both.</p>
+<p>④ Disk is viable because it <strong>only ever appends</strong>: ~600 MB/s sequential vs ~100 KB/s random — disks aren't slow, random access is.</p>
+<p>⑤ Partitions are the unit of scale and <strong>the boundary of the ordering guarantee</strong>; one partition per consumer in a group means <strong>partition count caps parallelism</strong>.</p>
+<p>⑥ Throughput is accumulated by <strong>batching</strong>; <code>linger.ms</code> is the latency-for-throughput dial. Zero-copy is a by-product of "disk format = wire format".</p>
+<p>⑦ Pull over push: the consumer sets its own pace, and <strong>batching and replay come free</strong>.</p>
+<p>⑧ Replication reuses the same log; <code>acks</code> picks the durability tier; the <strong>high watermark</strong> ensures nothing a consumer read vanishes in a failover.</p>
+<p>⑨ Offsets are written constantly → an internal topic; metadata must be strongly consistent → a consensus component. Rebalancing is stop-the-world.</p>
+<p>⑩ Pick delivery semantics by business: at-most-once for telemetry, <strong>at-least-once plus your own idempotency for most things</strong>, and only billing and financial ledgers justify paying for exactly-once.</p>
+</div>
+</div>
+<footer>Books Deep-Read · reading this page ≈ the core of this chapter; for full case studies and depth, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
