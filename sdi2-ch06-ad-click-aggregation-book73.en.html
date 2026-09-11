@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview Vol 2 Ch 6 · Ad Click Event Aggregation — Books Deep-Read 73</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOK DEEP READ · System Design Interview Vol 2 · Ch 6</p>
+<h1>Ad Click Event Aggregation</h1>
+<p class="sub">System Design Interview Vol 2 · Ch 6 · Alex Xu &amp; Sahn Lam · 2022</p>
+<p class="langbar"><a href="sdi2-ch06-ad-click-aggregation-book73.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>An ad scrolls past on your phone and you tap it. For that one tap, an advertiser pays the platform. Worldwide there are <strong>a billion such taps a day</strong>. This chapter is about one thing: how to count those billion taps into <strong>a bill nobody can poke a hole in</strong>.</p>
+
+<h2>Something odd first</h2>
+<p>It sounds like counting — tap, add one, a child could do it. But the moment <strong>the number turns into money</strong>, its nature changes completely. It is no longer a reading on a pedometer; it is <strong>the till in a cash register</strong>. Nobody cares if a pedometer skips a step. If the till comes up short, the month doesn't balance. Everything hard about this chapter comes from that switch of identity.</p>
+
+<h2>Why the old world found this hard</h2>
+<p>Three things. <strong>Too many</strong>: ten thousand taps a second on average, fifty thousand at peak — no single machine can count that, so dozens of machines count in parallel and someone has to add it all up. <strong>They arrive late</strong>: you tap an ad on the subway, the signal drops, and your phone only sends the record once you're back above ground. It may be three minutes late, or three hours. Does that tap belong to "that minute back then" or "this minute now"? <strong>They arrive twice</strong>: the network hiccups, the phone never sees an acknowledgement, so it sends again — count the same tap twice and the advertiser has been overcharged.</p>
+
+<h2>How it pulls this off</h2>
+<p><strong>Keep the running receipts.</strong> An incoming tap isn't counted right away; it is first parked, untouched, in one long queue — the way a shop keeps the stub of every receipt. If you later get the sum wrong or change the rules, you just run the stubs through again.</p>
+<p><strong>One drawer per minute.</strong> Instead of maintaining a single "total" that keeps changing, give every minute its own drawer, and let each tap fall into the minute it was <em>born</em> in. The drawers sit end to end and never overlap, so no tap can land in two of them.</p>
+<p><strong>Give latecomers a grace period.</strong> When a minute ends, don't seal the drawer immediately — wait another three minutes, the way the last bus waits three more minutes before it pulls out. Almost all the stragglers make it. The ones that truly don't get settled overnight.</p>
+<p><strong>Number every receipt.</strong> Each tap is born carrying a globally unique number. Before accepting it, check whether that number has been seen before; if it has, throw it away. Send the same one a hundred times and it still counts once.</p>
+
+<h2>So what do you choose?</h2>
+<p><strong>Fast and accurate pull against each other here.</strong> A longer grace period recovers more late taps and gives a truer bill — but the answer arrives later, and advertisers watching a live dashboard to adjust their bids can't use a number that shows up too late. So the industry usually <strong>walks on two legs</strong>: publish a "good enough, fast" number within minutes for people to look at, then overnight recount from the full pile of stubs to get the "accurate" number that actually settles the bill — and compare the two, raising an alarm if they drift too far apart.</p>
+<p>The cost is worth stating plainly: from then on this system permanently carries two sets of numbers and a reconciliation line, which is an order of magnitude more to operate than "counting one number".</p>
+
+<h2>One line to remember</h2>
+<div class="tl">
+<p>Counting clicks isn't counting, it's bookkeeping. So the system stores every tap verbatim first, counts into per-minute drawers, gives latecomers a grace period, numbers every receipt against duplicates, and overnight recounts from the original stubs to reconcile — <strong>the fast number is for people to look at, the accurate one is what gets paid</strong>.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the notation and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">On the surface this chapter builds a counter. In substance it builds <strong>an accounting ledger on top of stream processing</strong>. Once the number turns directly into money, the system's first property is no longer throughput or latency but <strong>being reconcilable, recomputable, and neither double-counted nor dropped</strong>. The authors use this problem to walk through the three hardest things in stream processing — <strong>event time and watermarks, exactly-once semantics, and hot partitions</strong> — in correctness-first order.</p>
+
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Stream</strong>: an endless sequence of data with no final element; the opposite of a "bounded dataset" that has a beginning and an end.</li>
+<li><strong>Message queue / Kafka</strong>: a durable buffer between producers and consumers. Writes only append, and each consumer tracks its own <strong>offset</strong> — where it has read up to — so the same stretch of data can be <strong>replayed</strong>.</li>
+<li><strong>Partition</strong>: one queue split by a key into parallel sub-queues, each internally ordered. <em>The number of partitions is the ceiling on parallelism.</em></li>
+<li><strong>Stream vs batch</strong>: the former computes per record and keeps refining the result; the latter accumulates a large chunk and computes it once, arriving at the answer in one shot.</li>
+<li><strong>Window</strong>: a bounded slice cut out of an endless stream so it can be aggregated — "each minute", say.</li>
+<li><strong>Event time vs processing time</strong>: when the event actually <em>happened</em> (carried inside the data) versus when the system <em>received</em> it.</li>
+<li><strong>Watermark</strong>: the system's estimate that "everything before this instant should have arrived by now", used to decide when a window may be sealed and settled.</li>
+<li><strong>Idempotent</strong>: applying the same operation many times has the same effect as applying it once.</li>
+<li><strong>Checkpoint</strong>: a stream engine periodically persisting operator state together with read positions, so it can resume from there after a crash.</li>
+<li><strong>Reconciliation</strong>: recomputing the same data down an independent path and comparing the two results.</li>
+<li><strong>OLAP database</strong>: an analytical store tuned for aggregate queries over large volumes (ClickHouse, Druid, Pinot), as opposed to OLTP stores tuned for single-row reads and writes.</li>
+</ul>
+</div>
+
+<h2>Where it sits</h2>
+<p>This is Chapter 6 of Volume 2, right after Ch4 (building a distributed message queue by hand) and Ch5 (the time-series write path of a monitoring system): the first hands this chapter the <strong>replayable log</strong> it lives on, the second the pattern for <strong>aggregating huge write volumes into time windows</strong>. What it adds is a constraint neither earlier chapter had — <strong>the result has to be good enough to bill from</strong>. In the real world it maps to the billing and reporting pipelines behind Google Ads and Meta Ads, and to the Kafka + Flink + Druid/Pinot chain that is close to an industry default today.</p>
+
+<h2>What the chapter is solving</h2>
+<p>Put the scale on the table first. The book's numbers: <strong>1 billion clicks per day, 2 million ads in the catalog</strong>. A billion over 86,400 seconds is <strong>~10K QPS on average</strong>; taking peak as 5× average gives <strong>50K QPS at peak</strong>. A click event is about <code>0.1 KB</code> (ad id, timestamp, user id, IP, country), so <strong>~100 GB of raw data a day and ~3 TB a month</strong>.</p>
+<p>Two deliverables: <strong>the click count for a given <code>ad_id</code> over the last M minutes</strong>, and <strong>the top 100 most-clicked ads each minute</strong>, both filterable by IP, user and country. End-to-end latency should be "within a few minutes" — milliseconds aren't needed, but neither is tomorrow acceptable.</p>
+<p>What actually sets the tone is one line among the non-functional requirements: <strong>this data is used for billing</strong>. Undercount and the platform gives impressions away; overcount and you have overcharged a customer, which is a compliance and trust problem. Almost every design choice downstream — why the raw log must be persisted, why event time, why exactly-once is non-negotiable — can be derived backwards from that line. Put bluntly: <strong>nobody sues you when a monitoring metric drops a few points; an ad invoice off by a cent is a different matter.</strong></p>
+
+<h2>The core, explained properly</h2>
+
+<h3>Land a replayable log first, compute second</h3>
+<p>Click events don't go straight into a database; they go into Kafka. The reason isn't only smoothing out peaks: <strong>this log is the single source of truth for the whole system</strong>. Raw events are also forked to object storage (S3 / HDFS) with a retention measured in months — every recomputation, reconciliation and definition change works by running it through again.</p>
+<p>There is one design in the book that is easy to skim past: <strong>aggregation results are not written to the database directly, but into a second queue</strong>. One consumption step has to do two things — persist the result and advance the read position (offset) — and those two live in different systems, so they are not naturally atomic; crash in between and you either double-count or lose data. Adding a queue <strong>collapses atomicity into one place</strong> (the queue's transactional commit), and the downstream database write is made idempotent, so a replay writes nothing wrong.</p>
+<figure>
+<svg viewBox="0 0 640 266" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs>
+<marker id="g1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="g2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text x="16" y="24" fill="#5b9df9" font-size="12.5" font-weight="700">Realtime path · minutes · the fast number</text>
+<rect x="16" y="42" width="84" height="32" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="58" y="62" fill="#b9c0ca" font-size="10.5" text-anchor="middle">Click events</text>
+<rect x="130" y="42" width="110" height="32" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect><text x="185" y="62" fill="#e7ebf1" font-size="10.5" text-anchor="middle">Raw event queue</text>
+<rect x="270" y="42" width="110" height="32" rx="6" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5" stroke-width="2"></rect><text x="325" y="56" fill="#e7ebf1" font-size="10.5" text-anchor="middle">Aggregation</text><text x="325" y="69" fill="#b9c0ca" font-size="8.5" text-anchor="middle" font-family="monospace">map · aggregate · reduce</text>
+<rect x="410" y="42" width="110" height="32" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect><text x="465" y="62" fill="#e7ebf1" font-size="10.5" text-anchor="middle">Result queue</text>
+<rect x="548" y="42" width="76" height="32" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="586" y="62" fill="#b9c0ca" font-size="10.5" text-anchor="middle">Writer</text>
+<line x1="100" y1="58" x2="126" y2="58" stroke="#7c8593" marker-end="url(#g1)"></line>
+<line x1="240" y1="58" x2="266" y2="58" stroke="#7c8593" marker-end="url(#g1)"></line>
+<line x1="380" y1="58" x2="406" y2="58" stroke="#7c8593" marker-end="url(#g1)"></line>
+<line x1="520" y1="58" x2="544" y2="58" stroke="#7c8593" marker-end="url(#g1)"></line>
+<line x1="586" y1="74" x2="586" y2="110" stroke="#7c8593" marker-end="url(#g1)"></line>
+<rect x="496" y="114" width="128" height="32" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect><text x="560" y="134" fill="#e7ebf1" font-size="10.5" text-anchor="middle">OLAP store · query</text>
+<text x="486" y="128" fill="#7c8593" font-size="9.5" text-anchor="end">last M minutes / top 100</text>
+<line x1="185" y1="74" x2="185" y2="186" stroke="#9b6cf5" stroke-dasharray="4 4" marker-end="url(#g2)"></line>
+<text x="16" y="176" fill="#9b6cf5" font-size="12.5" font-weight="700">Authoritative path · T+1 · the accurate number</text>
+<rect x="128" y="190" width="120" height="32" rx="6" fill="rgba(155,108,245,0.1)" stroke="#9b6cf5"></rect><text x="188" y="210" fill="#e7ebf1" font-size="10.5" text-anchor="middle">Raw log archive</text>
+<rect x="286" y="190" width="126" height="32" rx="6" fill="rgba(155,108,245,0.1)" stroke="#9b6cf5"></rect><text x="349" y="210" fill="#e7ebf1" font-size="10.5" text-anchor="middle">Daily batch recount</text>
+<rect x="450" y="190" width="110" height="32" rx="6" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5" stroke-width="2"></rect><text x="505" y="210" fill="#e7ebf1" font-size="10.5" text-anchor="middle">Reconcile · bill</text>
+<line x1="248" y1="206" x2="282" y2="206" stroke="#9b6cf5" marker-end="url(#g2)"></line>
+<line x1="412" y1="206" x2="446" y2="206" stroke="#9b6cf5" marker-end="url(#g2)"></line>
+<path d="M540,190 Q556,172 560,150" fill="none" stroke="#9b6cf5" stroke-dasharray="3 3" marker-end="url(#g2)"></path>
+<text x="16" y="246" fill="#7c8593" font-size="9.5">Object storage keeps months · alert past a drift threshold · batch result wins</text>
+</svg>
+<figcaption>Fig 1 · Two paths: the realtime one emits a fast number within minutes; the authoritative one recounts from the raw log the next day and reconciles. The raw log is the system's single source of truth.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/message-queue-day8.en.html" target="_blank" rel="noopener">System Design · Day 8 Message Queues</a> — why "land a log first" buys peak smoothing, decoupling and replay at once, and how delivery semantics are implemented at the queue layer</aside>
+
+<h3>The aggregation skeleton: a map–aggregate–reduce DAG</h3>
+<p>The computation has the shape of MapReduce, only running on a stream: <strong>map nodes</strong> validate, clean and enrich (resolving an IP to a country, say), then hash on <code>ad_id</code> to fan events out; <strong>aggregate nodes</strong> keep "count per <code>ad_id</code> per minute" in memory; <strong>reduce nodes</strong> merge the partial results into a global top N.</p>
+<p>A sense of scale for why this works: 2 million <code>ad_id</code>s, one counter row each per minute (id plus count, a dozen-odd bytes), so a full minute's count table is on the order of <strong>tens of megabytes</strong> — comfortably in one machine's memory. Top 100 is maintained with a <strong>min-heap of capacity 100</strong>, and one pass over 2 million rows is <code>O(n log 100)</code> — <code>log 100</code> is under 7, i.e. a constant factor, so this step is not the bottleneck. <strong>The real bottlenecks are always whether partitions are even and whether state can be persisted reliably — never raw compute.</strong></p>
+
+<h3>Event time vs processing time: billing can only use the former</h3>
+<p>A click carries two times: when it <em>happened</em> (event time, stamped by the client into the data) and when it was <em>received</em> (processing time).</p>
+<p>Processing time is far simpler to implement — no waiting, no buffering of out-of-order data, seal the window the moment the clock ticks. But it files "the user tapped on the subway and the phone only sent it after surfacing" into the wrong minute, and around midnight into the <strong>wrong billing day</strong>. For a report that is an error; for an invoice it is a wrong entry. So the chapter picks <strong>event time</strong>.</p>
+<p>The price is confronting <strong>out-of-order arrival</strong>: a click with event time 12:00:30 may only land at 12:03. The answer is a <strong>watermark</strong> — after the window's nominal boundary passes, wait a while longer before sealing and settling. This is a bet with a posted price: wait <code>3</code> minutes and almost every straggler is recovered, at the cost of end-to-end latency going from ~1 minute to ~4; wait <code>30</code> minutes and the extra recovery is marginal while the delay strips the live dashboard of its point. And <strong>a watermark never truly covers the tail</strong> — what handles "hours late" is the batch backfill below.</p>
+<figure>
+<svg viewBox="0 0 640 240" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="t1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="t2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#e8794b"></path></marker></defs>
+<text x="16" y="22" fill="#5b9df9" font-size="12" font-weight="700">① Event time — when the click actually happened</text>
+<line x1="50" y1="86" x2="614" y2="86" stroke="#7c8593" marker-end="url(#t1)"></line>
+<rect x="90" y="64" width="120" height="22" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"></rect>
+<text x="150" y="56" fill="#8fbaff" font-size="10.5" text-anchor="middle">window 12:00–12:01</text>
+<circle cx="120" cy="86" r="4.5" fill="#5b9df9"></circle>
+<circle cx="160" cy="86" r="4.5" fill="#5b9df9"></circle>
+<circle cx="195" cy="86" r="4.5" fill="#9b6cf5"></circle>
+<line x1="450" y1="42" x2="450" y2="212" stroke="#9b6cf5" stroke-dasharray="5 4"></line>
+<text x="450" y="36" fill="#9b6cf5" font-size="10.5" text-anchor="middle">watermark 12:04 · window sealed</text>
+<path d="M120,92 Q122,140 127,178" fill="none" stroke="#7c8593" marker-end="url(#t1)"></path>
+<path d="M160,92 Q270,140 388,178" fill="none" stroke="#7c8593" marker-end="url(#t1)"></path>
+<path d="M195,92 Q370,140 543,178" fill="none" stroke="#e8794b" marker-end="url(#t2)"></path>
+<line x1="50" y1="186" x2="614" y2="186" stroke="#7c8593" marker-end="url(#t1)"></line>
+<circle cx="128" cy="186" r="4.5" fill="#5b9df9"></circle>
+<circle cx="390" cy="186" r="4.5" fill="#5b9df9"></circle>
+<circle cx="545" cy="186" r="4.5" fill="#e8794b"></circle>
+<text x="128" y="204" fill="#7c8593" font-size="9.5" text-anchor="middle">on time</text>
+<text x="372" y="204" fill="#7c8593" font-size="9.5" text-anchor="middle">late · still in time</text>
+<text x="614" y="204" fill="#e8794b" font-size="9.5" text-anchor="end">too late · next-day batch backfill</text>
+<text x="16" y="228" fill="#5b9df9" font-size="12" font-weight="700">② Processing time — when the system received it</text>
+</svg>
+<figcaption>Fig 2 · Event time and processing time drift apart: the watermark grants the window a grace period that recovers most stragglers; anything past it is only caught by the next day's batch backfill.</figcaption>
+</figure>
+
+<h3>Window shape: tumbling for billing, sliding for leaderboards</h3>
+<p>A <strong>tumbling window</strong> cuts time into abutting, non-overlapping cells, one per minute. Billing <strong>can only</strong> use it: overlap the windows and a single click falls into two of them and is counted twice. A <strong>sliding window</strong> advances a small step at a time with heavy overlap, which suits "the hottest ads in the last 5 minutes".</p>
+<p>There is a cheap trick in practice: compute <strong>only tumbling windows</strong> in the stream, land them in the OLAP store, and answer "the last M minutes" <strong>at query time</strong> by summing M one-minute cells — moving the cost of a sliding window from "maintained in memory forever" to "summed on read".</p>
+
+<h3>Exactly-once is about effect, not transmission</h3>
+<p class="tcap">Table 1 · The three delivery semantics, and why this problem must buy the most expensive one</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Semantics</th><th>Meaning</th><th>Cost</th><th>Usable here?</th></tr></thead>
+<tbody>
+<tr><th>At most once</th><td>No retry; a failure loses the event</td><td>Cheapest, fastest</td><td><strong>No</strong> — a loss is money not collected</td></tr>
+<tr><th>At least once</th><td>Retry on failure, duplicates possible</td><td>Cheap, but results skew high</td><td>Not alone — <strong>needs dedup</strong></td></tr>
+<tr><th>Exactly once</th><td>Effect equivalent to processing once</td><td>Lower throughput, latency jitters with checkpoints</td><td><strong>Required</strong> — the books must balance</td></tr>
+</tbody></table></div>
+<p>What needs clearing up: <strong>"exactly once" never meant the message crossed the network exactly once</strong>. Transmission still duplicates whenever it must; what is guaranteed is that <strong>the effect landing in the result is equivalent to processing it once</strong> (end-to-end exactly-once). Two implementation routes:</p>
+<ul>
+<li><strong>Transactions / two-phase commit</strong>: bind "commit the offset" and "emit the result" into one atomic operation. Flink checkpoints plus Kafka transactions are the industrial form of this route. The cost is reduced throughput and latency that jitters with the checkpoint interval.</li>
+<li><strong>At least once + idempotent dedup</strong>: every event is born with a UUID and the downstream rejects repeats by UUID. The hidden cost is the <strong>dedup store</strong>: a billion UUIDs a day is <code>16 GB</code> of 16-byte keys alone, so it needs expiry, sharded by time window and dropped a whole shard at a time.</li>
+</ul>
+<p>People reach for a <strong>Bloom filter</strong> (a probabilistic structure that answers "have I seen this value?" using little memory) to shrink dedup cost — careful: it has <strong>false positives</strong>, so it will judge a never-seen click a duplicate and drop it, which in billing terms means <strong>undercharging</strong>. It is only good as a coarse pre-filter; anything it calls "possibly seen" must still be checked against the exact store.</p>
+
+<h3>Hot advertisers: the old complaint about hash partitioning</h3>
+<p>Hashing on <code>ad_id</code> assumes traffic is roughly even across ad ids. Advertising is precisely not that: one giant advertiser running a promotion can drive a single partition to dozens of times the average, and <strong>a partition can only be processed by one consumer</strong>, so adding machines does not rescue it.</p>
+<p>The standard answer is <strong>two-stage aggregation</strong>: append a random suffix to the hot key, splitting <code>ad_id</code> into <code>ad_id:0</code> … <code>ad_id:N</code> spread over N partitions that each count locally, then have a second stage add the N parts back together. Three costs: the extra merge latency, the need to identify hot keys <strong>dynamically</strong> (today's hot key may not be tomorrow's), and the split factor N itself having to track traffic.</p>
+<figure>
+<svg viewBox="0 0 640 240" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="h1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line x1="320" y1="14" x2="320" y2="228" stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4"></line>
+<text x="160" y="24" fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle">Plain hash on ad_id</text>
+<rect x="102" y="38" width="116" height="26" rx="6" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5"></rect><text x="160" y="56" fill="#e7ebf1" font-size="10.5" text-anchor="middle">Giant advertiser A</text>
+<line x1="160" y1="64" x2="178" y2="96" stroke="#7c8593" marker-end="url(#h1)"></line>
+<rect x="22" y="100" width="56" height="26" rx="5" fill="rgba(91,157,249,0.06)" stroke="#7c8593"></rect><text x="50" y="118" fill="#7c8593" font-size="9.5" text-anchor="middle">P1 idle</text>
+<rect x="94" y="100" width="56" height="26" rx="5" fill="rgba(91,157,249,0.06)" stroke="#7c8593"></rect><text x="122" y="118" fill="#7c8593" font-size="9.5" text-anchor="middle">P2 idle</text>
+<rect x="166" y="100" width="56" height="26" rx="5" fill="rgba(224,107,107,0.2)" stroke="#e06b6b" stroke-width="2"></rect><text x="194" y="118" fill="#e7ebf1" font-size="9.5" text-anchor="middle">P3 hot</text>
+<rect x="238" y="100" width="56" height="26" rx="5" fill="rgba(91,157,249,0.06)" stroke="#7c8593"></rect><text x="266" y="118" fill="#7c8593" font-size="9.5" text-anchor="middle">P4 idle</text>
+<rect x="41" y="136" width="18" height="8" fill="#5b9df9"></rect>
+<rect x="113" y="136" width="18" height="6" fill="#5b9df9"></rect>
+<rect x="185" y="136" width="18" height="56" fill="#e06b6b"></rect>
+<rect x="257" y="136" width="18" height="7" fill="#5b9df9"></rect>
+<text x="160" y="216" fill="#7c8593" font-size="9.5" text-anchor="middle">one consumer per partition — more machines don't help</text>
+<text x="480" y="24" fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle">Random suffix + two-stage aggregation</text>
+<rect x="340" y="38" width="54" height="24" rx="5" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"></rect><text x="367" y="55" fill="#e7ebf1" font-size="9.5" text-anchor="middle">A:0</text>
+<rect x="410" y="38" width="54" height="24" rx="5" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"></rect><text x="437" y="55" fill="#e7ebf1" font-size="9.5" text-anchor="middle">A:1</text>
+<rect x="480" y="38" width="54" height="24" rx="5" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"></rect><text x="507" y="55" fill="#e7ebf1" font-size="9.5" text-anchor="middle">A:2</text>
+<rect x="550" y="38" width="54" height="24" rx="5" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"></rect><text x="577" y="55" fill="#e7ebf1" font-size="9.5" text-anchor="middle">A:3</text>
+<line x1="367" y1="62" x2="367" y2="96" stroke="#7c8593" marker-end="url(#h1)"></line>
+<line x1="437" y1="62" x2="437" y2="96" stroke="#7c8593" marker-end="url(#h1)"></line>
+<line x1="507" y1="62" x2="507" y2="96" stroke="#7c8593" marker-end="url(#h1)"></line>
+<line x1="577" y1="62" x2="577" y2="96" stroke="#7c8593" marker-end="url(#h1)"></line>
+<rect x="340" y="100" width="54" height="26" rx="5" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"></rect><text x="367" y="118" fill="#b9c0ca" font-size="9.5" text-anchor="middle">P1</text>
+<rect x="410" y="100" width="54" height="26" rx="5" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"></rect><text x="437" y="118" fill="#b9c0ca" font-size="9.5" text-anchor="middle">P2</text>
+<rect x="480" y="100" width="54" height="26" rx="5" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"></rect><text x="507" y="118" fill="#b9c0ca" font-size="9.5" text-anchor="middle">P3</text>
+<rect x="550" y="100" width="54" height="26" rx="5" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"></rect><text x="577" y="118" fill="#b9c0ca" font-size="9.5" text-anchor="middle">P4</text>
+<rect x="358" y="136" width="18" height="16" fill="#5b9df9"></rect>
+<rect x="428" y="136" width="18" height="15" fill="#5b9df9"></rect>
+<rect x="498" y="136" width="18" height="17" fill="#5b9df9"></rect>
+<rect x="568" y="136" width="18" height="15" fill="#5b9df9"></rect>
+<line x1="367" y1="156" x2="452" y2="176" stroke="#7c8593" marker-end="url(#h1)"></line>
+<line x1="437" y1="156" x2="466" y2="176" stroke="#7c8593" marker-end="url(#h1)"></line>
+<line x1="507" y1="158" x2="494" y2="176" stroke="#7c8593" marker-end="url(#h1)"></line>
+<line x1="577" y1="156" x2="510" y2="176" stroke="#7c8593" marker-end="url(#h1)"></line>
+<rect x="408" y="180" width="144" height="26" rx="6" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5" stroke-width="2"></rect><text x="480" y="198" fill="#e7ebf1" font-size="10.5" text-anchor="middle">stage 2 merge → total for A</text>
+<text x="480" y="224" fill="#7c8593" font-size="9.5" text-anchor="middle">cost: an extra merge + dynamic hot-key detection</text>
+</svg>
+<figcaption>Fig 3 · A hot key saturates one partition (left); a random suffix spreads it over N and a second aggregation stage adds it back up (right).</figcaption>
+</figure>
+
+<h3>Reconciliation and recomputation: the chapter's ballast</h3>
+<p>The streaming result is "the fast one". Separately, a batch job runs once a day, recounts yesterday from the raw log in object storage, compares it ad by ad against the streaming result, alerts past a drift threshold, and settles on the batch figure.</p>
+<p>That same raw log also powers <strong>recomputation</strong>: when a definition changes or a bug surfaces, replay the log from a chosen point into a fresh table, verify, then cut over — no rewriting history, no downtime. This is exactly the Kappa move: <strong>don't maintain two codebases, maintain one replayable log.</strong></p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/data-processing-day20.en.html" target="_blank" rel="noopener">System Design · Day 20 Batch and Stream Processing</a> — the batch-versus-stream unification argument, the engineering of windows and watermarks, and why replay is a streaming system's undo key</aside>
+
+<h2>Key trade-offs and choices</h2>
+<p>Every trade-off in this chapter collapses onto one axis: <strong>accuracy ↔ latency ↔ cost</strong>, and you cannot maximise all three — which is precisely the trio standing side by side in the title of Google's Dataflow paper.</p>
+<p class="tcap">Table 2 · Two architectures: Lambda vs Kappa</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Lambda (batch + stream)</th><th>Kappa (one stream + replayable log)</th></tr></thead>
+<tbody>
+<tr><th>Correctness</th><td>The batch path is authoritative and eventually right</td><td>Replaying the same log yields the same result</td></tr>
+<tr><th>Code</th><td><strong>The same logic written twice</strong>; the two definitions drift apart over time</td><td>One implementation; changing logic means a replay</td></tr>
+<tr><th>Latency</th><td>Fast path in minutes, authoritative result T+1</td><td>Minutes; recomputation on demand</td></tr>
+<tr><th>Cost</th><td>Two clusters, two operational burdens</td><td>One cluster, but <strong>longer log retention costs more</strong></td></tr>
+<tr><th>Fits</th><td>Heavy regulation demanding an independent authority</td><td>Most realtime analytics; <strong>the chapter's pick</strong></td></tr>
+</tbody></table></div>
+<p>The chapter picks Kappa but keeps a daily batch <strong>reconciliation</strong> line — strictly "Kappa in the lead with batch as auditor", which is also where most real advertising companies settle.</p>
+<p class="tcap">Table 3 · How long should the watermark wait (this chapter: 1B clicks/day, minutes end-to-end)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Grace period</th><th>What it covers</th><th>End-to-end latency</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th><code>3 s</code></th><td>Only network jitter</td><td>&lt; 1 min</td><td>High late rate, <strong>the books don't balance</strong>; dashboards only</td></tr>
+<tr><th><code>3 min</code></th><td>Most mobile re-sends</td><td>~4 min</td><td><strong>The sweet spot</strong>; the chapter's choice</td></tr>
+<tr><th><code>30 min+</code></th><td>Marginal extra recovery</td><td>Half an hour plus</td><td>Live reporting loses its point</td></tr>
+<tr><th>None; leave it to batch</th><td>100% coverage</td><td>T+1</td><td>No realtime view; <strong>day-end settlement needs this layer regardless</strong></td></tr>
+</tbody></table></div>
+<p>Two more judgements that don't fit a table:</p>
+<ul>
+<li><strong>Don't put top N and billing on the same pipeline.</strong> Top N tolerates approximation; billing does not. Mixing them into one "must be exactly once" channel means paying billing-grade cost for a leaderboard.</li>
+<li><strong>Shard the dedup store by time and expire whole shards.</strong> Per-key expiry keeps the storage engine collecting small objects forever; sharding by hour or day and deleting an entire shard is an order of magnitude cheaper.</li>
+</ul>
+
+<h2>Why it matters / in real systems</h2>
+<p>This problem is the canonical specimen of <strong>correctness-first stream processing</strong>, and that is exactly what an interview is testing: whether, after you say "Flink windowed aggregation", you add unprompted, "but this number gets billed, so I need event time, exactly-once, and a reconciliation line." In practice the chain has almost hardened into <strong>Kafka (the log) + Flink (stateful streaming) + Pinot / Druid / ClickHouse (OLAP queries) + S3 / HDFS (raw data and batch reconciliation)</strong>.</p>
+<div class="ev">
+<div class="evh">EVIDENCE FROM INDUSTRY · these are the companies' own public claims, not the book's</div>
+<ul>
+<li><strong>Uber</strong> published its ad event pipeline: exactly-once via Flink's <strong>checkpoints plus two-phase commit</strong>, while also <strong>generating a UUID per event as an idempotency key</strong> for downstream deduplication, aggregating into one-minute tumbling windows — Uber runs <strong>both</strong> of the chapter's exactly-once routes at once.<span class="src"><a href="https://www.uber.com/blog/real-time-exactly-once-ad-event-processing/" rel="noopener" target="_blank">Uber Blog, "Real-Time Exactly-Once Ad Event Processing", 2021 ↗</a></span></li>
+<li><strong>Google</strong>'s Dataflow paper puts the essence in its title: balancing <strong>correctness, latency and cost</strong>. Its event-time / watermark / trigger triad is the theoretical source of the watermark scheme used here.<span class="src"><a href="https://research.google.com/pubs/archive/43864.pdf" rel="noopener" target="_blank">T. Akidau et al., "The Dataflow Model", VLDB 2015 ↗</a></span></li>
+<li><strong>Jay Kreps (LinkedIn / Kafka's author)</strong> publicly questioned the Lambda architecture in 2014: writing the same logic once for batch and once for streaming guarantees long-term drift, so use one replayable log instead — the origin of this chapter's Kappa choice.<span class="src"><a href="https://www.oreilly.com/radar/questioning-the-lambda-architecture/" rel="noopener" target="_blank">J. Kreps, "Questioning the Lambda Architecture", O'Reilly Radar 2014 ↗</a></span></li>
+<li><strong>Meta (Facebook)</strong>, publishing its realtime pipeline, stated plainly that its latency target is <strong>seconds rather than milliseconds</strong> — and it is precisely by giving up milliseconds that it can put a persistent message bus between every stage, buying fault tolerance and replay. <strong>An inverse confirmation of the chapter's ordering: land the log first, argue about speed second.</strong><span class="src"><a href="https://research.facebook.com/publications/realtime-data-processing-at-facebook/" rel="noopener" target="_blank">G. J. Chen et al., "Realtime Data Processing at Facebook", SIGMOD 2016 ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/data-lakehouse-day38.en.html" target="_blank" rel="noopener">System Design · Day 38 Data Lakes and Lakehouses</a> — how an archived raw log gets recomputed efficiently by batch jobs, and how table formats make "replay into a new table, then cut over" cheap</aside>
+
+<h2>Pitfalls and disputes</h2>
+<ul>
+<li><strong>Reading "exactly once" as "sent once"</strong>: it is about the <em>effect</em> being equivalent to one processing; the transport re-sends whenever it must. Getting this backwards in an interview reads as not understanding it at all.</li>
+<li><strong>Believing a watermark guarantees no late data is lost</strong>: it is a heuristic estimate betting on "almost all". The real backstop is batch backfill plus reconciliation, not a longer watermark.</li>
+<li><strong>Using a Bloom filter for billing dedup</strong>: false positives kill genuine clicks and undercharge. Coarse pre-filter only.</li>
+<li><strong>Discussing technical dedup but never invalid traffic</strong>: in a real ad system the largest source of "clicks ≠ billable clicks" is <strong>fraud filtering</strong> (bots, click farms), and that is what advertisers and platforms actually argue about. <em>This point is outside the book — don't attribute it to the authors.</em></li>
+<li><strong>Kappa isn't free</strong>: replay cost grows linearly with log retention, so keeping 30 days means a full recomputation reads roughly <code>3 TB</code>.</li>
+<li><strong>Period limits</strong>: by the 2022 writing Flink was already the de facto standard; table formats like Iceberg and Hudi have since made "replay into a new table and cut over" considerably cheaper, and the batch/stream boundary is blurrier than the book describes.</li>
+</ul>
+
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① The crux isn't "count fast" but <strong>"count well enough to bill from"</strong> — that one non-functional line, "used for billing", derives every design downstream.</p>
+<p>② Scale: 1B clicks/day, 2M ads → <code>10K QPS</code> average, <code>50K QPS</code> peak, ~<code>100 GB</code>/day, ~<code>3 TB</code>/month; minutes end-to-end.</p>
+<p>③ <strong>Land a replayable log first</strong> (Kafka + object storage) as the single source of truth; write aggregates into a second queue so atomicity collapses into one place.</p>
+<p>④ The computation is map–aggregate–reduce on a stream: hash by <code>ad_id</code>, count per minute in memory, merge top N with a min-heap. Bottlenecks are partition evenness and state durability, not compute.</p>
+<p>⑤ Billing requires <strong>event time</strong>; the price is out-of-order data, handled by a <strong>watermark</strong> that holds the window open a few more minutes — a bet, not a guarantee.</p>
+<p>⑥ Billing can only use <strong>tumbling windows</strong> (no overlap); "the last M minutes" is answered by summing M one-minute cells at query time.</p>
+<p>⑦ <strong>Exactly-once is about effect</strong>: either transactions / two-phase commit, or at-least-once plus UUID idempotent dedup — whose hidden cost is the dedup store (a billion keys a day).</p>
+<p>⑧ Hot advertisers saturate a single partition; fix it with <strong>random-suffix two-stage aggregation</strong>.</p>
+<p>⑨ The ballast is <strong>daily batch reconciliation plus replayable recomputation</strong>: the fast number is for people to look at, the accurate one settles the bill.</p>
+</div>
+</div>
+
+<footer>Books Deep-Read · Reading this page ≈ getting the chapter's core; for full cases and detail, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

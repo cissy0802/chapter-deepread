@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview 卷二 第 6 章 · 设计广告点击聚合 — 专业书籍精读 Book 73</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · System Design Interview 卷二 · 第 6 章</p>
+<h1>设计广告点击聚合</h1>
+<p class="sub">System Design Interview Vol 2 · Ch 6 · Alex Xu &amp; Sahn Lam · 2022</p>
+<p class="langbar"><a href="sdi2-ch06-ad-click-aggregation-book73.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你在手机上刷到一条广告，随手点了一下——就这一下，广告主要为它付钱给平台。全世界每天有<strong>十亿次</strong>这样的点击。这一章讲的就是：怎么把这十亿次点击，<strong>数成一份没人能挑出错的账单</strong>。</p>
+
+<h2>先说个怪事</h2>
+<p>听上去这不就是「计数」吗，按一下加一，小学生都会。可一旦<strong>数字直接变成钱</strong>，性质就整个变了：它不是码表上的读数，是<strong>收银机里的账</strong>。码表少跳一格没人在意；收银机少收一笔，月底就对不上。这一章之所以难，全难在这个身份切换上。</p>
+
+<h2>旧世界为什么难</h2>
+<p>难在三件事。<strong>太多</strong>：平均每秒一万次、高峰五万次，一台机器数不过来，得拆给几十台一起数、最后再汇总。<strong>会迟到</strong>：你在地铁里点了广告、信号断了，手机等出了站才把这条记录发出去——它可能晚三分钟，也可能晚三小时。这一下到底该算进「刚才那一分钟」，还是「现在这一分钟」？<strong>会重复</strong>：网络抖一下，手机没收到确认就再发一遍，同一次点击被数两遍，广告主就被多收了钱。</p>
+
+<h2>它怎么做到的</h2>
+<p><strong>先记流水账。</strong>点击一进来不急着算，先原封不动排成一长队存下来——像超市把每张小票的存根都留着。以后算错了、口径改了，把存根重新过一遍就行。</p>
+<p><strong>按分钟分抽屉。</strong>不去维护「总数」这么一个一直在变的数，而是给每一分钟准备一个抽屉，每次点击落进它<em>出生</em>的那一分钟。抽屉首尾相接、互不重叠，所以同一次点击不会被数进两个抽屉。</p>
+<p><strong>给迟到的留宽限期。</strong>一分钟过完不立刻封箱，再多等三分钟——像末班车再等三分钟才开。绝大多数迟到的都赶得上；实在赶不上的，夜里统一补账。</p>
+<p><strong>每张小票编号。</strong>每次点击出生时就带一个全世界唯一的编号，收下之前先看这个号见没见过，见过就扔掉。这样同一条发一百遍，也只算一次。</p>
+
+<h2>该怎么选</h2>
+<p><strong>快和准在这里是对着干的</strong>：宽限期留得越长，迟到的点击追回来越多、账越准，可结果也出得越晚——广告主盯着实时报表调出价，等太久就没法用了。所以行业里常见的做法是<strong>两条腿走路</strong>：几分钟内先出一份「够用的快数」给人看，夜里再拿全部存根重算一份「准数」去结账，两边一对，差得太多就报警。</p>
+<p>代价也得说清楚：这套系统从此永远养着两份数字和一条对账线，运维复杂度比「数一个数」高出一个量级。</p>
+
+<h2>一句话记住</h2>
+<div class="tl">
+<p>数点击不是「计数」，是「记账」。所以它先把每一笔原样存下来，再按分钟分抽屉数、给迟到的留宽限期、给每一笔编号防重复，夜里还要拿原始存根重算一遍来对账——<strong>快的那份给人看，准的那份用来付钱</strong>。</p>
+</div>
+<p class="switch-hint">想进到具体机制、记号和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">这一章表面上在做一个计数器，实质是在<strong>流处理（stream processing）</strong>上做一本<strong>会计账</strong>。一旦数字直接变成钱，系统的首要属性就不再是吞吐或延迟，而是<strong>可对账、可重算、不重不漏</strong>。作者借这道题，把流处理里最硬的三件事——<strong>事件时间与水位线、恰好一次语义、热点分区</strong>——按「正确性优先」的顺序串了一遍。</p>
+
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>事件流（stream）</strong>：源源不断、没有终点的数据序列；相对的是有头有尾的「有界数据集」。</li>
+<li><strong>消息队列 / Kafka</strong>：架在生产者与消费者之间的持久化缓冲；写入只追加，消费者用<strong>偏移量（offset）</strong>自己记「读到哪儿了」，所以同一段数据可以被<strong>重放</strong>一遍。</li>
+<li><strong>分区（partition）</strong>：把一条队列按某个键切成多条并行子队列，每条内部保持有序；<em>并行度的上限就是分区数</em>。</li>
+<li><strong>流处理 vs 批处理</strong>：前者来一条算一条、结果不断修正；后者攒一大批一次性算完、结果一次到位。</li>
+<li><strong>窗口（window）</strong>：把无尽的流切成有边界的小段来统计，比如「每一分钟」。</li>
+<li><strong>事件时间 vs 处理时间</strong>：前者是事件<em>发生</em>的时刻（由数据自己带着），后者是它<em>被系统收到</em>的时刻。</li>
+<li><strong>水位线（watermark）</strong>：系统对「这一刻之前的数据应该都到齐了」的估计，用来决定一个窗口什么时候可以封箱结算。</li>
+<li><strong>幂等（idempotent）</strong>：同一个操作重复执行多次，效果和执行一次一样。</li>
+<li><strong>检查点（checkpoint）</strong>：流处理引擎定期把算子的内存状态和读取位置一起存盘，崩溃后从这里恢复。</li>
+<li><strong>对账（reconciliation）</strong>：用另一条独立通道重算同一份数据，比对两个结果是否一致。</li>
+<li><strong>OLAP 数据库</strong>：为「在大量数据上做聚合查询」优化的分析型数据库（ClickHouse、Druid、Pinot），区别于面向单条读写的 OLTP。</li>
+</ul>
+</div>
+
+<h2>坐标</h2>
+<p>本章是 Vol 2 的第 6 章，紧接 Ch4（亲手造一个分布式消息队列）与 Ch5（监控告警的时序写入）：前者给了这一章赖以生存的<strong>可重放日志</strong>，后者给了<strong>按时间窗口聚合海量写入</strong>的套路。但它多加了一条前两章都没有的约束——<strong>结果要能拿去结账</strong>。现实里它对应 Google Ads、Meta Ads 的计费与报表管线，以及 Kafka + Flink + Druid/Pinot 这条今天近乎行业默认的实时数仓链路。</p>
+
+<h2>这章要解决什么</h2>
+<p>先把规模摆上桌。书里给的量级是：<strong>每天 10 亿次点击、在库广告 200 万个</strong>。10 亿 ÷ 86400 ≈ <strong>平均 1 万 QPS</strong>；按峰值取平均值的 5 倍，<strong>峰值 5 万 QPS</strong>。单条点击事件约 <code>0.1 KB</code>（广告 id、时间戳、用户 id、IP、国家），于是<strong>每天约 100 GB 原始数据、每月约 3 TB</strong>。</p>
+<p>要交付的东西有两类：<strong>查某个 <code>ad_id</code> 最近 M 分钟的点击数</strong>，以及<strong>每分钟给出点击最多的 Top 100 广告</strong>，都要支持按 IP、用户、国家过滤。端到端延迟要求是「几分钟以内」——不需要毫秒，但也不能等到第二天。</p>
+<p>真正给这道题定调的，是非功能需求里那一句：<strong>这份数据要拿去计费</strong>。少算，平台白送广告主曝光；多算，是向客户超收，属于合规与信任问题。后面几乎每个设计选择——为什么必须落原始日志、为什么用事件时间、为什么非要恰好一次——都能从这一句倒推出来。说白了：<strong>监控指标掉几个点没人会打官司，广告账单错一分钱会。</strong></p>
+
+<h2>核心内容，讲透</h2>
+
+<h3>先落一条可重放的日志，再谈计算</h3>
+<p>点击事件不直接打进数据库，而是先进 Kafka。理由不止是削峰填谷：<strong>这条日志是全系统唯一的真相</strong>。原始事件同时旁路落一份到对象存储（S3 / HDFS），保留期以月计——所有重算、对账、口径变更，都靠把它重新过一遍。</p>
+<p>书里还有一个容易被跳过的设计：<strong>聚合结果不直接写库，而是先写进第二道队列</strong>。因为一次消费要同时做两件事——把结果落盘、把消费位置（offset）往前推——它们跨了两个系统，天然不是原子操作，崩在中间要么重复计数、要么丢数。加一道队列，就把「原子性」<strong>收敛到一处</strong>（队列的事务提交），下游写库那段做成幂等的，重放也不会写错。</p>
+<figure>
+<svg viewBox="0 0 640 266" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs>
+<marker id="g1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="g2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text x="16" y="24" fill="#5b9df9" font-size="12.5" font-weight="700">实时通道 · 分钟级 · 「快的那份」</text>
+<rect x="16" y="42" width="84" height="32" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="58" y="62" fill="#b9c0ca" font-size="11" text-anchor="middle">点击事件</text>
+<rect x="130" y="42" width="110" height="32" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect><text x="185" y="62" fill="#e7ebf1" font-size="11" text-anchor="middle">原始事件队列</text>
+<rect x="270" y="42" width="110" height="32" rx="6" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5" stroke-width="2"></rect><text x="325" y="56" fill="#e7ebf1" font-size="11" text-anchor="middle">聚合服务</text><text x="325" y="69" fill="#b9c0ca" font-size="8.5" text-anchor="middle" font-family="monospace">map · aggregate · reduce</text>
+<rect x="410" y="42" width="110" height="32" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect><text x="465" y="62" fill="#e7ebf1" font-size="11" text-anchor="middle">聚合结果队列</text>
+<rect x="548" y="42" width="76" height="32" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="586" y="62" fill="#b9c0ca" font-size="11" text-anchor="middle">写入服务</text>
+<line x1="100" y1="58" x2="126" y2="58" stroke="#7c8593" marker-end="url(#g1)"></line>
+<line x1="240" y1="58" x2="266" y2="58" stroke="#7c8593" marker-end="url(#g1)"></line>
+<line x1="380" y1="58" x2="406" y2="58" stroke="#7c8593" marker-end="url(#g1)"></line>
+<line x1="520" y1="58" x2="544" y2="58" stroke="#7c8593" marker-end="url(#g1)"></line>
+<line x1="586" y1="74" x2="586" y2="110" stroke="#7c8593" marker-end="url(#g1)"></line>
+<rect x="496" y="114" width="128" height="32" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect><text x="560" y="134" fill="#e7ebf1" font-size="11" text-anchor="middle">OLAP 库 · 查询</text>
+<text x="486" y="128" fill="#7c8593" font-size="9.5" text-anchor="end">最近 M 分钟计数 / Top 100</text>
+<line x1="185" y1="74" x2="185" y2="186" stroke="#9b6cf5" stroke-dasharray="4 4" marker-end="url(#g2)"></line>
+<text x="16" y="176" fill="#9b6cf5" font-size="12.5" font-weight="700">权威通道 · T+1 · 「准的那份」</text>
+<rect x="128" y="190" width="120" height="32" rx="6" fill="rgba(155,108,245,0.1)" stroke="#9b6cf5"></rect><text x="188" y="210" fill="#e7ebf1" font-size="11" text-anchor="middle">原始日志归档</text>
+<rect x="286" y="190" width="126" height="32" rx="6" fill="rgba(155,108,245,0.1)" stroke="#9b6cf5"></rect><text x="349" y="210" fill="#e7ebf1" font-size="11" text-anchor="middle">每日批处理重算</text>
+<rect x="450" y="190" width="110" height="32" rx="6" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5" stroke-width="2"></rect><text x="505" y="210" fill="#e7ebf1" font-size="11" text-anchor="middle">对账 · 结算</text>
+<line x1="248" y1="206" x2="282" y2="206" stroke="#9b6cf5" marker-end="url(#g2)"></line>
+<line x1="412" y1="206" x2="446" y2="206" stroke="#9b6cf5" marker-end="url(#g2)"></line>
+<path d="M540,190 Q556,172 560,150" fill="none" stroke="#9b6cf5" stroke-dasharray="3 3" marker-end="url(#g2)"></path>
+<text x="16" y="246" fill="#7c8593" font-size="9.5">对象存储保留数月 · 差异超阈值报警 · 以批处理结果为准</text>
+</svg>
+<figcaption>图 1 · 两条通道：实时通道分钟级出「快数」，权威通道次日从原始日志重算出「准数」并对账。原始日志是全系统唯一真相。</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/message-queue-day8.html" target="_blank" rel="noopener">System Design · Day 8 消息队列</a> — 为什么「先落一条日志」能同时买到削峰、解耦与重放，以及投递语义在队列这一层是怎么实现的</aside>
+
+<h3>聚合骨架：一张 map–aggregate–reduce 的 DAG</h3>
+<p>计算本身是 MapReduce 的形状，只是跑在流上：<strong>map 节点</strong>做校验、清洗、打标（比如把 IP 翻成国家），再按 <code>ad_id</code> 哈希把事件分发出去；<strong>aggregate 节点</strong>在内存里维护「每个 <code>ad_id</code> 每分钟的计数」；<strong>reduce 节点</strong>把各聚合节点的局部结果合并，算出全局 Top N。</p>
+<p>给个量级感受为什么这能成立：200 万个 <code>ad_id</code>，每分钟一行计数（id 加计数不过十几字节），一分钟的完整计数表也就<strong>几十 MB 级</strong>，单机内存轻松装下；Top 100 用容量 100 的<strong>小顶堆</strong>维护，扫一遍 200 万条是 <code>O(n log 100)</code>——<code>log 100</code> 不到 7，等于乘了个常数，不是瓶颈。<strong>真正的瓶颈永远在「分区均不均匀」和「状态能不能可靠地存下来」，不在算力。</strong></p>
+
+<h3>事件时间 vs 处理时间：计费只能用前者</h3>
+<p>一条点击有两个时间：它<em>发生</em>的时刻（事件时间，由客户端打在数据里）和它<em>被系统收到</em>的时刻（处理时间）。</p>
+<p>用处理时间实现起来简单得多——不用等、不用缓存乱序数据、窗口一到点就封箱。但它会把「用户在地铁里点了一下、出站后手机才补发」这类事件记进错误的分钟，跨零点时甚至记进<strong>错误的账单日</strong>。对报表这叫误差，对账单这叫错账。所以本章选<strong>事件时间</strong>。</p>
+<p>代价是必须正面面对<strong>乱序</strong>：事件时间 12:00:30 的点击，可能 12:03 才到。解法是<strong>水位线</strong>——窗口的名义边界过去后，再多等一段才封箱结算。这是一场明码标价的赌：等 <code>3</code> 分钟，绝大多数迟到事件追得回来，代价是端到端延迟从 ~1 分钟变成 ~4 分钟；等 <code>30</code> 分钟，追回的增量已很小，延迟却让实时报表失去意义。而且<strong>水位线永远兜不住底</strong>——真正处理「迟到几小时」的是下面那条批处理回补线。</p>
+<figure>
+<svg viewBox="0 0 640 240" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="t1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="t2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#e8794b"></path></marker></defs>
+<text x="16" y="22" fill="#5b9df9" font-size="12" font-weight="700">① 事件时间轴 — 点击实际发生的时刻</text>
+<line x1="50" y1="86" x2="614" y2="86" stroke="#7c8593" marker-end="url(#t1)"></line>
+<rect x="90" y="64" width="120" height="22" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"></rect>
+<text x="150" y="56" fill="#8fbaff" font-size="10.5" text-anchor="middle">窗口 12:00–12:01</text>
+<circle cx="120" cy="86" r="4.5" fill="#5b9df9"></circle>
+<circle cx="160" cy="86" r="4.5" fill="#5b9df9"></circle>
+<circle cx="195" cy="86" r="4.5" fill="#9b6cf5"></circle>
+<line x1="450" y1="42" x2="450" y2="212" stroke="#9b6cf5" stroke-dasharray="5 4"></line>
+<text x="450" y="36" fill="#9b6cf5" font-size="10.5" text-anchor="middle">水位线 12:04 · 封箱结算</text>
+<path d="M120,92 Q122,140 127,178" fill="none" stroke="#7c8593" marker-end="url(#t1)"></path>
+<path d="M160,92 Q270,140 388,178" fill="none" stroke="#7c8593" marker-end="url(#t1)"></path>
+<path d="M195,92 Q370,140 543,178" fill="none" stroke="#e8794b" marker-end="url(#t2)"></path>
+<line x1="50" y1="186" x2="614" y2="186" stroke="#7c8593" marker-end="url(#t1)"></line>
+<circle cx="128" cy="186" r="4.5" fill="#5b9df9"></circle>
+<circle cx="390" cy="186" r="4.5" fill="#5b9df9"></circle>
+<circle cx="545" cy="186" r="4.5" fill="#e8794b"></circle>
+<text x="128" y="204" fill="#7c8593" font-size="9.5" text-anchor="middle">准时到达</text>
+<text x="378" y="204" fill="#7c8593" font-size="9.5" text-anchor="middle">迟到 · 赶上封箱</text>
+<text x="614" y="204" fill="#e8794b" font-size="9.5" text-anchor="end">太迟 · 次日批处理回补</text>
+<text x="16" y="228" fill="#5b9df9" font-size="12" font-weight="700">② 处理时间轴 — 系统实际收到的时刻</text>
+</svg>
+<figcaption>图 2 · 事件时间与处理时间的错位：水位线把窗口多留一段宽限期，追回大部分迟到事件；超出水位线的只能靠次日批处理回补。</figcaption>
+</figure>
+
+<h3>窗口形状：计费用滚动，排行榜用滑动</h3>
+<p><strong>滚动窗口（tumbling window）</strong>把时间切成首尾相接、互不重叠的格子，一分钟一个。计费<strong>只能</strong>用它：窗口一旦重叠，同一次点击就会落进两个窗口被算两次。<strong>滑动窗口（sliding window）</strong>每次向前挪一小步、彼此大面积重叠，适合「最近 5 分钟最热的广告」这类问题。</p>
+<p>实践上有个便宜的取巧：流里<strong>只算滚动窗口</strong>并落进 OLAP 库，「最近 M 分钟」在<strong>查询时</strong>把 M 个一分钟格子加起来——把滑动窗口的成本从「常驻内存维护」挪到「查询时求和」。</p>
+
+<h3>恰好一次：它说的是效果，不是传输</h3>
+<p class="tcap">表 1 · 三档投递语义，以及这道题为什么必须选最贵的那档</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>语义</th><th>含义</th><th>代价</th><th>这道题能不能用</th></tr></thead>
+<tbody>
+<tr><th>至多一次</th><td>不重试，失败就丢</td><td>最便宜、最快</td><td><strong>不行</strong>——丢了就是少收钱</td></tr>
+<tr><th>至少一次</th><td>失败就重试，可能重复</td><td>便宜；但结果会偏大</td><td>单独不行，<strong>必须配去重</strong></td></tr>
+<tr><th>恰好一次</th><td>结果等价于只处理了一次</td><td>吞吐下降、延迟随检查点抖动</td><td><strong>必须</strong>——账不能错</td></tr>
+</tbody></table></div>
+<p>要澄清的是：<strong>「恰好一次」从来不是指消息只在网络上传了一次</strong>。传输该重复还是会重复，它保证的是<strong>最终落到结果里的效果等价于只处理了一次</strong>（end-to-end exactly-once）。实现上两条路：</p>
+<ul>
+<li><strong>事务 / 两阶段提交</strong>：把「提交 offset」和「写出结果」绑成一个原子操作。Flink 的检查点 + Kafka 事务就是这条路的工业实现。代价是吞吐下降、延迟随检查点间隔抖动。</li>
+<li><strong>至少一次 + 幂等去重</strong>：每个事件出生时带一个 UUID，下游按 UUID 判重。隐藏成本在<strong>去重存储</strong>：一天 10 亿个 UUID，光 16 字节的键就是 <code>16 GB</code>，必须带过期时间、按时间窗口分片，到期整片丢弃。</li>
+</ul>
+<p>有人想用<strong>布隆过滤器（Bloom filter，用少量内存判断「这个值见没见过」的概率结构）</strong>压缩去重成本——小心：它有<strong>假阳性</strong>，会把没见过的点击误判成重复丢掉，落在计费上就是<strong>少算钱</strong>。只能做前置粗筛，判成「可能重复」的再去精确存储查一次。</p>
+
+<h3>热点广告主：哈希分区的老毛病</h3>
+<p>按 <code>ad_id</code> 哈希分区，前提是流量在各个 <code>ad_id</code> 之间大致均匀。广告业务偏偏不是：一个超大广告主搞一次大促，就能把单个分区的流量打到平均值的几十倍，而<strong>一个分区只能由一个消费者处理</strong>，加机器也救不了它。</p>
+<p>标准解法是<strong>两段聚合</strong>：给热点键加随机后缀，把 <code>ad_id</code> 拆成 <code>ad_id:0</code> … <code>ad_id:N</code> 散到 N 个分区各自局部计数，再由第二段把这 N 份加起来。代价有三：多一层合并的延迟、要<strong>动态</strong>识别哪些键是热点（今天的热点明天可能不是）、拆分因子 N 本身还得随流量调整。</p>
+<figure>
+<svg viewBox="0 0 640 240" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="h1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line x1="320" y1="14" x2="320" y2="228" stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4"></line>
+<text x="160" y="24" fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle">直接按 ad_id 哈希</text>
+<rect x="108" y="38" width="104" height="26" rx="6" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5"></rect><text x="160" y="56" fill="#e7ebf1" font-size="10.5" text-anchor="middle">超大广告主 A</text>
+<line x1="160" y1="64" x2="178" y2="96" stroke="#7c8593" marker-end="url(#h1)"></line>
+<rect x="22" y="100" width="56" height="26" rx="5" fill="rgba(91,157,249,0.06)" stroke="#7c8593"></rect><text x="50" y="118" fill="#7c8593" font-size="10" text-anchor="middle">P1 闲</text>
+<rect x="94" y="100" width="56" height="26" rx="5" fill="rgba(91,157,249,0.06)" stroke="#7c8593"></rect><text x="122" y="118" fill="#7c8593" font-size="10" text-anchor="middle">P2 闲</text>
+<rect x="166" y="100" width="56" height="26" rx="5" fill="rgba(224,107,107,0.2)" stroke="#e06b6b" stroke-width="2"></rect><text x="194" y="118" fill="#e7ebf1" font-size="10" text-anchor="middle">P3 过载</text>
+<rect x="238" y="100" width="56" height="26" rx="5" fill="rgba(91,157,249,0.06)" stroke="#7c8593"></rect><text x="266" y="118" fill="#7c8593" font-size="10" text-anchor="middle">P4 闲</text>
+<rect x="41" y="136" width="18" height="8" fill="#5b9df9"></rect>
+<rect x="113" y="136" width="18" height="6" fill="#5b9df9"></rect>
+<rect x="185" y="136" width="18" height="56" fill="#e06b6b"></rect>
+<rect x="257" y="136" width="18" height="7" fill="#5b9df9"></rect>
+<text x="160" y="216" fill="#7c8593" font-size="9.5" text-anchor="middle">一个分区只能一个消费者 → 加机器也救不了</text>
+<text x="480" y="24" fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle">加随机后缀 + 两段聚合</text>
+<rect x="340" y="38" width="54" height="24" rx="5" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"></rect><text x="367" y="55" fill="#e7ebf1" font-size="9.5" text-anchor="middle">A:0</text>
+<rect x="410" y="38" width="54" height="24" rx="5" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"></rect><text x="437" y="55" fill="#e7ebf1" font-size="9.5" text-anchor="middle">A:1</text>
+<rect x="480" y="38" width="54" height="24" rx="5" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"></rect><text x="507" y="55" fill="#e7ebf1" font-size="9.5" text-anchor="middle">A:2</text>
+<rect x="550" y="38" width="54" height="24" rx="5" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"></rect><text x="577" y="55" fill="#e7ebf1" font-size="9.5" text-anchor="middle">A:3</text>
+<line x1="367" y1="62" x2="367" y2="96" stroke="#7c8593" marker-end="url(#h1)"></line>
+<line x1="437" y1="62" x2="437" y2="96" stroke="#7c8593" marker-end="url(#h1)"></line>
+<line x1="507" y1="62" x2="507" y2="96" stroke="#7c8593" marker-end="url(#h1)"></line>
+<line x1="577" y1="62" x2="577" y2="96" stroke="#7c8593" marker-end="url(#h1)"></line>
+<rect x="340" y="100" width="54" height="26" rx="5" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"></rect><text x="367" y="118" fill="#b9c0ca" font-size="9.5" text-anchor="middle">P1</text>
+<rect x="410" y="100" width="54" height="26" rx="5" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"></rect><text x="437" y="118" fill="#b9c0ca" font-size="9.5" text-anchor="middle">P2</text>
+<rect x="480" y="100" width="54" height="26" rx="5" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"></rect><text x="507" y="118" fill="#b9c0ca" font-size="9.5" text-anchor="middle">P3</text>
+<rect x="550" y="100" width="54" height="26" rx="5" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"></rect><text x="577" y="118" fill="#b9c0ca" font-size="9.5" text-anchor="middle">P4</text>
+<rect x="358" y="136" width="18" height="16" fill="#5b9df9"></rect>
+<rect x="428" y="136" width="18" height="15" fill="#5b9df9"></rect>
+<rect x="498" y="136" width="18" height="17" fill="#5b9df9"></rect>
+<rect x="568" y="136" width="18" height="15" fill="#5b9df9"></rect>
+<line x1="367" y1="156" x2="452" y2="176" stroke="#7c8593" marker-end="url(#h1)"></line>
+<line x1="437" y1="156" x2="466" y2="176" stroke="#7c8593" marker-end="url(#h1)"></line>
+<line x1="507" y1="158" x2="494" y2="176" stroke="#7c8593" marker-end="url(#h1)"></line>
+<line x1="577" y1="156" x2="510" y2="176" stroke="#7c8593" marker-end="url(#h1)"></line>
+<rect x="414" y="180" width="132" height="26" rx="6" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5" stroke-width="2"></rect><text x="480" y="198" fill="#e7ebf1" font-size="10.5" text-anchor="middle">第二段合并 → A 总计</text>
+<text x="480" y="224" fill="#7c8593" font-size="9.5" text-anchor="middle">代价：多一层合并 + 要动态识别热点</text>
+</svg>
+<figcaption>图 3 · 热点键打爆单分区（左）；加随机后缀把它拆成 N 份摊平、再用第二段聚合合回来（右）。</figcaption>
+</figure>
+
+<h3>对账与重算：这一章的压舱石</h3>
+<p>流式结果是「快的那一份」。系统另外每天跑一次批处理，从对象存储的原始日志把昨天重算一遍，与流式结果逐广告比对，差异超阈值就报警，并以批处理结果为准结账。</p>
+<p>同一条原始日志还支撑<strong>重算（recalculation）</strong>：口径改了、发现了 bug，就从某个时间点起把日志重放进一张新表，验完再切过去——不用改历史结果，也不用停机。这正是 Kappa 架构的做法：<strong>不维护两套代码，而是维护一条可重放的日志。</strong></p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/data-processing-day20.html" target="_blank" rel="noopener">System Design · Day 20 批处理与流处理</a> — 批与流的统一之争、窗口与水位线的工程细节，以及重放为什么是流式系统的「撤销键」</aside>
+
+<h2>关键权衡与选型</h2>
+<p>这一章的所有权衡，最后都收敛到同一条轴上：<strong>准确性 ↔ 延迟 ↔ 成本</strong>，三者不可能同时最优——这也正是 Google Dataflow 论文标题里并排的那三个词。</p>
+<p class="tcap">表 2 · 两条架构路线：Lambda vs Kappa</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Lambda（批 + 流两条线）</th><th>Kappa（单流 + 可重放日志）</th></tr></thead>
+<tbody>
+<tr><th>正确性</th><td>批线是权威，最终一定对</td><td>靠重放同一条日志得到同样结果</td></tr>
+<tr><th>代码</th><td><strong>同一套逻辑写两遍</strong>，两边口径长期必然漂移</td><td>一套逻辑；改逻辑 = 重放一次</td></tr>
+<tr><th>延迟</th><td>快线分钟级，权威结果 T+1</td><td>分钟级；重算按需触发</td></tr>
+<tr><th>成本</th><td>两套集群、两套运维</td><td>一套集群，但<strong>日志保留期越长越贵</strong></td></tr>
+<tr><th>适合</th><td>强监管、必须有独立权威口径</td><td>多数实时分析场景；<strong>本章主推</strong></td></tr>
+</tbody></table></div>
+<p>本章推荐 Kappa，但保留一条每日批处理<strong>对账</strong>线——严格说这是「Kappa 为主 + 批处理当审计员」，真实广告公司大多也停在这个位置。</p>
+<p class="tcap">表 3 · 水位线该等多久（本章场景：日均 10 亿点击，端到端要求几分钟）</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>宽限期</th><th>能兜住什么</th><th>端到端延迟</th><th>代价</th></tr></thead>
+<tbody>
+<tr><th><code>3 秒</code></th><td>只够兜网络抖动</td><td>&lt; 1 分钟</td><td>迟到率高，<strong>账不准</strong>，只配做监控面板</td></tr>
+<tr><th><code>3 分钟</code></th><td>绝大多数移动端补发</td><td>~4 分钟</td><td><strong>收益 / 延迟的甜点</strong>，本章取值</td></tr>
+<tr><th><code>30 分钟+</code></th><td>边际收益已经很小</td><td>半小时以上</td><td>实时性丧失，报表失去意义</td></tr>
+<tr><th>不设，交给批处理</th><td>100% 覆盖</td><td>T+1</td><td>没有实时性；<strong>日终结算必须有这一层</strong></td></tr>
+</tbody></table></div>
+<p>还有两条不上表的判断：</p>
+<ul>
+<li><strong>别把 Top N 和计费塞进同一条链路。</strong>Top N 允许近似，计费不允许；混在同一个「必须恰好一次」的通道里，等于为一张排行榜付了计费级的成本。</li>
+<li><strong>去重存储按时间分片、整片过期。</strong>逐键设过期会让存储引擎不停做小对象回收；按小时或天分片、到期整片删掉要便宜一个数量级。</li>
+</ul>
+
+<h2>为什么重要 / 落到真实系统</h2>
+<p>这道题是<strong>「正确性优先的流处理」</strong>的标准样板，面试真正考的也是这一点：面试官想看你会不会在说完「用 Flink 做窗口聚合」之后，主动补一句「但这份数是要结账的，所以我需要事件时间、需要恰好一次、需要一条对账线」。选型上这条链路今天几乎固化成了 <strong>Kafka（日志）+ Flink（有状态流处理）+ Pinot / Druid / ClickHouse（OLAP 查询）+ S3 / HDFS（原始数据与批处理对账）</strong>。</p>
+<div class="ev">
+<div class="evh">大厂实证 · 这些主张不是书里说的，是公司自己公开说的</div>
+<ul>
+<li><strong>Uber</strong> 公开过它的广告事件管线：用 Flink 的<strong>检查点 + 两阶段提交</strong>拿到恰好一次，同时<strong>给每个事件生成 UUID 当幂等键</strong>在下游去重，聚合走一分钟滚动窗口——本章讲的两条恰好一次路线，Uber 是<strong>两条一起用</strong>。<span class="src"><a href="https://www.uber.com/blog/real-time-exactly-once-ad-event-processing/" rel="noopener" target="_blank">Uber Blog「Real-Time Exactly-Once Ad Event Processing」, 2021 ↗</a></span></li>
+<li><strong>Google</strong> 的 Dataflow 论文把这件事的本质写进了标题：在<strong>正确性、延迟、成本</strong>之间做平衡；它提出的「事件时间 / 水位线 / 触发器」三件套，正是本章水位线方案的理论来源。<span class="src"><a href="https://research.google.com/pubs/archive/43864.pdf" rel="noopener" target="_blank">T. Akidau 等《The Dataflow Model》, VLDB 2015 ↗</a></span></li>
+<li><strong>Jay Kreps（LinkedIn / Kafka 作者）</strong>2014 年公开质疑 Lambda 架构：同一套逻辑在批和流里各写一遍，长期必然漂移，主张改用一条可重放的日志——这是本章 Kappa 选型的出处。<span class="src"><a href="https://www.oreilly.com/radar/questioning-the-lambda-architecture/" rel="noopener" target="_blank">J. Kreps「Questioning the Lambda Architecture」, O'Reilly Radar 2014 ↗</a></span></li>
+<li><strong>Meta（Facebook）</strong>公开自家实时管线时明确说，目标延迟是<strong>「秒级而不是毫秒级」</strong>——正因为主动放弃了毫秒，才能在每个阶段之间都插一条持久化消息总线，换来容错与重放。<strong>反向印证了本章「先落日志、再谈算得多快」的次序。</strong><span class="src"><a href="https://research.facebook.com/publications/realtime-data-processing-at-facebook/" rel="noopener" target="_blank">G. J. Chen 等《Realtime Data Processing at Facebook》, SIGMOD 2016 ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/data-lakehouse-day38.html" target="_blank" rel="noopener">System Design · Day 38 数据湖与湖仓</a> — 原始日志归档到对象存储之后怎么被批处理高效重算，以及表格式如何让「重放写进新表再切换」变便宜</aside>
+
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>把「恰好一次」理解成「消息只传一次」</strong>：它说的是<em>效果</em>上等价于处理一次，传输层该重发还是重发。面试里这句话说反，基本等于没理解。</li>
+<li><strong>以为水位线能保证不丢迟到数据</strong>：它只是个启发式估计，赌的是「绝大多数」。真正兜底的是批处理回补加对账，而不是把水位线调长。</li>
+<li><strong>用布隆过滤器做计费去重</strong>：假阳性会误杀真实点击、少算钱，只能做前置粗筛。</li>
+<li><strong>只谈技术去重，不提无效流量</strong>：真实广告系统里「点击数 ≠ 计费点击数」的最大来源是<strong>反作弊过滤</strong>（机器人、点击农场），那才是广告主和平台真正争论的地方。<em>这条是书外补充，别当成原书论点。</em></li>
+<li><strong>Kappa 不是免费的</strong>：重放成本随日志保留期线性增长，保留 30 天就意味着一次全量重算要读约 <code>3 TB</code>。</li>
+<li><strong>时代局限</strong>：本书 2022 年成稿时 Flink 已是事实标准；此后 Iceberg / Hudi 这类表格式让「重放写进新表再切换」便宜了不少，流批一体的边界比书里更模糊。</li>
+</ul>
+
+<h2>要点</h2>
+<div class="tl">
+<p>① 题眼不是「数得快」，而是<strong>「数得能拿去结账」</strong>——非功能需求里「用于计费」那一句，倒推出后面所有设计。</p>
+<p>② 量级：每天 10 亿点击、200 万广告 → 平均 <code>1 万 QPS</code>、峰值 <code>5 万 QPS</code>、每天约 <code>100 GB</code>、每月约 <code>3 TB</code>；端到端要求几分钟。</p>
+<p>③ <strong>先落一条可重放的日志</strong>（Kafka + 对象存储），它是全系统唯一真相；聚合结果先写第二道队列，把原子性收敛到一处。</p>
+<p>④ 计算是流上的 map–aggregate–reduce：按 <code>ad_id</code> 哈希分发、内存里按分钟计数、小顶堆合并 Top N；瓶颈在分区均匀性与状态可靠性，不在算力。</p>
+<p>⑤ 计费必须用<strong>事件时间</strong>，代价是乱序，靠<strong>水位线</strong>多等几分钟封窗——水位线是赌注，不是保证。</p>
+<p>⑥ 计费只能用<strong>滚动窗口</strong>（不重叠）；「最近 M 分钟」在查询时把 M 个一分钟格子加起来即可。</p>
+<p>⑦ <strong>恰好一次指的是效果</strong>：两条路——事务 / 两阶段提交，或至少一次 + UUID 幂等去重；后者的隐藏成本是去重存储（10 亿键/天）。</p>
+<p>⑧ 热点广告主会打爆单分区，用<strong>加随机后缀的两段聚合</strong>打散再合并。</p>
+<p>⑨ 压舱石是<strong>每日批处理对账 + 可重放重算</strong>：快的那份给人看，准的那份用来结账。</p>
+</div>
+</div>
+
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
