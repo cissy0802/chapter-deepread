@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview Vol 2 Ch 7 · Hotel Reservation System — Books Deep-Read 74</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOK DEEP READ · System Design Interview Vol 2 · Ch 7</p>
+<h1>Hotel Reservation System</h1>
+<p class="sub">System Design Interview Vol 2 · Ch 7 · Alex Xu &amp; Sahn Lam · 2022</p>
+<p class="langbar"><a href="sdi2-ch07-hotel-reservation-book74.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You pick a room in a booking app and press "Reserve". In the second or two that follows, the system has to do something genuinely dangerous: confirm the room is still there, put it in your name, and <strong>not also sell that same room to the person pressing the same button right now</strong>. This chapter builds that system from scratch.</p>
+<h2>Here's the odd part</h2>
+<p>You probably assume the hard part is crowds. Do the arithmetic: five thousand hotels, a million rooms; even at 70% occupancy with an average three-night stay, that's only a bit over two hundred thousand bookings a day — <strong>about three per second</strong>. Three! Less traffic than a small forum's posts. The difficulty was never volume. It's that two of those three might be reaching for the same room, and getting it wrong costs real money.</p>
+<h2>Why the old world struggled</h2>
+<p>Picture the paper register at the front desk. A guest calls, the clerk turns to March 5th, sees one room left, writes down a name. The trouble is that in the same second a colleague is looking at the same page, also seeing "one left", also writing a name. Two people paid; there is one room. That's <strong>overselling</strong>. What's true of a paper ledger is exactly true of two servers reading the same row.</p>
+<h2>How it pulls this off</h2>
+<p><strong>Step one: change what you sell.</strong> A hotel doesn't sell "room 301" — it sells "king room · March 5th · how many left", a single cell of allowance. Like a cinema selling "how many seats remain for Saturday night" and sorting out where you sit at the door. Finding an empty room among tens of thousands turns into subtracting one from a number.</p>
+<p><strong>Step two: govern that cell.</strong> Two ways to live. Either you hold the page face-down while you change it and nobody else may look until you're done — safe, but a queue builds up; or you note which revision of the page you read, check on writing whether that revision still holds, and if someone cut in front of you, start over — faster most days, but during a scramble you redo it again and again.</p>
+<p><strong>Step three: cure the other kind of double.</strong> You fumbled and clicked "Submit" twice. The fix is to hand you a ticket number when you open the booking page, and let one ticket number be redeemed exactly once — like taking a numbered slip in a queue: shout twice, you still count as one person.</p>
+<h2>So what should you pick?</h2>
+<p>For an ordinary hotel the second way (check the revision) is plenty, and you can even let the database itself guard the rule "never book more than you have". Only a scramble — the night before a concert, a whole city chasing one hotel — earns that cell its own queue. The price you pay: now and then you'll reach the last step and read "just taken". The system would rather waste one of your clicks than sell one room twice.</p>
+<h2>Remember this</h2>
+<div class="tl">
+<p>A reservation system is hard not because of traffic (it's a few writes per second) but because of <strong>correctness over finite inventory</strong>: turn rooms into one cell of "room type × date", then guard that cell with "only one writer at a time" and "one ticket, one redemption".</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the notation and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">On the surface this chapter teaches you to design a booking system; what it actually teaches is that <strong>some systems are hard on correctness, not on scale</strong>. The estimate comes out at roughly three reservations per second, yet the system must survive concurrency on a single inventory row and must never sell an extra room because of one retry. The skeleton is four things: model sellable capacity as <strong>an inventory row per "room type × date"</strong>, wrap "decrement inventory" and "insert reservation" in <strong>one database transaction</strong>, block duplicate submissions with an <strong>idempotency key</strong>, and block overselling with an <strong>optimistic lock or a database constraint</strong>. Only once the system is split into several services are you forced to reach for 2PC / Saga / TCC — tools that cost far more.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Room type</strong>: hotels sell interchangeable rooms in batches ("king", "twin", "suite"); the actual room number is usually assigned at check-in.</li>
+<li><strong>Inventory</strong>: how many rooms of one type, at one hotel, on one date remain sellable — every concurrency problem in this chapter happens on that row.</li>
+<li><strong>Oversell</strong>: selling more than actually exists. The core error this chapter defends against.</li>
+<li><strong>Overbooking</strong>: <em>deliberately</em> selling a little more (say 110% of capacity) to offset cancellations and no-shows. A business policy, not a bug.</li>
+<li><strong>Transaction / ACID</strong>: a group of reads and writes either all happen or none do, and nobody sees the intermediate state.</li>
+<li><strong>Pessimistic locking</strong>: lock the row before changing it; everyone else waits. In SQL, usually <code>SELECT ... FOR UPDATE</code>.</li>
+<li><strong>Optimistic locking</strong>: take no lock; remember a version number when reading, verify on write that it hasn't changed, and re-read and retry if it has.</li>
+<li><strong>Idempotency</strong>: sending the same request many times has the same effect as sending it once, achieved by carrying a unique <em>idempotency key</em>.</li>
+<li><strong>Race condition</strong>: two requests interleave, each reads a stale value and each writes it back, so neither ends up right.</li>
+<li><strong>2PC / Saga / TCC</strong>: three ways to do "one thing" across services — two-phase vote, local steps plus compensation, or reserve-then-confirm-or-cancel.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Chapter 7 of Volume 2. The first six chapters (proximity service, maps, message queue, monitoring, ad aggregation) are uniformly <strong>throughput and streaming</strong> problems; this one turns for the first time to a <strong>transactional system with finite inventory</strong> — the book's dividing line between "can it hold up" and "does it add up". It leads into Ch 11 (payments) and Ch 12 (digital wallet). In the real world: the booking path at Booking.com, Airbnb or Expedia, and any system with finite inventory and money attached — ticketing, airline seats, flash sales, restaurant tables.</p>
+<h2>The problem it solves</h2>
+<p>All of the difficulty concentrates into one instant: <strong>two people press "Reserve" on the last room at the same time</strong>. What if you don't solve it? An oversell isn't a line in an error log, it's a payout — the guest arrives, there's no room, and the hotel covers the difference to put them elsewhere (the industry calls it <em>walking the guest</em>), plus the reputational cost. But fearing oversells so much that you serialize all concurrency makes a popular hotel unbookable during a rush. This chapter walks the narrow path: <strong>never sell one room twice, and never lock the system up either</strong>.</p>
+<h2>The core, properly explained</h2>
+<h3>Do the arithmetic first: this is a small system</h3>
+<p>The book's setting is a chain of <strong>5,000 hotels, about 1 million rooms</strong>. At 70% occupancy and an average three-night stay, new reservations per day come to roughly <code>1,000,000 × 0.7 ÷ 3 ≈ 230,000</code>; spread over 86,400 seconds that's <strong>about 3 QPS of writes</strong>. Walking the funnel backwards (far more people browse detail pages than actually pay), reads land in the <strong>hundreds of QPS</strong>. How many inventory rows? <code>5,000 hotels × ~20 room types × 730 days ≈ 73 million rows</code>, each holding a few integers — <strong>a few GB, which one relational database holds comfortably</strong>.</p>
+<p>The conclusion is counterintuitive: this chapter needs <strong>no sharding, no NoSQL, no queue to absorb spikes</strong>. <strong>The estimate isn't here to prove the design can cope; it's here to talk you out of over-engineering</strong> — so all the attention goes back to those 3 writes.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="e1a" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="24" y="26">Funnel: many reads, almost no writes</text>
+<rect fill="rgba(91,157,249,0.10)" height="32" rx="6" stroke="#5b9df9" width="252" x="24" y="42"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="150" y="63">Browse / room detail · ~100s QPS</text>
+<rect fill="rgba(91,157,249,0.10)" height="32" rx="6" stroke="#7c8593" width="200" x="50" y="100"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="150" y="121">Booking page · ~10s QPS</text>
+<rect fill="rgba(155,108,245,0.22)" height="32" rx="6" stroke="#9b6cf5" stroke-width="2" width="150" x="75" y="158"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="150" y="179">Reserve · ~3 QPS</text>
+<line marker-end="url(#e1a)" stroke="#7c8593" x1="150" x2="150" y1="76" y2="97"></line>
+<line marker-end="url(#e1a)" stroke="#7c8593" x1="150" x2="150" y1="134" y2="155"></line>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="150" y="212">writes are two orders smaller than reads</text>
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="310" x2="310" y1="20" y2="232"></line>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="352" y="26">Data layer: one database</text>
+<rect fill="rgba(91,157,249,0.10)" height="40" rx="6" stroke="#5b9df9" width="246" x="358" y="48"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="481" y="66">Cache + read replicas</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="481" y="81">absorb nearly all reads</text>
+<rect fill="rgba(155,108,245,0.18)" height="54" rx="6" stroke="#9b6cf5" stroke-width="2" width="246" x="358" y="140"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="481" y="159">Primary · one relational DB</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="481" y="175">~73M inventory rows · a few GB</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="481" y="189">every write goes through a transaction</text>
+<line marker-end="url(#e1a)" stroke="#7c8593" x1="280" x2="354" y1="58" y2="60"></line>
+<line marker-end="url(#e1a)" stroke="#9b6cf5" x1="228" x2="354" y1="174" y2="166"></line>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="481" y="222">no sharding · no NoSQL · no spike queue</text>
+</svg>
+<figcaption>Fig 1 · The architecture the estimate implies: caches and read replicas spread the reads, while ~3 QPS of writes fit on a single relational database — so the difficulty shifts from "holding up" to "not being wrong".</figcaption>
+</figure>
+<h3>The key abstraction: you sell a "room type × date" cell, not a room number</h3>
+<p>This is the chapter's foundation. The data model needs two tables: <strong>reservation</strong> (idempotency key, hotel, room type, check-in / check-out dates, count, status) and <strong>room_type_inventory</strong> (<code>hotel_id, room_type_id, date, total_inventory, total_reserved</code>) — <strong>one row per hotel, per room type, per day</strong>. Asking "is anything free from 3/5 to 3/8" becomes checking whether those three rows all have headroom; booking becomes adding 1 to <code>total_reserved</code> on each, plus one reservation row.</p>
+<p>Why model it this way? <strong>① It copies the business</strong> — hotels already sell by type and assign numbers at check-in, so the model tracks reality and needs the fewest later changes. <strong>② It turns search into arithmetic</strong> — "find an empty room among tens of thousands" degenerates into "add or subtract one integer on one row", which gives concurrency control somewhere concrete to live. <strong>③ It turns "several nights" into "several rows"</strong> — three nights is three row updates in one transaction, and if any single night is full the whole booking fails, which is exactly the right semantics. The cost lives in that multiplication: rows = hotels × types × days, so you must define a <strong>sellable window</strong> (say two years out) and roll rows forward and clean them up on a schedule.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 270" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="e2a" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="24" y="24">Inventory: one row = one hotel × one room type × one day</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle" x="218" y="53">3/4</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle" x="304" y="53">3/5</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle" x="390" y="53">3/6</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle" x="476" y="53">3/7</text>
+<rect fill="rgba(255,255,255,0.025)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="130" x="34" y="64"></rect>
+<text fill="#cdd3db" font-size="10.5" text-anchor="middle" x="99" y="85">King room</text>
+<rect fill="rgba(255,255,255,0.025)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="130" x="34" y="104"></rect>
+<text fill="#cdd3db" font-size="10.5" text-anchor="middle" x="99" y="125">Twin room</text>
+<rect fill="rgba(255,255,255,0.025)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="130" x="34" y="144"></rect>
+<text fill="#cdd3db" font-size="10.5" text-anchor="middle" x="99" y="165">Suite</text>
+<rect fill="rgba(91,157,249,0.08)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="80" x="178" y="64"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="218" y="85">12 left</text>
+<rect fill="rgba(91,157,249,0.08)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="80" x="264" y="64"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="304" y="85">4 left</text>
+<rect fill="rgba(91,157,249,0.08)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="80" x="350" y="64"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="390" y="85">0 left</text>
+<rect fill="rgba(91,157,249,0.08)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="80" x="436" y="64"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="476" y="85">7 left</text>
+<rect fill="rgba(91,157,249,0.08)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="80" x="178" y="104"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="218" y="125">9 left</text>
+<rect fill="rgba(91,157,249,0.08)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="80" x="264" y="104"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="304" y="125">2 left</text>
+<rect fill="rgba(91,157,249,0.08)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="80" x="350" y="104"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="390" y="125">3 left</text>
+<rect fill="rgba(91,157,249,0.08)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="80" x="436" y="104"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="476" y="125">5 left</text>
+<rect fill="rgba(91,157,249,0.08)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="80" x="178" y="144"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="218" y="165">2 left</text>
+<rect fill="rgba(155,108,245,0.22)" height="32" rx="5" stroke="#9b6cf5" stroke-width="2" width="80" x="264" y="144"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="304" y="165">1 left</text>
+<rect fill="rgba(155,108,245,0.22)" height="32" rx="5" stroke="#9b6cf5" stroke-width="2" width="80" x="350" y="144"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="390" y="165">1 left</text>
+<rect fill="rgba(155,108,245,0.22)" height="32" rx="5" stroke="#9b6cf5" stroke-width="2" width="80" x="436" y="144"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="476" y="165">3 left</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" x="528" y="85">total_inventory</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" x="528" y="125">− total_reserved</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" x="528" y="165">= left</text>
+<line marker-end="url(#e2a)" stroke="#9b6cf5" x1="304" x2="304" y1="212" y2="180"></line>
+<line marker-end="url(#e2a)" stroke="#9b6cf5" x1="376" x2="390" y1="212" y2="180"></line>
+<line marker-end="url(#e2a)" stroke="#9b6cf5" x1="448" x2="476" y1="212" y2="180"></line>
+<rect fill="rgba(155,108,245,0.12)" height="36" rx="6" stroke="#9b6cf5" width="310" x="184" y="214"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="339" y="237">Suite, 3/5→3/8: three rows +1, one transaction</text>
+</svg>
+<figcaption>Fig 2 · Inventory unrolled into a "room type × date" grid. A three-night booking is +1 on three rows plus one reservation row, committed together; if any night has no headroom the whole booking fails.</figcaption>
+</figure>
+<h3>Two kinds of "duplicate", treated completely differently</h3>
+<p>They both look like "booked twice" and their causes are nothing alike — this is the chapter's most valuable distinction, and the place interviews trip people up.</p>
+<p><strong>First kind: one user submitting twice</strong> (a retry after a timeout, a fumbled double-click). The cure is <strong>idempotency</strong>: generate a reservation id as the idempotency key the moment the user <em>opens the booking page</em>, carry it on the request, and put a <strong>unique index</strong> on that key in the reservation table. The second submission collides with the constraint, so no new row is created and the first result is returned. The easy mistake is timing: <strong>the key must be fixed before the moment a retry could happen</strong> — mint a fresh key on every click and your idempotency is fake.</p>
+<p><strong>Second kind: two users reaching for the same cell.</strong> Both requests read "1 left", both conclude there's room, both write "reserved +1" — a read-modify-write race. <strong>An idempotency key is no help whatsoever here</strong>: these are two separate, individually legitimate requests. Only concurrency control saves you.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/api-design-day9.en.html" target="_blank" rel="noopener">System Design · Day 9 API Design</a> — how idempotency keys enter the contract, how retry semantics and error codes should be shaped, and why a public API can never take those promises back</aside>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 290" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="e3a" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="e3b" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#e06b6b"></path></marker></defs>
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="318" x2="318" y1="16" y2="278"></line>
+<text fill="#5b9df9" font-size="11.5" font-weight="700" x="20" y="26">1. Duplicate submit → key blocks it</text>
+<rect fill="rgba(91,157,249,0.10)" height="24" rx="5" stroke="#7c8593" width="70" x="24" y="40"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="59" y="57">Client</text>
+<rect fill="rgba(91,157,249,0.10)" height="24" rx="5" stroke="#5b9df9" width="130" x="166" y="40"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="231" y="57">reservation (unique idx)</text>
+<line stroke="rgba(120,120,130,0.3)" x1="59" x2="59" y1="66" y2="256"></line>
+<line stroke="rgba(120,120,130,0.3)" x1="231" x2="231" y1="66" y2="256"></line>
+<line marker-end="url(#e3a)" stroke="#7c8593" x1="61" x2="227" y1="94" y2="94"></line>
+<text fill="#b9c0ca" font-size="10" x="66" y="88">submit (key K)</text>
+<text fill="#8fbaff" font-size="10" x="150" y="118">→ row created</text>
+<line marker-end="url(#e3a)" stroke="#7c8593" x1="61" x2="227" y1="158" y2="158"></line>
+<text fill="#b9c0ca" font-size="10" x="66" y="152">retry after timeout (same key K)</text>
+<text fill="#9b6cf5" font-size="10" x="106" y="182">→ hits unique index, no new row</text>
+<line marker-end="url(#e3a)" stroke="#9b6cf5" x1="229" x2="63" y1="208" y2="208"></line>
+<text fill="#b9c0ca" font-size="10" x="70" y="202">returns the first reservation</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" x="24" y="244">key fixed when booking page opens</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" x="24" y="264">a new key per click = fake idempotency</text>
+<text fill="#e8794b" font-size="11.5" font-weight="700" x="344" y="26">2. Two users, one cell → oversell</text>
+<rect fill="rgba(91,157,249,0.10)" height="24" rx="5" stroke="#7c8593" width="66" x="344" y="40"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="377" y="57">User A</text>
+<rect fill="rgba(155,108,245,0.18)" height="24" rx="5" stroke="#9b6cf5" width="106" x="443" y="40"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="496" y="57">row: 1 left</text>
+<rect fill="rgba(91,157,249,0.10)" height="24" rx="5" stroke="#7c8593" width="66" x="566" y="40"></rect><text fill="#b9c0ca" font-size="10" text-anchor="middle" x="599" y="57">User B</text>
+<line stroke="rgba(120,120,130,0.3)" x1="377" x2="377" y1="66" y2="256"></line>
+<line stroke="rgba(120,120,130,0.3)" x1="496" x2="496" y1="66" y2="256"></line>
+<line stroke="rgba(120,120,130,0.3)" x1="599" x2="599" y1="66" y2="256"></line>
+<line marker-end="url(#e3a)" stroke="#7c8593" x1="379" x2="492" y1="96" y2="96"></line>
+<text fill="#b9c0ca" font-size="10" x="382" y="90">read: 1 left</text>
+<line marker-end="url(#e3a)" stroke="#7c8593" x1="597" x2="500" y1="126" y2="126"></line>
+<text fill="#b9c0ca" font-size="10" text-anchor="end" x="594" y="120">read: 1 left</text>
+<line marker-end="url(#e3a)" stroke="#7c8593" x1="379" x2="492" y1="166" y2="166"></line>
+<text fill="#b9c0ca" font-size="10" x="382" y="160">write: +1</text>
+<line marker-end="url(#e3b)" stroke="#e06b6b" x1="597" x2="500" y1="196" y2="196"></line>
+<text fill="#e7ebf1" font-size="10" text-anchor="end" x="594" y="190">write: +1</text>
+<rect fill="rgba(224,107,107,0.14)" height="26" rx="5" stroke="#e06b6b" width="210" x="391" y="216"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="496" y="234">reserved 2 &gt; capacity 1 · oversell</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="496" y="264">no key helps — only concurrency control</text>
+</svg>
+<figcaption>Fig 3 · Two kinds of duplicate: on the left one request is retried, cured by an idempotency key plus a unique index; on the right two legitimate requests interleave a read-modify-write, and only concurrency control can save it.</figcaption>
+</figure>
+<h3>Guarding the cell: three options</h3>
+<p><strong>Pessimistic locking.</strong> <code>SELECT ... FOR UPDATE</code> locks the inventory row until the transaction commits; latecomers queue. Correct and easy to explain; the cost is that concurrency on that row is fully serialized, everyone waits while the lock is held, and a long transaction drags in timeouts and deadlocks.</p>
+<p><strong>Optimistic locking.</strong> Add a <code>version</code> integer to the row: read it, then write with <code>UPDATE ... SET total_reserved = ?, version = version + 1 WHERE version = &lt;the value read&gt;</code>. Zero rows affected means somebody got there first, so re-read and retry. Near-zero overhead under low contention; under high contention it degenerates into a retry storm.</p>
+<p><strong>Database constraint.</strong> Let the row police itself, e.g. <code>CHECK (total_reserved &lt;= total_inventory)</code> — or <code>&lt;= total_inventory * 1.1</code> to leave room for overbooking. The least code, and out-of-bounds writes are rejected by the database itself; the cost is that the rule hides in the schema rather than evolving with your code, support differs across databases, and the application still has to handle the "rejected" path.</p>
+<p>At this chapter's 3 QPS the authors pick <strong>optimistic locking or a database constraint</strong> — <strong>pessimistic locking here is the most expensive tool for the smallest nail</strong>. One piece of discipline is non-negotiable: <strong>decrementing inventory and writing the reservation must sit in the same transaction</strong>. Split them, crash in between, and you are left with either "inventory taken but no reservation" (a room that vanishes) or "a reservation with no inventory taken" (an oversell).</p>
+<h3>Overbooking: selling extra on purpose is business, not a bug</h3>
+<p>Loosen the constraint from "no more than capacity" to "no more than capacity × a factor" (the book uses 110%) and the system will sell more rooms than exist. Why? Cancellations and no-shows are the norm, and selling strictly to inventory leaves rooms running empty. The cost is that unredeemable overbooking means walking the guest elsewhere and eating the difference. So that factor <strong>isn't a technical parameter; it's a business decision trading historical cancellation rates against payout costs</strong>.</p>
+<h3>After you split into microservices, consistency has to be bought</h3>
+<p>As soon as the reservation service and the inventory service each own a database, "decrement inventory + write reservation" crosses a process boundary and ACID stops being free. Three roads: <strong>2PC</strong> has a coordinator run a two-phase vote — strong consistency, but locks are held throughout and a coordinator crash leaves transactions in doubt; <strong>Saga</strong> splits the work into a chain of local steps and runs <em>compensations</em> in reverse order on failure — no locks, scales well, but only eventual consistency, and <strong>compensation is not rollback</strong>: refunds may carry fees and cancellations may carry penalties, so compensations have business semantics of their own; <strong>TCC</strong> does a Try that reserves the inventory, then a Confirm or a Cancel — shorter lock windows than 2PC, at the cost of three code paths per service.</p>
+<p>The chapter's stance is admirably restrained: <strong>don't split if you don't have to.</strong> With a few GB of data and 3 QPS of writes, anything one transaction in one database can settle is not worth trading for a better-looking architecture diagram.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/distributed-transactions-day7.en.html" target="_blank" rel="noopener">System Design · Day 7 Distributed Transactions</a> — 2PC's blocking and coordinator failures, designing Saga compensation chains, TCC's empty-rollback and hanging cases, and the rule "don't, and if you must, keep it small"</aside>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="e4a" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="e4b" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="318" x2="318" y1="16" y2="238"></line>
+<text fill="#5b9df9" font-size="11.5" font-weight="700" x="20" y="26">2PC · the coordinator decides</text>
+<rect fill="rgba(155,108,245,0.18)" height="28" rx="6" stroke="#9b6cf5" width="120" x="94" y="44"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="154" y="63">Coordinator</text>
+<rect fill="rgba(91,157,249,0.10)" height="28" rx="6" stroke="#7c8593" width="110" x="20" y="140"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="75" y="159">Reservation svc</text>
+<rect fill="rgba(91,157,249,0.10)" height="28" rx="6" stroke="#7c8593" width="110" x="180" y="140"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="235" y="159">Inventory svc</text>
+<line marker-end="url(#e4a)" stroke="#7c8593" x1="128" x2="82" y1="74" y2="136"></line>
+<line marker-end="url(#e4a)" stroke="#7c8593" x1="180" x2="228" y1="74" y2="136"></line>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="154" y="104">1. can you commit?</text>
+<text fill="#8fbaff" font-size="9.5" text-anchor="middle" x="154" y="124">2. all yes → 3. commit</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="154" y="196">locks held throughout</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="154" y="216">coordinator crash → in-doubt txns</text>
+<text fill="#5b9df9" font-size="11.5" font-weight="700" x="344" y="26">Saga · local steps + compensation</text>
+<rect fill="rgba(91,157,249,0.10)" height="28" rx="5" stroke="#5b9df9" width="84" x="342" y="52"></rect><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="384" y="71">Create order</text>
+<rect fill="rgba(91,157,249,0.10)" height="28" rx="5" stroke="#5b9df9" width="84" x="442" y="52"></rect><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="484" y="71">Hold room</text>
+<rect fill="rgba(91,157,249,0.10)" height="28" rx="5" stroke="#5b9df9" width="84" x="542" y="52"></rect><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="584" y="71">Payment</text>
+<line marker-end="url(#e4a)" stroke="#7c8593" x1="428" x2="438" y1="66" y2="66"></line>
+<line marker-end="url(#e4a)" stroke="#7c8593" x1="528" x2="538" y1="66" y2="66"></line>
+<text fill="#e8794b" font-size="9.5" text-anchor="middle" x="584" y="100">payment fails</text>
+<rect fill="rgba(155,108,245,0.14)" height="28" rx="5" stroke="#9b6cf5" width="84" x="342" y="112"></rect><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="384" y="131">Cancel order</text>
+<rect fill="rgba(155,108,245,0.14)" height="28" rx="5" stroke="#9b6cf5" width="84" x="442" y="112"></rect><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="484" y="131">Release room</text>
+<rect fill="rgba(155,108,245,0.14)" height="28" rx="5" stroke="#9b6cf5" width="84" x="542" y="112"></rect><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="584" y="131">Refund</text>
+<line marker-end="url(#e4b)" stroke="#9b6cf5" x1="584" x2="584" y1="82" y2="108"></line>
+<line marker-end="url(#e4b)" stroke="#9b6cf5" x1="540" x2="528" y1="126" y2="126"></line>
+<line marker-end="url(#e4b)" stroke="#9b6cf5" x1="440" x2="428" y1="126" y2="126"></line>
+<text fill="#9b6cf5" font-family="monospace" font-size="9.5" text-anchor="middle" x="484" y="166">reverse compensation chain</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="484" y="196">no locks · eventual consistency</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="484" y="216">compensation is not rollback</text>
+</svg>
+<figcaption>Fig 4 · Two cross-service roads: 2PC votes in two phases through a coordinator and holds locks the whole time; Saga breaks the work into local steps and compensates in reverse, buying lock-freedom at the price of eventual consistency.</figcaption>
+</figure>
+<h2>Key trade-offs and choices</h2>
+<p class="tcap">Table 1 · Three ways to guard the inventory row</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Pessimistic lock</th><th>Optimistic lock</th><th>DB constraint</th></tr></thead>
+<tbody>
+<tr><th>Mechanism</th><td><code>SELECT ... FOR UPDATE</code> locks the row</td><td>write only if <code>version</code> is unchanged, else retry</td><td><code>CHECK</code> rejects out-of-bounds writes</td></tr>
+<tr><th>Low contention (3 QPS)</th><td>works, but you pay for locks</td><td><strong>almost free</strong></td><td><strong>least code</strong></td></tr>
+<tr><th>Hot row (a rush)</th><td>serialized queue, latency spikes, deadlocks</td><td><strong>retry storm</strong>, success rate drops</td><td>rejection rate climbs, app still retries</td></tr>
+<tr><th>When to choose</th><td>high contention that must succeed first time</td><td>this chapter's default: few writes, rare conflicts</td><td>simple rule, let the database backstop you</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · Where "decrement inventory + write reservation" lives</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Approach</th><th>Consistency</th><th>Locks held</th><th>Cost</th><th>Fits</th></tr></thead>
+<tbody>
+<tr><th>One DB, one txn</th><td><strong>strong (ACID)</strong></td><td>milliseconds</td><td>data must share a DB; service borders constrained</td><td><strong>this chapter</strong>: a few GB, 3 QPS</td></tr>
+<tr><th>2PC</th><td>strong</td><td>both phases</td><td>blocking, coordinator single point, high latency</td><td>few participants, short txns, strong needs</td></tr>
+<tr><th>Saga</th><td>eventual</td><td>none</td><td>you write the compensations, with business meaning</td><td>long flows (book → pay → ticket)</td></tr>
+<tr><th>TCC</th><td>eventual (near-lock while reserved)</td><td>Try → Confirm</td><td>three code paths per service + edge cases</td><td>"hold it now, pay later" inventory</td></tr>
+</tbody></table></div>
+<p><strong>What about hot rows?</strong> A non-problem most days that erupts the night before a concert, when a whole city chases one hotel. Three practical answers: <strong>bucket</strong> the cell (split 10 rooms into 5 cells of 2, spreading concurrency over 5 rows, at the cost of "rooms exist but in another bucket"); give the cell its own <strong>queue</strong>, trading a retry storm for a predictable wait; and <strong>keep reads away</strong> — let list pages read caches and replicas, treat the number they see as a hint, and re-check against the primary only at the moment of booking.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/consistency-day6.en.html" target="_blank" rel="noopener">System Design · Day 6 Consistency</a> — the whole spectrum from linearizable to eventual, and why session guarantees like "read your own writes" are exactly what rescues a user who just booked and can't see the booking</aside>
+<h2>Why it matters / in real systems</h2>
+<p>This skeleton — an inventory row, one transaction, an idempotency key — is close to the universal answer for <strong>finite inventory</strong>: ticketing (a price tier for one show), airlines (flight × cabin × date), e-commerce checkout (SKU stock), restaurant and desk booking. Swap the nouns and it ports. In practice: <code>SELECT ... FOR UPDATE</code> plus a unique index on MySQL or PostgreSQL is the most common implementation; DynamoDB uses conditional writes and a transactional API, with a client token on transactional writes for idempotency; Spanner uses pessimistic locks plus automatic client retries; Alibaba and Ant turned TCC and Saga into a framework (Seata) and open-sourced it.</p>
+<p>In interviews the value of this question is that it's one of the few that tests <strong>transactions, isolation and idempotency</strong> for real. An interviewer will almost certainly push on three things: what happens when two people book the last room, what happens when a user clicks twice, and how many transactions you put the inventory decrement and the reservation write into. Answer those three and the chapter has paid for itself.</p>
+<div class="ev">
+<div class="evh">EVIDENCE FROM INDUSTRY · these are the companies' own public claims, not the book's</div>
+<ul>
+<li><strong>Sabre</strong> (global travel distribution) says it "typically processes thousands of reservation updates per second", that a reservation database "must be served from many availability zones", and that it "requires ACID properties for transactional updates across records since airlines often make changes to multiple passengers and multiple flights at the same time" — <strong>confirming that reservation systems are light on write volume but demanding on cross-row atomicity and availability</strong>. <span class="src"><a href="https://cloud.google.com/blog/products/databases/sabre-powers-the-travel-industry-with-google-cloud" rel="noopener" target="_blank">A. Gasparovic (Chief Architect, Sabre Labs), Google Cloud Blog, 2022-01 ↗</a></span></li>
+<li><strong>Google Cloud</strong> published how Spanner's <strong>pessimistic locking</strong> works and says contention typically arises from "hot keys being present in the table", ending in aborted transactions; its advice is to "only include critical path code within a transaction", and it notes read-only transactions "don't hold locks and they don't block other transactions… never abort" — <strong>the official version of what pessimistic locking costs</strong>. <span class="src"><a href="https://cloud.google.com/blog/products/databases/transaction-locking-in-cloud-spanner" rel="noopener" target="_blank">M. Gupta, "Understanding transactional locking in Cloud Spanner", Google Cloud Blog, 2022-11 ↗</a></span></li>
+<li><strong>Amazon (DynamoDB)</strong> built idempotency into the interface: a transactional write may carry a client token, which "is valid for 10 minutes after the request that uses it finishes", and within that window a repeat with the same token "return[s] successfully without making any changes" — <strong>an idempotency key plus a validity window, exactly the industrial form of this chapter's defence</strong>. <span class="src"><a href="https://github.com/awsdocs/amazon-dynamodb-developer-guide/blob/master/doc_source/transaction-apis.md" rel="noopener" target="_blank">AWS DynamoDB Developer Guide · Transaction APIs ↗</a></span></li>
+<li><strong>Alibaba and Ant Group</strong> open-sourced their internal distributed-transaction solution as Seata (now an Apache incubator project), offering AT / TCC / Saga / XA modes — <strong>the inverse proof of "don't split if you don't have to"</strong>: once ordering and inventory are two services, you must keep a coordinator and a whole compensation layer alive just to stay consistent. <span class="src"><a href="https://github.com/apache/incubator-seata" rel="noopener" target="_blank">Apache Seata (originally Alibaba / Ant Group) ↗</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and open questions</h2>
+<ul>
+<li><strong>Treating it as a flash-sale problem</strong>: sharding, Redis pre-decrements and spike queues from the first minute are all over-engineering at 3 QPS. The estimate in the book exists precisely to talk you out of it.</li>
+<li><strong>An idempotency key is not concurrency control</strong>: it only blocks a re-sent request, never two users reaching for the same cell; conversely an optimistic lock never blocks a duplicate submission, since both submissions are legitimate. Each ailment needs its own cure. And the key must be fixed before the first request goes out and carried through the whole retry chain — minting it on the Submit button means no idempotency at all.</li>
+<li><strong>Optimistic locking degrades on hot rows</strong>: with hundreds of concurrent writes on one cell there can be more retries than successes, and p99 gets ugly. Bucket it or queue it; don't expect retries to resolve contention on their own.</li>
+<li><strong>Cached availability</strong>: caching the remaining count for speed is right, but that number is only a hint — booking must re-check against the database, or cache error turns straight into an oversell. Conversely, accepting "you clicked through and it had just gone" is the <strong>correct</strong> trade.</li>
+<li><strong>The overbooking factor is not an industry standard</strong>: the book's 110% is illustrative. A real factor comes from historical cancellation and no-show rates against payout costs, and it moves with season and city; copying it into production as a constant is dangerous.</li>
+<li><strong>Dated assumptions, and a trap the book skips</strong>: the book is from 2022, and since then DynamoDB (whose transaction implementation was published at USENIX ATC 2023), Spanner and TiDB have driven down the price of cross-shard transactions, so "2PC is too expensive" deserves a recalculation against the database you actually use. The book also doesn't develop something real projects always hit: <strong>dates and time zones</strong>. Inventory is keyed by date, and time zones, daylight saving and the hotel's local definition of a "check-in day" can land the same booking on different rows.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. This chapter is hard on <strong>correctness</strong>, not scale — about <strong>3 QPS of writes</strong>, 73M inventory rows in a few GB, and <strong>one relational database is enough</strong>.</p>
+<p>2. The core abstraction: you don't sell a room number but one cell of "<strong>room type × date</strong>" (<code>total_inventory</code> and <code>total_reserved</code>), one row per night.</p>
+<p>3. A multi-night booking is +1 on several inventory rows plus one reservation, and it <strong>must happen in a single transaction</strong>, or you leak vanished rooms or oversells.</p>
+<p>4. Treat the two duplicates separately: a re-sent request → <strong>idempotency key + unique index</strong>; two users on one cell → <strong>concurrency control</strong>. Neither substitutes for the other.</p>
+<p>5. Pick one guard: pessimistic locks (correct but serializing), optimistic locks (the default here, a retry storm under contention), or a database constraint (least code).</p>
+<p>6. Overbooking (say 110%) is a <strong>business decision</strong> — cancellation rates traded against payout costs, not a technical parameter.</p>
+<p>7. Splitting services means buying consistency: 2PC blocks while holding locks, Saga is only eventual and <strong>compensation is not rollback</strong>, TCC needs three code paths per service. <strong>Don't split if you don't have to.</strong></p>
+<p>8. Hot rows are the real enemy: bucket, queue, and push reads onto caches and replicas — where the count is only ever a hint.</p>
+</div>
+</div>
+<footer>Books Deep-Read · Reading this page ≈ getting the chapter's core; for full cases and detail, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

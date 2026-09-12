@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>System Design Interview 卷二 第 7 章 · 设计酒店预订系统 — 专业书籍精读 Book 74</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · System Design Interview 卷二 · 第 7 章</p>
+<h1>设计酒店预订系统</h1>
+<p class="sub">System Design Interview Vol 2 · Ch 7 · Alex Xu &amp; Sahn Lam · 2022</p>
+<p class="langbar"><a href="sdi2-ch07-hotel-reservation-book74.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你在订房 App 上挑好房间、点下「预订」，那一两秒里系统要办一件很凶险的事：确认这间房还在、记在你名下，同时<strong>不能把同一间房也卖给正在点同一个按钮的另一个人</strong>。这一章就是从零把这套系统搭出来。</p>
+<h2>先说个怪事</h2>
+<p>你大概以为这种系统难在「人太多」。算一下：五千家酒店、一百万间房，就算住满七成、平均住三晚，一天也只有二十多万笔预订——摊到每秒<strong>大约三笔</strong>。三笔！比一个小论坛的发帖量还低。难的从来不是量，而是那三笔里可能有两笔在抢同一间房，而且抢错了要赔钱。</p>
+<h2>旧世界为什么难</h2>
+<p>想象前台那本纸质登记簿。客人打电话订房，前台翻到 3 月 5 日那页，看见还剩一间，写下名字。麻烦在于同一秒另一个同事也翻着同一页、也看见「还剩一间」、也写了个名字。两个人都收了钱，房只有一间——这就是<strong>超卖</strong>。纸簿子如此，两台服务器同时读同一行数据，一模一样。</p>
+<h2>它怎么做到的</h2>
+<p><strong>第一步是换个卖法。</strong>酒店卖的不是「301 号房」，而是「大床房 · 3 月 5 日 · 还剩几间」这一格额度——就像电影院卖的是「周六晚场还剩多少座」，具体坐哪儿进场再说。于是「在几万间房里找一间空的」变成了「把一格数字减一」，简单太多。</p>
+<p><strong>第二步是管住这一格。</strong>两种活法：一种是改之前先把那一页扣在手里，谁也别看，改完再放开——保险，但排队的人一多就堵；另一种是先记下这一页的版次，真要改时核对版次变没变，变了说明有人插了队、自己重来一遍——平时更快，抢得凶时会反复重来。</p>
+<p><strong>第三步治另一种重复：</strong>你手抖点了两下「提交」。办法是进下单页时先发你一张票号，同一张票号只兑一次订单——像排队取号，号在手里，重复喊也只算一个人。</p>
+<h2>该怎么选</h2>
+<p>平常的酒店，第二种（核对版次）就够了，甚至可以直接让数据库守着「订出去的不许超过总数」这条规矩；只有演唱会前一晚全城抢一家酒店那种场面，才值得给这一格单独排队。代价是：你偶尔会在最后一步看到「刚好被订走了」——系统宁可让你白点一次，也绝不把同一间房卖给两个人。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>订房系统的难点不是流量（每秒只有几笔），而是<strong>有限库存上的正确性</strong>：把房间换算成「房型 × 日期」的一格额度，再用「一次只让一个人改这一格」和「一张票号只兑一次」把它守住。</p>
+</div>
+<p class="switch-hint">想进到具体机制、记号和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">这一章表面在教你设计订房系统，真正教的是：<strong>有些系统难在正确性，不难在规模</strong>。粗略估算下来它每秒只有约 3 笔预订，却必须在同一行库存上顶住并发、还不能因为一次重试多卖一间房。骨架只有四件事：把可售资源抽象成<strong>「房型 × 日期」的库存行</strong>、用<strong>一次数据库事务</strong>把扣库存与写订单绑成原子操作、用<strong>幂等键（idempotency key）</strong>挡重复提交、用<strong>乐观锁或数据库约束</strong>挡超卖。拆成多个服务之后，才不得不请出 2PC / Saga / TCC 这些贵得多的工具。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>房型（room type）</strong>：酒店按「大床房 / 双床房 / 套房」这类等价房间成批售卖，房号通常入住时才分配。</li>
+<li><strong>库存（inventory）</strong>：某家酒店、某个房型、某一天还能卖几间——本章所有并发问题都发生在这一行上。</li>
+<li><strong>超卖（oversell）</strong>：卖出的数量超过实际可用数量，是本章要防的核心错误。</li>
+<li><strong>超售（overbooking）</strong>：<em>故意</em>多卖一点（如总量的 110%）对冲取消与放空，是业务策略、不是 bug。</li>
+<li><strong>事务（transaction）/ ACID</strong>：一组读写要么全成、要么全不成，中间状态不被别人看见。</li>
+<li><strong>悲观锁（pessimistic locking）</strong>：改之前先锁住这行、别人只能等；SQL 里常写作 <code>SELECT ... FOR UPDATE</code>。</li>
+<li><strong>乐观锁（optimistic locking）</strong>：不加锁，读时记下版本号，写时校验它没被改过；被改过就重读重试。</li>
+<li><strong>幂等（idempotency）</strong>：同一个请求发多次，效果与发一次相同；靠请求带一个唯一的<em>幂等键</em>实现。</li>
+<li><strong>竞态（race condition）</strong>：两个请求交错执行，各自都读到旧值又各自写回，结果谁也不对。</li>
+<li><strong>2PC / Saga / TCC</strong>：跨服务做「一件事」的三种办法——两阶段拍板 / 本地事务加补偿 / 先预占再确认或取消。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>卷二第 7 章。前六章（附近服务、地图、消息队列、监控、广告聚合）清一色是<strong>吞吐与流式</strong>问题，这一章第一次转向<strong>事务型、库存有限</strong>的系统——全书从「扛得住」切到「算得准」的分界线；下启第 11 章支付、第 12 章数字钱包。现实对应：Booking.com / Airbnb / 携程的下单链路，以及任何「有限库存 + 钱」的系统：票务、航空舱位、电商秒杀、餐厅订座。</p>
+<h2>这章要解决什么</h2>
+<p>订房的全部难点集中在一个瞬间：<strong>两个人同时点了最后一间房的「预订」</strong>。不解决会怎样？超卖不是一条错误日志，是真金白银的赔付——客人到店没房，酒店得掏差价把他送去别家（业内叫 <em>walk the guest</em>），还赔上口碑。可怕超卖就把并发全串行化，又会让热门酒店在大促时订不动。这一章要走的是窄路：<strong>既不多卖一间，也别把系统锁死</strong>。</p>
+<h2>核心内容，讲透</h2>
+<h3>先算一笔：它其实是个小系统</h3>
+<p>书里的场景是一家连锁：<strong>5000 家酒店、约 100 万间房</strong>。按 70% 入住率、平均住 3 晚估算，每天新增预订约 <code>1,000,000 × 0.7 ÷ 3 ≈ 23 万笔</code>；摊到一天 86400 秒，<strong>写入约 3 QPS</strong>。按漏斗往前推（看详情页的远多于真付钱的），读侧是<strong>数百 QPS</strong>量级。库存有多少行？<code>5000 家 × 约 20 个房型 × 未来两年 730 天 ≈ 7300 万行</code>，每行只有几个整数——<strong>几个 GB，一台关系库装得下</strong>。</p>
+<p>结论很反直觉：这一章<strong>不需要分片、不需要 NoSQL、不需要消息队列削峰</strong>。<strong>估算在这里的作用不是证明「能扛」，而是劝你别过度设计</strong>——把全部注意力还给那 3 笔写。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="h1a" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="24" y="26">请求漏斗：读多写极少</text>
+<rect fill="rgba(91,157,249,0.10)" height="32" rx="6" stroke="#5b9df9" width="240" x="24" y="42"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="144" y="63">浏览房型 / 详情页 · 数百 QPS</text>
+<rect fill="rgba(91,157,249,0.10)" height="32" rx="6" stroke="#7c8593" width="170" x="59" y="100"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="144" y="121">进入下单页 · 数十 QPS</text>
+<rect fill="rgba(155,108,245,0.22)" height="32" rx="6" stroke="#9b6cf5" stroke-width="2" width="120" x="84" y="158"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="144" y="179">真正预订 · 约 3 QPS</text>
+<line marker-end="url(#h1a)" stroke="#7c8593" x1="144" x2="144" y1="76" y2="97"></line>
+<line marker-end="url(#h1a)" stroke="#7c8593" x1="144" x2="144" y1="134" y2="155"></line>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="144" y="212">写入量比读少两个数量级</text>
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="310" x2="310" y1="20" y2="232"></line>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="352" y="26">数据层：一个库就够</text>
+<rect fill="rgba(91,157,249,0.10)" height="40" rx="6" stroke="#5b9df9" width="242" x="360" y="48"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="481" y="66">缓存 + 只读副本</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="481" y="81">承接几乎全部读</text>
+<rect fill="rgba(155,108,245,0.18)" height="54" rx="6" stroke="#9b6cf5" stroke-width="2" width="242" x="360" y="140"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="481" y="159">主库 · 单台关系型数据库</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="481" y="175">约 7300 万行库存 · 几 GB</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="481" y="189">所有写都在这里、走事务</text>
+<line marker-end="url(#h1a)" stroke="#7c8593" x1="268" x2="356" y1="58" y2="60"></line>
+<line marker-end="url(#h1a)" stroke="#9b6cf5" x1="208" x2="356" y1="174" y2="166"></line>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="481" y="222">不分片 · 不上 NoSQL · 不削峰</text>
+</svg>
+<figcaption>图 1 · 粗略估算得出的架构：读侧用缓存与只读副本摊开，写侧只有约 3 QPS，一台关系库足以承担——难点因此从「扛住」变成「别错」。</figcaption>
+</figure>
+<h3>关键抽象：你卖的不是房号，是「房型 × 日期」的一格</h3>
+<p>这是整章的地基。数据模型只需两张关键表：<strong>订单表</strong>（reservation：幂等键、酒店、房型、入住 / 离店日、间数、状态）和<strong>库存表</strong>（room_type_inventory：<code>hotel_id, room_type_id, date, total_inventory, total_reserved</code>）——<strong>一家酒店、一个房型、一天，占一行</strong>。于是问「3/5 到 3/8 有没有房」就是看这三行是否都有余量；下单就是把这三行的 <code>total_reserved</code> 各加 1，再插一条订单。</p>
+<p>为什么这样设计？<strong>① 照抄业务</strong>——酒店本来就按房型卖、房号入住时才分配，模型贴着现实走，后续改动最少；<strong>② 把搜索变成算术</strong>——「在几万间房里找一间空的」退化成「一行上加减一个整数」，并发控制才有明确落点；<strong>③ 把「多晚」变成「多行」</strong>——跨三晚就是三行写在同一个事务里，任何一晚满了整单失败，语义天然正确。代价也在这个乘法里：行数 = 酒店 × 房型 × 天数，所以必须设一个<strong>可售窗口</strong>（如未来两年）并定期滚动生成与清理。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 270" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="h2a" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="24" y="24">库存表：一行 = 一家酒店 × 一个房型 × 一天</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle" x="218" y="53">3/4</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle" x="304" y="53">3/5</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle" x="390" y="53">3/6</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle" x="476" y="53">3/7</text>
+<rect fill="rgba(255,255,255,0.025)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="130" x="34" y="64"></rect>
+<text fill="#cdd3db" font-size="11" text-anchor="middle" x="99" y="85">大床房</text>
+<rect fill="rgba(255,255,255,0.025)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="130" x="34" y="104"></rect>
+<text fill="#cdd3db" font-size="11" text-anchor="middle" x="99" y="125">双床房</text>
+<rect fill="rgba(255,255,255,0.025)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="130" x="34" y="144"></rect>
+<text fill="#cdd3db" font-size="11" text-anchor="middle" x="99" y="165">套房</text>
+<rect fill="rgba(91,157,249,0.08)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="80" x="178" y="64"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="218" y="85">余 12</text>
+<rect fill="rgba(91,157,249,0.08)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="80" x="264" y="64"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="304" y="85">余 4</text>
+<rect fill="rgba(91,157,249,0.08)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="80" x="350" y="64"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="390" y="85">余 0</text>
+<rect fill="rgba(91,157,249,0.08)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="80" x="436" y="64"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="476" y="85">余 7</text>
+<rect fill="rgba(91,157,249,0.08)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="80" x="178" y="104"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="218" y="125">余 9</text>
+<rect fill="rgba(91,157,249,0.08)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="80" x="264" y="104"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="304" y="125">余 2</text>
+<rect fill="rgba(91,157,249,0.08)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="80" x="350" y="104"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="390" y="125">余 3</text>
+<rect fill="rgba(91,157,249,0.08)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="80" x="436" y="104"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="476" y="125">余 5</text>
+<rect fill="rgba(91,157,249,0.08)" height="32" rx="5" stroke="rgba(91,157,249,0.25)" width="80" x="178" y="144"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="218" y="165">余 2</text>
+<rect fill="rgba(155,108,245,0.22)" height="32" rx="5" stroke="#9b6cf5" stroke-width="2" width="80" x="264" y="144"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="304" y="165">余 1</text>
+<rect fill="rgba(155,108,245,0.22)" height="32" rx="5" stroke="#9b6cf5" stroke-width="2" width="80" x="350" y="144"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="390" y="165">余 1</text>
+<rect fill="rgba(155,108,245,0.22)" height="32" rx="5" stroke="#9b6cf5" stroke-width="2" width="80" x="436" y="144"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="476" y="165">余 3</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" x="530" y="85">total_inventory</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" x="530" y="125">− total_reserved</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" x="530" y="165">= 余量</text>
+<line marker-end="url(#h2a)" stroke="#9b6cf5" x1="304" x2="304" y1="212" y2="180"></line>
+<line marker-end="url(#h2a)" stroke="#9b6cf5" x1="376" x2="390" y1="212" y2="180"></line>
+<line marker-end="url(#h2a)" stroke="#9b6cf5" x1="448" x2="476" y1="212" y2="180"></line>
+<rect fill="rgba(155,108,245,0.12)" height="36" rx="6" stroke="#9b6cf5" width="300" x="188" y="214"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="338" y="237">一单三晚：套房 3/5→3/8 · 三行各 +1 · 同一事务</text>
+</svg>
+<figcaption>图 2 · 库存被展开成「房型 × 日期」的网格。一次跨三晚的预订 = 三行 total_reserved 各加一 + 一条订单，绑在同一个事务里；任一晚无余量则整单失败。</figcaption>
+</figure>
+<h3>两种「重复」，治法完全不同</h3>
+<p>看起来都是「订了两次」，病根完全不同——这是本章最值得记住的分类，也是面试里最容易被绕进去的地方。</p>
+<p><strong>第一种：同一个用户重复提交</strong>（超时重试、手抖双击）。治法是<strong>幂等</strong>：用户<em>进入下单页</em>时就生成一个预订号当幂等键随请求带上，订单表在这个键上建<strong>唯一索引</strong>；第二次提交撞上唯一约束，就不建新单、直接返回第一次的结果。最容易写错的是时机：<strong>键必须在「可能被重试的那一刻」之前就固定</strong>，每次点击都新生成一个，幂等就是假的。</p>
+<p><strong>第二种：两个用户抢同一格。</strong>两个请求都读到「余 1」、都算出「还能订」、都写回「已订 +1」——读-改-写竞态。<strong>幂等键在这里一点忙都帮不上</strong>：这是两个各自都合法的请求，只能靠并发控制。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/api-design-day9.html" target="_blank" rel="noopener">System Design · Day 9 API 设计</a> — 幂等键怎么进契约、重试语义与错误码怎么设计，以及公开 API 一旦定下这些约定就改不动了</aside>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 290" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="h3a" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="h3b" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#e06b6b"></path></marker></defs>
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="318" x2="318" y1="16" y2="278"></line>
+<text fill="#5b9df9" font-size="12" font-weight="700" x="20" y="26">① 重复提交 → 幂等键挡住</text>
+<rect fill="rgba(91,157,249,0.10)" height="24" rx="5" stroke="#7c8593" width="76" x="24" y="40"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="62" y="57">用户</text>
+<rect fill="rgba(91,157,249,0.10)" height="24" rx="5" stroke="#5b9df9" width="110" x="176" y="40"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="231" y="57">订单表（唯一索引）</text>
+<line stroke="rgba(120,120,130,0.3)" x1="62" x2="62" y1="66" y2="256"></line>
+<line stroke="rgba(120,120,130,0.3)" x1="231" x2="231" y1="66" y2="256"></line>
+<line marker-end="url(#h3a)" stroke="#7c8593" x1="64" x2="227" y1="94" y2="94"></line>
+<text fill="#b9c0ca" font-size="10" x="70" y="88">提交（键 K）</text>
+<text fill="#8fbaff" font-size="10" x="152" y="118">→ 建单成功</text>
+<line marker-end="url(#h3a)" stroke="#7c8593" x1="64" x2="227" y1="158" y2="158"></line>
+<text fill="#b9c0ca" font-size="10" x="70" y="152">超时重试（同一个键 K）</text>
+<text fill="#9b6cf5" font-size="10" x="118" y="182">→ 撞唯一索引、不建新单</text>
+<line marker-end="url(#h3a)" stroke="#9b6cf5" x1="229" x2="66" y1="208" y2="208"></line>
+<text fill="#b9c0ca" font-size="10" x="74" y="202">返回第一次那张单</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" x="24" y="246">键在进入下单页时就固定</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" x="24" y="266">每次点击新生成 = 假幂等</text>
+<text fill="#e8794b" font-size="12" font-weight="700" x="348" y="26">② 两人抢同一格 → 超卖</text>
+<rect fill="rgba(91,157,249,0.10)" height="24" rx="5" stroke="#7c8593" width="66" x="344" y="40"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="377" y="57">用户 A</text>
+<rect fill="rgba(155,108,245,0.18)" height="24" rx="5" stroke="#9b6cf5" width="96" x="448" y="40"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="496" y="57">库存行（余 1）</text>
+<rect fill="rgba(91,157,249,0.10)" height="24" rx="5" stroke="#7c8593" width="66" x="566" y="40"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="599" y="57">用户 B</text>
+<line stroke="rgba(120,120,130,0.3)" x1="377" x2="377" y1="66" y2="256"></line>
+<line stroke="rgba(120,120,130,0.3)" x1="496" x2="496" y1="66" y2="256"></line>
+<line stroke="rgba(120,120,130,0.3)" x1="599" x2="599" y1="66" y2="256"></line>
+<line marker-end="url(#h3a)" stroke="#7c8593" x1="379" x2="492" y1="96" y2="96"></line>
+<text fill="#b9c0ca" font-size="10" x="382" y="90">读：余 1</text>
+<line marker-end="url(#h3a)" stroke="#7c8593" x1="597" x2="500" y1="126" y2="126"></line>
+<text fill="#b9c0ca" font-size="10" text-anchor="end" x="594" y="120">读：余 1</text>
+<line marker-end="url(#h3a)" stroke="#7c8593" x1="379" x2="492" y1="166" y2="166"></line>
+<text fill="#b9c0ca" font-size="10" x="382" y="160">写：已订 +1</text>
+<line marker-end="url(#h3b)" stroke="#e06b6b" x1="597" x2="500" y1="196" y2="196"></line>
+<text fill="#e7ebf1" font-size="10" text-anchor="end" x="594" y="190">写：已订 +1</text>
+<rect fill="rgba(224,107,107,0.14)" height="26" rx="5" stroke="#e06b6b" width="200" x="396" y="216"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="496" y="234">已订 2 &gt; 总量 1 · 超卖发生</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="496" y="266">幂等键挡不住它，只能靠并发控制</text>
+</svg>
+<figcaption>图 3 · 两种「重复」：左边是同一请求被重试，用幂等键 + 唯一索引化解；右边是两个合法请求的读-改-写交错，只有并发控制能救。</figcaption>
+</figure>
+<h3>守住那一格：三种做法</h3>
+<p><strong>悲观锁。</strong><code>SELECT ... FOR UPDATE</code> 先把库存行锁住，改完提交才放开，后来者排队。正确、直观；代价是这一行上的并发被彻底串行化，持锁期间别人全在等，事务一长就拖出超时与死锁。</p>
+<p><strong>乐观锁。</strong>给库存行加一个 <code>version</code> 整数：读时带出来，写时用 <code>UPDATE ... SET total_reserved = ?, version = version + 1 WHERE version = &lt;读到的值&gt;</code>；受影响行数为 0 就说明有人先改过，重读重试。低争用下几乎没有开销，高争用下退化成重试风暴。</p>
+<p><strong>数据库约束。</strong>让库存行自己守规矩，如 <code>CHECK (total_reserved &lt;= total_inventory)</code>（要留超售就写 <code>&lt;= total_inventory * 1.1</code>）。最省代码，越界的写被数据库直接拒绝；代价是规则散在 schema 里不好随代码演进、各家数据库支持不一，应用仍得处理「被拒绝」这条路径。</p>
+<p>按本章 3 QPS 的量级，作者选的是<strong>乐观锁或数据库约束</strong>——<strong>悲观锁在这里是拿最贵的工具去打最小的钉子</strong>。还有一条不能省的纪律：<strong>扣库存与写订单必须在同一个事务里</strong>，分开做、中间崩一次，就会留下「扣了库存却没有订单」（房间凭空消失）或「有订单却没扣库存」（超卖）。</p>
+<h3>超售：故意多卖一点，是生意不是 bug</h3>
+<p>把约束从「不超过总量」放宽成「不超过总量 × 系数」（书里用 110% 举例），系统就允许卖出比实际更多的房。为什么？取消与放空（no-show）是常态，严格按库存卖会让房间空着跑。代价是超售兑现不了就得把客人送去别家、承担差价与口碑。所以那个系数<strong>不是技术参数，是拿历史取消率换赔付成本的业务决策</strong>。</p>
+<h3>拆成微服务之后：一致性要自己花钱买</h3>
+<p>只要预订服务和库存服务各自拿着一个库，「扣库存 + 写订单」就跨了进程，ACID 不再免费。三条路：<strong>2PC</strong> 靠协调者两阶段拍板，强一致，但全程持锁、协调者挂掉会留下悬而未决的事务；<strong>Saga</strong> 把事务拆成一串本地步骤，失败时按相反顺序执行<em>补偿</em>，不持锁、能扩展，但只有最终一致性，而且<strong>补偿不是回滚</strong>——退款可能有手续费、取消可能有罚金，补偿自带业务语义；<strong>TCC</strong> 先 Try 预占库存、再 Confirm 或 Cancel，持锁比 2PC 短，代价是每个服务都要写三套逻辑。</p>
+<p>这一章的立场很克制：<strong>能不拆就别拆。</strong>几个 GB、3 QPS 写，一个库的一次事务能解决的事，不值得用分布式事务换一张好看的架构图。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/distributed-transactions-day7.html" target="_blank" rel="noopener">System Design · Day 7 分布式事务</a> — 2PC 的阻塞与协调者故障、Saga 补偿链的设计、TCC 的空回滚与悬挂，以及「别做、做了也尽量做小」这条经验</aside>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="h4a" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="h4b" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="318" x2="318" y1="16" y2="238"></line>
+<text fill="#5b9df9" font-size="12" font-weight="700" x="20" y="26">2PC · 协调者拍板</text>
+<rect fill="rgba(155,108,245,0.18)" height="28" rx="6" stroke="#9b6cf5" width="120" x="94" y="44"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="154" y="63">协调者</text>
+<rect fill="rgba(91,157,249,0.10)" height="28" rx="6" stroke="#7c8593" width="100" x="24" y="140"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="74" y="159">订单服务</text>
+<rect fill="rgba(91,157,249,0.10)" height="28" rx="6" stroke="#7c8593" width="100" x="184" y="140"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="234" y="159">库存服务</text>
+<line marker-end="url(#h4a)" stroke="#7c8593" x1="128" x2="80" y1="74" y2="136"></line>
+<line marker-end="url(#h4a)" stroke="#7c8593" x1="180" x2="228" y1="74" y2="136"></line>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="154" y="104">① 能提交吗？</text>
+<text fill="#8fbaff" font-size="10" text-anchor="middle" x="154" y="124">② 都点头 → ③ 一起提交</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="154" y="196">全程持锁 · 强一致</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="154" y="216">协调者故障留下悬挂事务</text>
+<text fill="#5b9df9" font-size="12" font-weight="700" x="348" y="26">Saga · 本地事务 + 补偿</text>
+<rect fill="rgba(91,157,249,0.10)" height="28" rx="5" stroke="#5b9df9" width="80" x="344" y="52"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="384" y="71">建订单</text>
+<rect fill="rgba(91,157,249,0.10)" height="28" rx="5" stroke="#5b9df9" width="80" x="444" y="52"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="484" y="71">扣库存</text>
+<rect fill="rgba(91,157,249,0.10)" height="28" rx="5" stroke="#5b9df9" width="80" x="544" y="52"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="584" y="71">支付</text>
+<line marker-end="url(#h4a)" stroke="#7c8593" x1="426" x2="440" y1="66" y2="66"></line>
+<line marker-end="url(#h4a)" stroke="#7c8593" x1="526" x2="540" y1="66" y2="66"></line>
+<text fill="#e8794b" font-size="10" text-anchor="middle" x="584" y="100">支付失败 ✕</text>
+<rect fill="rgba(155,108,245,0.14)" height="28" rx="5" stroke="#9b6cf5" width="80" x="344" y="112"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="384" y="131">取消订单</text>
+<rect fill="rgba(155,108,245,0.14)" height="28" rx="5" stroke="#9b6cf5" width="80" x="444" y="112"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="484" y="131">还库存</text>
+<rect fill="rgba(155,108,245,0.14)" height="28" rx="5" stroke="#9b6cf5" width="80" x="544" y="112"></rect><text fill="#e7ebf1" font-size="10" text-anchor="middle" x="584" y="131">退款</text>
+<line marker-end="url(#h4b)" stroke="#9b6cf5" x1="584" x2="584" y1="82" y2="108"></line>
+<line marker-end="url(#h4b)" stroke="#9b6cf5" x1="542" x2="528" y1="126" y2="126"></line>
+<line marker-end="url(#h4b)" stroke="#9b6cf5" x1="442" x2="428" y1="126" y2="126"></line>
+<text fill="#9b6cf5" font-family="monospace" font-size="10" text-anchor="middle" x="484" y="166">反向补偿链</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="484" y="196">不持锁 · 最终一致 · 中间状态可见</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="484" y="216">补偿 ≠ 回滚：退款可能有手续费</text>
+</svg>
+<figcaption>图 4 · 跨服务的两条路：2PC 靠协调者两阶段拍板、全程持锁；Saga 把事务拆成本地步骤，失败时反向执行补偿，换来不持锁但只有最终一致。</figcaption>
+</figure>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 1 · 守住库存行的三种并发控制</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>悲观锁</th><th>乐观锁</th><th>数据库约束</th></tr></thead>
+<tbody>
+<tr><th>机制</th><td><code>SELECT ... FOR UPDATE</code> 锁住这一行</td><td>校验 <code>version</code> 未变才写，否则重试</td><td><code>CHECK</code> 让越界的写直接失败</td></tr>
+<tr><th>低争用（3 QPS）</th><td>能用，白付锁开销</td><td><strong>几乎零成本</strong></td><td><strong>最省代码</strong></td></tr>
+<tr><th>热点行（抢房）</th><td>串行排队、延迟陡升、可能死锁</td><td><strong>重试风暴</strong>，成功率下滑</td><td>拒绝率上升，仍要应用侧重试</td></tr>
+<tr><th>什么时候选</th><td>争用高且必须一次成功（如结算）</td><td>本章默认解：写少、冲突罕见</td><td>规则简单、想让数据库兜底</td></tr>
+</tbody></table></div>
+<p class="tcap">表 2 · 「扣库存 + 写订单」放在哪：四种一致性方案</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>方案</th><th>一致性</th><th>持锁时间</th><th>代价</th><th>适用</th></tr></thead>
+<tbody>
+<tr><th>单库一个事务</th><td><strong>强一致（ACID）</strong></td><td>毫秒级</td><td>数据须同库，服务边界被绑住</td><td><strong>本章的答案</strong>：几 GB、3 QPS 写</td></tr>
+<tr><th>2PC</th><td>强一致</td><td>整个两阶段</td><td>阻塞、协调者单点、延迟高</td><td>参与者少、事务短、必须强一致</td></tr>
+<tr><th>Saga</th><td>最终一致</td><td>不持锁</td><td>补偿要自己写，且带业务语义</td><td>长流程（下单 → 支付 → 出票）</td></tr>
+<tr><th>TCC</th><td>最终一致（预占期近似锁）</td><td>Try 到 Confirm</td><td>每服务写三套逻辑 + 边界处理</td><td>「先占住再慢慢付款」的库存</td></tr>
+</tbody></table></div>
+<p><strong>热点怎么办？</strong>平时不存在的问题，会在「演唱会前一晚、全城抢同一家酒店」时集中爆发。三条对策：把一格<strong>分桶</strong>（10 间的额度拆成 5 格各 2 间，并发打散到 5 行，代价是「有房但恰好在别的桶」）；给这一格<strong>排队</strong>，把重试风暴换成可预测的等待；以及<strong>把读挡在外面</strong>——列表页读缓存与只读副本、拿到的余量只能当提示，只有真下单那一步回主库校验。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/consistency-day6.html" target="_blank" rel="noopener">System Design · Day 6 一致性</a> — 从线性一致到最终一致的整条光谱，以及「读自己的写」这类会话保证为什么正好能救订完单看不到订单的窘境</aside>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>这套「库存行 + 一次事务 + 幂等键」的骨架，几乎是所有<strong>有限库存</strong>系统的通用解：票务（某个票档）、航空（航班 × 舱位 × 日期）、电商下单（SKU 库存）、餐厅与共享办公订座——换个名词就能搬。落地上：MySQL / PostgreSQL 的 <code>SELECT ... FOR UPDATE</code> 与唯一索引最常见；DynamoDB 用条件写与事务接口、并在事务写里附客户端令牌做幂等；Spanner 用悲观锁 + 自动重试；阿里与蚂蚁把 TCC / Saga 做成框架（Seata）开源。</p>
+<p>面试里它的价值在于：这是少数能把<strong>事务、隔离与幂等</strong>考实的题目，面试官几乎一定追问三件事——「两个人同时订最后一间怎么办」「用户点了两次怎么办」「扣库存和写订单放在几个事务里」。答得上这三问，这一章就没白读。</p>
+<div class="ev">
+<div class="evh">大厂实证 · 这些主张不是书里说的，是公司自己公开说的</div>
+<ul>
+<li><strong>Sabre</strong>（全球旅行分销）说自己「每秒处理数千次预订更新」，预订库<strong>必须跨多个可用区提供服务</strong>，还需要「跨多条记录的 ACID 事务，因为航司常同时改动多名乘客、多个航班」——<strong>印证了「预订类系统写量不大，要的是跨行原子性与高可用」</strong>。<span class="src"><a href="https://cloud.google.com/blog/products/databases/sabre-powers-the-travel-industry-with-google-cloud" rel="noopener" target="_blank">A. Gasparovic（Sabre Labs 首席架构师）, Google Cloud Blog, 2022-01 ↗</a></span></li>
+<li><strong>Google Cloud</strong> 公开了 Spanner 的<strong>悲观锁</strong>细节，直言争用常来自「表里存在热点键」、结果是事务被 abort；官方建议「只把关键路径的代码放进事务」，并指出只读事务「不持锁、不阻塞别人、永不 abort」——<strong>这就是悲观锁代价的官方版本</strong>。<span class="src"><a href="https://cloud.google.com/blog/products/databases/transaction-locking-in-cloud-spanner" rel="noopener" target="_blank">M. Gupta「Understanding transactional locking in Cloud Spanner」, Google Cloud Blog, 2022-11 ↗</a></span></li>
+<li><strong>Amazon（DynamoDB）</strong> 把幂等做进了接口：事务写可带一个客户端令牌，「令牌在请求完成后 10 分钟内有效」，期间同一个令牌重发「会成功返回但不做任何改动」——<strong>幂等键 + 有效期窗口，正是本章挡重复提交的工业做法</strong>。<span class="src"><a href="https://github.com/awsdocs/amazon-dynamodb-developer-guide/blob/master/doc_source/transaction-apis.md" rel="noopener" target="_blank">AWS DynamoDB Developer Guide · Transaction APIs ↗</a></span></li>
+<li><strong>阿里巴巴与蚂蚁</strong>把内部的分布式事务方案开源成 Seata（现为 Apache 孵化项目），提供 AT / TCC / Saga / XA 四种模式——<strong>反面印证了「能不拆就别拆」</strong>：一旦下单与库存拆成两个服务，你就得额外养一个协调者和一整套补偿逻辑。<span class="src"><a href="https://github.com/apache/incubator-seata" rel="noopener" target="_blank">Apache Seata（原 Alibaba / Ant Group）↗</a></span></li>
+</ul>
+</div>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>把它当秒杀题做</strong>：一上来就分片、上 Redis 预扣、加队列削峰——在 3 QPS 下全是过度设计。书里那段估算的真正用途就是劝你别这么干。</li>
+<li><strong>幂等键 ≠ 并发控制</strong>：幂等只挡「同一个请求被重发」，挡不住两个用户抢同一格；反过来乐观锁也挡不住重复提交（两次提交都是合法请求）。两种病要各治一遍。另外键必须在首次请求发出前就固定、并带过整条重试链，在「提交」按钮上现生成等于没有幂等。</li>
+<li><strong>乐观锁在热点行上会退化</strong>：同一格上几百个并发写，重试可能比成功还多，p99 很难看。该分桶就分桶、该排队就排队，别指望重试自己解决争用。</li>
+<li><strong>缓存余量的一致性</strong>：放缓存提速是对的，但那个数字只能当提示，下单必须回库校验，否则「看起来有房」会直接变成超卖。反过来，接受「点进去才发现刚被订走」是<strong>正确</strong>的取舍。</li>
+<li><strong>超售系数不是行业标准</strong>：书里的 110% 是示意值，真实系数要用历史取消率、放空率与赔付成本算，还随季节和城市变；当常量抄进生产很危险。</li>
+<li><strong>时代局限与书外的坑</strong>：本书成于 2022，此后 DynamoDB（其事务实现于 USENIX ATC 2023 公开）、Spanner、TiDB 把跨分片事务的价格压了下来，「2PC 太贵」值得按你用的数据库重算一遍。另外书里没展开、真实工程一定会踩的是<strong>日期与时区</strong>：库存以「日期」为键，跨时区、夏令时、酒店当地对「入住日」的定义，都可能让同一笔预订落到不同的行上。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 这一章难在<strong>正确性</strong>不难在规模——约 <strong>3 QPS 的写</strong>、库存 7300 万行几个 GB，<strong>一台关系库就够</strong>。</p>
+<p>② 核心抽象：卖的不是房号，而是「<strong>房型 × 日期</strong>」的一格额度（<code>total_inventory</code> 与 <code>total_reserved</code>），一晚一行。</p>
+<p>③ 跨多晚的预订 = 多行库存各 +1 加一条订单，<strong>必须在同一个事务里</strong>，否则会漏出「房间消失」或「超卖」。</p>
+<p>④ 两种「重复」分开治：同一请求被重发 → <strong>幂等键 + 唯一索引</strong>；两人抢同一格 → <strong>并发控制</strong>。互相替代不了。</p>
+<p>⑤ 并发控制三选一：悲观锁（正确但串行化）、乐观锁（本章默认，高争用退化为重试风暴）、数据库约束（最省代码）。</p>
+<p>⑥ 超售（如 110%）是<strong>业务决策</strong>：拿历史取消率换赔付成本，不是技术参数。</p>
+<p>⑦ 拆服务后一致性要花钱买：2PC 持锁阻塞、Saga 只有最终一致且<strong>补偿 ≠ 回滚</strong>、TCC 每个服务写三套逻辑。<strong>能不拆就别拆。</strong></p>
+<p>⑧ 热点（大促抢房）才是真敌人：分桶、排队、把读挡在缓存与只读副本上，缓存余量只能当提示。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
