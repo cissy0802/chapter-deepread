@@ -57,34 +57,34 @@ BigCat 人工维护的计算机 / 软件经典书清单。**按书成簇、簇�
 ## Machine Learning System Design Interview · Ali Aminian & Alex Xu · 2023
 Xu 系统设计三部曲的第二部，**把「设计一个系统」换成「设计一个带模型的系统」**。结构与前两卷同源：Ch1 是七步框架，Ch2–11 是十道真题。难点不在模型本身，而在模型之外——数据从哪来、特征怎么算、离线指标涨了线上为什么不涨、上线后怎么发现它悄悄变坏。**全书 11 章全收。**
 ### Part I · 框架（Ch1）
-- **Ch1 引论与概览** — Introduction and Overview — ML 系统设计的七步框架：澄清需求 → 把业务问题翻译成 ML 问题 → 数据准备 → 特征工程 → 模型选型 → 离线/在线评估 → 部署与监控（slug: `mlsdi-ch01-introduction-and-overview`） · xref: `sd:feature-platform-day40`, `sd:system-design-interview-day25`
+- **Ch1 引论与概览** — Introduction and Overview — ML 系统设计的七步框架：澄清需求 → 把业务问题翻译成 ML 问题 → 数据准备 → 特征工程 → 模型选型 → 离线/在线评估 → 部署与监控（slug: `mlsdi-ch01-introduction-and-overview`） · xref: `sd:feature-platform-day40`, `sd:system-design-interview-day25`, `aiml:evaluation-benchmarks-day15`
 ### Part II · 十道真题（Ch2–11）
-- **Ch2 视觉搜索系统** — Visual Search System — 以图搜图：表示学习把图片压成向量、对比损失怎么训，以及十亿级图库里近似最近邻的代价（slug: `mlsdi-ch02-visual-search-system`） · xref: `sd:hybrid-search-day31`, `sd:search-system-day12`, `paper:clip-paper6`
-- **Ch3 Google 街景模糊化** — Google Street View Blurring System — 用目标检测做隐私合规：漏检一张人脸和误糊一块招牌的代价完全不对称，阈值该往哪边偏（slug: `mlsdi-ch03-street-view-blurring`） · xref: `sd:privacy-compliance-day43`, `paper:deep-residual-learning-paper2`
-- **Ch4 YouTube 视频搜索** — YouTube Video Search — 视觉与文本双路表示：标题、字幕、画面各出一路，怎么融合成一个可排序的相关性分（slug: `mlsdi-ch04-youtube-video-search`） · xref: `sd:search-system-day12`, `sd:video-streaming-day16`, `paper:attention-is-all-you-need-paper1`
-- **Ch5 有害内容检测** — Harmful Content Detection — 多模态融合与多任务学习，以及低底率下阈值怎么定、人工复审队列怎么接（slug: `mlsdi-ch05-harmful-content-detection`） · xref: `sd:low-base-rate-alerting-day51`, `sd:privacy-compliance-day43`
+- **Ch2 视觉搜索系统** — Visual Search System — 以图搜图：表示学习把图片压成向量、对比损失怎么训，以及十亿级图库里近似最近邻的代价（slug: `mlsdi-ch02-visual-search-system`） · xref: `sd:hybrid-search-day31`, `aiml:semantic-search-day22`, `paper:clip-paper6`
+- **Ch3 Google 街景模糊化** — Google Street View Blurring System — 用目标检测做隐私合规：漏检一张人脸和误糊一块招牌的代价完全不对称，阈值该往哪边偏（slug: `mlsdi-ch03-street-view-blurring`） · xref: `sd:privacy-compliance-day43`, `aiml:cnn-vision-day18`, `paper:deep-residual-learning-paper2`
+- **Ch4 YouTube 视频搜索** — YouTube Video Search — 视觉与文本双路表示：标题、字幕、画面各出一路，怎么融合成一个可排序的相关性分（slug: `mlsdi-ch04-youtube-video-search`） · xref: `sd:search-system-day12`, `aiml:multimodal-day23`, `paper:attention-is-all-you-need-paper1`
+- **Ch5 有害内容检测** — Harmful Content Detection — 多模态融合与多任务学习，以及低底率下阈值怎么定、人工复审队列怎么接（slug: `mlsdi-ch05-harmful-content-detection`） · xref: `sd:low-base-rate-alerting-day51`, `sd:privacy-compliance-day43`, `aiml:fairness-bias-day51`
 - **Ch6 视频推荐系统** — Video Recommendation System — 召回 + 排序两段式：协同过滤与内容式各补对方的短板，冷启动和曝光偏差怎么治（slug: `mlsdi-ch06-video-recommendation`） · xref: `sd:recommendation-system-day13`, `sd:feature-platform-day40`
 - **Ch7 活动推荐系统** — Event Recommendation System — 全书特征工程最重的一章：时间、地点、社交关系怎么编码成模型吃得下的特征（slug: `mlsdi-ch07-event-recommendation`） · xref: `sd:recommendation-system-day13`, `sd:geo-system-day19`
-- **Ch8 社交平台广告点击预测** — Ad Click Prediction on Social Platforms — CTR 预估：特征交叉怎么做、为什么必须在线学习，以及概率校准为什么在计费场景里是硬需求（slug: `mlsdi-ch08-ad-click-prediction`） · xref: `sd:data-processing-day20`, `sd:feature-platform-day40`
-- **Ch9 民宿相似房源** — Similar Listings on Vacation Rental Platforms — 用一次浏览会话里的共现关系学 embedding（Airbnb 那一套），冷启动靠属性回退（slug: `mlsdi-ch09-similar-listings`） · xref: `sd:recommendation-system-day13`, `paper:word2vec-paper4`
+- **Ch8 社交平台广告点击预测** — Ad Click Prediction on Social Platforms — CTR 预估：特征交叉怎么做、为什么必须在线学习，以及概率校准为什么在计费场景里是硬需求（slug: `mlsdi-ch08-ad-click-prediction`） · xref: `sd:data-processing-day20`, `sd:feature-platform-day40`, `aiml:classic-ml-day16`
+- **Ch9 民宿相似房源** — Similar Listings on Vacation Rental Platforms — 用一次浏览会话里的共现关系学 embedding（Airbnb 那一套），冷启动靠属性回退（slug: `mlsdi-ch09-similar-listings`） · xref: `sd:recommendation-system-day13`, `aiml:representation-geometry-day30`, `paper:word2vec-paper4`
 - **Ch10 个性化信息流** — Personalized News Feed — 多目标排序：点赞、评论、转发、停留时长各training一个头，权重怎么定、怎么防止单一目标吃掉体验（slug: `mlsdi-ch10-personalized-news-feed`） · xref: `sd:feed-system-day14`, `sd:recommendation-system-day13`
-- **Ch11 你可能认识的人** — People You May Know — 社交图上的链接预测：从共同好友的朴素启发式，一路走到图神经网络（slug: `mlsdi-ch11-people-you-may-know`） · xref: `sd:recommendation-system-day13`, `paper:pregel-paper22`
+- **Ch11 你可能认识的人** — People You May Know — 社交图上的链接预测：从共同好友的朴素启发式，一路走到图神经网络（slug: `mlsdi-ch11-people-you-may-know`） · xref: `aiml:graph-ml-day37`, `sd:recommendation-system-day13`, `paper:pregel-paper22`
 
 ## Generative AI System Design Interview · Ali Aminian, Hao Sheng & Alex Xu · 2024
 三部曲的第三部，2024 年 11 月出版，是本仓时效性最强的一本。**与上一部的根本差别：生成式系统没有标准答案**——评估要靠人或模型当裁判、成本按 token 走、失败方式是「错得流畅」而不是「报错」。Ch1 框架，Ch2–11 十道真题，从智能补全、翻译、聊天助理一路到扩散模型与文生视频。（署名：封面与 Amazon 列 Aminian & Sheng，出版方 ByteByteGo 的发布公告把 Alex Xu 一并列为作者。）**全书 11 章全收。**
 ### Part I · 框架（Ch1）
-- **Ch1 引论与概览** — Introduction and Overview — 生成式系统设计的七步框架，以及它和判别式 ML 系统的根本差别：评估没有标准答案、成本按 token 走、失败方式是「错得流畅」（slug: `gaisdi-ch01-introduction-and-overview`） · xref: `sd:llm-serving-day32`, `sd:ai-product-backend-day33`, `sd:fail-obviously-day54`
+- **Ch1 引论与概览** — Introduction and Overview — 生成式系统设计的七步框架，以及它和判别式 ML 系统的根本差别：评估没有标准答案、成本按 token 走、失败方式是「错得流畅」（slug: `gaisdi-ch01-introduction-and-overview`） · xref: `sd:llm-serving-day32`, `sd:fail-obviously-day54`, `aiml:evaluation-benchmarks-day15`
 ### Part II · 十道真题（Ch2–11）
-- **Ch2 Gmail 智能撰写** — Gmail Smart Compose — 实时补全：延迟预算直接把模型规模钉死，解码要在几十毫秒内出词，还不能打断打字的人（slug: `gaisdi-ch02-gmail-smart-compose`） · xref: `sd:llm-serving-day32`, `sd:realtime-systems-day34`
-- **Ch3 Google 翻译** — Google Translate — 序列到序列的工业形态：多语言共享一个模型、低资源语言怎么办，以及 BLEU 之外怎么评（slug: `gaisdi-ch03-google-translate`） · xref: `paper:seq2seq-paper8`, `paper:bahdanau-attention-paper9`, `paper:attention-is-all-you-need-paper1`
-- **Ch4 ChatGPT：个人助理聊天机器人** — ChatGPT: Personal Assistant Chatbot — 预训练 → 监督微调 → RLHF 三段式，以及对话系统的记忆、工具调用与安全边界（slug: `gaisdi-ch04-chatgpt-assistant`） · xref: `sd:ai-product-backend-day33`, `paper:instructgpt-rlhf-paper14`, `paper:constitutional-ai-paper15`
-- **Ch5 图像描述** — Image Captioning — 视觉编码器接语言解码器：跨模态对齐怎么训，以及「描述得对不对」这件事怎么自动评（slug: `gaisdi-ch05-image-captioning`） · xref: `paper:clip-paper6`, `paper:vision-transformer-paper5`
-- **Ch6 检索增强生成** — Retrieval-Augmented Generation — 检索质量决定回答上限：分块、混合检索、重排序，以及引用与可核验为什么是系统级需求而非产品装饰（slug: `gaisdi-ch06-retrieval-augmented-generation`） · xref: `sd:ai-product-backend-day33`, `sd:hybrid-search-day31`, `sd:fail-obviously-day54`
-- **Ch7 真实人脸生成** — Realistic Face Generation — GAN 路线：生成器与判别器的博弈怎么收敛、模式崩塌是什么、FID 到底在量什么（slug: `gaisdi-ch07-realistic-face-generation`） · xref: `paper:generative-adversarial-networks-paper16`
-- **Ch8 高分辨率图像合成** — High-Resolution Image Synthesis — 扩散模型与潜空间：为什么把去噪搬到 latent 上能把算力压下一个量级（slug: `gaisdi-ch08-high-resolution-image-synthesis`） · xref: `paper:ddpm-paper28`
-- **Ch9 文生图** — Text-to-Image Generation — 文本条件怎么注入、无分类器引导（CFG）在调什么，以及提示词在系统层该由谁承接（slug: `gaisdi-ch09-text-to-image-generation`） · xref: `paper:ddpm-paper28`, `paper:clip-paper6`
-- **Ch10 个性化头像生成** — Personalized Headshot Generation — 少样本个性化：整模微调 vs 适配器的取舍，以及肖像权与滥用防护怎么设计进流程（slug: `gaisdi-ch10-personalized-headshot`） · xref: `sd:privacy-compliance-day43`, `sd:llm-serving-day32`
-- **Ch11 文生视频** — Text-to-Video Generation — 时间一致性是新难点：帧间连贯怎么保、算力怎么爆炸，以及分段生成后怎么接缝（slug: `gaisdi-ch11-text-to-video-generation`） · xref: `sd:video-streaming-day16`, `sd:cost-capacity-engineering-day27`
+- **Ch2 Gmail 智能撰写** — Gmail Smart Compose — 实时补全：延迟预算直接把模型规模钉死，解码要在几十毫秒内出词，还不能打断打字的人（slug: `gaisdi-ch02-gmail-smart-compose`） · xref: `sd:llm-serving-day32`, `aiml:decoding-sampling-day45`, `aiml:inference-optimization-day9`
+- **Ch3 Google 翻译** — Google Translate — 序列到序列的工业形态：多语言共享一个模型、低资源语言怎么办，以及 BLEU 之外怎么评（slug: `gaisdi-ch03-google-translate`） · xref: `aiml:rnn-sequence-day19`, `paper:seq2seq-paper8`, `paper:attention-is-all-you-need-paper1`
+- **Ch4 ChatGPT：个人助理聊天机器人** — ChatGPT: Personal Assistant Chatbot — 预训练 → 监督微调 → RLHF 三段式，以及对话系统的记忆、工具调用与安全边界（slug: `gaisdi-ch04-chatgpt-assistant`） · xref: `sd:ai-product-backend-day33`, `aiml:agent-architectures-day5`, `paper:instructgpt-rlhf-paper14`
+- **Ch5 图像描述** — Image Captioning — 视觉编码器接语言解码器：跨模态对齐怎么训，以及「描述得对不对」这件事怎么自动评（slug: `gaisdi-ch05-image-captioning`） · xref: `aiml:multimodal-day23`, `paper:clip-paper6`, `paper:vision-transformer-paper5`
+- **Ch6 检索增强生成** — Retrieval-Augmented Generation — 检索质量决定回答上限：分块、混合检索、重排序，以及引用与可核验为什么是系统级需求而非产品装饰（slug: `gaisdi-ch06-retrieval-augmented-generation`） · xref: `aiml:rag-systems-day4`, `sd:ai-product-backend-day33`, `sd:hybrid-search-day31`
+- **Ch7 真实人脸生成** — Realistic Face Generation — GAN 路线：生成器与判别器的博弈怎么收敛、模式崩塌是什么、FID 到底在量什么（slug: `gaisdi-ch07-realistic-face-generation`） · xref: `aiml:generative-models-day20`, `paper:generative-adversarial-networks-paper16`
+- **Ch8 高分辨率图像合成** — High-Resolution Image Synthesis — 扩散模型与潜空间：为什么把去噪搬到 latent 上能把算力压下一个量级（slug: `gaisdi-ch08-high-resolution-image-synthesis`） · xref: `aiml:generative-models-day20`, `paper:ddpm-paper28`
+- **Ch9 文生图** — Text-to-Image Generation — 文本条件怎么注入、无分类器引导（CFG）在调什么，以及提示词在系统层该由谁承接（slug: `gaisdi-ch09-text-to-image-generation`） · xref: `aiml:multimodal-day23`, `paper:ddpm-paper28`, `paper:clip-paper6`
+- **Ch10 个性化头像生成** — Personalized Headshot Generation — 少样本个性化：整模微调 vs 适配器的取舍，以及肖像权与滥用防护怎么设计进流程（slug: `gaisdi-ch10-personalized-headshot`） · xref: `sd:privacy-compliance-day43`, `aiml:meta-learning-day39`
+- **Ch11 文生视频** — Text-to-Video Generation — 时间一致性是新难点：帧间连贯怎么保、算力怎么爆炸，以及分段生成后怎么接缝（slug: `gaisdi-ch11-text-to-video-generation`） · xref: `aiml:frontier-architectures-day34`, `sd:video-streaming-day16`, `sd:cost-capacity-engineering-day27`
 
 ## DDIA — Designing Data-Intensive Applications · Martin Kleppmann · 2017
 

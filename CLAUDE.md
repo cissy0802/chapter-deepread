@@ -65,13 +65,17 @@
 
 两个姊妹站和本仓高度互补——本仓按**书**走，它们分别按**主题**和按**论文**走。一章里讲到的机制或引到的论文，只要那边有一篇专门讲透，就把读者送过去。
 
-- **system-design**（`https://hub.cissychen.com/system-design/`）— 54 篇主题制长文，对应**机制 / 概念**。
-- **cs-papers-deepread**（`https://hub.cissychen.com/cs-papers-deepread/`）— 58 篇论文精读，对应**原书引用的论文**。书里点名一篇论文而那边正好有精读，是最该链的情形。
+- **system-design**（`https://hub.cissychen.com/system-design/`）— 54 篇主题制长文，对应**分布式系统与后端机制 / 概念**。
+- **cs-papers-deepread**（`https://hub.cissychen.com/cs-papers-deepread/`）— 58 篇论文精读，对应**原书点名引用的论文**。书里指名一篇论文而那边正好有精读，是最该链的情形。
+- **ai-ml**（`https://hub.cissychen.com/ai-ml/`）— 56 篇 AI / ML 主题长文，对应**模型与训练侧**的概念（Transformer、微调、RAG、评估、对齐、多模态……）。ML / GenAI 那两本书的章几乎每章都该挂一条。
+- **super-individual**（`https://hub.cissychen.com/super-individual/`）— **双系列仓**：`*-dayN.html` 是 59 篇「超级个体」主题长文（AI 协作方法、工作流、认知与效率），`*-skillN.html` 是 10 篇「Skills 精选」（具体可装的 AI 编码工具与 skill）。对应**把技术变成个人生产力**的那一侧；书里讲到人机协作、工具化、评审与验证成本时可挂。
+
+四个站的 URL 形状一致：`https://hub.cissychen.com/{仓名}/{文件名}`，英文页是同名 `.en.html`（四个站每篇都有，已逐一探活 200）。
 
 **什么时候链**：读者读到这个概念会想「我要再深一层」，而那篇正好接得住——才链。**同主题 ≠ 该链**，泛泛相关一律不链。宁缺勿滥。
 
 **数量与位置**
-- 每章 **最多 3 条**；同一篇 system-design 页面在一章里只出现一次。
+- 每章 **最多 3 条**（四个站合计，不是每站 3 条）；同一个目标页在一章里只出现一次。四个站里挑**最能接住这个概念的那一个**，别为了凑站点数硬挂。
 - 放在**讲到该概念的那个小节末尾**（§4 的某个 `<h3>` 子节、§5 关键权衡、§6 落到真实系统），不要堆在页尾。
 - **只放在精读版（`.mode-deep`）里。科普版（`.mode-pop`）不放**——那是给零基础读者的短版，外链是干扰。
 
@@ -112,7 +116,7 @@
 
 **回填旧页**：只补 xref、不动正文的批量提交，走 `MSG="Backfill xref links [skip bake]" ./publish.sh`——`[skip bake]` 让 bake 工作流整个跳过（`publish.sh` 的 `MSG` 可被环境变量覆盖）。即使忘了带，只要守住上面的 `<aside>` 规则也不会产生任何新 mp3。
 
-**TOPICS.md 里已给出对应关系的章**（行尾 `· xref: …`）直接照用——前缀 `sd:` 指 system-design 页面、`paper:` 指 cs-papers-deepread 页面，值就是不带扩展名的文件名（如 `sd:chaos-engineering-day44` → `https://hub.cissychen.com/system-design/chaos-engineering-day44.html`）。没给 xref 的章自己按下面两张表匹配。routine 的工作目录里**没有**这两个仓，**只能用表里的文件名，一个字都不要臆造**——写错就是死链。
+**TOPICS.md 里已给出对应关系的章**（行尾 `· xref: …`）直接照用——前缀 `sd:` 指 system-design、`paper:` 指 cs-papers-deepread、`aiml:` 指 ai-ml、`si:` 指 super-individual（含两个系列），值就是不带扩展名的文件名（如 `sd:chaos-engineering-day44` → `https://hub.cissychen.com/system-design/chaos-engineering-day44.html`）。没给 xref 的章自己按下面两张表匹配。routine 的工作目录里**没有**这两个仓，**只能用表里的文件名，一个字都不要臆造**——写错就是死链。
 
 ### system-design 页面对照表（54 篇）
 
@@ -255,6 +259,146 @@
 2026-09-04 起 BigCat 把 System Design Interview Vol 1 / Vol 2 提到 `TOPICS.md` 最顶，并把本 routine 的触发频率从**每天 1 次**临时提到**每天 3 次**（`0 0,8,16 * * *`），目标是尽快写完 Xu 两卷（28 章）+ Chaos Engineering（21 章）。
 
 **每次运行选完题后检查一次**：若本次要写的 slug **既不以 `sdi1-` / `sdi2-` 开头、也不以 `chaoseng-` 开头**，说明这两批已经写完了——正常写完本篇并发布，然后在 PushNotification 里**额外加一句**提醒 BigCat 做两件事：①把频率调回每天 1 次（`0 8 * * *`，routine `chapter-deepread`）；②把 `.maxchars` 从 6500 收到 5500（见 §2 篇幅那条）。只提醒，这两件都别自己动手。
+
+### ai-ml 页面对照表（56 篇）
+
+| 页 | 文件名 | 主题 |
+| --- | --- | --- |
+| Day 1 | `llm-basics-day1.html` | AI/ML 详解：LLM 基础 |
+| Day 2 | `pretraining-finetuning-day2.html` | AI/ML 详解：预训练与微调 |
+| Day 3 | `prompt-engineering-day3.html` | AI/ML 详解：Prompt Engineering |
+| Day 4 | `rag-systems-day4.html` | AI/ML 详解：RAG 体系 |
+| Day 5 | `agent-architectures-day5.html` | AI/ML 详解：Agent 架构 |
+| Day 6 | `tool-use-day6.html` | AI/ML 详解：Tool Use |
+| Day 7 | `multi-agent-systems-day7.html` | AI/ML 详解：Multi-Agent 系统 |
+| Day 8 | `context-engineering-day8.html` | AI/ML 详解：Context 工程 |
+| Day 9 | `inference-optimization-day9.html` | AI/ML 详解：推理优化 |
+| Day 10 | `loss-optimization-day10.html` | AI/ML 详解：Loss 与 Optimization |
+| Day 11 | `tokenization-day11.html` | AI/ML 详解：Tokenization 深度 |
+| Day 12 | `attention-variants-day12.html` | AI/ML 详解：Attention 变种 |
+| Day 13 | `position-encoding-day13.html` | AI/ML 详解：位置编码深入 |
+| Day 14 | `scaling-laws-day14.html` | AI/ML 详解：Scaling Laws 规模定律 |
+| Day 15 | `evaluation-benchmarks-day15.html` | AI/ML 详解：评估与基准 |
+| Day 16 | `classic-ml-day16.html` | AI/ML 详解：经典 ML 算法 |
+| Day 17 | `deep-learning-basics-day17.html` | AI/ML 详解：深度学习基础 |
+| Day 18 | `cnn-vision-day18.html` | AI/ML 详解：CNN 与视觉 |
+| Day 19 | `rnn-sequence-day19.html` | AI/ML 详解：RNN 与序列 |
+| Day 20 | `generative-models-day20.html` | AI/ML 详解：生成模型 |
+| Day 21 | `reinforcement-learning-day21.html` | AI/ML 详解：强化学习 |
+| Day 22 | `semantic-search-day22.html` | AI/ML 详解：语义搜索 |
+| Day 23 | `multimodal-day23.html` | AI/ML 详解：多模态 |
+| Day 24 | `encoder-models-day24.html` | AI/ML 详解：编码模型 |
+| Day 25 | `training-infrastructure-day25.html` | AI/ML 详解：训练基础设施 |
+| Day 26 | `alignment-math-day26.html` | AI/ML 详解：Alignment 数学 |
+| Day 27 | `interpretability-day27.html` | AI/ML 详解：可解释性 |
+| Day 28 | `reasoning-models-day28.html` | AI/ML 详解：推理模型 |
+| Day 29 | `data-engineering-day29.html` | AI/ML 详解：数据工程 |
+| Day 30 | `representation-geometry-day30.html` | AI/ML 详解：表示与嵌入几何 |
+| Day 31 | `model-compression-day31.html` | AI/ML 详解：模型压缩 |
+| Day 32 | `activation-normalization-day32.html` | AI/ML 详解：激活函数与归一化 |
+| Day 33 | `probability-information-day33.html` | AI/ML 详解：概率与信息论基础 |
+| Day 34 | `frontier-architectures-day34.html` | AI/ML 详解：前沿架构 |
+| Day 35 | `time-series-day35.html` | AI/ML 详解：时间序列预测 |
+| Day 36 | `causal-inference-day36.html` | AI/ML 详解：因果推断 |
+| Day 37 | `graph-ml-day37.html` | AI/ML 详解：图机器学习 |
+| Day 38 | `probabilistic-programming-day38.html` | AI/ML 详解：概率编程与贝叶斯深度学习 |
+| Day 39 | `meta-learning-day39.html` | AI/ML 详解：元学习与小样本 |
+| Day 40 | `federated-privacy-day40.html` | AI/ML 详解：联邦与隐私学习 |
+| Day 41 | `world-models-embodied-day41.html` | AI/ML 详解：世界模型与具身智能 |
+| Day 42 | `neuro-symbolic-day42.html` | AI/ML 详解：神经符号 |
+| Day 43 | `optimization-geometry-day43.html` | AI/ML 详解：优化的几何与前沿 |
+| Day 44 | `training-phenomena-day44.html` | AI/ML 详解：训练中的反常现象 |
+| Day 45 | `decoding-sampling-day45.html` | AI/ML 详解：解码与采样数学 |
+| Day 46 | `ai-for-science-day46.html` | AI/ML 详解：AI for Science |
+| Day 47 | `alignment-failures-day47.html` | AI/ML 详解：对齐失败机制 |
+| Day 48 | `hallucination-calibration-day48.html` | AI/ML 详解：幻觉与校准机制 |
+| Day 49 | `knowledge-editing-day49.html` | AI/ML 详解：知识存储与模型编辑 |
+| Day 50 | `adversarial-robustness-day50.html` | AI/ML 详解：对抗样本与鲁棒性 |
+| Day 51 | `fairness-bias-day51.html` | AI/ML 详解：公平、偏见与去偏 |
+| Day 52 | `continual-learning-day52.html` | AI/ML 详解：持续学习与灾难性遗忘 |
+| Day 53 | `audio-speech-day53.html` | AI/ML 详解：音频与语音模型 |
+| Day 54 | `llm-as-judge-day54.html` | AI/ML 详解：LLM-as-Judge 的偏差与校准 |
+| Day 55 | `cot-monitoring-day55.html` | AI/ML 详解：思维链监控与可监控性 |
+| Day 56 | `model-versioning-day56.html` | AI/ML 详解：同名不同物 — 模型版本学与评测可复现性 |
+
+### super-individual · 主题系列对照表（59 篇）
+
+| 页 | 文件名 | 主题 |
+| --- | --- | --- |
+| Day 1 | `prompt-eng-day1.html` | Prompt Engineering |
+| Day 2 | `context-eng-day2.html` | Context Engineering |
+| Day 3 | `harness-eng-day3.html` | Harness Engineering |
+| Day 4 | `tool-use-day4.html` | Tool Use &amp; Function Calling |
+| Day 5 | `agent-design-day5.html` | Agent Design Patterns |
+| Day 6 | `eval-eng-day6.html` | Eval 工程 |
+| Day 7 | `memory-state-day7.html` | Memory &amp; State 管理 |
+| Day 8 | `multimodal-eng-day8.html` | 多模态工程 |
+| Day 9 | `prompt-patterns-day9.html` | Prompting Patterns |
+| Day 10 | `rag-eng-day10.html` | RAG 实战工程 |
+| Day 11 | `hallucination-day11.html` | Hallucination 的工程治理 |
+| Day 12 | `fine-tuning-day12.html` | Fine-tuning vs Prompting |
+| Day 13 | `multi-agent-day13.html` | Multi-agent Systems |
+| Day 14 | `inference-opt-day14.html` | Inference Optimization |
+| Day 15 | `latency-eng-day15.html` | Latency Engineering |
+| Day 16 | `cost-eng-day16.html` | Cost Engineering |
+| Day 17 | `claude-code-day17.html` | Claude Code 高阶用法 |
+| Day 18 | `mcp-day18.html` | MCP |
+| Day 19 | `coding-agents-day19.html` | Coding Agents |
+| Day 20 | `refactor-eng-day20.html` | Refactoring with AI |
+| Day 21 | `ai-research-day21.html` | AI for Research |
+| Day 22 | `writing-eng-day22.html` | Writing Engineering |
+| Day 23 | `personal-infra-day23.html` | Personal AI Infra |
+| Day 24 | `prompt-injection-day24.html` | Prompt Injection 攻防 |
+| Day 25 | `agentic-ide-day25.html` | Agentic IDE |
+| Day 26 | `computer-use-day26.html` | Computer Use &amp; Browser Agents |
+| Day 27 | `synthetic-data-day27.html` | Synthetic Data &amp; Self-Improvement |
+| Day 28 | `local-edge-llm-day28.html` | Local &amp; Edge LLM |
+| Day 29 | `real-world-eval-day29.html` | Eval Beyond Benchmark |
+| Day 30 | `open-weights-day30.html` | Open Source Models 实战 |
+| Day 31 | `personal-ai-safety-day31.html` | Personal AI Safety |
+| Day 32 | `coding-future-day32.html` | AI Coding 的下一个五年 |
+| Day 33 | `legacy-governance-day33.html` | 大规模 Legacy 代码库的 AI 治理 |
+| Day 34 | `hitl-day34.html` | Human-in-the-Loop 工程 |
+| Day 35 | `prompt-as-code-day35.html` | Prompt 即代码 / 版本治理 |
+| Day 36 | `skills-library-day36.html` | 大型组织的 Skills Library 治理 |
+| Day 37 | `observability-day37.html` | AI 可观测性 |
+| Day 38 | `structured-output-day38.html` | 结构化输出 |
+| Day 39 | `agent-resilience-day39.html` | Agent 错误恢复与韧性 |
+| Day 40 | `data-pipeline-day40.html` | Data Pipeline for AI |
+| Day 41 | `streaming-eng-day41.html` | 流式与中断工程 |
+| Day 42 | `ai-cicd-day42.html` | AI 测试与 CI/CD |
+| Day 43 | `retrieval-quality-day43.html` | 检索质量工程 |
+| Day 44 | `data-analysis-day44.html` | AI 辅助数据分析 |
+| Day 45 | `anti-patterns-day45.html` | AI 工程的反模式 |
+| Day 46 | `voice-ai-day46.html` | Voice AI Engineering |
+| Day 47 | `image-gen-day47.html` | 图像生成工程 |
+| Day 48 | `graphrag-day48.html` | 知识库与 GraphRAG |
+| Day 49 | `reasoning-eng-day49.html` | 推理模型工程 |
+| Day 50 | `guardrails-sandbox-day50.html` | LLM 安全护栏与沙箱 |
+| Day 51 | `auto-prompt-opt-day51.html` | 自动 Prompt 优化 |
+| Day 52 | `agentic-commerce-day52.html` | 智能体商务与支付协议 |
+| Day 53 | `learning-guardrails-day53.html` | 用 AI 学习的护栏工程 |
+| Day 54 | `oracle-inventory-day54.html` | Oracle 盘点 |
+| Day 55 | `study-switches-day55.html` | 三个已验证的学习开关 |
+| Day 56 | `determinism-eng-day56.html` | Determinism Engineering |
+| Day 57 | `semantic-cache-day57.html` | Semantic Caching |
+| Day 58 | `durable-agents-day58.html` | Durable Agent Execution |
+| Day 59 | `skill-maintenance-day59.html` | 给自己开「手动剂量」 |
+
+### super-individual · Skills 精选对照表（10 篇）
+
+| 期 | 文件名 | 主题 |
+| --- | --- | --- |
+| S1 | `coding-skills-roundup-skill1.html` | AI 编码 Skills 榜单 |
+| S2 | `superpowers-skill2.html` | Superpowers 拆解 |
+| S3 | `code-review-skills-skill3.html` | 代码审查类 Skills |
+| S4 | `git-workflow-skills-skill4.html` | Git 工作流三件套 |
+| S5 | `meta-skills-roundup-skill5.html` | 元技能榜单：造工具的工具 |
+| S6 | `skill-authoring-skill6.html` | 官方 Authoring 最佳实践精读 |
+| S7 | `skill-eval-skill7.html` | 给 Skill 写 Eval |
+| S8 | `agents-md-skill8.html` | AGENTS.md 与跨 Harness 可移植性 |
+| S9 | `mcp-servers-roundup-skill9.html` | MCP Server 榜单：十个真能装的 |
+| S10 | `context7-docs-mcp-skill10.html` | 文档检索类 MCP：治训练截止日期这个病 |
 
 ## 3. 文件约定 / 发布
 - 文件名 `{slug}-book{N}.html` + `{slug}-book{N}.en.html`，放仓库根目录。
