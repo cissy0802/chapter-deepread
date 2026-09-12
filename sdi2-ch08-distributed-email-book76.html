@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>SDI 卷二 第 8 章 · 设计分布式邮箱服务 — 专业书籍精读 Book 76</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · System Design Interview 卷二 · 第 8 章</p>
+<h1>设计分布式邮箱服务</h1>
+<p class="sub">System Design Interview Vol 2 · Ch 8 · Alex Xu &amp; Sahn Lam · 2022</p>
+<p class="langbar"><a href="sdi2-ch08-distributed-email-book76.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你每天打开的 Gmail、QQ 邮箱、公司邮箱，背后要同时给<strong>十亿个人各管一个信箱</strong>：收得下、找得到、换台手机还得一模一样。这一章就是把「造一个这样的邮箱服务」从头到尾走一遍。</p>
+
+<h2>先说个怪事</h2>
+<p>邮件的收发规矩是 1980 年代定下来的，四十年几乎没改过，照着做就行。可这一章依然是全书最重的几章之一——因为<strong>难的从来不是「怎么把信送过去」，是「送到之后往哪儿放、以后怎么找回来」</strong>。邮箱本质上不是通信系统，是个超大仓库。</p>
+
+<h2>旧世界为什么难</h2>
+<p>早年的邮件服务器很朴素：一台机器，每个人的信就堆在这台机器上的一个文件夹里。人一多就全线崩塌——一天新进来的信就能把一台机器塞满；机器一挂，这批人集体失联；而且<strong>邮件几乎不许删</strong>（法务、审计都要求留着），只进不出。</p>
+<p>还有件反直觉的事：真正压垮系统的往往不是「收信」，而是<strong>你随手点的那些小动作</strong>。标个已读、加个标签、拖进归档——每一下都是一次写入。你一天读 40 封，就至少有 40 次这种写。</p>
+
+<h2>核心的几个点子</h2>
+<p><strong>① 一人一格。</strong>邮箱有个别的系统羡慕不来的好处：<strong>没人会去查别人的信箱</strong>。所有操作天然只关一个人的事。于是把仓库按人切成一格一格，任何一次读写都只碰一格——那些「要协调好几台机器才能办成一件事」的麻烦，直接不存在了。</p>
+<p><strong>② 信和包裹分开放。</strong>正文很轻（几行字），附件很重（几百 KB 到几十 MB）。所以附件送进旁边的大仓库，信箱格子里只留一张<strong>取件单</strong>。这样翻收件箱的时候，不会被一堆大包裹拖慢。</p>
+<p><strong>③ 每人一本自己的目录。</strong>搜邮件和上网搜东西完全是两回事：搜网页是十亿人查同一本大目录；搜邮件是<strong>十亿本小目录，每本只服务一个人</strong>。你那本薄得很，所以能做到「一秒前刚到的信，现在就搜得着」。</p>
+<p><strong>④ 门口收发员只管签收。</strong>外面的信送上门，门口不能让人家在门外干等——先签个字收下，扔进传送带；查毒、拦垃圾、分拣归档这些慢活，在传送带后头慢慢干。</p>
+
+<h2>代价在哪</h2>
+<p>一封信实际上被写到了三个地方：信箱、大仓库、目录本。所以删一封信要删三处，而这三处在短时间内<strong>可能对不上</strong>——你删了，搜索里可能还残留一会儿。</p>
+
+<h2>一句话记住</h2>
+<div class="tl">
+<p>邮箱服务的难点不在「送信」，在「存和找」。它最大的本钱是<strong>没人查别人的信箱</strong>：按人把仓库切成一格一格，重活就都变成了一格之内的事；重附件挪去旁边的大仓库，目录本每人一册。代价是一封信散在三处，删改时短时间内会对不齐。</p>
+</div>
+<p class="switch-hint">想进到具体机制、记号和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">这一章表面是「造一个 Gmail」，实际上是整套 Xu 系列里<strong>分区键（partition key）最干净的一道题</strong>：邮件协议那一层四十年前就冻结了，工程量全压在十亿个互不相干的私人信箱上——而正因为<strong>任何查询都只落在一个人身上</strong>，分布式里最贵的那几样（跨分区事务、全局排序、全局索引）在这里可以整套不买。这一章真正教你的，是<strong>认出并用尽这份天赐的分区键</strong>。</p>
+
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>SMTP</strong>：邮件<strong>投递</strong>协议，只负责把一封信从发送方的服务器送到接收方的服务器；它不管信之后怎么存。</li>
+<li><strong>POP3 / IMAP</strong>：客户端<strong>取信</strong>协议。POP3 是「下载到本地、服务端删掉」，IMAP 是「服务端为准、多个设备各自同步一份视图」。</li>
+<li><strong>MX 记录</strong>：DNS 里的一条记录，写明「发给这个域名的信，该投到哪台服务器」。</li>
+<li><strong>元数据（metadata）</strong>：这里指邮件本身之外的一切——发件人、主题、时间、已读标志、标签、所在文件夹。</li>
+<li><strong>对象存储（object storage）</strong>：按「一个键取一整个文件」的存储服务（如 S3），擅长存大块不可变数据，不适合频繁小改。</li>
+<li><strong>宽列存储 / 列族 NoSQL（wide-column store）</strong>：Bigtable / HBase / Cassandra 那一类。一行可以有极多列，列按名字排好序，读的时候能只读用到的那几族列。</li>
+<li><strong>行键（row key）/ 列键（column key）</strong>：宽列存储的两级地址。行键决定数据落在哪台机器，列键在行内自带排序。</li>
+<li><strong>倒排索引（inverted index）</strong>：从「词」指向「含这个词的文档」的表，全文搜索的基本结构。</li>
+<li><strong>幂等（idempotent）</strong>：同一个操作做一次和做十次结果一样。投递会重试，所以收信端必须幂等。</li>
+<li><strong>SPF / DKIM / DMARC</strong>：三套校验「这封信真是那个域名发的吗」的机制，是今天反垃圾的第一道门槛。</li>
+</ul>
+</div>
+
+<h2>坐标</h2>
+<p>卷二第 8 章。上承 Ch7「酒店预订」（有限库存的并发争抢），下启 Ch9「对象存储」。它是卷二那条<strong>「造轮子的内部构造」</strong>主线的前半段：本章把「海量小对象的元数据」摊开讲，下一章再把承接附件的那个存储层本身拆开。现实对应物是 Gmail、Outlook、企业邮件网关，以及任何「每个用户一个私有数据空间」的系统——网盘、笔记、私信收件箱都是同一形状。</p>
+
+<h2>这章要解决什么</h2>
+<p>先按书里那组假设把账算出来：<strong>10 亿用户，人均每天发 10 封、收 40 封，正文平均 50KB，20% 的信带附件、附件平均 500KB。</strong></p>
+<ul>
+<li>发信：<code>10^9 × 10 / 86400 ≈ 11.6 万封/秒</code>；收信：<code>10^9 × 40 / 86400 ≈ 46 万封/秒</code>。</li>
+<li>每天新增正文 <code>10^9 × 40 × 50KB ≈ 2PB</code>，附件 <code>10^9 × 40 × 20% × 500KB ≈ 4PB</code>——<strong>合计约 6PB/天，而且几乎只增不减</strong>。</li>
+</ul>
+<p>传统邮件服务器的做法是一台机器上一个 <code>Maildir</code> 目录，每个人的信当文件堆着。这套东西在 6PB/天面前三处同时崩：<strong>存不下</strong>（单机容量）、<strong>搜不动</strong>（全文搜索要扫文件）、<strong>挂一台掉一批人</strong>（没有副本）。</p>
+<p>更隐蔽的一条是<strong>写放大在状态位上</strong>：邮件正文写一次就不动了，但「已读 / 未读 / 标签 / 归档」每天被改无数次。按上面的假设，光是「读完标已读」这一个动作，全局就是约 <strong>46 万次/秒的小更新</strong>——跟收信本身同一个量级。<strong>邮箱不是一个读系统，是一个读写都很重的系统</strong>，这直接决定了它不能用只读优化的存储。</p>
+
+<h2>核心内容，讲透</h2>
+
+<h3>① 协议这层是既定事实，真正的自由度在它后面</h3>
+<p>对外你必须讲 SMTP：发信时查对方域名的 <strong>MX 记录</strong>找到目标服务器，建连接把信推过去。这一层你改不了，也<strong>控制不了对端</strong>——对方服务器可能宕着、可能限速、可能把你判成垃圾直接退回。</p>
+<p>由此推出第一条架构硬约束：<strong>出站绝不能同步等</strong>。用户点「发送」得立刻返回，投递本身是个可能要重试几小时甚至几天的后台任务。所以出站必须是<strong>队列 + 指数退避重试 + 死信/退信</strong>。</p>
+<p>对内则是另一套：POP3 是单设备时代的遗产（下载即删），IMAP 让服务端成为唯一真相、多设备各自同步，而今天网页版和手机 App 实际走的是<strong>自家的 HTTPS 接口 + WebSocket 推送</strong>——只在跟第三方客户端（Outlook、Apple Mail）打交道时才需要真的实现 IMAP。</p>
+<figure>
+<svg viewBox="0 0 660 320" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs>
+<marker id="e1a" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker>
+<marker id="e1b" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"/></marker>
+</defs>
+<text x="20" y="22" fill="#5b9df9" font-size="12.5" font-weight="700">① 发信流 · 约 11.6 万封/秒 —— 出站不可同步等对端</text>
+<rect x="20" y="36" width="96" height="34" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="68" y="57" fill="#b9c0ca" font-size="10.5" text-anchor="middle">Web 客户端</text>
+<line x1="116" x2="136" y1="53" y2="53" stroke="#7c8593" marker-end="url(#e1a)"/>
+<rect x="140" y="36" width="96" height="34" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="188" y="57" fill="#b9c0ca" font-size="10.5" text-anchor="middle">Web 服务器</text>
+<line x1="236" x2="256" y1="53" y2="53" stroke="#7c8593" marker-end="url(#e1a)"/>
+<rect x="260" y="36" width="96" height="34" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2"/><text x="308" y="57" fill="#e7ebf1" font-size="10.5" text-anchor="middle">出站队列</text>
+<line x1="356" x2="376" y1="53" y2="53" stroke="#7c8593" marker-end="url(#e1a)"/>
+<rect x="380" y="36" width="112" height="34" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="436" y="57" fill="#b9c0ca" font-size="10.5" text-anchor="middle">SMTP 出站 worker</text>
+<line x1="492" x2="512" y1="53" y2="53" stroke="#7c8593" marker-end="url(#e1a)"/>
+<rect x="516" y="36" width="124" height="34" rx="6" fill="none" stroke="#5a6069" stroke-dasharray="4 3"/><text x="578" y="57" fill="#7c8593" font-size="10.5" text-anchor="middle">对方 MX 服务器</text>
+<text x="20" y="90" fill="#7c8593" font-size="10">查 DNS 的 MX 记录定位对端 · 失败进退避重试 / 退信 · 同时写一份进「已发送」</text>
+
+<text x="20" y="122" fill="#5b9df9" font-size="12.5" font-weight="700">② 收信流 · 约 46 万封/秒 —— 门口只签收，重活挪到队列后</text>
+<rect x="20" y="134" width="100" height="34" rx="6" fill="none" stroke="#5a6069" stroke-dasharray="4 3"/><text x="70" y="155" fill="#7c8593" font-size="10.5" text-anchor="middle">外部发信方</text>
+<line x1="120" x2="140" y1="151" y2="151" stroke="#7c8593" marker-end="url(#e1a)"/>
+<rect x="144" y="134" width="112" height="34" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="200" y="155" fill="#b9c0ca" font-size="10.5" text-anchor="middle">SMTP 入站 + LB</text>
+<line x1="256" x2="276" y1="151" y2="151" stroke="#7c8593" marker-end="url(#e1a)"/>
+<rect x="280" y="134" width="96" height="34" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2"/><text x="328" y="155" fill="#e7ebf1" font-size="10.5" text-anchor="middle">入站队列</text>
+<line x1="376" x2="396" y1="151" y2="151" stroke="#7c8593" marker-end="url(#e1a)"/>
+<rect x="400" y="134" width="152" height="34" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="476" y="155" fill="#b9c0ca" font-size="10.5" text-anchor="middle">处理 worker（查毒 / 反垃圾）</text>
+<text x="20" y="188" fill="#7c8593" font-size="10">门口只做最便宜的拒绝：IP 黑名单、SPF / DKIM / DMARC</text>
+
+<line x1="476" x2="476" y1="168" y2="200" stroke="#9b6cf5"/>
+<line x1="476" x2="150" y1="200" y2="222" stroke="#9b6cf5" marker-end="url(#e1b)"/>
+<line x1="476" x2="336" y1="200" y2="222" stroke="#9b6cf5" marker-end="url(#e1b)"/>
+<line x1="476" x2="522" y1="200" y2="222" stroke="#9b6cf5" marker-end="url(#e1b)"/>
+<text x="20" y="216" fill="#5b9df9" font-size="12.5" font-weight="700">③ 一封信落三处</text>
+<rect x="40" y="226" width="180" height="46" rx="8" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"/>
+<text x="130" y="245" fill="#e7ebf1" font-size="10.5" text-anchor="middle">元数据 · 宽列 NoSQL</text><text x="130" y="261" fill="#8fbaff" font-size="10" text-anchor="middle" font-family="monospace">row key = user_id</text>
+<rect x="240" y="226" width="180" height="46" rx="8" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"/>
+<text x="330" y="245" fill="#e7ebf1" font-size="10.5" text-anchor="middle">附件 · 对象存储</text><text x="330" y="261" fill="#8fbaff" font-size="10" text-anchor="middle" font-family="monospace">元数据里只留 key</text>
+<rect x="440" y="226" width="180" height="46" rx="8" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"/>
+<text x="530" y="245" fill="#e7ebf1" font-size="10.5" text-anchor="middle">搜索索引</text><text x="530" y="261" fill="#8fbaff" font-size="10" text-anchor="middle" font-family="monospace">按 user_id 分片</text>
+<text x="330" y="296" fill="#7c8593" font-size="10.5" text-anchor="middle">落盘后经 WebSocket 推给在线设备；三处之间只保证最终一致</text>
+</svg>
+<figcaption>图 1 · 发信与收信是两条独立流水线，各自用队列与外界解耦；一封信最终写进三个存储。</figcaption>
+</figure>
+
+<h3>② 元数据存哪：为什么不是关系库，而是宽列 NoSQL</h3>
+<p>书里先把邮件元数据的性格列清楚，选型是从性格里推出来的：</p>
+<ul>
+<li><strong>量极大且只增不减</strong>——PB 级，合规要求下删不掉。</li>
+<li><strong>每个用户只访问自己的数据</strong>——没有任何一条查询需要跨用户。</li>
+<li><strong>写的大头是小更新</strong>——已读位、标签、移动文件夹。</li>
+<li><strong>单用户内要强一致，跨用户之间毫不相干</strong>——手机上标了已读，电脑刷新必须立刻看到；但你的信箱和我的信箱之间，不需要任何一致性保证。</li>
+</ul>
+<p>最后一条是整章的枢纽。它意味着<strong>「一致性边界」可以正好画在一个用户身上</strong>：把行键（row key）取成 <code>user_id</code>，一个用户就是一行，那么所有需要原子性的操作——收一封信、标已读、批量归档——全部落在<strong>同一行内</strong>。绝大多数宽列存储都提供单行原子写，于是<strong>分布式事务这项最贵的开销，一次都不用买</strong>。Google 的 Megastore 论文（CIDR 2011）正是拿邮箱账户当「实体组」的范例：组内保证 ACID，组与组之间不保证——邮箱天然长成这个形状。</p>
+<p>列键则再吃一次免费的午餐。把它设计成 <code>文件夹:时间戳:邮件ID</code> 这样的复合键，宽列存储本就按列键排序，于是<strong>「取收件箱最近 20 封」退化成一次反向范围扫描</strong>：不需要二级索引，不需要 <code>ORDER BY</code>，不需要 offset 分页。</p>
+<figure>
+<svg viewBox="0 0 660 290" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<text x="20" y="22" fill="#5b9df9" font-size="12.5" font-weight="700">一个用户 = 一行；列键自带顺序，翻收件箱就是一次范围扫描</text>
+<rect x="20" y="38" width="620" height="200" rx="10" fill="rgba(255,255,255,0.02)" stroke="rgba(91,157,249,0.45)" stroke-dasharray="5 4"/>
+<text x="32" y="58" fill="#8fbaff" font-size="10.5" font-family="monospace">row key = user_42  —— 所有读写都在这一行内，单行原子写就够用</text>
+<text x="32" y="94" fill="#cdd3db" font-size="10.5">列族 inbox</text>
+<rect x="150" y="76" width="110" height="30" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="205" y="96" fill="#b9c0ca" font-size="9" text-anchor="middle" font-family="monospace">…T09:12:e77</text>
+<rect x="272" y="76" width="110" height="30" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="327" y="96" fill="#b9c0ca" font-size="9" text-anchor="middle" font-family="monospace">…T10:03:e91</text>
+<rect x="394" y="76" width="110" height="30" rx="5" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5" stroke-width="2"/><text x="449" y="96" fill="#e7ebf1" font-size="9" text-anchor="middle" font-family="monospace">…T10:41:e93</text>
+<rect x="516" y="76" width="110" height="30" rx="5" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5" stroke-width="2"/><text x="571" y="96" fill="#e7ebf1" font-size="9" text-anchor="middle" font-family="monospace">…T11:02:e95</text>
+<text x="32" y="142" fill="#cdd3db" font-size="10.5">列族 sent</text>
+<rect x="150" y="124" width="110" height="30" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="205" y="144" fill="#b9c0ca" font-size="9" text-anchor="middle" font-family="monospace">…T08:40:s12</text>
+<rect x="272" y="124" width="110" height="30" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="327" y="144" fill="#b9c0ca" font-size="9" text-anchor="middle" font-family="monospace">…T09:55:s13</text>
+<text x="32" y="190" fill="#cdd3db" font-size="10.5">列族 attach</text>
+<rect x="150" y="172" width="476" height="30" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="388" y="192" fill="#b9c0ca" font-size="9.5" text-anchor="middle" font-family="monospace">obj://att/9f2c… （只存键；500KB 的附件本体不进这一行）</text>
+<text x="32" y="224" fill="#7c8593" font-size="10.5">列键 = 文件夹 : 时间戳 : 邮件ID —— 天然按时间排好序</text>
+<text x="20" y="262" fill="#8fbaff" font-size="11">取「收件箱最近 20 封」= 在 inbox 列族里从末尾反向扫 20 个列：无二级索引、无排序、无 offset 分页</text>
+</svg>
+<figcaption>图 2 · 行键把一致性边界画在一个用户身上，列键把排序做成存储布局的副产品。</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/sharding-day4.html" target="_blank" rel="noopener">System Design · Day 4 数据库分片</a> — 分区键怎么选、热点分区与再平衡，以及「分区键选错了要付多少代价」</aside>
+
+<h3>③ 正文与附件分家：小对象进数据库，大对象进对象存储</h3>
+<p>正文通常几 KB 到几十 KB，附件则是几百 KB 起、上限 25MB（Gmail 的公开限制）。若把附件字节塞进元数据行，收件箱列表这个<strong>最高频的操作</strong>就得连带拖动几百 MB 的无用数据。所以书里的做法是把附件放进外部对象存储，元数据里只留一个键。</p>
+<p>这带来一个漂亮的顺手收益：<strong>按内容哈希去重</strong>。一封带 10MB 附件的信群发给 100 人，对象存储里只存一份，元数据里 100 张「取件单」指过去——省掉 99% 空间。代价是删除从一次写变成了<strong>引用计数与垃圾回收</strong>问题：最后一个引用消失前，那份字节不能动。</p>
+<p>大附件上传还得是<strong>分片上传 + 断点续传</strong>：25MB 在弱网下一次性 PUT 的失败率高到不可接受，切成 5MB 一片重试才有意义。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/object-storage-day29.html" target="_blank" rel="noopener">System Design · Day 29 文件存储</a> — 数据面与元数据面怎么分、纠删码如何用 1.5 倍空间换 11 个 9，以及分片上传与版本控制</aside>
+
+<h3>④ 搜索：十亿个小索引，不是一个大索引</h3>
+<p>这是全章最容易被想歪的地方。邮件搜索和网页搜索有三条根本差别：</p>
+<ul>
+<li><strong>范围</strong>：网页搜索是<em>一个巨型索引服务十亿人</em>；邮件搜索是<em>十亿个小索引各服务一人</em>。一个重度用户几万到几十万封信，语料小到可以每人独立成册。</li>
+<li><strong>排序</strong>：网页按相关性排；邮件绝大多数时候按<strong>时间倒序</strong>排——用户找的是「上周那封」，不是「最相关那封」。</li>
+<li><strong>时效</strong>：网页索引延迟几小时可以接受；邮件<strong>一秒前刚到的那封，现在就必须搜得到</strong>。这条直接把「离线批量建索引」这条路堵死了。</li>
+</ul>
+<figure>
+<svg viewBox="0 0 660 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs>
+<marker id="e3a" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker>
+</defs>
+<text x="20" y="22" fill="#7c8593" font-size="12" font-weight="700">网页搜索：一个大索引，十亿人共用</text>
+<text x="352" y="22" fill="#5b9df9" font-size="12" font-weight="700">邮件搜索：十亿个小索引，各服务一人</text>
+<line x1="336" x2="336" y1="10" y2="236" stroke="#3a4049" stroke-dasharray="4 4"/>
+<rect x="36" y="44" width="62" height="28" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="67" y="63" fill="#b9c0ca" font-size="10" text-anchor="middle">用户</text>
+<rect x="128" y="44" width="62" height="28" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="159" y="63" fill="#b9c0ca" font-size="10" text-anchor="middle">用户</text>
+<rect x="220" y="44" width="62" height="28" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="251" y="63" fill="#b9c0ca" font-size="10" text-anchor="middle">用户</text>
+<line x1="67" x2="150" y1="72" y2="106" stroke="#7c8593" marker-end="url(#e3a)"/>
+<line x1="159" x2="159" y1="72" y2="106" stroke="#7c8593" marker-end="url(#e3a)"/>
+<line x1="251" x2="170" y1="72" y2="106" stroke="#7c8593" marker-end="url(#e3a)"/>
+<rect x="40" y="112" width="250" height="46" rx="8" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="165" y="140" fill="#b9c0ca" font-size="11" text-anchor="middle">全网倒排索引（PB 级）</text>
+<text x="36" y="186" fill="#7c8593" font-size="10">排序靠相关性</text>
+<text x="36" y="204" fill="#7c8593" font-size="10">索引延迟几小时也能接受</text>
+<text x="36" y="222" fill="#7c8593" font-size="10">一次查询要打散到上千分片再归并</text>
+<rect x="352" y="44" width="56" height="28" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="380" y="63" fill="#b9c0ca" font-size="10" text-anchor="middle">用户 A</text>
+<line x1="408" x2="428" y1="58" y2="58" stroke="#7c8593" marker-end="url(#e3a)"/>
+<rect x="432" y="44" width="140" height="28" rx="5" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"/><text x="502" y="63" fill="#e7ebf1" font-size="9.5" text-anchor="middle">A 的索引（几万封）</text>
+<rect x="352" y="88" width="56" height="28" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="380" y="107" fill="#b9c0ca" font-size="10" text-anchor="middle">用户 B</text>
+<line x1="408" x2="428" y1="102" y2="102" stroke="#7c8593" marker-end="url(#e3a)"/>
+<rect x="432" y="88" width="140" height="28" rx="5" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"/><text x="502" y="107" fill="#e7ebf1" font-size="9.5" text-anchor="middle">B 的索引（几万封）</text>
+<rect x="352" y="132" width="56" height="28" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"/><text x="380" y="151" fill="#b9c0ca" font-size="10" text-anchor="middle">用户 C</text>
+<line x1="408" x2="428" y1="146" y2="146" stroke="#7c8593" marker-end="url(#e3a)"/>
+<rect x="432" y="132" width="140" height="28" rx="5" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"/><text x="502" y="151" fill="#e7ebf1" font-size="9.5" text-anchor="middle">C 的索引（几万封）</text>
+<text x="588" y="107" fill="#7c8593" font-size="14" text-anchor="middle">⋮</text>
+<text x="352" y="186" fill="#8fbaff" font-size="10">排序按时间倒序</text>
+<text x="352" y="204" fill="#8fbaff" font-size="10">刚到的那封必须秒级可搜</text>
+<text x="352" y="222" fill="#8fbaff" font-size="10">一次查询只打一个分片，不用扇出</text>
+</svg>
+<figcaption>图 3 · 两种搜索的索引形状根本不同：网页是一个巨型索引服务所有人，邮件是每人一册。</figcaption>
+</figure>
+<p>把这三条合起来，索引的分片键就只剩一个选择：<strong>还是 <code>user_id</code></strong>。一次搜索只打一个分片，不需要把查询扇出到上千个分片再归并——这正是邮件搜索能做到<strong>几十毫秒级</strong>而成本又不爆炸的原因。</p>
+<p>写路径因此被搜索反向塑形：一封信进来，要同时写元数据、写对象存储、写索引。这三者<strong>不在同一个事务里</strong>，所以书里的处理是异步写 + 失败重试 + 定期比对补偿，接受一个秒级的不一致窗口。<strong>把搜索当成「以后再加的功能」，是这道题最常见的翻车点</strong>——它决定的是写路径的形状，不是读路径的装饰。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/search-system-day12.html" target="_blank" rel="noopener">System Design · Day 12 搜索系统</a> — 倒排索引怎么建、分片与归并的代价，以及实时索引与批量重建怎么共存</aside>
+
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 1 · 元数据存哪：三条路线，书里选了第三条</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>方案</th><th>好在哪</th><th>代价（诚实说）</th><th>适用判据</th></tr></thead>
+<tbody>
+<tr><th>关系型数据库</th><td>事务、二级索引、SQL 全都现成；小规模邮箱（百万级用户）完全够用</td><td><strong>PB 级下分库分表成为主要工作量</strong>；全文搜索要么外挂、要么拖垮主库；行宽不适合几十万列的信箱</td><td>用户数 ≤ 千万、单用户邮件量可控时，别过度设计</td></tr>
+<tr><th>纯对象存储</th><td>容量与成本最优，天然适合只写一次的正文和附件</td><td><strong>改一个已读位要重写整个对象</strong>；没有范围扫描、没有按时间取最近 N 封</td><td>只作为附件层与冷归档层，不承担元数据</td></tr>
+<tr><th>宽列 NoSQL<br/>（书里的选择）</th><td>行键 = <code>user_id</code> 直接分区；列键自带排序；单行原子写覆盖全部事务需求；水平扩到 PB 级</td><td>没有跨用户查询能力（本题恰好不需要）；<strong>运维门槛高</strong>；胖行需要自己二次切分</td><td>十亿用户量级、访问天然按人隔离</td></tr>
+</tbody>
+</table></div>
+
+<p class="tcap">表 2 · 搜索：买现成的，还是长在存储里</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>方案</th><th>好在哪</th><th>代价（诚实说）</th><th>适用判据</th></tr></thead>
+<tbody>
+<tr><th>Elasticsearch 一类</th><td>开箱即用：分词、相关性、聚合、高亮全有；生态成熟，几周能上线</td><td><strong>额外一套与原文同量级的存储与内存开销</strong>；十亿分片的运维极重；重建索引是以天计的工程</td><td>用户规模中等、团队要快速交付；或搜索功能要求丰富</td></tr>
+<tr><th>与邮件存储共用一套<br/>（LSM 上原生建索引）</th><td>写入顺带建索引，无第二套系统；实时性最好；存储与索引共享分片与副本，不会分裂</td><td><strong>要自己实现分词、合并、压缩</strong>；功能远不如 ES 丰富；只有到了极大规模才划算</td><td>十亿用户、成本敏感、且团队有存储引擎能力</td></tr>
+</tbody>
+</table></div>
+
+<p class="tcap">表 3 · 客户端怎么取信：三种同步模型</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>协议</th><th>模型</th><th>代价（诚实说）</th><th>今天的位置</th></tr></thead>
+<tbody>
+<tr><th>POP3</th><td>下载到本地，服务端删除</td><td><strong>多设备下完全不成立</strong>：手机收了，电脑就看不见</td><td>只为极老的客户端保留</td></tr>
+<tr><th>IMAP</th><td>服务端为真相，客户端同步文件夹与标志位</td><td>协议状态多、实现复杂；<strong>大信箱首次同步代价很高</strong></td><td>对接 Outlook / Apple Mail 的必需品</td></tr>
+<tr><th>HTTPS + WebSocket</th><td>自家接口，按需分页拉取 + 新信实时推送</td><td>只对自家客户端有效，<strong>第三方客户端接不进来</strong></td><td>网页版与自家 App 的主路径</td></tr>
+</tbody>
+</table></div>
+
+<h2>为什么重要 / 落到真实系统</h2>
+<p>这道题在面试里的独特价值是：它是<strong>唯一一道分区键已经写在题面上</strong>的题。考官真正在看的，不是你能不能背出 SMTP 的握手，而是你有没有意识到「没人查别人的信箱」这句话<strong>一次性买断了跨分区事务、全局排序和搜索扇出</strong>——并把这份红利用到底。答不出这层，整道题就退化成一堆框图。</p>
+<div class="ev">
+<div class="evh">大厂实证</div>
+<ul>
+<li><strong>Gmail 的元数据确实跑在宽列存储上。</strong>Google Cloud 在 Bigtable 正式商用的公告里写道：「Enterprises of all sizes can build scalable production applications on top of the same managed NoSQL database service that <strong>powers Google Search, Google Analytics, Google Maps, Gmail</strong> and other Google products, several of which serve over a billion users.」——书里的选型不是纸上推演，是十亿用户邮箱的实际答案。<span class="src">Misha Brukman · Google Cloud Blog · 2016-08-17 · <a href="https://cloud.google.com/blog/products/gcp/google-cloud-bigtable-is-generally-available-for-petabyte-scale-nosql-workloads" target="_blank" rel="noopener">Cloud Bigtable GA 公告</a></span></li>
+<li><strong>收信链路上的「过滤」不是配角，是主路径。</strong>Google 公开称：「Every day, <strong>Gmail blocks more than 100 million phishing emails</strong>」，并且「we continue to block more than <strong>99.9% of spam, phishing, and malware</strong> from reaching our users」。按本章的量级，被挡掉的信可能远多于被投递的信——这也是为什么反垃圾必须放在队列之后异步跑，而不能挂在 SMTP 连接上。<span class="src">Neil Kumaran &amp; Sam Lugani · Google Cloud Blog · 2020-04-17 · <a href="https://cloud.google.com/blog/products/identity-security/protecting-against-cyber-threats-during-covid-19-and-beyond" target="_blank" rel="noopener">Protecting against cyber threats</a></span></li>
+<li><strong>副本不是备份——这条是邮件系统用真事故换来的。</strong>Google 在《SRE》第 26 章「数据完整性」里把 2011 年 2 月的 Gmail 事件当作标准案例：一个存储层的软件缺陷让一小部分用户的邮件消失，而多份在线副本<em>忠实地</em>把这次删除复制了一遍；最终把邮件找回来的是离线磁带。<span class="src">出处：Google《Site Reliability Engineering》第 26 章（O'Reilly, 2016）。该来源域名被本次运行的出口代理拦截，故只留文字出处。</span></li>
+<li><strong>同一形状的系统不止 Gmail。</strong>Facebook 2010 年重做 Messages（把邮件、聊天、短信合并成一个收件箱）时，公开说明了选择 HBase 而非 MySQL / Cassandra 的理由——同样是「海量小消息 + 按用户隔离 + 写多」这组性格。<span class="src">出处：Facebook Engineering，《The Underlying Technology of Messages》，2010-11。该来源域名被本次运行的出口代理拦截，故只留文字出处。</span></li>
+</ul>
+</div>
+
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>以为难点在协议。</strong>SMTP/IMAP 是全章最成熟、最没有设计空间的一层。把时间花在讲握手流程上，等于答错了题。</li>
+<li><strong>以为「按 user_id 分区」就万事大吉。</strong>企业里有几十万封、几十 GB 的超大信箱，一行会变成<strong>胖行 + 热点</strong>。真实系统需要在用户之下再按文件夹或时间段二次切分——这一层书里点到但没展开。</li>
+<li><strong>把已读位当小事。</strong>状态更新的 QPS 与收信同量级，它才是决定存储选型的那条约束；只按「存正文」估算，会选错整套底层。</li>
+<li><strong>把三副本当备份。</strong>副本抗的是硬件与机房故障，抗不了一个会删数据的软件缺陷——它会被忠实复制三份。邮件系统必须另有离线、不可变、跨介质的备份。</li>
+<li><strong>时代局限（书写于 2022）</strong>：端到端加密邮箱（Proton 那一类）几乎没被讨论。一旦服务端看不到正文，<strong>服务端搜索和反垃圾同时失效</strong>，索引只能搬到客户端——本章的整套架构在那里要重来一遍。</li>
+<li><strong>本章没覆盖的真实工程量</strong>：投递率（deliverability）。IP 信誉、发送域预热、退信分类处理、SPF/DKIM/DMARC 的实际部署——真实邮件团队一大半时间花在这上面，书里只是点名。同理，GDPR 的「删除权」与法务保留（legal hold）之间的冲突，在「邮件只增不减」的前提下是个真难题，书里也没展开。</li>
+</ul>
+
+<h2>要点</h2>
+<div class="tl">
+<p>① 邮箱不是通信系统，是存储与检索系统：协议四十年没变，工程量全在「存哪、怎么找」。</p>
+<p>② 量级：10 亿用户下发信约 11.6 万/秒、收信约 46 万/秒，每天新增约 6PB，且只增不减。</p>
+<p>③ 真正的写压力在<strong>已读位与标签</strong>，与收信同量级——它决定了不能用只读优化的存储。</p>
+<p>④ 本章的枢纽：<strong>没人查别人的信箱</strong>。一致性边界正好画在一个用户上，行键取 <code>user_id</code>，跨分区事务整套不用买。</p>
+<p>⑤ 列键设成 <code>文件夹:时间戳:邮件ID</code>，「取最近 20 封」退化成一次范围扫描——排序成了存储布局的副产品。</p>
+<p>⑥ 正文与附件分家：附件进对象存储、按内容哈希去重，元数据只留键；代价是删除变成引用计数与 GC。</p>
+<p>⑦ 邮件搜索 ≠ 网页搜索：十亿个小索引各服务一人、按时间倒序、必须秒级可搜；分片键还是 <code>user_id</code>，一次搜索只打一个分片。</p>
+<p>⑧ 一封信落三处（元数据 / 附件 / 索引），三者不在一个事务里，只保证最终一致——搜索是写路径的形状，不是读路径的装饰。</p>
+<p>⑨ 选型：宽列 NoSQL 胜关系型与纯对象存储；搜索在「买 Elasticsearch」与「长在 LSM 上」之间按规模取舍。</p>
+<p>⑩ 两条血的教训：副本不是备份（2011 Gmail 靠磁带恢复）；反垃圾是主路径不是附件（Gmail 每天拦超 1 亿封钓鱼）。</p>
+</div>
+</div>
+
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
