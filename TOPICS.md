@@ -18,7 +18,7 @@ BigCat 人工维护的计算机 / 软件经典书清单。**按书成簇、簇�
 > 之后往下面任何书簇里补章都不会插到 Xu 前面。Xu 写完后顺序自然回到 DDIA → CD → SRE → … 的原序列。
 
 ## System Design Interview Vol 1 — An Insider's Guide · Alex Xu · 2020
-系统设计面试的通行底本。**与本仓其他书最大的不同：它是案例制不是概念制**——每章从需求澄清一路走到 API、数据模型、组件演进，示范的是「怎么把一道开放题做完」。精读时保留这条主线，别拆成概念清单。（跳过 Ch16「学习的延续」——收尾励志章、无实质内容。）
+系统设计面试的通行底本。**与本仓其他书最大的不同：它是案例制不是概念制**——每章从需求澄清一路走到 API、数据模型、组件演进，示范的是「怎么把一道开放题做完」。精读时保留这条主线，别拆成概念清单。**全书 16 章全收。**
 ### Part I · 方法与基础（Ch1–3）
 - **Ch1 从零到百万用户** — Scale From Zero To Millions Of Users — 单机怎么一步步长成分层集群：加缓存、加从库、加负载均衡、拆数据层，每一步解决的到底是哪个瓶颈（slug: `sdi1-ch01-scale-to-millions`）· xref: `sd:scalability-day1`, `sd:caching-day2`, `sd:sharding-day4`
 - **Ch2 粗略估算** — Back-of-the-Envelope Estimation — 2 的幂、延迟数字、可用性九位数：怎么在白板上把 QPS / 存储 / 带宽算到量级正确（slug: `sdi1-ch02-back-of-envelope-estimation`）· xref: `sd:capacity-estimation-day26`, `sd:cost-capacity-engineering-day27`
