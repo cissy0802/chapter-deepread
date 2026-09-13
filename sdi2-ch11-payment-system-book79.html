@@ -54,7 +54,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </style></head><body>
 <div class="container">
 <p class="top">专业书籍精读 · System Design Interview 卷二 · 第 11 章</p>
-<h1>设计支付系统</h1>
+<h1 data-tts="ecf54b6e835ba7ff">设计支付系统</h1>
 <p class="sub">System Design Interview Vol 2 · Ch 11 · Alex Xu &amp; Sahn Lam · 2022</p>
 <p class="langbar"><a href="sdi2-ch11-payment-system-book79.en.html">EN →</a></p>
 <div class="modebar">
@@ -62,31 +62,31 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <button data-mode="deep">精读版</button>
 </div>
 <div class="mode mode-pop">
-<h2>这一章讲什么？</h2>
+<h2 data-tts="880bd5504d9cf26f">这一章讲什么？</h2>
 <p>你在购物 App 上点「立即付款」，一秒后页面说「支付成功」。这一章造的就是那一秒里跑完的东西：把钱从买家那边收进来，再在某一天把钱结给卖家，而且一分不能多、一分不能少。</p>
-<h2>先说个怪事</h2>
+<h2 data-tts="89eb4288d2625b97">先说个怪事</h2>
 <p>这套系统慢得出奇。一天一百万笔交易，摊到每秒只有十来笔——比一个中型论坛的刷新还少。可它偏偏是整本书里最难写对的一章。</p>
 <p>因为难点根本不在快，在于<strong>「钱到底动没动」这句话必须有确定答案</strong>。</p>
-<h2>旧世界为什么难</h2>
+<h2 data-tts="755e831e7cc6cb29">旧世界为什么难</h2>
 <p>你按下付款键，手机转了三十秒，跳出一行「网络错误」。钱扣了吗？<strong>你不知道，你的服务器也不知道。</strong>请求可能压根没送到，也可能银行早扣了、只是回执丢在路上。</p>
 <p>这时系统只有两条路：当它没成功——用户可能白白被扣一笔；当它成功了——商家可能白发一件货。更糟的是用户自己会再按一次，于是一次购物扣两回钱。</p>
-<h2>核心机制直觉</h2>
+<h2 data-tts="027d67e4c8cde54e">核心机制直觉</h2>
 <p><strong>① 给每次付款发一张号码牌。</strong>同一张号码牌无论递上来几次，窗口只办一次事，第二次直接把第一次的收据再抄一份给你。于是「不确定成没成，就再试一次」从危险动作变成安全动作。</p>
 <p><strong>② 记账要一笔记两边。</strong>每一分钱的移动都同时落在两个账户上，一边减一边加，全部加起来永远是零。漏记一笔，一求和就露馅——<strong>钱守恒不是靠会计细心，是靠记账格式本身。</strong></p>
 <p><strong>③ 每天晚上对一次账。</strong>你自己记的流水，和支付公司发来的流水，逐笔比。对得上的过，对不上的挑出来：差个手续费这种能自动补，剩下说不清的交给人工。这一步不是保险，是必需品——前两招永远盖不住全部情况。</p>
 <p><strong>④ 卡号根本不进你家。</strong>刷卡那一页是支付公司的，卡号直接进他们的机器，你只拿到一串替代号码。你存不了的东西，就泄露不了。</p>
-<h2>代价在哪</h2>
+<h2 data-tts="97c58b6d511d7502">代价在哪</h2>
 <p>这一整套把「付款」从一个动作变成了一条带状态的流程：它会卡在「处理中」、会进重试队列、每天还留下一小撮必须人工处理的尾巴——这些麻烦就是买「正确」花的钱。</p>
-<h2>一句话记住</h2>
+<h2 data-tts="5acaa340cc12ae33">一句话记住</h2>
 <div class="tl">
 <p>支付系统慢得离谱却难得离谱，因为它唯一的任务是让「钱动没动」有确定答案。网络超时时你分不清成功与失败，所以每笔付款带一张只认一次的号码牌，让重试重新变安全；账目一笔记两边，让漏账藏不住；每天再和支付公司的流水对一遍，把前两招漏掉的挑出来人工修。至于卡号，压根不让它进你的机器。</p>
 </div>
 <p class="switch-hint">想进到具体机制、记号和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
 </div>
 <div class="mode mode-deep" hidden="">
-<h2>一句话</h2>
+<h2 data-tts="0ced889fd34b42bc">一句话</h2>
 <p class="lead">这一章表面是「接一个支付」，真正教的是：<strong>在一个你控制不了、又不能重来的外部世界里，让「钱到底动没动」有唯一答案</strong>。第一个反直觉——支付是全书吞吐最低的系统：每天 100 万笔交易折合约 <code>11.6 TPS</code>，一台普通关系数据库闭着眼都扛得住，<em>这一章没有一行设计是为了性能</em>。第二个反直觉——正确性不是「小心就不会错」换来的，而是三层叠着买来的：<strong>幂等键</strong>让重试变安全，<strong>复式记账的账本</strong>让钱守恒且可审计，<strong>每日对账</strong>则直接承认前两层仍会漏，所以每天把账重新数一遍。</p>
-<h2>Glossary · 术语表</h2>
+<h2 data-tts="7a5b66e8cc9f12e2">Glossary · 术语表</h2>
 <div class="glossary">
 <ul>
 <li><strong>进账 / 出账（pay-in / pay-out）</strong>：钱从买家流进平台叫进账，平台把钱结给卖家叫出账。</li>
@@ -103,14 +103,14 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>TPS</strong>：每秒事务数。</li>
 </ul>
 </div>
-<h2>坐标</h2>
+<h2 data-tts="5c89697976fdab13">坐标</h2>
 <p>卷二第 11 章，全书「钱不能错」这条线的上半场：下一章 Ch12「数字钱包」把本章的账本一路推到事件溯源 + CQRS + Raft 复制状态机；Ch7「酒店预订」则是同类问题的另一面——有限库存的并发争抢。现实对应物是电商结账、打车下单扣款、SaaS 订阅续费，以及一切「调用外部机构、且钱会真的动」的系统。</p>
-<h2>这章要解决什么</h2>
+<h2 data-tts="2013f6dbc7a00183">这章要解决什么</h2>
 <p>先把规模摆上桌：每天 100 万笔交易，<code>1,000,000 ÷ 86,400 ≈ 11.6 TPS</code>。这个数字放在本书里几乎可笑——Ch4 的限流器要扛百万 QPS，Ch10 的排行榜峰值 2,500 QPS，支付系统只有两位数。<strong>于是「加缓存、分库分表、异步化」那套本能在这一章集体失效：没有性能问题需要解决。</strong></p>
 <p>真正的问题只有一个，而且来自边界之外。一次支付要穿过<strong>你的服务 → PSP → 收单行 → 卡组织 → 发卡行</strong>五道门，你只拥有第一道。调用超时时，<em>「超时」既不等于成功也不等于失败</em>，它是第三种状态：<strong>未知</strong>。而钱最讨厌的就是「未知」。</p>
 <p>不解决会怎样？三件事都会发生：<strong>① 重复扣款</strong>——重试一次，钱扣两遍；<strong>② 记账丢失</strong>——PSP 扣成功了，你的账本没记上，卖家拿不到钱；<strong>③ 月底对不上</strong>——差额确实存在，却没人能定位它是哪几笔。前两件伤用户，第三件伤公司：<strong>一个无法解释自己差异的支付系统，在财务和监管眼里等于没有系统。</strong></p>
-<h2>核心内容，讲透</h2>
-<h3>① 进账流：一次结账，拆成几笔各自负责的支付订单</h3>
+<h2 data-tts="0cfa727733263d92">核心内容，讲透</h2>
+<h3 data-tts="15cb248bc39a4cfc">① 进账流：一次结账，拆成几笔各自负责的支付订单</h3>
 <p>第一个容易被跳过的决定藏在数据模型里：<strong>「一次结账」和「一笔付款」不是同一个东西</strong>。购物车里三件商品可能来自三个卖家，于是一次结账（<em>支付事件</em>，主键 <code>checkout_id</code>）要拆成三个<em>支付订单</em>（主键 <code>payment_order_id</code>），各自调一次 PSP、各自成败。</p>
 <p>为什么不能打包成一笔？因为它们流向不同的收款方，而且<strong>你没有一个能横跨 PSP 的事务可用</strong>——第二笔失败时，第一笔已经在银行那边落地了：没有「回滚」，只有「补偿」。</p>
 <p>分工也值得记住：<strong>支付服务</strong>接支付事件、做风控与反洗钱检查；<strong>支付执行器</strong>只执行单个支付订单、调用 PSP；成功后才轮到<strong>账本</strong>记账、<strong>钱包</strong>更新余额。支付订单表上两个不起眼的字段 <code>ledger_updated</code> 与 <code>wallet_updated</code> 是全章最有工程味的细节：<strong>它们把「这一步做没做」写成可查询的状态</strong>，于是卡在半路的单子能被程序扫出来，而不是靠人猜。</p>
@@ -149,7 +149,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </svg>
 <figcaption>图 1 · 进账流的组件与两张核心表；控制边界止于 PSP，之后的世界你只能等回执。</figcaption>
 </figure>
-<h3>② 幂等键：把「未知」变成「可以再试一次」</h3>
+<h3 data-tts="9f17d9279fe7b812">② 幂等键：把「未知」变成「可以再试一次」</h3>
 <p>这是全章的心脏。网络给不了<em>恰好一次</em>：不重试可能漏，重试可能重。所以工程上的<strong>恰好一次 = 至少一次（重试）+ 幂等（重试不产生新效果）</strong>。</p>
 <p>做法是：客户端为每次付款生成一个 UUID 放进 HTTP 头（如 <code>Idempotency-Key: 8f3c…</code>），服务端在<strong>真正执行之前</strong>，先把它以<strong>数据库唯一约束</strong>的方式原子插入。插得进，说明你是第一个；插不进，说明有人已经在办或办完了——返回第一次的结果，或回 <code>409</code> 让调用方稍后再问。</p>
 <p>三个细节决定成败，也都是面试里的分水岭：</p>
@@ -185,15 +185,15 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <figcaption>图 2 · 超时是「未知」而非失败；幂等键把三种真相收敛成同一个安全动作。</figcaption>
 </figure>
 <aside class="xref"><a href="https://hub.cissychen.com/system-design/reliability-day23.html" rel="noopener" target="_blank">System Design · Day 23 可靠性</a> — 超时怎么定、重试要配指数退避与抖动、熔断与舱壁怎么防止一个下游把整条链路拖垮</aside>
-<h3>③ 卡号不进你的服务器：托管收银台与令牌化</h3>
+<h3 data-tts="88a49b9c58ee097c">③ 卡号不进你的服务器：托管收银台与令牌化</h3>
 <p>这一节是「不做什么」的艺术。只要卡号进过你的进程、日志或数据库，整套系统就落进 <strong>PCI DSS</strong> 的合规范围。所以标准解法是把收集卡号那一步<strong>整个外包给 PSP</strong>：用它的托管收银台（整页跳转）或内嵌组件（iframe / JS SDK），卡号从浏览器直连 PSP，你只拿回一个<strong>令牌</strong>（token）——它只在你的商户账户下有效，被偷走也花不出去。<strong>你存不了的东西，就泄露不了。</strong></p>
 <p>代价是流程变成异步：用户在 PSP 页面上完成支付（还可能被要求做 3DS 双因素验证），结果由 <strong>webhook 回调</strong>通知你。于是你得处理「先收到 webhook、后看到用户跳回来」的乱序，还得校验回调签名——<em>否则任何人都能给你的回调地址发一条「支付成功」。</em></p>
-<h3>④ 复式记账：钱守恒是记账格式给的，不是小心给的</h3>
+<h3 data-tts="9e2ae3a415e3d04d">④ 复式记账：钱守恒是记账格式给的，不是小心给的</h3>
 <p>账本用复式记账：<strong>每笔交易写两条记录，一借一贷、金额相等，整本账求和恒为零。</strong>买家账户减 100，平台应付卖家账户加 100，两条必须同时写进去。</p>
 <p>这看着像会计老规矩，其实是一条极硬的工程性质：<strong>它把「有没有漏账」变成程序能回答的问题</strong>——求和不为零就是出事了，还能顺着分录找到是哪一笔。若只维护一张「余额表」，漏掉一次更新就永久静默。</p>
 <p>由此推出另一条：<strong>钱包（卖家余额）不是真相源，账本才是。</strong>余额是账本累加出的派生视图，坏了可以重算——和 Ch10 里「内存榜是可重建的派生视图」是同一条原则。</p>
 <aside class="xref"><a href="https://hub.cissychen.com/system-design/payments-day17.html" rel="noopener" target="_blank">System Design · Day 17 支付系统</a> — 双向流、幂等与对账在主题视角下的完整展开，含状态机设计与资金流的端到端拆解</aside>
-<h3>⑤ 一致性：没有跨边界的事务，所以先幂等、再对账</h3>
+<h3 data-tts="1ab51318016d3a8f">⑤ 一致性：没有跨边界的事务，所以先幂等、再对账</h3>
 <p>支付服务、执行器、账本、钱包是四个服务，PSP 还在公司之外。<strong>这条链路上不存在一个能把所有人包住的事务。</strong>真要上也只有两条路：<strong>两阶段提交（2PC）</strong>要求参与者投票后统一提交，协调者一挂就可能把参与者卡在持锁状态——而 PSP 根本不会参与你的投票；<strong>Saga</strong> 把一串本地事务排好、失败按相反顺序补偿（退款、冲正），代价是补偿逻辑要自己写、中间态还对外可见。</p>
 <p>于是书里的默认解法是第三条：<strong>每一步做成幂等，失败就重试，剩下的交给对账。</strong>失败有标准流水线：支付订单进<em>重试队列</em>（指数退避 + 抖动，免得大家一起重试打垮 PSP），仍不成的进<em>死信队列</em>等人工。每天 PSP 发来的结算文件则与账本逐笔比对：一致的放过；<strong>可分类的差异</strong>（手续费、跨日时间差、汇率）由规则自动生成调整分录；<strong>说不清的差异</strong>进人工队列——这一小撮永远存在，<em>承认它、给它正规通道，正是这一章最成熟的地方</em>。</p>
 <figure>
@@ -229,7 +229,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <figcaption>图 3 · 每日对账把账本与 PSP 结算文件逐笔比对，差异按可否分类分流；失败支付则走重试队列 → 死信队列 → 人工。</figcaption>
 </figure>
 <aside class="xref"><a href="https://hub.cissychen.com/system-design/distributed-transactions-day7.html" rel="noopener" target="_blank">System Design · Day 7 分布式事务</a> — 2PC 的阻塞点、Saga 的补偿设计与中间态可见性，以及「别做，做了也尽量做小」的判据</aside>
-<h2>关键权衡与选型</h2>
+<h2 data-tts="686f6970e40e0856">关键权衡与选型</h2>
 <p class="tcap">表 1 · 卡数据怎么接：合规范围差一个数量级</p>
 <div class="tblwrap"><table class="cmp">
 <thead><tr><th>接法</th><th>好在哪</th><th>代价（诚实说）</th><th>什么时候选它</th></tr></thead>
@@ -258,7 +258,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <tr><th>不处理，留给对账</th><td>你这边完全没记录、只有 PSP 那边有的「孤儿交易」</td><td>修复最慢（次日级）；但这是<strong>唯一能兜住未知未知的网</strong></td></tr>
 </tbody>
 </table></div>
-<h2>为什么重要 / 落到真实系统</h2>
+<h2 data-tts="171beb7f8135d39f">为什么重要 / 落到真实系统</h2>
 <p>这一章的迁移价值远超支付：任何「调用外部系统、且副作用不可撤销」的场景都是同一道题——发短信、开发票、发货指令、给第三方转账、给模型 API 扣额度。判据也永远是同一条：<strong>先问「重复一次会怎样」，答案不可接受就必须有幂等键；再问「漏一次怎么发现」，答不上来就必须有对账。</strong></p>
 <div class="ev">
 <div class="evh">大厂实证</div>
@@ -269,7 +269,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>「重复支付」是真实平台公开讨论过的头等问题。</strong>Airbnb 工程团队发表过《Avoiding Double Payments in a Distributed Payments System》（Jessica Tai，2018），介绍他们如何用幂等键与共享的幂等层，让支付链路上的重试不产生重复扣款。<span class="src">出处：Airbnb Engineering &amp; Data Science，2018。该来源域名被本次运行的出口代理拦截，故只留文字出处、不附链接。</span></li>
 </ul>
 </div>
-<h2>易错点与争议</h2>
+<h2 data-tts="e37f9496d77663b1">易错点与争议</h2>
 <ul>
 <li><strong>把支付当成高吞吐问题。</strong>上来就画缓存与分片，说明没算账：<code>11.6 TPS</code> 不需要任何性能设计。<em>这一章考的是你对「不确定性」的处理能力。</em></li>
 <li><strong>把超时当失败。</strong>直接换个新订单号重发，是重复扣款最常见的成因——<strong>重试要带上同一个幂等键，而不是重新发起一笔。</strong></li>
@@ -279,7 +279,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>用浮点数存钱。</strong>金额要用整数最小单位（分）或定点小数，并始终带币种。书里着墨不多，线上翻车极多。</li>
 <li><strong>本章没覆盖的</strong>：退款与拒付（chargeback）的完整流程、多币种与汇率、订阅与分期、3DS 带来的长时间 pending，以及风控规则本身——本章只把风控画成一个方框。</li>
 </ul>
-<h2>要点</h2>
+<h2 data-tts="5110671cb64ace0f">要点</h2>
 <div class="tl">
 <p>① 支付是全书<strong>吞吐最低</strong>的系统：100 万笔/天 ≈ <code>11.6 TPS</code>。没有性能问题，只有正确性问题。</p>
 <p>② 根源是控制边界：你的服务 → PSP → 收单行 → 卡组织 → 发卡行，<strong>你只拥有第一道门</strong>。</p>
