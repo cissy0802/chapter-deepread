@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>ML System Design Interview Ch 3 · Street View Blurring — Books Deep-Read Book 84</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">Books Deep-Read · ML System Design Interview · Chapter 3</p>
+<h1>Street View Blurring: the question where you skew the threshold on purpose</h1>
+<p class="sub">Machine Learning System Design Interview · Ch 3 · Ali Aminian &amp; Alex Xu · 2023</p>
+<p class="langbar"><a href="mlsdi-ch03-street-view-blurring-book84.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>A camera car drives past your front door and photographs the whole street on the way. In those photos there are pedestrians, license plates parked at the curb, and possibly you. The photos are going online for the whole world to browse — so before they do, every face and every plate has to be smudged out. This chapter is about <strong>how a machine finds the parts that need smudging, and then smudges them.</strong></p>
+<h2>First, something strange</h2>
+<p>You would assume the people building this want it to be as accurate as possible — smudge what needs smudging, nothing more. <strong>The opposite is true.</strong> They deliberately tune the machine to be <em>paranoid</em>: it would rather smear things that are not faces at all than let one real face through. They know it will smudge the wrong things, and they tune it that way anyway.</p>
+<h2>Why the old world was hard</h2>
+<p>The first problem is volume. Count the archive in billions of photos. Even if one person could glance at a photo in five seconds, that is five billion seconds — <strong>roughly 158 people working full-time for a year</strong> — and the camera cars are out again tomorrow.</p>
+<p>The second problem is sneakier. A machine that says "there is a face in this photo" is useless here. What you have to smudge is <strong>that particular patch of pixels</strong>, so you need to know <em>where</em> the face is and how big it is. "Noticing something is there" and "pointing at exactly where" are two completely different difficulties.</p>
+<h2>How it actually works</h2>
+<p>Four moves, each more important than the last.</p>
+<ul>
+<li><strong>Circle first, identify second.</strong> The machine does not reason pixel by pixel about whether something is a face. It sweeps the photo coarsely and circles a few hundred patches that look like "something might be here" — the way you would first mark suspicious spots on a map with a magnifying glass. Only then does it look at each one closely: this is a face, this is a plate, this is nothing.</li>
+<li><strong>The same face gets circled a dozen times.</strong> Neighbouring patches all think they saw the face, so a single face ends up with a dozen overlapping boxes on it. The fix is almost embarrassingly plain: when several people raise a hand about the same thing, listen to the most confident one and throw out everyone who was pointing at the same spot.</li>
+<li><strong>That paranoia dial.</strong> Every box the machine reports comes with a number saying how sure it is. You draw a line: only boxes above the line get smudged. Drop the line and the machine turns paranoid — it misses almost nothing, but it also smears shop signs, faces on billboards, plates on toy cars. Raise the line and the imagery stays clean, but a few real faces slip through. <strong>Where you put that line is the entire question of this chapter.</strong></li>
+<li><strong>Why the answer is "lean paranoid".</strong> The two mistakes are nothing like each other. Miss a face and a photo that identifies a specific real person is published on the internet, then scraped and mirrored where you cannot retract it. Over-smudge a shop sign and you have an uglier photo. <strong>When the costs differ that much, you lean toward the cheap mistake.</strong> Then you add a second pass whose only job is to catch the obvious over-smudges — far smarter than fiddling with one dial. And finally there is a human backstop: anyone can report "that's me, please blur it", and the handful of photos a human fixes are exactly the ones the machine most needs to study.</li>
+</ul>
+<h2>What it costs</h2>
+<p>Lean paranoid and the imagery fills up with inexplicably erased shop signs, billboard portraits and street art — and blurring is destructive, so once a patch is smeared it essentially never comes back.</p>
+<h2>Remember this one line</h2>
+<div class="tl">
+<p>When one kind of mistake costs orders of magnitude more than the other, <strong>"be as accurate as possible" is the wrong goal.</strong> The right move is to skew knowingly toward the cheap mistake — and then spend a whole extra stage cleaning up the mess that skew creates.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the notation and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">On the surface this chapter teaches object detection. What it actually teaches is <strong>how to pick an operating point when the two error costs are wildly unequal</strong>: a missed face is an irreversible privacy incident, an over-blurred shop sign is an ugly photo. So the right answer is not the balance point between precision and recall — it is a detector deliberately parked at <strong>high recall, low precision</strong>, followed by a stage whose only job is killing false positives, plus a human report loop to catch what still slips.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Object detection</strong>: not just "is there one of these in the image" but "where is it". The output is a list of box + class + confidence.</li>
+<li><strong>Bounding box</strong>: the rectangle around a target, written as four numbers (centre plus width and height, or two opposite corners).</li>
+<li><strong>Confidence score</strong>: the model's own 0-to-1 rating that this box really does contain a face.</li>
+<li><strong>Backbone</strong>: the convolutional network (ResNet, say) that the whole image passes through first, producing a <em>feature map</em> for the localisation and classification heads to work on.</li>
+<li><strong>Region proposal</strong>: the coarsely filtered set of "something may be here" boxes handed to a later network for a closer look.</li>
+<li><strong>Anchor</strong>: a grid of box templates of assorted sizes and aspect ratios laid over the image; the detector learns how far to shift and scale relative to a template.</li>
+<li><strong>IoU (intersection over union)</strong>: overlap area divided by the area of the two boxes combined — the test for whether a predicted box counts as matching a ground-truth box.</li>
+<li><strong>NMS (non-maximum suppression)</strong>: one target usually collects a dozen overlapping boxes; NMS keeps the most confident one and suppresses everything that overlaps it too much.</li>
+<li><strong>Precision / recall</strong>: precision is what fraction of the boxes you reported are real; recall is what fraction of the real targets you reported.</li>
+<li><strong>AP / mAP</strong>: average precision computed at various IoU strictness levels, then averaged across classes — the standard offline metric for detection.</li>
+<li><strong>Batch prediction</strong>: computing offline over a large set of data and storing the results, rather than computing per live request.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The second of the ten case studies in Part II. The input is still an image, but the task moves from Ch2's "encode to a vector and retrieve" to "localise and classify" — and this is the only question in the book whose <strong>business objective is compliance rather than experience</strong>. It sets up Ch5 (harmful content detection), which runs the same low-base-rate / threshold / human-review triad. In the real world it maps onto the redaction pipelines behind Google Street View and Apple Look Around, and onto anonymising autonomous-driving road capture under GDPR.</p>
+<h2>The problem this chapter attacks</h2>
+<p>Camera cars photograph public roads in dozens of countries, and those photos inevitably contain passers-by and license plates nobody ever asked about. Privacy law (GDPR and local regimes) requires de-identification before publication, and Street View itself has drawn privacy disputes and regulatory scrutiny in several countries.</p>
+<p>The difficulty is not "can we detect faces". It is scale and consequence:</p>
+<ul>
+<li><strong>Scale</strong>: count the archive at a billion images; at a skim rate of five seconds each that is <code>5×10⁹</code> seconds, about <strong>158 person-years</strong>, while the cars keep adding more every day. Pure manual review is not expensive — it is nonexistent.</li>
+<li><strong>Asymmetric consequence</strong>: a miss means a photo identifying a specific person is public on the internet, scraped, cached and mirrored — <strong>you cannot pull it all back</strong> — with regulatory exposure attached. An over-blur means one photo looks worse.</li>
+</ul>
+<p>So the real question is not "how high can we push mAP" but <strong>"how high can we push recall at an over-blur rate the business can live with"</strong>. Treat it as a routine accuracy-optimisation problem and the design is wrong in round one.</p>
+<h2>The core, properly</h2>
+<h3>1 · Framing it as ML: why this must be detection, not classification</h3>
+<p>Image classification only answers "does this image contain a face". But the thing you have to blur is <strong>that patch of pixels</strong>, and without coordinates there is nothing to act on — so the task must be object detection, emitting <code>(box, class, confidence)</code> with two classes: face and license plate.</p>
+<p>One corollary that gets skipped: this is <strong>multi-class</strong> detection, and the two classes are not equally hard. Faces vary in pose, occlusion and scale (a distant face is a dozen pixels tall) and their shape is fluid; plates are rigid and carry a text prior, which helps, but they glare, skew under perspective, and fakes on posters and toys fool the model. <strong>Two classes deserve two independent thresholds</strong>; sharing one treats two problems as one (the open-source evidence in §6 is built exactly this way).</p>
+<h3>2 · Two detector skeletons: two-stage vs one-stage</h3>
+<p><strong>Two-stage (Faster R-CNN and relatives)</strong>: the backbone compresses the image into a feature map → a <em>region proposal network</em> uses anchors to filter out a few hundred to a few thousand "something may be here" boxes → the second stage classifies only those candidates and refines their coordinates. <strong>Propose first, identify second.</strong></p>
+<p><strong>One-stage (SSD, YOLO)</strong>: a single forward pass emits, at every location on the feature map, "is there a target + which class + how far is the box off". No proposal stage.</p>
+<p>The trade-off comes down to where the compute goes. Two-stage splits "where might something be" from "what is it", so the heavy compute lands on a small candidate set: usually higher accuracy, noticeably so on small targets, at the price of a longer pipeline and more time per image. One-stage drops the proposal stage and tends to run several times faster on comparable hardware, historically at the cost of weaker performance on small, dense targets (focal loss and successors narrowed that gap considerably).</p>
+<p>The book lays out both, and its conclusion travels with its premise: Street View redaction is <strong>offline batch processing</strong> with no online latency budget, so optimise for accuracy — recall in particular — and take the two-stage design. <strong>Memorise the conclusion together with the premise</strong>: move the redaction onto the capture vehicle in real time and the answer immediately flips to one-stage. Saying only "two-stage, because it's more accurate" in an interview throws away the point.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/cnn-vision-day18.en.html" rel="noopener" target="_blank">AI/ML · Day 18 CNNs and Vision</a> — how convolution, receptive fields and feature maps turn pixels into localisable semantics, and which layer the detection head attaches to</aside>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 660 248" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="e1a" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="11.5" font-weight="700" x="16" y="18">Two-stage: propose first, identify second (the Faster R-CNN line)</text>
+<rect fill="rgba(91,157,249,0.18)" height="42" rx="6" stroke="#5b9df9" width="86" x="16" y="30"></rect><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="59" y="48">Street View</text><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="59" y="62">image</text>
+<rect fill="rgba(255,255,255,0.03)" height="42" rx="6" stroke="#7c8593" width="78" x="112" y="30"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="151" y="55">Backbone</text>
+<rect fill="rgba(155,108,245,0.22)" height="42" rx="6" stroke="#9b6cf5" stroke-width="2" width="150" x="200" y="30"></rect><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="275" y="48">Region proposal net</text><text fill="#b9c0ca" font-size="9" text-anchor="middle" x="275" y="62">~10²–10³ candidate boxes</text>
+<rect fill="rgba(91,157,249,0.14)" height="42" rx="6" stroke="#5b9df9" width="134" x="360" y="30"></rect><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="427" y="48">classify each box</text><text fill="#b9c0ca" font-size="9" text-anchor="middle" x="427" y="62">+ refine coordinates</text>
+<rect fill="rgba(255,255,255,0.03)" height="42" rx="6" stroke="#7c8593" width="140" x="504" y="30"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="574" y="55">face / plate boxes</text>
+<line marker-end="url(#e1a)" stroke="#7c8593" x1="102" x2="110" y1="51" y2="51"></line>
+<line marker-end="url(#e1a)" stroke="#7c8593" x1="190" x2="198" y1="51" y2="51"></line>
+<line marker-end="url(#e1a)" stroke="#7c8593" x1="350" x2="358" y1="51" y2="51"></line>
+<line marker-end="url(#e1a)" stroke="#7c8593" x1="494" x2="502" y1="51" y2="51"></line>
+<text fill="#7c8593" font-size="9.5" x="16" y="92">Heavy compute lands only on a small candidate set → higher accuracy, better on distant faces;</text>
+<text fill="#7c8593" font-size="9.5" x="16" y="108">longer pipeline, more time per image.</text>
+<line stroke="rgba(91,157,249,0.2)" x1="16" x2="644" y1="122" y2="122"></line>
+<text fill="#9b6cf5" font-size="11.5" font-weight="700" x="16" y="142">One-stage: one forward pass, answer straight out (SSD / YOLO)</text>
+<rect fill="rgba(91,157,249,0.18)" height="42" rx="6" stroke="#5b9df9" width="86" x="16" y="154"></rect><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="59" y="172">Street View</text><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="59" y="186">image</text>
+<rect fill="rgba(255,255,255,0.03)" height="42" rx="6" stroke="#7c8593" width="78" x="112" y="154"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="151" y="179">Backbone</text>
+<rect fill="rgba(155,108,245,0.22)" height="42" rx="6" stroke="#9b6cf5" stroke-width="2" width="294" x="200" y="154"></rect><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="347" y="172">every location emits: object? which class? box offset?</text><text fill="#b9c0ca" font-size="9" text-anchor="middle" x="347" y="186">no proposal stage</text>
+<rect fill="rgba(255,255,255,0.03)" height="42" rx="6" stroke="#7c8593" width="140" x="504" y="154"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="574" y="179">face / plate boxes</text>
+<line marker-end="url(#e1a)" stroke="#7c8593" x1="102" x2="110" y1="175" y2="175"></line>
+<line marker-end="url(#e1a)" stroke="#7c8593" x1="190" x2="198" y1="175" y2="175"></line>
+<line marker-end="url(#e1a)" stroke="#7c8593" x1="494" x2="502" y1="175" y2="175"></line>
+<text fill="#7c8593" font-size="9.5" x="16" y="216">Several times faster on comparable hardware → fits on-vehicle and live video; historically weaker on small dense targets.</text>
+<text fill="#8fbaff" font-size="10" x="16" y="238">Two-stage wins here not because it is more accurate, but because batch processing has no latency budget.</text>
+</svg>
+<figcaption>Figure 1 · The data-flow difference: two-stage splits "where might something be" from "what is it"; one-stage computes it all at once. Latency budget decides, not accuracy taste.</figcaption>
+</figure>
+<h3>3 · The training signal: localisation plus classification</h3>
+<p>Detection is supervised on two things at once — how well the box is drawn (a regression against ground-truth coordinates) and whether the class is right (cross entropy). They combine into a multi-task loss, <code>L = L_cls + λ·L_box</code>, where <code>λ</code> is the dial: turn it up and the model cares more about tight boxes, down and it cares more about not confusing classes.</p>
+<p>This problem has a convenient property: <strong>a box that is slightly too big is nearly harmless</strong> (nobody complains about a generous smudge) while a miss is fatal — which is why production pipelines commonly dilate each detected box by a fixed margin before blurring, spending slack to absorb small localisation error.</p>
+<p>On the data side, annotation means drawing boxes one at a time and is expensive, so the book leans on <strong>data augmentation</strong>: horizontal flips, random crops, rotation, brightness and saturation jitter, grayscale conversion. <strong>Offline augmentation</strong> materialises the variants to disk — fast training, more storage; <strong>online augmentation</strong> transforms during training — no storage, slower steps. One domain judgement: street scenes have a fixed gravity direction, so <em>vertical</em> flips produce samples that do not exist in reality and are wasted augmentation.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/deep-residual-learning-paper2.en.html" rel="noopener" target="_blank">Paper Deep-Read · ResNet</a> — how residual connections let backbones stack to hundreds of layers, which is where every modern detector's default backbone comes from</aside>
+<h3>4 · One face, a dozen boxes: NMS</h3>
+<p>A detector fires on the same face from neighbouring locations and different anchors, so one street image easily produces dozens or hundreds of overlapping boxes. <strong>NMS</strong> is almost common sense: sort by confidence, keep the highest, discard every box whose IoU with it exceeds a threshold (<code>0.5</code> is typical), then repeat on what remains.</p>
+<p>Why the chapter has to cover it: <strong>without NMS your precision and recall are simply wrong.</strong> Twelve boxes on one face get counted as twelve detections, and over-blurred area is miscounted too — and every decision in this chapter rests on those two numbers.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 660 216" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="e2a" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="11.5" font-weight="700" x="16" y="18">1 · IoU: does this prediction count as a hit?</text>
+<text fill="#7c8593" font-size="9.5" x="24" y="38">ground truth</text>
+<rect fill="none" height="70" stroke="#7c8593" stroke-dasharray="4 3" width="92" x="24" y="44"></rect>
+<rect fill="rgba(91,157,249,0.16)" height="70" stroke="#5b9df9" width="92" x="70" y="64"></rect>
+<rect fill="rgba(155,108,245,0.3)" height="50" stroke="none" width="46" x="70" y="64"></rect>
+<text fill="#8fbaff" font-size="9.5" x="118" y="148">prediction</text>
+<text fill="#e7ebf1" font-size="9.5" x="196" y="64">overlap area (purple)</text>
+<text fill="#b9c0ca" font-size="9.5" x="196" y="80">———————————</text>
+<text fill="#e7ebf1" font-size="9.5" x="196" y="96">area of the two combined</text>
+<text fill="#8fbaff" font-size="10" x="196" y="124">= IoU; &gt;0.5 usually counts as a hit</text>
+<line stroke="rgba(91,157,249,0.2)" x1="368" x2="368" y1="12" y2="204"></line>
+<text fill="#9b6cf5" font-size="11.5" font-weight="700" x="388" y="18">2 · NMS: one box per face</text>
+<rect fill="none" height="46" stroke="#7c8593" width="58" x="392" y="46"></rect>
+<rect fill="none" height="46" stroke="#7c8593" width="58" x="402" y="56"></rect>
+<rect fill="none" height="46" stroke="#7c8593" width="58" x="412" y="38"></rect>
+<rect fill="rgba(91,157,249,0.18)" height="46" stroke="#5b9df9" stroke-width="2" width="58" x="406" y="50"></rect>
+<text fill="#8fbaff" font-size="9" x="406" y="46">0.93</text>
+<text fill="#7c8593" font-size="9" x="392" y="118">also 0.88 / 0.71 / 0.62</text>
+<line marker-end="url(#e2a)" stroke="#9b6cf5" x1="494" x2="530" y1="72" y2="72"></line>
+<rect fill="rgba(91,157,249,0.18)" height="46" rx="4" stroke="#5b9df9" stroke-width="2" width="72" x="536" y="50"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="572" y="77">keep 0.93</text>
+<text fill="#7c8593" font-size="9.5" x="388" y="148">Sort by confidence → keep the top one → drop</text>
+<text fill="#7c8593" font-size="9.5" x="388" y="164">everything with IoU &gt; 0.5 → repeat on the rest.</text>
+<text fill="#8fbaff" font-size="10" x="388" y="188">Skip this and twelve boxes on one face count</text>
+<text fill="#8fbaff" font-size="10" x="388" y="204">as twelve detections: every metric distorts.</text>
+</svg>
+<figcaption>Figure 2 · IoU sets how strictly a "hit" is judged; NMS collapses the pile of overlapping boxes on one target into a single box. Both are the bedrock under every metric in this chapter.</figcaption>
+</figure>
+<h3>5 · The soul of the chapter: which way the threshold leans</h3>
+<p>The confidence threshold is a single dial: lower it and more boxes are reported, so recall rises and precision falls (more over-blur); raise it and the reverse. The default answer in almost every ML problem is "take the point where F1 peaks", and the correct answer here is <strong>explicitly not that point</strong>.</p>
+<p>The reason fits on one line: call the cost of missing a face <code>C_fn</code> and of over-blurring a sign <code>C_fp</code>. Here <code>C_fn / C_fp</code> is orders of magnitude — an irreversible privacy incident with regulatory exposure on one side, image quality on the other — so the expected-loss-minimising operating point <strong>sits on the high-recall side</strong>.</p>
+<p>But high recall is not free. Push the threshold down and each extra point of recall costs steeply more over-blur: erased shopfront signage, billboard portraits, toy license plates. <strong>The fix is not to compromise along one curve — it is to add a stage.</strong> Leave the detector parked at high recall and low precision, then run a <strong>dedicated false-positive killer</strong> behind it, using domain information the detector never sees to veto impossible boxes: a box whose absolute size makes no sense at that depth, a box entirely inside the sky region, a detection that is wildly inconsistent across adjacent frames of the same spot. The point of two stages is that <strong>each error type gets its own owner</strong>, instead of one threshold carrying both jobs.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 660 252" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="e3a" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="e3b" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="11.5" font-weight="700" x="16" y="18">Every box the detector emits, laid out by confidence</text>
+<rect fill="rgba(155,108,245,0.07)" height="52" width="184" x="60" y="34"></rect>
+<line stroke="#7c8593" x1="60" x2="600" y1="86" y2="86"></line>
+<text fill="#7c8593" font-size="9.5" x="54" y="102">0</text><text fill="#7c8593" font-size="9.5" x="306" y="102">0.5 confidence</text><text fill="#7c8593" font-size="9.5" x="594" y="102">1</text>
+<circle cx="96" cy="70" fill="#5a6069" r="5"></circle><circle cx="140" cy="56" fill="#5a6069" r="5"></circle><circle cx="186" cy="72" fill="#5b9df9" r="5"></circle><circle cx="228" cy="52" fill="#5a6069" r="5"></circle>
+<circle cx="288" cy="68" fill="#5b9df9" r="5"></circle><circle cx="340" cy="54" fill="#5a6069" r="5"></circle><circle cx="404" cy="70" fill="#5b9df9" r="5"></circle><circle cx="470" cy="56" fill="#5b9df9" r="5"></circle><circle cx="540" cy="68" fill="#5b9df9" r="5"></circle>
+<line stroke="#9b6cf5" stroke-dasharray="5 3" stroke-width="2" x1="244" x2="244" y1="28" y2="94"></line>
+<text fill="#9b6cf5" font-size="10" font-weight="700" x="66" y="28">threshold: pushed left on purpose</text>
+<text fill="#7c8593" font-size="9.5" x="62" y="122">left of the line is dropped — a wrong drop is a miss</text>
+<text fill="#8fbaff" font-size="9.5" x="330" y="122">right of it gets blurred (blue = real, grey = false alarm)</text>
+<line stroke="rgba(91,157,249,0.2)" x1="16" x2="644" y1="140" y2="140"></line>
+<rect fill="rgba(91,157,249,0.14)" height="44" rx="6" stroke="#5b9df9" stroke-width="2" width="136" x="16" y="156"></rect><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="84" y="174">Stage 1 · detector</text><text fill="#b9c0ca" font-size="9" text-anchor="middle" x="84" y="189">high recall, low precision</text>
+<rect fill="rgba(155,108,245,0.22)" height="44" rx="6" stroke="#9b6cf5" stroke-width="2" width="162" x="176" y="156"></rect><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="257" y="174">Stage 2 · post-filter</text><text fill="#b9c0ca" font-size="9" text-anchor="middle" x="257" y="189">domain info kills false alarms</text>
+<rect fill="rgba(255,255,255,0.03)" height="44" rx="6" stroke="#7c8593" width="140" x="362" y="156"></rect><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="432" y="174">dilate + Gaussian blur</text><text fill="#b9c0ca" font-size="9" text-anchor="middle" x="432" y="189">destructive, irreversible</text>
+<line marker-end="url(#e3b)" stroke="#9b6cf5" x1="152" x2="174" y1="178" y2="178"></line>
+<line marker-end="url(#e3a)" stroke="#7c8593" x1="338" x2="360" y1="178" y2="178"></line>
+<text fill="#8fbaff" font-size="9.5" x="516" y="172">miss a face: incident</text><text fill="#8fbaff" font-size="9.5" x="516" y="188">over-blur: ugly photo</text>
+<text fill="#7c8593" font-size="9.5" x="16" y="222">Each error type gets its own owner: the threshold is responsible for not missing,</text>
+<text fill="#7c8593" font-size="9.5" x="16" y="240">the post-filter for not smearing everything — far better than one dial doing both.</text>
+</svg>
+<figcaption>Figure 3 · The threshold is pushed low to buy recall; the extra false positives are killed by a second stage. Blurring itself is destructive, so a generous box beats a missed one.</figcaption>
+</figure>
+<h3>6 · Evaluation: mAP is not enough</h3>
+<p>Offline metrics rest on IoU deciding what counts as a hit, then AP / mAP on top. But <strong>mAP folds both error types into a single score</strong>, and a privacy decision needs them separated: at an acceptable false-positive level, what is recall (the recall value at a specified precision on the PR curve)? Try explaining "how many faces we missed" to legal with a composite score and you cannot.</p>
+<p>The easier miss: <strong>report it stratified</strong>. An overall recall of 95% comfortably hides "frontal 99%, profile 70%, distant small faces 40%" — and misses concentrate in exactly those last two. Slicing by region, lighting and demographic group is the one move that stops you fooling yourself.</p>
+<p>Online, the metrics go operational: blur requests per million images, the share of reports confirmed as genuine misses, and the sampled review rate for over-blurs.</p>
+<h2>Trade-offs and choices</h2>
+<p class="tcap">Table 1 · One-stage or two-stage — decided by latency budget, not accuracy taste</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Skeleton</th><th>Mechanism in one line</th><th>What you get / what it costs</th><th>When to pick it</th></tr></thead>
+<tbody>
+<tr><th>Two-stage<br/>Faster R-CNN</th><td>A proposal network filters to 10²–10³ boxes, then each is classified and refined</td><td>Higher accuracy, <strong>steadier on small targets</strong>; more time per image, longer pipeline, heavier to deploy</td><td><strong>This problem</strong>: offline batch, no online latency budget, recall first</td></tr>
+<tr><th>One-stage<br/>SSD / YOLO</th><td>One forward pass emits class and box offset at every location</td><td>Often several times faster on the same hardware, fits on-device; <strong>historically weaker on small dense targets</strong></td><td>Redaction at capture time, on-vehicle, live video masking</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · Which operating point — the only real design decision here</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Operating point</th><th>Consequence</th><th>Premise it needs</th></tr></thead>
+<tbody>
+<tr><th>High precision<br/>threshold up</th><td>Clean imagery, almost no over-blur; <strong>but real faces get through</strong> — and one is an irreversible privacy incident</td><td>Only holds when a false alarm costs at least as much as a miss, which is false here</td></tr>
+<tr><th>Peak F1<br/>the balance point</th><td>Neither error type is common; looks the most "professional"</td><td>The default answer, <strong>but it assumes the two errors are equivalent</strong> — and their inequality is the whole question</td></tr>
+<tr><th><strong>High recall</strong><br/>threshold down + post-filter</th><td>Misses pushed to a minimum; over-blur rises sharply and a second stage kills most of it</td><td><strong>The book's choice</strong>: <code>C_fn / C_fp</code> spans orders of magnitude, and over-blur only costs image quality</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 3 · How to report metrics (a privacy system cannot ship one composite score)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Metric</th><th>What it looks at</th><th>Fit for this problem</th></tr></thead>
+<tbody>
+<tr><th>AP / mAP</th><td>Average precision across classes and IoU strictness levels</td><td>The academic standard, handy for comparing models; <strong>folds misses and over-blur into one number</strong>, so it cannot carry a privacy decision</td></tr>
+<tr><th><strong>Recall at a fixed precision</strong></th><td>At an over-blur level the business accepts, how much did we miss</td><td><strong>The headline metric here</strong> — it answers "how many faces are still exposed"</td></tr>
+<tr><th>Stratified recall</th><td>Frontal / profile / small faces, by region and demographic group</td><td>The only reporting style that prevents self-deception; an overall 95% often hides a 40% slice</td></tr>
+<tr><th>Report rate in production</th><td>Blur requests per million images, and their confirmation rate</td><td>The real-world proxy for misses, and a compliance record you need anyway</td></tr>
+</tbody></table></div>
+<p>All three tables point at one sentence: <strong>almost none of the choices here are about "which is stronger" — they are about how the costs are priced.</strong> Price the costs and the selections follow as corollaries; leave them unpriced and no selection can be defended.</p>
+<h2>Why it matters / in real systems</h2>
+<p>The shape on the ground is a <strong>batch pipeline, not an online service</strong>: newly captured imagery is sharded geographically into a queue → a GPU / TPU fleet runs detection → NMS and post-filtering → a blur service dilates each box and applies a Gaussian blur → results land in object storage and go live. Two constraints have to be designed in from day one. First, <strong>blurring is destructive and irreversible</strong>, so retention period and access control on the originals must be pinned to the privacy policy. Second, the pipeline must be able to <strong>re-run history under a new model version</strong>, or else improvements only ever touch new photos and the misses already in the archive stay there forever.</p>
+<p>The other half is the <strong>human loop</strong>: anyone can report "that is my face / my house number, please blur it", a reviewer confirms and blurs it — and those samples happen to be precisely the hard cases the model lacks, so feeding them back is active learning by construction. Its value is not only remediation: what compliance requires is <strong>that a usable redress channel exists</strong>, not that the model is 100% correct. Treating the human backstop as cover for a weak model misreads the chapter.</p>
+<p>Swap the class list and the same skeleton is reused: anonymising road-capture and dashcam data, de-identifying medical imaging, masking whiteboards in meeting recordings, live-stream redaction. <strong>Whenever the rule is "some category must be covered, and one miss is an incident", this chapter is the answer.</strong></p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/privacy-compliance-day43.en.html" rel="noopener" target="_blank">System Design · Day 43 Privacy and Compliance Architecture</a> — what de-identification, the right to erasure and retention policy look like in a system, and why "provable" matters as much as "done"</aside>
+<div class="ev">
+<div class="evh">Evidence from industry · these are the companies' own public claims, not the book's</div>
+<ul>
+<li><strong>Google</strong>: the official paper on the Street View redaction system describes its approach as a standard sliding-window detector "tuned for a <strong>high recall, low precision operating point</strong>" followed by a fast post-processing stage that removes additional false positives using domain-specific information unavailable to the detector; the fully automatic system "sufficiently blurred more than <strong>89% of faces and 94–96% of license plates</strong>" in evaluation sets sampled from Street View imagery, and the authors state plainly that even state-of-the-art face detectors alone are not sufficient to reach the recall large-scale privacy protection needs. <strong>The two-stage "lean toward recall, then kill false positives" structure in this chapter comes straight from here.</strong><span class="src">Frome et al., Large-scale Privacy Protection in Google Street View, ICCV 2009 (the source page is unreachable from this site's egress, so the citation is text-only)</span></li>
+<li><strong>Google</strong>: the official TensorFlow Object Detection API ships two-stage Faster R-CNN alongside one-stage SSD, RetinaNet and EfficientDet, and the team's recommended citation is "Speed/accuracy trade-offs for modern convolutional object detectors" (Huang et al., CVPR 2017) — <strong>in industry "one-stage or two-stage" has never been a matter of academic taste; it is a speed/accuracy curve you look up per deployment.</strong><span class="src">TensorFlow Object Detection API, Google · <a href="https://github.com/tensorflow/models/tree/master/research/object_detection" rel="noopener" target="_blank">source</a></span></li>
+<li><strong>understand.ai</strong> (autonomous-driving data company): the README of its open-source anonymiser says "To improve privacy and make it easier for companies to comply with GDPR, we at understand.ai decided to open-source our anonymization software", the tool detects and obfuscates "faces and license plates", and it exposes <strong>face threshold and plate threshold as two independent parameters</strong> — confirming this chapter's "two classes deserve two thresholds". The cautionary half is worth keeping too: the repo calls itself "an early version in terms of quality and speed", says it will not work on low-quality or grayscale images, and was archived in 2022 — <strong>the long tail of redaction (blurry, grayscale, fisheye) is a real engineering wall.</strong><span class="src">understand.ai anonymizer · <a href="https://github.com/understand-ai/anonymizer" rel="noopener" target="_blank">source</a></span></li>
+</ul>
+</div>
+<h2>Traps and disputes</h2>
+<ul>
+<li><strong>Framing it as image classification</strong>: "does this image contain a face" gives you no coordinates and nothing to blur. This is the top elimination mistake on this question.</li>
+<li><strong>Forgetting NMS</strong>: a dozen boxes on one face count as a dozen detections, so recall, precision and blurred area all distort, and every later decision rests on wrong numbers.</li>
+<li><strong>Reporting only mAP</strong>: a composite score is for comparing models, not for privacy decisions. Report recall at an acceptable over-blur rate, plus the stratified slices.</li>
+<li><strong>One threshold for everything</strong>: faces and plates differ in difficulty and in cost and deserve separate dials; more importantly, a single dial cannot buy you the two-stage structure.</li>
+<li><strong>Ignoring fairness</strong>: public evaluations have repeatedly found that face algorithms do not have uniform error rates across demographic groups and imaging conditions. Unequal misses in detection are <strong>unequal privacy protection</strong> — which is the real reason for stratified reporting, not box-ticking.</li>
+<li><strong>"Blurred means safe"</strong>: research indicates blurring is not absolutely irreversible, and a person can still be identified by clothing, vehicle or house number in the same frame. Blurring reduces risk; it does not erase it.</li>
+<li><strong>No re-run capability in the pipeline</strong>: if a new model version cannot be backfilled over historical imagery, the improvement only applies to new photos.</li>
+<li><strong>Period limits</strong>: the book is from 2023 and its answer centres on a purpose-built two-stage detector. Open-vocabulary detection and segmentation since then let you name what to mask in a sentence, so adding a category no longer requires labelling a fresh dataset; on unit cost and auditability at billion-image batch scale, though, small purpose-built models still look ahead — that last clause is my judgement, not the book's conclusion.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1 · The core claim: when two error types differ in cost by orders of magnitude, <strong>"as accurate as possible" is the wrong objective</strong> — the right operating point for Street View redaction deliberately favours high recall and low precision.</p>
+<p>2 · It must be <strong>object detection</strong>, not classification: you blur a patch of pixels, and without coordinates there is nothing to do. Output <code>(box, class, confidence)</code> over two classes, face and plate, each with its own threshold.</p>
+<p>3 · Two-stage (proposal network then per-box classify and refine) vs one-stage (one forward pass); <strong>two-stage wins here because offline batch has no latency budget</strong> — change the premise and the answer changes.</p>
+<p>4 · The training signal is a <strong>multi-task loss</strong>, <code>L = L_cls + λ·L_box</code>: localisation plus classification. A slightly large box is harmless and a miss is fatal, so pipelines dilate boxes before blurring.</p>
+<p>5 · <strong>NMS is not a detail</strong>: leave the overlapping boxes on one target unsuppressed and recall, precision and blurred area are all wrong.</p>
+<p>6 · The answer is not a compromise on one curve but a <strong>two-stage structure</strong>: the detector sits at high recall, the post-filter kills false positives with domain information. Google's Street View paper describes exactly this structure, with the fully automatic system blurring more than 89% of faces and 94–96% of plates.</p>
+<p>7 · Report metrics <strong>separately and stratified</strong>: mAP for comparing models, recall at a fixed precision for decisions. An overall 95% routinely hides profile and distant faces at 40–70% — and unequal misses are unequal privacy protection.</p>
+<p>8 · The architecture is a <strong>batch pipeline plus a human report loop</strong>: blurring is irreversible, so retention on originals is policy-bound and the pipeline must re-run history under new models. The human backstop is not cover for a weak model — a usable redress channel is what compliance asks for in the first place.</p>
+</div>
+</div>
+<footer>Books Deep-Read · Read this page ≈ get the core of the chapter; for the full case studies, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
