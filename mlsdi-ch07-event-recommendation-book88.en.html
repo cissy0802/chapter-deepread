@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>ML System Design Interview Ch 7 · Event Recommendation — Books Deep-Read Book 88</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">Books Deep-Read · ML System Design Interview · Chapter 7</p>
+<h1>Event Recommendation: the goods expire, so cold start is the steady state</h1>
+<p class="sub">Machine Learning System Design Interview · Ch 7 · Ali Aminian &amp; Alex Xu · 2023</p>
+<p class="langbar"><a href="mlsdi-ch07-event-recommendation-book88.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>A ticketing app shows you a screen: "this weekend, near you" — a comedy night, a hike, a street market. This chapter is about how that screen gets ordered. What makes it different from recommending films is blunt: <strong>these "goods" will not exist in a few days</strong>.</p>
+<h2>A strange thing first</h2>
+<p>Recommending films is like suggesting books in a library that never closes. The books stay on the shelves, and the record of who borrowed what only gets thicker. The thicker it gets, the better the machine knows which book to hand to whom.</p>
+<p>Events are not like that. They are a morning market: <strong>today's stall goes up today and comes down tonight</strong>. When a show first goes on sale, nobody has been to it; by the time enough people have proven it popular, it has already started — or already finished. So the sentence recommendation systems live on — "people with taste like yours went too" — cannot even be spoken here.</p>
+<h2>Why the old world was hard</h2>
+<p>The usual method is to look at other people: what did people similar to you also watch, also buy. That method has a precondition — the item must live long enough to be tried by many. Videos, products and songs qualify. Events do not.</p>
+<p>The result: a system that only knows how to look at other people knows nothing about the vast majority of events currently on sale. All it can push is the small handful that already caught fire. A newly listed event never gets in front of anyone — and new listings are exactly what the platform adds every single day.</p>
+<h2>The mechanism: no history, so look at the thing itself</h2>
+<p>If you cannot accumulate "who went", you switch to a different basis: <strong>ask, item by item, about this person, this thing, and this moment</strong>. How far from home? Can you walk, or must you drive? Saturday afternoon or Wednesday midnight? Do you normally go out at that hour? How much does it cost? How many of your friends have already signed up? Do you follow the organiser?</p>
+<p>That long list of questions is a questionnaire. The system takes a few million past events — their questionnaires and what actually happened — and trains a judge to look at a fresh questionnaire and estimate the chance that this person signs up. <strong>It does not know this event; it knows the shape of the form.</strong> Exactly like you and the new place on the corner: you have never been, but "800 metres away, serves the food you usually order, three of your friends booked a table" already tells you what you need.</p>
+<p>Worth noting: the most useful line on that form is usually not how well the content matches, but <strong>whether friends are going</strong>. Attending an event is a social act to begin with.</p>
+<h2>How to look at this approach</h2>
+<p>What to remember: this chapter moves the effort from "pick a cleverer model" to "<strong>design the questionnaire well</strong>". If the form has no line for "how many friends are going", no judge, however sharp, can recover it. And because the market restocks every day, the judge has to <strong>go back to school every day</strong> too.</p>
+<h2>What it costs</h2>
+<p>"All your friends are going" is the strongest signal and also the strongest bias: it makes the crowded more crowded, and leaves niche events, the ones nobody has heard of yet, even harder to surface.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p>Event recommendation is hard not because guessing is hard, but because <strong>the goods expire</strong>. With no history to learn from, all you have left is the specifics of this person, this thing, here and now — which is why the real protagonist of this chapter is not the model, it's how the questionnaire is written.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the notation and the diagrams? <a data-mode="deep">→ switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">On the surface this chapter builds an event recommender. Underneath it is one structural fact forced by item lifespan: <strong>the goods here expire</strong>. An event lives days to weeks from creation to close, has zero interactions the moment it is listed, and is gone before it accumulates data — so <strong>cold start is not an edge case, it is the steady state</strong>, and collaborative filtering, which eats interaction matrices, is cut off at the root. What is left is the specifics: <strong>this user × this event × here and now</strong>. So the chapter shifts its weight from model choice onto <strong>feature engineering</strong>, and frames the problem as <strong>learning to rank (LTR)</strong>: not "does he like it" but "put this batch of candidates in the right order by registration probability".</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Cold start</strong> — a new user has no history, a new item has no interactions, so the recommender has nothing to go on. What is special here is that the system never leaves this state.</li>
+<li><strong>Feature</strong> — one number or category fed to the model, e.g. "distance between user and event". Feature engineering is deciding which questions to ask and how to turn the answers into numbers.</li>
+<li><strong>Learning to rank (LTR)</strong> — a family of methods that aim not at an absolute score but at putting a batch of candidates in the correct order.</li>
+<li><strong>Pointwise / pairwise / listwise</strong> — the three LTR training units: one item at a time, one pair at a time, one whole list at a time.</li>
+<li><strong>One-hot encoding</strong> — turn a category into a vector with a single 1, e.g. "Wednesday" → the third of seven slots.</li>
+<li><strong>Bucketize</strong> — cut a continuous value into ranges and treat them as categories, e.g. distance into "&lt;2km / 2–10km / &gt;10km".</li>
+<li><strong>Feature crossing</strong> — glue two features into a new one (say "distance × weekday") so the model sees their joint signal.</li>
+<li><strong>Embedding</strong> — compress a high-cardinality ID (an organiser, say) into a short vector, so similar IDs land close together.</li>
+<li><strong>GBDT (gradient boosted decision trees)</strong> — a relay of small trees, each correcting the residual of the ones before. The industrial default on tabular features; XGBoost and LightGBM are the reference implementations.</li>
+<li><strong>Class imbalance</strong> — positives are rare (a 1% registration rate, say), which makes accuracy meaningless on this data.</li>
+<li><strong>Batch / streaming features</strong> — the former precomputed offline by the hour or day, the latter computed live at request time.</li>
+<li><strong>nDCG / MRR / Recall@k</strong> — the usual rulers for ranking quality: whether good items land in high positions, how far down the first correct answer sits, and what fraction of what should have been found was found.</li>
+<li><strong>Position bias</strong> — the same item gets more clicks at rank 1 than at rank 20, so logs are not a clean record of preference.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This is the sixth of the ten case studies in Part II. It follows Ch6 on video recommendation, where items are long-lived and interactions plentiful, so the protagonist was the split between retrieval and ranking; here items are short-lived and interactions thin, and the protagonist becomes the features. It leads into Ch8 on ad click prediction — also pointwise scoring, but there the score gets billed against, so probability calibration becomes non-negotiable. The real-world counterparts are Meetup, Eventbrite and Facebook Events.</p>
+<h2>What the chapter is solving</h2>
+<p>The book's setup is an events platform: a user opens the home page, sees a screen of recommended events, and the business goal is <strong>registration conversion</strong> — not clicks. Two constraints separate this chapter cleanly from the last one.</p>
+<p><strong>One: item lifespan measured in days.</strong> A video lives for years after upload and can accumulate millions of views, so the interaction matrix has plenty to chew on. An event lives days to weeks from creation to start, may collect only tens or hundreds of interactions in its entire life, and is delisted permanently afterwards. Put differently: <strong>every event is recommended from start to finish while still in cold start, and then it disappears.</strong></p>
+<p><strong>Two: positives are extremely rare.</strong> Impressions are plentiful, registrations are not. For scale: at a <code>1%</code> registration rate, a model that always predicts "will not register" is 99% accurate — <strong>accuracy is a dead metric here</strong>, and that is the starting point of this chapter's evaluation section.</p>
+<p>What happens if you ignore all this? A recommender that only reads the interaction matrix knows nothing about most of the events on sale, and can only push the small handful already on fire. The rich get richer, new organisers never get off the ground — and new organisers are precisely the supply the platform adds every day.</p>
+<figure>
+<svg viewBox="0 0 640 240" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<text x="320" y="20" fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle">Item lifespan decides whether there is interaction data to learn from</text>
+<text x="16" y="66" fill="#b9c0ca" font-size="11.5" font-weight="700">Video</text>
+<line x1="80" y1="96" x2="612" y2="96" stroke="#7c8593"></line>
+<rect x="96" y="88" width="14" height="8" fill="rgba(91,157,249,0.5)"></rect>
+<rect x="146" y="80" width="14" height="16" fill="rgba(91,157,249,0.55)"></rect>
+<rect x="196" y="70" width="14" height="26" fill="rgba(91,157,249,0.6)"></rect>
+<rect x="246" y="62" width="14" height="34" fill="rgba(91,157,249,0.65)"></rect>
+<rect x="296" y="56" width="14" height="40" fill="rgba(91,157,249,0.7)"></rect>
+<rect x="346" y="52" width="14" height="44" fill="rgba(91,157,249,0.75)"></rect>
+<rect x="396" y="49" width="14" height="47" fill="rgba(91,157,249,0.8)"></rect>
+<rect x="446" y="47" width="14" height="49" fill="rgba(91,157,249,0.85)"></rect>
+<rect x="496" y="45" width="14" height="51" fill="#5b9df9"></rect>
+<rect x="546" y="44" width="14" height="52" fill="#5b9df9"></rect>
+<text x="80" y="114" fill="#8fbaff" font-family="monospace" font-size="10">published</text>
+<text x="612" y="114" fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="end">still on the shelf years later</text>
+<text x="80" y="134" fill="#7c8593" font-family="monospace" font-size="10.5">interactions keep piling up, so collaborative filtering has something to learn</text>
+<text x="16" y="172" fill="#b9c0ca" font-size="11.5" font-weight="700">Event</text>
+<line x1="80" y1="202" x2="612" y2="202" stroke="#7c8593"></line>
+<rect x="96" y="198" width="12" height="4" fill="rgba(232,121,75,0.6)"></rect>
+<rect x="132" y="195" width="12" height="7" fill="rgba(232,121,75,0.7)"></rect>
+<rect x="168" y="192" width="12" height="10" fill="rgba(232,121,75,0.8)"></rect>
+<rect x="204" y="189" width="12" height="13" fill="#e8794b"></rect>
+<line x1="240" y1="178" x2="240" y2="208" stroke="#e8794b" stroke-width="2"></line>
+<text x="248" y="186" fill="#e8794b" font-family="monospace" font-size="10">starts, ends, delisted for good</text>
+<line x1="256" y1="202" x2="612" y2="202" stroke="rgba(120,120,130,0.3)" stroke-dasharray="4 4"></line>
+<text x="80" y="222" fill="#7c8593" font-family="monospace" font-size="10.5">zero interactions at listing · days to weeks · gone before data accumulates</text>
+</svg>
+<figcaption>Fig 1 · Same task, but item lifespans two or three orders of magnitude apart. Video lets time thicken the interaction record; events are delisted before it thickens — so the matrix collaborative filtering depends on is permanently empty here.</figcaption>
+</figure>
+<h2>The core content, properly</h2>
+<h3>Step 1: frame it as ranking — and specifically as pointwise ranking</h3>
+<p>The book frames it as a ranking problem: given a "user × event" pair, predict the <strong>registration probability</strong> <code>P(register | user, event)</code> and sort descending. Labels come for free — impression followed by registration is a 1, impression without one is a 0.</p>
+<p>Learning to rank comes in three training units, differing in how much it looks at per step:</p>
+<ul>
+<li><strong>Pointwise</strong> — one item at a time, which degenerates into ordinary binary classification. Any mature classifier works, and the score means something on its own (it is a probability, so downstream can threshold or budget against it). The cost: it <strong>cannot see the other candidates in the same request</strong>, so it learns absolute preference rather than relative order.</li>
+<li><strong>Pairwise</strong> — one pair at a time, learning only "of these two, which goes first". It optimises order directly; LambdaMART is the representative.</li>
+<li><strong>Listwise</strong> — the whole list at once, optimising a list-level metric such as nDCG directly. Closest to the true objective, and the most expensive.</li>
+</ul>
+<p>The book picks <strong>pointwise</strong> for pragmatic reasons: simplest to implement, easiest labels, reusable score. A criterion worth taking away: <strong>if you care intensely about the order of the top few → pairwise / listwise; if you want engineering simplicity and the score reused elsewhere (billing, thresholds) → pointwise.</strong></p>
+<h3>Step 2: feature engineering — the real body of the chapter</h3>
+<p>Since you cannot ask "who went", you can only ask about this person, this thing, this moment. The book sorts features into four groups, and each group brings out a different encoding technique.</p>
+<p><strong>Location.</strong> Distance between the venue and where the user usually is, same-city or not, walk score, public transit access. The key technique here is to <strong>bucketize and then one-hot — do not feed raw kilometres</strong>. People respond to distance as a cliff, not a slope: 3 km and 5 km are barely different, 5 km and 50 km are different worlds. Closer to the real decision than straight-line distance is <strong>estimated travel time</strong>: 8 km across a river can be further than 15 km within a district.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/geo-system-day19.en.html" rel="noopener" target="_blank">System Design · Day 19 Geo Systems</a> — the location side as engineering: cutting the sphere into cells (geohash / S2), radius queries, and how "find the nearest N" actually works on an index</aside>
+<p><strong>Time.</strong> This group holds the chapter's most characteristic feature: <strong>time remaining until the event starts</strong>. What makes it special is that the same user–event pair must score differently at different moments — thirty days out and two hours out are two different buying mindsets. Alongside it: duration, day of week, hour of day, and the user's historical attendance times. Weekday and hour come with a trap: <strong>they are circular</strong>. Sunday 23:00 and Monday 00:00 are adjacent in life and maximally far apart numerically, so they need one-hot or a cyclical encoding, never a raw number.</p>
+<p><strong>Social — the most valuable column in this chapter.</strong> How many of the user's friends have registered, whether the host is a friend or followed, whether a friend sent a direct invitation, registrations against capacity. Why so strong? Because <strong>attending an event is a social act</strong> — "three friends are going" often decides attendance more than content match does. Asked in an interview which feature matters most, answer social plus time-remaining and you will not be wrong.</p>
+<p><strong>The user and the event itself.</strong> Age, gender (bucketized and one-hot); ticket price (free versus paid conversion often differs by an order of magnitude), category, an embedding of the description text, the organiser's historical conversion rate.</p>
+<p>The encoding toolkit is four items, each for a different problem: <strong>one-hot</strong> for low-cardinality categories; <strong>bucketize + one-hot</strong> for continuous values with a kink; <strong>embeddings</strong> for high-cardinality IDs; <strong>feature crossing</strong> for interaction signal. One example makes crossing obvious: very few people will travel 20 km late on a Wednesday, plenty will on a Saturday afternoon — <strong>neither distance alone nor weekday alone yields that conclusion</strong>, so "distance × weekday" has to be built explicitly.</p>
+<p>And here the short lifespan bites again: <strong>an embedding for the event ID barely trains</strong>, because each ID appears only a few dozen times in its whole life. What does train is the layer above — <strong>organiser ID, venue ID, category</strong> — because those are reused across events and therefore have enough samples.</p>
+<figure>
+<svg viewBox="0 0 640 318" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="c1" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text x="320" y="18" fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle">No interaction history, so encode this user × this event × here and now</text>
+<rect x="5" y="34" width="150" height="66" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect>
+<text x="80" y="53" fill="#e7ebf1" font-size="11" text-anchor="middle">Location</text>
+<text x="80" y="70" fill="#7c8593" font-size="9" text-anchor="middle">distance · same city</text>
+<text x="80" y="86" fill="#7c8593" font-size="9" text-anchor="middle">walk score · travel time</text>
+<rect x="163" y="34" width="150" height="66" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect>
+<text x="238" y="53" fill="#e7ebf1" font-size="11" text-anchor="middle">Time</text>
+<text x="238" y="70" fill="#7c8593" font-size="9" text-anchor="middle">time left until start</text>
+<text x="238" y="86" fill="#7c8593" font-size="9" text-anchor="middle">weekday · hour · duration</text>
+<rect x="321" y="34" width="150" height="66" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="396" y="53" fill="#e7ebf1" font-size="11" text-anchor="middle">Social (strongest)</text>
+<text x="396" y="70" fill="#c3a6ff" font-size="9" text-anchor="middle">friends going · invites</text>
+<text x="396" y="86" fill="#c3a6ff" font-size="9" text-anchor="middle">host ties · fill rate</text>
+<rect x="479" y="34" width="156" height="66" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect>
+<text x="557" y="53" fill="#e7ebf1" font-size="11" text-anchor="middle">User &amp; event itself</text>
+<text x="557" y="70" fill="#7c8593" font-size="9" text-anchor="middle">age · price · category</text>
+<text x="557" y="86" fill="#7c8593" font-size="9" text-anchor="middle">description embedding</text>
+<line x1="80" y1="102" x2="200" y2="128" stroke="#7c8593" marker-end="url(#c1)"></line>
+<line x1="238" y1="102" x2="272" y2="128" stroke="#7c8593" marker-end="url(#c1)"></line>
+<line x1="396" y1="102" x2="366" y2="128" stroke="#7c8593" marker-end="url(#c1)"></line>
+<line x1="557" y1="102" x2="438" y2="128" stroke="#7c8593" marker-end="url(#c1)"></line>
+<rect x="55" y="132" width="530" height="66" rx="6" fill="rgba(91,157,249,0.08)" stroke="#5b9df9"></rect>
+<text x="320" y="151" fill="#8fbaff" font-size="11" text-anchor="middle">The encoding toolkit</text>
+<text x="320" y="170" fill="#b9c0ca" font-size="9.5" text-anchor="middle">low-cardinality category → one-hot   |   continuous with a kink → bucketize + one-hot</text>
+<text x="320" y="187" fill="#b9c0ca" font-size="9.5" text-anchor="middle">high-cardinality ID → embedding   |   interaction signal → feature crossing</text>
+<line x1="320" y1="200" x2="320" y2="216" stroke="#7c8593" marker-end="url(#c1)"></line>
+<rect x="130" y="220" width="380" height="34" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="320" y="241" fill="#e7ebf1" font-size="10.5" text-anchor="middle">Feature vector: tens to hundreds of dims, tabular, heterogeneous, sparse</text>
+<line x1="320" y1="256" x2="320" y2="272" stroke="#7c8593" marker-end="url(#c1)"></line>
+<rect x="175" y="276" width="290" height="38" rx="6" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="320" y="292" fill="#e7ebf1" font-size="11" text-anchor="middle">GBDT ranking model (pointwise)</text>
+<text x="320" y="307" fill="#c3a6ff" font-family="monospace" font-size="9.5" text-anchor="middle">P(register | user, event)</text>
+</svg>
+<figcaption>Fig 2 · The shape of the chapter: four feature groups, four encodings, one tabular vector, one GBDT score. The event-ID embedding never trains; what trains is the reusable layer above it — organiser, venue, category.</figcaption>
+</figure>
+<h3>Step 3: batch features and streaming features — one table, two freshnesses</h3>
+<p>Features split by when they are computed. <strong>Batch features</strong> are precomputed offline and refreshed hourly or daily: the description embedding, the organiser's historical conversion rate, the user's long-term interest profile. <strong>Streaming features</strong> are computed live at request time, within seconds: has a friend just registered, how many tickets are left, how long until it starts, current device and location.</p>
+<p>This chapter cannot avoid streaming features for a blunt reason: <strong>its two strongest features are exactly the ones that change.</strong> Time remaining moves every minute; friends-registered can increment at any moment. A value computed an hour ago is already wrong by the time the user makes the request.</p>
+<p>The engineering cost is that one feature needs two computation paths — historical backfill tables for offline training, a live stream for online serving — and the moment they disagree you have training-serving skew: lovely offline metrics, an inexplicable drop in production.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/feature-platform-day40.en.html" rel="noopener" target="_blank">System Design · Day 40 Feature Platforms and ML Infrastructure</a> — sharing one set of features between training and inference: how leakage happens, the latency budget of an online feature store, backfill and consistency checks</aside>
+<h3>Step 4: model choice and evaluation — why GBDT is the default here</h3>
+<p>Look at what you are holding: tens to hundreds of <strong>hand-built, tabular, mixed categorical-and-numeric, fairly sparse</strong> features. This is <strong>GBDT</strong> home ground — no normalisation needed, non-linearity and interactions learned automatically, steadier than a neural network on small-to-medium data, and <strong>interpretable</strong>: feature importances tell you directly which column is doing the work. That matters especially here, because the features you built <em>are</em> your model.</p>
+<p>The book offers a ladder: <strong>logistic regression</strong> (fast, interpretable, but every cross must be hand-built) → <strong>decision tree</strong> (learns non-linearity, overfits alone) → <strong>GBDT</strong> (the default) → <strong>neural network</strong> (worth it once data is large enough, or when you need text embeddings or continual learning).</p>
+<p>GBDT has two weaknesses, both amplified by this chapter's nature: it is <strong>awkward to update incrementally</strong> (new events arrive daily, yet traditionally the whole model is retrained) and it is <strong>bad with high-cardinality ID embeddings</strong>. So the industrial compromise is usually one of two: GBDT plus <strong>frequent retraining</strong> (daily, even hourly), or GBDT output fed as a feature into a light neural network.</p>
+<p>Evaluation runs on two registers. <strong>Offline</strong>: with positives around <code>1%</code>, <strong>accuracy has to go</strong>, replaced by area under the precision-recall curve for classification quality, and Recall@k / MRR / nDCG for ranking quality — MRR when a request expects a single right answer, nDCG when relevance has grades. <strong>Online</strong>: click-through rate, <strong>registration conversion</strong> (the actual business goal), revenue. And if negatives were downsampled during training, the score must be <strong>calibrated</strong> back to a true probability, or anything downstream involving thresholds, budgets or money will be wrong.</p>
+<h3>Step 5: the serving path — why the first stage is rules, not a model</h3>
+<p>This is the point most easily confused with Ch6. There the first stage was model retrieval — two towers plus approximate nearest neighbours — because a billion videos come with no natural filtering predicate. Here you do not need it: <strong>events are tightly bound in space and time</strong>. "Has not started yet" plus "within the user's radius" cuts 10⁵–10⁶ on-sale events down to a few hundred or a few thousand, and a ranking model swallows that directly.</p>
+<p>So the path is: all on-sale events → <strong>rule filter</strong> → candidates <code>10²–10³</code> → feature assembly (batch + streaming) → ranking model → top-k. <strong>Copying the previous chapter's retrieval layer over is a free layer of complexity</strong> — and a common way to lose points in an interview.</p>
+<p>Finally, <strong>retraining must be frequent</strong>. The inventory turns over daily; seasons, holidays and per-city event density all move. What the model learned last month may not hold this month. That is a direct corollary of short-lived items.</p>
+<figure>
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="c2" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect x="20" y="20" width="280" height="32" rx="6" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"></rect>
+<text x="160" y="41" fill="#e7ebf1" font-size="11" text-anchor="middle">All on-sale events · 10⁵–10⁶</text>
+<line x1="160" y1="54" x2="160" y2="70" stroke="#7c8593" marker-end="url(#c2)"></line>
+<rect x="20" y="74" width="280" height="44" rx="6" fill="rgba(232,121,75,0.12)" stroke="#e8794b"></rect>
+<text x="160" y="93" fill="#e7ebf1" font-size="11" text-anchor="middle">Rule filter (not a model)</text>
+<text x="160" y="109" fill="#e8794b" font-family="monospace" font-size="9" text-anchor="middle">not started · within radius · on sale</text>
+<text x="312" y="92" fill="#e8794b" font-family="monospace" font-size="9.5">time + geo predicates cut ~99%</text>
+<text x="312" y="108" fill="#e8794b" font-family="monospace" font-size="9.5">so no ANN retrieval layer is needed</text>
+<line x1="160" y1="120" x2="160" y2="136" stroke="#7c8593" marker-end="url(#c2)"></line>
+<rect x="50" y="140" width="220" height="30" rx="6" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"></rect>
+<text x="160" y="160" fill="#e7ebf1" font-size="11" text-anchor="middle">Candidates · 10²–10³</text>
+<line x1="160" y1="172" x2="160" y2="188" stroke="#7c8593" marker-end="url(#c2)"></line>
+<rect x="20" y="192" width="280" height="44" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect>
+<text x="160" y="211" fill="#e7ebf1" font-size="11" text-anchor="middle">Feature assembly</text>
+<text x="160" y="227" fill="#8fbaff" font-family="monospace" font-size="9" text-anchor="middle">batch (hours/days) + streaming (seconds)</text>
+<text x="312" y="210" fill="#8fbaff" font-family="monospace" font-size="9.5">time-left and friends-registered</text>
+<text x="312" y="226" fill="#8fbaff" font-family="monospace" font-size="9.5">must be live; a cache is simply wrong</text>
+<line x1="160" y1="238" x2="160" y2="254" stroke="#7c8593" marker-end="url(#c2)"></line>
+<rect x="50" y="258" width="220" height="38" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="160" y="275" fill="#e7ebf1" font-size="11" text-anchor="middle">GBDT scores → top-k</text>
+<text x="160" y="290" fill="#c3a6ff" font-family="monospace" font-size="9" text-anchor="middle">sorted by P(register)</text>
+<text x="312" y="274" fill="#c3a6ff" font-family="monospace" font-size="9.5">inventory turns over daily</text>
+<text x="312" y="290" fill="#c3a6ff" font-family="monospace" font-size="9.5">→ retrain daily, even hourly</text>
+</svg>
+<figcaption>Fig 3 · The serving path. The first stage is rules rather than a model because events are bound in space and time; the two strongest features are inherently streaming; and short-lived inventory turns frequent retraining from an optimisation into a requirement.</figcaption>
+</figure>
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 1 · Video recommendation (Ch6) vs event recommendation (Ch7)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Video recommendation</th><th>Event recommendation</th></tr></thead>
+<tbody>
+<tr><th>Item lifespan</th><td>Months to years; interactions thicken</td><td><strong>Days to weeks; delisted on expiry</strong></td></tr>
+<tr><th>Cold start</th><td>An edge case, covered by popularity</td><td><strong>The steady state</strong>, for every item's whole life</td></tr>
+<tr><th>Main method</th><td>Collaborative + content, two towers</td><td>Collaborative fails; <strong>features only</strong></td></tr>
+<tr><th>First stage</th><td>Model retrieval (two towers + ANN)</td><td><strong>Rule filter</strong> (time + geo radius)</td></tr>
+<tr><th>Strongest signal</th><td>The user's watch history sequence</td><td><strong>Social ties + time left until start</strong></td></tr>
+<tr><th>Retraining</th><td>Daily is fine</td><td>Daily to hourly; <strong>skip it and you drift</strong></td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · The three learning-to-rank paradigms</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Pointwise (the book's pick)</th><th>Pairwise</th><th>Listwise</th></tr></thead>
+<tbody>
+<tr><th>Training unit</th><td>One sample</td><td>One pair</td><td>The whole candidate list</td></tr>
+<tr><th>What it learns</th><td>Absolute preference (probability)</td><td><strong>Relative order</strong></td><td>A list-level metric directly</td></tr>
+<tr><th>Score meaning</th><td><strong>A probability, reusable</strong></td><td>Ordinal only</td><td>Ordinal only</td></tr>
+<tr><th>Engineering cost</th><td>Lowest; any classifier works</td><td>Medium; must build pairs</td><td><strong>Highest</strong></td></tr>
+<tr><th>Weakness</th><td>Blind to the rest of the request</td><td>Pair count explodes</td><td>Slow to train, complex</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 3 · The model ladder: why it stops at GBDT</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Logistic regression</th><th>GBDT (the book's pick)</th><th>Neural network</th></tr></thead>
+<tbody>
+<tr><th>Non-linearity, crosses</th><td><strong>All hand-built</strong></td><td>Learned automatically</td><td>Learned, including high order</td></tr>
+<tr><th>Preprocessing</th><td>Normalise and encode</td><td><strong>Almost none</strong>; eats raw tables</td><td>Normalise; embed categories</td></tr>
+<tr><th>Data needed</th><td>Very little</td><td>Moderate; <strong>steadiest at this size</strong></td><td>A lot</td></tr>
+<tr><th>Interpretability</th><td>Best (read the weights)</td><td>Good (feature importances)</td><td>Poor</td></tr>
+<tr><th>Incremental learning</th><td>Easy</td><td><strong>Awkward; retrain wholesale</strong></td><td>Easy</td></tr>
+<tr><th>High-cardinality IDs</th><td>Cannot cope</td><td>Cannot cope</td><td><strong>Embeddings are its strength</strong></td></tr>
+</tbody></table></div>
+<p>Two practical criteria that are not in any table: <strong>features matter far more than the model</strong> — adding a "friends already registered" column usually beats swapping GBDT for something fancier; and <strong>cold start here is mostly not a modelling problem</strong>, it is handled by rules and product moves: give a new user same-city popular events with high fill rates, and let the first few clicks converge fast.</p>
+<h2>Why it matters / in real systems</h2>
+<p>The shape generalises well beyond events: anywhere <strong>items have an expiry date and start life in cold start</strong>, this chapter applies. Ticketing and events platforms (Meetup, Eventbrite, Facebook Events) are the direct case; further out, limited-time coupons, distressed airline and hotel inventory, live-stream "going live" alerts, "closing soon" job recommendations, same-day restaurant availability — all share one property: the interaction matrix never warms up before the item is gone.</p>
+<p>Interviews press on three places: <strong>why collaborative filtering does not work here</strong> (say "item lifespan" out loud rather than reciting definitions), <strong>which features matter most and why</strong> (social ties and time remaining), and <strong>which offline metric to use</strong> (start by explaining why accuracy is dead).</p>
+<div class="ev">
+<div class="evh">Evidence from the field · these claims are the projects' and teams' own words, not the book's</div>
+<ul>
+<li><strong>Microsoft · LightGBM</strong> states the position of GBDT plainly in its own repository: it is "<strong>a gradient boosting framework that uses tree based learning algorithms</strong>", "used for <strong>ranking, classification and many other machine learning tasks</strong>", with four listed advantages — "Faster training speed and higher efficiency", "Lower memory usage", "Better accuracy", "Capable of handling large-scale data". Exactly why a tabular, heterogeneous, hand-built-feature setting like this chapter picks it. <span class="src"><a href="https://github.com/microsoft/LightGBM" rel="noopener" target="_blank">microsoft/LightGBM · README ↗</a></span></li>
+<li><strong>XGBoost's official "Learning to Rank" tutorial</strong> sets out both this chapter's paradigm choice and its hidden trap: learning-to-rank aims "<strong>to train a model that arranges a set of query results into an ordered list</strong>"; LambdaMART "<strong>is a pairwise ranking model, meaning that it compares the relevance degree for every pair of samples in a query group</strong>". On using click logs as labels it is blunt: "<strong>user clicks are often biased, as users tend to choose results that are displayed in higher positions</strong>" — which is why XGBoost implements Unbiased LambdaMART to debias position-dependent click data. <span class="src"><a href="https://github.com/dmlc/xgboost/blob/master/doc/tutorials/learning_to_rank.rst" rel="noopener" target="_blank">dmlc/xgboost · doc/tutorials/learning_to_rank.rst ↗</a></span></li>
+<li><strong>Google Cloud (2021, Kaz Sato &amp; Anand Iyer)</strong> named and defined the signature failure of this chapter's batch/streaming split: training-serving skew is "<strong>a difference between model performance during training and performance during serving</strong>", one cause being "<strong>a discrepancy between how you handle data in the training and serving pipelines</strong>". Their verdict: it "can sometimes be <strong>as harmful as a P0 bug in your program code</strong>." <span class="src"><a href="https://cloud.google.com/blog/topics/developers-practitioners/monitor-models-training-serving-skew-vertex-ai" rel="noopener" target="_blank">Google Cloud Blog · Monitor models for training-serving skew with Vertex AI, 2021-07-31 ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/recommendation-system-day13.en.html" rel="noopener" target="_blank">System Design · Day 13 Recommendation Systems</a> — the full funnel for long-lived items (a billion candidates down to twenty): read side by side and you see why event recommendation drops the retrieval layer entirely</aside>
+<h2>Common mistakes and open questions</h2>
+<ul>
+<li><strong>Copying the previous chapter's funnel.</strong> Events are bound in space and time; a rule filter already removes 99%, so an ANN retrieval layer on top is pure added complexity.</li>
+<li><strong>Judging a 1%-positive problem by accuracy.</strong> Always predicting "no registration" scores 99%. Use PR-AUC and ranking metrics.</li>
+<li><strong>Feeding distance and age in raw.</strong> Human response to these has kinks; without bucketing the model cannot learn them.</li>
+<li><strong>Treating weekday and hour as ordinary numbers.</strong> They are circular: Sunday 23:00 and Monday 00:00 are adjacent in life and maximally distant numerically.</li>
+<li><strong>Learning an embedding for the event ID.</strong> Each ID appears a few dozen times in its entire life. What does train is the reusable layer: organiser, venue, category.</li>
+<li><strong>Feature leakage across time.</strong> Training on "final total registrations" gives you a feature that simply does not exist at scoring time — the classic "great offline, collapses online" of this chapter.</li>
+<li><strong>The two faces of social features.</strong> The strongest signal is also the strongest bias: it makes crowded events more crowded and leaves niche ones stranded. And whether "which of your friends are going" should even be displayed is a privacy boundary, not just an effectiveness question.</li>
+<li><strong>Period limits.</strong> The book is from 2023, when hand-built features plus GBDT was the settled answer; since then sequence models for behaviour, and large models used to extract features from event descriptions or fill in cold-start profiles, have become live alternatives. <strong>But the constraint — items expire, so there is no history to learn from — does not change</strong>; what changes is how features get built, not whether they must be.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. The goods in this chapter expire: event lifespans are measured in days and interactions are zero at listing, so <strong>cold start is the steady state, not an edge case</strong>.</p>
+<p>2. Collaborative filtering is therefore cut off at the root — the interaction matrix never thickens — leaving only the features of this user × this event × here and now.</p>
+<p>3. Framed as learning to rank, and the book picks <strong>pointwise</strong>: predict <code>P(register | user, event)</code> and sort descending. Simple, labels for free, the score is a reusable probability; the cost is blindness to the rest of the request.</p>
+<p>4. Four feature groups: location, time, social, and the user and event themselves. <strong>The two strongest are social ties and time left until start.</strong></p>
+<p>5. Four encodings: one-hot for low cardinality, bucketize-then-one-hot for kinked continuous values, embeddings for high-cardinality IDs, feature crossing for interaction signal. <strong>Weekday and hour are circular — never raw numbers; and the event-ID embedding never trains, while organiser / venue / category does.</strong></p>
+<p>6. The strongest features happen to be streaming ones (time remaining, friends registered), so batch and streaming paths must both exist — and the moment they disagree you have training-serving skew.</p>
+<p>7. The model stops at <strong>GBDT</strong>: home ground for tabular heterogeneous features, interpretable, steadiest at this data size; its weakness is incremental updating, which frequent retraining covers. Drop accuracy in evaluation, use PR-AUC plus Recall@k / MRR / nDCG, and watch registration conversion online.</p>
+<p>8. The first stage of the serving path is <strong>rules, not a model</strong>: space-time predicates take 10⁵–10⁶ down to 10²–10³, which the ranking model swallows directly.</p>
+</div>
+</div>
+<footer>Books Deep-Read · Reading this page ≈ getting the chapter's core; for the full case study and extensions, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
