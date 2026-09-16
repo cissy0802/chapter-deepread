@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>ML System Design Interview Ch 6 · Video Recommendation System — Books Deep-Read 87</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">Books Deep-Read · ML System Design Interview · Chapter 6</p>
+<h1>Video Recommendation: you think the hard part is guessing right — it's not having the time</h1>
+<p class="sub">Machine Learning System Design Interview · Ch 6 · Ali Aminian &amp; Alex Xu · 2023</p>
+<p class="langbar"><a href="mlsdi-ch06-video-recommendation-book87.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You open a video site and the home page hands you about twenty videos. You probably imagine a machine that knows you well, picking your twenty favourites out of everything it has. This chapter says the real problem is different: <strong>the hard part isn't picking well, it's that there is nowhere near enough time to pick at all</strong>.</p>
+<h2>An analogy first</h2>
+<p>Imagine a city with a billion restaurants. You are hungry, standing at your door, and you need to be told where to eat before you can blink.</p>
+<p>"Try all billion, then rank them" was never on the table — not because the tasting is inaccurate, but because there simply isn't time. So the real method splits into two passes: <strong>first something very fast and a bit crude narrows a billion down to a few hundred plausible ones, then something slow and fussy ranks those few hundred properly.</strong> Almost every design in this chapter grows out of that arithmetic.</p>
+<h2>Why the old world was hard</h2>
+<p>Before you can split the work, you have to answer a simpler question: what makes the system think you'd like something? There were two old answers, each with its own way of dying.</p>
+<ul>
+<li><strong>Look at what you watched and offer more of the same.</strong> You watched three boxing clips, so here's more boxing. The trouble is it can never leave the circle you're already in — you might come to love scuba diving, but it has no reason ever to hand you scuba diving.</li>
+<li><strong>Look at what people with your taste watched.</strong> This one can surprise you, but it leans entirely on someone having watched the thing already. A brand-new member is a blank; a just-uploaded video is a blank. Both ends are empty.</li>
+</ul>
+<p>So real systems run both: the second one does the discovering, the first one covers what the second can't reach.</p>
+<h2>How it manages to be fast enough</h2>
+<p>The trick is doing the work ahead of time. The system precomputes, for every video, a short string of coordinates — roughly, where it sits on a huge map of interests. It computes one for you too: which part of that map you usually hang around in. When you arrive, it does one thing: <strong>find the points on the map near you</strong> — the way you'd find nearby restaurants on a map instead of measuring the distance to every restaurant in town.</p>
+<p>That pass only tries not to miss anything, and leaves about a thousand. Only then does the slow, fussy model rank them properly. Finally there's a review pass: this one isn't licensed in your country, this one is stale, these two are the same clip, all twenty are from the same creator — all removed here.</p>
+<h2>How to think about it</h2>
+<p>The thing worth remembering is that <strong>each layer chases something different</strong>. The first chases "don't drop anything" — what it drops, no amount of later precision can recover. The second chases "get the order right". The third handles the rules you can't teach a model: licensing, freshness, no duplicates, don't be monotonous. Collapsing all three into one layer is the classic beginner's mistake.</p>
+<h2>What it costs</h2>
+<p>The system can only learn from things it has already shown you — anything it never showed you, it will never find out whether you'd have liked, so it keeps recommending an ever-tighter version of who it thought you were yesterday.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p>A recommender's shape isn't set by "how do we get smarter", it's set by <strong>an arithmetic of time</strong>: a billion candidates against a budget shorter than a blink forces the three passes — coarse filter, fine ranking, final review. And its deepest flaw comes from that same shape: it can only learn from what it has already shown.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the notation and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">On the surface this chapter builds a video recommender; underneath it makes two calls. First, <strong>recommendation has to be staged</strong> — not for accuracy but for arithmetic: a billion-item corpus against a few tens of milliseconds means "run the model over every video" was never possible, so a dirt-cheap model cuts a billion down to a thousand (chasing recall), and an expensive one ranks that thousand (chasing precision). Second, <strong>the model has to be able to eat user features</strong> — methods that only know the interaction matrix (matrix factorization) work beautifully on established users and go completely mute on new users and new videos, which are exactly the platform's largest daily increment. <strong>The difficulty isn't the architecture; it's cold start and exposure bias: the system can only learn from what it has already shown.</strong></p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Collaborative filtering</strong>: ignores video content entirely and reads only the "who watched what" table — people with your taste watched X, so here's X.</li>
+<li><strong>Content-based filtering</strong>: reads the video's own attributes (tags, title, language, length) and offers things similar to what you watched.</li>
+<li><strong>Embedding / vector</strong>: compressing a user or a video into a short string of numbers (say 64), such that similar things end up with similar strings.</li>
+<li><strong>Dot product</strong>: the cheapest way to measure how "aligned" two such strings are; bigger means more alike. Recommenders often use it directly as the predicted score.</li>
+<li><strong>Matrix factorization</strong>: splitting the sparse "users × videos" table of feedback into two skinny tables — one row of numbers per user, one per video.</li>
+<li><strong>Two-tower model</strong>: two neural networks, one encoding user features and one encoding video features; relevance is the dot product of the two vectors.</li>
+<li><strong>ANN (approximate nearest neighbour)</strong>: finding the few hundred vectors closest to a query among hundreds of millions, trading "occasionally wrong" for orders of magnitude of speed.</li>
+<li><strong>Retrieval / ranking</strong>: the two halves of a recommender — the first coarsely filters candidates out of the whole corpus, the second orders them precisely.</li>
+<li><strong>Cold start</strong>: a new user has no history and a new video has no views, so the system has nothing to go on.</li>
+<li><strong>Explicit / implicit feedback</strong>: the former is volunteered (likes, ratings) — accurate but extremely sparse; the latter is inferred from behaviour (clicks, watch time) — dense but noisy.</li>
+<li><strong>Exposure / position bias</strong>: training data only covers what the system chose to show; and the same item in slot 1 naturally collects more clicks than in slot 20.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This is the fifth of the ten case studies in Part II, and the book's first <strong>ranking</strong> problem. It follows Ch5 on harmful content detection — there several signals converge into a <em>verdict</em>, here into an <em>ordering</em> — and leads into Ch7 on event recommendation, same skeleton with far heavier feature engineering. In the wild: the YouTube home page, Netflix's row-based home, the TikTok feed.</p>
+<h2>What the chapter is trying to solve</h2>
+<p>The book's setting is a YouTube-scale platform: a corpus in the billions, hundreds of millions of daily users, and a home page that needs a few dozen videos per user. The business objective is <strong>engagement</strong> (not click-through rate — the difference bites later). A home page response budget is typically on the order of <code>100ms</code>, of which recommendation often gets only tens of milliseconds.</p>
+<p>The whole shape of the chapter lives in one sum: <strong>even at 1 microsecond per video, scoring a billion of them takes 1,000 seconds</strong> — and that's for one request from one user. So "score the whole corpus, take the top 20" isn't slow; it doesn't exist.</p>
+<p>The second trap is just as hard: <strong>the training data is produced by the system itself.</strong> Users can only click what they were shown, so the logs contain only what was shown, and a video that was never surfaced never gets a chance to prove itself. Not enough time, and self-generated data — those are the two things this chapter is really up against.</p>
+<h2>The core, properly</h2>
+<h3>Step one: why should it think you'd like this — content-based, collaborative, and why the answer is hybrid</h3>
+<p><strong>Content-based filtering</strong> pairs the video's own attributes with your history and offers "things like what you watched". It has one ability nothing else gives you: <strong>a freshly uploaded, zero-view video can be surfaced the same day as long as it has a title and tags</strong>; niche taste is fine too, because it never requires that someone else be like you. The cost is hand-built features, and worse, it <strong>can't surface a new interest</strong> — it only winds tighter around the circle you're already in. That's the filter bubble.</p>
+<p><strong>Collaborative filtering</strong> is the mirror image: it reads only the "who watched what" table. It needs no domain knowledge, and <strong>it can find interests you couldn't have articulated</strong> — cross-category associations are visible only to it. The cost is cold start: the new user's row is empty, the new video's column is empty, and a large slice of the corpus is cold at any moment.</p>
+<p>So the book picks a <strong>hybrid</strong>, and industry usually wires it <strong>in series</strong> rather than in parallel — collaborative filtering produces candidates and content-based fills in what it can't reach (new videos, cold users, the tail), rather than two rankings being averaged. One judgement to take away: <strong>collaborative filtering does the discovering, content-based does the covering.</strong></p>
+<h3>Step two: from matrix factorization to two towers — why the swap is forced</h3>
+<p><strong>Matrix factorization</strong> is the classic realisation of collaborative filtering. Picture an enormous table: rows are users, columns are videos, cells hold feedback, and 99.99% of the cells are empty. Factorization splits it into two skinny tables — a row of numbers per user, a row per video — and the <strong>dot product</strong> of the two is the predicted score. Training adjusts those two tables so the dot products match the real feedback <em>on the observed cells</em>.</p>
+<p>What goes into a cell is itself a choice. <strong>Explicit feedback</strong> (likes, ratings) is accurate but brutally sparse — most people finish a video and tap nothing. <strong>Implicit feedback</strong> (clicks, watch time) is dense but noisy — a click isn't fondness, and finishing may just mean it was background noise. In practice both are used, weighted differently.</p>
+<p>There's also a training trap the book calls out: <strong>compute the loss only over observed cells and the model learns to recommend everything</strong> — unseen cells were never penalised, so inflating every dot product costs nothing. Unobserved cells must be folded in as zeros (weighted alternating least squares, WALS, is exactly a weighting between the two terms).</p>
+<p>But factorization has one flaw it can't design away: <strong>it only knows IDs.</strong> A new user has no row in the table, so the system knows nothing about them — even when you plainly know they're 25, in Tokyo, and searched for "camping gear" five minutes ago.</p>
+<p>The <strong>two-tower model</strong> replaces "look the ID up in a table" with "let a neural network eat a pile of features and emit a vector". The user tower takes demographics, context (time of day, device) and history (the average of recently watched video vectors); the video tower takes title and tag text vectors, length, language. Each tower emits a vector, the dot product is the relevance score, and training is a binary classification — watched items are positives, randomly sampled ones are negatives. Cold start opens up as a result: <strong>a new user has no history, but the demographic and context paths are still there, so the tower still produces a vector</strong>; likewise for a new video.</p>
+<p>What actually makes two towers deployable, though, is a purely engineering property: <strong>the two towers' inference decouples.</strong> The video tower runs offline over the whole corpus and the vectors go into an ANN index; a live request runs the user tower once and does one vector lookup. The costs: more training data, an index that will "occasionally miss", and features from the two sides that meet only at the final dot product, which limits how much crossing they can express — precisely what the ranking layer exists to repair.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="320" x2="320" y1="10" y2="292"></line>
+<text fill="#7c8593" font-size="12.5" font-weight="700" text-anchor="middle" x="155" y="22">Matrix factorization · IDs only</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="118" x="26" y="38"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="85" y="56">User ID</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="5" stroke="#7c8593" width="118" x="162" y="38"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="221" y="56">Video ID</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="85" x2="85" y1="66" y2="80"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="221" x2="221" y1="66" y2="80"></line>
+<rect fill="rgba(91,157,249,0.14)" height="28" rx="5" stroke="#5b9df9" width="118" x="26" y="84"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="85" y="103">table lookup</text>
+<rect fill="rgba(91,157,249,0.14)" height="28" rx="5" stroke="#5b9df9" width="118" x="162" y="84"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="221" y="103">table lookup</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="85" x2="130" y1="114" y2="136"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="221" x2="176" y1="114" y2="136"></line>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="5" stroke="#5b9df9" width="170" x="68" y="140"></rect>
+<text fill="#8fbaff" font-size="11" text-anchor="middle" x="153" y="158">dot product = score</text>
+<text fill="#e8794b" font-family="monospace" font-size="10" text-anchor="middle" x="155" y="200">New user / new video = no such row</text>
+<text fill="#e8794b" font-family="monospace" font-size="10" text-anchor="middle" x="155" y="220">Attributes and context unusable</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="155" y="244">Upside: trains fast, serves in one dot</text>
+<text fill="#9b6cf5" font-size="12.5" font-weight="700" text-anchor="middle" x="480" y="22">Two-tower · eats features</text>
+<rect fill="rgba(155,108,245,0.1)" height="40" rx="5" stroke="#7c8593" width="124" x="344" y="32"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="406" y="49">User features</text>
+<text fill="#7c8593" font-size="9" text-anchor="middle" x="406" y="64">profile · context · history</text>
+<rect fill="rgba(155,108,245,0.1)" height="40" rx="5" stroke="#7c8593" width="124" x="486" y="32"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="548" y="49">Video features</text>
+<text fill="#7c8593" font-size="9" text-anchor="middle" x="548" y="64">title · tags · length</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="406" x2="406" y1="74" y2="82"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="548" x2="548" y1="74" y2="82"></line>
+<rect fill="rgba(155,108,245,0.2)" height="30" rx="5" stroke="#9b6cf5" stroke-width="2" width="124" x="344" y="86"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="406" y="106">User tower</text>
+<rect fill="rgba(155,108,245,0.2)" height="30" rx="5" stroke="#9b6cf5" stroke-width="2" width="124" x="486" y="86"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="548" y="106">Video tower</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="406" x2="450" y1="118" y2="136"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="548" x2="504" y1="118" y2="136"></line>
+<rect fill="rgba(155,108,245,0.14)" height="26" rx="5" stroke="#9b6cf5" width="190" x="382" y="140"></rect>
+<text fill="#c3a6ff" font-size="11" text-anchor="middle" x="477" y="158">dot product = relevance</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle" x="480" y="200">Video vectors precomputed → ANN index</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle" x="480" y="220">Online: one user tower + one lookup</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="480" y="244">Cost: more data · index can miss</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="480" y="264">Features meet only at the last step</text>
+</svg>
+<figcaption>Fig 1 · Matrix factorization can only look an ID up, and a new user or video has no such row; two towers replace the lookup with encoders so attributes and context get in, and the decoupling lets video vectors be precomputed offline.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/semantic-search-day22.en.html" rel="noopener" target="_blank">AI/ML Explained · Day 22 Semantic Search</a> — the vector-retrieval side: how HNSW and IVF indexes trade recall for latency, and where the recall actually leaks</aside>
+<h3>Step three: two stages — retrieval chases coverage, ranking chases precision</h3>
+<p>Turn that arithmetic into structure and you get the three-layer funnel: <strong>candidate generation → ranking → re-ranking</strong>. Each layer chases something different, and that is the single most useful picture in the chapter.</p>
+<p><strong>Retrieval</strong>: several sources in parallel, each doing one job — a relevance source (two-tower plus ANN), popular and trending sources, new uploads from channels you follow. Each yields hundreds to thousands; merged and deduplicated you're left with about <code>10³</code>. This layer <strong>over-collects rather than under-collects</strong>: what it drops is gone no matter how good the ranker is, while what it over-collects the ranker will clean up. So <strong>you evaluate retrieval with recall, not precision</strong> — using precision here is the most common case of the wrong yardstick.</p>
+<p><strong>Ranking</strong>: with only a thousand candidates left you can finally afford a heavy model, and finally afford what retrieval couldn't — <strong>cross features</strong> between user and video, real-time counters. The objective is one of the chapter's key calls: <strong>optimise engagement (watch time, completion), not click-through rate</strong>. Optimise CTR alone and the system reliably promotes clickbait — the user clicks, bounces after three seconds, the metric goes up and the experience collapses.</p>
+<p><strong>Re-ranking</strong>: three families of filters, all of them constraints you can't write into a model. <strong>Compliance</strong> — region licensing, misinformation, harmful content (last chapter's machinery plugs in right here); <strong>freshness</strong> — demote the stale; <strong>experience</strong> — dedupe near-duplicates, enforce diversity, cap how many items one creator gets on a screen. It gets treated as decoration, but it carries the part of product intent that a loss function can't hold.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 336" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b2" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect fill="rgba(91,157,249,0.1)" height="32" rx="6" stroke="#5b9df9" width="370" x="40" y="34"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="225" y="55">Full corpus · ~1 billion videos</text>
+<text fill="#e8794b" font-family="monospace" font-size="9.5" x="444" y="48">Can't score every item:</text>
+<text fill="#e8794b" font-family="monospace" font-size="9.5" x="444" y="63">1 µs each × 1B ≈ 1,000 s</text>
+<line marker-end="url(#b2)" stroke="#7c8593" x1="225" x2="225" y1="68" y2="80"></line>
+<rect fill="rgba(155,108,245,0.16)" height="34" rx="5" stroke="#9b6cf5" width="118" x="40" y="84"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="99" y="100">Relevance</text>
+<text fill="#c3a6ff" font-family="monospace" font-size="8.5" text-anchor="middle" x="99" y="113">two-tower + ANN</text>
+<rect fill="rgba(155,108,245,0.16)" height="34" rx="5" stroke="#9b6cf5" width="118" x="166" y="84"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="225" y="100">Popular / trending</text>
+<text fill="#c3a6ff" font-family="monospace" font-size="8.5" text-anchor="middle" x="225" y="113">cold-start workhorse</text>
+<rect fill="rgba(155,108,245,0.16)" height="34" rx="5" stroke="#9b6cf5" width="118" x="292" y="84"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="351" y="100">Followed channels</text>
+<text fill="#c3a6ff" font-family="monospace" font-size="8.5" text-anchor="middle" x="351" y="113">strong signal</text>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" x="444" y="96">Retrieval: coverage first</text>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" x="444" y="111">Over-collect; misses are fatal</text>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" x="444" y="126">~10 ms · judged by recall</text>
+<line marker-end="url(#b2)" stroke="#7c8593" x1="99" x2="215" y1="120" y2="140"></line>
+<line marker-end="url(#b2)" stroke="#7c8593" x1="225" x2="225" y1="120" y2="140"></line>
+<line marker-end="url(#b2)" stroke="#7c8593" x1="351" x2="235" y1="120" y2="140"></line>
+<rect fill="rgba(91,157,249,0.1)" height="28" rx="6" stroke="#5b9df9" width="230" x="110" y="144"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="225" y="163">Merge + dedupe · ~1,000 items</text>
+<line marker-end="url(#b2)" stroke="#7c8593" x1="225" x2="225" y1="174" y2="190"></line>
+<rect fill="rgba(91,157,249,0.18)" height="36" rx="6" stroke="#5b9df9" stroke-width="2" width="200" x="125" y="194"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="225" y="211">Heavy ranking model</text>
+<text fill="#8fbaff" font-family="monospace" font-size="8.5" text-anchor="middle" x="225" y="225">user × video cross features</text>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" x="444" y="202">Ranking: precision</text>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" x="444" y="217">Target = engagement, not CTR</text>
+<text fill="#8fbaff" font-family="monospace" font-size="9.5" x="444" y="232">~30 ms</text>
+<line marker-end="url(#b2)" stroke="#7c8593" x1="225" x2="225" y1="234" y2="248"></line>
+<rect fill="rgba(232,121,75,0.12)" height="32" rx="6" stroke="#e8794b" width="160" x="145" y="252"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="225" y="272">Re-rank / filter</text>
+<text fill="#e8794b" font-family="monospace" font-size="9.5" x="444" y="260">Compliance · freshness</text>
+<text fill="#e8794b" font-family="monospace" font-size="9.5" x="444" y="275">Dedupe · diversity · creator caps</text>
+<line marker-end="url(#b2)" stroke="#7c8593" x1="225" x2="225" y1="288" y2="300"></line>
+<rect fill="rgba(91,157,249,0.14)" height="28" rx="6" stroke="#5b9df9" width="130" x="160" y="304"></rect>
+<text fill="#8fbaff" font-size="11" text-anchor="middle" x="225" y="323">Top 20 for the feed</text>
+</svg>
+<figcaption>Fig 2 · The three-layer funnel: a billion → a thousand → a hundred → twenty. Each layer has its own budget, metric and cost of error — a retrieval miss is unrecoverable, ranking must target engagement, re-ranking carries what no loss function can.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/recommendation-system-day13.en.html" rel="noopener" target="_blank">System Design · Day 13 Recommendation Systems</a> — the engineering side of the same funnel: service topology per layer, the feature-fetch path, and how multi-source merging and dedupe are actually built</aside>
+<h3>Features and evaluation: why offline gains don't show up online</h3>
+<p>Features come in three families: <strong>user</strong> (demographics, context such as time of day and device, behaviour history), <strong>video</strong> (ID, length, language, title and tag text vectors, upload time, cumulative views) and <strong>interaction counters</strong>. How does history become a feature a model can eat? Most commonly by <strong>averaging</strong> the vectors of the last N watched videos — crude but strong, at the cost of throwing the order away.</p>
+<p>Evaluation runs on two sets of books. <strong>Offline</strong>: precision@k, mAP, and <strong>diversity</strong> (the mean pairwise similarity of the recommended list — lower is more diverse); the book notes pointedly that diversity alone is meaningless, since recommending random videos maximises it. <strong>Online</strong>: click-through rate, completed videos, total watch time, explicit feedback.</p>
+<p>"Offline up, online flat" is the norm rather than the exception here: <strong>offline metrics are computed on logs produced by the old policy</strong>, and what the new model wants to surface is exactly the part the old policy never showed and the logs never labelled. The only credible judge is an online A/B test.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b3" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle" x="320" y="20">Exposure bias: the training data is the system's own output</text>
+<rect fill="rgba(91,157,249,0.12)" height="42" rx="6" stroke="#5b9df9" width="184" x="46" y="36"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="138" y="62">Model shows what it expects</text>
+<rect fill="rgba(91,157,249,0.12)" height="42" rx="6" stroke="#5b9df9" width="184" x="410" y="36"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="502" y="62">You click only what is shown</text>
+<rect fill="rgba(91,157,249,0.12)" height="42" rx="6" stroke="#5b9df9" width="184" x="410" y="150"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="502" y="176">Logs cover only what was shown</text>
+<rect fill="rgba(91,157,249,0.12)" height="42" rx="6" stroke="#5b9df9" width="184" x="46" y="150"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="138" y="176">Training data = that log</text>
+<line marker-end="url(#b3)" stroke="#9b6cf5" stroke-width="1.5" x1="232" x2="404" y1="57" y2="57"></line>
+<line marker-end="url(#b3)" stroke="#9b6cf5" stroke-width="1.5" x1="502" x2="502" y1="80" y2="146"></line>
+<line marker-end="url(#b3)" stroke="#9b6cf5" stroke-width="1.5" x1="408" x2="236" y1="171" y2="171"></line>
+<line marker-end="url(#b3)" stroke="#9b6cf5" stroke-width="1.5" x1="138" x2="138" y1="148" y2="82"></line>
+<text fill="#e8794b" font-family="monospace" font-size="10" text-anchor="middle" x="320" y="108">A video never shown</text>
+<text fill="#e8794b" font-family="monospace" font-size="10" text-anchor="middle" x="320" y="126">never gets to prove itself</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="320" y="228">Pry it open: exploration traffic + position-bias correction</text>
+</svg>
+<figcaption>Fig 3 · The self-confirming loop: logs only ever cover what the system chose to show, so offline metrics can only circle inside the old policy's field of view.</figcaption>
+</figure>
+<h2>The trade-offs that matter</h2>
+<p class="tcap">Table 1 · Three recommendation paradigms</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Content-based</th><th>Collaborative</th><th>Hybrid (the book's pick)</th></tr></thead>
+<tbody>
+<tr><th>New video</th><td><strong>Servable day one</strong> (metadata suffices)</td><td>Can't serve it (nobody watched)</td><td>Covered by the content-based path</td></tr>
+<tr><th>New user</th><td>Needs a little history</td><td><strong>No answer at all</strong></td><td>Popular / trending + demographics</td></tr>
+<tr><th>New interests</th><td>Weak: circles the existing bubble</td><td><strong>Strong</strong>: only it sees cross-category links</td><td>Supplied by the collaborative path</td></tr>
+<tr><th>Cost</th><td>Hand-built features; filter bubble</td><td>Cold start; sparse tail</td><td>Two systems to build and maintain</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · Retrieval model: matrix factorization vs two towers</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Matrix factorization</th><th>Two-tower (the book's pick)</th></tr></thead>
+<tbody>
+<tr><th>Input</th><td><strong>Interaction matrix only</strong>, ID lookup</td><td>User + video features, encoded to vectors</td></tr>
+<tr><th>Cold start</th><td>New user / video: <strong>goes mute</strong></td><td>Profile and context remain; still emits a vector</td></tr>
+<tr><th>Training</th><td>Fast; WALS or SGD both work</td><td>Slow, and needs notably more data</td></tr>
+<tr><th>Serving</th><td>One dot product, very light</td><td>One user tower + one ANN lookup</td></tr>
+<tr><th>Weakness</th><td>Loss over observed cells only → recommends everything</td><td>Approximate index misses; crossing only at the last step</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 3 · What each funnel layer is actually chasing (the most commonly conflated table)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Retrieval</th><th>Ranking</th><th>Re-ranking</th></tr></thead>
+<tbody>
+<tr><th>Input size</th><td>1B → 10³</td><td>10³ → 10²</td><td>10² → a few dozen</td></tr>
+<tr><th>Chases</th><td><strong>Recall / coverage</strong></td><td><strong>Precision</strong> (engagement estimate)</td><td>Compliance and experience constraints</td></tr>
+<tr><th>Usable features</th><td>Only precomputable, two-side-decoupled ones</td><td>Cross features and live counters both fine</td><td>Rules + business metadata</td></tr>
+<tr><th>Latency budget</th><td>~10 ms</td><td>~30 ms</td><td>single-digit ms</td></tr>
+<tr><th>Failure mode</th><td><strong>A miss is unrecoverable</strong></td><td>Bad order, content still present</td><td>Policy-violating or monotonous screen</td></tr>
+</tbody></table></div>
+<p>One operational judgement isn't in any table: <strong>cold start is mostly a product problem, not a model problem.</strong> New users are carried by popularity plus demographics on the first screen and converge from their first few clicks; new videos enter through metadata and get a slice of exploration traffic to accumulate interactions.</p>
+<h2>Why it matters / in real systems</h2>
+<p>"Multi-source retrieval + ranking + re-ranking" is now the universal shape of every feed product: the YouTube home page, Netflix's row-based home, the TikTok feed, Spotify's Discover Weekly, e-commerce "picked for you" — and even RAG's "coarse vector retrieval, then cross-encoder rerank". Same funnel, different payload. Three interview follow-ups recur: <strong>why can't one model do it end to end</strong> (do the 1,000-second sum out loud), <strong>what goes on a new user's first screen</strong>, and <strong>what to do when offline improves but online doesn't</strong>.</p>
+<div class="ev">
+<div class="evh">Field evidence · these claims are the teams' own public words, not the book's</div>
+<ul>
+<li><strong>Spotify · Annoy</strong> says so in its own README: "We use it at Spotify for music recommendations. <strong>After running matrix factorization algorithms, every user/item can be represented as a vector in f-dimensional space.</strong>" And on why they built their own index: "We have many millions of tracks in a high-dimensional space, so memory usage is a prime concern." <span class="src"><a href="https://github.com/spotify/annoy" rel="noopener" target="_blank">spotify/annoy · README ↗</a></span></li>
+<li><strong>Google Cloud (2023)</strong>, in its official post on two-tower retrieval: "To meet low latency serving requirements, large-scale recommenders are often deployed to production as <strong>multi-stage systems</strong>. The goal of the first stage (candidate retrieval) is to sift through a large (&gt;100M elements) corpus of candidate items and retrieve a relevant subset (<strong>~hundreds</strong>) of items for downstream ranking and filtering tasks." And on the engineering crux: "This decoupling means <strong>all candidate item embeddings can be precomputed</strong>." <span class="src"><a href="https://cloud.google.com/blog/products/ai-machine-learning/scaling-deep-retrieval-tensorflow-two-towers-architecture" rel="noopener" target="_blank">Google Cloud Blog · Scaling deep retrieval with TFRS and Vertex AI Matching Engine, 2023-04-19 ↗</a></span></li>
+<li><strong>Meta · DLRM</strong>'s README states the input shape of an industrial recommender plainly: "The model input consists of <strong>dense and sparse features</strong>. The former is a vector of floating point values. The latter is a list of sparse indices into embedding tables." IDs through embedding tables, profile and counters through the dense path — exactly this chapter, industrialised. <span class="src"><a href="https://github.com/facebookresearch/dlrm" rel="noopener" target="_blank">facebookresearch/dlrm · README ↗</a></span></li>
+<li><strong>YouTube</strong>: the direct ancestor of this chapter's two-stage architecture is Google's "Deep Neural Networks for YouTube Recommendations" (RecSys 2016), which splits the system into candidate generation and ranking and argues for ranking on <em>expected watch time per impression</em> rather than click-through rate. <span class="src">Covington, Adams &amp; Sargin, RecSys 2016 (research.google and the ACM DL are both blocked by the egress proxy; the original text was not verified, so no link is given)</span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/feature-platform-day40.en.html" rel="noopener" target="_blank">System Design · Day 40 Feature Platforms and ML Infrastructure</a> — sharing one set of features between training and inference: leakage, the online store's latency budget, and backfills</aside>
+<h2>Mistakes and open arguments</h2>
+<ul>
+<li><strong>Treating retrieval as "ranking, but smaller".</strong> The objectives, available features and metrics all differ. Judging retrieval by precision is the classic error — its entire job is not to drop things.</li>
+<li><strong>Making CTR the only objective.</strong> It reliably promotes clickbait; but swapping in watch time isn't safe either — watch time favours long videos and is polluted by autoplay. The mainstream answer is a weighted multi-objective head, and the weights are a product decision.</li>
+<li><strong>Ignoring position bias.</strong> The same video in slot 1 versus slot 20 differs several-fold in clicks. Without correction, what the model learns is "things at the top are better" — treating yesterday's ordering as ground truth.</li>
+<li><strong>Treating cold start as a model problem.</strong> It is mostly handled by product means: onboarding interest pickers, popularity carrying the first screen, exploration traffic reserved for new videos.</li>
+<li><strong>Taking offline metrics as the verdict.</strong> Offline evaluation rests on the old policy's logs and is structurally blind to what that policy never showed.</li>
+<li><strong>Period limits.</strong> The book is from 2023; sequence modelling, generative recommendation and using LLMs to patch cold-start features have arrived since, and the hand-assembled two-tower here already looks dated. <strong>The funnel, though, has only got firmer</strong>: it follows from corpus size and latency budget, so whatever model you swap in, you still need it.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① The shape follows from arithmetic: 1B candidates × 1 µs each ≈ 1,000 seconds, so it must be staged — retrieval, ranking, re-ranking.</p>
+<p>② Content-based serves new videos and the tail but is trapped in the filter bubble; collaborative finds new interests but has no answer to cold start. <strong>Collaborative discovers, content-based covers.</strong></p>
+<p>③ Matrix factorization splits a sparse feedback table into two skinny ones with the dot product as the score; a loss over observed cells only makes it "recommend everything", so fold the unobserved in (WALS).</p>
+<p>④ Its fatal flaw is that <strong>it only knows IDs</strong>; two towers replace the lookup with encoders, letting profile and context into the model and opening up cold start.</p>
+<p>⑤ Two towers ship because <strong>the towers decouple</strong>: video vectors are precomputed into an ANN index and a request runs one user tower plus one lookup. Costs: more data, index misses, weak feature crossing.</p>
+<p>⑥ Each layer chases its own thing: retrieval chases <strong>recall</strong> (a miss is unrecoverable), ranking chases precision (target engagement, not CTR), re-ranking holds the constraints no loss function can.</p>
+<p>⑦ Implicit feedback is dense and noisy, explicit is accurate and sparse; in practice mix them and weight them separately.</p>
+<p>⑧ The deepest trap is <strong>exposure bias</strong>: the training data is the system's own output, so offline metrics can only circle inside the old policy's field of view. Exploration traffic, position-bias correction and online A/B are the three standard fittings this chapter leaves you with.</p>
+</div>
+</div>
+<footer>Books Deep-Read · Reading this page ≈ getting the chapter's core; for the full case study and extensions, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
