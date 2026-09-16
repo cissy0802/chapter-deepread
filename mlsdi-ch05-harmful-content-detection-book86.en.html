@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>ML System Design Interview Ch 5 · Harmful Content Detection — Books Deep-Read 86</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">Books Deep-Read · ML System Design Interview · Chapter 5</p>
+<h1>Harmful Content Detection: the image is fine, the caption is fine, together they aren't</h1>
+<p class="sub">Machine Learning System Design Interview · Ch 5 · Ali Aminian &amp; Alex Xu · 2023</p>
+<p class="langbar"><a href="mlsdi-ch05-harmful-content-detection-book86.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You scroll past hundreds of posts a day and almost never run into gore, slurs or scams. That isn't because nobody posts them. It's because <strong>every piece of content passes through an invisible checkpoint before it reaches you</strong>. This chapter is about how that checkpoint is built.</p>
+<h2>Start with something odd</h2>
+<p>There's a kind of content where every piece, taken apart, is spotless. A photo of a skunk — harmless. A line that reads "love the way you smell today" — harmless. Put them together and send them at a person, and it's an insult.</p>
+<p><strong>The malice isn't in the picture or in the words. It's in the join.</strong> So a checkpoint built as "let the picture inspector look, then the text inspector look, and wave it through if both say fine" is structurally blind to this. Half the design in this chapter exists because of that fact.</p>
+<h2>Why the old world struggled</h2>
+<p>Three old approaches, all of them short.</p>
+<ul>
+<li><strong>Wait for user reports.</strong> Reports always arrive after the fact — by the time someone spends the fifteen seconds to file one, thousands have already seen the post. Harm is counted in <em>views</em>, not in posts.</li>
+<li><strong>Keep a banned-words list.</strong> Split the letters, swap in a homophone, or just write the sentence inside the image, and the list is dead. This is a chase where the other side actively dodges.</li>
+<li><strong>Review everything by hand.</strong> A platform with hundreds of millions of daily users takes in new content by the billion each day. Review capacity is a fixed number and hiring cannot close that gap — and staring at this material for a living harms the reviewers themselves.</li>
+</ul>
+<h2>The core mechanism</h2>
+<p>Three moves.</p>
+<ul>
+<li><strong>Combine first, judge second.</strong> Turn the picture and the words each into a string of "impressions", stitch them into one complete impression, and judge <em>that</em> — instead of judging separately and voting at the end. Only then does the skunk-plus-caption malice get a chance to be seen.</li>
+<li><strong>One well-rounded reviewer, not ten specialists.</strong> Violence, nudity, self-harm, hate — rather than training one model per category, train one shared foundation with a dozen small per-category judgements on top. The payoff is concrete: self-harm, a category with very few examples, gets to borrow the foundation the common categories paid for.</li>
+<li><strong>The output isn't yes or no, it's a degree of confidence.</strong> Then act by band: very confident, take it down; unsure, cut its reach and queue it for a person; looks fine, let it through and send a random sample to people anyway. What the reviewers decide becomes new teaching material for the next model.</li>
+</ul>
+<h2>How to think about it</h2>
+<p>The thing that matters isn't how clever the model is. It's <strong>where those two dividing lines get drawn</strong>. Draw them loose and people get hurt; draw them tight and people speaking normally get their posts pulled for nothing. There is no "correct" spot — and different categories belong in different spots: missing one self-harm post and wrongly deleting one rudely-worded one are not the same order of cost.</p>
+<h2>What it costs</h2>
+<p>Handing the least certain band to people ties a fixed-capacity tail to the system: loosen the threshold and the queue explodes, so the content that most needs a human ends up waiting hours.</p>
+<h2>Remember one thing</h2>
+<div class="tl">
+<p>The hard part of harmful content detection isn't "recognising bad things". It's two other things: <strong>information has to be merged early</strong>, because malice often lives only in the combination; and <strong>the model scores, it does not rule</strong> — you leave the least certain band to humans and accept that their capacity is the ceiling of the whole system.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the notation and the diagrams? <a data-mode="deep">→ switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">On the surface this chapter builds a harmful-content classifier. At its core it makes two calls. First, <strong>fusion must happen early</strong>: harm often sits neither in the image nor in the text but in their combination, and any structure that judges each modality separately and then votes is blind to it by construction. Second, <strong>the output must be a score, not a verdict</strong>: on a distribution where positives are a few in a thousand, every single threshold forces a choice between missing harm and deleting legitimate speech, so real systems cut the score into bands and give the least certain band to people. <strong>The difficulty was never the architecture — it's thresholds under a low base rate, and human review capacity.</strong></p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Multimodal</strong>: one item carrying several forms at once — text, image, video. A social post is multimodal by nature.</li>
+<li><strong>Early / late fusion</strong>: the first concatenates per-modality features and then judges once; the second lets each modality judge for itself and merges the conclusions.</li>
+<li><strong>Embedding / vector</strong>: a piece of text or an image squeezed into a string of numbers (say 512); the more alike the content, the closer the strings.</li>
+<li><strong>Multi-label classification</strong>: one item can belong to several categories at once (both violent and hateful), so each category gets its own 0–1 score instead of one exclusive pick.</li>
+<li><strong>Multi-task learning</strong>: several "task heads" sitting on one shared backbone; a single forward pass answers every task, and the tasks share the learned representation.</li>
+<li><strong>Base rate</strong>: the share of positives in the whole population. For harmful content it is often a few in a thousand or less, which distorts many familiar metrics.</li>
+<li><strong>Precision / recall</strong>: the first is "of the items flagged harmful, how many really were" (wrongful deletion); the second is "of all harmful items, how many were caught" (misses).</li>
+<li><strong>ROC-AUC vs PR-AUC</strong>: the areas under two evaluation curves. The first is inflated when the base rate is tiny; the second stares straight at precision.</li>
+<li><strong>Human review queue</strong>: where items the model is unsure about land, to be judged one by one. Its throughput is fixed and is the hard constraint on the whole system.</li>
+<li><strong>Appeal</strong>: the channel by which an author asks for a deletion to be reviewed. The success rate is the direct measure of what wrongful deletion costs.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This is the fourth of the ten case studies in Part II. It follows Ch4, video search — there multimodality served <strong>retrieval</strong> (pinning text and pixels into one space so likeness becomes distance); here it serves <strong>adjudication</strong> (funnelling several signals into one decision). It leads into Ch6, video recommendation. In the real world it maps to every platform's Trust &amp; Safety stack, comment moderation, and the content-safety layer every LLM product now bolts on.</p>
+<h2>What the chapter is solving</h2>
+<p>The book's setting is a social platform with hundreds of millions of daily users taking in new content by the billion per day, where a post can carry text, images, video and links at once. The target is <strong>harmful content</strong> — violence, nudity, self-harm, hate speech and the like. Note that the book carves off a separate problem: <strong>bad actors</strong> (bots, scams, harassment, engagement farming) are a behavioural problem, fought with account graphs and action sequences, and are out of scope here.</p>
+<p>Why does this deserve its own chapter? Because the earlier case studies can all be pushed forward with a better model, and this one cannot. Each old path dies its own death: <strong>user reports arrive after the fact</strong> — cost is counted in reach, not in posts, and a violating video that takes off can reach hundreds of thousands before anyone reports it, while reports themselves are both late and sparse; <strong>banned-word lists cannot survive an adversary</strong> — posters actively evade with split characters, homophones, variant spellings, text baked into images, and every list update changes the evasion; <strong>pure human review does not arithmetically work</strong> — at a billion new items a day, even at two seconds each and forty thousand items per person per day, you would need tens of thousands of reviewers online simultaneously just to keep pace.</p>
+<p>So the real question is: <strong>how do you produce an actionable judgement before content is widely seen, while placing the two errors it will inevitably make — misses and wrongful deletions — where each can be absorbed?</strong></p>
+<h2>The core, properly</h2>
+<h3>First call: early fusion, because the malice lives in the combination</h3>
+<p>A post has text and an image. How do the two meet? <strong>Late fusion</strong> has each judged once and merges the two scores; <strong>early fusion</strong> encodes each modality into a vector, concatenates them into one full feature, and hands it to <em>a single</em> classifier. Late fusion is engineering-seductive — independent training, off-the-shelf models, separate scaling. The book still picks early fusion, for two reasons, the second harder than the first:</p>
+<p>One, <strong>late fusion cannot see cross-modal malice</strong>. Content whose image is fine and whose text is fine and which is harmful only jointly — the industry calls these <em>benign confounders</em> — returns a low score on both paths, and a low score after merging. This is not a weak model; it is a <strong>structural blind spot</strong>: each path has already been squeezed into a scalar before the two can meet.</p>
+<p>Two, <strong>labels are not per-modality</strong>. Annotation yields "this post violated these policies", never a per-modality label. Late fusion requires an independently trainable classifier per modality, which requires you to manufacture a whole extra per-modality annotation set — an expense that simply does not pencil out at a billion items a day.</p>
+<p>Early fusion's costs are real too: the interaction space is large, so it <strong>needs meaningfully more training data to learn at all</strong>; you forfeit the dividend of off-the-shelf per-modality classifiers; and when a modality is missing the concatenated feature still has to be filled with defaults.</p>
+<figure>
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line x1="320" y1="10" x2="320" y2="290" stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4"></line>
+<text x="150" y="22" fill="#7c8593" font-size="12.5" font-weight="700" text-anchor="middle">Late fusion · judge separately</text>
+<rect x="18" y="38" width="122" height="26" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="79" y="56" fill="#b9c0ca" font-size="10.5" text-anchor="middle">Image: a skunk</text>
+<rect x="158" y="38" width="128" height="26" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="222" y="56" fill="#b9c0ca" font-size="10.5" text-anchor="middle">Text: "smell great"</text>
+<line x1="79" y1="66" x2="79" y2="72" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="222" y1="66" x2="222" y2="72" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="18" y="76" width="122" height="28" rx="5" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="79" y="95" fill="#e7ebf1" font-size="10.5" text-anchor="middle">Image model</text>
+<rect x="158" y="76" width="128" height="28" rx="5" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="222" y="95" fill="#e7ebf1" font-size="10.5" text-anchor="middle">Text model</text>
+<line x1="79" y1="106" x2="79" y2="112" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="222" y1="106" x2="222" y2="112" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="18" y="116" width="122" height="24" rx="5" fill="rgba(255,255,255,0.03)" stroke="rgba(120,120,130,0.4)"></rect>
+<text x="79" y="133" fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle">benign 0.06</text>
+<rect x="158" y="116" width="128" height="24" rx="5" fill="rgba(255,255,255,0.03)" stroke="rgba(120,120,130,0.4)"></rect>
+<text x="222" y="133" fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle">benign 0.09</text>
+<line x1="79" y1="142" x2="128" y2="164" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="222" y1="142" x2="172" y2="164" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="50" y="168" width="200" height="26" rx="5" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect>
+<text x="150" y="186" fill="#e7ebf1" font-size="10.5" text-anchor="middle">merge the two scores</text>
+<line x1="150" y1="196" x2="150" y2="218" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="50" y="222" width="200" height="26" rx="5" fill="rgba(232,121,75,0.1)" stroke="#e8794b"></rect>
+<text x="150" y="240" fill="#e8794b" font-size="10.5" text-anchor="middle">verdict: allow (a miss)</text>
+<text x="150" y="270" fill="#7c8593" font-size="10" text-anchor="middle">the paths meet only as scalars</text>
+<text x="150" y="288" fill="#7c8593" font-size="10" text-anchor="middle">the joint malice is already gone</text>
+<text x="478" y="22" fill="#9b6cf5" font-size="12.5" font-weight="700" text-anchor="middle">Early fusion · merge, then judge</text>
+<rect x="348" y="38" width="122" height="26" rx="5" fill="rgba(155,108,245,0.1)" stroke="#7c8593"></rect>
+<text x="409" y="56" fill="#b9c0ca" font-size="10.5" text-anchor="middle">Image: a skunk</text>
+<rect x="484" y="38" width="128" height="26" rx="5" fill="rgba(155,108,245,0.1)" stroke="#7c8593"></rect>
+<text x="548" y="56" fill="#b9c0ca" font-size="10.5" text-anchor="middle">Text: "smell great"</text>
+<line x1="409" y1="66" x2="409" y2="72" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="548" y1="66" x2="548" y2="72" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="348" y="76" width="122" height="28" rx="5" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"></rect>
+<text x="409" y="95" fill="#e7ebf1" font-size="10.5" text-anchor="middle">image encoder</text>
+<rect x="484" y="76" width="128" height="28" rx="5" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"></rect>
+<text x="548" y="95" fill="#e7ebf1" font-size="10.5" text-anchor="middle">text encoder</text>
+<line x1="409" y1="106" x2="409" y2="112" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="548" y1="106" x2="548" y2="112" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="348" y="116" width="122" height="24" rx="5" fill="rgba(255,255,255,0.03)" stroke="rgba(120,120,130,0.4)"></rect>
+<text x="409" y="133" fill="#c3a6ff" font-family="monospace" font-size="10" text-anchor="middle">vector</text>
+<rect x="484" y="116" width="128" height="24" rx="5" fill="rgba(255,255,255,0.03)" stroke="rgba(120,120,130,0.4)"></rect>
+<text x="548" y="133" fill="#c3a6ff" font-family="monospace" font-size="10" text-anchor="middle">vector</text>
+<line x1="409" y1="142" x2="452" y2="164" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="548" y1="142" x2="505" y2="164" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="368" y="168" width="212" height="26" rx="5" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5"></rect>
+<text x="474" y="186" fill="#e7ebf1" font-size="10.5" text-anchor="middle">concatenate → one classifier</text>
+<line x1="474" y1="196" x2="474" y2="218" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="368" y="222" width="212" height="26" rx="5" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="474" y="240" fill="#8fbaff" font-size="10.5" text-anchor="middle">verdict: hate 0.91 (caught)</text>
+<text x="474" y="270" fill="#7c8593" font-size="10" text-anchor="middle">the paths meet before compression</text>
+<text x="474" y="288" fill="#7c8593" font-size="10" text-anchor="middle">cost: harder to learn, more data</text>
+</svg>
+<figcaption>Fig 1 · A benign confounder: image fine, text fine, combination harmful. Late fusion merges only after each path is a scalar, so this malice is lost by construction; early fusion concatenates before compression and keeps the interaction.</figcaption>
+</figure>
+<h3>Second call: multi-task learning, not one model per category</h3>
+<p>What you're blocking isn't one kind of content but a set of policies — violence, nudity, self-harm, hate speech — and one item can violate <strong>several at once</strong>. Four shapes, eliminated in order:</p>
+<ul>
+<li><strong>A single binary classifier (harmful / not)</strong>. Cheapest, but it gives one score and cannot say which policy. That's a defect, not a UX quibble: <strong>with no category you cannot set per-category thresholds, tell the author why, or run an appeals process</strong>.</li>
+<li><strong>One binary classifier per category</strong>. It names the category, at the price of N trainings, deployments and monitors — and worse, rare categories fight alone: self-harm may have on the order of one percent of the positives violence has, and cannot be fed on its own.</li>
+<li><strong>A single multi-label classifier</strong>: one model, one output per category. Cheap, but one shared representation must serve wildly different tasks.</li>
+<li><strong>Multi-task learning</strong>: a shared backbone learns a general representation, with one task head per category on top. <strong>The book's choice.</strong></li>
+</ul>
+<p>Multi-task wins in three places, the third most useful in practice: <strong>data efficiency</strong> — rare categories borrow the representation the common ones paid for, exactly what "one model per category" cannot provide; <strong>serving cost</strong> — one forward pass yields every category's score; <strong>each head can set its own threshold</strong> — cost structures differ by orders of magnitude across categories, and missing a self-harm post should not share a line with deleting a rudely-worded one. The price: tasks can drag on each other (negative transfer), and changing one policy means retraining the whole backbone.</p>
+<figure>
+<svg viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line x1="320" y1="10" x2="320" y2="240" stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4"></line>
+<text x="150" y="22" fill="#7c8593" font-size="12.5" font-weight="700" text-anchor="middle">One model per category</text>
+<rect x="18" y="98" width="82" height="30" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="59" y="118" fill="#b9c0ca" font-size="10.5" text-anchor="middle">post</text>
+<line x1="102" y1="110" x2="138" y2="58" stroke="#7c8593" marker-end="url(#a2)"></line>
+<line x1="102" y1="113" x2="138" y2="113" stroke="#7c8593" marker-end="url(#a2)"></line>
+<line x1="102" y1="118" x2="138" y2="168" stroke="#7c8593" marker-end="url(#a2)"></line>
+<rect x="142" y="42" width="136" height="28" rx="5" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="210" y="61" fill="#e7ebf1" font-size="10.5" text-anchor="middle">violence model</text>
+<rect x="142" y="99" width="136" height="28" rx="5" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="210" y="118" fill="#e7ebf1" font-size="10.5" text-anchor="middle">nudity model</text>
+<rect x="142" y="156" width="136" height="28" rx="5" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="210" y="175" fill="#e7ebf1" font-size="10.5" text-anchor="middle">self-harm model</text>
+<text x="150" y="212" fill="#e8794b" font-family="monospace" font-size="10" text-anchor="middle">N trainings · N rollouts · N monitors</text>
+<text x="150" y="232" fill="#e8794b" font-family="monospace" font-size="10" text-anchor="middle">rare categories starve on their own</text>
+<text x="478" y="22" fill="#9b6cf5" font-size="12.5" font-weight="700" text-anchor="middle">Multi-task · shared backbone + heads</text>
+<rect x="334" y="98" width="70" height="30" rx="5" fill="rgba(155,108,245,0.1)" stroke="#7c8593"></rect>
+<text x="369" y="118" fill="#b9c0ca" font-size="10.5" text-anchor="middle">post</text>
+<line x1="406" y1="113" x2="424" y2="113" stroke="#7c8593" marker-end="url(#a2)"></line>
+<rect x="428" y="92" width="96" height="42" rx="6" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="476" y="109" fill="#e7ebf1" font-size="10.5" text-anchor="middle">shared backbone</text>
+<text x="476" y="126" fill="#c3a6ff" font-family="monospace" font-size="9" text-anchor="middle">general representation</text>
+<line x1="526" y1="105" x2="544" y2="60" stroke="#7c8593" marker-end="url(#a2)"></line>
+<line x1="526" y1="113" x2="544" y2="113" stroke="#7c8593" marker-end="url(#a2)"></line>
+<line x1="526" y1="122" x2="544" y2="166" stroke="#7c8593" marker-end="url(#a2)"></line>
+<rect x="548" y="44" width="78" height="26" rx="5" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"></rect>
+<text x="587" y="62" fill="#e7ebf1" font-size="9.5" text-anchor="middle">violence head</text>
+<rect x="548" y="100" width="78" height="26" rx="5" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"></rect>
+<text x="587" y="118" fill="#e7ebf1" font-size="9.5" text-anchor="middle">nudity head</text>
+<rect x="548" y="156" width="78" height="26" rx="5" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"></rect>
+<text x="587" y="174" fill="#e7ebf1" font-size="9.5" text-anchor="middle">self-harm head</text>
+<text x="478" y="212" fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle">one pass yields every category score</text>
+<text x="478" y="232" fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle">each head sets its own threshold</text>
+</svg>
+<figcaption>Fig 2 · Multi-task learning: the shared backbone lets rare categories borrow what common ones paid for, while the heads keep per-category thresholds. The price is negative transfer, and one policy change means retraining the backbone.</figcaption>
+</figure>
+<h3>Features: the other half of the signal</h3>
+<p>The book splits features three ways, and interviewees routinely drop the last two whole:</p>
+<ul>
+<li><strong>Content features</strong>: text through a BERT-family encoder, and the book specifically calls for a <strong>multilingual</strong> variant — the platform is global, and a model trained only on English collapses on low-resource languages; images through a pretrained visual encoder, video sampled into frames first.</li>
+<li><strong>Author features</strong>: prior violations, account age, follower count. An account registered three days ago with two takedowns already has nothing in common, as a prior, with a ten-year-old one.</li>
+<li><strong>Context features</strong>: views, shares, report count, comment text. <strong>Report count is the strongest single feature and the most dangerous one</strong> — it can be brigaded, and it is late by nature. It can be a feature; it must never be a trigger.</li>
+</ul>
+<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/fairness-bias-day51.en.html" target="_blank" rel="noopener">AI/ML · Day 51 Fairness, Bias and Debiasing</a> — how a model amplifies bias that was already in the labels, and how to run sliced evaluation</aside>
+<h3>Evaluation: why you have to watch the PR curve</h3>
+<p>Every evaluation difficulty here comes from one fact: <strong>the base rate is tiny</strong>. Run the arithmetic. Suppose a million posts contain a thousand genuine violations (base rate <code>0.1%</code>). A classifier with 99% recall and a 1% false-positive rate — which sounds formidable — recovers 990 true ones while wrongly hitting about 9,990 ordinary posts. <strong>Precision is under 10%</strong>: nine of every ten deletions are wrongful.</p>
+<p>And its ROC-AUC will look gorgeous: the ROC's x-axis is the false-positive rate, so hitting 1% of 990,000 negatives moves it by 0.01. <strong>Under a low base rate ROC-AUC systematically flatters the model</strong>; the curve to read is PR, whose y-axis is precision itself.</p>
+<p>Online, the yardsticks change. The three worth memorising: <strong>prevalence</strong> (harmful content's share of <em>impressions</em>, not of posts — counting views is what matches the real distribution of harm), <strong>proactive rate</strong> (the share caught before any user report), and <strong>valid appeals</strong> (the share of removals successfully appealed, the only directly observable measure of what wrongful deletion costs).</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/low-base-rate-alerting-day51.en.html" target="_blank" rel="noopener">System Design · Day 51 Alerting Under a Low Base Rate</a> — the same arithmetic on the alerting side: why an accurate detector still drowns in false positives, and how review capacity back-solves the threshold</aside>
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 1 · Where fusion happens</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Late fusion</th><th>Early fusion</th></tr></thead>
+<tbody>
+<tr><th>Structure</th><td>one classifier per modality → merge scores</td><td>encode each → concatenate → one classifier</td></tr>
+<tr><th>Convenience</th><td><strong>High</strong>: train/scale separately, reuse off-the-shelf</td><td>Low: trained as a whole, one change moves everything</td></tr>
+<tr><th>Labels needed</th><td><strong>per-modality labels</strong> (which don't exist)</td><td>post-level labels (which is what you have)</td></tr>
+<tr><th>Fatal flaw</th><td><strong>Blind to cross-modal malice</strong>, silently</td><td>Large interaction space, needs far more data</td></tr>
+<tr><th>Fits</th><td>categories damning in one modality alone</td><td><strong>the chapter's default</strong></td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · Four model shapes</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Shape</th><th>What it yields</th><th>Cost / why it loses</th></tr></thead>
+<tbody>
+<tr><th>Single binary</th><td>one harm score</td><td>can't name the policy → no per-category thresholds, no explanation, no appeals</td></tr>
+<tr><th>Binary per category</th><td>per-category scores</td><td>N trainings / rollouts / monitors; <strong>rare categories starve</strong></td></tr>
+<tr><th>Single multi-label</th><td>all scores in one pass</td><td>cheap, but one shared representation spread over very different tasks</td></tr>
+<tr><th><strong>Multi-task</strong></th><td>shared representation + one head each</td><td><strong>the book's pick</strong>; price is negative transfer and backbone retrains</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 3 · From score to action (band → handling → who pays)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Band</th><th>Handling</th><th>Where the cost lands</th></tr></thead>
+<tbody>
+<tr><th>High</th><td>auto-remove + tell the author which policy</td><td><strong>Wrongful deletion</strong>: generates appeals, hits legitimate speech</td></tr>
+<tr><th>Middle</th><td>demote reach + enqueue for human review</td><td><strong>Review capacity</strong>: loosen the threshold and the queue explodes; delay is harm</td></tr>
+<tr><th>Low</th><td>allow + a small random sample to review</td><td><strong>Misses</strong>: sampling is the only way to learn what this band let through</td></tr>
+</tbody></table></div>
+<p>One more operational rule beyond the three bands: <strong>the review queue should be ordered by score × projected reach, not by score</strong>. A 0.72 video currently taking off deserves a human before a 0.88 post nobody is seeing — cost is counted in reach.</p>
+<figure>
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text x="320" y="22" fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle">Model output: a 0–1 confidence per category</text>
+<rect x="60" y="36" width="240" height="26" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect>
+<rect x="300" y="36" width="180" height="26" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"></rect>
+<rect x="480" y="36" width="100" height="26" fill="rgba(232,121,75,0.18)" stroke="#e8794b"></rect>
+<text x="60" y="78" fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle">0</text>
+<text x="300" y="78" fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle">threshold A</text>
+<text x="480" y="78" fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle">threshold B</text>
+<text x="580" y="78" fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle">1</text>
+<line x1="180" y1="86" x2="180" y2="106" stroke="#7c8593" marker-end="url(#a3)"></line>
+<line x1="390" y1="86" x2="390" y2="106" stroke="#7c8593" marker-end="url(#a3)"></line>
+<line x1="530" y1="86" x2="530" y2="106" stroke="#7c8593" marker-end="url(#a3)"></line>
+<rect x="60" y="110" width="240" height="44" rx="6" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"></rect>
+<text x="180" y="130" fill="#e7ebf1" font-size="10.5" text-anchor="middle">allow + random sample to review</text>
+<text x="180" y="147" fill="#7c8593" font-family="monospace" font-size="9" text-anchor="middle">cost: misses</text>
+<rect x="300" y="110" width="180" height="44" rx="6" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5"></rect>
+<text x="390" y="130" fill="#e7ebf1" font-size="10.5" text-anchor="middle">demote + enqueue</text>
+<text x="390" y="147" fill="#7c8593" font-family="monospace" font-size="9" text-anchor="middle">cost: review capacity</text>
+<rect x="480" y="110" width="100" height="44" rx="6" fill="rgba(232,121,75,0.1)" stroke="#e8794b"></rect>
+<text x="530" y="130" fill="#e7ebf1" font-size="10.5" text-anchor="middle">auto-remove</text>
+<text x="530" y="147" fill="#7c8593" font-family="monospace" font-size="9" text-anchor="middle">cost: wrong deletes</text>
+<line x1="390" y1="156" x2="350" y2="186" stroke="#7c8593" marker-end="url(#a3)"></line>
+<line x1="530" y1="156" x2="530" y2="186" stroke="#7c8593" marker-end="url(#a3)"></line>
+<rect x="232" y="190" width="192" height="30" rx="6" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="328" y="210" fill="#e7ebf1" font-size="10.5" text-anchor="middle">human review (fixed capacity)</text>
+<rect x="452" y="190" width="138" height="30" rx="6" fill="rgba(232,121,75,0.1)" stroke="#e8794b"></rect>
+<text x="521" y="210" fill="#e7ebf1" font-size="10.5" text-anchor="middle">user appeal</text>
+<line x1="450" y1="205" x2="428" y2="205" stroke="#7c8593" marker-end="url(#a3)"></line>
+<line x1="328" y1="222" x2="328" y2="240" stroke="#7c8593" marker-end="url(#a3)"></line>
+<rect x="178" y="244" width="300" height="30" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect>
+<text x="328" y="264" fill="#8fbaff" font-size="10.5" text-anchor="middle">decisions flow back as labels → next retrain</text>
+<text x="320" y="292" fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle">queue ordered by score × projected reach, not by score</text>
+</svg>
+<figcaption>Fig 3 · Bands and handling: the model only scores; the action comes from the thresholds. Each band hands one kind of error to whoever can absorb it, and review decisions flow back as training data.</figcaption>
+</figure>
+<h2>Why it matters / in real systems</h2>
+<p>"Multimodal early fusion + multi-task + score bands + review feedback" is the shape of every platform's Trust &amp; Safety stack today, and it was lifted wholesale into the content-safety layer of LLM products — one pass on the input, another on the output, likewise multi-category scoring rather than a blanket refusal. Interviews probe three spots: <strong>why not late fusion</strong> (the structural blind spot, plus labels that only exist at post level), <strong>why an ROC-AUC of 0.99 doesn't ship</strong> (base rate one in a thousand, precision possibly under 10%), and <strong>how the review queue is ordered</strong> (by score × reach).</p>
+<div class="ev">
+<div class="evh">Evidence from the field · not the book's claims, these teams' own</div>
+<ul>
+<li><strong>Meta AI (FAIR) · MMF</strong> describes itself as "a modular framework for vision and language multimodal research from Facebook AI Research", and says it "also acts as starter codebase for challenges around vision and language datasets (The Hateful Memes, TextVQA, TextCaps and VQA challenges)" — <strong>Facebook ran a public challenge and shipped a framework specifically for the cross-modal adjudication problem, which is itself an endorsement of this chapter's first call</strong>. <span class="src"><a href="https://github.com/facebookresearch/mmf" target="_blank" rel="noopener">facebookresearch/mmf · README ↗</a></span></li>
+<li><strong>OpenAI · Moderation</strong> publishes an evaluation dataset that cuts content into eight categories — sexual, hate, violence, harassment, self-harm, sexual/minors, hate/threatening, violence/graphic — noting that "the category label is a binary flag" — <strong>the industrial form of exactly the reason this chapter eliminates the single binary classifier: you must score per category before per-category thresholds or explanations are even possible</strong>. <span class="src"><a href="https://github.com/openai/moderation-api-release" target="_blank" rel="noopener">openai/moderation-api-release · README ↗</a> (paper: A Holistic Approach to Undesired Content Detection, 2022)</span></li>
+<li><strong>Google Jigsaw · Perspective API</strong> calls itself "a free API that helps you host better conversations online", whose models "score the perceived impact a comment might have on a conversation" — <strong>note the output is defined as a score, and explicitly of <em>perceived</em> impact, not a ruling that the comment is harmful; the action and the threshold are left to the platform. Exactly this chapter's "the model scores, it does not rule"</strong>. <span class="src"><a href="https://github.com/conversationai/perspectiveapi" target="_blank" rel="noopener">conversationai/perspectiveapi · README ↗</a></span></li>
+<li><strong>YouTube</strong> has long published two quantities isomorphic to this chapter's online metrics in its Community Guidelines Enforcement Report: the <strong>violative view rate</strong> and the <strong>share first detected by automated systems</strong>; the Q4 2022 report states that of the 5.6 million-plus videos removed that quarter, over 94% were first detected automatically. <span class="src">YouTube Community Guidelines Enforcement Report · Q4 2022 (the egress proxy blocked that page this run, so the wording was not re-verified and no link is given)</span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/privacy-compliance-day43.en.html" target="_blank" rel="noopener">System Design · Day 43 Privacy and Compliance Architecture</a> — enforcement records, appeal audit trails and cross-jurisdiction policy differences, down to the data model and retention rules</aside>
+<h2>Pitfalls and disputes</h2>
+<ul>
+<li><strong>Reporting ROC-AUC.</strong> At a base rate of one in a thousand, a model with ROC-AUC 0.99 can still be wrong on nine of every ten deletions. Once the base rate is low, report PR-AUC and precision at a stated recall.</li>
+<li><strong>Treating human review as a backstop rather than a bottleneck.</strong> Review capacity is a fixed number, and it <strong>back-solves</strong> how wide the middle band may be: compute how many items a day people can clear, then derive the threshold — not the reverse.</li>
+<li><strong>Forgetting this is adversarial.</strong> A recommender's distribution drifts slowly; harmful content's distribution is <em>pushed</em> by an opponent, and probing starts the day you ship. Continuous retraining, adversarial mining and review feedback are routine operations here.</li>
+<li><strong>Assuming labels are objective.</strong> What counts as hate speech has no cross-cultural, cross-jurisdiction consensus, and inter-annotator agreement is low to begin with. Label quality caps model accuracy, and bias in the labels gets amplified onto particular groups — sliced evaluation (by language, by region) is mandatory, not a bonus.</li>
+<li><strong>Dated in places.</strong> The book is from 2023; since then multimodal foundation models and "let a large model be the moderator" have become the new route, and the hand-assembled encoder stack here looks old. <strong>The skeleton, though, has only firmed up</strong>: bands, human backstop, feedback, ordering by reach — all determined by the cost structure rather than model capability, and required whatever model you swap in.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① Two things at the core: information must be fused early, and the output must be a score rather than a verdict.</p>
+<p>② The problem: reports are after the fact, word lists cannot survive an adversary, and pure human review does not arithmetically work at a billion items a day — while cost is counted in reach.</p>
+<p>③ Early vs late fusion: benign confounders (image fine, text fine, combination harmful) are a <strong>structural blind spot</strong> for late fusion; and labels exist only at post level, so per-modality classifiers cannot even be trained. The price is needing far more data.</p>
+<p>④ Multi-task &gt; per-category models &gt; a single binary: the shared backbone lets rare categories borrow common ones' data, one pass yields all scores, and <strong>each head still sets its own threshold</strong>.</p>
+<p>⑤ Features aren't only content: author violation history and account age, plus views/shares/reports and comments, are strong signals; <strong>report count is a feature, never a trigger</strong>.</p>
+<p>⑥ Be able to do the low-base-rate arithmetic on the spot: base rate <code>0.1%</code>, recall 99%, FPR 1% → precision under 10%. Hence PR, not ROC.</p>
+<p>⑦ Three online metrics: prevalence (by impressions), proactive rate (how far ahead of reports you run), valid appeals (the cost of wrongful deletion).</p>
+<p>⑧ Three bands: high → auto-remove (cost: wrongful deletion), middle → demote and enqueue (cost: review capacity), low → allow and sample (cost: misses); order the queue by <strong>score × projected reach</strong>, and let review capacity back-solve the thresholds.</p>
+</div>
+</div>
+<footer>Books Deep-Read · read this page ≈ get the chapter's core; for the full case and extensions, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

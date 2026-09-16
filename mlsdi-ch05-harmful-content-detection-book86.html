@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>ML 系统设计面试 第 5 章 · 有害内容检测 — 专业书籍精读 Book 86</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · ML System Design Interview · 第 5 章</p>
+<h1>有害内容检测：图没问题、字也没问题，合起来才有问题</h1>
+<p class="sub">Machine Learning System Design Interview · Ch 5 · Ali Aminian &amp; Alex Xu · 2023</p>
+<p class="langbar"><a href="mlsdi-ch05-harmful-content-detection-book86.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你每天在社交平台上刷过成百上千条内容，几乎不会撞见血腥、辱骂或诈骗。这不是因为没人发，是因为<strong>每一条内容在送到你眼前之前，都过了一道看不见的安检</strong>。这一章讲的就是这道安检怎么造。</p>
+<h2>先说个怪事</h2>
+<p>有一类内容，把它拆开看，每一块都干干净净。一张臭鼬的照片——没问题。一句「今天你身上的味道真好闻」——也没问题。可这两样贴在一起发给一个人，就是一次羞辱。</p>
+<p><strong>恶意不在图里，也不在字里，在两者的拼接里。</strong>所以一台「先让看图的人看一眼、再让看字的人看一眼、两人都说没事就放行」的安检机，对这类内容是彻底的睁眼瞎。这一章一半的设计，都是被这个事实逼出来的。</p>
+<h2>旧世界为什么难</h2>
+<p>过去靠三样东西，三样都不够。</p>
+<ul>
+<li><strong>等用户举报。</strong>举报永远是事后的——等有人肯花那十几秒点举报，内容早被成千上万人看过。伤害是按「被看了多少次」算的，不是按「有几条」算的。</li>
+<li><strong>列一张违禁词表。</strong>发的人把字拆开、换成谐音、或者干脆把话写进图片里，词表立刻失效。这是一场对方会主动躲的追逐战。</li>
+<li><strong>全靠人审。</strong>数亿人用的平台每天新增内容按十亿条计，人审产能是固定的，招人补不上这个量级；何况长期看这些东西，对审核员本身就是伤害。</li>
+</ul>
+<h2>核心机制：它是怎么做到的</h2>
+<p>三步。</p>
+<ul>
+<li><strong>先合起来，再判断。</strong>把图和字各自翻译成一串「感觉」，先拼成一份完整的印象，再拿这份印象去判断——而不是各判各的、最后投票。这样「臭鼬 + 那句话」的恶意才有机会被看见。</li>
+<li><strong>一个见多识广的审核员，而不是十个专员。</strong>暴力、色情、自残、仇恨……不给每一类各训一个模型，而是训一个共用的底子，上面接十来个各管一类的小判断。好处很实在：自残这类样本极少的品类，能蹭到常见品类练出来的底子。</li>
+<li><strong>输出的不是「是」或「否」，是一个把握程度。</strong>再按把握分三档办：很有把握的直接下架；拿不准的先降曝光、同时排队等人来看；看着没事的放行，另外随机抽一点送人工检查。人看完的结论回头变成新教材，喂给下一版模型。</li>
+</ul>
+<h2>该怎么看这套做法</h2>
+<p>关键不在模型多聪明，在<strong>那两条分档线画在哪</strong>。往松了画，有人受到伤害；往紧了画，正常说话的人被无故删帖。这条线没有「正确」的位置——而且不同类别该画在不同地方：漏掉一条自残内容和误删一条措辞粗鲁的帖子，代价根本不是一个量级。</p>
+<h2>这套做法的代价</h2>
+<p>把最不确定的那一档交给人，等于给系统绑了一条产能固定的尾巴：阈值一松，队列就爆，最该被人看的那些内容反而排到了几小时之后。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>有害内容检测真正难的不是「认出坏东西」，而是两件事：<strong>信息必须早合并</strong>——因为恶意常常只存在于图与字的组合里；<strong>模型只出分、不下判决</strong>——把最没把握的那一档留给人，并接受人的产能就是这套系统的上限。</p>
+</div>
+<p class="switch-hint">想进到具体机制、记号和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">这一章表面是「做一个有害内容识别器」，内核是两个判断。其一，<strong>融合必须早做</strong>：有害往往不在图里也不在字里，而在两者的组合里，任何「各模态先各判一次再投票」的结构从原理上就看不见它。其二，<strong>输出必须是分数而不是判决</strong>：在正样本只占千分之几的分布上，任何一根阈值都是在「漏掉伤害」和「误删正常言论」之间硬选一边，所以真实系统把分数切成几档，把最不确定的那一档交给人。<strong>难点从来不在模型结构，在低底率下的阈值与人审产能。</strong></p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>多模态（multimodal）</strong>：一条数据同时带好几种形态——文字、图片、视频。社交平台的帖子天生就是多模态的。</li>
+<li><strong>早期融合 / 晚期融合（early / late fusion）</strong>：前者把各模态特征先拼成一条再统一判断；后者让各模态各判各的，最后合并结论。</li>
+<li><strong>嵌入 / 向量（embedding）</strong>：把一段文字或一张图压成一串数（如 512 个），内容越像两串数越接近。</li>
+<li><strong>多标签分类（multi-label）</strong>：一条内容可同时属于多个类别（既是暴力又是仇恨），所以每类各给一个 0–1 的分，而不是互斥地选一个。</li>
+<li><strong>多任务学习（multi-task learning）</strong>：一个共享骨干上接多个「任务头」，一次前向给出多个任务的答案，任务之间共享学到的表示。</li>
+<li><strong>底率（base rate）</strong>：正样本在总量里占的比例。有害内容的底率常在千分之几甚至更低，会让很多常用指标失真。</li>
+<li><strong>精确率 / 召回率（precision / recall）</strong>：前者是「判为有害的里面真有害的比例」（对应误删），后者是「所有有害的里面被抓到的比例」（对应漏检）。</li>
+<li><strong>ROC-AUC 与 PR-AUC</strong>：两条评价曲线下的面积。前者在底率极低时会虚高，后者直接盯住精确率。</li>
+<li><strong>人审队列（human review queue）</strong>：模型拿不准的内容排进来、由人工逐条判定。吞吐固定，是整套系统的硬约束。</li>
+<li><strong>申诉（appeal）</strong>：内容被删后作者请求复核的通道。成功率是误删代价的直接度量。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>本章是《ML 系统设计面试》Part II 十道真题的第 4 道。上承 Ch4 视频搜索——那里多模态是为了<strong>检索</strong>（把文字和画面钉进同一个空间好比距离），这里是为了<strong>判定</strong>（把多路信号汇成一个决策）；下启 Ch6 视频推荐。现实对应各大平台的 Trust &amp; Safety 系统、评论区治理，以及今天每个大模型产品都要挂的那层内容安全过滤。</p>
+<h2>这章要解决什么</h2>
+<p>书设定的场景是一个数亿日活的社交平台，每天新增内容按十亿条计，帖子可同时含文字、图片、视频和外链。要挡的是暴力、色情裸露、自残、仇恨言论等若干类<strong>有害内容</strong>——注意书把它和另一个问题切开了：<strong>坏账号</strong>（机器人、诈骗、骚扰、刷量）是行为层面的问题，靠账号图谱与行为序列来打，不在本章范围。</p>
+<p>为什么值得单独一章？因为前面几题都能靠「更好的模型」往前推，这一题不能。三条旧路各有各的死法：<strong>用户举报是事后的</strong>——代价按触达算不按条数算，一条爆起来的违规视频在被举报前就可能触达几十万人，而举报本身既滞后又稀疏；<strong>违禁词表挡不住对抗</strong>——发布方会主动规避（拆字、谐音、变体拼写、把话写进图片里），词表每更新一次规避方式就变一次；<strong>纯人工的产能算不过来</strong>——十亿量级的日增内容，就算每条只看两秒、一人一天不吃不睡看四万条，也要几万人同时在线才追得平。</p>
+<p>所以这一章真正要回答的是：<strong>怎么在内容被大量看到之前给出一个可行动的判断，同时把它必然会犯的两类错误——漏检与误删——分别安置到能承受它们的地方去。</strong></p>
+<h2>核心内容，讲透</h2>
+<h3>第一个决定：早期融合，因为恶意藏在组合里</h3>
+<p>一条帖子有文字也有图，两条信息怎么汇到一起？<strong>晚期融合</strong>是文本、图像各判一次，最后合并两个分数；<strong>早期融合</strong>是各模态先编码成向量、拼接成一条完整特征，再交给<em>一个</em>分类器。晚期融合工程上诱人——可独立训练、复用现成模型、分别扩容。书仍选早期融合，两条理由，第二条更硬：</p>
+<p>第一，<strong>晚期融合看不见跨模态的恶意</strong>。图无害、字无害、合起来才有害的内容（业界叫「良性混淆样本」，benign confounder），在晚期融合里两路都返回低分，合并之后仍是低分。这不是模型不够强，是<strong>结构性盲区</strong>——信息在能相遇之前，就已经各自被压成一个标量了。</p>
+<p>第二，<strong>标签根本不是按模态打的</strong>。标注给出的是「这条帖子违反了哪几条政策」，没有分模态的标签。晚期融合要求每个模态各有一个能独立训练的分类器，也就要求额外造一份分模态标注——这笔账在十亿量级上压根不成立。</p>
+<p>早期融合的代价也要认：交互空间大，<strong>要明显更多训练数据才学得动</strong>；吃不到各模态现成分类器的红利；某条模态缺失时整条特征还要补默认值。</p>
+<figure>
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line x1="320" y1="10" x2="320" y2="290" stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4"></line>
+<text x="158" y="22" fill="#7c8593" font-size="12.5" font-weight="700" text-anchor="middle">晚期融合 · 各判各的</text>
+<rect x="22" y="38" width="120" height="26" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="82" y="56" fill="#b9c0ca" font-size="11" text-anchor="middle">图：一只臭鼬</text>
+<rect x="158" y="38" width="120" height="26" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="218" y="56" fill="#b9c0ca" font-size="11" text-anchor="middle">字：味道真好闻</text>
+<line x1="82" y1="66" x2="82" y2="72" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="218" y1="66" x2="218" y2="72" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="22" y="76" width="120" height="28" rx="5" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="82" y="95" fill="#e7ebf1" font-size="11" text-anchor="middle">图像模型</text>
+<rect x="158" y="76" width="120" height="28" rx="5" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="218" y="95" fill="#e7ebf1" font-size="11" text-anchor="middle">文本模型</text>
+<line x1="82" y1="106" x2="82" y2="112" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="218" y1="106" x2="218" y2="112" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="22" y="116" width="120" height="24" rx="5" fill="rgba(255,255,255,0.03)" stroke="rgba(120,120,130,0.4)"></rect>
+<text x="82" y="133" fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle">无害 0.06</text>
+<rect x="158" y="116" width="120" height="24" rx="5" fill="rgba(255,255,255,0.03)" stroke="rgba(120,120,130,0.4)"></rect>
+<text x="218" y="133" fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle">无害 0.09</text>
+<line x1="82" y1="142" x2="130" y2="164" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="218" y1="142" x2="170" y2="164" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="52" y="168" width="196" height="26" rx="5" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect>
+<text x="150" y="186" fill="#e7ebf1" font-size="11" text-anchor="middle">合并两个分数</text>
+<line x1="150" y1="196" x2="150" y2="218" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="52" y="222" width="196" height="26" rx="5" fill="rgba(232,121,75,0.1)" stroke="#e8794b"></rect>
+<text x="150" y="240" fill="#e8794b" font-size="11" text-anchor="middle">结论：放行（漏）</text>
+<text x="150" y="270" fill="#7c8593" font-size="10.5" text-anchor="middle">两路各自压成一个标量后才相遇</text>
+<text x="150" y="288" fill="#7c8593" font-size="10.5" text-anchor="middle">组合里的恶意再也找不回来</text>
+<text x="482" y="22" fill="#9b6cf5" font-size="12.5" font-weight="700" text-anchor="middle">早期融合 · 先合再判</text>
+<rect x="346" y="38" width="120" height="26" rx="5" fill="rgba(155,108,245,0.1)" stroke="#7c8593"></rect>
+<text x="406" y="56" fill="#b9c0ca" font-size="11" text-anchor="middle">图：一只臭鼬</text>
+<rect x="482" y="38" width="120" height="26" rx="5" fill="rgba(155,108,245,0.1)" stroke="#7c8593"></rect>
+<text x="542" y="56" fill="#b9c0ca" font-size="11" text-anchor="middle">字：味道真好闻</text>
+<line x1="406" y1="66" x2="406" y2="72" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="542" y1="66" x2="542" y2="72" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="346" y="76" width="120" height="28" rx="5" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"></rect>
+<text x="406" y="95" fill="#e7ebf1" font-size="11" text-anchor="middle">图像编码器</text>
+<rect x="482" y="76" width="120" height="28" rx="5" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"></rect>
+<text x="542" y="95" fill="#e7ebf1" font-size="11" text-anchor="middle">文本编码器</text>
+<line x1="406" y1="106" x2="406" y2="112" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="542" y1="106" x2="542" y2="112" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="346" y="116" width="120" height="24" rx="5" fill="rgba(255,255,255,0.03)" stroke="rgba(120,120,130,0.4)"></rect>
+<text x="406" y="133" fill="#c3a6ff" font-family="monospace" font-size="10.5" text-anchor="middle">向量</text>
+<rect x="482" y="116" width="120" height="24" rx="5" fill="rgba(255,255,255,0.03)" stroke="rgba(120,120,130,0.4)"></rect>
+<text x="542" y="133" fill="#c3a6ff" font-family="monospace" font-size="10.5" text-anchor="middle">向量</text>
+<line x1="406" y1="142" x2="450" y2="164" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="542" y1="142" x2="498" y2="164" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="376" y="168" width="196" height="26" rx="5" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5"></rect>
+<text x="474" y="186" fill="#e7ebf1" font-size="11" text-anchor="middle">拼接成一条特征 → 一个分类器</text>
+<line x1="474" y1="196" x2="474" y2="218" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="376" y="222" width="196" height="26" rx="5" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="474" y="240" fill="#8fbaff" font-size="11" text-anchor="middle">结论：仇恨 0.91（抓到）</text>
+<text x="474" y="270" fill="#7c8593" font-size="10.5" text-anchor="middle">两路在压缩之前就相遇</text>
+<text x="474" y="288" fill="#7c8593" font-size="10.5" text-anchor="middle">代价：更难学、要更多数据</text>
+</svg>
+<figcaption>图 1 · 良性混淆样本：图无害、字无害、组合有害。晚期融合在两路各自压成标量之后才合并，这类恶意从结构上就丢失了；早期融合在压缩前拼接，才留得住交互。</figcaption>
+</figure>
+<h3>第二个决定：多任务学习，而不是每类一个模型</h3>
+<p>要挡的不是一类内容，是一组政策：暴力、裸露、自残、仇恨言论……而且一条内容可以<strong>同时</strong>违反好几条。四种形态，书按序淘汰：</p>
+<ul>
+<li><strong>单个二分类器（有害 / 无害）</strong>。最省事，但只给一个分、说不出违了哪条。这是硬伤不是体验问题：<strong>没有类别，就没法分类定阈值、没法告诉作者原因、没法接申诉</strong>。</li>
+<li><strong>每类一个二分类器</strong>。能说出类别，代价是 N 份训练、上线与监控；更糟的是罕见类各自为战——自残这类的正样本量可能只有暴力类的百分之一量级，单独训喂不饱。</li>
+<li><strong>单个多标签分类器</strong>：一个模型、每类一个输出。便宜，但一份共享表示要同时服务差异极大的若干任务。</li>
+<li><strong>多任务学习</strong>：共享骨干学通用表示，上面每类接一个任务头。<strong>书的选择。</strong></li>
+</ul>
+<p>多任务赢在三处，第三处最实用：<strong>数据效率</strong>——罕见类蹭到常见类练出来的表示，正是「每类一个模型」补不上的那块；<strong>服务成本</strong>——一次前向出全部类别的分；<strong>每个头可以独立定阈值</strong>——不同品类的代价结构差着数量级，漏掉一条自残内容和误删一条措辞粗鲁的帖子不该共用一根线。代价是任务间可能负迁移，且改一类政策要重训整个骨干。</p>
+<figure>
+<svg viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line x1="320" y1="10" x2="320" y2="240" stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4"></line>
+<text x="155" y="22" fill="#7c8593" font-size="12.5" font-weight="700" text-anchor="middle">每类一个模型</text>
+<rect x="20" y="98" width="86" height="30" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect>
+<text x="63" y="118" fill="#b9c0ca" font-size="11" text-anchor="middle">帖子</text>
+<line x1="108" y1="110" x2="142" y2="58" stroke="#7c8593" marker-end="url(#a2)"></line>
+<line x1="108" y1="113" x2="142" y2="113" stroke="#7c8593" marker-end="url(#a2)"></line>
+<line x1="108" y1="118" x2="142" y2="168" stroke="#7c8593" marker-end="url(#a2)"></line>
+<rect x="146" y="42" width="128" height="28" rx="5" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="210" y="61" fill="#e7ebf1" font-size="11" text-anchor="middle">暴力模型</text>
+<rect x="146" y="99" width="128" height="28" rx="5" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="210" y="118" fill="#e7ebf1" font-size="11" text-anchor="middle">裸露模型</text>
+<rect x="146" y="156" width="128" height="28" rx="5" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="210" y="175" fill="#e7ebf1" font-size="11" text-anchor="middle">自残模型</text>
+<text x="155" y="212" fill="#e8794b" font-family="monospace" font-size="10.5" text-anchor="middle">N 份训练 · N 份上线 · N 份监控</text>
+<text x="155" y="232" fill="#e8794b" font-family="monospace" font-size="10.5" text-anchor="middle">罕见类各自为战，数据喂不饱</text>
+<text x="482" y="22" fill="#9b6cf5" font-size="12.5" font-weight="700" text-anchor="middle">多任务 · 共享骨干 + 多头</text>
+<rect x="336" y="98" width="72" height="30" rx="5" fill="rgba(155,108,245,0.1)" stroke="#7c8593"></rect>
+<text x="372" y="118" fill="#b9c0ca" font-size="11" text-anchor="middle">帖子</text>
+<line x1="410" y1="113" x2="428" y2="113" stroke="#7c8593" marker-end="url(#a2)"></line>
+<rect x="432" y="92" width="92" height="42" rx="6" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="478" y="109" fill="#e7ebf1" font-size="11" text-anchor="middle">共享骨干</text>
+<text x="478" y="126" fill="#c3a6ff" font-family="monospace" font-size="9.5" text-anchor="middle">通用表示</text>
+<line x1="526" y1="105" x2="544" y2="60" stroke="#7c8593" marker-end="url(#a2)"></line>
+<line x1="526" y1="113" x2="544" y2="113" stroke="#7c8593" marker-end="url(#a2)"></line>
+<line x1="526" y1="122" x2="544" y2="166" stroke="#7c8593" marker-end="url(#a2)"></line>
+<rect x="548" y="44" width="76" height="26" rx="5" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"></rect>
+<text x="586" y="62" fill="#e7ebf1" font-size="10.5" text-anchor="middle">暴力头</text>
+<rect x="548" y="100" width="76" height="26" rx="5" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"></rect>
+<text x="586" y="118" fill="#e7ebf1" font-size="10.5" text-anchor="middle">裸露头</text>
+<rect x="548" y="156" width="76" height="26" rx="5" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"></rect>
+<text x="586" y="174" fill="#e7ebf1" font-size="10.5" text-anchor="middle">自残头</text>
+<text x="482" y="212" fill="#8fbaff" font-family="monospace" font-size="10.5" text-anchor="middle">一次前向出全部类别的分</text>
+<text x="482" y="232" fill="#8fbaff" font-family="monospace" font-size="10.5" text-anchor="middle">每个头可以独立定阈值</text>
+</svg>
+<figcaption>图 2 · 多任务学习：共享骨干让罕见品类蹭到常见品类练出来的表示，任务头让每一类保有自己的阈值；代价是任务间可能负迁移，改一类政策要重训整个骨干。</figcaption>
+</figure>
+<h3>特征：模型之外的那一半信号</h3>
+<p>书把特征分三类，后两类常被面试者整块漏掉：</p>
+<ul>
+<li><strong>内容特征</strong>：文本走 BERT 系编码器，书特别点明要用<strong>多语言</strong>版本——平台是全球的，只在英文上训的模型换到低资源语言会直接塌；图像走预训练视觉编码器，视频先抽帧再编码。</li>
+<li><strong>作者特征</strong>：历史违规次数、账号注册时长、粉丝数。三天前注册、已被删过两次的账号，先验和十年老号完全不同。</li>
+<li><strong>上下文特征</strong>：浏览数、分享数、举报数、评论区文本。<strong>举报数是最强的一路，也是最危险的一路</strong>——可被有组织地刷起来，且天生滞后。它只能当特征，绝不能当触发器。</li>
+</ul>
+<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/fairness-bias-day51.html" target="_blank" rel="noopener">AI/ML 详解 · Day 51 公平、偏见与去偏</a> — 标签本身带偏见时模型会怎样放大它，以及分群评估该怎么做</aside>
+<h3>评估：为什么必须盯 PR 曲线</h3>
+<p>评估的全部困难来自同一件事：<strong>底率极低</strong>。算一遍就清楚。假设 100 万条帖子里有 1000 条真违规（底率 <code>0.1%</code>），一个召回率 99%、假阳性率 1% 的分类器——听起来相当能打——实际捞回 990 条真的，同时误伤约 9990 条正常帖。<strong>精确率不到 10%</strong>：每删十条，九条是冤枉的。</p>
+<p>而它的 ROC-AUC 会非常漂亮：ROC 的横轴是假阳性率，99 万条负样本被 1% 误伤，横轴上才挪动 0.01。<strong>低底率下 ROC-AUC 会系统性高估模型</strong>，该看的是 PR 曲线——纵轴直接就是精确率。</p>
+<p>线上换一套口径，书给的三个最该记住：<strong>违规触达率</strong>（prevalence，有害内容的<em>展示次数</em>占总展示的比例——按被看见多少次算而不是按条数算，才对得上伤害的真实分布）、<strong>主动发现率</strong>（proactive rate，在用户举报之前就被系统发现的比例）、<strong>有效申诉率</strong>（被删内容里申诉成功的比例，误删代价唯一可直接观测的量）。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/low-base-rate-alerting-day51.html" target="_blank" rel="noopener">System Design · Day 51 低底率下的告警系统</a> — 同一道算术在告警侧的样子：为什么高准确率的检测器仍会被误报淹没，以及复审产能怎么倒推阈值</aside>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 1 · 融合发生在哪一层</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>晚期融合 · 各判各的</th><th>早期融合 · 先拼再判</th></tr></thead>
+<tbody>
+<tr><th>结构</th><td>每模态一个分类器 → 合并分数</td><td>每模态编码成向量 → 拼接 → 一个分类器</td></tr>
+<tr><th>工程便利</th><td><strong>高</strong>：独立训练 / 扩容，复用现成模型</td><td>低：整体训练，改一处牵全身</td></tr>
+<tr><th>标签要求</th><td>要<strong>分模态标签</strong>（现实中没有）</td><td>只要帖子级标签（现实中就是这个）</td></tr>
+<tr><th>致命短板</th><td><strong>看不见跨模态恶意</strong>，且不报错</td><td>交互空间大，要更多数据才学得动</td></tr>
+<tr><th>适用</th><td>各模态独立成罪的品类</td><td><strong>本章的默认选择</strong></td></tr>
+</tbody></table></div>
+<p class="tcap">表 2 · 四种模型形态</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>形态</th><th>能给出什么</th><th>代价 / 为什么被淘汰</th></tr></thead>
+<tbody>
+<tr><th>单个二分类</th><td>一个有害分</td><td>说不出违了哪条 → 无法分类定阈值、解释、接申诉</td></tr>
+<tr><th>每类一个二分类</th><td>逐类的分</td><td>N 份训练 / 上线 / 监控；<strong>罕见类各自数据不够</strong></td></tr>
+<tr><th>单个多标签</th><td>一次出全部类别的分</td><td>便宜，但一份共享表示摊给差异极大的任务</td></tr>
+<tr><th><strong>多任务</strong></th><td>共享表示 + 每类一个头</td><td><strong>书的选择</strong>；代价是负迁移、改一类要重训骨干</td></tr>
+</tbody></table></div>
+<p class="tcap">表 3 · 分数怎么变成动作（阈值带 → 处置 → 谁付代价）</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>分数带</th><th>处置</th><th>这一档的代价落在谁身上</th></tr></thead>
+<tbody>
+<tr><th>很高</th><td>自动删除 + 通知作者违了哪条</td><td><strong>误删</strong>：直接生成申诉，伤的是正常表达</td></tr>
+<tr><th>中间</th><td>限制分发（降权）+ 进人审队列</td><td><strong>人审产能</strong>：阈值一松队列就爆，延迟即伤害</td></tr>
+<tr><th>很低</th><td>放行 + 少量随机抽样送审</td><td><strong>漏检</strong>：抽样是唯一能发现这一档漏了什么的手段</td></tr>
+</tbody></table></div>
+<p>三档之外还有一条实操判据：<strong>人审队列不该按分数排，该按「分数 × 预计触达」排</strong>。一条 0.72 分但正在爆的视频，比一条 0.88 分却没人看的帖子更该先被人看到——代价是按触达算的。</p>
+<figure>
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text x="320" y="22" fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle">模型输出：每个类别一个 0–1 的把握分</text>
+<rect x="60" y="36" width="240" height="26" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect>
+<rect x="300" y="36" width="180" height="26" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"></rect>
+<rect x="480" y="36" width="100" height="26" fill="rgba(232,121,75,0.18)" stroke="#e8794b"></rect>
+<text x="60" y="78" fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle">0</text>
+<text x="300" y="78" fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle">阈值 A</text>
+<text x="480" y="78" fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle">阈值 B</text>
+<text x="580" y="78" fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle">1</text>
+<line x1="180" y1="86" x2="180" y2="106" stroke="#7c8593" marker-end="url(#a3)"></line>
+<line x1="390" y1="86" x2="390" y2="106" stroke="#7c8593" marker-end="url(#a3)"></line>
+<line x1="530" y1="86" x2="530" y2="106" stroke="#7c8593" marker-end="url(#a3)"></line>
+<rect x="60" y="110" width="240" height="44" rx="6" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"></rect>
+<text x="180" y="130" fill="#e7ebf1" font-size="11" text-anchor="middle">放行 + 随机抽样送审</text>
+<text x="180" y="147" fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle">代价：漏检</text>
+<rect x="300" y="110" width="180" height="44" rx="6" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5"></rect>
+<text x="390" y="130" fill="#e7ebf1" font-size="11" text-anchor="middle">降权 + 排队人审</text>
+<text x="390" y="147" fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle">代价：人审产能</text>
+<rect x="480" y="110" width="100" height="44" rx="6" fill="rgba(232,121,75,0.1)" stroke="#e8794b"></rect>
+<text x="530" y="130" fill="#e7ebf1" font-size="11" text-anchor="middle">自动删除</text>
+<text x="530" y="147" fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle">代价：误删</text>
+<line x1="390" y1="156" x2="350" y2="186" stroke="#7c8593" marker-end="url(#a3)"></line>
+<line x1="530" y1="156" x2="530" y2="186" stroke="#7c8593" marker-end="url(#a3)"></line>
+<rect x="240" y="190" width="180" height="30" rx="6" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="330" y="210" fill="#e7ebf1" font-size="11" text-anchor="middle">人工复审（产能固定）</text>
+<rect x="450" y="190" width="140" height="30" rx="6" fill="rgba(232,121,75,0.1)" stroke="#e8794b"></rect>
+<text x="520" y="210" fill="#e7ebf1" font-size="11" text-anchor="middle">用户申诉</text>
+<line x1="448" y1="205" x2="424" y2="205" stroke="#7c8593" marker-end="url(#a3)"></line>
+<line x1="330" y1="222" x2="330" y2="240" stroke="#7c8593" marker-end="url(#a3)"></line>
+<rect x="190" y="244" width="280" height="30" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect>
+<text x="330" y="264" fill="#8fbaff" font-size="11" text-anchor="middle">复审结论回流成新标注 → 下一轮重训</text>
+<text x="320" y="292" fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle">队列按「分数 × 预计触达」排序，而不是纯按分数</text>
+</svg>
+<figcaption>图 3 · 分数分档与处置：模型只出分，动作由阈值带决定；三档各把一种错误交给能承受它的一方，人审结论回流成下一轮的训练数据。</figcaption>
+</figure>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>「多模态早融合 + 多任务 + 分数分档 + 人审回流」这套骨架，今天就是各大平台 Trust &amp; Safety 系统的通用形状，也被整段搬进了大模型产品的内容安全层——输入过一遍、输出再过一遍，同样是多类别打分而非一刀切拒绝。面试高频追问三处：<strong>为什么不用晚期融合</strong>（跨模态恶意的结构性盲区，加上标签本来只打在帖子级）、<strong>ROC-AUC 0.99 为什么不敢上线</strong>（底率千分之一，精确率可能不到 10%）、<strong>人审队列怎么排</strong>（按分数 × 触达）。</p>
+<div class="ev">
+<div class="evh">大厂实证 · 这些主张不是书里说的，是团队自己公开说的</div>
+<ul>
+<li><strong>Meta AI（FAIR）· MMF</strong> 官方自述是「一个用于视觉与语言多模态研究的模块化框架」，并称它「同时作为若干视觉—语言数据集挑战赛的起步代码库（The Hateful Memes、TextVQA、TextCaps 与 VQA）」——<strong>Facebook 专门为「仇恨模因」这一跨模态判定问题办公开挑战赛并配了框架，本身就是对本章第一个决定的背书</strong>。<span class="src"><a href="https://github.com/facebookresearch/mmf" target="_blank" rel="noopener">facebookresearch/mmf · README ↗</a></span></li>
+<li><strong>OpenAI · Moderation</strong> 公开的评测数据集把内容切成八类：sexual、hate、violence、harassment、self-harm、sexual/minors、hate/threatening、violence/graphic，并说明「类别标签是一个二元标志」——<strong>这正是本章淘汰「单个二分类」那条理由的工业形态：必须逐类出分，才谈得上分类定阈值与解释</strong>。<span class="src"><a href="https://github.com/openai/moderation-api-release" target="_blank" rel="noopener">openai/moderation-api-release · README ↗</a>（配套论文 A Holistic Approach to Undesired Content Detection, 2022）</span></li>
+<li><strong>Google Jigsaw · Perspective API</strong> 自述为「一个免费 API，帮助你在线上主持更好的对话」，其模型「给一条评论可能对对话造成的<em>感知影响</em>打分」——<strong>输出被明确定义成一个「感知到的」影响分，而不是「这条有害」的判定，处置与阈值留给平台，与本章「模型只出分、不下判决」完全一致</strong>。<span class="src"><a href="https://github.com/conversationai/perspectiveapi" target="_blank" rel="noopener">conversationai/perspectiveapi · README ↗</a></span></li>
+<li><strong>YouTube</strong> 在《社区准则执行报告》里长期公布两个与本章线上指标同构的量：<strong>违规观看率</strong>（violative view rate）与<strong>被自动系统首先发现的比例</strong>；2022 年第四季度报告称当季移除的逾 560 万条视频中超过 94% 由自动系统首先发现。<span class="src">YouTube Community Guidelines Enforcement Report · 2022 Q4（出口代理拦下了该页，未核验原文，故不附链接）</span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/privacy-compliance-day43.html" target="_blank" rel="noopener">System Design · Day 43 隐私与合规架构</a> — 处置记录、申诉留痕与跨法域的政策差异，怎么落到数据模型与保留策略上</aside>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>拿 ROC-AUC 汇报效果。</strong>千分之一的底率上，ROC-AUC 0.99 的模型完全可能每删十条冤枉九条。底率一低，就该报 PR-AUC 和给定召回下的精确率。</li>
+<li><strong>把人审当兜底，而不是当瓶颈。</strong>复审产能是个固定的数，它反过来<strong>倒推</strong>中间带能有多宽：先算一天能审多少条再倒推阈值，而不是先定阈值再指望人跟上。</li>
+<li><strong>忘了这是对抗环境。</strong>推荐系统的分布是慢慢漂移的，有害内容的分布是被对手<strong>主动推</strong>着变的——模型上线当天就开始被试探。持续重训、对抗样本挖掘、复审回流是常态运维。</li>
+<li><strong>默认标签是客观的。</strong>什么算仇恨言论，跨文化跨法域并无共识，标注者之间一致性本就不高。模型精度上限被标签质量卡死，而标签里的偏见会被放大到特定群体身上——分群评估（按语言、地区）是必需项而非加分项。</li>
+<li><strong>时代局限。</strong>书成于 2023 年，此后多模态大模型与「让大模型直接当审核裁判」成了新路线，本章手工搭的编码器组合看着已旧。<strong>但骨架反而更稳固</strong>：分档、人审兜底、结论回流、按触达排序，由代价结构而非模型能力决定，换什么模型都得有。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 内核两件事：信息必须早融合，输出必须是分数而不是判决。</p>
+<p>② 问题本质：举报是事后的、词表挡不住对抗、纯人工在十亿量级日增内容前算不过来；代价按触达算。</p>
+<p>③ 早融合 vs 晚融合：图无害、字无害、组合有害的「良性混淆样本」在晚期融合里是<strong>结构性盲区</strong>；何况标签只打在帖子级，分模态分类器连训都训不出来。代价是要更多数据。</p>
+<p>④ 多任务 &gt; 每类一个模型 &gt; 单个二分类：共享骨干让罕见类蹭到常见类的数据，一次前向出全部类别的分，<strong>每个头还能独立定阈值</strong>。</p>
+<p>⑤ 特征别只想内容：作者的历史违规与账号年龄、帖子的浏览/分享/举报与评论区都是强信号；<strong>举报数是特征，不能当触发器</strong>。</p>
+<p>⑥ 低底率算术要能当场算：底率 <code>0.1%</code>、召回 99%、假阳性率 1% → 精确率不到 10%。所以看 PR 曲线，不看 ROC。</p>
+<p>⑦ 线上三个指标：违规触达率（按展示算）、主动发现率（跑在举报前面多少）、有效申诉率（误删代价）。</p>
+<p>⑧ 分数分三档：高分自动删（代价=误删）、中间降权加人审（代价=人审产能）、低分放行加抽样（代价=漏检）；队列按<strong>分数 × 预计触达</strong>排，人审产能倒推阈值。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
