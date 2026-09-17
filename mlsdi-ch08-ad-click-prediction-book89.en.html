@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>ML System Design Interview Ch 8 · Ad Click Prediction — Chapter Deepread Book 89</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">Chapter Deepread · ML System Design Interview · Chapter 8</p>
+<h1>Ad Click Prediction: you think it's ranking, but it's quoting a price</h1>
+<p class="sub">Machine Learning System Design Interview · Ch 8 · Ali Aminian &amp; Alex Xu · 2023</p>
+<p class="langbar"><a href="mlsdi-ch08-ad-click-prediction-book89.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>As you scroll a social app, every dozen or so posts an ad slides in. This chapter is about how that one ad got picked — why that ad, and why for you.</p>
+<h2>A strange thing first</h2>
+<p>You probably assume the system is picking "the one you're most likely to find interesting." Order does matter, but there's a layer here that other recommendation settings don't have: <strong>money is divided by this judgment.</strong> Advertisers pay per click, and the platform has to do arithmetic between "who bid more" and "who will actually get clicked." So the system can't just say "this one is more likely than that one" — it has to name <strong>an accurate number</strong>.</p>
+<p>Weather forecasts are the useful comparison. If all you want to know is whether tomorrow is rainier than the day after, ordering is enough. But if somebody charges insurance premiums by the chance of rain, then "70%" had better mean it really rains seven times out of ten. Ads are the second kind.</p>
+<h2>Why the old world struggled</h2>
+<p>Almost everything the system knows arrives as <em>labels</em>: which city you're in, what phone you use, who placed this ad, what hour you're scrolling. Any one of them is weak on its own — "lives in Shanghai" predicts nothing.</p>
+<p>The forceful clues are <strong>combinations</strong>: somebody who bought bananas <em>and</em> a cookbook is more likely to want a blender. But a system that scores each clue separately and adds them up can never see a signal that only exists when two things are true at once. And there are absurdly many combinations — a few hundred clues paired up is tens of thousands of pairs, far more than people can curate by hand.</p>
+<h2>The core mechanism: let the machine do the pairing</h2>
+<p>The trick is to give every label a <strong>business card</strong> — a short string of numbers the machine works out for itself. Bump two cards together and you get a score for "how well do these two go together." The machine runs every pair, and the data decides which combinations matter. Nobody has to name them in advance. That's the chapter's first move.</p>
+<p>The second move is <strong>how often it studies</strong>. An ad pool isn't like a film library — new ads go live every hour and what's hot changes daily. A judge trained last week hasn't seen half of what's in front of it this week. So it doesn't sit one exam a week; it <strong>studies on the job</strong>, continuously nudging itself toward the present using the impressions and clicks that just happened.</p>
+<p>The third move is that accurate number. The system checks itself against history: <strong>of all the ads it called 2%, did about 2% actually get clicked?</strong> If not, the whole dial gets twisted back. That step is called calibration, and without it the ordering can look fine while every invoice is wrong.</p>
+<h2>How to read this approach</h2>
+<p>What's worth remembering is where the effort goes: <strong>how the machine finds combinations, how often it studies, and whether the numbers are honest</strong>. Eighty percent of the chapter lands on those three. The model itself is not the star.</p>
+<h2>What it costs</h2>
+<p>A judge that studies on the job slowly forgets what it once knew — and a version that learns something wrong can reach everybody within hours. Fast iteration and a big blast radius are the same property seen from two sides.</p>
+<h2>Remember this one line</h2>
+<div class="tl">
+<p>What separates ad click prediction from every other recommendation problem is that its output <strong>goes on to divide money</strong>. It has to get the order right, say the number honestly, and keep up with a market that changes hourly. Drop any one of the three and the system starts quietly losing money.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, notation and diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">This looks like one more ranking problem, but its core is a constraint no other recommendation setting has: <strong>the number the model emits gets used for billing</strong>. Ads are paid per click and ranked by bid times predicted click-through rate, so the <em>absolute value</em> of the score matters as much as its <em>relative order</em> — which turns probability <strong>calibration</strong> from a nicety into a hard requirement. Two more constraints fall out of the same setting: features are almost all high-cardinality categorical labels, so the signal hides in <strong>feature crossing</strong>; and the ad pool drifts by the hour, so the model must do <strong>continual learning</strong>.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Impression</strong>: one ad actually shown once. <strong>CTR (click-through rate)</strong> = clicks ÷ impressions.</li>
+<li><strong>Bid and eCPM</strong>: the bid is what the advertiser will pay for one click; eCPM is the expected revenue of this impression, which under per-click billing is roughly <code>bid × pCTR</code>. Ads are ranked by <em>that</em>, not by pCTR alone.</li>
+<li><strong>Pointwise</strong>: score one candidate at a time, independently, then sort by score.</li>
+<li><strong>High-cardinality categorical feature</strong>: a discrete label with an enormous number of possible values, like ad ID. <strong>One-hot encoding</strong> turns it into a vector with a single 1, which explodes in width; the <strong>hashing trick</strong> instead hashes it into a fixed number of slots, trading occasional collisions for a memory ceiling.</li>
+<li><strong>Embedding</strong>: compress an ID into a short trainable vector, so similar IDs land near each other.</li>
+<li><strong>Feature cross</strong>: combine two or more features into one new signal, capturing relationships that only hold jointly.</li>
+<li><strong>FM / DCN / DeepFM</strong>: three families that learn crosses automatically. FM learns second-order crosses as dot products of embeddings; DCN adds a dedicated cross network for explicit, bounded-degree crosses; DeepFM runs FM and a deep network in parallel over a shared embedding table.</li>
+<li><strong>Log loss (cross-entropy) and AUC</strong>: the first penalises both bad ordering and dishonest magnitudes; the second looks <strong>only</strong> at ordering — multiply every prediction by 0.5 and AUC doesn't move.</li>
+<li><strong>Calibration</strong>: of the batch the model called 2%, the real rate should also be near 2%.</li>
+<li><strong>Continual learning</strong>: instead of retraining from scratch, keep fine-tuning the existing model on fresh data. <strong>Catastrophic forgetting</strong> is the side effect — it learns the new and loses the old.</li>
+<li><strong>Negative sampling</strong>: negatives vastly outnumber positives, so only a fraction is used for training. The cost is that the class ratio has been altered by hand, which biases predicted probabilities upward.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This is the seventh of the ten Part II case studies. It follows Ch7 event recommendation — also pointwise scoring, but there the weight was on hand-built features and the model stopped at GBDT. Here the scale is an order of magnitude larger and <strong>the score gets billed against</strong>, so the model moves toward automatic crossing and the evaluation moves toward calibration. Ch9 (similar listings) follows, switching to embeddings learned from behaviour sequences. The real-world analogues are Meta Ads, Google Ads and TikTok Ads.</p>
+<h2>What the chapter is solving</h2>
+<p>The setup is direct: on a social platform, every refresh has to decide which ad to show, and the goal is to <strong>maximise clicks, and thus revenue</strong>. Four constraints separate this from every earlier recommendation problem.</p>
+<p><strong>One: the score gets billed against.</strong> Slots don't go to whoever has the highest pCTR; they go by <code>bid × pCTR</code> — the expected revenue of the impression. So if the model multiplies every pCTR by 1.5, the ordering doesn't move and AUC doesn't drop, but <strong>the relative standing of a high-bid, low-CTR ad against a low-bid, high-CTR one is completely scrambled</strong>.</p>
+<p><strong>Two: features are almost all sparse categoricals.</strong> User ID, ad ID, device model, region, hour — after one-hot the dimensionality reaches the 10⁸ range while each sample has only a few dozen non-zero positions.</p>
+<p><strong>Three: the useful signal is multiplicative.</strong> "In Shanghai" and "10pm" each predict nothing; "in Shanghai × 10pm × food-delivery ad" carries signal. A linear model, by definition, cannot see that interaction.</p>
+<p><strong>Four: the distribution drifts by the hour.</strong> New campaigns launch, old ones exhaust their budget and drop out, events spike. A model trained yesterday faces a candidate set today containing plenty it has never seen.</p>
+<p>What happens if you don't solve it? Miscalibration → billing and budget allocation go wrong with it. No crossing → the model only memorises coarse rules like "this advertiser generally gets clicks." No continual learning → new ads never surface, and advertisers eventually leave.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 234" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b1" markerHeight="7" markerWidth="8" orient="auto" refX="7" refY="3.5"><path d="M0,0 L8,3.5 L0,7 z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="320" y="20">Ad click prediction is a closed loop, not a one-shot score</text>
+<rect fill="rgba(255,255,255,0.03)" height="40" rx="7" stroke="rgba(91,157,249,0.35)" width="92" x="12" y="54"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="58" y="72">one feed</text>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="58" y="87">refresh</text>
+<rect fill="rgba(255,255,255,0.03)" height="40" rx="7" stroke="rgba(91,157,249,0.35)" width="104" x="122" y="54"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="174" y="72">targeting + budget</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="174" y="87">~10³ candidates</text>
+<rect fill="rgba(91,157,249,0.12)" height="40" rx="7" stroke="#5b9df9" stroke-width="1.6" width="108" x="244" y="54"></rect>
+<text fill="#8fbaff" font-size="11.5" font-weight="700" text-anchor="middle" x="298" y="72">pCTR model</text>
+<text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="298" y="87">one score each</text>
+<rect fill="rgba(255,255,255,0.03)" height="40" rx="7" stroke="rgba(91,157,249,0.35)" width="104" x="370" y="54"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="422" y="72">rank + bill by</text>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="422" y="87">bid × pCTR</text>
+<rect fill="rgba(255,255,255,0.03)" height="40" rx="7" stroke="rgba(91,157,249,0.35)" width="102" x="492" y="54"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="543" y="79">show 1–2 ads</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="104" x2="120" y1="74" y2="74"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="226" x2="242" y1="74" y2="74"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="352" x2="368" y1="74" y2="74"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="474" x2="490" y1="74" y2="74"></line>
+<rect fill="rgba(255,255,255,0.03)" height="40" rx="7" stroke="rgba(91,157,249,0.35)" width="150" x="444" y="156"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="519" y="181">impression / click log</text>
+<rect fill="rgba(155,108,245,0.1)" height="40" rx="7" stroke="rgba(155,108,245,0.6)" width="168" x="206" y="156"></rect>
+<text fill="#c3a6fb" font-size="11" text-anchor="middle" x="290" y="174">fine-tune + calibrate</text>
+<text fill="#9b8fb5" font-size="10.5" text-anchor="middle" x="290" y="189">hourly</text>
+<path d="M543,94 L543,154" fill="none" marker-end="url(#b1)" stroke="#7c8593"></path>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="442" x2="378" y1="176" y2="176"></line>
+<path d="M262,154 L262,96" fill="none" marker-end="url(#b1)" stroke="#9b6cf5"></path>
+<text fill="#7c8593" font-size="10.5" x="122" y="180">canary rollout</text>
+</svg>
+<figcaption>The model emits a probability, the probability times the bid decides who gets shown, and the outcome flows back as the next round of training data. A loop means bias compounds — and that the model must keep updating.</figcaption>
+</figure>
+<h2>The core content, worked through</h2>
+<h3>1. Translating the business problem: pointwise binary classification</h3>
+<p>The chapter models this as <strong>binary classification scored one candidate at a time</strong>: given (user, ad, context), predict <code>P(click)</code>. Labels come free — clicked is 1, impressed-without-click is 0 — and the loss is log loss.</p>
+<p>Why not pairwise or listwise methods, which are more natively about ranking? Because they optimise relative order and their outputs are not probabilities, <strong>and a probability that can be multiplied into <code>bid × pCTR</code> is exactly what ads need</strong>. The previous chapter also chose pointwise, but there it was convenience; here there is no alternative.</p>
+<h3>2. Features: three sources, one shared headache</h3>
+<p>The book splits features into three groups. <strong>Ad side</strong>: ad ID, advertiser and campaign ID, category, creative content, historical impressions and clicks. <strong>User side</strong>: demographics, context (device, time, location) and historical engagement. <strong>User × ad</strong>: interaction statistics, such as this user's historical CTR in this category. The shared headache is <strong>cardinality</strong> — there may be hundreds of millions of ad IDs, and plain one-hot is a disaster.</p>
+<h3>3. Feature crossing: why a linear model isn't enough</h3>
+<p>A model that assigns one weight per feature and sums them up — logistic regression is exactly that — cannot learn "bought bananas <em>and</em> bought a cookbook." It can only say "bananas add 0.1, cookbook adds 0.2." To make it visible you have to <strong>hand-build</strong> a third feature from the two: <code>n</code> features give <code>n(n-1)/2</code> pairs, and which ones help can only be found by trying.</p>
+<p>Sparsity makes it worse: "Shanghai × Wednesday 11pm × this advertiser" may appear three times in the training set, so the hand-crossed dimension learns essentially nothing. <strong>This is precisely what FM fixes</strong>: rather than one weight per combination, it learns an embedding vector per feature and sets the cross weight to their dot product. Even if those two never co-occurred, each vector was trained elsewhere, so the dot product still means something — <strong>parameter sharing dissolves the sparsity</strong>.</p>
+<h3>4. The model ladder: from logistic regression to DCN / DeepFM</h3>
+<p>The chapter lays the models out historically, each rung patching the one below:</p>
+<ul>
+<li><strong>Logistic regression (LR)</strong> — linear, interpretable, trivially updated incrementally. Hole: no crossing without human labour.</li>
+<li><strong>GBDT</strong> — learns interactions automatically (each root-to-leaf path is a cross). Hole: bad at high-cardinality sparse features, and hard to update incrementally.</li>
+<li><strong>GBDT + LR hybrid</strong> — trees map raw features into "which leaves did this land in," which feeds an LR that <em>can</em> be updated online. Trees find crosses, LR keeps up with the data. The industry default around 2014.</li>
+<li><strong>FM / FFM</strong> — as above, all second-order crosses learned automatically and learnable under sparsity. Hole: second order only.</li>
+<li><strong>DCN (Deep &amp; Cross Network)</strong> — two parallel paths: a cross network where each layer raises the degree by one (<code>L</code> layers reach degree <code>L+1</code>), explicit and parameter-cheap; and a deep network for implicit interactions of arbitrary shape.</li>
+<li><strong>DeepFM</strong> — same two paths, with FM on the crossing side, and both paths <strong>sharing one embedding table</strong>.</li>
+</ul>
+<p>The book lands on the <strong>DCN / DeepFM tier</strong>. The cost is that training and serving both get more expensive, and embedding tables can outgrow a single machine's memory.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b2" markerHeight="7" markerWidth="8" orient="auto" refX="7" refY="3.5"><path d="M0,0 L8,3.5 L0,7 z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="320" y="18">DCN: explicit crossing and implicit interaction, merged at the top</text>
+<rect fill="rgba(255,255,255,0.03)" height="36" rx="7" stroke="rgba(91,157,249,0.3)" width="288" x="34" y="248"></rect>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="178" y="264">sparse categorical features</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="178" y="278">ad ID / advertiser / device / region / hour</text>
+<rect fill="rgba(255,255,255,0.03)" height="36" rx="7" stroke="rgba(91,157,249,0.3)" width="184" x="352" y="248"></rect>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="444" y="264">dense numeric features</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="444" y="278">past clicks / dwell time</text>
+<rect fill="rgba(255,255,255,0.03)" height="32" rx="7" stroke="rgba(91,157,249,0.3)" width="288" x="34" y="198"></rect>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="178" y="219">embedding layer: each ID → a short vector</text>
+<line marker-end="url(#b2)" stroke="#7c8593" x1="178" x2="178" y1="246" y2="232"></line>
+<rect fill="rgba(255,255,255,0.03)" height="30" rx="7" stroke="rgba(91,157,249,0.3)" width="502" x="34" y="152"></rect>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="285" y="172">concatenated into one input vector</text>
+<line marker-end="url(#b2)" stroke="#7c8593" x1="178" x2="178" y1="196" y2="186"></line>
+<path d="M444,246 L444,186" fill="none" marker-end="url(#b2)" stroke="#7c8593"></path>
+<rect fill="rgba(91,157,249,0.12)" height="46" rx="7" stroke="#5b9df9" stroke-width="1.6" width="214" x="52" y="86"></rect>
+<text fill="#8fbaff" font-size="11.5" font-weight="700" text-anchor="middle" x="159" y="105">cross network · explicit</text>
+<text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="159" y="121">L layers → up to degree L+1</text>
+<rect fill="rgba(155,108,245,0.1)" height="46" rx="7" stroke="rgba(155,108,245,0.6)" width="214" x="306" y="86"></rect>
+<text fill="#c3a6fb" font-size="11.5" font-weight="700" text-anchor="middle" x="413" y="105">deep network · implicit</text>
+<text fill="#c3a6fb" font-size="10.5" text-anchor="middle" x="413" y="121">MLP, arbitrary interactions</text>
+<path d="M159,150 L159,124" fill="none" marker-end="url(#b2)" stroke="#7c8593"></path>
+<path d="M413,150 L413,124" fill="none" marker-end="url(#b2)" stroke="#7c8593"></path>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="7" stroke="rgba(91,157,249,0.3)" width="252" x="160" y="34"></rect>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="286" y="56">concat → sigmoid → pCTR</text>
+<path d="M159,84 L159,72 L250,72 L250,70" fill="none" marker-end="url(#b2)" stroke="#7c8593"></path>
+<path d="M413,84 L413,72 L322,72 L322,70" fill="none" marker-end="url(#b2)" stroke="#7c8593"></path>
+</svg>
+<figcaption>Sparse IDs pass through the embedding layer into dense vectors and join the numeric features in one input. The cross network handles bounded-degree explicit crosses, the deep network handles interactions of unclear shape, and the two merge into a probability.</figcaption>
+</figure>
+<h3>5. Continual learning: why it's mandatory, and where it bites</h3>
+<p>Ad data doesn't drift slowly; it turns over daily. So training isn't "a run every week" but <strong>continuous fine-tuning of the existing model on the most recent logs</strong>, usually on an hourly cadence.</p>
+<p>Three things must come with it. <strong>(1) An online evaluation gate</strong>: every new version runs on a small slice of traffic first and isn't promoted unless metrics hold, because automated high-frequency updates also roll bad models out automatically. <strong>(2) Forgetting control</strong>: feeding only the last hour makes the model lose long-run regularities, so the usual practice is to mix fresh data with a sample of history. <strong>(3) Feature parity</strong>: training and serving must use the same feature computation, or you get training-serving skew — a class of bug invisible offline.</p>
+<h3>6. Probability calibration: the real watershed of this chapter</h3>
+<p>The definition is humble: <strong>of the impressions the model called 2%, the real click rate should be near 2%</strong>. It's a property independent of ranking — multiply every prediction by 0.5 and the order is untouched, AUC is untouched, and calibration is destroyed.</p>
+<p>Ads contain an action that almost guarantees miscalibration: <strong>negative sampling</strong>. CTR sits in the low single-digit percent range, negatives dominate, and training usually subsamples them at some rate <code>w</code> — which lifts outputs systematically and has to be converted back using <code>w</code>. So the book treats calibration as its own stage in the serving path: raw score → calibration layer → only then a pCTR you can multiply by <code>bid</code>.</p>
+<p>The evaluation consequence: <strong>AUC is not enough</strong>. It is blind to any monotone transform, so a badly calibrated model can still post a handsome AUC. Report log loss, and the blunter "predicted total clicks ÷ actual total clicks" against 1.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/classic-ml-day16.en.html" rel="noopener" target="_blank">AI/ML · Day 16 Classic ML Algorithms</a> — logistic regression, GBDT and tree ensembles in depth, which is where the first two rungs of this chapter's model ladder are worked out properly</aside>
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 1 · Picking a CTR model — the last column is what an interviewer wants to hear</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Option</th><th>Crosses it learns</th><th>Sparse high-cardinality</th><th>Incremental update</th><th>When to pick it</th></tr></thead>
+<tbody>
+<tr><th>Logistic regression</th><td>only what you hand it</td><td>OK with hashing</td><td><strong>very easy</strong></td><td>a first version, or when interpretability matters; also the last stage of a hybrid</td></tr>
+<tr><th>GBDT</th><td>automatic, depth = degree</td><td><strong>weak</strong> on ID features</td><td>hard</td><td>mostly dense numeric features, moderate data, need a strong baseline fast</td></tr>
+<tr><th>GBDT + LR</th><td>trees find, LR finishes</td><td>medium</td><td>the LR stage can</td><td>you need both auto-crossing and online updates but have no deep-learning stack</td></tr>
+<tr><th>FM / FFM</th><td>all second order, under sparsity</td><td><strong>strong</strong></td><td>yes</td><td>extremely sparse features, combinations that never co-occurred, cheap training</td></tr>
+<tr><th>DCN</th><td>explicit to degree <code>L+1</code> + implicit</td><td><strong>strong</strong></td><td>yes</td><td><strong>the book's choice</strong>: large scale, with GPU and embedding-table infrastructure</td></tr>
+<tr><th>DeepFM</th><td>FM second order + MLP, shared embeddings</td><td><strong>strong</strong></td><td>yes</td><td>same; less manual feature work than DCN, slightly weaker high-order explicit crossing</td></tr>
+</tbody>
+</table>
+</div>
+<p class="tcap">Table 2 · Training cadence: freshness, cost and blast radius</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Cadence</th><th>Freshness</th><th>Cost</th><th>Risk</th><th>Fits</th></tr></thead>
+<tbody>
+<tr><th>Daily full retrain</th><td>poor: new ads wait a day</td><td>high but predictable</td><td><strong>low</strong>, time to validate</td><td>slow-moving ad pools, smaller platforms</td></tr>
+<tr><th>Hourly fine-tune</th><td><strong>good</strong></td><td>moderate</td><td>medium: needs an automated gate</td><td><strong>the book's choice</strong>, mainstream social ad platforms</td></tr>
+<tr><th>Near-real-time online</th><td>best: minutes</td><td>low, each sample seen once</td><td><strong>high</strong>: one dirty window skews production at once</td><td>anti-abuse and traffic spikes, where seconds matter</td></tr>
+</tbody>
+</table>
+</div>
+<p>The other trade-off that gets asked about is <strong>how to fit high-cardinality IDs</strong>: embeddings are the most expressive but can't learn the long tail and strain memory; hashing pins memory to a constant at the cost of collisions merging unrelated IDs; frequency cutoffs are cheapest but amount to giving up on the tail. In practice all three are stacked: embeddings for the head, hashing for the middle, an OOV bucket for the tail.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/feature-platform-day40.en.html" rel="noopener" target="_blank">System Design · Day 40 Feature Platforms &amp; ML Infrastructure</a> — the engineering of serving one shared feature definition to training and inference, which is the systems-level answer to this chapter's parity constraint</aside>
+<h2>Why it matters / in real systems</h2>
+<p>The shape reaches far past advertising: any setting that <strong>predicts a probability whose value is then used as a number downstream</strong> is this chapter — a default probability feeding a credit pricing formula, a claim probability feeding an insurance premium, an on-time probability feeding a delivery promise. Conversely, pure content recommendation only needs the order to be right, and calibration is simply not an issue.</p>
+<p>Three questions come up constantly in interviews: <strong>why CTR prediction must be calibrated while ordinary recommendation needn't be</strong> (answer with the multiplication into <code>bid × pCTR</code>, not a definition), <strong>how to convert probabilities back after negative sampling</strong>, and <strong>how continual learning avoids rolling a bad model out automatically</strong>. The test itself is one line: <strong>does the downstream only compare this score, or does it do arithmetic with it?</strong></p>
+<div class="ev">
+<div class="evh">Industry evidence · claims these teams made publicly, not the book's</div>
+<ul>
+<li><strong>Google · the official DCN tutorial in TensorFlow Recommenders</strong> puts "why you need automatic crossing" more plainly than the book does: "<strong>If one has purchased both bananas and cooking books, then this customer will more likely click on the recommended blender</strong>"; the difficulty is that "<strong>In Web-scale applications, data are mostly categorical, leading to large and sparse feature space</strong>," where finding effective crosses "<strong>often requires manual feature engineering or exhaustive search</strong>"; and traditional feed-forward MLPs "<strong>cannot efficiently approximate even 2nd or 3rd-order feature crosses</strong>" — whereas DCN "<strong>was designed to learn explicit and bounded-degree cross features more effectively</strong>." <span class="src"><a href="https://github.com/tensorflow/recommenders/blob/main/docs/examples/dcn.ipynb" rel="noopener" target="_blank">tensorflow/recommenders · docs/examples/dcn.ipynb ↗</a></span></li>
+<li><strong>Meta · DLRM</strong> is this chapter's model shape as a shipped artefact: the input "<strong>consists of dense and sparse features. The former is a vector of floating point values. The latter is a list of sparse indices into embedding tables</strong>," and the architecture diagram labels the output directly as "<strong>probability of a click</strong>." The scale is in the repo too: benchmarks run against Criteo's <strong>Terabyte click logs</strong>, with pretrained configurations reaching <code>--max-ind-range=40000000</code>. <span class="src"><a href="https://github.com/facebookresearch/dlrm" rel="noopener" target="_blank">facebookresearch/dlrm · README ↗</a></span></li>
+<li><strong>Microsoft · Vowpal Wabbit</strong> wrote both of this chapter's engineering constraints into its own README: "<strong>the memory footprint of the program is bounded independent of data</strong>," and "<strong>the size of the set of features is bounded independent of the amount of training data using the hashing trick</strong>." Crossing is built in as well — "<strong>Subsets of features can be internally paired so that the algorithm is linear in the cross-product of the subsets</strong>" — while explicitly expanding features before feeding them in "<strong>can be both computation and space intensive</strong>." <span class="src"><a href="https://github.com/VowpalWabbit/vowpal_wabbit" rel="noopener" target="_blank">VowpalWabbit/vowpal_wabbit · README ↗</a></span></li>
+</ul>
+</div>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 276" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="320" y="20">Same AUC, very different invoices</text>
+<line stroke="#7c8593" x1="76" x2="76" y1="46" y2="226"></line>
+<line stroke="#7c8593" x1="76" x2="424" y1="226" y2="226"></line>
+<line stroke="rgba(91,157,249,0.75)" stroke-dasharray="6 4" x1="76" x2="424" y1="226" y2="46"></line>
+<path d="M76,226 C 180,214 280,190 424,128" fill="none" stroke="#9b6cf5" stroke-width="2.2"></path>
+<text fill="#8fbaff" font-size="11" text-anchor="end" x="302" y="112">perfectly calibrated</text>
+<text fill="#c3a6fb" font-size="11" x="176" y="200">uncorrected: systematic overestimate</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="250" y="250">predicted click probability →</text>
+<text fill="#7c8593" font-size="10.5" x="14" y="42">observed CTR ↑</text>
+<text fill="#7c8593" font-size="10" x="62" y="240">0</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="424" y="240">high</text>
+<text fill="#b9c0ca" font-size="11" x="444" y="126">identical ordering,</text>
+<text fill="#b9c0ca" font-size="11" x="444" y="146">identical AUC</text>
+<text fill="#e7ebf1" font-size="11" font-weight="700" x="444" y="172">but the violet line</text>
+<text fill="#e7ebf1" font-size="11" font-weight="700" x="444" y="190">overstates every bid</text>
+</svg>
+<figcaption>A reliability diagram: predicted probability on the x-axis, the batch's true click rate on the y-axis. The violet line sits below the diagonal — the order is fine, but every number runs high, so allocating budget by <code>bid × pCTR</code> keeps betting on the wrong ads.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/data-processing-day20.en.html" rel="noopener" target="_blank">System Design · Day 20 Batch and Stream Processing</a> — the unification war behind this chapter's daily-vs-hourly-vs-online cadence table, seen at the systems layer</aside>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>Reporting AUC alone.</strong> It is immune to any monotone transform — multiply all predictions by 0.5 and it doesn't budge while billing is already wrong. Report log loss and predicted-over-actual total clicks alongside it.</li>
+<li><strong>Forgetting to correct after negative sampling.</strong> The classic production incident: offline metrics look great, and online budget burn mysteriously doubles.</li>
+<li><strong>Feature leakage.</strong> Using "this ad's final CTR for the day" as a feature, which does not exist at scoring time. The subtle version is user behaviour generated after the impression.</li>
+<li><strong>Delayed feedback.</strong> Clicks, and conversions especially, may arrive minutes or days after the impression. Too tight a training window mislabels "hasn't clicked yet" as "won't click."</li>
+<li><strong>Position bias and closed-loop bias.</strong> The top slot gets clicks for free; worse, the model only learns from ads <em>it chose to show</em>, so anything unshown never gets a label. Exploration traffic is what breaks that.</li>
+<li><strong>Learning an embedding for every ad ID.</strong> Long-tail IDs appear a handful of times in their whole life. What is learnable is the advertiser, category and creative-type level, which is reusable across ads.</li>
+<li><strong>Treating continual learning as free.</strong> The costs are catastrophic forgetting and the blast radius of "a bad model rolls out to everyone automatically" — high-frequency updates require automatic rollback.</li>
+<li><strong>Overstating the gain from deep models.</strong> In public comparisons, DCN / DeepFM beat a well-tuned GBDT or FM by AUC deltas in the third decimal. That is worth real money at ad volume; a small platform copying it will lose on the trade.</li>
+<li><strong>Period limits.</strong> Written in 2023, the chapter stops at the DCN / DeepFM generation; behaviour <strong>sequence modelling</strong> and much larger embedding tables have become the mainline since. But "the score gets billed against, therefore it must be calibrated" does not change with the model.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① This chapter's output <strong>goes on to divide money</strong>: ads are ranked and billed by <code>bid × pCTR</code>, so the absolute value of the score matters as much as its order. That is the watershed against every other recommendation problem.</p>
+<p>② The model is pointwise binary classification predicting <code>P(click)</code>, trained with log loss. Pairwise and listwise are out because their outputs aren't probabilities.</p>
+<p>③ Three feature families: ad side, user side, user × ad interactions. The shared headache is <strong>cardinality</strong>, handled by stacking embeddings, hashing and frequency cutoffs.</p>
+<p>④ The useful signal is <strong>multiplicative</strong>: single features are weak, combinations are strong. Manual crossing explodes combinatorially and learns nothing from rare pairs.</p>
+<p>⑤ The ladder runs LR → GBDT → GBDT+LR → FM → <strong>DCN / DeepFM</strong>. FM's key contribution is sharing parameters through embedding dot products, so combinations that never co-occurred are still learnable.</p>
+<p>⑥ <strong>Continual learning is mandatory</strong> because the ad pool turns over hourly. It comes with three companions: an online evaluation gate, mixed sampling against forgetting, and feature parity between training and serving.</p>
+<p>⑦ <strong>Calibration is independent of ranking.</strong> Negative sampling lifts predictions systematically and must be converted back by the sampling rate, then finished with Platt scaling or isotonic regression. Reporting AUC alone is this chapter's biggest trap.</p>
+<p>⑧ To decide whether a setting needs calibration, ask one question: <strong>does the downstream only compare this score, or does it do arithmetic with it?</strong></p>
+</div>
+</div>
+<footer>Chapter Deepread · Reading this page ≈ getting the chapter's core; for the full case studies, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

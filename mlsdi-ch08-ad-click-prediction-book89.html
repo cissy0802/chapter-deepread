@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>ML 系统设计面试 第 8 章 · 社交平台广告点击预测 — 专业书籍精读 Book 89</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · ML System Design Interview · 第 8 章</p>
+<h1>广告点击预测：你以为它在排序，其实它在报价</h1>
+<p class="sub">Machine Learning System Design Interview · Ch 8 · Ali Aminian &amp; Alex Xu · 2023</p>
+<p class="langbar"><a href="mlsdi-ch08-ad-click-prediction-book89.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你往下刷社交软件，每隔十几条内容会夹进来一条广告。这一章讲的就是：那一条是怎么被挑中的，为什么是这条、为什么是给你。</p>
+<h2>先说个怪事</h2>
+<p>你大概以为系统在做的事是「挑一条你最可能感兴趣的」。顺序确实要紧，但这里还有一层别的推荐场景没有的东西：<strong>钱按这个判断分。</strong>广告主按点击付费，平台要在「谁出价高」和「谁真会被点」之间算账。所以系统不能只说「这条比那条更可能被点」，它得说出一个<strong>准数</strong>。</p>
+<p>天气预报是个好参照：如果你只想知道明天比后天更容易下雨，先后顺序就够了；可要是有人按降雨概率收保费，那「70%」就必须真的十次里下七次。广告就是后一种。</p>
+<h2>旧世界为什么难</h2>
+<p>系统手里的线索，绝大多数是一个个「标签」：你在哪座城、用什么手机、这条广告是谁投的、什么时段刷到的。单看每一条都很弱——「在上海」预测不了任何事。</p>
+<p>真正有力的线索是<strong>组合</strong>：买过香蕉、又买过菜谱的人，更可能想要一台搅拌机。可一个把每条线索单独打个分再加起来的系统，永远看不见这种「合起来才成立」的信号。而组合的数量又大得离谱，几百条线索两两配对就是几万种，靠人一对对去挑，挑不完也挑不准。</p>
+<h2>核心机制：让机器自己去配对</h2>
+<p>办法是给每个标签发一张「<strong>名片</strong>」——一小串数字，机器自己学出来的。两张名片一碰，就得出一个「这两样凑在一起有多对味」的分。机器把所有两两组合都过一遍，哪些组合真管用由数据说了算，不用人事先指定。这是这一章的第一件事。</p>
+<p>第二件事是<strong>补课的频率</strong>。广告池不像电影库——新广告每小时都在上，热点每天都在换。上周训好的判官，这周看到的东西有一半是它没见过的。所以它不是每周考一次试，而是<strong>边上班边补课</strong>：拿刚刚过去这段时间的曝光和点击，持续把自己往新情况上调。</p>
+<p>第三件事，就是前面说的「说准数」。系统会拿历史核对：<strong>它说 2% 的那一批广告，实际点击率是不是真有 2%</strong>。不是就把整条刻度往回拧。这一步叫校准，不做的话，排序看着还挺对，账全是错的。</p>
+<h2>该怎么看这套做法</h2>
+<p>值得记住的是力气分在哪三处：<strong>怎么让机器自己找组合、多久补一次课、数字准不准</strong>。这一章八成的内容都落在这三件事上，模型本身反倒不是主角。</p>
+<h2>这套做法的代价</h2>
+<p>边上班边补课的判官会慢慢忘掉旧知识，而且一个学坏了的版本，几小时内就能铺到所有人面前——迭代快和爆炸半径大，是同一件事的两面。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>广告点击预测和别的推荐最大的不同，是它的输出要<strong>拿去分钱</strong>。所以它既要把顺序排对，又要把数字说准，还要跟得上一个每小时都在变的市场——三件事缺一件，系统就开始默默地亏钱。</p>
+</div>
+<p class="switch-hint">想进到具体机制、记号和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">这一章看着是「再做一道排序题」，内核却是别的推荐场景都没有的一条约束：<strong>模型输出的那个数要拿去计费</strong>。广告按点击付费，排序依据是出价乘以预测点击率，于是分数的<em>绝对值</em>和它的<em>相对顺序</em>一样重要——「概率校准（calibration）」就此从锦上添花变成硬需求。另外两个约束同样由广告场景逼出：特征几乎全是高基数类别标签，信号藏在<strong>特征交叉（feature crossing）</strong>里；广告池以小时为单位漂移，模型必须<strong>持续学习（continual learning）</strong>。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>曝光（impression）</strong>：一条广告真被展示一次。<strong>CTR（click-through rate，点击率）</strong>＝点击数 ÷ 曝光数。</li>
+<li><strong>出价（bid）与 eCPM</strong>：出价是广告主愿为一次点击付的钱；eCPM 是「这次曝光的期望收入」，按点击计费时约等于 <code>bid × pCTR</code>——广告是按这个值排序的，不是按 pCTR。</li>
+<li><strong>pointwise</strong>：一次只看一条候选、独立打一个分，再按分排序。</li>
+<li><strong>高基数类别特征（high-cardinality categorical）</strong>：取值是离散标签且种类极多，如广告 ID。<strong>独热编码（one-hot）</strong>把它变成一串只有一位是 1 的向量，种类一多维度就爆炸；<strong>特征哈希（hashing trick）</strong>则哈希到固定槽位，用「偶尔撞车」换「内存有上限」。</li>
+<li><strong>嵌入（embedding）</strong>：把一个 ID 压成一小串可训练的数，相似的 ID 数值相近。</li>
+<li><strong>特征交叉（feature cross）</strong>：把两个以上特征组合成一个新信号，捕捉「合起来才成立」的关系。</li>
+<li><strong>FM / DCN / DeepFM</strong>：三类自动学交叉的模型。FM 用嵌入内积学二阶交叉；DCN 用专门的交叉网络学有界阶数的显式交叉；DeepFM 把 FM 与深度网络并联、共享嵌入。</li>
+<li><strong>log loss（交叉熵）与 AUC</strong>：前者同时惩罚「排错」和「说得不准」；后者<strong>只</strong>看排序——把所有预测乘以 0.5，AUC 一点不变。</li>
+<li><strong>校准（calibration）</strong>：模型说 2% 的那一批，实际发生率也该接近 2%。</li>
+<li><strong>持续学习（continual learning）</strong>：不从头重训，拿最新数据接着微调。<strong>灾难性遗忘</strong>是它的副作用——学了新的、忘了旧的。</li>
+<li><strong>负采样（negative sampling）</strong>：负样本太多，只抽一部分来训。代价是正负比例被人为改动，预测概率系统性偏高。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>本章是《ML 系统设计面试》Part II 十道真题的第 7 道。上承 Ch7 活动推荐——那里同样是 pointwise 打分，但重心在手造特征、模型停在 GBDT；这里规模大一个量级，而且<strong>分数要拿去计费</strong>，于是模型往「自动学交叉」走、评估往「校准」走。下启 Ch9 相似房源，那里换成用行为序列学嵌入。现实对应 Meta Ads、Google Ads、TikTok Ads。</p>
+<h2>这章要解决什么</h2>
+<p>书设定的场景很直接：社交平台上，用户每次刷新都要决定给他看哪条广告，目标是<strong>最大化点击（进而是收入）</strong>。四个约束把这道题和前面所有推荐题分开。</p>
+<p><strong>其一，分数要计费。</strong>广告位不是按「谁的 pCTR 高」给的，是按 <code>bid × pCTR</code>——出价乘以预测点击率，即这次曝光的期望收入。所以如果模型把所有 pCTR 统一乘以 1.5，排序一点没变、AUC 一点没掉，但<strong>高出价低点击率的广告和低出价高点击率的广告之间，相对位置全乱了</strong>。</p>
+<p><strong>其二，特征几乎全是稀疏类别。</strong>用户 ID、广告 ID、设备型号、地域、时段——独热之后维度轻松到 10⁸ 量级，而每条样本上非零的位置只有几十个。</p>
+<p><strong>其三，有用的信号是乘性的。</strong>「在上海」和「晚上 10 点」各自都预测不了什么，「在上海 × 晚上 10 点 × 外卖类广告」才有信号。线性模型按定义看不见这种交互。</p>
+<p><strong>其四，分布以小时计漂移。</strong>新 campaign 上线、预算耗尽下线、热点事件——昨天训好的模型，今天面对的候选里有相当一部分它从没见过。</p>
+<p>不解决会怎样？校准错 → 计费与预算分配跟着错；不学交叉 → 只会背「这个广告主普遍点击率高」这种粗粒度规律；不持续学习 → 新广告永远排不上去，广告主最后走人。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 234" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerHeight="7" markerWidth="8" orient="auto" refX="7" refY="3.5"><path d="M0,0 L8,3.5 L0,7 z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="320" y="20">广告点击预测是一条闭环，不是一次性打分</text>
+<rect fill="rgba(255,255,255,0.03)" height="40" rx="7" stroke="rgba(91,157,249,0.35)" width="92" x="12" y="54"></rect>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="58" y="79">一次刷新请求</text>
+<rect fill="rgba(255,255,255,0.03)" height="40" rx="7" stroke="rgba(91,157,249,0.35)" width="104" x="122" y="54"></rect>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="174" y="72">定向 / 预算过滤</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="174" y="87">剩 10³ 条候选</text>
+<rect fill="rgba(91,157,249,0.12)" height="40" rx="7" stroke="#5b9df9" stroke-width="1.6" width="108" x="244" y="54"></rect>
+<text fill="#8fbaff" font-size="11.5" font-weight="700" text-anchor="middle" x="298" y="72">pCTR 模型</text>
+<text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="298" y="87">逐条出概率</text>
+<rect fill="rgba(255,255,255,0.03)" height="40" rx="7" stroke="rgba(91,157,249,0.35)" width="104" x="370" y="54"></rect>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="422" y="72">按 bid × pCTR</text>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="422" y="87">排序与计费</text>
+<rect fill="rgba(255,255,255,0.03)" height="40" rx="7" stroke="rgba(91,157,249,0.35)" width="102" x="492" y="54"></rect>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="543" y="79">展示 1–2 条</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="104" x2="120" y1="74" y2="74"></line>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="226" x2="242" y1="74" y2="74"></line>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="352" x2="368" y1="74" y2="74"></line>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="474" x2="490" y1="74" y2="74"></line>
+<rect fill="rgba(255,255,255,0.03)" height="40" rx="7" stroke="rgba(91,157,249,0.35)" width="150" x="444" y="156"></rect>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="519" y="181">曝光 / 点击日志</text>
+<rect fill="rgba(155,108,245,0.1)" height="40" rx="7" stroke="rgba(155,108,245,0.6)" width="168" x="206" y="156"></rect>
+<text fill="#c3a6fb" font-size="11.5" text-anchor="middle" x="290" y="174">持续微调 + 校准</text>
+<text fill="#9b8fb5" font-size="10.5" text-anchor="middle" x="290" y="189">小时级</text>
+<path d="M543,94 L543,154" fill="none" marker-end="url(#a1)" stroke="#7c8593"></path>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="442" x2="378" y1="176" y2="176"></line>
+<path d="M262,154 L262,96" fill="none" marker-end="url(#a1)" stroke="#9b6cf5"></path>
+<text fill="#7c8593" font-size="10.5" x="132" y="180">新模型灰度上线</text>
+</svg>
+<figcaption>模型出概率 → 概率乘出价决定谁被展示 → 展示结果回流成下一轮训练数据。闭环意味着偏差会自我强化，也意味着模型必须持续更新。</figcaption>
+</figure>
+<h2>核心内容，讲透</h2>
+<h3>一、把业务问题翻译成 ML 问题：pointwise 二分类</h3>
+<p>本章的建模选择是<strong>逐条打分的二分类</strong>：给定（用户、广告、上下文），预测 <code>P(click)</code>。标签现成——日志里点了是 1，曝光没点是 0；损失用 log loss。</p>
+<p>为什么不用 pairwise / listwise 这类更「排序原生」的方法？因为它们优化的是相对顺序，输出的分不是概率，<strong>而广告要的恰恰是那个能乘进 <code>bid × pCTR</code> 的概率值</strong>。上一章也选 pointwise，但那里是图省事，这里是别无选择。</p>
+<h3>二、特征：三类来源，一个共同麻烦</h3>
+<p>书把特征分成三组。<strong>广告侧</strong>：广告 ID、广告主与 campaign ID、类目、素材内容、历史曝光与点击数。<strong>用户侧</strong>：人口属性、上下文（设备、时间、位置）与历史互动。<strong>用户 × 广告</strong>：交互统计，如这个用户在这个类目上的历史点击率。共同麻烦是<strong>基数</strong>——广告 ID 可能上亿个，直接独热是灾难。</p>
+<h3>三、特征交叉：为什么线性模型不够</h3>
+<p>一个只会给每个特征配权重再求和的模型（逻辑回归就是），学不到「买香蕉 <em>且</em> 买菜谱」这种联合信号——它只能分别说「买香蕉加 0.1 分、买菜谱加 0.2 分」。要让它看见，得<strong>人工</strong>把两个特征拼成第三个喂进去：<code>n</code> 个特征有 <code>n(n-1)/2</code> 对，哪些有用只能靠试。</p>
+<p>更糟的是稀疏：「上海 × 周三 23 点 × 某广告主」在训练集里可能只出现过三次，人工交叉出的这一维几乎学不到东西。<strong>FM 解决的正是这一点</strong>：它不给每个组合单学一个权重，而是给每个特征学一个嵌入向量，交叉权重＝两个向量的内积。于是即便这两者从没共现过，它们的向量各自都在别处被训练过，内积依然有意义——<strong>参数共享把稀疏化解掉了</strong>。</p>
+<h3>四、模型阶梯：从逻辑回归到 DCN / DeepFM</h3>
+<p>本章按历史脉络把模型排开，每一级都在补上一级的洞：</p>
+<ul>
+<li><strong>逻辑回归（LR）</strong>——线性、可解释、能增量更新。洞：不会交叉，全靠人工。</li>
+<li><strong>GBDT</strong>——自动学交互（每条根到叶的路径就是一次交叉）。洞：不擅长高基数稀疏特征，且难增量更新。</li>
+<li><strong>GBDT + LR 混合</strong>——树把特征映射成「落在哪些叶子」，再喂给可在线更新的 LR：树找交叉，LR 跟数据。2014 年前后的工业主流。</li>
+<li><strong>FM / FFM</strong>——用嵌入内积自动学全部二阶交叉，稀疏下依然能学。洞：只到二阶。</li>
+<li><strong>DCN（Deep &amp; Cross Network）</strong>——两路并行：交叉网络每加一层把阶数提高一阶（<code>L</code> 层到 <code>L+1</code> 阶），显式且参数量小；深度网络学任意形状的隐式交互。</li>
+<li><strong>DeepFM</strong>——同样两路，把交叉那一路换成 FM，两路<strong>共享同一套嵌入</strong>。</li>
+</ul>
+<p>书的落点是 <strong>DCN / DeepFM 这一档</strong>。代价是训练与服务都更贵，嵌入表能大到单机内存装不下。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerHeight="7" markerWidth="8" orient="auto" refX="7" refY="3.5"><path d="M0,0 L8,3.5 L0,7 z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="320" y="18">DCN：显式交叉与隐式交互各走一路，最后合流</text>
+<rect fill="rgba(255,255,255,0.03)" height="36" rx="7" stroke="rgba(91,157,249,0.3)" width="288" x="34" y="248"></rect>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="178" y="264">稀疏类别特征</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="178" y="278">广告 ID / 广告主 / 设备 / 地域 / 时段</text>
+<rect fill="rgba(255,255,255,0.03)" height="36" rx="7" stroke="rgba(91,157,249,0.3)" width="184" x="352" y="248"></rect>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="444" y="264">稠密数值特征</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="444" y="278">历史点击次数 / 停留时长</text>
+<rect fill="rgba(255,255,255,0.03)" height="32" rx="7" stroke="rgba(91,157,249,0.3)" width="288" x="34" y="198"></rect>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="178" y="219">嵌入层：每个 ID → 一小串数</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="178" x2="178" y1="246" y2="232"></line>
+<rect fill="rgba(255,255,255,0.03)" height="30" rx="7" stroke="rgba(91,157,249,0.3)" width="502" x="34" y="152"></rect>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="285" y="172">拼接成一条输入向量</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="178" x2="178" y1="196" y2="186"></line>
+<path d="M444,246 L444,186" fill="none" marker-end="url(#a2)" stroke="#7c8593"></path>
+<rect fill="rgba(91,157,249,0.12)" height="46" rx="7" stroke="#5b9df9" stroke-width="1.6" width="214" x="52" y="86"></rect>
+<text fill="#8fbaff" font-size="11.5" font-weight="700" text-anchor="middle" x="159" y="105">交叉网络 · 显式</text>
+<text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="159" y="121">L 层 → 最高 L+1 阶交叉</text>
+<rect fill="rgba(155,108,245,0.1)" height="46" rx="7" stroke="rgba(155,108,245,0.6)" width="214" x="306" y="86"></rect>
+<text fill="#c3a6fb" font-size="11.5" font-weight="700" text-anchor="middle" x="413" y="105">深度网络 · 隐式</text>
+<text fill="#c3a6fb" font-size="10.5" text-anchor="middle" x="413" y="121">多层 MLP，任意形状交互</text>
+<path d="M159,150 L159,124" fill="none" marker-end="url(#a2)" stroke="#7c8593"></path>
+<path d="M413,150 L413,124" fill="none" marker-end="url(#a2)" stroke="#7c8593"></path>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="7" stroke="rgba(91,157,249,0.3)" width="240" x="166" y="34"></rect>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="286" y="56">拼接 → sigmoid → pCTR</text>
+<path d="M159,84 L159,72 L250,72 L250,70" fill="none" marker-end="url(#a2)" stroke="#7c8593"></path>
+<path d="M413,84 L413,72 L322,72 L322,70" fill="none" marker-end="url(#a2)" stroke="#7c8593"></path>
+</svg>
+<figcaption>稀疏 ID 先过嵌入层压成稠密向量，与数值特征拼成一条输入；交叉网络负责有界阶数的显式交叉，深度网络负责说不清形状的隐式交互，两路合流出一个概率。</figcaption>
+</figure>
+<h3>五、持续学习：为什么必须，以及它的坑</h3>
+<p>广告的数据分布不是缓慢漂移，是天天换血。所以训练不是「每周跑一次」，而是<strong>拿最近的日志在现有模型上持续微调</strong>，节奏通常按小时计。</p>
+<p>三件必须配套的东西：<strong>①在线评估门槛</strong>——新版本先在小流量上跑，指标不达标就不 promote，因为高频自动更新意味着坏模型也会自动铺开；<strong>②防遗忘</strong>——只喂最近一小时的数据会忘掉长期规律，常见做法是把新数据和一份历史样本混着训；<strong>③特征一致</strong>——训练与服务必须用同一份特征计算逻辑，否则就是训练与服务偏斜（training-serving skew），这类 bug 离线看不出来。</p>
+<h3>六、概率校准：这一章真正的分水岭</h3>
+<p>校准的定义很朴素：<strong>模型说 2% 的那一批曝光，实际点击率也该接近 2%</strong>。它和排序是两个独立性质——把所有预测乘以 0.5，排序不变、AUC 不变，校准却全毁了。</p>
+<p>广告场景里有个几乎必然破坏校准的动作：<strong>负采样</strong>。CTR 常在百分之几的量级，负样本压倒性多，训练时往往按比例 <code>w</code> 抽样负例——这会把输出系统性抬高，必须按 <code>w</code> 换算回真实概率。所以书把校准当成服务链路里一个独立环节：模型出原始分 → 校准层 → 才是能乘进 <code>bid</code> 的 pCTR。</p>
+<p>评估上的结论因此是：<strong>AUC 不够用</strong>——它对任何单调变换都不敏感，校准糟糕的模型照样能有漂亮的 AUC。要看 log loss，以及更直接的「预测总点击数 ÷ 实际总点击数」是否接近 1。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 276" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="320" y="20">同样的 AUC，完全不同的账单</text>
+<line stroke="#7c8593" x1="76" x2="76" y1="46" y2="226"></line>
+<line stroke="#7c8593" x1="76" x2="424" y1="226" y2="226"></line>
+<line stroke="rgba(91,157,249,0.75)" stroke-dasharray="6 4" x1="76" x2="424" y1="226" y2="46"></line>
+<path d="M76,226 C 180,214 280,190 424,128" fill="none" stroke="#9b6cf5" stroke-width="2.2"></path>
+<text fill="#8fbaff" font-size="11" text-anchor="end" x="300" y="112">完美校准</text>
+<text fill="#c3a6fb" font-size="11" x="196" y="200">未校正：系统性高估</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="250" y="250">模型预测的点击概率 →</text>
+<text fill="#7c8593" font-size="10.5" x="14" y="42">实际点击率 ↑</text>
+<text fill="#7c8593" font-size="10" x="62" y="240">0</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="424" y="240">高</text>
+<text fill="#b9c0ca" font-size="11" x="444" y="126">两条线的排序完全一样</text>
+<text fill="#b9c0ca" font-size="11" x="444" y="146">AUC 也完全一样</text>
+<text fill="#e7ebf1" font-size="11" font-weight="700" x="444" y="172">但紫线每一次曝光</text>
+<text fill="#e7ebf1" font-size="11" font-weight="700" x="444" y="190">都在虚报期望收入</text>
+</svg>
+<figcaption>可靠性图：横轴是模型给出的概率，纵轴是这批样本真实的点击率。紫线在对角线下方——排序没错，但每个数都偏高，按 <code>bid × pCTR</code> 分预算时会持续把钱押错地方。</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/classic-ml-day16.html" rel="noopener" target="_blank">AI/ML · Day 16 经典 ML 算法</a> — 逻辑回归、GBDT、树模型集成这一脉的原理与适用边界，本章模型阶梯的前两级在那里讲得更细</aside>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 1 · CTR 模型选型：这一列「什么时候选它」才是面试想听的</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>方案</th><th>能学到的交叉</th><th>高基数稀疏</th><th>增量更新</th><th>什么时候选它</th></tr></thead>
+<tbody>
+<tr><th>逻辑回归</th><td>只有人工拼进去的</td><td>配哈希后尚可</td><td><strong>很容易</strong></td><td>起步版本、要强可解释性；或作混合模型的最后一级</td></tr>
+<tr><th>GBDT</th><td>自动，树深即阶数</td><td><strong>弱</strong>，ID 类吃力</td><td>难</td><td>稠密数值特征为主、数据量中等、要快速拿到强基线</td></tr>
+<tr><th>GBDT + LR</th><td>树找交叉，LR 收尾</td><td>中等</td><td>LR 那级可以</td><td>要自动交叉又要在线更新，但还没有深度学习基建</td></tr>
+<tr><th>FM / FFM</th><td>全部二阶，稀疏下也能学</td><td><strong>强</strong></td><td>可以</td><td>特征极稀疏、组合从没共现过、训练要便宜</td></tr>
+<tr><th>DCN</th><td>显式到 <code>L+1</code> 阶 + 隐式</td><td><strong>强</strong></td><td>可以</td><td><strong>本章落点</strong>：大规模、有 GPU 与嵌入表基建</td></tr>
+<tr><th>DeepFM</th><td>FM 二阶 + MLP 隐式，共享嵌入</td><td><strong>强</strong></td><td>可以</td><td>同上；更省人工特征工程，高阶显式交叉稍弱</td></tr>
+</tbody>
+</table>
+</div>
+<p class="tcap">表 2 · 训练节奏：新鲜度、成本与爆炸半径的三角</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>节奏</th><th>新鲜度</th><th>成本</th><th>风险</th><th>适合</th></tr></thead>
+<tbody>
+<tr><th>天级全量重训</th><td>差：新广告等一天</td><td>高但可预测</td><td><strong>低</strong>，有时间验证</td><td>广告池变化慢、流量小的平台</td></tr>
+<tr><th>小时级微调</th><td><strong>好</strong></td><td>中等</td><td>中：需要自动化的评估门槛</td><td><strong>本章落点</strong>，主流社交广告平台</td></tr>
+<tr><th>近实时在线学习</th><td>最好：分钟级</td><td>低，每条样本只过一次</td><td><strong>高</strong>：一个脏数据窗口立刻带偏线上</td><td>反作弊、突发流量这类要秒级响应的子问题</td></tr>
+</tbody>
+</table>
+</div>
+<p>另一组常被问到的取舍是<strong>高基数 ID 怎么装下</strong>：嵌入表达最好但长尾学不动、内存吃紧；特征哈希把内存钉死在常数，代价是碰撞把两个无关 ID 混成一个；频次截断最省，但等于放弃长尾。实践中的答案是三者叠用：高频学嵌入、中频走哈希、低频进 OOV 桶。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/feature-platform-day40.html" rel="noopener" target="_blank">System Design · Day 40 特征平台与 ML 基础设施</a> — 训练与推理共用一份特征的工程学，本章「特征一致否则训练与服务偏斜」那条约束的系统级答案</aside>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>这套形状远不止广告：凡是<strong>预测概率、且这个概率要被下游当数字用</strong>的场景都是它——信贷风控的违约概率进定价公式、保险的出险概率进保费、外卖的准时率进承诺时间。反过来，纯内容推荐只要顺序对就行，校准根本不是问题。</p>
+<p>面试高频追问三处：<strong>为什么 CTR 预估必须校准而普通推荐不用</strong>（答「输出要进 <code>bid × pCTR</code> 的乘法」，别背定义）、<strong>负采样之后概率怎么修回去</strong>、<strong>持续学习怎么防止坏模型自动铺开</strong>。判断标准也只有一条：<strong>下游是只比较这个分数，还是拿它做算术。</strong></p>
+<div class="ev">
+<div class="evh">大厂实证 · 这些主张不是书里说的，是项目 / 团队自己公开说的</div>
+<ul>
+<li><strong>Google · TensorFlow Recommenders 的 DCN 官方教程</strong>把「为什么需要自动交叉」讲得比书还直白：「<strong>如果一个人同时买过香蕉和菜谱，那么这位顾客更可能点击推荐给他的搅拌机</strong>」；难处在于「<strong>在 Web 规模的应用里，数据大多是类别型的，导致特征空间又大又稀疏</strong>」，找出有效交叉「<strong>往往需要人工特征工程或穷举搜索</strong>」；而传统前馈 MLP「<strong>无法高效地逼近哪怕二阶或三阶的特征交叉</strong>」——DCN「<strong>被设计来更有效地学习显式且有界阶数的交叉特征</strong>」。<span class="src"><a href="https://github.com/tensorflow/recommenders/blob/main/docs/examples/dcn.ipynb" rel="noopener" target="_blank">tensorflow/recommenders · docs/examples/dcn.ipynb ↗</a></span></li>
+<li><strong>Meta · DLRM（开源推荐模型）</strong>是本章模型形状的工业实物：输入「<strong>由稠密特征和稀疏特征组成。前者是一个浮点数向量。后者是一组指向嵌入表的稀疏索引</strong>」，架构图上的输出被直接标注为「<strong>点击的概率</strong>」。规模也写在仓库里：基准跑 Criteo 的 <strong>Terabyte 点击日志</strong>，预训练配置嵌入索引范围到 <code>--max-ind-range=40000000</code>。<span class="src"><a href="https://github.com/facebookresearch/dlrm" rel="noopener" target="_blank">facebookresearch/dlrm · README ↗</a></span></li>
+<li><strong>Microsoft · Vowpal Wabbit</strong>把「在线学习 + 高基数特征」两条约束写进了自述：「<strong>程序的内存占用与数据量无关</strong>」，且「<strong>特征集合的大小借助哈希技巧被限定，与训练数据量无关</strong>」。交叉也是内建的：「<strong>特征的子集可以在内部两两配对，使算法在这些子集的叉积上是线性的</strong>」，而显式展开特征再喂进去「<strong>在计算和空间上都可能开销很大</strong>」。<span class="src"><a href="https://github.com/VowpalWabbit/vowpal_wabbit" rel="noopener" target="_blank">VowpalWabbit/vowpal_wabbit · README ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/data-processing-day20.html" rel="noopener" target="_blank">System Design · Day 20 计算作业系统</a> — 批处理与流处理的统一：本章「天级全量重训 vs 小时级微调 vs 近实时在线」那张表，在系统层就是这场批流之争</aside>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>只报 AUC。</strong>它对任何单调变换免疫，把预测全乘 0.5 纹丝不动，而计费已经全错。必须同时给 log loss 和「预测点击总数 ÷ 实际点击总数」。</li>
+<li><strong>负采样之后忘了修概率。</strong>最常见的线上事故：离线指标漂亮，线上预算消耗莫名翻倍。</li>
+<li><strong>特征穿越。</strong>拿「这条广告当天的最终 CTR」当特征，打分那一刻根本拿不到；隐蔽版本是用了晚于曝光时刻才产生的用户行为。</li>
+<li><strong>延迟反馈。</strong>点击尤其是转化可能在曝光几分钟甚至几天后才回来。窗口切得太紧，就把「还没点」误标成「不会点」。</li>
+<li><strong>位置偏差与闭环偏差。</strong>排第一的广告天生点击多；更麻烦的是模型只能从<em>自己展示过</em>的广告上学，没被展示的永远没有标签——得靠探索流量打破。</li>
+<li><strong>给每个广告 ID 学嵌入。</strong>长尾 ID 一辈子出现不了几次。能学动的是广告主、类目、素材类型这些可跨广告复用的层。</li>
+<li><strong>把持续学习当成纯收益。</strong>代价是灾难性遗忘和「坏模型自动全量铺开」的爆炸半径——高频更新必须配自动回滚。</li>
+<li><strong>深度模型的增益被夸大。</strong>公开对比里 DCN / DeepFM 相对调好的 GBDT 或 FM，AUC 提升常在千分之几量级。广告体量下值钱，小平台照搬则得不偿失。</li>
+<li><strong>时代局限。</strong>书成于 2023 年，落点停在 DCN / DeepFM 这一代；此后行为<strong>序列建模</strong>与更大规模嵌入表成了主线。但「分数要拿去计费、所以必须校准」这条约束不随模型更新而变。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 这一章的输出<strong>要拿去分钱</strong>：广告按 <code>bid × pCTR</code> 排序与计费，分数的绝对值和相对顺序一样重要——这是它和其它推荐题的分水岭。</p>
+<p>② 建模是 pointwise 二分类，预测 <code>P(click)</code>、用 log loss 训。不选 pairwise / listwise，是因为那些方法的输出不是概率。</p>
+<p>③ 特征三类：广告侧、用户侧、用户 × 广告交互。共同麻烦是<strong>高基数</strong>，对策是嵌入 / 特征哈希 / 频次截断叠用。</p>
+<p>④ 有用的信号是<strong>乘性</strong>的：单个特征弱、组合才强。人工交叉会组合爆炸，且稀有组合学不到东西。</p>
+<p>⑤ 模型阶梯 LR → GBDT → GBDT+LR → FM → <strong>DCN / DeepFM</strong>。FM 的关键贡献是用嵌入内积共享参数，让从未共现的组合也能学。</p>
+<p>⑥ <strong>必须持续学习</strong>：广告池以小时计换血。配套三件套是在线评估门槛、防遗忘的混合采样、训练与服务的特征一致。</p>
+<p>⑦ <strong>校准独立于排序</strong>。负采样会系统性抬高预测，必须按采样率换算回去，再用 Platt scaling 或保序回归收尾。只看 AUC 是本章最大的坑。</p>
+<p>⑧ 判断一个场景要不要校准，只问一句：<strong>下游是只比较这个分数，还是拿它做算术。</strong></p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
