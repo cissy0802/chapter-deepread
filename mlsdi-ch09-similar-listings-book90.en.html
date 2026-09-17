@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>ML System Design Interview Ch 9 · Similar Listings — Book Deep Read 90</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">Book Deep Read · ML System Design Interview · Chapter 9</p>
+<h1>Similar Listings: you think it looks for lookalikes — it looks for substitutes</h1>
+<p class="sub">Machine Learning System Design Interview · Ch 9 · Ali Aminian &amp; Alex Xu · 2023</p>
+<p class="langbar"><a href="mlsdi-ch09-similar-listings-book90.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You open a place to stay on a rental site, scroll down, and there is always a row of "you might also like." This chapter is about how that row gets picked.</p>
+<h2>A strange thing first</h2>
+<p>You probably assume it hunts for places that <em>resemble</em> the one you are viewing — same neighborhood, same two bedrooms, same $120 a night. Filter that way and the results mostly go unclicked.</p>
+<p>Meanwhile two places whose specs differ quite a bit — one $120 and one $150, one a whole apartment and one a room in the host's home — get compared back and forth by the same crowd of people, who eventually book one of them. <strong>Those two are the genuinely similar pair</strong>, because in real people's heads they are interchangeable.</p>
+<p>So the pivot in this chapter is: what counts as similar <strong>is not decided by the property's specs, it is decided by the people looking at it</strong>.</p>
+<h2>Why the old way is hard</h2>
+<p>Nobody ever wrote down the answer. Across millions of listings there is no table anywhere saying "A and B are similar." Label them by hand? The number of pairs is astronomical; you could label for a lifetime and not finish.</p>
+<p>Computing similarity from the specs drops you straight back into the first trap. Two places can both be "two bedrooms, $120, city center" while one opens onto a subway entrance and the other is a twenty-minute climb uphill. How good the photos are, how it actually feels to stay there — none of that fits in a spec sheet, and that is exactly what people decide on.</p>
+<h2>The core idea: let browsing trails define similarity</h2>
+<p>The platform is already sitting on an answer — <strong>everyone's browsing trail</strong>. The seven or eight places one person opened in a single evening are precisely the set they were weighing against each other. A big platform collects hundreds of millions of such trails.</p>
+<p>So give every listing a <strong>name card</strong>: a short string of numbers the machine works out for itself. One rule only: <strong>listings that keep showing up in the same shopping trip get cards that sit close together; two listings picked at random get pushed apart</strong>. Run hundreds of millions of trails through that, and the cards that end up near each other belong to places real people actually compare.</p>
+<p>It is a bit like inferring who is friends with whom from a pile of group photos. You never ask anyone; you just notice who keeps turning up in the same frame.</p>
+<p>There is one extra move. If a trail <strong>ends in an actual booking</strong>, the booked place gets a say over the whole trail — every place seen along the way is nudged toward it. Because "finally chose it" carries far more weight than "clicked on it."</p>
+<h2>What about brand-new places?</h2>
+<p>A listing that just went up has no visitors and therefore no card. The fix is crude and effective: <strong>take a few nearby places of the same type and price, average their cards, and use that as a stand-in</strong> until the new listing has trails of its own.</p>
+<h2>What it costs</h2>
+<p>It can only repeat back what people <strong>already look at</strong> — a great place nobody has clicked is hard for it to surface, so the cold stay cold and the hot get hotter.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p>Similar listings are not "the ones that look alike," they are "the ones you'd take instead." And that second thing doesn't need defining — it is already sitting in millions of browsing trails. Pour the trails in and similarity surfaces on its own.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, notation and diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">This chapter makes exactly one big decision: <strong>don't define "similar" — let user sessions define it</strong>. It is the only problem in the book with <em>no human labels</em>. The training signal comes entirely from co-occurrence in the logs: an adapted word2vec skip-gram compresses every listing into a few dozen dimensions, and "similar" simply means "nearby vector." The engineering content is not in the model (the model is from 2013) but in three adaptations: treating the <strong>eventually booked listing</strong> as global context, adding <strong>same-market negatives</strong> to survive congregated search, and an <strong>attribute fallback</strong> for new listings.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Listing</strong>: one bookable property on the platform. <strong>Market</strong>: a searchable geographic area, usually a city.</li>
+<li><strong>Session</strong>: one user's continuous stretch of browsing; a long enough pause ends it and starts a new one.</li>
+<li><strong>Co-occurrence</strong>: two listings appearing inside the same session. Every training signal in this chapter comes from it.</li>
+<li><strong>Embedding</strong>: compressing an ID into a short trainable vector. Closeness is measured by <strong>cosine similarity</strong> — the closer two vectors point, the nearer the value is to 1.</li>
+<li><strong>Self-supervised</strong>: no human annotation; labels are generated by the structure of the data itself — here, "clicked next to each other in one session."</li>
+<li><strong>skip-gram</strong>: the word2vec training scheme that uses a center item to predict the items in a window around it. That window is the <strong>sliding window</strong>.</li>
+<li><strong>Negative sampling</strong>: instead of scoring all several million candidates each step, draw a handful of random "counter-examples" to contrast against, which keeps training affordable.</li>
+<li><strong>ANN (approximate nearest neighbor)</strong>: finding the closest few vectors among millions fast, trading a little recall for orders of magnitude of speed.</li>
+<li><strong>Collaborative filtering</strong>: recommending from behavioral co-occurrence ("people who viewed A also viewed B") rather than from item attributes.</li>
+<li><strong>Cold start</strong>: a new item or user has no history, so the model has nothing to work with.</li>
+<li><strong>CTR (click-through rate)</strong>: clicks ÷ impressions — the headline online metric here.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This is the 8th of the ten case studies in Part II, and it mirrors the previous one. Ch8, ad click prediction, had labels ready-made and spent its effort on feature crossing and probability calibration; <strong>here there are no labels and almost no feature engineering, and all the effort goes into turning raw logs into training samples</strong>. Ch10, personalized news feed, returns to multi-objective supervised ranking. In the real world this is Airbnb's similar-listings carousel and e-commerce's "customers also viewed."</p>
+<h2>What the chapter is solving</h2>
+<p>The setting is concrete: a horizontal "similar listings" row on the listing detail page. A user who opened this listing is interested in the category but has not decided — <strong>this row determines whether they keep shopping on your site or bounce back to search and out</strong>. On a rental platform it is the second-biggest discovery surface after search itself.</p>
+<p>Three constraints separate it from every earlier problem.</p>
+<p><strong>One: there are no labels.</strong> No table anywhere says "A is similar to B." Hand annotation fails on sheer count: pairing millions of listings is on the order of <code>10¹³</code> pairs — the notation just means "tens of trillions," which puts annotation out of reach entirely.</p>
+<p><strong>Two: attribute similarity is systematically wrong.</strong> Cosine over "same city + same price band + same room type" is ten lines of code, but it surfaces listings with <em>nearby specs</em> when the user wants listings that are <em>substitutable</em>. Same "two bedrooms, $120, city center," yet one is next to a subway entrance and the other is a twenty-minute climb. Photo quality, decor, the felt sense of value for money — the things people actually trade off mostly cannot be encoded in the attribute table.</p>
+<p><strong>Three: the scale forbids brute force.</strong> Airbnb has publicly described millions of active listings, while the render budget for this block of the detail page is typically tens of milliseconds — exact cosine against millions of vectors per request is hundreds of millions of multiply-adds, so it is off the table.</p>
+<p>What happens if you skip it? The row fills with spec twins, its CTR looks like random placement, and users go back to search and start over.</p>
+<h2>The core, explained</h2>
+<h3>1. Framing it as ML: representation learning, not classification</h3>
+<p>The chapter does not train a binary classifier that takes A and B and outputs "alike or not." It <strong>learns one vector per listing</strong> and measures similarity by cosine. Two payoffs: compute the vectors once and any pair on the site becomes queryable, and several downstream surfaces (detail-page recommendations, search retrieval) reuse the same representation.</p>
+<p>Where does the training signal come from? One assumption carries the whole chapter: <strong>listings clicked within the same session are, in the user's head, interchangeable candidates.</strong> That hands the definition of "similar" from the product manager to user behavior, so what gets learned is <em>behavioral substitutability</em>, not <em>attribute resemblance</em>.</p>
+<h3>2. Cutting logs into training samples (this is the real work)</h3>
+<p>This step looks like plumbing and is the easiest place to ruin the model. The book's treatment:</p>
+<ul>
+<li><strong>Segment sessions</strong>: split a user's click stream wherever inactivity exceeds about 30 minutes.</li>
+<li><strong>Drop misclicks</strong>: clicks with very short dwell time (say under 30 seconds) are treated as slips and removed.</li>
+<li><strong>Drop trivial sessions</strong>: a session with a single click carries no co-occurrence at all.</li>
+<li><strong>Drop bot traffic</strong>: crawlers string together completely unrelated listings into long sequences.</li>
+</ul>
+<p>Why do these thresholds matter? A session that wasn't cut cleanly splices "I browsed Paris, then two hours later switched to Tokyo" into one sentence, and the model duly learns that <strong>Paris resembles Tokyo</strong>. Garbage in, garbage out is literal here.</p>
+<p>The scale is worth remembering: in the KDD 2018 paper, Airbnb reports training 32-dimensional listing embeddings for roughly 4.5 million listings from over 800 million search click sessions. <strong>32 dimensions</strong> — not 512, not 1024 — because what's wanted is the coarse substitutability structure; more dimensions overfit to noise on long-tail listings and multiply memory and query cost.</p>
+<h3>3. Running skip-gram over listings</h3>
+<p>Swap words for listings and sentences for sessions and word2vec's skip-gram transfers unchanged: a sliding window takes a <strong>center listing</strong> plus the <strong>context listings</strong> around it, and training pushes the dot product of same-window vectors up and the dot product with randomly drawn listings down.</p>
+<p>In plain terms, two motions: <strong>pull the same window together, push random draws apart.</strong> Why "random draws" instead of comparing against all 4.5 million listings? Because that would require a 4.5-million-term normalization at every step, which blows up training cost — that is the only reason negative sampling exists.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 252" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m1" markerheight="7" markerwidth="8" orient="auto" refx="7" refy="3.5"><path d="M0,0 L8,3.5 L0,7 z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="320" y="20">A click session is a sentence; listings are the words</text>
+<rect fill="none" height="54" rx="8" stroke="rgba(91,157,249,0.55)" stroke-dasharray="5 4" width="234" x="125" y="84"></rect>
+<text fill="#5b9df9" font-size="11" text-anchor="middle" x="242" y="74">sliding window: center + context</text>
+<rect fill="rgba(255,255,255,0.03)" height="38" rx="6" stroke="rgba(91,157,249,0.3)" width="66" x="53" y="92"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="86" y="116">listing 1</text>
+<rect fill="rgba(255,255,255,0.03)" height="38" rx="6" stroke="rgba(91,157,249,0.3)" width="66" x="131" y="92"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="164" y="116">listing 2</text>
+<rect fill="rgba(91,157,249,0.14)" height="38" rx="6" stroke="#5b9df9" stroke-width="1.6" width="66" x="209" y="92"></rect>
+<text fill="#8fbaff" font-size="10.5" font-weight="700" text-anchor="middle" x="242" y="108">listing 3</text>
+<text fill="#8fbaff" font-size="9.5" text-anchor="middle" x="242" y="123">center</text>
+<rect fill="rgba(255,255,255,0.03)" height="38" rx="6" stroke="rgba(91,157,249,0.3)" width="66" x="287" y="92"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="320" y="116">listing 4</text>
+<rect fill="rgba(255,255,255,0.03)" height="38" rx="6" stroke="rgba(91,157,249,0.3)" width="66" x="365" y="92"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="398" y="116">listing 5</text>
+<rect fill="rgba(255,255,255,0.03)" height="38" rx="6" stroke="rgba(91,157,249,0.3)" width="66" x="443" y="92"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="476" y="116">listing 6</text>
+<rect fill="rgba(155,108,245,0.14)" height="38" rx="6" stroke="#9b6cf5" stroke-width="1.6" width="66" x="521" y="92"></rect>
+<text fill="#c3a6fb" font-size="10.5" font-weight="700" text-anchor="middle" x="554" y="108">listing 7</text>
+<text fill="#c3a6fb" font-size="9.5" text-anchor="middle" x="554" y="123">booked</text>
+<path d="M554,132 L554,170 L242,170 L242,142" fill="none" marker-end="url(#m1)" stroke="#9b6cf5" stroke-dasharray="4 3"></path>
+<text fill="#c3a6fb" font-size="11" text-anchor="middle" x="320" y="190">the booked listing joins every window as global context</text>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="320" y="216">same window → vectors pulled together</text>
+<text fill="#7c8593" font-size="11.5" text-anchor="middle" x="320" y="236">random listings site-wide → vectors pushed apart</text>
+</svg>
+<figcaption>Sessions are cut into sliding windows; center and context vectors are pulled together while random negatives are pushed apart. If the session ends in a booking, the booked listing appears as context in every window.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/word2vec-paper4.en.html" rel="noopener" target="_blank">Paper Deep Read · Word2Vec</a> — skip-gram, negative sampling and the original argument that context defines meaning; the source of this chapter's whole mechanism</aside>
+<h3>4. The two adaptations you cannot skip</h3>
+<p>Port word2vec over unchanged and you get a model that <strong>runs but is useless</strong>. The two adaptations in the book are the most valuable part of the chapter — and the part interviewers push on.</p>
+<p><strong>Adaptation one: treat the booking as global context.</strong> A click is a weak signal — it only means "took a look." A booking is a strong one: real money changed hands. So for any session that ends in a booking, the booked listing is <strong>added to every sliding window of that session</strong>, wherever the window happens to be. The effect is that every vector along the trail leans toward the listing that actually converted, encoding not just "seen together" but "seen together, and this one won."</p>
+<p><strong>Adaptation two: add same-market negatives.</strong> This one is subtler. Search is <em>congregated</em>: a session basically stays inside one city. So positives in a window are automatically same-city, while site-wide random negatives almost certainly come from other cities. The model spots a shortcut: <strong>just learn to tell cities apart and the loss goes down</strong>. What you get is a geographic clustering map with each city an undifferentiated blob — and "which listing inside this city substitutes for which" is the only thing the product needed.</p>
+<p>The fix is plain: on top of the site-wide random negatives, <strong>draw a second set of negatives from the same market</strong>. Now "same city" no longer lowers the loss, and the model is forced to find structure inside the city.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 268" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="320" y="20">Where negatives come from decides what the embedding learns</text>
+<text fill="#b9c0ca" font-size="11.5" font-weight="700" text-anchor="middle" x="165" y="40">1 · negatives drawn site-wide only</text>
+<rect fill="rgba(255,255,255,0.02)" height="170" rx="9" stroke="rgba(91,157,249,0.22)" width="290" x="20" y="48"></rect>
+<ellipse cx="85" cy="105" fill="rgba(91,157,249,0.12)" rx="38" ry="26" stroke="rgba(91,157,249,0.5)"></ellipse>
+<circle cx="74" cy="100" fill="#8fbaff" r="2.6"></circle><circle cx="86" cy="97" fill="#8fbaff" r="2.6"></circle><circle cx="95" cy="106" fill="#8fbaff" r="2.6"></circle><circle cx="80" cy="112" fill="#8fbaff" r="2.6"></circle><circle cx="92" cy="115" fill="#8fbaff" r="2.6"></circle>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="85" y="147">city A</text>
+<ellipse cx="225" cy="98" fill="rgba(91,157,249,0.12)" rx="36" ry="24" stroke="rgba(91,157,249,0.5)"></ellipse>
+<circle cx="215" cy="94" fill="#8fbaff" r="2.6"></circle><circle cx="228" cy="92" fill="#8fbaff" r="2.6"></circle><circle cx="234" cy="103" fill="#8fbaff" r="2.6"></circle><circle cx="219" cy="106" fill="#8fbaff" r="2.6"></circle>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="225" y="138">city B</text>
+<ellipse cx="155" cy="178" fill="rgba(91,157,249,0.12)" rx="38" ry="22" stroke="rgba(91,157,249,0.5)"></ellipse>
+<circle cx="145" cy="174" fill="#8fbaff" r="2.6"></circle><circle cx="158" cy="172" fill="#8fbaff" r="2.6"></circle><circle cx="165" cy="182" fill="#8fbaff" r="2.6"></circle><circle cx="149" cy="184" fill="#8fbaff" r="2.6"></circle>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="155" y="214">city C</text>
+<text fill="#b9c0ca" font-size="11.5" font-weight="700" text-anchor="middle" x="475" y="40">2 · plus same-market negatives</text>
+<rect fill="rgba(255,255,255,0.02)" height="170" rx="9" stroke="rgba(155,108,245,0.3)" width="290" x="330" y="48"></rect>
+<ellipse cx="475" cy="135" fill="rgba(155,108,245,0.07)" rx="120" ry="72" stroke="rgba(155,108,245,0.45)"></ellipse>
+<text fill="#9b8fb5" font-size="10.5" text-anchor="middle" x="475" y="80">inside one city</text>
+<ellipse cx="425" cy="123" fill="rgba(155,108,245,0.16)" rx="54" ry="26" stroke="rgba(155,108,245,0.7)" stroke-dasharray="4 3"></ellipse>
+<text fill="#c3a6fb" font-size="10" text-anchor="middle" x="425" y="127">entire home · high price</text>
+<ellipse cx="528" cy="175" fill="rgba(155,108,245,0.16)" rx="54" ry="26" stroke="rgba(155,108,245,0.7)" stroke-dasharray="4 3"></ellipse>
+<text fill="#c3a6fb" font-size="10" text-anchor="middle" x="528" y="179">private room · low price</text>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="165" y="238">telling cities apart already cuts the loss</text>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="165" y="256">cost: no structure left within a city</text>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="475" y="238">"same city" stops being a shortcut</text>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="475" y="256">structure must come from within</text>
+</svg>
+<figcaption>Left: with site-wide negatives, separating cities is the cheapest solution and the embedding degenerates into geographic clusters. Right: same-market negatives remove that shortcut, forcing the model to learn substitutability inside a city.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/representation-geometry-day30.en.html" rel="noopener" target="_blank">AI/ML · Day 30 Representation and Embedding Geometry</a> — anisotropy, collapse, and how the choice of negatives shapes the geometry; the theory side of the shortcut above</aside>
+<h3>5. Cold start and online serving</h3>
+<p><strong>Cold start</strong> is the structural weakness here: a listing that just went live has no sessions and therefore no co-occurrence. The book adopts Airbnb's attribute fallback — take the geographically nearest few listings (say 3) of the same room type and price bucket and <strong>average their vectors</strong> as the initial value, replacing it once the listing accumulates sessions of its own.</p>
+<p><strong>Serving</strong> is the classic "heavy offline, light online" shape: embeddings are retrained offline daily (substitutability does not drift hourly the way ad inventory does), and online you either look up a precomputed top-k or query an ANN index.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m3" markerheight="7" markerwidth="8" orient="auto" refx="7" refy="3.5"><path d="M0,0 L8,3.5 L0,7 z" fill="#7c8593"></path></marker><marker id="m4" markerheight="7" markerwidth="8" orient="auto" refx="7" refy="3.5"><path d="M0,0 L8,3.5 L0,7 z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="320" y="20">Heavy offline, light online: retrain daily, only look up at serve time</text>
+<rect fill="rgba(255,255,255,0.03)" height="44" rx="7" stroke="rgba(91,157,249,0.32)" width="130" x="16" y="44"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="81" y="62">session cleaning</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="81" y="78">split · de-noise · de-bot</text>
+<rect fill="rgba(255,255,255,0.03)" height="44" rx="7" stroke="rgba(91,157,249,0.32)" width="160" x="176" y="44"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="256" y="62">skip-gram training</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="256" y="78">negatives + same-market</text>
+<rect fill="rgba(91,157,249,0.13)" height="44" rx="7" stroke="#5b9df9" stroke-width="1.6" width="170" x="366" y="44"></rect>
+<text fill="#8fbaff" font-size="11" font-weight="700" text-anchor="middle" x="451" y="62">listing embedding table</text>
+<text fill="#8fbaff" font-size="10" text-anchor="middle" x="451" y="78">millions of rows × 32 dims</text>
+<line marker-end="url(#m3)" stroke="#7c8593" x1="146" x2="174" y1="66" y2="66"></line>
+<line marker-end="url(#m3)" stroke="#7c8593" x1="336" x2="364" y1="66" y2="66"></line>
+<rect fill="rgba(155,108,245,0.1)" height="44" rx="7" stroke="rgba(155,108,245,0.55)" width="210" x="16" y="108"></rect>
+<text fill="#c3a6fb" font-size="11" text-anchor="middle" x="121" y="126">new-listing fallback</text>
+<text fill="#9b8fb5" font-size="10" text-anchor="middle" x="121" y="142">mean of 3 nearest, same type/price</text>
+<path d="M226,130 L410,130 L410,92" fill="none" marker-end="url(#m4)" stroke="#9b6cf5" stroke-dasharray="4 3"></path>
+<path d="M536,66 L600,66 L600,168 L165,168 L165,182" fill="none" marker-end="url(#m3)" stroke="#7c8593"></path>
+<path d="M445,168 L445,182" fill="none" marker-end="url(#m3)" stroke="#7c8593"></path>
+<rect fill="rgba(255,255,255,0.03)" height="48" rx="7" stroke="rgba(91,157,249,0.32)" width="230" x="50" y="184"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="165" y="204">precompute top-k per listing</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="165" y="220">store in KV, one online lookup</text>
+<rect fill="rgba(255,255,255,0.03)" height="48" rx="7" stroke="rgba(91,157,249,0.32)" width="230" x="330" y="184"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="445" y="204">build an ANN index</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="445" y="220">approximate search, filters at query time</text>
+</svg>
+<figcaption>Training runs as a daily offline batch. Online there are two paths: precomputed top-k for the lowest possible latency, or an ANN index for the flexibility of filtering by dates and price at query time.</figcaption>
+</figure>
+<h3>6. Evaluating a model with no right answer</h3>
+<p>With no ground truth, offline metrics can only be proxies you invent. The book's move is to <strong>use converted sessions as the yardstick</strong>: for a session that ended in booking listing X, at every click use the current listing's vector to retrieve candidates and check X's rank — if the embedding is good, <strong>the closer to booking, the higher X ranks</strong>. That curve compares training configurations without shipping. It remains a proxy, though; the real verdict is an online A/B on the row's CTR and on conversions that start from it.</p>
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 1 · How to define "similar" — the last column is what interviews are listening for</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Approach</th><th>Signal</th><th>Captures substitutability?</th><th>Cold start</th><th>When to pick it</th></tr></thead>
+<tbody>
+<tr><th>Attribute rules</th><td>hand-written filters</td><td><strong>No</strong> — returns spec twins</td><td><strong>Not an issue</strong></td><td>v1, or as a fallback and filter layer</td></tr>
+<tr><th>Content-feature cosine</th><td>attributes / image-text vectors</td><td>Weak, only "looks alike"</td><td>Good</td><td>New platforms with thin behavioral data</td></tr>
+<tr><th>Collaborative filtering</th><td>long-run user×item interaction</td><td>Yes, but skews to long-term taste</td><td>Poor</td><td>Dense interaction with returning users</td></tr>
+<tr><th>Session co-occurrence embeddings</th><td>click sequence within one session</td><td><strong>Yes — it captures this comparison</strong></td><td>Poor, needs attribute fallback</td><td><strong>This chapter</strong>: in-session decisions, short-lived intent, huge logs</td></tr>
+<tr><th>Supervised two-tower</th><td>constructed positive/negative pairs</td><td>Yes, and business goals can be injected</td><td>Medium</td><td>Mature labels and training infra, multi-objective needs</td></tr>
+</tbody>
+</table>
+</div>
+<p class="tcap">Table 2 · How to query online: latency, freshness and flexibility</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Approach</th><th>Latency</th><th>Freshness / flexibility</th><th>Cost</th><th>Fits</th></tr></thead>
+<tbody>
+<tr><th>Precomputed top-k</th><td><strong>Lowest</strong>, one KV lookup</td><td>Poor: new vectors force a full recompute; no query-time filters</td><td>Storage for compute, predictable</td><td>Fixed modules whose results don't vary per request</td></tr>
+<tr><th>Online ANN index</th><td>Low, milliseconds</td><td><strong>Good</strong>: incremental inserts, filter by date / price</td><td>Index resident in memory</td><td><strong>This chapter</strong> and most production systems</td></tr>
+<tr><th>Exact brute force</th><td><strong>Unacceptable</strong></td><td>Best</td><td>Hundreds of millions of multiply-adds per request</td><td>Offline evaluation and small canaries only</td></tr>
+</tbody>
+</table>
+</div>
+<p>One more question interviewers like: <strong>the mix of negatives</strong>. Site-wide random negatives give global separation, same-market negatives give local resolution, and you want both — keep only the same-market ones and vectors across markets lose comparability.</p>
+<h2>Why it matters / in real systems</h2>
+<p>The shape generalizes well beyond rentals: <strong>anywhere you have no similarity labels but plenty of behavioral logs</strong> — "customers also viewed" in e-commerce, "similar artists" in music, "similar jobs" on job boards. The test is one sentence: <strong>is the similarity you want attribute resemblance, or behavioral substitutability?</strong> Only the second needs this chapter.</p>
+<p>Three near-certain interview probes: <strong>why not attribute cosine</strong>, <strong>why congregated search wrecks the embedding and how to fix it</strong> (the question that separates "read it" from "understood it"), and <strong>what to do about cold start</strong>.</p>
+<div class="ev">
+<div class="evh">Industry evidence · these claims are the companies' and projects' own, not the book's</div>
+<ul>
+<li><strong>Airbnb</strong> is the prototype for this chapter. In the KDD 2018 paper <em>Real-time Personalization using Embeddings for Search Ranking at Airbnb</em>, Grbovic and Cheng report training 32-dimensional listing embeddings for roughly 4.5 million listings from over 800 million search click sessions, with adaptations for treating the booked listing as global context and for same-market negative sampling; Airbnb's engineering blog subsequently reported roughly a 21% CTR lift on the similar-listings module. <span class="src">(Source: Grbovic &amp; Cheng, KDD 2018; Airbnb engineering blog — those domains are unreachable from this site's build environment, so the citation is text-only.)</span></li>
+<li><strong>Spotify · Annoy (open-source ANN library)</strong> states the case for approximate retrieval in its own README: it is "<strong>a C++ library with Python bindings to search for points in space that are close to a given query point</strong>," and on motivation — "<strong>We use it at Spotify for music recommendations. After running matrix factorization algorithms, every user/item can be represented as a vector in f-dimensional space</strong>," where "<strong>We have many millions of tracks in a high-dimensional space, so memory usage is a prime concern</strong>." The index is a read-only memory-mapped file "<strong>so that many processes may share the same data</strong>." <span class="src"><a href="https://github.com/spotify/annoy" rel="noopener" target="_blank">spotify/annoy · README ↗</a></span></li>
+<li><strong>Meta · Faiss</strong> states the accuracy-for-scale trade most bluntly: it is "<strong>a library for efficient similarity search and clustering of dense vectors</strong>," and the compressed-code methods do not keep the original vectors, which "<strong>generally comes at the cost of a less precise search but these methods can scale to billions of vectors in main memory on a single server</strong>." That sentence is the engineering basis for "brute force is off the table" in Table 2. <span class="src"><a href="https://github.com/facebookresearch/faiss" rel="noopener" target="_blank">facebookresearch/faiss · README ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/recommendation-system-day13.en.html" rel="noopener" target="_blank">System Design · Day 13 Recommendation Systems</a> — the retrieval-then-ranking funnel from a billion candidates down to twenty, and where embedding retrieval sits in it</aside>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>Treating "similar" as "looks alike."</strong> The chapter's first lesson and the most common product misreading: nobody compares two spec twins.</li>
+<li><strong>Sessions cut badly.</strong> Cross-city, cross-date and bot traffic merged into one sequence produce absurd neighbors — and offline metrics barely show it.</li>
+<li><strong>Forgetting same-market negatives.</strong> The sneakiest trap: the embedding looks sensible (cities do cluster) while online clicks don't move, because the within-city ordering the module needs was never learned.</li>
+<li><strong>Popularity bias.</strong> Hot listings appear in countless sessions, get dragged toward the center of the space and become everyone's neighbor. Downsample by frequency.</li>
+<li><strong>The cold-start fallback's side effect.</strong> A new listing's vector is the mean of its neighbors, so it <em>permanently resembles its neighbors</em> and never acquires character — it's a temporary value to retire fast, not a resting state.</li>
+<li><strong>The feedback loop.</strong> Whatever the module shows is what users see, and the next round of training data looks more like it. Without exploration traffic, long-tail listings never enter anyone's session.</li>
+<li><strong>Taking offline metrics as the verdict.</strong> On a task with no ground truth, "better offline, worse online" is routine.</li>
+<li><strong>Period limits.</strong> This is 2018 engineering around a 2013 model; the field has since moved to sequence models, two-tower retrieval and graph embeddings. But "use session co-occurrence as the label" was never overturned — it became the default starting point for retrieval layers everywhere.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. The pivot is <strong>not defining "similar" and letting sessions define it</strong>: listings clicked in one session are each other's substitutes.</p>
+<p>2. That makes it the book's only <strong>self-supervised</strong> problem — labels come free from co-occurrence, with almost no feature engineering.</p>
+<p>3. The framing is representation learning, not classification: one vector per listing (Airbnb used 32 dims), similarity by cosine.</p>
+<p>4. The mechanism is skip-gram with negative sampling: <strong>pull the same window together, push random negatives apart</strong>; negative sampling exists only to avoid normalizing over millions of candidates.</p>
+<p>5. Adaptation one: <strong>make the booked listing global context</strong>, so the whole trail leans toward the real conversion — clicks are weak, bookings are strong.</p>
+<p>6. Adaptation two: <strong>add same-market negatives</strong>, or "tell cities apart" becomes the shortcut and the embedding degenerates into geographic clusters with no within-city structure.</p>
+<p>7. Cold start uses an attribute fallback — the mean vector of the nearest same-type, same-price listings; serving is daily offline retraining plus online ANN retrieval.</p>
+<p>8. Evaluation has no right answer: offline, use "does the booked listing rank higher as the session progresses" as a proxy; the verdict is still online A/B on CTR and conversion.</p>
+</div>
+</div>
+<footer>Book Deep Read · Reading this page ≈ getting the core of the chapter; for the full case study, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

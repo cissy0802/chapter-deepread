@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>ML 系统设计面试 第 9 章 · 民宿相似房源 — 专业书籍精读 Book 90</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · ML System Design Interview · 第 9 章</p>
+<h1>相似房源：你以为在找长得像的，其实在找可替代的</h1>
+<p class="sub">Machine Learning System Design Interview · Ch 9 · Ali Aminian &amp; Alex Xu · 2023</p>
+<p class="langbar"><a href="mlsdi-ch09-similar-listings-book90.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你在订房网站上点开一套房子，页面往下拉，总有一排「你可能也喜欢」。这一章讲的就是：那一排是怎么挑出来的。</p>
+<h2>先说个怪事</h2>
+<p>你大概以为它在找「跟这套像的」——同一个区、同样两居、同样一晚六百。可真按这个筛，挑出来的东西常常没人点。</p>
+<p>反过来，有两套房子参数差得不小：一套六百、一套七百五，一套整租、一套带房东，但同一批人来来回回在这两套之间比价、犹豫、最后选了一套。<strong>这两套才是真正的「相似」</strong>——因为它们在同一群人心里是可以互相替换的。</p>
+<p>所以这一章最关键的转向是：谁跟谁像，<strong>不由房子的参数说了算，由看房子的人说了算</strong>。</p>
+<h2>旧世界为什么难</h2>
+<p>难点在于，没人给过答案。全站几百万套房，没有任何一张表写着「A 和 B 相似」。想靠人标？两两配对的数量是天文数字，标一辈子也标不完。</p>
+<p>靠参数算又回到了刚才那个坑：同样是「两居、六百、市中心」，一套推窗是地铁口，一套要爬二十分钟山路；照片拍得好不好、住进去舒不舒服，这些没法写进参数的东西，恰恰是人做决定时最看重的。</p>
+<h2>核心机制：让浏览轨迹替你定义相似</h2>
+<p>平台手里其实有一个现成的答案——<strong>每个人的浏览轨迹</strong>。一个人某天晚上连着点开的那七八套房，就是他心里放在一起比较的一组。这种轨迹，平台一天能收上亿条。</p>
+<p>做法是给每套房发一张「<strong>名片</strong>」——一小串数字，机器自己学出来的。规则只有一句：<strong>经常出现在同一次逛街里的房子，名片要互相靠近；随便抽来的两套，名片要互相推远</strong>。几亿条轨迹过完，名片挨得近的，就是人们真会拿来比较的。</p>
+<p>这有点像从大量合影里推断谁跟谁熟：你不用问任何人，只要看谁总是跟谁出现在同一张照片里。</p>
+<p>还有一个加料的动作：如果这次逛街<strong>最后真订下来了</strong>，那被订的那一套对整段轨迹都有发言权——让路上看过的每一套都往它靠一点。因为「最后选了它」比「点开看过」要重得多。</p>
+<h2>新房子怎么办</h2>
+<p>刚上架的房子没人看过，自然也没有名片。办法很土但很有效：<strong>找附近几套户型和价位都差不多的房子，把它们的名片平均一下，先顶上</strong>，等这套房攒够了浏览记录再换成自己的。</p>
+<h2>这套做法的代价</h2>
+<p>它只会复述人们<strong>已经在看</strong>的东西——一套没人点过的好房子，很难被它翻出来，于是冷的越冷、热的越热。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>相似房源不是「找长得像的」，是「找会被拿来当替代品的」。而后者不用定义、也定义不出来——它就藏在千万人的浏览轨迹里，把轨迹倒进机器，相似自己会浮出来。</p>
+</div>
+<p class="switch-hint">想进到具体机制、记号和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">这一章的核心决定只有一个：<strong>不去定义什么叫「相似」，让用户的会话轨迹替你定义</strong>。它是全书唯一一道<em>没有人工标签</em>的题——训练信号完全来自日志里的共现（co-occurrence），用改造过的 word2vec skip-gram 把每个房源压成一个几十维向量，「相似」就等于向量近。真正的工程含量不在模型（模型是 2013 年的），而在三处改造：把<strong>最终下单的那套</strong>当全局上下文、为<strong>同城搜索</strong>补一组同市场负样本、给新房源准备<strong>属性回退</strong>。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>房源（listing）</strong>：平台上一个可预订的房子。<strong>市场（market）</strong>：一个可搜索的地理区域，通常就是一座城市。</li>
+<li><strong>会话（session）</strong>：一个用户一段连续的浏览行为，中间停太久就算断开、算新的一段。</li>
+<li><strong>共现（co-occurrence）</strong>：两个房源出现在同一段会话里。这一章的全部训练信号都来自它。</li>
+<li><strong>嵌入（embedding）</strong>：把一个 ID 压成一小串可训练的数（向量）。相似度用<strong>余弦相似度（cosine similarity）</strong>衡量：两个向量方向越接近，值越接近 1。</li>
+<li><strong>自监督（self-supervised）</strong>：没有人工标注，标签由数据自身的结构生成——这里就是「同一会话里挨着出现」。</li>
+<li><strong>skip-gram</strong>：word2vec 的一种训练方式，用中心词去预测它周围窗口内的词。<strong>滑动窗口（sliding window）</strong>就是那个「周围」的范围。</li>
+<li><strong>负采样（negative sampling）</strong>：不去跟全部几百万个候选算一遍概率，只随机抽少量「反例」来对比，把训练成本压下来。</li>
+<li><strong>ANN（approximate nearest neighbor，近似最近邻）</strong>：在几百万个向量里快速找出最近的几个，接受一点漏召回换几个数量级的速度。</li>
+<li><strong>协同过滤（collaborative filtering）</strong>：靠「买了 A 的人也买了 B」这类行为共现做推荐，不看物品本身的属性。</li>
+<li><strong>冷启动（cold start）</strong>：新物品 / 新用户没有历史行为，模型无从下手。</li>
+<li><strong>CTR（click-through rate）</strong>：点击数 ÷ 曝光数，这一章线上评估的主指标。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>本章是《ML 系统设计面试》Part II 十道真题的第 8 道，和上一章正好对称：Ch8 广告点击预测有现成标签，力气花在特征交叉与概率校准上；<strong>这里没有标签、几乎不做特征工程，力气全花在「怎么把原始日志变成训练样本」</strong>。下启 Ch10 个性化信息流，回到多目标监督排序。现实对应 Airbnb 的相似房源模块、电商的「看了又看」。</p>
+<h2>这章要解决什么</h2>
+<p>场景很具体：房源详情页往下滚，有一个「相似房源」横排。用户点开一套房，说明他对这一类有兴趣但还没定——<strong>这一屏决定他是继续在站内挑，还是退回搜索页、甚至关掉标签页</strong>。在民宿平台上，这是仅次于搜索的发现入口。</p>
+<p>三个约束把它和前面所有题分开。</p>
+<p><strong>其一，没有标签。</strong>没有任何一张表写着「A 与 B 相似」。人工标注在数量上就不成立：几百万房源的两两配对是 <code>10¹³</code> 量级——这个记号只是说「万亿级」，标注根本无从谈起。</p>
+<p><strong>其二，属性相似度会系统性地答错。</strong>「同城 + 同价位段 + 同户型」的余弦相似度十行代码就能写完，但它挑出来的是<em>参数接近</em>的房源，而用户要的是<em>可替代</em>的房源。同样是「两居、600 元、市中心」，一套推窗即地铁、一套要爬二十分钟山路；照片质量、装修风格、性价比感受——这些决定用户取舍的东西，大半编码不进属性表。</p>
+<p><strong>其三，规模不允许暴力。</strong>Airbnb 公开过的量级是数百万在售房源，而详情页这一块的渲染预算通常是几十毫秒——逐次请求跟几百万个向量算精确余弦是上亿次乘加，不在选项里。</p>
+<p>不解决会怎样？模块推出来全是「参数孪生」，点击率低得像随机，用户只能退回搜索页重新开始。</p>
+<h2>核心内容，讲透</h2>
+<h3>一、翻译成 ML 问题：不是分类，是表示学习</h3>
+<p>本章不训练一个「给定 A、B 输出像不像」的二分类器，而是<strong>给每个房源学一个向量</strong>，相似度用余弦算。好处有两个：向量一次算好，全站任意一对都能查；下游多个模块（详情页推荐、搜索召回）复用同一份表示。</p>
+<p>训练信号来自哪里？一句话假设撑起了整章：<strong>同一次会话里被连着点开的房源，在用户心里是可以互相替换的候选。</strong>它把「相似」的定义权从产品经理交给了用户行为，于是学到的是<em>行为上的可替代</em>，不是<em>属性上的像</em>。</p>
+<h3>二、把日志切成训练样本（真正的工作量在这里）</h3>
+<p>这一步看着琐碎，却是全章最容易做砸的地方。书里给出的处理是：</p>
+<ul>
+<li><strong>切会话</strong>：按用户的点击流切段，连续无操作超过 30 分钟就断开，算新的一段。</li>
+<li><strong>去误点</strong>：停留时间过短（如不足 30 秒）的点击视为手滑，剔除。</li>
+<li><strong>去太短的会话</strong>：只剩一次点击的会话没有共现信息，直接丢。</li>
+<li><strong>去机器流量</strong>：爬虫会把毫不相干的房源串成一条长序列。</li>
+</ul>
+<p>为什么这些阈值要紧？一条没切干净的会话，会把「我先看巴黎、两小时后改看东京」拼成同一个句子，于是模型学到<strong>巴黎像东京</strong>。垃圾进、垃圾出，在这一章是字面意义上的。</p>
+<p>数据量级值得记住：Airbnb 在 KDD 2018 的论文里报告的是用超过 8 亿次搜索点击会话、为约 450 万个房源训出 32 维嵌入。<strong>32 维</strong>——不是 512、不是 1024，因为这里要的是「可替代」这一层粗结构，维度高反而更容易过拟合到噪声，而且直接乘进内存与查询成本。</p>
+<h3>三、skip-gram 怎么用在房源上</h3>
+<p>把词换成房源、把句子换成会话，word2vec 的 skip-gram 就能原样搬过来：滑动窗口取一个<strong>中心房源</strong>和它前后的<strong>上下文房源</strong>，训练目标是让同窗口内的向量内积变大、让随机抽来的房源向量内积变小。</p>
+<p>白话说就是两个动作：<strong>同窗口的往一起拉，随机抽的往外推。</strong>为什么是「随机抽」而不是跟全部 450 万房源比一遍？因为那样每一步都要做一次 450 万项的归一化，训练成本直接爆掉——这就是负采样存在的唯一理由。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 252" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m1" markerheight="7" markerwidth="8" orient="auto" refx="7" refy="3.5"><path d="M0,0 L8,3.5 L0,7 z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="320" y="20">一次点击会话就是一个「句子」，房源就是「词」</text>
+<rect fill="none" height="54" rx="8" stroke="rgba(91,157,249,0.55)" stroke-dasharray="5 4" width="234" x="125" y="84"></rect>
+<text fill="#5b9df9" font-size="11" text-anchor="middle" x="242" y="74">滑动窗口：中心 + 上下文</text>
+<rect fill="rgba(255,255,255,0.03)" height="38" rx="6" stroke="rgba(91,157,249,0.3)" width="66" x="53" y="92"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="86" y="116">房源 1</text>
+<rect fill="rgba(255,255,255,0.03)" height="38" rx="6" stroke="rgba(91,157,249,0.3)" width="66" x="131" y="92"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="164" y="116">房源 2</text>
+<rect fill="rgba(91,157,249,0.14)" height="38" rx="6" stroke="#5b9df9" stroke-width="1.6" width="66" x="209" y="92"></rect>
+<text fill="#8fbaff" font-size="11" font-weight="700" text-anchor="middle" x="242" y="108">房源 3</text>
+<text fill="#8fbaff" font-size="10" text-anchor="middle" x="242" y="123">中心</text>
+<rect fill="rgba(255,255,255,0.03)" height="38" rx="6" stroke="rgba(91,157,249,0.3)" width="66" x="287" y="92"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="320" y="116">房源 4</text>
+<rect fill="rgba(255,255,255,0.03)" height="38" rx="6" stroke="rgba(91,157,249,0.3)" width="66" x="365" y="92"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="398" y="116">房源 5</text>
+<rect fill="rgba(255,255,255,0.03)" height="38" rx="6" stroke="rgba(91,157,249,0.3)" width="66" x="443" y="92"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="476" y="116">房源 6</text>
+<rect fill="rgba(155,108,245,0.14)" height="38" rx="6" stroke="#9b6cf5" stroke-width="1.6" width="66" x="521" y="92"></rect>
+<text fill="#c3a6fb" font-size="11" font-weight="700" text-anchor="middle" x="554" y="108">房源 7</text>
+<text fill="#c3a6fb" font-size="10" text-anchor="middle" x="554" y="123">已下单</text>
+<path d="M554,132 L554,170 L242,170 L242,142" fill="none" marker-end="url(#m1)" stroke="#9b6cf5" stroke-dasharray="4 3"></path>
+<text fill="#c3a6fb" font-size="11" text-anchor="middle" x="320" y="190">下单的那一套作为全局上下文，进入每一个窗口</text>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="320" y="216">同一窗口内 → 向量互相拉近</text>
+<text fill="#7c8593" font-size="11.5" text-anchor="middle" x="320" y="236">全站随机抽的房源 → 向量互相推远</text>
+</svg>
+<figcaption>会话被切成滑动窗口，中心房源与上下文房源的向量互相拉近，随机负例被推远；若这次会话最终成交，被订下的房源会作为全局上下文出现在每一个窗口里。</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/word2vec-paper4.html" rel="noopener" target="_blank">论文精读 · Word2Vec（词向量）</a> — skip-gram、负采样与「上下文定义语义」的原始论证，本章整套机制的出处</aside>
+<h3>四、两处非做不可的改造</h3>
+<p>直接把 word2vec 搬过来会得到一个<strong>能跑但没用</strong>的模型。书里给出的两处改造，是这一章最值钱、也最常被面试追问的部分。</p>
+<p><strong>改造一：把预订当全局上下文。</strong>点击是弱信号——点开只说明「看了一眼」；预订是强信号——那是真金白银的选择。做法是：对于最终产生预订的会话，把被订下的那一套房源<strong>加进该会话的每一个滑动窗口</strong>，无论窗口滑到哪里。效果是整条轨迹上的向量都朝最终成交的那一套偏，学到的不只是「被一起看过」，还有「一起看过并且最后选了它」。</p>
+<p><strong>改造二：补一组同市场负样本。</strong>这条更微妙。用户搜索是<strong>聚集</strong>的——一次会话基本只在一个城市里挑。于是窗口里的正例天然全部同城，而全站随机抽的负例大概率来自别的城市。模型发现了一条捷径：<strong>只要学会分辨城市，损失就能降下来</strong>。训出来的嵌入于是变成了一张地理聚类图，同一个城市内部糊成一团——而「同城内部哪套能替代哪套」恰恰是产品唯一要的东西。</p>
+<p>修法很朴素：在原有的全站随机负例之外，<strong>再抽一组来自同一市场的负例</strong>。这样「同城」不再是一个能降损失的捷径，模型被迫在同城内部分出结构。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 268" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="320" y="20">负样本从哪里抽，决定了嵌入到底学到什么</text>
+<text fill="#b9c0ca" font-size="11.5" font-weight="700" text-anchor="middle" x="165" y="40">① 负例只从全站随机抽</text>
+<rect fill="rgba(255,255,255,0.02)" height="170" rx="9" stroke="rgba(91,157,249,0.22)" width="290" x="20" y="48"></rect>
+<ellipse cx="85" cy="105" fill="rgba(91,157,249,0.12)" rx="38" ry="26" stroke="rgba(91,157,249,0.5)"></ellipse>
+<circle cx="74" cy="100" fill="#8fbaff" r="2.6"></circle><circle cx="86" cy="97" fill="#8fbaff" r="2.6"></circle><circle cx="95" cy="106" fill="#8fbaff" r="2.6"></circle><circle cx="80" cy="112" fill="#8fbaff" r="2.6"></circle><circle cx="92" cy="115" fill="#8fbaff" r="2.6"></circle>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="85" y="147">城市 A</text>
+<ellipse cx="225" cy="98" fill="rgba(91,157,249,0.12)" rx="36" ry="24" stroke="rgba(91,157,249,0.5)"></ellipse>
+<circle cx="215" cy="94" fill="#8fbaff" r="2.6"></circle><circle cx="228" cy="92" fill="#8fbaff" r="2.6"></circle><circle cx="234" cy="103" fill="#8fbaff" r="2.6"></circle><circle cx="219" cy="106" fill="#8fbaff" r="2.6"></circle>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="225" y="138">城市 B</text>
+<ellipse cx="155" cy="178" fill="rgba(91,157,249,0.12)" rx="38" ry="22" stroke="rgba(91,157,249,0.5)"></ellipse>
+<circle cx="145" cy="174" fill="#8fbaff" r="2.6"></circle><circle cx="158" cy="172" fill="#8fbaff" r="2.6"></circle><circle cx="165" cy="182" fill="#8fbaff" r="2.6"></circle><circle cx="149" cy="184" fill="#8fbaff" r="2.6"></circle>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="155" y="214">城市 C</text>
+<text fill="#b9c0ca" font-size="11.5" font-weight="700" text-anchor="middle" x="475" y="40">② 再补一组同市场负例</text>
+<rect fill="rgba(255,255,255,0.02)" height="170" rx="9" stroke="rgba(155,108,245,0.3)" width="290" x="330" y="48"></rect>
+<ellipse cx="475" cy="135" fill="rgba(155,108,245,0.07)" rx="120" ry="72" stroke="rgba(155,108,245,0.45)"></ellipse>
+<text fill="#9b8fb5" font-size="10.5" text-anchor="middle" x="475" y="80">同一个城市内部</text>
+<ellipse cx="425" cy="123" fill="rgba(155,108,245,0.16)" rx="52" ry="26" stroke="rgba(155,108,245,0.7)" stroke-dasharray="4 3"></ellipse>
+<text fill="#c3a6fb" font-size="10.5" text-anchor="middle" x="425" y="127">整租 · 高价段</text>
+<ellipse cx="528" cy="175" fill="rgba(155,108,245,0.16)" rx="52" ry="26" stroke="rgba(155,108,245,0.7)" stroke-dasharray="4 3"></ellipse>
+<text fill="#c3a6fb" font-size="10.5" text-anchor="middle" x="528" y="179">单间 · 低价段</text>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="165" y="238">模型只要分得清城市，损失就降了</text>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="165" y="256">代价：同城内部完全糊成一团</text>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="475" y="238">「同城」不再是降损失的捷径</text>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="475" y="256">模型被迫在同城内部分出结构</text>
+</svg>
+<figcaption>左：全站随机负例下，分辨城市就是最省力的解，嵌入退化成地理聚类。右：补上同市场负例后，城市这一维不再有区分度，模型只能去学同城内部的可替代关系。</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/representation-geometry-day30.html" rel="noopener" target="_blank">AI/ML · Day 30 表示与嵌入几何</a> — 嵌入空间的各向异性、坍缩与「什么样的负样本决定什么样的几何」，本节那条捷径的理论侧</aside>
+<h3>五、冷启动与在线服务</h3>
+<p><strong>冷启动</strong>是这套方法的结构性弱点：新上架的房源一条会话都没有，没有共现可学。书里采用 Airbnb 的属性回退——取地理最近的若干套（如 3 套）、房型与价位档相同的房源，把它们的向量<strong>取平均</strong>当作初始值，等它自己攒够会话再替换。</p>
+<p><strong>服务侧</strong>是典型的「离线重、在线轻」：嵌入按天离线重训（房源的可替代关系不像广告那样以小时计漂移），线上要么查预先算好的 top-k，要么走 ANN 索引。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m3" markerheight="7" markerwidth="8" orient="auto" refx="7" refy="3.5"><path d="M0,0 L8,3.5 L0,7 z" fill="#7c8593"></path></marker><marker id="m4" markerheight="7" markerwidth="8" orient="auto" refx="7" refy="3.5"><path d="M0,0 L8,3.5 L0,7 z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="320" y="20">离线重、在线轻：嵌入按天重训，线上只做查找</text>
+<rect fill="rgba(255,255,255,0.03)" height="44" rx="7" stroke="rgba(91,157,249,0.32)" width="130" x="16" y="44"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="81" y="62">会话清洗</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="81" y="78">切段 / 去误点 / 去机器</text>
+<rect fill="rgba(255,255,255,0.03)" height="44" rx="7" stroke="rgba(91,157,249,0.32)" width="160" x="176" y="44"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="256" y="62">skip-gram 训练</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="256" y="78">负采样 + 同市场负例</text>
+<rect fill="rgba(91,157,249,0.13)" height="44" rx="7" stroke="#5b9df9" stroke-width="1.6" width="170" x="366" y="44"></rect>
+<text fill="#8fbaff" font-size="11" font-weight="700" text-anchor="middle" x="451" y="62">房源嵌入表</text>
+<text fill="#8fbaff" font-size="10" text-anchor="middle" x="451" y="78">数百万条 × 32 维</text>
+<line marker-end="url(#m3)" stroke="#7c8593" x1="146" x2="174" y1="66" y2="66"></line>
+<line marker-end="url(#m3)" stroke="#7c8593" x1="336" x2="364" y1="66" y2="66"></line>
+<rect fill="rgba(155,108,245,0.1)" height="44" rx="7" stroke="rgba(155,108,245,0.55)" width="210" x="16" y="108"></rect>
+<text fill="#c3a6fb" font-size="11" text-anchor="middle" x="121" y="126">新房源冷启动回退</text>
+<text fill="#9b8fb5" font-size="10" text-anchor="middle" x="121" y="142">最近 3 套同房型同价位取均值</text>
+<path d="M226,130 L410,130 L410,92" fill="none" marker-end="url(#m4)" stroke="#9b6cf5" stroke-dasharray="4 3"></path>
+<path d="M536,66 L600,66 L600,168 L165,168 L165,182" fill="none" marker-end="url(#m3)" stroke="#7c8593"></path>
+<path d="M445,168 L445,182" fill="none" marker-end="url(#m3)" stroke="#7c8593"></path>
+<rect fill="rgba(255,255,255,0.03)" height="48" rx="7" stroke="rgba(91,157,249,0.32)" width="230" x="50" y="184"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="165" y="204">离线预算每套房的 top-k</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="165" y="220">存 KV，线上一次点查</text>
+<rect fill="rgba(255,255,255,0.03)" height="48" rx="7" stroke="rgba(91,157,249,0.32)" width="230" x="330" y="184"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="445" y="204">建 ANN 索引</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="445" y="220">线上近似检索，可带过滤条件</text>
+</svg>
+<figcaption>训练在离线批处理里按天跑完；线上两条可选路径——预先算好 top-k 换极低延迟，或建 ANN 索引换「能带日期、价格等过滤条件实时查」的灵活性。</figcaption>
+</figure>
+<h3>六、怎么评估一个没有标准答案的模型</h3>
+<p>没有 ground truth，离线指标只能是自造的代理。书里的办法是<strong>拿已经成交的会话当尺子</strong>：对一条最终订了房源 X 的会话，在用户每一步点击时用当前房源的向量去检索候选，看 X 的排名——嵌入若学得好，<strong>越接近下单，X 排得越靠前</strong>。这条曲线能在不上线的情况下比较训练配置，但终究是代理；真正的判据仍是线上 A/B：模块 CTR，以及从该模块进入并成交的转化率。</p>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 1 · 「相似」怎么定义：这一列「什么时候选它」才是面试想听的</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>方案</th><th>信号来源</th><th>能捕捉「可替代」吗</th><th>冷启动</th><th>什么时候选它</th></tr></thead>
+<tbody>
+<tr><th>属性规则</th><td>人写的筛选条件</td><td><strong>不能</strong>，只会给参数孪生</td><td><strong>天然没问题</strong></td><td>第一版、或作为兜底与过滤层</td></tr>
+<tr><th>内容特征余弦</th><td>房源属性 / 图文向量</td><td>弱，只到「长得像」</td><td>好</td><td>冷启动多、行为数据稀薄的新平台</td></tr>
+<tr><th>协同过滤 / 矩阵分解</th><td>用户×房源的长期交互</td><td>能，但偏「长期口味」</td><td>差</td><td>交互密集且用户长期回访的场景</td></tr>
+<tr><th>会话共现嵌入</th><td>单次会话内的点击序列</td><td><strong>能，且抓的是当下这次比较</strong></td><td>差，需属性回退</td><td><strong>本章落点</strong>：会话内决策、意图短期、日志量大</td></tr>
+<tr><th>有监督双塔</th><td>需要构造正负样本对</td><td>能，且可注入业务目标</td><td>中等</td><td>已有成熟标签体系与训练基建，要多目标</td></tr>
+</tbody>
+</table>
+</div>
+<p class="tcap">表 2 · 线上怎么查：延迟、新鲜度与灵活性的三角</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>方案</th><th>延迟</th><th>新鲜度 / 灵活性</th><th>成本</th><th>适合</th></tr></thead>
+<tbody>
+<tr><th>离线预算 top-k</th><td><strong>最低</strong>，一次 KV 点查</td><td>差：换向量要重算全量；不能带查询期过滤</td><td>存储换计算，可预测</td><td>结果不随请求变化的固定模块</td></tr>
+<tr><th>ANN 在线索引</th><td>低，毫秒级</td><td><strong>好</strong>：新向量可增量入库，可带日期 / 价格过滤</td><td>索引常驻内存</td><td><strong>本章落点</strong>与绝大多数生产系统</td></tr>
+<tr><th>精确暴力检索</th><td><strong>不可接受</strong></td><td>最好</td><td>每次请求上亿次乘加</td><td>只在离线评估、小规模灰度里用</td></tr>
+</tbody>
+</table>
+</div>
+<p>还有一个高频追问：<strong>负样本配比</strong>。全站随机负例给全局区分度、同市场负例给局部分辨率，两者都要——只留同市场的，跨市场向量之间反而失去可比性。</p>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>这套形状远不止民宿：<strong>凡是「没有相似标签、但有海量行为日志」的场景都能套</strong>——电商的「看了又看」、音乐的「相似歌手」、招聘网站的「相似职位」。判断口径只有一句：<strong>你要的相似，是属性上的像，还是行为上的可替代？</strong>后者才需要这一章。</p>
+<p>面试必问三处：<strong>为什么不用属性余弦</strong>、<strong>同城搜索为什么会毁掉嵌入、怎么修</strong>（最能区分「读过」和「读懂」）、<strong>冷启动怎么办</strong>。</p>
+<div class="ev">
+<div class="evh">大厂实证 · 这些主张不是书里说的，是公司 / 项目自己公开说的</div>
+<ul>
+<li><strong>Airbnb</strong> 是这一章的原型。Grbovic 与 Cheng 在 KDD 2018 的论文《Real-time Personalization using Embeddings for Search Ranking at Airbnb》中报告：用超过 8 亿次搜索点击会话，为约 450 万个房源训练出 32 维的房源嵌入，并针对「最终下单的房源作为全局上下文」与「同市场负采样」两点做了适配；Airbnb 随后在工程博客里给出的线上结果是相似房源模块点击率约 +21%。<span class="src">（出处：Grbovic &amp; Cheng, KDD 2018；Airbnb 工程博客 — 该域在本站构建环境不可达，故只留文字出处）</span></li>
+<li><strong>Spotify · Annoy（开源 ANN 库）</strong>把「向量检索为什么必须近似」写进了自述：它是「<strong>一个 C++ 库，用来在空间中搜索离给定查询点较近的点</strong>」，并说明用法与动机——「<strong>我们在 Spotify 用它做音乐推荐。在跑完矩阵分解算法之后，每个用户 / 物品都能表示成 f 维空间里的一个向量</strong>」，而「<strong>我们有数百万首曲目处在高维空间里，所以内存占用是首要顾虑</strong>」。索引被做成只读的内存映射文件，「<strong>这样许多进程可以共享同一份数据</strong>」。<span class="src"><a href="https://github.com/spotify/annoy" rel="noopener" target="_blank">spotify/annoy · README ↗</a></span></li>
+<li><strong>Meta · Faiss</strong>把精度与规模的交换讲得最直白：它是「<strong>一个用于稠密向量高效相似性搜索与聚类的库</strong>」；采用压缩编码的那些方法不必保留原始向量，「<strong>这通常以搜索精度下降为代价，但这些方法能在单台服务器的内存里扩展到数十亿向量</strong>」。本章表 2 里「暴力检索不在选项内」的工程依据，就是这句话的另一面。<span class="src"><a href="https://github.com/facebookresearch/faiss" rel="noopener" target="_blank">facebookresearch/faiss · README ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/recommendation-system-day13.html" rel="noopener" target="_blank">System Design · Day 13 推荐系统</a> — 从十亿候选到二十条的召回 / 排序漏斗，本章的嵌入检索在完整推荐链路里处在哪一环</aside>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>把「相似」当成「长得像」。</strong>这是本章的第一课，也是最常见的产品误解：参数孪生的两套房，用户根本不会拿来比。</li>
+<li><strong>会话切不干净。</strong>跨城市、跨日期、机器流量混进同一条序列，模型就会学出荒唐的邻居关系，而这在离线指标上很难看出来。</li>
+<li><strong>忘了同市场负例。</strong>最隐蔽的坑：嵌入看着很合理（同城的确聚在一起），线上点击却不涨——因为模块要的是同城内部的排序，而那一层什么都没学到。</li>
+<li><strong>流行度偏差。</strong>热门房源出现在无数会话里，向量被拉向空间中心，变成谁的邻居都是它。对策是按出现频次做下采样。</li>
+<li><strong>冷启动回退的副作用。</strong>新房源的向量是邻居的平均值，于是它<em>永远像它的邻居</em>、拿不到自己的个性；这是一个必须尽快退役的临时值，不是终态。</li>
+<li><strong>反馈闭环。</strong>模块推什么，用户就看什么，下一轮训练数据就更像它。没有探索流量，长尾房源永远进不了任何人的会话。</li>
+<li><strong>把离线指标当结论。</strong>没有 ground truth 的任务里，离线曲线更好、线上更差是常态。</li>
+<li><strong>时代局限。</strong>这是 2018 年的工程形状、2013 年的模型；此后主流转向序列模型、双塔与图嵌入。但「用会话共现当标签」这条思路没有被推翻，反而成了各家召回层的默认起点。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 这一章的转向是<strong>不定义「相似」，让用户会话替你定义</strong>：同一次会话里被连着点开的房源，就是彼此的替代品。</p>
+<p>② 因此它是全书唯一一道<strong>自监督</strong>的题——标签由日志的共现结构自动生成，几乎不做特征工程。</p>
+<p>③ 建模是表示学习而非分类：每个房源学一个向量（Airbnb 用 32 维），相似度就是余弦。</p>
+<p>④ 机制是 skip-gram + 负采样：<strong>同窗口拉近、随机负例推远</strong>；负采样的唯一理由是避免对数百万候选做全量归一化。</p>
+<p>⑤ 改造一：<strong>把最终下单的房源当全局上下文</strong>，让整条轨迹朝真实成交偏——点击是弱信号，预订是强信号。</p>
+<p>⑥ 改造二：<strong>补一组同市场负例</strong>。否则「分辨城市」就是降损失的捷径，嵌入退化成地理聚类，同城内部毫无结构。</p>
+<p>⑦ 冷启动靠属性回退：取最近的同房型同价位房源取向量均值；服务侧走「离线按天重训 + 线上 ANN 检索」。</p>
+<p>⑧ 评估没有标准答案：离线用「成交房源的排名是否随会话推进而上升」当代理，最终仍以线上 A/B 的 CTR 与转化率为准。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
