@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>ML System Design Interview Ch 10 · Personalized News Feed — Book Deep Read 91</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+</head><body>
+<div class="container">
+<p class="top">Book Deep Read · ML System Design Interview · Chapter 10</p>
+<h1>Personalized News Feed: the model only gets the probabilities right — the weights decide what the product becomes</h1>
+<p class="sub">Machine Learning System Design Interview · Ch 10 · Ali Aminian &amp; Alex Xu · 2023</p>
+<p class="langbar"><a href="mlsdi-ch10-personalized-news-feed-book91.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You open a social app in the morning, and the first few things on the screen are not in time order. The people you follow posted hundreds of things yesterday; the platform picks a few dozen for you, and the order is <strong>computed for you alone, right then</strong>. This chapter is about how that order gets computed.</p>
+<h2>A strange thing first</h2>
+<p>The lazy approach is to guess "will you tap on this?" and sort by that likelihood, high to low. Sounds fine.</p>
+<p>Do exactly that, and a few months later your feed is wall-to-wall <strong>clickbait</strong>. The model asked "will you tap," and those headlines are precisely the ones with <strong>the highest tap rate and the deepest regret afterwards</strong>. You did tap. The model thinks it did a great job. The flaw is simple: <strong>a tap is not a liking</strong>.</p>
+<h2>Why the old way is hard</h2>
+<p>It is hard because there is <strong>no right answer</strong>. Which post belongs at the top? Nobody can write that down. The same post is a welcome life update to an old classmate and noise to a stranger.</p>
+<p>The only clue available is <strong>what you did</strong>: tapped, liked, commented, reshared, paused for a few seconds, or hit "not interested." Every one of those is real, and every one of them tells only a sliver: a like is casual, a comment means something genuinely landed, a reshare means you are willing to put your own name on it, and "not interested" means the post should never have appeared.</p>
+<h2>The core idea: don't ask one question, ask a row of them</h2>
+<p>The chapter's move is to ask <strong>six or seven questions at once</strong> about the same post: Will they tap? Like? Comment? Reshare? How long will they linger? Will they get annoyed and swipe it away?</p>
+<p>Each question gets its own little judge who returns a likelihood, and the likelihoods are <strong>each multiplied by a number and added up</strong> into that post's score. It works like gymnastics scoring: not one judge deciding, but several scoring separately and combining by weights fixed in advance. The "annoyed" judge carries a <strong>negative</strong> weight — it drags the score down.</p>
+<p>The judges also share one understanding of "this person and this post," splitting apart only at the last step. That pays off concretely: resharing is rare enough that it cannot be learned on its own, but learning it alongside liking lets it ride along.</p>
+<h2>The real product decision is those few weights</h2>
+<p>How the model trains is a technical question. <strong>What a comment is worth versus a like is a judgment call about values.</strong> Raise the weight on comments and creators start chasing "start a discussion" the next day; raise the weight on dwell time and thin, time-consuming content floats up.</p>
+<p>The cost is just as direct: <strong>this set of weights has no correct answer. It can only be found through rounds of live experiments, and every change reshapes what every creator does.</strong></p>
+<h2>Remember this one line</h2>
+<div class="tl">
+<p>Feed ranking is not one guess about "will you tap." It is <strong>several guesses at once — like, comment, reshare, dwell, annoyance — combined by weights fixed in advance</strong>. The model decides how accurate the guesses are; <strong>the weights decide what the product turns into</strong>.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the notation and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">This chapter translates "how should a feed be ordered" into a trainable problem, and the answer is <strong>multi-objective ranking</strong>: instead of predicting a single click-through rate, train one prediction head per user reaction (click, like, comment, share, dwell time, hide / report), then combine those probabilities into a single ranking score by a <strong>weighted sum</strong>. You think it is teaching you to train a model; its real conclusion is that <strong>the model's job is accurate probabilities, and the weights' job is deciding what the product becomes</strong> — the first is engineering, the second is product judgment.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>News feed</strong>: the surface that lays out content from the accounts you follow in one column; the question here is which posts and in what order.</li>
+<li><strong>Candidate generation (retrieval)</strong>: cheaply narrow an enormous corpus down to a few thousand posts eligible for scoring by the expensive model.</li>
+<li><strong>Implicit vs explicit feedback</strong>: explicit is the user stating a position (like, comment, report); implicit is inferred from behavior (click, dwell time, swiping past).</li>
+<li><strong>Multi-task learning</strong>: one network learns several related things at once, sharing a lower representation so the tasks help each other.</li>
+<li><strong>Shared bottom + task head</strong>: the first layers are common to all tasks; each task then gets its own small branch on top.</li>
+<li><strong>Embedding</strong>: a piece of text, an image or an ID compressed into a list of numbers, where similar meanings land on nearby numbers.</li>
+<li><strong>Binary cross-entropy</strong>: the standard loss for yes/no questions — the more confidently wrong the answer, the bigger the penalty.</li>
+<li><strong>Class imbalance</strong>: positives are rare (one report per ten thousand impressions), so the model is tempted to always answer "no."</li>
+<li><strong>Position bias</strong>: items placed higher get tapped more by construction, so more clicks do not prove better content.</li>
+<li><strong>ROC-AUC</strong>: the common offline measure of whether a model ranks positives above negatives; 0.5 is a coin flip.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>It is the second-to-last of the ten case studies in Part II. It builds on Ch6 video recommendation (the retrieval–ranking–rerank funnel) and Ch8 ad click prediction (a single CTR objective whose probability must be calibrated), then pushes one step further: <strong>Ch8 had one objective; this chapter has six or seven, and they must still collapse into one score.</strong> In the wild it maps to Facebook Feed, X's For You, and every content platform's home surface.</p>
+<h2>What the chapter is solving</h2>
+<p>Start with scale. On a Facebook-sized platform, daily actives run into the billions; a single user's candidate pool — unseen posts from friends, groups and pages within the last few days — is on the order of hundreds to a few thousand, and every pull-to-refresh has to order them in <strong>tens of milliseconds</strong>.</p>
+<p>But scale is not this chapter's difficulty; Ch6 already gave us the funnel. The real difficulty is that <strong>the objective function cannot be written down</strong>. No label anywhere says "this post belongs first." The only supervision is what users did, and <strong>every action is a biased proxy for value</strong>.</p>
+<p>What happens if you ignore that? Look at what single-objective optimization produces: optimize clicks and clickbait plus engagement bait win; optimize dwell time and thin, padded content floats up; optimize likes and the screen fills with crowd-pleasing pablum. Worse, the whole thing is a <strong>closed loop</strong>: the model changes distribution, distribution changes creator behavior, and that new content comes back as training data. Hence the chapter exists — not to answer "how do we predict," but <strong>"what should we predict."</strong></p>
+<h2>The core content, in depth</h2>
+<h3>1. Break "engagement" into a row of predictable events</h3>
+<p>Step one is to decompose the fuzzy "will they enjoy this" into a set of events that can be <strong>labeled automatically from logs</strong>: explicit ones — like, comment, share, hide, report, "show me less of this"; implicit ones — click, dwell time, skip (swiped past within a few seconds). All are clean binary classifications except dwell time, which is regression (or bucketed).</p>
+<p>One design motive is easy to miss: <strong>passive users</strong>. A large share of people never like, comment or reshare — they just scroll quietly. Train only on explicit reactions and the model has <strong>essentially no supervision</strong> for them. So dwell time and skip must join the task list to bring silent users' preferences in. That is the chapter's most practical addition to the standard list.</p>
+<p>Now the densities: the positive rate for likes typically sits in the low single-digit percents, comments an order of magnitude below, shares another order below that, and hides / reports often only a few per ten thousand. Tasks inside one network can differ in density by <strong>three or four orders of magnitude</strong> — which is exactly why the next section shares a bottom.</p>
+<h3>2. Features: the heavy lifting is not the model, it is "who posted it"</h3>
+<p>Three families. <strong>Post side</strong>: the text encoded into a vector by a pretrained language model, images and video by a pretrained vision model; hashtags are numerous and churn fast, so practice favors <strong>lightweight representations</strong> like TF-IDF or feature hashing over dedicated trained embeddings (which neither learn well nor keep up with new tags); plus existing reaction counts (log-compressed) and the post's age. <strong>User side</strong>: demographics, language and region, plus context such as device and time of day.</p>
+<p>The family that actually moves the metric is the third — <strong>author–user affinity</strong>: how often this person has liked or commented on this author before, how long the friendship has lasted, whether the author is marked a close friend, whether the post tags them. In a feed these features routinely beat architecture changes, for a plain reason: <strong>a feed is fundamentally about social relationships, not content retrieval</strong>.</p>
+<h3>3. The multi-task network: shared bottom, one head per objective</h3>
+<p>The structure is straightforward: concatenate all features → several <strong>shared</strong> fully connected layers that learn a general "this person × this post" representation → one small head per task → each head emits a probability through a sigmoid, each with its own binary cross-entropy, and the total loss is the sum of the task losses.</p>
+<p>Why share? Because <strong>sparse tasks like share and report learn almost nothing on their own</strong>; a shared bottom lets them borrow the representation that dense tasks such as click and like have paid for. That is the real reason for multi-task here — not saving machines.</p>
+<p>The cost deserves honesty: when tasks pull in different directions you get <strong>negative transfer</strong> — the shared representation is dominated by the dense tasks and the sparse ones come out worse; and every task is welded together, so iterating on one head still means retraining the whole net. Industry later relaxed "full sharing" into "soft sharing," at the price of more parameters and training cost.</p>
+<figure>
+<svg viewBox="0 0 660 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect x="8" y="76" width="112" height="32" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="64" y="96" font-size="11.5" fill="#b9c0ca" text-anchor="middle">post features</text>
+<rect x="8" y="126" width="112" height="32" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="64" y="146" font-size="11.5" fill="#b9c0ca" text-anchor="middle">user features</text>
+<rect x="8" y="176" width="112" height="32" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect><text x="64" y="196" font-size="11.5" fill="#e7ebf1" text-anchor="middle">author affinity</text>
+<line x1="124" x2="150" y1="92" y2="130" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="124" x2="150" y1="142" y2="142" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="124" x2="150" y1="192" y2="154" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="154" y="70" width="96" height="144" rx="8" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="202" y="136" font-size="12" fill="#e7ebf1" text-anchor="middle">shared</text>
+<text x="202" y="154" font-size="12" fill="#e7ebf1" text-anchor="middle">bottom</text>
+<rect x="290" y="14" width="86" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="333" y="32" font-size="11" fill="#b9c0ca" text-anchor="middle">click</text>
+<rect x="290" y="56" width="86" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="333" y="74" font-size="11" fill="#b9c0ca" text-anchor="middle">like</text>
+<rect x="290" y="98" width="86" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="333" y="116" font-size="11" fill="#b9c0ca" text-anchor="middle">comment</text>
+<rect x="290" y="140" width="86" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="333" y="158" font-size="11" fill="#b9c0ca" text-anchor="middle">share</text>
+<rect x="290" y="182" width="86" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="333" y="200" font-size="11" fill="#b9c0ca" text-anchor="middle">dwell</text>
+<rect x="290" y="224" width="86" height="28" rx="6" fill="rgba(232,121,75,0.12)" stroke="#e8794b"></rect><text x="333" y="242" font-size="11" fill="#e7ebf1" text-anchor="middle">hide / report</text>
+<line x1="254" x2="286" y1="120" y2="30" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="254" x2="286" y1="128" y2="72" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="254" x2="286" y1="136" y2="114" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="254" x2="286" y1="148" y2="156" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="254" x2="286" y1="156" y2="198" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="254" x2="286" y1="164" y2="240" stroke="#7c8593" marker-end="url(#a1)"></line>
+<text x="394" y="32" font-size="10.5" fill="#8fbaff" font-family="monospace">×w₁</text>
+<text x="394" y="74" font-size="10.5" fill="#8fbaff" font-family="monospace">×w₂</text>
+<text x="394" y="116" font-size="10.5" fill="#8fbaff" font-family="monospace">×w₃</text>
+<text x="394" y="158" font-size="10.5" fill="#8fbaff" font-family="monospace">×w₄</text>
+<text x="394" y="200" font-size="10.5" fill="#8fbaff" font-family="monospace">×w₅</text>
+<text x="394" y="242" font-size="10.5" fill="#e8794b" font-family="monospace">×(−w₆)</text>
+<line x1="448" x2="472" y1="133" y2="133" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="476" y="110" width="80" height="46" rx="8" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect><text x="516" y="132" font-size="11" fill="#e7ebf1" text-anchor="middle">weighted</text><text x="516" y="147" font-size="11" fill="#e7ebf1" text-anchor="middle">sum</text>
+<line x1="560" x2="582" y1="133" y2="133" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="586" y="110" width="66" height="46" rx="8" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2"></rect><text x="619" y="132" font-size="11" fill="#e7ebf1" text-anchor="middle">ranking</text><text x="619" y="147" font-size="11" fill="#e7ebf1" text-anchor="middle">score</text>
+</svg>
+<figcaption>Multi-task ranking: one shared representation branches into several prediction heads, each estimating the probability of one reaction, then the weights collapse them into a single ranking score. Negative reactions carry negative weights.</figcaption>
+</figure>
+<h3>4. Collapsing to a score: the weighted sum, and that negative weight</h3>
+<p>The final score is <code>score = Σ wᵢ·pᵢ</code> — multiply each reaction's predicted probability by what that reaction is deemed worth, and add. Three things matter.</p>
+<p><strong>The magnitude of the negative weight.</strong> Hide, report and "not interested" carry negative weights, and their absolute values are usually <strong>far larger</strong> than the positive ones: one report has to outweigh hundreds or thousands of likes, or negative feedback simply never registers in the sum — it is too sparse.</p>
+<p><strong>How the weights get set.</strong> There is no closed form. The practical path is: pick initial values by hand from product intent → run live A/B judged on <strong>long-horizon metrics</strong> (next-day and 7-day retention, satisfaction surveys) → iterate. Note the mismatch: <strong>training uses today's clicks and likes, while the verdict uses long-run retention — that weight vector is the layer that translates short-term signals into long-term value.</strong></p>
+<p><strong>Whether calibration is required.</strong> Ranking cares about order, so unlike Ch8's ad scores (which get billed against) strict calibration is not mandatory. But the probabilities' <strong>scales must stay comparable</strong>, or the meaning of a fixed weight vector drifts quietly with every model refresh.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/recommendation-system-day13.en.html" target="_blank" rel="noopener">System Design · Day 13 Recommendation Systems</a> — the funnel from a billion candidates down to twenty: retrieval, pre-ranking, ranking and rerank, each with its own compute budget and failure modes</aside>
+<h3>5. The serving path and the rerank layer</h3>
+<p>Online it is four stages: <strong>candidate generation</strong> (unseen + time window + relationship edges) → <strong>ranking</strong> (the multi-task model scores each post) → <strong>rerank</strong> → display.</p>
+<p>The rerank layer enforces what a score cannot express: per-author caps, topic diversity, integrity demotions (misinformation, engagement bait), user-set blocks. Why not fold these into the model? Because they are <strong>rules and policy</strong> — they must be explainable, auditable, and changeable overnight. Buried inside model weights they are neither explainable nor changeable.</p>
+<figure>
+<svg viewBox="0 0 660 150" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect x="10" y="52" width="132" height="56" rx="8" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="76" y="76" font-size="12" fill="#e7ebf1" text-anchor="middle">candidate gen</text>
+<text x="76" y="95" font-size="9" fill="#7c8593" text-anchor="middle" font-family="monospace">unseen · friends/groups</text>
+<rect x="176" y="52" width="132" height="56" rx="8" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="242" y="76" font-size="12" fill="#e7ebf1" text-anchor="middle">ranking</text>
+<text x="242" y="95" font-size="9" fill="#9b6cf5" text-anchor="middle" font-family="monospace">multi-task model scores</text>
+<rect x="342" y="52" width="132" height="56" rx="8" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect>
+<text x="408" y="76" font-size="12" fill="#e7ebf1" text-anchor="middle">rerank</text>
+<text x="408" y="95" font-size="9" fill="#7c8593" text-anchor="middle" font-family="monospace">caps · diversity · demote</text>
+<rect x="508" y="52" width="132" height="56" rx="8" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="574" y="82" font-size="12" fill="#e7ebf1" text-anchor="middle">feed</text>
+<line x1="146" x2="172" y1="80" y2="80" stroke="#7c8593" marker-end="url(#a2)"></line>
+<line x1="312" x2="338" y1="80" y2="80" stroke="#7c8593" marker-end="url(#a2)"></line>
+<line x1="478" x2="504" y1="80" y2="80" stroke="#7c8593" marker-end="url(#a2)"></line>
+<text x="159" y="42" font-size="9.5" fill="#8fbaff" text-anchor="middle" font-family="monospace">10³</text>
+<text x="325" y="42" font-size="9.5" fill="#8fbaff" text-anchor="middle" font-family="monospace">10³ scored</text>
+<text x="491" y="42" font-size="9.5" fill="#8fbaff" text-anchor="middle" font-family="monospace">10¹ shown</text>
+<text x="330" y="132" font-size="10" fill="#7c8593" text-anchor="middle" font-family="monospace">end-to-end budget: tens of ms</text>
+</svg>
+<figcaption>The online path: candidate generation narrows to thousands, the ranking model scores each one, the rerank layer applies rules and policy, and about ten items reach the screen.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/feed-system-day14.en.html" target="_blank" rel="noopener">System Design · Day 14 Feed Systems</a> — fanout-on-write vs fanout-on-read, the hybrid strategy celebrity accounts force, and what candidate generation costs in storage and cache</aside>
+<h2>The trade-offs that matter</h2>
+<p>The soul of this chapter is entirely "what do we make the objective, and how do we combine them." The first table answers which signals can serve as training targets — watch the last column: <strong>optimizing any one of them alone breaks the product</strong>, which is the whole case for multi-objective.</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Signal</th><th>Density</th><th>What it stands for</th><th>How gameable</th><th>Alone, it produces</th></tr></thead>
+<tbody>
+<tr><th>Click</th><td>high</td><td>curiosity; weakly tied to satisfaction</td><td>trivially</td><td>a screen full of clickbait</td></tr>
+<tr><th>Dwell time</th><td>high</td><td>attention was occupied</td><td>easy (padding, slicing)</td><td>long, thin content rises</td></tr>
+<tr><th>Like</th><td>medium</td><td>light agreement, very cheap</td><td>medium</td><td>crowd-pleasing pablum rises</td></tr>
+<tr><th>Comment</th><td>low</td><td>something landed — or enraged</td><td>medium (outrage works)</td><td>divisive content rises</td></tr>
+<tr><th>Share</th><td>very low</td><td>willing to endorse under your own name</td><td>hard</td><td>too sparse to cover the corpus</td></tr>
+<tr><th>Hide / report</th><td>extremely low</td><td>an explicit negative verdict</td><td>hard (costly for the user)</td><td>usable only as a penalty term</td></tr>
+</tbody>
+</table>
+</div>
+<p class="tcap">The second table is structural: the more the tasks conflict, the further toward soft sharing you should go — and the more it costs.</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Option</th><th>When to pick it</th><th>What it costs</th></tr></thead>
+<tbody>
+<tr><th>One model per task</th><td>Few tasks, unrelated to each other, and separate teams shipping independently</td><td>Sparse tasks never learn; training and serving cost multiply by task count</td></tr>
+<tr><th>Shared bottom + heads<br/>(this chapter)</th><td>Related tasks, sparse ones needing a lift, limited compute — the default starting point for nearly every feed</td><td><strong>Negative transfer</strong>: dense tasks dominate the shared representation; tasks are coupled, so one head means retraining all</td></tr>
+<tr><th>Soft sharing (e.g. MMoE)</th><td>Tasks visibly conflict ("watched to the end" and "liked" often disagree) and there is enough data</td><td>More parameters and training cost; the gates themselves become another thing to tune</td></tr>
+</tbody>
+</table>
+</div>
+<p>One last trade-off lives outside the model: <strong>how often to retune the weights</strong>. Too often and creators cannot keep up while the ecosystem oscillates; too rarely and the model slides toward whichever signal is easiest to game.</p>
+<h2>Why it matters / in real systems</h2>
+<p>Saying "we'll use multi-task" is worth nothing in an interview. What is worth something is explaining three things: <strong>why share a bottom</strong> (to rescue sparse tasks, not to save machines), <strong>why the negative weight must be large</strong> (or sparse negative feedback gets drowned), and <strong>what decides the weights</strong> (offline metrics cannot; only long-horizon online metrics can). Same in an architecture review: the moment someone asks "what are we actually maximizing," the answer is that one weighted sum.</p>
+<div class="ev">
+<div class="evh">Industry evidence</div>
+<ul>
+<li><strong>X (Twitter)</strong> open-sourced its recommendation code in 2023. The README describes the For You core as a "Neural network for ranking candidate posts," and the notifications heavy ranker as a "Multi-task learning model to predict the probabilities that the target users will open and engage" — <strong>predict several probabilities, then collapse them into a ranking: exactly this chapter's structure</strong>. In the code each prediction carries its own tunable weight (fav, retweet, reply, bookmark, share, dwell, video watch time…), and negative signals enter the same sum: the report weight's allowed range runs to <code>-20000</code> and negative feedback to <code>-1000</code>, <strong>public confirmation of the "one report must outweigh thousands of positives" design</strong> (defaults are zeroed in the open-source snapshot; live values live outside the repo).<span class="src"><a href="https://github.com/twitter/the-algorithm" rel="noopener" target="_blank">twitter/the-algorithm, GitHub 2023 ↗</a> · <a href="https://github.com/twitter/the-algorithm/blob/main/home-mixer/server/src/main/scala/com/twitter/home_mixer/param/HomeGlobalParams.scala" rel="noopener" target="_blank">HomeGlobalParams.scala ↗</a></span></li>
+<li><strong>Google / YouTube</strong> published the same route at RecSys 2019 and named two real-world difficulties: <strong>multiple competing ranking objectives</strong> and <strong>implicit selection bias</strong> in user feedback. They used a Multi-gate Mixture-of-Experts for soft sharing plus a dedicated shallow tower to model position bias — the industrial answer to both this chapter's shared bottom and its position-bias discussion question.<span class="src">Z. Zhao et al., "Recommending What Video to Watch Next: A Multitask Ranking System," RecSys 2019</span></li>
+<li><strong>Meta</strong> announced in January 2018 that Facebook's feed would shift toward <strong>"meaningful social interactions"</strong>: up-weighting comments and replies between friends, down-weighting passive consumption of public page content — and the announcement <strong>said up front</strong> that page reach and time spent would fall as a result. <strong>This is the most direct public evidence that the weights are the product: only a few coefficients changed, and the whole content ecosystem moved.</strong><span class="src">Facebook / Meta Newsroom announcement, January 2018</span></li>
+</ul>
+</div>
+<h2>Common mistakes and open debates</h2>
+<ul>
+<li>Treating multi-task as "several models in one bundle": the gain comes mainly from <strong>a shared representation rescuing sparse tasks</strong>, and when tasks conflict badly multi-task is actively worse.</li>
+<li>Assuming that if every head's offline AUC went up, online will follow: <strong>the ranking quality of a weighted sum is not the classification quality of any head</strong>. Move the weights and every head's relative importance changes, so offline can barely adjudicate — this chapter ultimately rests on live A/B.</li>
+<li>Ignoring <strong>position bias</strong>: training labels come from items the model itself placed high, and height alone earns taps. Without correction it self-reinforces.</li>
+<li>Treating negative feedback as an ordinary task: not reporting <strong>does not</strong> mean satisfied — most dissatisfaction shows up only as a quiet swipe away. Rerank rules and active satisfaction surveys have to cover that gap.</li>
+<li><strong>Period limitation</strong>: the chapter is written around discriminative ranking models. It does not cover list-level or generative rerank that optimizes a whole screen as one sequence, nor does it go deep on the genuinely hard problem of deriving weights from long-term value.</li>
+<li><strong>Debate</strong>: is engagement-weighted ranking a good objective at all? Outside critics keep asking whether maximizing interaction necessarily amplifies divisive content. Industry's answer has been satisfaction surveys, integrity demotions and diversity constraints — with no agreed optimum to date.</li>
+</ul>
+<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/evaluation-benchmarks-day15.en.html" target="_blank" rel="noopener">AI/ML · Day 15 Evaluation and Benchmarks</a> — the systematic reasons offline gains fail to land online, and how to measure the gap between a proxy metric and the real goal</aside>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>1. In one line: feed ranking's answer is <strong>multi-objective ranking</strong> — one prediction head per reaction, then a weighted sum into a single score.</p>
+<p>2. The real question is not "how do we predict" but <strong>"what should we predict"</strong>: no label says which post belongs first; user actions are the only, biased, proxy.</p>
+<p>3. Optimizing any single signal breaks things: clicks → clickbait, dwell → padded content, comments → divisive content.</p>
+<p>4. <strong>Dwell time and skip must be on the task list</strong>, or <strong>passive users</strong> who never react give the model no signal at all.</p>
+<p>5. The reason for <strong>shared bottom + heads</strong> is to rescue sparse tasks (shares and reports run three to four orders of magnitude below likes); the price is <strong>negative transfer</strong> and coupling. Escalate to MMoE-style soft sharing when tasks visibly conflict.</p>
+<p>6. The feature family that moves the metric most is not content but <strong>author–user affinity</strong> — a feed is fundamentally about social relationships.</p>
+<p>7. In <code>score = Σ wᵢ·pᵢ</code>, negative feedback needs an absolute weight <strong>far larger</strong> than the positives (X's open code allows report down to <code>-20000</code>), or the sparse negative signal is drowned.</p>
+<p>8. That weight vector <strong>has no offline solution</strong>: hand-picked initial values plus live A/B on long-run retention and satisfaction. It is the layer translating short-term signals into long-term value — <strong>and it is the real product decision</strong>.</p>
+</div>
+</div>
+<footer>Book Deep Read · Reading this page ≈ getting the core of the chapter; for the full case study, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

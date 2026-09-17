@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>ML 系统设计面试 第 10 章 · 个性化信息流 — 专业书籍精读 Book 91</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+</head><body>
+<div class="container">
+<p class="top">专业书籍精读 · ML System Design Interview · 第 10 章</p>
+<h1>个性化信息流：模型只负责把概率算准，定生死的是那几个权重</h1>
+<p class="sub">Machine Learning System Design Interview · Ch 10 · Ali Aminian &amp; Alex Xu · 2023</p>
+<p class="langbar"><a href="mlsdi-ch10-personalized-news-feed-book91.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你早上打开社交 App，第一屏那几条不是按时间排的。你关注的人昨天发了几百条，平台只挑其中几十条给你，顺序还是<strong>为你一个人现算的</strong>。这一章讲的就是：那个顺序怎么算出来。</p>
+<h2>先说个怪事</h2>
+<p>最省事的做法是猜「你会不会点开」，然后按这个可能性从高到低排。听着没毛病。</p>
+<p>可真这么做，几个月后你的信息流会变成一片<strong>标题党</strong>。因为模型问的是「会不会点」，而这类标题恰恰<strong>点击率最高、看完最后悔</strong>。你确实点了，模型觉得自己干得漂亮。问题出在：<strong>点击不等于喜欢</strong>。</p>
+<h2>旧世界为什么难</h2>
+<p>难在这件事<strong>没有标准答案</strong>。哪条该排第一？没人写得下来。同一条动态，对老同学是想看的近况，对陌生人是噪音。</p>
+<p>唯一拿得到的线索，是你<strong>做过的动作</strong>：点开了、点赞了、评论了、转发了、停下来看了几秒、还是直接点「不感兴趣」。这些动作都是真的，但每一个只说明一小块：点赞很随手，评论说明真被戳到，转发说明你愿意署上自己的名字，「不感兴趣」说明这条根本不该出现。</p>
+<h2>核心点子：别问一个问题，问一排问题</h2>
+<p>这一章的办法是：同一条动态，<strong>一次问六七个问题</strong>——会点开吗？会点赞吗？会评论吗？会转发吗？会停留多久？会不会嫌烦把它划掉？</p>
+<p>每个问题有一个小裁判给出可能性，最后把这些可能性<strong>各乘一个分数再加起来</strong>，就是这条动态的排序分。像体操比赛：不是一个裁判说了算，而是几位裁判分别打分、按事先定好的比重合成总分。「嫌烦」那一项的比重是<strong>负的</strong>，它会把分往下拽。</p>
+<p>这些裁判还共用同一套「对这个人和这条内容的理解」，只在最后一步才分开。好处很实在：转发这种很罕见的动作，单独学学不明白，跟着点赞一起学就能沾光。</p>
+<h2>真正的产品决定，是那几个比重</h2>
+<p>模型怎么训是技术问题；<strong>评论该值几分、点赞该值几分，是价值判断</strong>。把评论的比重调高，创作者第二天就开始追着「引发讨论」做内容；把停留时长的比重调高，那些信息量不大但很能拖时间的内容会浮上来。</p>
+<p>代价也直接：<strong>这组比重没有正确答案，只能靠一轮轮线上实验试出来，而每改一次，都会重塑所有创作者的行为。</strong></p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>信息流排序不是猜「你会不会点」这一个问题，而是<strong>同时猜好几种反应（赞、评、转、停留、嫌烦），再按事先定好的比重合成一个分</strong>。模型决定猜得准不准，<strong>比重决定这个产品最后长成什么样</strong>。</p>
+</div>
+<p class="switch-hint">想进到具体机制、记号和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">这一章把「信息流该怎么排」翻译成一个可训练的问题，答案是<strong>多目标排序</strong>：不预测单一的点击率，而是为每一种用户反应（点击、点赞、评论、分享、停留时长、隐藏 / 举报）各训练一个预测头，再把这些概率<strong>加权求和</strong>成唯一的排序分。你以为它在教你训模型，其实真正的结论是：<strong>模型负责把概率算准，那组权重负责决定产品长成什么样</strong>——前者是工程，后者是产品判断。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>信息流（news feed）</strong>：把你关注对象发布的内容排成一列展示的界面；这里讨论的是「排哪些、按什么顺序」。</li>
+<li><strong>候选生成 / 召回（candidate generation）</strong>：先从海量内容里粗筛出几千条有资格进入排序的，再交给精细模型打分。</li>
+<li><strong>隐式 / 显式反馈</strong>：显式是用户主动表态（点赞、评论、举报），隐式是从行为里推出来的（点击、停留多久、划过去了）。</li>
+<li><strong>多任务学习（multi-task learning）</strong>：让一个网络同时学几件相关的事，共用底层表示，彼此借力。</li>
+<li><strong>共享底座 + 任务头（shared bottom + task head）</strong>：网络前几层所有任务公用，后面每个任务接一个自己的小分支。</li>
+<li><strong>嵌入（embedding）</strong>：把一段文字 / 一张图 / 一个 ID 压成一串数字，含义相近的数字也相近。</li>
+<li><strong>二元交叉熵（binary cross-entropy）</strong>：判断题的标准损失函数，模型答得越离谱罚得越重。</li>
+<li><strong>类别不平衡</strong>：正样本极少（如一万次曝光才一次举报），模型容易学成「一律说不会」。</li>
+<li><strong>位置偏差（position bias）</strong>：排在前面的内容天生更容易被点，点击多不一定是内容好。</li>
+<li><strong>ROC-AUC</strong>：衡量「模型能否把正样本排在负样本前面」的常用离线指标，0.5 是瞎猜。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>ML 系统设计面试 Part II「十道真题」的倒数第二道。它上承 Ch6 视频推荐（召回 + 排序 + 重排的三层漏斗）与 Ch8 广告点击预估（单目标 CTR、且概率必须校准），再往前推一步：<strong>Ch8 只有一个目标，这一章有六七个目标，还必须合成一个分。</strong>对应现实里的 Facebook Feed、X 的 For You、以及各家内容平台的首页。</p>
+<h2>这章要解决什么</h2>
+<p>先看规模：一个 Facebook 量级的平台，日活以十亿计；单个用户的候选池是「好友 + 关注的群组 / 主页在最近几天发的、你还没看过的内容」，量级在几百到几千条；每次下拉刷新，要在<strong>几十毫秒</strong>内把它们排好。</p>
+<p>但规模不是这一章的难点——漏斗结构 Ch6 已经给过。真正的难点是<strong>目标函数写不出来</strong>：没有任何标注说「这条该排第一」，唯一的监督信号是用户做过的动作，而<strong>每一种动作都只是「价值」的有偏代理</strong>。</p>
+<p>不解决会怎样？看单目标优化各自的下场：只优化点击，标题党与诱导互动胜出；只优化停留时长，信息量低但能拖时间的内容浮上来；只优化点赞，迎合性内容占满屏幕。更麻烦的是这套东西会<strong>闭环</strong>：模型改变分发，分发改变创作者行为，新内容再回来当训练数据。所以这一章必须单独存在——它要解决的不是「怎么预测」，而是<strong>「该预测什么」</strong>。</p>
+<h2>核心内容，讲透</h2>
+<h3>一、先把「参与度」拆成一排可预测的事件</h3>
+<p>第一步是把模糊的「用户会喜欢吗」拆成一组<strong>能从日志里自动打标签</strong>的事件：显式的有点赞、评论、分享、隐藏、举报、点「减少此类内容」；隐式的有点击、停留时长、skip（在若干秒内划过）。除停留时长是回归（或分桶）外，其余都是干净的二分类。</p>
+<p>这里有一个容易漏掉的设计动机：<strong>被动用户</strong>。相当一部分人从不点赞、不评论、不转发，只是安静地刷。如果只拿显式反应当目标，模型对这批人几乎<strong>没有监督信号</strong>。所以必须补上停留时长与 skip 两个任务，把沉默用户的偏好也接进来——这是本章给多任务清单额外加的两项，也是最实用的一笔。</p>
+<p>再看密度：点赞的正样本率通常在个位数百分比，评论低一个量级，分享再低一个量级，举报 / 隐藏往往只有万分之几。同一个网络里的任务，<strong>样本密度能差三四个数量级</strong>——这直接决定了下面为什么要共享底座。</p>
+<h3>二、特征：这一章的重头不是模型，是「谁发的」</h3>
+<p>三族特征。<strong>帖子侧</strong>：正文用预训练语言模型编码成向量，图 / 视频用预训练视觉模型编码；话题标签数量多、更新快，实践中常用 TF-IDF 或特征哈希这类<strong>轻量表示</strong>而不是训练专属嵌入（学不动、也追不上新词）；再加上已有互动数（取对数压缩）与发布至今的时长。<strong>用户侧</strong>：人口属性、语言地区，以及设备、时段这类上下文。</p>
+<p>真正拉动效果的是第三族——<strong>作者与用户的亲密度（affinity）</strong>：这个人历史上给这位作者点过多少赞、评论过几次、好友关系多久、是否标记为亲密好友、这条内容有没有 @ 他。在信息流里，这族特征往往比换模型结构管用得多，原因很朴素：<strong>信息流的本质是社交关系，不是内容检索。</strong></p>
+<h3>三、多任务网络：共享底座 + 每个目标一个头</h3>
+<p>结构很直白：所有特征拼成输入 → 若干层<strong>共享</strong>的全连接层，学「这个人 × 这条内容」的通用表示 → 每个任务接一个自己的小头 → 每个头用 sigmoid 输出一个概率，各自算二元交叉熵，总损失是各任务损失之和。</p>
+<p>为什么要共享？因为分享、举报这类<strong>稀疏任务单独训练几乎学不出东西</strong>，共享底座让它们借用点击、点赞这些稠密任务学到的表示。这才是多任务在这里的真正理由，不是为了省机器。</p>
+<p>代价要诚实写：任务方向不一致时会发生<strong>负迁移（negative transfer）</strong>——共享的表示被稠密任务主导，稀疏任务反而更差；而且所有任务被绑死，想单独迭代一个头也得重训整网。工业界后来的主流是把「完全共享」放松成「软共享」，代价是参数量与训练成本上升。</p>
+<figure>
+<svg viewBox="0 0 660 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect x="12" y="76" width="104" height="32" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="64" y="96" font-size="11.5" fill="#b9c0ca" text-anchor="middle">帖子特征</text>
+<rect x="12" y="126" width="104" height="32" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="64" y="146" font-size="11.5" fill="#b9c0ca" text-anchor="middle">用户特征</text>
+<rect x="12" y="176" width="104" height="32" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect><text x="64" y="196" font-size="11.5" fill="#e7ebf1" text-anchor="middle">作者亲密度</text>
+<line x1="120" x2="148" y1="92" y2="130" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="120" x2="148" y1="142" y2="142" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="120" x2="148" y1="192" y2="154" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="152" y="70" width="94" height="144" rx="8" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="199" y="134" font-size="12.5" fill="#e7ebf1" text-anchor="middle">共享底座</text>
+<text x="199" y="154" font-size="10" fill="#9b6cf5" text-anchor="middle" font-family="monospace">shared bottom</text>
+<rect x="286" y="14" width="88" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="330" y="32" font-size="11" fill="#b9c0ca" text-anchor="middle">点击</text>
+<rect x="286" y="56" width="88" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="330" y="74" font-size="11" fill="#b9c0ca" text-anchor="middle">点赞</text>
+<rect x="286" y="98" width="88" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="330" y="116" font-size="11" fill="#b9c0ca" text-anchor="middle">评论</text>
+<rect x="286" y="140" width="88" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="330" y="158" font-size="11" fill="#b9c0ca" text-anchor="middle">分享</text>
+<rect x="286" y="182" width="88" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="330" y="200" font-size="11" fill="#b9c0ca" text-anchor="middle">停留</text>
+<rect x="286" y="224" width="88" height="28" rx="6" fill="rgba(232,121,75,0.12)" stroke="#e8794b"></rect><text x="330" y="242" font-size="11" fill="#e7ebf1" text-anchor="middle">隐藏 / 举报</text>
+<line x1="250" x2="282" y1="120" y2="30" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="250" x2="282" y1="128" y2="72" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="250" x2="282" y1="136" y2="114" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="250" x2="282" y1="148" y2="156" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="250" x2="282" y1="156" y2="198" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="250" x2="282" y1="164" y2="240" stroke="#7c8593" marker-end="url(#a1)"></line>
+<text x="392" y="32" font-size="10.5" fill="#8fbaff" font-family="monospace">×w₁</text>
+<text x="392" y="74" font-size="10.5" fill="#8fbaff" font-family="monospace">×w₂</text>
+<text x="392" y="116" font-size="10.5" fill="#8fbaff" font-family="monospace">×w₃</text>
+<text x="392" y="158" font-size="10.5" fill="#8fbaff" font-family="monospace">×w₄</text>
+<text x="392" y="200" font-size="10.5" fill="#8fbaff" font-family="monospace">×w₅</text>
+<text x="392" y="242" font-size="10.5" fill="#e8794b" font-family="monospace">×(−w₆)</text>
+<line x1="444" x2="470" y1="133" y2="133" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="474" y="110" width="76" height="46" rx="8" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect><text x="512" y="138" font-size="11.5" fill="#e7ebf1" text-anchor="middle">加权求和</text>
+<line x1="554" x2="578" y1="133" y2="133" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="582" y="110" width="66" height="46" rx="8" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2"></rect><text x="615" y="138" font-size="11.5" fill="#e7ebf1" text-anchor="middle">排序分</text>
+</svg>
+<figcaption>多任务排序：一套共享表示分出多个预测头，每头预测一种反应的概率，再按权重合成唯一的排序分；负向反应的权重为负。</figcaption>
+</figure>
+<h3>四、合成分数：加权求和，与那个负权重</h3>
+<p>最终分是 <code>score = Σ wᵢ·pᵢ</code>——把每种反应的预测概率乘上「这种反应值多少」，加起来。三件事要讲清：</p>
+<p><strong>负权重的量级。</strong>隐藏、举报、「不感兴趣」的权重是负的，而且绝对值通常<strong>远大于</strong>正向项：一次举报要能压过成百上千次点赞，否则负反馈在加权和里根本不起作用——因为它太稀疏了。</p>
+<p><strong>权重怎么定。</strong>没有闭式解。实践路径是：按产品意图人工拍一组初值 → 线上 A/B 用<strong>长期指标</strong>（次日 / 七日留存、满意度调研）判优 → 迭代。注意这里的错位：<strong>训练用的是当下的点击点赞，判优用的是长期留存，那组权重就是把短期信号翻译成长期价值的转换层。</strong></p>
+<p><strong>要不要校准。</strong>排序只关心顺序，不像 Ch8 的广告分要拿去计费那样必须严格校准；但各任务概率的<strong>尺度必须可比</strong>，否则同一组权重的含义会随模型迭代悄悄漂移。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/recommendation-system-day13.html" target="_blank" rel="noopener">System Design · Day 13 推荐系统</a> — 从十亿候选收到二十条的漏斗：召回、粗排、精排、重排各自的算力预算与失败模式</aside>
+<h3>五、服务链路与重排层</h3>
+<p>在线链路是四段：<strong>候选生成</strong>（未读 + 时间窗 + 关系边）→ <strong>排序</strong>（多任务模型逐条打分）→ <strong>重排</strong> → 展示。</p>
+<p>重排层做的是排序分里表达不了的约束：同一作者限流、话题多样性、完整性（integrity）降权（虚假信息、诱导互动）、用户自设的屏蔽。为什么不塞进模型？因为它们是<strong>规则与政策</strong>，要求可解释、可审计、能一夜之间改；混进模型权重里就既说不清、也改不动。</p>
+<figure>
+<svg viewBox="0 0 660 150" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect x="10" y="52" width="132" height="56" rx="8" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="76" y="76" font-size="12" fill="#e7ebf1" text-anchor="middle">候选生成</text>
+<text x="76" y="95" font-size="9.5" fill="#7c8593" text-anchor="middle" font-family="monospace">unread · 好友/群组/主页</text>
+<rect x="176" y="52" width="132" height="56" rx="8" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="242" y="76" font-size="12" fill="#e7ebf1" text-anchor="middle">排序</text>
+<text x="242" y="95" font-size="9.5" fill="#9b6cf5" text-anchor="middle" font-family="monospace">多任务模型逐条打分</text>
+<rect x="342" y="52" width="132" height="56" rx="8" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect>
+<text x="408" y="76" font-size="12" fill="#e7ebf1" text-anchor="middle">重排</text>
+<text x="408" y="95" font-size="9.5" fill="#7c8593" text-anchor="middle" font-family="monospace">限流 · 多样性 · 降权</text>
+<rect x="508" y="52" width="132" height="56" rx="8" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="574" y="82" font-size="12" fill="#e7ebf1" text-anchor="middle">信息流</text>
+<line x1="146" x2="172" y1="80" y2="80" stroke="#7c8593" marker-end="url(#a2)"></line>
+<line x1="312" x2="338" y1="80" y2="80" stroke="#7c8593" marker-end="url(#a2)"></line>
+<line x1="478" x2="504" y1="80" y2="80" stroke="#7c8593" marker-end="url(#a2)"></line>
+<text x="159" y="42" font-size="9.5" fill="#8fbaff" text-anchor="middle" font-family="monospace">10³</text>
+<text x="325" y="42" font-size="9.5" fill="#8fbaff" text-anchor="middle" font-family="monospace">10³ 打分</text>
+<text x="491" y="42" font-size="9.5" fill="#8fbaff" text-anchor="middle" font-family="monospace">10¹ 展示</text>
+<text x="330" y="132" font-size="10" fill="#7c8593" text-anchor="middle" font-family="monospace">端到端预算：数十毫秒</text>
+</svg>
+<figcaption>在线链路：候选生成把范围收到千条量级，排序模型逐条打分，重排层加上规则与政策约束，最后展示十条量级。</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/feed-system-day14.html" target="_blank" rel="noopener">System Design · Day 14 Feed 系统</a> — 写时扇出 vs 读时扇出、名人账号的混合策略，以及候选生成这一层的存储与缓存代价</aside>
+<h2>关键权衡与选型</h2>
+<p>这一章的灵魂全在「拿什么当目标、怎么合成」。第一张表回答「哪些信号能当训练目标」——注意最后一列，<strong>单独优化任何一个都会坏掉</strong>，这正是多目标的存在理由。</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>信号</th><th>密度</th><th>它代表什么</th><th>被刷的难度</th><th>单独优化的下场</th></tr></thead>
+<tbody>
+<tr><th>点击</th><td>高</td><td>好奇心，与满意度关系很弱</td><td>极易</td><td>标题党占满全屏</td></tr>
+<tr><th>停留时长</th><td>高</td><td>注意力被占住了</td><td>容易（拖长、切片）</td><td>信息量低的长内容上位</td></tr>
+<tr><th>点赞</th><td>中</td><td>轻度认同，成本很低</td><td>中</td><td>迎合性内容上位</td></tr>
+<tr><th>评论</th><td>低</td><td>被真正触动——或激怒</td><td>中（引战最有效）</td><td>争议与对立内容上位</td></tr>
+<tr><th>分享</th><td>很低</td><td>愿意用自己的名义背书</td><td>难</td><td>信号太稀疏，覆盖不住大盘</td></tr>
+<tr><th>隐藏 / 举报</th><td>极低</td><td>明确的负面判断</td><td>难（用户成本高）</td><td>只能当负项，做不了主目标</td></tr>
+</tbody>
+</table>
+</div>
+<p class="tcap">第二张表是结构选型：任务之间越冲突，越该往软共享走，代价是成本。</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>方案</th><th>什么场景选它</th><th>代价</th></tr></thead>
+<tbody>
+<tr><th>每任务一个独立模型</th><td>任务很少、彼此无关，且各团队要独立迭代上线</td><td>稀疏任务学不动；训练与推理成本按任务数翻倍</td></tr>
+<tr><th>共享底座 + 任务头<br/>（本章方案）</th><td>任务相关、有稀疏任务需要「借力」、算力有限——绝大多数信息流的默认起点</td><td><strong>负迁移</strong>：共享表示被稠密任务主导；任务耦合，改一个头要重训整网</td></tr>
+<tr><th>软共享（如 MMoE）</th><td>任务之间明显冲突（「看完」与「点赞」常常不同向），且样本量足够大</td><td>参数与训练成本上升，门控本身又成了要调的东西</td></tr>
+</tbody>
+</table>
+</div>
+<p>最后一个权衡不在模型里：<strong>权重该多久调一次</strong>。调得太频繁，创作者跟不上、生态反复震荡；调得太少，模型会一路滑向最容易被刷的那个信号。</p>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>面试里说一句「上多任务」不值钱，值钱的是能说清三件事：<strong>为什么要共享底座</strong>（救稀疏任务，不是省机器）、<strong>负权重的量级为什么必须大</strong>（否则稀疏的负反馈被淹没）、<strong>权重靠什么判优</strong>（离线指标没法判，只能线上长期指标）。架构评审里同理：一旦有人问「我们到底在最大化什么」，答案就是那一行加权求和。</p>
+<div class="ev">
+<div class="evh">大厂实证</div>
+<ul>
+<li><strong>X（Twitter）</strong>2023 年开源了推荐代码。README 把 For You 的核心描述为「Neural network for ranking candidate posts」，通知侧的 heavy ranker 则是「Multi-task learning model to predict the probabilities that the target users will open and engage」——<strong>多任务预测概率、再合成排序，正是本章的结构</strong>。代码里每种预测各挂一个可调权重（点赞、转推、回复、书签、分享、停留、视频观看时长…），负向信号进同一个加权和：举报权重的允许区间一直开到 <code>-20000</code>、负反馈到 <code>-1000</code>，<strong>公开印证了「一次举报要压过成千次正向互动」这个量级设计</strong>（开源快照里默认值置零，线上取值不在仓库内）。<span class="src"><a href="https://github.com/twitter/the-algorithm" rel="noopener" target="_blank">twitter/the-algorithm, GitHub 2023 ↗</a> · <a href="https://github.com/twitter/the-algorithm/blob/main/home-mixer/server/src/main/scala/com/twitter/home_mixer/param/HomeGlobalParams.scala" rel="noopener" target="_blank">HomeGlobalParams.scala ↗</a></span></li>
+<li><strong>Google / YouTube</strong> 在 RecSys 2019 公开了同一条路线，并点名两个现实难题：<strong>多个互相冲突的排序目标</strong>，以及用户反馈里的<strong>隐式选择偏差</strong>；他们用 Multi-gate Mixture-of-Experts 做软共享，另配一个浅层塔专门建模位置偏差——这正是本章「共享底座」的下一代与「位置偏差」讨论题的工业答案。<span class="src">Z. Zhao 等《Recommending What Video to Watch Next: A Multitask Ranking System》, RecSys 2019</span></li>
+<li><strong>Meta</strong> 2018 年 1 月公开宣布把 Facebook 信息流转向<strong>「有意义的社交互动」</strong>：调高好友间评论与回复的比重、调低对公共主页内容的被动消费，并在公告里<strong>预先承认</strong>主页触达与用户停留时长会因此下降——<strong>这是「权重即产品」最直接的公开证据：改的只是一组比重，动的是整个内容生态</strong>。<span class="src">Facebook / Meta Newsroom 公告, 2018 年 1 月</span></li>
+</ul>
+</div>
+<h2>易错点与争议</h2>
+<ul>
+<li>把多任务当成「几个模型打包」：它的收益主要来自<strong>共享表示救稀疏任务</strong>；任务之间高度冲突时，多任务反而更差。</li>
+<li>以为离线各头 AUC 都涨了线上就会涨：<strong>加权和的排序质量 ≠ 单头的分类质量</strong>，权重一动各头的相对重要性全变，离线基本判不了优——这一章最终只能靠线上 A/B。</li>
+<li>忽视<strong>位置偏差</strong>：训练标签来自模型自己排在前面的内容，排得靠前天然更容易被点；不纠偏就会自我强化。</li>
+<li>把负反馈当普通任务：用户不举报<strong>不等于</strong>满意——绝大多数不满只表现为静静划走。所以还需要重排层的规则与主动的满意度调研来兜底。</li>
+<li><strong>时代局限</strong>：本章按判别式排序模型写，没有覆盖把「整屏」当一个序列一起优化的列表级 / 生成式重排，也没深入「权重怎么从长期价值反推」这个真正的难题。</li>
+<li><strong>争议</strong>：参与度加权本身是不是好目标？外界持续追问最大化互动是否必然放大对立内容；业界的回应是加入满意度调研、完整性降权与多样性约束，但至今没有公认的最优解。</li>
+</ul>
+<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/evaluation-benchmarks-day15.html" target="_blank" rel="noopener">AI/ML · Day 15 评估与基准</a> — 离线指标涨、线上不涨的系统性原因，以及代理指标与真实目标之间的缝怎么量</aside>
+<h2>要点</h2>
+<div class="tl">
+<p>① 一句话：信息流排序的答案是<strong>多目标排序</strong>——为每种反应各训一个预测头，再加权合成一个排序分。</p>
+<p>② 这章的真问题不是「怎么预测」，而是<strong>「该预测什么」</strong>：没有标注说哪条该排第一，只有用户动作这个有偏代理。</p>
+<p>③ 单独优化任何一个信号都会坏掉：点击→标题党、停留→注水长内容、评论→争议内容。</p>
+<p>④ 必须把<strong>停留时长与 skip</strong> 加进任务清单，否则从不点赞的<strong>被动用户</strong>对模型等于没有信号。</p>
+<p>⑤ 用<strong>共享底座 + 任务头</strong>的理由是救稀疏任务（分享、举报的正样本率比点赞低三四个数量级），代价是<strong>负迁移</strong>与任务耦合；冲突明显时升级到 MMoE 这类软共享。</p>
+<p>⑥ 特征上最能拉动效果的不是内容，而是<strong>作者—用户亲密度</strong>——信息流的本质是社交关系。</p>
+<p>⑦ <code>score = Σ wᵢ·pᵢ</code> 里，负反馈的权重绝对值要<strong>远大于</strong>正向项（X 的开源代码里举报区间到 <code>-20000</code>），否则稀疏的负信号会被淹没。</p>
+<p>⑧ 那组权重<strong>没有离线解</strong>：只能人工拍初值 + 线上 A/B 用长期留存与满意度判优；它是把短期信号翻译成长期价值的转换层，<strong>也是真正的产品决策</strong>。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
