@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Generative AI System Design Interview Ch 2 · Gmail Smart Compose — Book Deep Read Book 94</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+</head><body>
+<div class="container">
+<p class="top">Book Deep Read · Generative AI System Design Interview · Ch 2</p>
+<h1>Gmail Smart Compose: the latency budget moves first, quality fights over what is left</h1>
+<p class="sub">Generative AI System Design Interview · Ch 2 · Ali Aminian, Hao Sheng &amp; Alex Xu · 2024</p>
+<p class="langbar"><a href="gaisdi-ch02-gmail-smart-compose-book94.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You are typing an email in Gmail. Halfway through a sentence, a line of pale grey text appears after your cursor, finishing exactly the thought you were having. Press Tab and it becomes your own words. This chapter is about how that guess-as-you-type system gets built.</p>
+<h2>An analogy</h2>
+<p>Picture an assistant standing behind you. You type a word, they lean in and offer you half a sentence. To be useful they have to do three things at once: guess right, hand it over fast, and know when to keep quiet. <strong>The hard one is not the first. It is the second.</strong> The gap between your finger going down and coming back up is a fraction of a second. If the assistant needs a moment to think, you have already typed it yourself, and however elegant their phrase, it is wasted breath.</p>
+<h2>Why the old world struggled</h2>
+<p>Old-style word prediction only looked at the single word you were mid-way through, matched it against a dictionary, and stopped there. It had no idea what you were writing about. So it could finish "tomor—" into "tomorrow", but it could never produce "tomorrow at ten, does that work for you?" To continue like a human it first has to take in the whole thread: what the subject line says, what the previous email asked, where your half-finished sentence has got to. But taking things in costs time, and time is exactly what this system does not have.</p>
+<h2>How it pulls that off</h2>
+<p>Three moves.</p>
+<p><strong>One: read the background once and keep it.</strong> The subject line and the previous email do not change a single character while you type, so there is no point re-reading them on every keystroke. Read them once, park what you understood, and from then on only process the handful of characters you just added. That alone removes most of the work.</p>
+<p><strong>Two: stay small.</strong> At equal cleverness, a big model is slow and a small one is fast; when fast is the whole point, you take the slightly dumber one that arrives in time. This is the precise opposite of the usual "bigger is better" instinct.</p>
+<p><strong>Three: offer only the few words you are sure of — and stay quiet otherwise.</strong> It never tries to write the whole email, just three to five words, and when it is unsure it says nothing at all. Because a wrong offer costs far more than no offer: you have to stop, read it, judge it, dismiss it, and your sentence is gone. Saying nothing merely means you were not helped.</p>
+<h2>What it costs you</h2>
+<p>Because it only speaks when it is confident, it is silent most of the time. And because it has seen an enormous amount of polite boilerplate, what it hands you tends to be the most average, most template-shaped version of the sentence — useful, but it slowly sands the personality out of your email.</p>
+<h2>Remember this</h2>
+<div class="tl">
+<p>In a guess-as-you-type product, the lead character is not how clever the model is. It is <strong>a timeline a few dozen milliseconds long</strong>: it decides first how big the model may be, how long it may think, how many words it may say — and only then does quality get to compete for what remains. Plus one piece of product common sense: when being wrong annoys people more than being silent, teach the system to shut up.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the notation and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think Smart Compose is a question about whether a model can guess your next sentence. It is really a question about whether it can hand you that sentence before your next keystroke lands. This is the first of the book's ten case studies and the cleanest one: <strong>the latency budget moves first, pinning model size, model shape, decoding width and even the decision to speak at all — quality only gets to fight over what is left.</strong> It also demonstrates a product principle: when a wrong suggestion costs far more than no suggestion, the system must learn to stay quiet.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Inline suggestion</strong>: grey continuation rendered right after the cursor; Tab accepts it, typing on invalidates it.</li>
+<li><strong>Language model (LM)</strong>: predicts the next token given everything before it; put the background in front and it will continue.</li>
+<li><strong>seq2seq</strong>: an encoder reads the input into a vector representation, a decoder then generates word by word — the classic machine-translation shape, and two passes of computation.</li>
+<li><strong>Token</strong>: the smallest unit a model processes, roughly a word or half a word; generating <code>N</code> tokens means <code>N</code> forward passes.</li>
+<li><strong>Beam search</strong>: keeps <code>k</code> candidates alive and expands them together; better than taking the top scorer at every step (greedy), but compute goes up roughly by a factor of <code>k</code>.</li>
+<li><strong>Perplexity</strong>: how "surprised" a language model is by real text, lower is better; cheap to compute offline, only weakly correlated with whether users accept a suggestion.</li>
+<li><strong>ExactMatch@N</strong>: compares the first <code>N</code> words of the suggestion with the first <code>N</code> words the user actually wrote — all of them must match.</li>
+<li><strong>Acceptance rate</strong>: the share of shown suggestions the user takes with Tab — the real north-star metric online.</li>
+<li><strong>Coverage (trigger rate)</strong>: how often the system chooses to speak. It is paired with acceptance rate: speak more often and acceptance falls.</li>
+<li><strong>Debounce</strong>: instead of firing on every keystroke, wait for a short pause or a word boundary before triggering.</li>
+<li><strong>KV cache / prefix cache</strong>: store the intermediate results of context you already processed, so the next call only computes the newly added tokens.</li>
+<li><strong>TPU / XLA</strong>: Google's tensor accelerator plus the compiler that turns a computation graph into native chip instructions ahead of time; the same model on that path can run an order of magnitude faster per call.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This is the <strong>first</strong> of the ten case studies in Part II of <em>Generative AI System Design Interview</em> (Aminian, Sheng &amp; Xu, 2024). It applies the seven-step framework from Ch 1 with every step squeezed into an unusually narrow latency budget. It follows Ch 1's hard constraint that output length is simultaneously cost and latency, and leads into Ch 3 on machine translation — also sequence generation, but with hundreds of milliseconds to play with and room for a large model. Read together, the two chapters measure how far the latency variable alone can pull a design apart. In the real world it maps to Gmail Smart Compose, inline code completion and keyboard prediction: the whole family of <strong>keystroke-level real-time generation</strong>.</p>
+<h2>The problem this chapter attacks</h2>
+<p>Writing email involves a lot of repeated labour: greetings, proposing times, thanks, sign-offs — everyone rewrites these sentences. Old autocomplete looked only at the word under the cursor and matched a dictionary, blind to context, so it could finish "tomor—" but never "tomorrow at ten, does that work for you?" To continue like a human, the system has to take in the whole thread.</p>
+<p>And that is exactly the difficulty: <strong>the background must be read, and there is no time to read it</strong>. Triggering is <em>keystroke-level</em> — every character typed invalidates the previous suggestion and demands a new one. Sustained typing puts keystrokes roughly 100–200 ms apart, so the entire budget for "read the background, think, produce words" is on the order of a hundred milliseconds. What happens if you ignore this? <strong>A completion system that answers in 300 ms is engineering-correct and product-nonexistent</strong> — its suggestions always land behind text the user has already typed, and turn into flickering noise. That tension drives the whole chapter.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 214" font-family="-apple-system,sans-serif">
+<defs><marker id="a1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line x1="24" y1="146" x2="614" y2="146" stroke="#7c8593" marker-end="url(#a1)"></line>
+<text x="610" y="166" fill="#7c8593" font-size="10" text-anchor="end">time →</text>
+<rect x="24" y="60" width="58" height="30" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"></rect><text x="53" y="79" fill="#e7ebf1" font-size="10" text-anchor="middle">keystroke</text>
+<rect x="88" y="60" width="58" height="30" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="117" y="79" fill="#b9c0ca" font-size="10" text-anchor="middle">debounce</text>
+<rect x="152" y="60" width="150" height="30" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="227" y="79" fill="#b9c0ca" font-size="10" text-anchor="middle">encode context (cacheable)</text>
+<rect x="308" y="60" width="106" height="30" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="2"></rect><text x="361" y="79" fill="#e7ebf1" font-size="10" text-anchor="middle">beam search decode</text>
+<rect x="420" y="60" width="106" height="30" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="473" y="79" fill="#b9c0ca" font-size="10" text-anchor="middle">threshold + render</text>
+<line x1="82" y1="75" x2="86" y2="75" stroke="#7c8593"></line>
+<line x1="146" y1="75" x2="150" y2="75" stroke="#7c8593"></line>
+<line x1="302" y1="75" x2="306" y2="75" stroke="#7c8593"></line>
+<line x1="414" y1="75" x2="418" y2="75" stroke="#7c8593"></line>
+<line x1="24" y1="112" x2="526" y2="112" stroke="#5b9df9" stroke-width="2"></line>
+<line x1="24" y1="106" x2="24" y2="118" stroke="#5b9df9" stroke-width="2"></line>
+<line x1="526" y1="106" x2="526" y2="118" stroke="#5b9df9" stroke-width="2"></line>
+<text x="275" y="132" fill="#5b9df9" font-size="10" text-anchor="middle" font-family="monospace">whole budget ≈ 100ms, round trip included</text>
+<line x1="576" y1="46" x2="576" y2="150" stroke="#e06b6b" stroke-dasharray="4 4"></line>
+<text x="576" y="40" fill="#e06b6b" font-size="10" text-anchor="middle">next keystroke</text>
+<text x="576" y="168" fill="#e06b6b" font-size="9.5" text-anchor="middle">prior suggestion voided</text>
+<text x="227" y="104" fill="#7c8593" font-size="9.5" text-anchor="middle">subject / previous email unchanged → cache hit, skip</text>
+<text x="320" y="196" fill="#7c8593" font-size="9.5" text-anchor="middle">an over-budget suggestion is not a slow suggestion, it is waste: the prefix it was written for no longer exists</text>
+</svg>
+<figcaption>Fig 1 · The keystroke-level timeline: the budget starts at the keystroke and ends when grey text hits the screen, and the next keystroke voids everything the pipeline just produced.</figcaption>
+</figure>
+<h2>The core material, properly</h2>
+<h3>1. Turn the product requirement into a language-modelling problem</h3>
+<p>Step one is not picking a model, it is defining "help me write email" as a prediction task with <strong>inputs and outputs nailed down</strong>. The input is one context string assembled from a few sources: the <em>subject line</em>, the <em>previous email in the thread</em>, <em>metadata</em> such as recipient and time, and <em>the half sentence already typed</em>. The output is not the email — it is <strong>the next few words</strong>.</p>
+<p>"Only a few words" is a deliberate product decision, not a capability limit: the longer the continuation, the more cost and latency grow linearly in tokens, while the odds of getting the whole span right fall away quickly. One wrong word in the middle of a fifteen-word suggestion and the user deletes the lot and starts over — net value negative. <strong>The virtue of a short suggestion is that being wrong is cheap.</strong></p>
+<h3>2. seq2seq or a single-tower LM: latency decides</h3>
+<p>There are two ways to feed the background in. <strong>seq2seq (encoder–decoder)</strong> gives the background its own encoder and lets the decoder generate from it — two passes, each specialised, and usually the higher quality ceiling; machine translation works this way. <strong>A single-tower language model</strong> concatenates everything into one long prefix and lets the same model keep going.</p>
+<p>On paper the first is prettier; on latency the second wins outright, and the reason is <strong>caching</strong>. Throughout the typing session the subject and the previous email do not change <em>by a single character</em>. A flat prefix naturally lets the already-computed part stay in the KV cache, so each keystroke only pays for the handful of new tokens; the two-tower shape makes that intermediate state much harder to reuse. <strong>An architecture that turns nine tenths of its input into "already computed" beats a better architecture that recomputes every time, by a wide margin, on this budget.</strong></p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 226" font-family="-apple-system,sans-serif">
+<defs><marker id="a2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line x1="320" y1="14" x2="320" y2="212" stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4"></line>
+<text x="163" y="26" fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle">seq2seq: two passes</text>
+<rect x="34" y="42" width="124" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="96" y="60" fill="#b9c0ca" font-size="9.5" text-anchor="middle">subject + prev. email</text>
+<rect x="168" y="42" width="124" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="230" y="60" fill="#b9c0ca" font-size="9.5" text-anchor="middle">typed so far</text>
+<line x1="96" y1="72" x2="96" y2="86" stroke="#7c8593" marker-end="url(#a2)"></line>
+<line x1="230" y1="72" x2="230" y2="86" stroke="#7c8593" marker-end="url(#a2)"></line>
+<rect x="34" y="90" width="258" height="30" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"></rect><text x="163" y="109" fill="#e7ebf1" font-size="10" text-anchor="middle">encoder: re-runs on every keystroke</text>
+<line x1="163" y1="122" x2="163" y2="136" stroke="#7c8593" marker-end="url(#a2)"></line>
+<rect x="34" y="140" width="258" height="30" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect><text x="163" y="159" fill="#e7ebf1" font-size="10" text-anchor="middle">decoder: token by token</text>
+<text x="163" y="192" fill="#7c8593" font-size="10" text-anchor="middle">higher quality ceiling</text>
+<text x="163" y="209" fill="#e06b6b" font-size="10" text-anchor="middle">state hard to reuse → full recompute per key</text>
+<text x="480" y="26" fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle">single-tower LM: one flat prefix</text>
+<rect x="346" y="42" width="196" height="28" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect><text x="444" y="60" fill="#e7ebf1" font-size="9.5" text-anchor="middle">subject + prev. email (unchanged)</text>
+<rect x="550" y="42" width="64" height="28" rx="6" fill="rgba(224,107,107,0.16)" stroke="#e06b6b"></rect><text x="582" y="60" fill="#e7ebf1" font-size="9.5" text-anchor="middle">new chars</text>
+<text x="444" y="84" fill="#5b9df9" font-size="9.5" text-anchor="middle">served from KV cache</text>
+<text x="582" y="84" fill="#e06b6b" font-size="9.5" text-anchor="middle">only this is computed</text>
+<line x1="444" y1="72" x2="444" y2="90" stroke="#5b9df9" marker-end="url(#a2)"></line>
+<line x1="582" y1="72" x2="582" y2="90" stroke="#e06b6b" marker-end="url(#a2)"></line>
+<rect x="346" y="96" width="268" height="30" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"></rect><text x="480" y="115" fill="#e7ebf1" font-size="10" text-anchor="middle">the same model simply keeps going</text>
+<line x1="480" y1="128" x2="480" y2="142" stroke="#7c8593" marker-end="url(#a2)"></line>
+<rect x="346" y="146" width="268" height="30" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect><text x="480" y="165" fill="#b9c0ca" font-size="10" text-anchor="middle">continue for three to five words</text>
+<text x="480" y="198" fill="#7c8593" font-size="10" text-anchor="middle">slightly weaker, but each key pays only for new tokens</text>
+<text x="480" y="215" fill="#5b9df9" font-size="10" text-anchor="middle">inside a 100ms budget that outweighs everything</text>
+</svg>
+<figcaption>Fig 2 · Two modelling shapes: the latency budget hands the decision from "whose quality ceiling is higher" to "who can reuse what was already computed".</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/llm-serving-day32.en.html" target="_blank" rel="noopener">System Design · Day 32 LLM Serving Architecture</a> — continuous batching, PagedAttention and prefix caching for keeping GPUs fed, and how to set SLOs for TTFT and TPOT separately</aside>
+<h3>3. Decoding: width, length, and when to stop</h3>
+<p>Every dial in decoding converts directly into milliseconds. <strong>Beam width <code>k</code></strong>: expanding <code>k</code> candidates together is more stable but multiplies compute by roughly <code>k</code>, so on this budget <code>k</code> stays in the very low single digits, sometimes collapsing to greedy. <strong>Maximum length</strong> is hard-capped, which also rules out runaway generations. <strong>Early stopping</strong>: end at a full stop or a natural phrase rather than padding to a target length.</p>
+<p>One detail people miss: users routinely pause <strong>in the middle of a word</strong>. The generation must be <em>strictly prefix-compatible</em> with what is already on screen — the first token has to continue that partial word, or the user sees a misspelled grey suggestion. In practice this means filtering candidates against the typed prefix during decoding.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/decoding-sampling-day45.en.html" target="_blank" rel="noopener">AI/ML · Day 45 Decoding and Sampling</a> — what greedy, beam search, temperature and top-p each actually control, and why deterministic decoding suits completion products better</aside>
+<h3>4. When to shut up: asymmetric cost sets the threshold</h3>
+<p>Here is the most portable judgement in the chapter. <strong>Showing a wrong suggestion and showing nothing do not cost the same.</strong> A wrong suggestion makes the user stop, read, judge and dismiss, and it interrupts the sentence they were assembling. Showing nothing simply means "no help this time" — the user never even notices. Since false positives are expensive and misses are cheap, the confidence threshold <code>τ</code> should be <strong>deliberately set high</strong>, even at an unflattering coverage number.</p>
+<p>"High model score" and "the user will accept it" are still different things, so real systems layer a <strong>trigger decision</strong> on top of the language-model score, fusing confidence, context type (replies are easier to predict than fresh emails) and the user's own acceptance history. And note that <strong>acceptance rate alone can be gamed</strong>: crank the threshold up, emit ten suggestions a day, and acceptance sails past ninety percent while product value approaches zero.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 196" font-family="-apple-system,sans-serif">
+<defs><marker id="a3" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect x="18" y="30" width="136" height="32" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect><text x="86" y="50" fill="#b9c0ca" font-size="10" text-anchor="middle">candidates + scores</text>
+<line x1="154" y1="46" x2="178" y2="46" stroke="#7c8593" marker-end="url(#a3)"></line>
+<rect x="182" y="30" width="152" height="32" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2"></rect><text x="258" y="50" fill="#e7ebf1" font-size="10" text-anchor="middle">trigger decision · threshold τ</text>
+<line x1="334" y1="46" x2="358" y2="46" stroke="#7c8593" marker-end="url(#a3)"></line>
+<rect x="362" y="16" width="150" height="30" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect><text x="437" y="35" fill="#e7ebf1" font-size="10" text-anchor="middle">speak: render grey text</text>
+<rect x="362" y="54" width="150" height="30" rx="6" fill="rgba(91,157,249,0.06)" stroke="#7c8593"></rect><text x="437" y="73" fill="#b9c0ca" font-size="10" text-anchor="middle">stay silent: render nothing</text>
+<text x="258" y="80" fill="#7c8593" font-size="9.5" text-anchor="middle">also weighs context type and user history</text>
+<rect x="18" y="106" width="292" height="68" rx="8" fill="rgba(224,107,107,0.12)" stroke="#e06b6b"></rect>
+<text x="164" y="128" fill="#e7ebf1" font-size="10.5" text-anchor="middle" font-weight="700">false positive: a wrong suggestion</text>
+<text x="164" y="148" fill="#b9c0ca" font-size="10" text-anchor="middle">stop → read → judge → dismiss</text>
+<text x="164" y="166" fill="#e06b6b" font-size="10" text-anchor="middle">cost: the sentence being composed is lost</text>
+<rect x="330" y="106" width="292" height="68" rx="8" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="476" y="128" fill="#e7ebf1" font-size="10.5" text-anchor="middle" font-weight="700">miss: stayed silent</text>
+<text x="476" y="148" fill="#b9c0ca" font-size="10" text-anchor="middle">the user never notices</text>
+<text x="476" y="166" fill="#5b9df9" font-size="10" text-anchor="middle">cost: simply no help this time</text>
+<text x="320" y="190" fill="#7c8593" font-size="9.5" text-anchor="middle">heavy left, light right → τ skews conservative; but coverage must always be reported beside acceptance rate</text>
+</svg>
+<figcaption>Fig 3 · Asymmetric cost: false positives interrupt writing while misses go unnoticed, so the threshold leans conservative — and coverage, the price paid, must be reported alongside acceptance.</figcaption>
+</figure>
+<h3>5. Data and privacy: nobody may look at the training set</h3>
+<p>The training corpus is real users' email, which brings a constraint no other chapter has: <strong>no engineer may inspect the data row by row</strong>. The entire pipeline has to work blind — automated language, length and quality filters, removal of templates and machine-generated mail, deduplication; <em>aggregate statistics</em> only for data profiling; error analysis confined to synthetic data or explicitly licensed corpora.</p>
+<p>Harder still is <strong>memorisation risk</strong>: models memorise strings that appear often in training, and the frequent strings in email are precisely phone numbers, addresses and verification codes. So sensitive data has to be stripped on the way in, and caught again on the way out — <strong>never surface something that looks like one person's private information as a suggestion to another</strong>. <em>Personalisation</em> visibly raises acceptance, but it requires a per-user model or adapter, which means redoing both the privacy and the cost arithmetic.</p>
+<h3>6. Evaluation: offline and online metrics measure different things</h3>
+<p>Offline you use <strong>perplexity</strong> and <code>ExactMatch@N</code> (do the first N words of the suggestion match what the user actually wrote, word for word?): cheap, regression-friendly, adequate as a pre-launch gate. But they only reward text identical to the human's, and score a perfectly good paraphrase at zero — while users accept paraphrases happily.</p>
+<p>Online is where the truth lives: <strong>acceptance rate</strong>, <strong>coverage</strong>, <strong>characters saved per acceptance</strong>, plus the <strong>p90 latency</strong> you must never stop watching. Read the four together: latency going up drags acceptance down (the suggestion arrives too late), and moving the threshold pushes acceptance and coverage in opposite directions. Any one of them alone will tell you something false.</p>
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 1 · Three ways to feed in the same background</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>n-gram / dictionary</th><th>seq2seq encoder–decoder</th><th>single-tower LM (flat prefix)</th></tr></thead>
+<tbody>
+<tr><th>Context visible</th><td>current word only</td><td>full background, dedicated encoder</td><td>full background, all in the prefix</td></tr>
+<tr><th>Cost per keystroke</th><td>near zero</td><td><strong>both passes recomputed</strong></td><td>only new tokens; rest from cache</td></tr>
+<tr><th>Quality</th><td>can finish a word, nothing more</td><td>highest ceiling on paper</td><td>slightly lower, gap acceptable</td></tr>
+<tr><th>Cost</th><td>limited product value</td><td>hard to fit in 100ms</td><td>longer prefix, bigger bill: trim the background</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · Where the milliseconds come from</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>smaller model</th><th>accelerator / compiler</th><th>cache the unchanged prefix</th><th>compress decoding</th></tr></thead>
+<tbody>
+<tr><th>Saves</th><td>compute per forward pass</td><td>same compute, faster</td><td>turns most input into "already done"</td><td>fewer steps, fewer branches</td></tr>
+<tr><th>Magnitude</th><td>several-fold</td><td>up to an order of magnitude</td><td>depends on context share; usually the big one</td><td>roughly linear in <code>k</code> and length</td></tr>
+<tr><th>Price</th><td>quality drops directly</td><td>cost and portability</td><td>more memory, invalidation to handle</td><td>blander candidates, no long suggestions</td></tr>
+<tr><th>Reach for it</th><td>only when nothing else fits</td><td>when traffic justifies it</td><td><strong>always first</strong>: quality untouched</td><td>last resort for tail latency</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 3 · Which way to move the threshold</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>lower τ (speak more)</th><th>higher τ (speak less)</th></tr></thead>
+<tbody>
+<tr><th>Coverage</th><td>high</td><td>low</td></tr>
+<tr><th>Acceptance</th><td>diluted, falls</td><td>flattering — possibly bought with silence</td></tr>
+<tr><th>Felt experience</th><td><strong>grey text flickering, writing interrupted</strong></td><td>appears rarely, right almost every time</td></tr>
+<tr><th>Fits</th><td>predictable cases such as template replies</td><td>the default, especially for fresh emails</td></tr>
+</tbody></table></div>
+<h2>Why it matters / in real systems</h2>
+<p>What this chapter really hands you is <strong>the general solution for the whole real-time completion category</strong>: Gmail Smart Compose, Copilot's inline completion, keyboard prediction — identical skeleton. Keystroke trigger, debounce, cache the unchanging context, small model and short generation, a threshold deciding whether to speak, acceptance rate online.</p>
+<p>It has one more use in interviews: <strong>this is one of the few questions where you can legitimately say "I am choosing the worse model"</strong>. Turning "the budget is a hundred milliseconds, therefore I give up the higher-quality two-tower design" into a complete chain of reasoning is worth more than reciting any architecture name.</p>
+<div class="ev">
+<div class="evh">Industry evidence · claims made publicly by the companies and projects themselves, not by the book</div>
+<ul>
+<li><strong>Google (the Gmail Smart Compose team)</strong>: their KDD 2019 paper <em>Gmail Smart Compose: Real-Time Assisted Writing</em> published the latency arithmetic for this exact product: the target was to keep each suggestion under <code>100ms</code> so users would not perceive a delay, with a reported p90 of about <code>60ms</code>. The paper also states that under comparable conditions <strong>LSTM latency per suggestion was markedly lower than Transformer</strong>, and that inference was moved onto TPUs with XLA compilation — on ordinary CPUs average serving latency was in the hundreds of milliseconds, which was unacceptable. <strong>This is the most direct primary evidence that the latency budget moves first.</strong><span class="src">(Chen et al., KDD 2019; arxiv.org and dl.acm.org are blocked by this site's egress proxy, so the citation is text-only.)</span></li>
+<li><strong>Google Cloud (2026)</strong>: frames the same trade-off as a curve — on a fixed hardware budget "you can trade latency for throughput. But, you can't improve one aspect without sacrificing the other, unless the frontier curve itself moves" — and notes that prefill and decode cannot both be optimal at once. Their measured result: routing changes alone, with no change of hardware or model, cut <code>TTFT</code> by <code>35%</code> and doubled the prefix cache hit rate from <code>35%</code> to <code>70%</code>. <strong>Confirms that caching and routing are latency you get without paying in quality.</strong><span class="src"><a href="https://cloud.google.com/blog/topics/developers-practitioners/five-techniques-to-reach-the-efficient-frontier-of-llm-inference" target="_blank" rel="noopener">Google Cloud Blog, "Five techniques to reach the efficient frontier of LLM inference" ↗</a></span></li>
+<li><strong>NVIDIA (TensorRT LLM)</strong>: has hardened these same moves into product features — "algorithmic runtime optimizations (Prefill-Decode disaggregation, Wide Expert Parallelism, Speculative Decoding, etc)" alongside KV cache reuse optimizations. <strong>Cache reuse plus compressed decoding is not one product's local trick; it is standard practice across the inference stack.</strong><span class="src"><a href="https://github.com/NVIDIA/TensorRT-LLM" target="_blank" rel="noopener">NVIDIA/TensorRT-LLM README ↗</a></span></li>
+<li><strong>A counter-example: Google switched part of the capability off.</strong> In November 2018 it was widely reported that Google had <strong>banned gendered pronouns</strong> in Smart Compose — the trigger was the system completing "I am meeting an investor next week" with a male pronoun. The team judged that this class of error could not be fixed reliably, so the whole capability was removed. <strong>In generative products the safety boundary is often "don't do it" rather than "get it right".</strong><span class="src">(Reuters, November 2018, reporting a Google product manager's public explanation; reuters.com is blocked by this site's egress proxy, so the citation is text-only.)</span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/inference-optimization-day9.en.html" target="_blank" rel="noopener">AI/ML · Day 9 Inference Optimization</a> — how much latency KV caching, quantization, distillation and speculative decoding each buy back, and when they work against each other</aside>
+<h2>Pitfalls and open questions</h2>
+<ul>
+<li><strong>Opening with the model architecture.</strong> The right opening is to ask for the latency budget and the trigger model, not how many layers the network has — before the budget is fixed, no architectural choice has a criterion.</li>
+<li><strong>Reporting acceptance rate alone.</strong> It can be inflated with silence. <strong>Acceptance, coverage, characters saved and p90 latency have to be reported as a set</strong>, or the metric itself is the loophole.</li>
+<li><strong>Writing the SLO against the mean.</strong> The experience is decided in the tail: 50 ms mean with a 400 ms p99 means a wasted flicker every few dozen keystrokes.</li>
+<li><strong>Treating perplexity as an acceptance test.</strong> It correlates only weakly with acceptance: paraphrases score badly while boilerplate, being frequent, scores well — one source of completion systems' natural pull toward the template.</li>
+<li><strong>Forgetting prefix compatibility.</strong> Stopping mid-word is normal, and the continuation must join onto the characters already typed or the screen shows a misspelling in grey.</li>
+<li><strong>Underestimating how far the privacy constraint spreads.</strong> "Nobody may read the training data" propagates into cleaning, error analysis and production debugging — when a bad suggestion is reported you cannot even open the email. That, not lack of effort, is why systems like this iterate slowly.</li>
+<li><strong>Dated in one respect.</strong> The prototype system comes from the era of LSTMs and small Transformers; speculative decoding (a small model drafts, a large one verifies in parallel) and capable on-device models have since loosened the conclusion that only small models qualify. The direction of reasoning is unchanged: <strong>measure the budget first, then choose the shape</strong>.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① The first of the ten case studies, and its lesson is: <strong>the latency budget moves first; quality fights over what is left</strong>.</p>
+<p>② Keystroke-level triggering means the previous suggestion is voided at any moment; the whole budget, round trip included, is on the order of a hundred milliseconds — an over-budget suggestion is not slow, it is waste.</p>
+<p>③ Task definition: input = subject + previous email + metadata + the half sentence typed; output = <strong>the next three to five words</strong> — a short suggestion is cheap to get wrong.</p>
+<p>④ seq2seq has the higher ceiling, but the single-tower LM wins because <strong>its prefix is cacheable</strong>: turning most of the input into "already computed" is worth more than architectural elegance.</p>
+<p>⑤ Latency savings in priority order: cache first (free of quality cost) → accelerator and compiler → compressed decoding (small beam, capped length) → only then a smaller model, which costs quality directly.</p>
+<p>⑥ False positives and misses are <strong>asymmetric</strong>: a wrong suggestion interrupts writing, silence goes unnoticed — so the threshold leans conservative and the system learns to shut up.</p>
+<p>⑦ Prefix compatibility: users stop mid-word, and the first generated token must join on cleanly.</p>
+<p>⑧ Offline metrics (perplexity, ExactMatch@N) only reward literal matches and score paraphrases at zero; online, the four numbers — acceptance, coverage, characters saved, p90 latency — must be read as a group.</p>
+<p>⑨ The training data is private email: nobody may inspect it row by row, so cleaning and debugging run on automation and aggregates, and the model must be kept from memorising high-frequency phone numbers and addresses.</p>
+<p>⑩ Sometimes the safety boundary is "don't do it" rather than "do it right" — for errors like gendered pronouns, removing the whole capability is a legitimate answer.</p>
+</div>
+</div>
+<footer>Book Deep Read · Read this page ≈ get the core of the chapter; for the full case studies, go to the book itself.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
