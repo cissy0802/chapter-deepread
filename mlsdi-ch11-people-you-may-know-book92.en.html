@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>ML System Design Interview Ch 11 · People You May Know — Book Deep Read 92</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">Book Deep Read · ML System Design Interview · Chapter 11</p>
+<h1>People You May Know: the hard part isn't guessing right, it's cutting a billion down to ten thousand</h1>
+<p class="sub">Machine Learning System Design Interview · Ch 11 · Ali Aminian &amp; Alex Xu · 2023</p>
+<p class="langbar"><a href="mlsdi-ch11-people-you-may-know-book92.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You sign up for a social app and fill in nothing but your name. Three days later it hands you a list of "people you may know" — and your college roommate and two former coworkers are actually on it. This chapter is about how it pulls that off.</p>
+<h2>A strange thing first</h2>
+<p>You'd assume it matches your profile against everyone else's: same school, same employer, same city. Those help, but none of them is the engine.</p>
+<p>The real engine is one single clue: <strong>how many friends the two of you have in common</strong>. That one signal alone surfaces most of the right people. It doesn't even need to know who you are or what you do.</p>
+<h2>Why the old world found this hard</h2>
+<p>The difficulty isn't the guessing. It's <strong>how many guesses you'd have to make</strong>.</p>
+<p>A platform has a billion people. Taken literally, deciding "who might you know" means pairing every person with every other person — an <strong>astronomical number that all the machines on earth couldn't finish</strong>. So the first job isn't building a clever model. It's figuring out <strong>how to know that almost everybody isn't worth looking at, without looking at them</strong>.</p>
+<h2>The core idea, in plain terms</h2>
+<p><strong>Step one: only look at friends of your friends.</strong> Almost everyone you meet, you meet through someone you already know. Restricting candidates to friends-of-friends shrinks the pool from a billion to <strong>tens of thousands</strong> — a hundred-thousand-fold cut.</p>
+<p><strong>Step two: discount mutual friends.</strong> The naive move is to count them and rank by the count. That has a trap: if the person in the middle is a <strong>super-connector with five thousand friends</strong>, they are "mutual" with everyone, which tells you nothing. Flip it around — someone with only thirty friends who knows both of you is strong evidence you two really move in the same circle. So: <strong>the more friends the middleman has, the less their vote is worth</strong>.</p>
+<p><strong>Step three: give everyone a position on a social map.</strong> Let each person look around at who surrounds them, then at who surrounds those people, and derive a coordinate from that. Two people whose coordinates sit close together should be recommended to each other — this catches the subtler signal of "you two share no friends at all, but your circles look remarkably alike."</p>
+<h2>How to think about it</h2>
+<p>What makes this powerful is that it reconstructs real-world social circles from nothing but "who is connected to whom."</p>
+<p>And that is exactly the cost: <strong>it knows the two of you are connected, but not why you'd rather this person couldn't find you</strong> — so it will happily surface an ex-colleague, an ex-partner, or someone from a context you never wanted linked to your name.</p>
+<h2>One sentence to remember</h2>
+<div class="tl">
+<p>Friend recommendation is won or lost before the model: <strong>use friends-of-friends to cut a billion candidates down to ten thousand</strong>, then count mutual friends and <strong>discount each one by how many friends the middleman has</strong> — a super-connector's vote is worth far less than that of someone from a small, tight circle.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, notation and diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">This chapter translates "friend recommendation" into <strong>link prediction</strong> on a graph: given today's social graph, predict which two unconnected nodes will connect in the future. You'd think the hard part is model choice. It isn't — <strong>a billion users means 10<sup>18</sup> candidate pairs, and no model earns the right to score them</strong>. The real skeleton of the chapter is: cut candidates to 10<sup>4</sup> with two-hop neighbors first, then talk features, and only then talk models.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Social graph</strong>: every user is a node, every friendship an edge. Facebook-style friendship is an undirected edge; Twitter-style following is directed.</li>
+<li><strong>Degree</strong>: how many edges a node has — in plain terms, how many friends a person has.</li>
+<li><strong>Two-hop neighbor / friends-of-friends (FoF)</strong>: anyone you can reach by walking exactly two edges from yourself.</li>
+<li><strong>Link prediction</strong>: predicting whether an edge that does not exist today will appear later.</li>
+<li><strong>Triadic closure</strong>: the empirical law of social networks — if A knows B and B knows C, then A and C are far likelier than random strangers to connect.</li>
+<li><strong>Adamic-Adar</strong>: a weighting scheme for mutual friends that discounts each one by the middleman's own degree; detailed below.</li>
+<li><strong>Embedding</strong>: compressing a person into a vector of numbers, such that related people land close together.</li>
+<li><strong>Graph neural network (GNN)</strong>: a model family that eats graphs, repeatedly pulling neighbors' information into each node to produce node embeddings.</li>
+<li><strong>Negative sampling</strong>: positives are edges that really formed; negatives you must draw yourself from the pairs that didn't connect, and how you draw them decides everything.</li>
+<li><strong>Cold start</strong>: a brand-new user has no edges at all, hence no position in the graph and an empty two-hop set.</li>
+<li><strong>ROC-AUC / mAP</strong>: two common offline metrics — the first measures whether positives rank above negatives, the second whether the top of the recommended list is right.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The last of the ten case studies in Part II, and the only one in the book whose <strong>input is an entire graph rather than a batch of independent samples</strong>. It builds on Ch 9 (learning embeddings from co-occurrence) and Ch 10 (the candidate-plus-ranking funnel), and merges both onto a graph. In the real world it maps to LinkedIn's People You May Know, Facebook's feature of the same name, and X's Who to Follow.</p>
+<h2>What problem the chapter solves</h2>
+<p>Start with scale. A billion users, a few hundred friends each on average. Pairing everyone with everyone is <code>n(n−1)/2 ≈ 5×10<sup>17</sup></code> pairs; at one microsecond per pair that is over ten thousand years. <strong>The "score every pair" framing is wrong from the first line</strong> — and that is the structural break from the previous ten chapters, whose candidate pools were naturally bounded (one user's feed, one video library). Here the pool is <strong>quadratic in the number of users</strong>.</p>
+<p>Pressure from the product side points the same way: social products almost universally track "K connections within N days" as their activation metric. A new user who signs up and sees an empty list churns — and new users are precisely the people with <strong>no position in the graph at all</strong>.</p>
+<p>So the chapter has to solve two things at once: <strong>how to cut candidates from 10<sup>18</sup> to something computable</strong>, and <strong>how to rank within what's left</strong>. The first decides whether the system runs; the second decides whether it works.</p>
+<h2>The core content, properly</h2>
+<h3>1. Frame it right: label by time slice</h3>
+<p>The easiest mistake is predicting today's graph from today's graph. If you're predicting whether u and v will become friends but your features were computed on a snapshot that already contains the u–v edge, that's <strong>label leakage</strong>: offline metrics look magnificent and production is silent.</p>
+<p>The correct method is a <strong>time slice</strong>: compute features on the graph at time <code>t</code>, and take edges <strong>newly formed</strong> between <code>t</code> and <code>t+Δ</code> (two weeks to a month, say) as positives. Draw negatives from two-hop candidates that had <em>not</em> connected at <code>t</code> — <strong>never uniformly from all users</strong>. Two random people almost certainly don't know each other, so a model that always says "no" scores 0.99 AUC while learning nothing. Negatives must come from the same pool as positives; these are hard negatives.</p>
+<h3>2. Candidate generation: two hops, 10<sup>18</sup> → 10<sup>4</sup></h3>
+<p>The justification is triadic closure: in the real world, most new friendships arrive through existing ones. So take two-hop neighbors as the candidate set. The sizing is straightforward — a user of degree <code>d</code> has on the order of <code>d²</code> two-hop neighbors (fewer after dedup): at <code>d ≈ 300</code> that is 10<sup>4</sup>–10<sup>5</sup>, more than a dozen orders of magnitude below 10<sup>18</sup>.</p>
+<p>State the cost plainly: <strong>anyone with zero mutual friends can never enter the candidate set</strong>. People who just moved cities, just switched industries, or just signed up all live in that blind spot. So two-hop is the primary source only, and several non-graph sources must run alongside it: same school and major with overlapping years, same employer with overlapping tenure, contact or email import, same city or group. Their job isn't precision — it's <strong>giving an entry point to people the graph hasn't placed yet</strong>.</p>
+<h3>3. Getting "mutual friends" right: Adamic-Adar and edge weights</h3>
+<p>The naive ranking signal is a raw count of mutual friends. It works surprisingly well, and it has one fatal flaw: <strong>hub nodes</strong> — recruiters, influencers and sales accounts carrying five thousand connections. They hand "one mutual friend" to countless unrelated pairs, diluting the signal into noise.</p>
+<p>The fix is Adamic-Adar: <code>AA(u,v) = Σ 1/log(deg(w))</code>, where <code>w</code> ranges over the mutual friends and <code>deg(w)</code> is that middleman's own friend count. In plain words: <strong>discount every middleman by the logarithm of their own degree — the more friends they have, the less their vote counts</strong>.</p>
+<p>Be honest about one thing: <strong>the discount is logarithmic, not linear</strong> — a 5000-friend hub still contributes 0.12 against 0.29 for a 30-friend node, a factor of 2.4. Hubs are weakened, not eliminated. In practice teams add a hard rule on top: nodes above a degree threshold are excluded from two-hop expansion entirely, or their adjacency lists alone blow up the candidate set.</p>
+<figure>
+<svg viewBox="0 0 660 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<circle cx="70" cy="125" r="27" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2"></circle><text x="70" y="130" font-size="12.5" fill="#e7ebf1" text-anchor="middle">u</text>
+<circle cx="245" cy="45" r="20" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></circle><text x="245" y="50" font-size="11.5" fill="#b9c0ca" text-anchor="middle">w₁</text>
+<circle cx="245" cy="125" r="20" fill="rgba(232,121,75,0.14)" stroke="#e8794b"></circle><text x="245" y="130" font-size="11.5" fill="#e7ebf1" text-anchor="middle">w₂</text>
+<circle cx="245" cy="205" r="20" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></circle><text x="245" y="210" font-size="11.5" fill="#b9c0ca" text-anchor="middle">w₃</text>
+<circle cx="415" cy="125" r="27" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"></circle><text x="415" y="130" font-size="12.5" fill="#e7ebf1" text-anchor="middle">v</text>
+<line x1="95" x2="226" y1="115" y2="55" stroke="#7c8593"></line>
+<line x1="97" x2="225" y1="125" y2="125" stroke="#e8794b"></line>
+<line x1="95" x2="226" y1="135" y2="195" stroke="#7c8593"></line>
+<line x1="264" x2="392" y1="55" y2="115" stroke="#7c8593"></line>
+<line x1="265" x2="388" y1="125" y2="125" stroke="#e8794b"></line>
+<line x1="264" x2="392" y1="195" y2="135" stroke="#7c8593"></line>
+<text x="245" y="22" font-size="10" fill="#7c8593" text-anchor="middle" font-family="monospace">deg 30</text>
+<text x="245" y="160" font-size="10" fill="#e8794b" text-anchor="middle" font-family="monospace">deg 5000</text>
+<text x="245" y="240" font-size="10" fill="#7c8593" text-anchor="middle" font-family="monospace">deg 80</text>
+<rect x="462" y="34" width="190" height="182" rx="9" fill="rgba(255,255,255,0.025)" stroke="rgba(91,157,249,0.22)"></rect>
+<text x="476" y="60" font-size="11" fill="#b9c0ca" font-family="monospace">w₁ 1/log 30   = 0.29</text>
+<text x="476" y="84" font-size="11" fill="#e8794b" font-family="monospace">w₂ 1/log 5000 = 0.12</text>
+<text x="476" y="108" font-size="11" fill="#b9c0ca" font-family="monospace">w₃ 1/log 80   = 0.23</text>
+<line x1="476" x2="638" y1="124" y2="124" stroke="rgba(91,157,249,0.22)"></line>
+<text x="476" y="148" font-size="11" fill="#7c8593" font-family="monospace">mutual friends = 3</text>
+<text x="476" y="176" font-size="11.5" fill="#8fbaff" font-family="monospace">AA weighted = 0.64</text>
+<text x="476" y="200" font-size="9.5" fill="#7c8593" font-family="monospace">the hub's vote is halved</text>
+</svg>
+<figcaption>All three mutual friends are identical under a raw count; Adamic-Adar discounts each by the inverse log of the middleman's degree, leaving the 5000-friend hub worth only 0.12.</figcaption>
+</figure>
+<p>One level up sits <strong>edge weight</strong>: friendship is not 0/1 — an edge with real interaction is far stronger than one that went quiet the day it formed. Weighting mutual friends by the strength of both sides usually buys more than swapping in a fancier model.</p>
+<h3>4. Three generations of models: rules → supervised → GNN</h3>
+<p><strong>Generation one, pure rules</strong>: rank by AA score. Zero training cost, fully explainable, usable the moment a user has any edge at all. It is the right first version of any PYMK system and the permanent baseline every later model must beat — plenty of teams lost their first A/B to it.</p>
+<p><strong>Generation two, pointwise supervised classification</strong>: treat each candidate pair <code>(u,v)</code> as one sample and feed three families of features — graph features (mutual count, AA, shortest path, both degrees), attribute features (same school or employer with overlapping years, same city, similar age, language), interaction features (did either visit the other's profile, for how long, were they mentioned by the same person) — into logistic regression or gradient-boosted trees to output <code>P(edge)</code>. This is the industry's longest-lived answer: tunable, explainable, shippable. Its ceiling is that <strong>graph structure can only enter through hand-crafted features</strong>; everything beyond two hops is lost.</p>
+<p><strong>Generation three, graph neural networks</strong>, the book's destination. In plain terms: everyone writes their attributes onto a card. <strong>Round one</strong>, everyone sends their card to all their friends, and each person folds the stack they received into a new card. <strong>Round two</strong> repeats it — and now the card in your hand encodes you, your friends, and your friends' friends. That card is the node embedding <code>z</code>. Prediction is one step: <code>P(u,v) = σ(z_u · z_v)</code>, a dot product squashed into a probability.</p>
+<figure>
+<svg viewBox="0 0 660 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="b1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<circle cx="115" cy="120" r="70" fill="none" stroke="rgba(91,157,249,0.18)" stroke-dasharray="4 4"></circle>
+<circle cx="115" cy="120" r="22" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2"></circle><text x="115" y="125" font-size="12" fill="#e7ebf1" text-anchor="middle">u</text>
+<circle cx="60" cy="68" r="13" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></circle>
+<circle cx="172" cy="68" r="13" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></circle>
+<circle cx="60" cy="172" r="13" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></circle>
+<circle cx="172" cy="172" r="13" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></circle>
+<line x1="70" x2="100" y1="79" y2="106" stroke="#7c8593" marker-end="url(#b1)"></line>
+<line x1="162" x2="131" y1="79" y2="106" stroke="#7c8593" marker-end="url(#b1)"></line>
+<line x1="70" x2="100" y1="161" y2="134" stroke="#7c8593" marker-end="url(#b1)"></line>
+<line x1="162" x2="131" y1="161" y2="134" stroke="#7c8593" marker-end="url(#b1)"></line>
+<text x="115" y="216" font-size="10.5" fill="#7c8593" text-anchor="middle" font-family="monospace">Layer 1: neighbors to self</text>
+<circle cx="320" cy="120" r="70" fill="none" stroke="rgba(155,108,245,0.35)" stroke-dasharray="4 4"></circle>
+<circle cx="320" cy="120" r="40" fill="none" stroke="rgba(91,157,249,0.22)" stroke-dasharray="3 3"></circle>
+<circle cx="320" cy="120" r="22" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2"></circle><text x="320" y="125" font-size="12" fill="#e7ebf1" text-anchor="middle">u</text>
+<text x="320" y="216" font-size="10.5" fill="#9b6cf5" text-anchor="middle" font-family="monospace">Layer 2: two hops included</text>
+<line x1="196" x2="244" y1="120" y2="120" stroke="#7c8593" marker-end="url(#b1)"></line>
+<line x1="396" x2="432" y1="120" y2="103" stroke="#7c8593" marker-end="url(#b1)"></line>
+<rect x="436" y="80" width="62" height="30" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect><text x="467" y="100" font-size="12" fill="#e7ebf1" text-anchor="middle">z_u</text>
+<rect x="436" y="132" width="62" height="30" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect><text x="467" y="152" font-size="12" fill="#e7ebf1" text-anchor="middle">z_v</text>
+<text x="520" y="126" font-size="16" fill="#8fbaff" text-anchor="middle" font-family="monospace">·</text>
+<line x1="534" x2="562" y1="120" y2="120" stroke="#7c8593" marker-end="url(#b1)"></line>
+<rect x="566" y="97" width="84" height="46" rx="8" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2"></rect><text x="608" y="118" font-size="11.5" fill="#e7ebf1" text-anchor="middle">σ(z_u·z_v)</text><text x="608" y="134" font-size="9.5" fill="#9b6cf5" text-anchor="middle" font-family="monospace">P(edge)</text>
+</svg>
+<figcaption>Two rounds of message passing: one layer folds one-hop neighbors into the vector, two layers cover two hops; prediction is just a dot product through a sigmoid.</figcaption>
+</figure>
+<p>The costs are equally concrete: the full graph doesn't fit in GPU memory, so training needs <strong>neighbor sampling</strong> (a random subset of neighbors per layer); inference needs all embeddings precomputed and cached, so <strong>the moment the graph changes the embeddings are stale</strong>; neighbor sampling on hubs is inherently biased; and when something goes wrong there is no feature-importance readout to fall back on. <strong>What it wins is the signal where two people share no mutual friends but their circles have the same shape</strong> — exactly generation two's blind spot.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/graph-ml-day37.en.html" target="_blank" rel="noopener">AI/ML · Day 37 Graph Machine Learning</a> — the math of message passing, GraphSAGE's neighbor sampling, and why over-smoothing keeps GNNs shallow</aside>
+<h3>5. Offline precompute, online lookup: PYMK is not real-time scoring</h3>
+<p>The key observation: <strong>the social graph changes very slowly</strong> — an active user adds zero to a few edges a day. So the whole pipeline moves offline: a batch job periodically expands two hops per user, computes features, scores, truncates to Top-K, and writes the result into a KV store; online there is one get plus filtering (already friends, dismissed, blocked), <strong>returning in tens of milliseconds</strong>. Model weight has no effect on serving latency — the cheapest step in the chapter, and the one interviewees most often skip.</p>
+<p>There is exactly one exception: <strong>users who just signed up, just imported contacts, or just added their first few friends</strong> must see results immediately. They go through a triggered incremental recompute — their corner of the graph is tiny, so recomputing it alone is cheap.</p>
+<figure>
+<svg viewBox="0 0 660 176" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="c1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect x="8" y="14" width="474" height="122" rx="10" fill="rgba(155,108,245,0.05)" stroke="rgba(155,108,245,0.25)" stroke-dasharray="5 4"></rect>
+<text x="245" y="34" font-size="10" fill="#9b6cf5" text-anchor="middle" font-family="monospace">Offline batch · daily or incremental · hours</text>
+<rect x="22" y="48" width="130" height="56" rx="8" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="87" y="72" font-size="11.5" fill="#e7ebf1" text-anchor="middle">Graph snapshot</text>
+<text x="87" y="90" font-size="9.5" fill="#8fbaff" text-anchor="middle" font-family="monospace">10⁹ users</text>
+<rect x="180" y="48" width="130" height="56" rx="8" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="245" y="72" font-size="11.5" fill="#e7ebf1" text-anchor="middle">Two-hop candidates</text>
+<text x="245" y="90" font-size="9.5" fill="#8fbaff" text-anchor="middle" font-family="monospace">~10⁴ per user</text>
+<rect x="338" y="48" width="130" height="56" rx="8" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="403" y="72" font-size="11.5" fill="#e7ebf1" text-anchor="middle">Score + truncate</text>
+<text x="403" y="90" font-size="9.5" fill="#9b6cf5" text-anchor="middle" font-family="monospace">Top-K ≈ 10²</text>
+<rect x="510" y="48" width="130" height="56" rx="8" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect>
+<text x="575" y="72" font-size="11.5" fill="#e7ebf1" text-anchor="middle">KV store</text>
+<text x="575" y="90" font-size="9.5" fill="#8fbaff" text-anchor="middle" font-family="monospace">online get &lt; 50ms</text>
+<line x1="156" x2="176" y1="76" y2="76" stroke="#7c8593" marker-end="url(#c1)"></line>
+<line x1="314" x2="334" y1="76" y2="76" stroke="#7c8593" marker-end="url(#c1)"></line>
+<line x1="472" x2="506" y1="76" y2="76" stroke="#7c8593" marker-end="url(#c1)"></line>
+<text x="575" y="126" font-size="9.5" fill="#7c8593" text-anchor="middle" font-family="monospace">filter: friends / dismissed / blocked</text>
+<text x="330" y="163" font-size="9.5" fill="#7c8593" text-anchor="middle" font-family="monospace">exception: new signup or contact import → triggered incremental recompute</text>
+</svg>
+<figcaption>PYMK's default shape is batch offline, lookup online: all the heavy work sits in the batch job, leaving one KV read and a few filter rules on the request path.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/pregel-paper22.en.html" target="_blank" rel="noopener">CS Papers · Pregel</a> — "think like a vertex": the classic execution model for whole-graph batch jobs like two-hop expansion, and the engineering ancestor of GNN message passing</aside>
+<h2>Key trade-offs</h2>
+<p>The first table answers "where do candidates come from." Note the last column — <strong>no single source stands alone</strong>, and the highest-coverage one happens to miss exactly the users who need recommendations most.</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Candidate source</th><th>Who it covers</th><th>Size / cost</th><th>Cost and risk</th></tr></thead>
+<tbody>
+<tr><th>Two-hop (FoF)</th><td>Existing users with some friends; highest hit rate</td><td>~10⁴ per user, hours of batch</td><td>New users and out-of-circle people <strong>can never enter</strong>; hubs blow up the expansion</td></tr>
+<tr><th>Same school / employer with overlapping years</th><td>People who moved city or industry but share a résumé overlap</td><td>Small, an attribute inverted index suffices</td><td>Depends on profile completeness; at large employers it degrades into "random people in town"</td></tr>
+<tr><th>Contact / email import</th><td>Brand-new users — the only source that can fire instantly</td><td>Tiny, the user supplies it</td><td><strong>The densest privacy minefield</strong>: it surfaces relationships the user never meant to expose</td></tr>
+<tr><th>Same city / same group</th><td>People with offline overlap not yet connected online</td><td>Medium</td><td>Low precision, backstop only, easily surfaces total strangers</td></tr>
+<tr><th>Embedding ANN retrieval</th><td>No mutual friends, but structurally similar communities</td><td>Needs full embeddings plus a vector index</td><td>Most expensive; useless once embeddings go stale; least explainable</td></tr>
+</tbody>
+</table>
+</div>
+<p class="tcap">The second table is model selection: the three generations replace nothing — mature systems run rules as a backstop, supervised as the workhorse, and a GNN to cover the blind spot.</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Approach</th><th>When to pick it</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>Rules: AA ranking</th><td>Cold start, tight compute budget, full explainability required — any PYMK's v1 and permanent baseline</td><td>Uses only structure within two hops; attribute and interaction signals go to waste; obvious ceiling</td></tr>
+<tr><th>Pointwise supervised (LR / GBDT)</th><td>Some log history accumulated, and you want attribute plus interaction features in play — the industry's long-lived workhorse</td><td>Graph structure enters only via hand-crafted features; every new structural signal means new feature engineering</td></tr>
+<tr><th>Graph neural network</th><td>A large, dense graph, GPUs and an engineering team, and a need for the "no mutual friends but similar community" signal</td><td>Neighbor sampling in training, cached embeddings at serving, <strong>stale the moment the graph moves</strong>; brutal to debug and attribute</td></tr>
+</tbody>
+</table>
+</div>
+<p>One more trade-off lives outside the model, and it separates candidates in interviews: <strong>should the target be "will they know each other" or "will an invite be sent and accepted"</strong>. The latter is what the product wants, and it is a two-sided event — recommending accurately but getting ignored buys you <strong>invite fatigue</strong>: the recipient starts ignoring every invite and the platform-wide acceptance rate drops with them. So the online objective is usually "sent × accepted," checked again two weeks later for whether the edge still shows any interaction.</p>
+<h2>Why it matters / real systems</h2>
+<p>Saying "use a GNN for link prediction" scores zero in an interview. The points are in four sentences: <strong>candidates before models</strong> (10<sup>18</sup> is unscoreable), <strong>labels must be time-sliced</strong> (or they leak), <strong>negatives must come from the candidate pool</strong> (or AUC is fake), and <strong>the pipeline is offline by default</strong> (the graph moves slowly). Same in an architecture review: the real cost isn't model inference, it's that nightly full two-hop expansion.</p>
+<div class="ev">
+<div class="evh">Evidence from industry</div>
+<ul>
+<li><strong>Twitter / Cassovary</strong> — the graph library behind Who to Follow. Its README states the positioning outright: "a simple 'big graph' processing library for the JVM," where "the size of the graph it works with is bounded by the memory available in a machine," with a measured figure to match: <strong>a directed graph of 10M nodes and 1B edges consumes under 6GB of memory</strong>. That inverts the intuition: a social graph looks terrifying, but <strong>packed tightly it fits in one machine's RAM</strong> — which is why friend recommendation was deliberately <em>not</em> built as distributed graph computation for years. <span class="src"><a href="https://github.com/twitter/cassovary" rel="noopener" target="_blank">twitter/cassovary, GitHub ↗</a></span></li>
+<li><strong>Twitter / GraphJet</strong> — the real-time counterpart. The README calls it "a real-time graph processing library … that maintains a full graph index over a sliding time window <strong>in memory on a single server</strong>," and quantifies it: <strong>up to one million graph edges ingested per second and up to 500 recommendations computed per second</strong> (several million edge reads). It proves the opposite pole of this chapter's offline batch is viable: <strong>trade history length for freshness</strong> by keeping a full index only within a sliding window. <span class="src"><a href="https://github.com/twitter/GraphJet" rel="noopener" target="_blank">twitter/GraphJet, GitHub ↗</a></span></li>
+<li><strong>Meta / PyTorch-BigGraph</strong> — graph embeddings pushed to genuine social-network scale, in public. The README describes "a distributed system for learning graph embeddings for large graphs, particularly big web interaction graphs with up to <strong>billions of entities and trillions of edges</strong>," quotes throughput of <strong>over one million edges per second per machine</strong> (100 negatives per edge), and ships pretrained Wikidata embeddings covering 78 million entities. It confirms the engineering premise behind generation three: <strong>the embedding route does work on billion-node graphs, but it takes an entire distributed training system, not just a new model.</strong> <span class="src"><a href="https://github.com/facebookresearch/PyTorch-BigGraph" rel="noopener" target="_blank">facebookresearch/PyTorch-BigGraph, GitHub ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/recommendation-system-day13.en.html" target="_blank" rel="noopener">System Design · Day 13 Recommendation Systems</a> — how compute budget splits across retrieval, pre-ranking and ranking, and why candidate generation is always the most expensive layer of the funnel</aside>
+<h2>Pitfalls and open questions</h2>
+<ul>
+<li><strong>Label leakage</strong>: computing features on today's graph while labelling from edges that already exist in it. Offline AUC hits 0.99 and production hits zero. Time-slice it.</li>
+<li><strong>Bad negatives</strong>: sampling negatives uniformly from all users turns the task into "are these two random strangers," which is free points. Negatives must be drawn from the two-hop candidate pool.</li>
+<li><strong>Counting mutual friends without degree normalization</strong>: the top of the list fills with strangers who happen to share a 5000-connection recruiter.</li>
+<li><strong>Judging by offline AUC</strong>: the real metric is invite send rate × acceptance rate, plus retention — <strong>an accurate recommendation nobody acts on is worth nothing</strong>.</li>
+<li><strong>The feedback loop</strong>: edges PYMK creates become the next round's training data and two-hop structure. Hubs grow, the rich get richer. That needs degree penalties and diversity constraints at the candidate stage; the model cannot correct it alone.</li>
+<li><strong>Privacy</strong>: PYMK's most real risk, and the thinnest part of the book's treatment. <strong>The graph knows two people are connected; it does not know why that connection should stay invisible to third parties</strong> — contact import and mutual friends alike can wire together two identities a user deliberately kept apart. This is a product-boundary problem, not an accuracy problem: the only defenses are admission control over candidate sources and user-controlled blocking. There is no model fix.</li>
+<li><strong>Period limits</strong>: the book ends at GNNs and never opens the real-time graph line (GraphJet-style sliding-window indexing), nor how embedding retrieval coexists with two-hop candidates, nor the cadence for recomputing embeddings once they go stale.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① Friend recommendation is <strong>link prediction on a graph</strong>: given today's social graph, predict which unconnected pair connects next.</p>
+<p>② The structural break from the previous ten chapters is that the candidate pool is <strong>quadratic in users</strong>: 10<sup>9</sup> users → 5×10<sup>17</sup> pairs, so "score every pair" never stood a chance.</p>
+<p>③ <strong>Triadic closure</strong> saves it: take only two-hop neighbors, ~10<sup>4</sup> per user, cutting more than a dozen orders of magnitude. The cost is that anyone with zero mutual friends never enters, so school/employer, contact import and same-city sources must run alongside.</p>
+<p>④ Mutual friends need <strong>degree normalization</strong>: <code>AA = Σ 1/log(deg(w))</code>, discounting middlemen by their own friend count — but the discount is logarithmic, so hubs still need a hard threshold.</p>
+<p>⑤ The three generations stack rather than replace: <strong>AA rules</strong> (baseline, never skip it) → <strong>GBDT pointwise</strong> (workhorse; structure only enters via hand-crafted features) → <strong>GNN</strong> (covers "no mutual friends but similar community," at the price of sampling, caching and staleness).</p>
+<p>⑥ Because the graph moves slowly, the pipeline is <strong>batch offline plus table lookup online</strong> — one KV get and a few filters on the request path; only new signups and fresh contact imports take the triggered incremental path.</p>
+<p>⑦ Label by <strong>time slice</strong> (features at t, new edges in t→t+Δ as positives) and sample hard negatives from the two-hop pool — get either wrong and every offline number is fiction.</p>
+<p>⑧ The online objective is not "will they know each other" but <strong>"will an invite be sent and accepted"</strong>; accuracy that buys invite fatigue is a net loss.</p>
+</div>
+</div>
+<footer>Book Deep Read · One page ≈ the core of one chapter; go to the book itself for the full case study.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
