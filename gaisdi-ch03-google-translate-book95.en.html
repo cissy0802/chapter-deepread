@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Generative AI System Design Interview Ch 3 · Google Translate — Book Deep Read 95</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">Book Deep Read · Generative AI System Design Interview · Ch 3</p>
+<h1>Google Translate: the hard part isn't language, it's the data distribution — and a ruler that doesn't measure</h1>
+<p class="sub">Generative AI System Design Interview · Ch 3 · Ali Aminian, Hao Sheng &amp; Alex Xu · 2024</p>
+<p class="langbar"><a href="gaisdi-ch03-google-translate-book95.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You point your phone at a street sign in a language you can't read, and a few hundred milliseconds later a fluent sentence appears. This chapter is about building that machine — one that has to serve a hundred-plus languages at once, most of which it has barely seen a decent example of.</p>
+<h2>An analogy</h2>
+<p>The old way was like someone working from a phrasebook: chop the sentence into pieces, look each piece up, glue the results back together. You can understand the output, but you can tell instantly that no human wrote it — none of the pieces knows what the whole sentence is about.</p>
+<p>The new way is like a real interpreter. They listen to the entire sentence first, form a meaning in their head, then speak the translation one word at a time. And as they say each word, their eyes flick back over the original to check which part they're on right now. That one habit is why long sentences stop getting lost halfway through.</p>
+<h2>Why the old world was hard</h2>
+<p>There are around seven thousand languages, but nearly all the bilingual material on the internet piles up in a dozen big ones — English and French have as much as you could ever want, while some languages can't scrape together ten thousand clean matched sentences. And then there's sheer count: two languages need one interpreter, but a hundred languages, every pair, is close to ten thousand directions. You cannot keep an interpreter for each.</p>
+<h2>How it's done</h2>
+<p><strong>First, teach one person all the languages.</strong> Instead of one machine per language pair, build one machine and stick a little tag on the front of the sentence saying "put this into Chinese." The payoff is that languages help each other: the feel for grammar it picked up from Spanish gets lent to a neighbouring language it has barely studied. You even get something odd — pairs it was never taught at all, which it can still translate, because it learned each end separately.</p>
+<p><strong>Second, make up homework for the languages that have none.</strong> If a language has articles but no matched translations, run the existing machine backwards to turn them into mediocre English, and use that fake pairing as practice material. The exercises are synthetic; the skill it builds is real.</p>
+<p><strong>Third, decide who gets to practise.</strong> If you allocate practice time in proportion to what's actually on the internet, the machine spends ninety percent of it on English and French, and the small languages never get a turn. So you deliberately raise the small languages' quota — and the big ones get slightly worse. <strong>That is the central trade in this chapter: the plate is only so big, and anyone who gets more means someone gets less.</strong></p>
+<h2>And one more problem: the ruler is bent</h2>
+<p>How do you know whether it translated well? The usual method is to compare its output against one "correct answer" and count how many words overlap. But a sentence has many correct translations — phrase it differently, the words stop matching, the score drops, and a human reads it as equally good. So the number is only good for spotting trends. To actually judge quality, you still have to ask a person.</p>
+<h2>Remember this</h2>
+<div class="tl">
+<p>The engineering difficulty in translation isn't "how do I turn one language into another." It's <strong>how to serve everyone when the resources are wildly unequal</strong>, and <strong>how to tell whether you're improving at a task that has no single right answer</strong>.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the notation and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think machine translation is hard because of linguistics; it is actually hard because of <strong>resource allocation</strong> and <strong>measurement</strong>. The model shape — encoder–decoder with attention — largely settled after 2017 and is no longer the argument. What decides whether the system works is <strong>how to serve a hundred-plus languages from one set of parameters without starving the small ones, and how to know you are improving on a task with no single correct answer.</strong> This is the book's first problem whose output is a full sentence that must be judged sentence by sentence.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Machine translation (MT)</strong>: automatically turning text in a source language into text in a target language.</li>
+<li><strong>Parallel corpus (bitext)</strong>: sentence pairs in one-to-one correspondence — the "questions and answers" a translation model trains on.</li>
+<li><strong>Monolingual corpus</strong>: text in a single language: plentiful, but with no translation alongside it.</li>
+<li><strong>Sequence-to-sequence (seq2seq)</strong>: an encoder reads the input into a vector representation, a decoder generates the output from it word by word.</li>
+<li><strong>Attention</strong>: at each decoding step, look back and assign weights across all source positions, drawing information by weight instead of relying on one fixed vector.</li>
+<li><strong>Autoregressive decoding</strong>: emit one token, feed it back, emit the next — so time scales with output length.</li>
+<li><strong>Subword / vocabulary</strong>: splitting words into common fragments (<code>un-</code>, <code>-ing</code>) so a fixed-size vocabulary can spell any word, including unseen ones.</li>
+<li><strong>High- / low-resource languages</strong>: ranked by available parallel data; the two ends often differ by four to six orders of magnitude.</li>
+<li><strong>Back-translation</strong>: run a reverse-direction model over target-language monolingual text to manufacture synthetic parallel data.</li>
+<li><strong>Zero-shot translation</strong>: the model translates a language direction it saw no pairs for during training.</li>
+<li><strong>BLEU</strong>: an automatic metric scoring n-gram overlap against a reference translation, <code>0–100</code>, higher is better.</li>
+<li><strong>chrF</strong>: the same idea computed over character n-grams instead of words; steadier for morphologically rich languages.</li>
+<li><strong>COMET / BLEURT</strong>: <em>learned</em> evaluation models trained on human quality ratings; they predict the score a person would give.</li>
+<li><strong>MQM</strong>: a human evaluation protocol in which professional translators annotate each error by type and severity — currently the most trusted reference.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This is the second of the ten case studies in Part II. It follows Ch2 Smart Compose — also sequence generation, but Ch2 had a hundred-millisecond budget and was forced into a small model, while translation can spend a few hundred milliseconds and afford a large one; the two chapters together measure how far a latency budget can pull a design apart. It leads into Ch4 ChatGPT: from generation that has a reference answer to generation that has none. In the real world it maps onto Google Translate, DeepL, subtitling and document localization, and the substrate of any cross-lingual search or support system.</p>
+<h2>What the chapter is solving</h2>
+<p>Statistical MT chopped sentences into chunks, looked them up in a phrase table, and glued the pieces back. It worked, but <strong>no chunk knew what the whole sentence was about</strong>, so every long-range relationship was lost — agreement, word-order reordering, pronoun reference. A gluing system structurally cannot reach them.</p>
+<p>The harder problem is <strong>scale and skew</strong>. First, pairs grow quadratically: <code>N</code> languages translating both ways is <code>N×(N−1)</code> directions, which at <code>N=100</code> is <code>9900</code>. Training, shipping and monitoring a separate model per direction is not an option. Second, the corpus distribution is brutally long-tailed: English–French or English–Spanish pull in <strong>hundreds of millions of sentence pairs</strong>, while many languages have fewer than <strong>a hundred thousand</strong> clean pairs available anywhere — four orders of magnitude and up.</p>
+<p>What happens if you don't solve it? You ship a product where twenty languages are genuinely useful and the other hundred read like a machine-translation joke. The real ambition of the chapter is this: <strong>make the hundred borrow from the twenty.</strong></p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 252" font-family="-apple-system,sans-serif">
+<defs><marker id="b1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line x1="378" y1="14" x2="378" y2="240" stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4"></line>
+<text x="186" y="24" fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle">Encoder–decoder with attention</text>
+<rect x="30" y="36" width="72" height="26" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="66" y="54" fill="#b9c0ca" font-size="10" text-anchor="middle">Tomorrow</text>
+<rect x="110" y="36" width="72" height="26" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="146" y="54" fill="#b9c0ca" font-size="10" text-anchor="middle">I</text>
+<rect x="190" y="36" width="72" height="26" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="226" y="54" fill="#b9c0ca" font-size="10" text-anchor="middle">go to</text>
+<rect x="270" y="36" width="72" height="26" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="306" y="54" fill="#b9c0ca" font-size="10" text-anchor="middle">Beijing</text>
+<rect x="30" y="78" width="312" height="28" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="2"></rect><text x="186" y="97" fill="#e7ebf1" font-size="10" text-anchor="middle">Encoder: one vector kept per position</text>
+<line x1="66" y1="64" x2="66" y2="74" stroke="#7c8593" marker-end="url(#b1)"></line>
+<line x1="146" y1="64" x2="146" y2="74" stroke="#7c8593" marker-end="url(#b1)"></line>
+<line x1="226" y1="64" x2="226" y2="74" stroke="#7c8593" marker-end="url(#b1)"></line>
+<line x1="306" y1="64" x2="306" y2="74" stroke="#7c8593" marker-end="url(#b1)"></line>
+<line x1="66" y1="106" x2="176" y2="136" stroke="#9b6cf5" stroke-width="1"></line>
+<line x1="146" y1="106" x2="182" y2="136" stroke="#9b6cf5" stroke-width="2.6"></line>
+<line x1="226" y1="106" x2="190" y2="136" stroke="#9b6cf5" stroke-width="1"></line>
+<line x1="306" y1="106" x2="196" y2="136" stroke="#9b6cf5" stroke-width="1"></line>
+<rect x="104" y="136" width="164" height="26" rx="13" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5"></rect><text x="186" y="154" fill="#e7ebf1" font-size="10" text-anchor="middle">Attention: what to look at now</text>
+<rect x="30" y="178" width="312" height="28" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect><text x="186" y="197" fill="#b9c0ca" font-size="10" text-anchor="middle">Decoder: emits one word at a time</text>
+<line x1="186" y1="164" x2="186" y2="174" stroke="#9b6cf5" marker-end="url(#b1)"></line>
+<text x="186" y="226" fill="#7c8593" font-size="9.5" text-anchor="middle">Every generated word re-weights all source positions</text>
+<text x="186" y="242" fill="#5b9df9" font-size="9.5" text-anchor="middle">Long sentences survive; reordering is reachable</text>
+<text x="510" y="24" fill="#e06b6b" font-size="12" font-weight="700" text-anchor="middle">Without attention</text>
+<rect x="398" y="36" width="224" height="26" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="510" y="54" fill="#b9c0ca" font-size="10" text-anchor="middle">Whole sentence (maybe 30 words)</text>
+<line x1="510" y1="64" x2="510" y2="84" stroke="#7c8593" marker-end="url(#b1)"></line>
+<rect x="462" y="88" width="96" height="26" rx="5" fill="rgba(224,107,107,0.16)" stroke="#e06b6b"></rect><text x="510" y="106" fill="#e7ebf1" font-size="10" text-anchor="middle">One fixed vector</text>
+<line x1="510" y1="116" x2="510" y2="136" stroke="#7c8593" marker-end="url(#b1)"></line>
+<rect x="398" y="140" width="224" height="26" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect><text x="510" y="158" fill="#b9c0ca" font-size="10" text-anchor="middle">Decoder has nothing else to go on</text>
+<text x="510" y="186" fill="#e06b6b" font-size="10" text-anchor="middle">Information bottleneck: longer = worse</text>
+<text x="510" y="206" fill="#7c8593" font-size="9.5" text-anchor="middle">This was the direct motivation for</text>
+<text x="510" y="220" fill="#7c8593" font-size="9.5" text-anchor="middle">attention around 2015</text>
+</svg>
+<figcaption>Fig 1 · Attention fixes a concrete structural defect: squeezing a whole sentence into one fixed vector necessarily loses information, and only a per-step look back makes long-range dependencies reachable.</figcaption>
+</figure>
+<h2>The core, properly explained</h2>
+<h3>1. Framing translation as conditional generation</h3>
+<p>Translation is modelled as: given the source sentence, generate the target sentence token by token, each step picking from the whole vocabulary. Two engineering consequences. First, <strong>latency scales with output length</strong> — emitting <code>N</code> tokens means <code>N</code> forward passes, so "translate a long article" and "translate a short message" are two different SLOs: interactive translation typically pins <code>p95</code> in the low hundreds of milliseconds, batch document translation is budgeted on throughput. Second, <strong>there is more than one correct translation</strong> — which is where the entire evaluation problem later in this chapter comes from.</p>
+<p>What requirements clarification should actually ask: how many languages, text or speech, interactive or batch, must formatting and glossaries survive. <strong>"How many languages" decides the architecture; the rest only decides parameters.</strong></p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/seq2seq-paper8.en.html" target="_blank" rel="noopener">CS Papers · Sequence to Sequence Learning</a> — the paper that established "read the whole sentence, then generate word by word", and why it originally had to pass everything through one fixed vector</aside>
+<h3>2. Subword vocabularies: the entry ticket to multilinguality</h3>
+<p>A word-level vocabulary collapses immediately under multilinguality: the union of a hundred languages' words is millions of entries, and the embedding matrix scales with the vocabulary. Subword segmentation (BPE / SentencePiece) splits words into common fragments, so a <strong>shared vocabulary</strong> of a few tens of thousands can spell any word in any language, including names and coinages never seen in training.</p>
+<p>A shared vocabulary has an overlooked bonus: <strong>it creates genuine parameter sharing between languages</strong> — Latin-script languages reuse the same fragments heavily, so a representation learned from Spanish is directly reusable for Catalan. The <em>cost</em> is a fight over vocabulary budget: without sampling balance, high-resource languages take almost all of it, small languages get shredded into fragments, the same sentence can cost three or four times as many tokens as in English, and cost and quality degrade together.</p>
+<h3>3. One model swallowing a hundred languages</h3>
+<p>The method is startlingly plain: don't change the architecture, just prepend a <strong>target-language token</strong> — <code>&lt;2zh&gt;</code> meaning "into Chinese" — and train one set of parameters on all directions mixed together.</p>
+<p>It buys three things. <strong>Operationally</strong>, <code>9900</code> models collapse into one: a single thing to train, ship, monitor and roll back. <strong>In quality</strong>, you get <em>cross-lingual transfer</em>: low-resource languages borrow syntactic and semantic structure learned from high-resource ones. <strong>In capability</strong>, you get <em>zero-shot</em>: a Portuguese→Korean pair never seen in training still translates, because each end's mapping to English pulled the intermediate representations into a shared space.</p>
+<p>The cost is called <strong>capacity dilution</strong> (also the curse of multilinguality): with parameters fixed, more languages means less capacity each, and high-resource directions typically come out <em>slightly worse</em> than their dedicated bilingual models. So real systems are usually hybrid — head directions get dedicated adapters, the tail all rides the multilingual model.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 240" font-family="-apple-system,sans-serif">
+<defs><marker id="b2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line x1="306" y1="14" x2="306" y2="226" stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4"></line>
+<text x="152" y="24" fill="#e06b6b" font-size="12" font-weight="700" text-anchor="middle">One model per direction</text>
+<g fill="rgba(224,107,107,0.14)" stroke="#e06b6b">
+<rect x="62" y="40" width="26" height="22" rx="3"></rect><rect x="96" y="40" width="26" height="22" rx="3"></rect><rect x="130" y="40" width="26" height="22" rx="3"></rect><rect x="164" y="40" width="26" height="22" rx="3"></rect><rect x="198" y="40" width="26" height="22" rx="3"></rect>
+<rect x="62" y="68" width="26" height="22" rx="3"></rect><rect x="96" y="68" width="26" height="22" rx="3"></rect><rect x="130" y="68" width="26" height="22" rx="3"></rect><rect x="164" y="68" width="26" height="22" rx="3"></rect><rect x="198" y="68" width="26" height="22" rx="3"></rect>
+<rect x="62" y="96" width="26" height="22" rx="3"></rect><rect x="96" y="96" width="26" height="22" rx="3"></rect><rect x="130" y="96" width="26" height="22" rx="3"></rect><rect x="164" y="96" width="26" height="22" rx="3"></rect><rect x="198" y="96" width="26" height="22" rx="3"></rect>
+<rect x="62" y="124" width="26" height="22" rx="3"></rect><rect x="96" y="124" width="26" height="22" rx="3"></rect><rect x="130" y="124" width="26" height="22" rx="3"></rect><rect x="164" y="124" width="26" height="22" rx="3"></rect><rect x="198" y="124" width="26" height="22" rx="3"></rect>
+</g>
+<text x="240" y="90" fill="#7c8593" font-size="14">…</text>
+<text x="152" y="172" fill="#b9c0ca" font-size="10" text-anchor="middle">N languages → N×(N−1) directions</text>
+<text x="152" y="190" fill="#e06b6b" font-size="10" text-anchor="middle">about 9900 models at N=100</text>
+<text x="152" y="210" fill="#7c8593" font-size="9.5" text-anchor="middle">adding one language adds about 2N more</text>
+<text x="472" y="24" fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle">One model + a language token</text>
+<rect x="336" y="40" width="272" height="26" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="472" y="58" fill="#b9c0ca" font-size="10" text-anchor="middle">&lt;2fr&gt; I will go to Beijing tomorrow</text>
+<line x1="472" y1="68" x2="472" y2="82" stroke="#7c8593" marker-end="url(#b2)"></line>
+<rect x="336" y="86" width="272" height="34" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="2"></rect><text x="472" y="107" fill="#e7ebf1" font-size="9.5" text-anchor="middle">Shared encoder–decoder · one parameter set · shared subwords</text>
+<line x1="472" y1="122" x2="472" y2="136" stroke="#7c8593" marker-end="url(#b2)"></line>
+<rect x="336" y="140" width="272" height="26" rx="5" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"></rect><text x="472" y="158" fill="#e7ebf1" font-size="10" text-anchor="middle">J&apos;irai à Pékin demain</text>
+<text x="472" y="188" fill="#5b9df9" font-size="10" text-anchor="middle">Never trained on pt→ko, translates anyway: zero-shot</text>
+<text x="472" y="210" fill="#e06b6b" font-size="10" text-anchor="middle">Cost: capacity thinned, head directions dip</text>
+</svg>
+<figcaption>Fig 2 · One multilingual model collapses quadratic operational complexity into a single artifact, buying transfer and zero-shot — at the price of less capacity per language.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/attention-is-all-you-need-paper1.en.html" target="_blank" rel="noopener">CS Papers · Attention Is All You Need (Transformer)</a> — how self-attention turned the encoder–decoder from step-by-step recurrence into something parallelizable, and what multi-head attention actually divides up</aside>
+<h3>4. Low-resource languages: manufacturing the data</h3>
+<p>Transfer borrows some of it, but a shortage still has to be filled. Three main lines:</p>
+<p><strong>Back-translation</strong> has the best return. Target-language monolingual text is abundant; run a reverse model over it to produce "machine-translated source + human-written target" pairs. The direction is the whole point: <em>the noisy side is the input, the clean human side is the output</em>, so the generation distribution the model learns stays clean.</p>
+<p><strong>Corpus mining</strong>: automatically pair sentences from web pages, subtitles and multilingual official documents, filtered by multilingual sentence-embedding similarity. Enormous yield, enormous noise — <strong>dirty parallel data is routinely underrated</strong>: a mispaired sentence doesn't teach the model a wrong word, it teaches the model that it may ignore the source and improvise.</p>
+<p><strong>Data balancing</strong>: sampling in proportion to real corpus size hands almost all the compute to English–French–German–Spanish. The practice is to reweight by corpus size to the power <code>1/T</code> (larger <code>T</code> is flatter), deliberately raising the small languages' quota. <strong>This is a straight zero-sum dial</strong>: low-resource scores rise, high-resource scores fall. There is no free lunch, only a choice about where you concede.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 226" font-family="-apple-system,sans-serif">
+<line x1="48" y1="172" x2="600" y2="172" stroke="#7c8593"></line>
+<g fill="rgba(91,157,249,0.28)" stroke="#5b9df9">
+<rect x="52" y="42" width="28" height="130"></rect><rect x="90" y="76" width="28" height="96"></rect><rect x="128" y="98" width="28" height="74"></rect><rect x="166" y="114" width="28" height="58"></rect><rect x="204" y="126" width="28" height="46"></rect><rect x="242" y="136" width="28" height="36"></rect><rect x="280" y="144" width="28" height="28"></rect><rect x="318" y="150" width="28" height="22"></rect><rect x="356" y="155" width="28" height="17"></rect><rect x="394" y="159" width="28" height="13"></rect><rect x="432" y="162" width="28" height="10"></rect><rect x="470" y="164" width="28" height="8"></rect><rect x="508" y="166" width="28" height="6"></rect><rect x="546" y="167" width="28" height="5"></rect>
+</g>
+<polyline points="66,62 104,74 142,82 180,88 218,94 256,99 294,103 332,107 370,110 408,113 446,116 484,118 522,120 560,122" fill="none" stroke="#9b6cf5" stroke-width="2.4"></polyline>
+<g fill="#9b6cf5">
+<circle cx="66" cy="62" r="2.6"></circle><circle cx="180" cy="88" r="2.6"></circle><circle cx="294" cy="103" r="2.6"></circle><circle cx="408" cy="113" r="2.6"></circle><circle cx="522" cy="120" r="2.6"></circle>
+</g>
+<text x="66" y="188" fill="#7c8593" font-size="9.5" text-anchor="middle">en–fr</text>
+<text x="180" y="188" fill="#7c8593" font-size="9.5" text-anchor="middle">en–de</text>
+<text x="294" y="188" fill="#7c8593" font-size="9.5" text-anchor="middle">zh–ja</text>
+<text x="446" y="188" fill="#7c8593" font-size="9.5" text-anchor="middle">→ long tail</text>
+<text x="560" y="188" fill="#7c8593" font-size="9.5" text-anchor="middle">low-resource</text>
+<text x="48" y="30" fill="#5b9df9" font-size="10">Blue bars = real corpus share (steep tail, four orders of magnitude)</text>
+<text x="318" y="146" fill="#9b6cf5" font-size="10">Violet line = training mix after reweighting by 1/T</text>
+<text x="320" y="212" fill="#7c8593" font-size="9.5" text-anchor="middle">Lift the violet tail and low-resource improves while high-resource degrades — a zero-sum dial, not an optimization</text>
+</svg>
+<figcaption>Fig 3 · Sampling temperature does not tune "is the model good"; it tunes "who gets the limited compute" — whatever you lift at the tail, you lose at the head.</figcaption>
+</figure>
+<h3>5. Evaluation: BLEU does not measure quality</h3>
+<p><strong>BLEU</strong> counts the n-grams shared between the output and a reference translation, times a penalty for being too short. It is cheap, fast and regressible, which is why it has been the default ruler for twenty years. But its assumption is that <em>a good translation looks like the reference</em> — and translation is one-to-many. Paraphrase, reorder, restructure: a human reads it as equally good, BLEU docks points.</p>
+<p>So the standard practice is <strong>three layers together</strong>: <em>BLEU / chrF</em> as the fast ruler for daily regression (chrF works on characters, steadier for morphologically rich languages like Finnish); <em>COMET / BLEURT</em>, learned metrics trained directly on human ratings and correlating far better with people, as the pre-launch gate; <em>MQM human evaluation</em> as the final arbiter — expensive and slow, run only on critical releases.</p>
+<p>And a class of failures that <strong>automatic metrics structurally cannot see</strong> needs its own checklist: <strong>hallucination</strong> on low-resource directions (output unrelated to the source yet perfectly fluent — <em>wrong, fluently</em>, the signature failure mode of generative systems), default gender and occupational stereotyping, and terminology or brand names getting "translated" away.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/hallucination-calibration-day48.en.html" target="_blank" rel="noopener">AI/ML · Day 48 Hallucination and Calibration</a> — why models are most fluent exactly where they are least certain, and what it takes to make confidence line up with correctness</aside>
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 1 · Three ways to hold a hundred languages</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>One bilingual model per direction</th><th>Pivot through English</th><th>A single multilingual model</th></tr></thead>
+<tbody>
+<tr><th>Model count</th><td><strong>about N×(N−1)</strong>, ~9900 at N=100</td><td>about 2N, ~200 at N=100</td><td><strong>1</strong></td></tr>
+<tr><th>Quality</th><td>highest on head directions</td><td>two hops: errors compound, register lost</td><td>head dips slightly, tail rises a lot</td></tr>
+<tr><th>Latency</th><td>one hop</td><td><strong>two hops, roughly double</strong></td><td>one hop</td></tr>
+<tr><th>Adding a language</th><td>train about 2N new models</td><td>train 2</td><td>add to the mix, retrain once</td></tr>
+<tr><th>Cost</th><td>operationally impossible; tail neglected</td><td>non-English pairs collapse</td><td>capacity dilution; one bad run hurts every language</td></tr>
+<tr><th>Fits</th><td>a handful of pairs, quality maxed</td><td>a stopgap / fallback for rare pairs</td><td><strong>the default</strong>, with adapters on head directions</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · Four routes to data for low-resource languages</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Back-translation</th><th>Web corpus mining</th><th>Cross-lingual transfer</th><th>Raising sampling temperature</th></tr></thead>
+<tbody>
+<tr><th>Needs</th><td>target monolingual text + a reverse model</td><td>web scale + multilingual sentence embeddings</td><td>a closely related high-resource language</td><td>nothing — just change the mix</td></tr>
+<tr><th>Payoff</th><td>steady and stackable; the industry default</td><td>the largest volume</td><td>cheapest when the families are close</td><td>immediate</td></tr>
+<tr><th>Cost</th><td>needs a usable reverse model first; synthetic style is uniform</td><td><strong>noisy pairs teach the model to ignore the source</strong></td><td>near useless across unrelated families</td><td><strong>high-resource directions get worse</strong></td></tr>
+<tr><th>Do first?</th><td>first priority</td><td>parallel with back-translation, filter hard</td><td>comes free with the architecture choice</td><td>last, tuned to product priorities</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 3 · Three rulers, three things measured</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>BLEU / chrF</th><th>COMET / BLEURT</th><th>MQM human evaluation</th></tr></thead>
+<tbody>
+<tr><th>Measures</th><td>n-gram / character overlap with a reference</td><td>a learned estimate of the human score</td><td>each error by type and severity</td></tr>
+<tr><th>Cost</th><td>near zero, seconds</td><td>a model run, minutes</td><td><strong>expensive and slow, person-days</strong></td></tr>
+<tr><th>Human correlation</th><td>weak; paraphrase is punished</td><td>markedly higher</td><td>the reference itself</td></tr>
+<tr><th>Fatal weakness</th><td>change tokenization and the score moves; not comparable across papers</td><td>biased itself, and can be optimized against</td><td>only affordable as a sample; never covers the tail</td></tr>
+<tr><th>Used for</th><td>daily regression, fast screening</td><td>the pre-launch gate</td><td>critical releases and disputes</td></tr>
+</tbody></table></div>
+<h2>Why it matters / in real systems</h2>
+<p>The skeleton here is much bigger than translation: <strong>any system serving wildly unequal subpopulations from one model looks like this</strong> — multilingual speech recognition, recommendation and risk scoring across country sites, intent classification across dialects. Share parameters to get transfer, add a token to condition, tune the sampling mix for fairness, then get stuck behind an imperfect automatic metric. Same four steps.</p>
+<p>The most valuable line in an interview: <strong>talk about multilinguality as a capacity-allocation problem, not a linguistics problem.</strong> Saying "I'll let English–French drop a BLEU point to gain three points on twenty tail directions, because our growth is in emerging markets" beats reciting any model name.</p>
+<div class="ev">
+<div class="evh">Industry evidence · these claims are the companies' / projects' own public statements, not the book's</div>
+<ul>
+<li><strong>Meta (No Language Left Behind)</strong>: the single-multilingual-model bet taken to its limit — models that translate directly between <strong>200+ languages</strong>, naming low-resource ones like Asturian, Luganda and Urdu, with the FLORES-200 evaluation set and Toxicity-200 open-sourced alongside, at scales from <code>600M</code> to <code>54.5B</code>. <strong>"The tail needs a purpose-built evaluation set" is itself the conclusion: a language with no ruler is a language nobody maintains.</strong><span class="src"><a href="https://github.com/facebookresearch/fairseq/tree/nllb" target="_blank" rel="noopener">facebookresearch/fairseq · NLLB branch ↗</a></span></li>
+<li><strong>Google (official TensorFlow NMT tutorial)</strong>: states plainly that older phrase-based systems "broke up source sentences into multiple chunks" which "led to disfluency in the translation outputs", while attention lets the decoder "peek at" the encoder states, bypassing the "information bottleneck" of a single fixed-size vector and thereby "improving the translation of longer sentences". Its baselines: WMT German–English at <code>28.9</code> BLEU, <code>29.9</code> with GNMT-style attention. <strong>First-hand support for "attention is not a garnish, it repairs a structural defect".</strong><span class="src"><a href="https://github.com/tensorflow/nmt" target="_blank" rel="noopener">tensorflow/nmt README ↗</a></span></li>
+<li><strong>Unbabel (COMET)</strong>: turns evaluation itself into a model — neural models trained on human quality assessments score the translation — and reports that its XCOMET family has "demonstrated the highest correlation with MQM", additionally marking error spans with severity. <strong>Automatic metrics are shifting from counting overlap to learning human judgement.</strong><span class="src"><a href="https://github.com/Unbabel/COMET" target="_blank" rel="noopener">Unbabel/COMET README ↗</a></span></li>
+<li><strong>A negative case: BLEU numbers were long incomparable.</strong> sacreBLEU points out that decoders "may handle tokenization in different ways" and that "different flags passed to each of these scripts can produce wide swings in the final score" — so BLEU figures across papers cannot be compared directly. Its remedy is to emit a version signature so others "know exactly what you did". <strong>A metric treated as an industry standard for twenty years needed a tool bolted on just to be comparable.</strong><span class="src"><a href="https://github.com/mjpost/sacrebleu" target="_blank" rel="noopener">mjpost/sacrebleu README ↗</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and disputes</h2>
+<ul>
+<li><strong>Opening with model architecture.</strong> The right opening is "how many languages, and how skewed" — after Transformer, the architecture is largely not the argument.</li>
+<li><strong>Comparing two BLEU numbers head to head.</strong> Change the tokenizer, the casing rules or the number of references and the score moves; it does not travel across papers or systems.</li>
+<li><strong>Treating zero-shot as free capability.</strong> It is real, but noticeably weaker than supervised directions, and prone to "off-target" output — emitting the wrong language entirely is its signature failure.</li>
+<li><strong>Assuming more languages only helps.</strong> With capacity fixed it necessarily thins; head directions regressing is normal, and that bill belongs on the table up front.</li>
+<li><strong>Underrating dirty corpora.</strong> A mispaired sentence doesn't teach one wrong word — it teaches the model it may improvise away from the source. Most fluent hallucination on tail directions traces back here.</li>
+<li><strong>Designing only at sentence level.</strong> Real inputs are paragraphs and documents: pronoun reference, consistent terminology, markup and register all demand a window wider than one sentence.</li>
+<li><strong>Period limits.</strong> The chapter's spine is the dedicated translation model; general-purpose LLMs have since become competitive on high-resource languages and absorbed document-level context and style instructions along the way. But the data gap and "evaluation has no single right answer" — the two fundamental constraints — remain untouched.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① Translation is conditional generation: read the whole sentence, emit word by word; latency scales with output length and there is no single right answer.</p>
+<p>② Attention repairs a concrete structural defect — squeezing a whole sentence into one fixed vector necessarily loses information.</p>
+<p>③ A shared <strong>subword vocabulary</strong> is the entry ticket: tens of thousands of entries spell every language, and create cross-lingual parameter sharing for free.</p>
+<p>④ One model per direction is an <code>N×(N−1)</code> dead end; <strong>one model plus a target-language token</strong> collapses it into a single artifact.</p>
+<p>⑤ That single model buys cross-lingual transfer and <strong>zero-shot</strong>, and costs <strong>capacity dilution</strong>: head directions usually trail their dedicated bilingual models.</p>
+<p>⑥ Four routes for the tail: back-translation (first), corpus mining (huge and noisy), transfer from close relatives, sampling temperature.</p>
+<p>⑦ Sampling temperature is a <strong>zero-sum dial</strong>: whatever you lift at the tail, you lose at the head — a product-priority decision, not an optimization.</p>
+<p>⑧ BLEU's assumption that a good translation looks like the reference simply fails on a one-to-many task; change the tokenization and the score moves.</p>
+<p>⑨ Evaluate in three layers: BLEU / chrF to screen → COMET / BLEURT to gate → MQM to arbitrate.</p>
+<p>⑩ List the failures metrics cannot see: <strong>fluent hallucination</strong> on tail directions, gender stereotyping, terminology and brand names translated away.</p>
+</div>
+</div>
+<footer>Book Deep Read · Reading this page ≈ getting the core of the chapter; for the full case studies, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
