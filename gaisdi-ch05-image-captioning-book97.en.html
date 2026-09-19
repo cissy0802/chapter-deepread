@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Generative AI System Design Interview Ch 5 · Image Captioning — Book Deep Read 97</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">Book Deep Read · Generative AI System Design Interview · Ch 5</p>
+<h1>Image Captioning: seeing the picture is the entry fee — nobody can say what "described it correctly" means</h1>
+<p class="sub">Generative AI System Design Interview · Ch 5 · Ali Aminian, Hao Sheng &amp; Alex Xu · 2024</p>
+<p class="langbar"><a href="gaisdi-ch05-image-captioning-book97.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You glance at a photo on your phone and instantly know what is going on. But for someone who cannot see the screen, and for a system that has to file away hundreds of millions of images, the picture first has to become <strong>a sentence</strong>. This chapter is about getting a machine to look once and say something human — not "dog, grass, frisbee", but "a dog catching a frisbee on the grass".</p>
+<h2>A strange thing first</h2>
+<p>Machines are good at labels: there is a person here, a dog, a frisbee — and they are usually right. But read those three words to a friend who cannot see the photo and they still have no idea what happened. <strong>Did the person throw the frisbee to the dog, or did the dog bring it back?</strong> Labels list the things and drop every <strong>relation</strong> between them. And the relations are usually the point of the picture.</p>
+<h2>Why the old way was hard</h2>
+<p>So stitch the labels into a sentence? What comes out reads like an inventory: "person dog frisbee grass". Worse, ten people shown the same photo will write ten different sentences that are all correct — one describes the action, one the weather, one how delighted the dog looks. <strong>There is no single right answer</strong>, which makes teaching the machine and checking its work hard at the same time.</p>
+<h2>How it is actually done</h2>
+<p>Two people work in relay. <strong>The first one looks at the picture.</strong> He writes nothing down in words; he chops the image into a few hundred small squares and keeps one scribbled card per square — this one is furry, that one is green grass. <strong>The second one does the talking.</strong> He never sees the picture, only the stack of cards, and he speaks one word at a time; before each next word he <strong>flips back through the stack and pulls out the few cards that matter right now</strong>. Saying "dog", he is holding the furry ones; saying "frisbee", a different few.</p>
+<p>How are the two trained? On web pages. Countless images online ship with a line of caption text attached, which hands you hundreds of millions of "picture plus sentence" pairs for free. The catch is plain: most of that text is junk — "click to enlarge" and the like — and over half has to be thrown out before any of it is usable.</p>
+<h2>How do you know it got it right?</h2>
+<p>The crude way: have five people each write a reference sentence for the same photo, then see how much wording the machine's sentence shares with theirs. But a paraphrase gets unfairly marked down — "puppy" and "canine" do not count as a match. So there is a second trick: bring in a <strong>scorer that looks at the picture</strong>, one that never reads the reference sentences and answers only one question — <strong>do this sentence and this picture go together?</strong></p>
+<h2>The one thing to remember</h2>
+<div class="tl">
+<p>Seeing the picture is the entry fee; the hard part is that <strong>nobody can state what "described it correctly" means</strong>, so everything from training to sign-off runs on a stack of approximations propping each other up. And the dangerous failure is not silence — it is a fluent sentence naming something that was never in the picture, which the listener has no way to check.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the notation and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think the hard part of image captioning is understanding the picture; in fact the vision half is largely solved by off-the-shelf pretrained models. What this chapter actually tackles is two things nobody can pin down: <strong>how to align a visual space with a language space into a chain you can generate through autoregressively</strong>, and <strong>how to score anything when one image has infinitely many correct descriptions</strong>. The engineering intuition is a single line: <strong>do not build a captioner from scratch — take two already-strong models and train only the thin translation layer between them.</strong></p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>encoder / decoder</strong>: the first compresses the input into a series of internal vectors; the second writes output from them, one token at a time.</li>
+<li><strong>patch</strong>: a small square an image is cut into (commonly 16×16 pixels); vision models work per patch, not per pixel.</li>
+<li><strong>embedding</strong>: a piece of content represented as a list of numbers, such that similar content gets similar numbers.</li>
+<li><strong>ViT (Vision Transformer)</strong>: a vision backbone that feeds a Transformer a sequence of patches as if they were words.</li>
+<li><strong>cross-attention</strong>: at every generated word, the decoder re-weights the encoder's vectors to decide which regions matter for this step.</li>
+<li><strong>autoregressive</strong>: writing one word at a time, feeding everything written so far back in as input.</li>
+<li><strong>teacher forcing</strong>: during training the <strong>correct prefix</strong> is fed in at every step, whether or not the model would have produced it.</li>
+<li><strong>beam search</strong>: keeping k candidate sentences alive at once, extending them word by word and keeping the highest-scoring ones.</li>
+<li><strong>alt text</strong>: the text description attached to a web image, originally meant for screen readers and search engines.</li>
+<li><strong>BLEU / CIDEr</strong>: automatic metrics that score a caption by how much of its wording overlaps with human reference captions.</li>
+<li><strong>adapter</strong>: a small set of trainable parameters wedged between two frozen models, whose only job is to translate one side's representation into the other's.</li>
+<li><strong>hallucination</strong>: the model fluently naming something that is not in the image.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The fourth of the ten case studies in Part II. It follows Ch4 (ChatGPT), where input and output were both text; here the book <strong>crosses modalities for the first time: image in, text out</strong> — the mirror image of Ch7–Ch11, which go text in, image out. In the real world it maps onto accessibility alt text, image search in stock libraries and e-commerce, content understanding ahead of moderation, and the "look and describe" step inside every multimodal assistant today.</p>
+<h2>What the chapter is solving</h2>
+<p>First, separate it from the previous generation of tasks. Classification and detection return <strong>labels</strong>: person, dog, frisbee. But labels drop the <strong>relations</strong> — "the person throws the frisbee to the dog" and "the dog brings the frisbee back" have identical label sets. A screen reader announcing three nouns still leaves a blind user without the event. <strong>What this chapter wants is a sentence with a verb in it.</strong></p>
+<p>Second, scale. Writing alt text by hand is not impossible, it is merely unfinishable: a mid-sized image platform taking in <code>10 million</code> new photos a day, at 30 seconds per human description, needs roughly <code>83,000</code> hours — about ten thousand person-days, every day. A model does one image in tens of milliseconds. <strong>The problem is automation-only from the first minute.</strong></p>
+<p>Third, and worst: <strong>"correct" has no single form</strong>. Translation at least has reference translations, classification a ground-truth label; here one image has unboundedly many acceptable descriptions, and coarse ones are useful for one purpose (search indexing) while detailed ones are useful for another (accessibility). Evaluation has to be rebuilt from scratch — which is why it takes up so much of the chapter's back half.</p>
+<p>What happens if you skip it? Blind users hear the word "image" and nothing else as they scroll; and billions of pictures become a black hole that cannot be searched, moderated or filed.</p>
+<h2>The core, properly explained</h2>
+<h3>1. Encoder–decoder: making the image something the decoder can "see"</h3>
+<p>The standard skeleton is <strong>vision encoder plus language decoder</strong>. A ViT cuts a <code>224×224</code> image into <code>16×16</code> patches, yielding <code>196</code> visual tokens, each a d-dimensional vector; the decoder is an ordinary autoregressive language model. Between them there must be a <strong>projection or adapter</strong> that moves the visual vectors into the language model's embedding space — the two sides speak different languages, and this layer is the interpreter.</p>
+<p>At generation time the decoder runs cross-attention for every word it writes: it computes a weight over those 196 visual tokens, which is exactly "flipping back through the stack of cards for the ones that matter now". Writing "dog", the weight concentrates on the furry patches; writing "grass", it slides to the bottom half of the frame. <strong>This is precisely what labels cannot do: the attention moves as the sentence advances, and the relations get spoken in the course of that movement.</strong></p>
+<p>Why this design is startlingly cheap: the vision side is a <strong>one-off</strong> few hundred tokens, and a caption is usually <code>10–20</code> tokens, so the generated volume is two to three orders of magnitude below text-to-image — on the same GPU, an image takes seconds while a caption takes tens of milliseconds. The cost sits elsewhere: finer patches see more detail (<code>448×448</code> gives 784 tokens), and attention cost grows with the <strong>square</strong> of the token count. Reading small text and dense scenes is bought with exactly that.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 252" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="c1" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect fill="rgba(91,157,249,0.1)" height="58" rx="6" stroke="#5b9df9" stroke-width="1.6" width="86" x="8" y="40"></rect>
+<text fill="#e7ebf1" font-size="10.5" font-weight="700" text-anchor="middle" x="51" y="64">Input image</text>
+<text fill="#8fbaff" font-size="10" text-anchor="middle" x="51" y="82">224×224</text>
+<line marker-end="url(#c1)" stroke="#7c8593" stroke-width="1.4" x1="98" x2="120" y1="69" y2="69"></line>
+<rect fill="none" height="58" rx="4" stroke="#5b9df9" stroke-width="1.4" width="56" x="124" y="40"></rect>
+<line stroke="rgba(91,157,249,0.6)" x1="138" x2="138" y1="40" y2="98"></line>
+<line stroke="rgba(91,157,249,0.6)" x1="152" x2="152" y1="40" y2="98"></line>
+<line stroke="rgba(91,157,249,0.6)" x1="166" x2="166" y1="40" y2="98"></line>
+<line stroke="rgba(91,157,249,0.6)" x1="124" x2="180" y1="54.5" y2="54.5"></line>
+<line stroke="rgba(91,157,249,0.6)" x1="124" x2="180" y1="69" y2="69"></line>
+<line stroke="rgba(91,157,249,0.6)" x1="124" x2="180" y1="83.5" y2="83.5"></line>
+<text fill="#7c8593" font-size="9" text-anchor="middle" x="152" y="112">16×16 patches</text>
+<line marker-end="url(#c1)" stroke="#7c8593" stroke-width="1.4" x1="184" x2="204" y1="69" y2="69"></line>
+<rect fill="rgba(91,157,249,0.14)" height="46" rx="6" stroke="#5b9df9" stroke-width="1.6" width="108" x="208" y="46"></rect>
+<text fill="#e7ebf1" font-size="10.5" font-weight="700" text-anchor="middle" x="262" y="66">Vision encoder</text>
+<text fill="#8fbaff" font-size="9" text-anchor="middle" x="262" y="82">ViT / CNN · frozen</text>
+<line marker-end="url(#c1)" stroke="#7c8593" stroke-width="1.4" x1="320" x2="344" y1="69" y2="69"></line>
+<rect fill="rgba(155,108,245,0.18)" height="46" rx="6" stroke="#9b6cf5" stroke-width="2" width="104" x="348" y="46"></rect>
+<text fill="#e7ebf1" font-size="10.5" font-weight="700" text-anchor="middle" x="400" y="66">Adapter</text>
+<text fill="#c9a8ff" font-size="9" text-anchor="middle" x="400" y="82">the only trained layer</text>
+<line marker-end="url(#c1)" stroke="#7c8593" stroke-width="1.4" x1="456" x2="478" y1="69" y2="69"></line>
+<rect fill="rgba(91,157,249,0.1)" height="46" rx="6" stroke="#5b9df9" stroke-dasharray="4 3" stroke-width="1.4" width="150" x="482" y="46"></rect>
+<text fill="#e7ebf1" font-size="10.5" font-weight="700" text-anchor="middle" x="557" y="66">Visual token sequence</text>
+<text fill="#8fbaff" font-size="9" text-anchor="middle" x="557" y="82">196 × d</text>
+<path d="M557,92 L557,132" fill="none" marker-end="url(#c1)" stroke="#9b6cf5" stroke-width="1.6"></path>
+<text fill="#c9a8ff" font-size="9" text-anchor="end" x="546" y="116">cross-attention</text>
+<rect fill="rgba(91,157,249,0.14)" height="48" rx="6" stroke="#5b9df9" stroke-width="1.6" width="256" x="326" y="136"></rect>
+<text fill="#e7ebf1" font-size="10.5" font-weight="700" text-anchor="middle" x="454" y="156">Language decoder (autoregressive)</text>
+<text fill="#8fbaff" font-size="9" text-anchor="middle" x="454" y="172">re-reads the patches for every word</text>
+<line marker-end="url(#c1)" stroke="#7c8593" stroke-width="1.4" x1="322" x2="262" y1="160" y2="160"></line>
+<rect fill="rgba(255,255,255,0.03)" height="30" rx="4" stroke="rgba(91,157,249,0.5)" width="40" x="20" y="145"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="40" y="164">A</text>
+<rect fill="rgba(255,255,255,0.03)" height="30" rx="4" stroke="rgba(91,157,249,0.5)" width="48" x="66" y="145"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="90" y="164">dog</text>
+<rect fill="rgba(255,255,255,0.03)" height="30" rx="4" stroke="rgba(91,157,249,0.5)" width="62" x="120" y="145"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="151" y="164">catches</text>
+<rect fill="rgba(155,108,245,0.14)" height="30" rx="4" stroke="#9b6cf5" width="68" x="188" y="145"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="222" y="164">a frisbee</text>
+<text fill="#7c8593" font-size="9.5" x="20" y="196">← generation order; every step re-weights all 196 visual tokens</text>
+<text fill="#7c8593" font-size="9.5" x="20" y="216">Vision side: 196 tokens, once (cost grows with the square of token count)</text>
+<text fill="#7c8593" font-size="9.5" x="20" y="234">Text side: a caption is 10–20 tokens — orders of magnitude cheaper than generating an image</text>
+</svg>
+<figcaption>Fig 1 · The image-in, text-out skeleton: the encoder compresses the picture into tokens, the adapter moves them into the language model's space, and the decoder looks back once per word</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/vision-transformer-paper5.en.html" rel="noopener" target="_blank">CS Papers · ViT (An Image is Worth 16×16 Words)</a> — why chopping an image into patches and feeding them to a Transformer beats convolution, and where its appetite for data comes from</aside>
+<h3>2. Data: alt text is a free gold mine and an open sewer</h3>
+<p>Training needs image–description pairs, and there are only two sources — opposite on nearly every axis.</p>
+<p><strong>Human annotation</strong>: COCO Captions gives about <code>120,000</code> images <code>5</code> human-written descriptions each. Five sentences per image is itself direct evidence that acceptable answers are plural. It is clean and well-formed, but capped in the hundreds of thousands and skewed towards everyday scenes.</p>
+<p><strong>Web alt text</strong>: billions of pairs for free, and filthy — file names, "click to enlarge", keyword stuffing, or text with no bearing on the image at all. So the real work is the <strong>filtering pipeline</strong>: drop non-sentences by length and part-of-speech, cross-check named objects against an off-the-shelf detector, and generalise proper nouns into hypernyms ("Obama" → "politician") so the model does not memorise names. Google's Conceptual Captions washed <code>3.3 million</code> pairs out of web alt text exactly this way.</p>
+<p>A third route is <strong>synthetic backfill</strong>: have a mediocre captioner rewrite descriptions for the dirty images, then let a scorer discard the ones that clearly do not match, producing something at near-web scale and near-human cleanliness. In essence it <strong>spends compute instead of annotation budget</strong> — at the price of writing the model's own preferences into its next training set, where errors reinforce themselves.</p>
+<h3>3. Training and decoding: given the answer while learning, alone while working</h3>
+<p>Training uses teacher forcing: at every step the <strong>correct prefix from the reference caption</strong> goes in, so the model only ever learns "given a correct prefix, what comes next". It trains fast and parallelises well. The hangover is <strong>exposure bias</strong>: at inference the prefix is the model's own, and once the third word goes wrong the model is in a situation it has never seen and keeps going wrong.</p>
+<p>Decoding then becomes an honest trade. <strong>Beam search</strong> picks the highest-probability sentence, which makes captions uniformly <strong>safe and boring</strong> — an endless parade of "a man is …", because the most probable sentence is by construction the most generic one. <strong>Sampling</strong> (temperature, nucleus) makes captions vivid while pushing hallucination up: the model grows bolder about details that are not there. Beam search at <code>k=3–5</code> with a length penalty is the usual landing spot for accessibility, where being wrong costs far more than being dull.</p>
+<p>There is one more crack that is easy to miss: <strong>training optimises cross-entropy (is each word right?) while sign-off reads CIDEr (does the whole sentence look human?)</strong>, and those are not the same thing. Hence the practice of optimising the metric directly as a reward (self-critical sequence training): let the model sample a few captions, score them with CIDEr, and shift towards the high scores. It does lift the metric substantially — and it opens the door to gaming the metric, which is Ch4's reward hacking wearing a different coat.</p>
+<h3>4. Evaluation: one image, infinitely many correct answers</h3>
+<p>Automatic metrics come in three generations, each patching a hole in the last.</p>
+<p><strong>N-gram overlap</strong> (BLEU, METEOR, ROUGE): compare the generated sentence's word groups against several references. Paraphrases get punished unfairly, while boilerplate like "a man" collects points for free. <strong>CIDEr</strong> is the captioning-specific fix: it weights n-grams by TF-IDF so that <strong>phrases common to all images score near zero</strong>, and only what is distinctive about this image earns credit.</p>
+<p><strong>Structural</strong> (SPICE): parse the sentence into a scene graph — objects, attributes, relations — and reconcile it against the references' graphs. This catches exactly the layer labels dropped: "dog catches frisbee" and "frisbee hits dog" score almost identically on n-grams and are two different events on a scene graph.</p>
+<p><strong>Reference-free</strong> (CLIPScore): skip ground truth altogether, encode image and sentence into one shared space and measure how close they sit. It can credit correct descriptions no reference happens to contain — and it inherits CLIP's own blind spots: counting, spatial relations and negation.</p>
+<p>All three together still do not replace human review. One more thing gets measured before launch: the <strong>object hallucination rate</strong>, the share of mentioned objects that are not in the image. It is unrelated to fluency, and it is the only fatal error class in accessibility.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 188" xmlns="http://www.w3.org/2000/svg">
+<rect fill="rgba(255,255,255,0.02)" height="160" rx="8" stroke="rgba(91,157,249,0.3)" width="196" x="10" y="16"></rect>
+<text fill="#8fbaff" font-size="10.5" font-weight="700" text-anchor="middle" x="108" y="36">1 · N-gram overlap</text>
+<text fill="#7c8593" font-size="9" text-anchor="middle" x="108" y="51">BLEU / CIDEr</text>
+<rect fill="rgba(91,157,249,0.12)" height="22" rx="4" stroke="#5b9df9" width="168" x="24" y="60"></rect>
+<text fill="#e7ebf1" font-size="9" x="31" y="75">Gen: a dog catches a frisbee</text>
+<rect fill="none" height="18" rx="4" stroke="rgba(124,133,147,0.6)" width="168" x="24" y="90"></rect>
+<text fill="#b9c0ca" font-size="8.5" x="31" y="103">Ref 1: a puppy leaps for a disc</text>
+<rect fill="none" height="18" rx="4" stroke="rgba(124,133,147,0.6)" width="168" x="24" y="112"></rect>
+<text fill="#b9c0ca" font-size="8.5" x="31" y="125">Ref 2: a canine catching a frisbee</text>
+<text fill="#7c8593" font-size="9" x="24" y="150">More shared n-grams, more points;</text>
+<text fill="#7c8593" font-size="9" x="24" y="165">a synonym gets you punished</text>
+<rect fill="rgba(255,255,255,0.02)" height="160" rx="8" stroke="rgba(91,157,249,0.3)" width="196" x="222" y="16"></rect>
+<text fill="#8fbaff" font-size="10.5" font-weight="700" text-anchor="middle" x="320" y="36">2 · Scene graph</text>
+<text fill="#7c8593" font-size="9" text-anchor="middle" x="320" y="51">SPICE</text>
+<circle cx="266" cy="82" fill="rgba(91,157,249,0.18)" r="20" stroke="#5b9df9"></circle>
+<text fill="#e7ebf1" font-size="9" text-anchor="middle" x="266" y="86">dog</text>
+<circle cx="374" cy="82" fill="rgba(91,157,249,0.18)" r="20" stroke="#5b9df9"></circle>
+<text fill="#e7ebf1" font-size="9" text-anchor="middle" x="374" y="86">frisbee</text>
+<line stroke="#9b6cf5" stroke-width="1.6" x1="286" x2="354" y1="82" y2="82"></line>
+<text fill="#c9a8ff" font-size="9" text-anchor="middle" x="320" y="74">catches</text>
+<circle cx="320" cy="128" fill="rgba(91,157,249,0.1)" r="18" stroke="rgba(91,157,249,0.6)"></circle>
+<text fill="#b9c0ca" font-size="9" text-anchor="middle" x="320" y="132">grass</text>
+<text fill="#7c8593" font-size="9" text-anchor="middle" x="320" y="166">who did what to whom, reconciled</text>
+<rect fill="rgba(255,255,255,0.02)" height="160" rx="8" stroke="rgba(155,108,245,0.4)" width="196" x="434" y="16"></rect>
+<text fill="#c9a8ff" font-size="10.5" font-weight="700" text-anchor="middle" x="532" y="36">3 · No references</text>
+<text fill="#7c8593" font-size="9" text-anchor="middle" x="532" y="51">CLIPScore</text>
+<rect fill="rgba(91,157,249,0.14)" height="28" rx="5" stroke="#5b9df9" width="56" x="456" y="70"></rect>
+<text fill="#e7ebf1" font-size="9" text-anchor="middle" x="484" y="88">image</text>
+<rect fill="rgba(155,108,245,0.18)" height="28" rx="5" stroke="#9b6cf5" width="56" x="552" y="70"></rect>
+<text fill="#e7ebf1" font-size="9" text-anchor="middle" x="580" y="88">caption</text>
+<line stroke="#9b6cf5" stroke-dasharray="4 3" stroke-width="1.4" x1="512" x2="552" y1="84" y2="84"></line>
+<text fill="#c9a8ff" font-size="9" text-anchor="middle" x="532" y="112">how close they sit in one space</text>
+<text fill="#7c8593" font-size="9" text-anchor="middle" x="532" y="140">Credits captions no reference has;</text>
+<text fill="#7c8593" font-size="9" text-anchor="middle" x="532" y="155">weak on counting, position, negation</text>
+</svg>
+<figcaption>Fig 2 · Three ways to score: n-gram overlap is cheapest and crudest, scene graphs reconcile relations, and reference-free scoring escapes ground truth while inheriting the scorer's blind spots</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/clip-paper6.en.html" rel="noopener" target="_blank">CS Papers · CLIP</a> — how image–text contrastive learning squeezes two modalities into one space, and why that space serves both retrieval and, turned around, scoring</aside>
+<h2>The trade-offs that decide the design</h2>
+<p>The first decision is <strong>how to wire it up</strong>: strong pretrained models exist on both the vision and the language side, so the question is which part you train and which you freeze.</p>
+<p class="tcap">Table 1 · Four ways to wire it</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>From scratch</th><th>Frozen towers + adapter</th><th>Full fine-tune</th><th>Call a general VLM</th></tr></thead>
+<tbody>
+<tr><th>Trainable params</th><td>everything</td><td><strong>typically 1%–5%</strong></td><td>everything</td><td>none</td></tr>
+<tr><th>Data needed</th><td>tens of millions of pairs</td><td>hundreds of thousands to millions</td><td>millions, and high quality</td><td>none (a few examples at most)</td></tr>
+<tr><th>Training cost</th><td>highest; out of reach for most</td><td><strong>lowest; one multi-GPU box</strong></td><td>high, and watch for catastrophic forgetting</td><td>no training cost</td></tr>
+<tr><th>Domain fit</th><td>customise anything</td><td>swapping either tower only means retraining that layer</td><td>best fit to a vertical</td><td><strong>often below bar on medical imaging, industrial inspection</strong></td></tr>
+<tr><th>Inference cost</th><td colspan="3">self-hosted, quantisable, tens of milliseconds per image</td><td>billed per token, expensive at volume, plus a network hop</td></tr>
+<tr><th>What it costs you</th><td>pure spend, unless you are a foundation-model shop</td><td>capped by the two frozen ends; fine-grained recognition often trails full fine-tuning</td><td>serves one domain at a time; a new domain starts over</td><td>data residency, rate limits and version drift all out of your hands</td></tr>
+<tr><th>Fits</th><td>foundation-model teams</td><td><strong>the default starting point for almost everyone</strong></td><td>verticals with proprietary data</td><td>validation phase, low volume, general subject matter</td></tr>
+</tbody></table></div>
+<p>The second decision is <strong>what you sign off against</strong>. The commonest mistake here is shipping on a single CIDEr number.</p>
+<p class="tcap">Table 2 · Five ways to judge a caption</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Needs references</th><th>What it measures</th><th>What it misses</th><th>When to use it</th></tr></thead>
+<tbody>
+<tr><th>BLEU</th><td>yes (several)</td><td>n-gram overlap</td><td>punishes paraphrase; pays for boilerplate</td><td>a snapshot for regression tests only</td></tr>
+<tr><th>CIDEr</th><td>yes (several)</td><td>TF-IDF-weighted n-gram overlap</td><td>still surface matching; scores well with relations reversed</td><td><strong>the main offline iteration metric</strong></td></tr>
+<tr><th>SPICE</th><td>yes</td><td>whether objects, attributes and relations reconcile</td><td>depends on parsing; a bad parse poisons the score</td><td>when you suspect invented relations</td></tr>
+<tr><th>CLIPScore</th><td><strong>no</strong></td><td>image–sentence fit in a shared space</td><td>counting, position, negation; inherits CLIP's bias</td><td>bulk monitoring in production, no ground truth</td></tr>
+<tr><th>Humans + hallucination rate</th><td>no</td><td>usability, and the share of objects mentioned but absent</td><td>expensive, slow, not repeatable as a regression</td><td><strong>the final gate before launch</strong></td></tr>
+</tbody></table></div>
+<p>The third decision gets treated as a detail and in fact defines the product: <strong>how detailed the caption should be</strong>. A search index wants dense nouns (more matchable words is better; whether it reads like a human is irrelevant). Accessibility wants one complete, accurate, non-speculative sentence. Social contexts want a little tone on top. One model rarely optimises all three — so most systems keep <strong>one visual representation and vary the prompt and decoding parameters per surface</strong>, rather than training three models.</p>
+<h2>Why it matters / in real systems</h2>
+<p>Three landing points already running at scale: <strong>accessibility</strong> (a platform auto-fills a caption for images that shipped without alt text, and the screen reader speaks it), <strong>image search</strong> (push generated descriptions into an inverted index and pictures become findable by text — the core requirement in e-commerce and stock libraries), and <strong>content understanding upstream</strong> (turn the image into text first, and moderation, tagging and recommendation can all reuse the existing text pipeline instead of building a parallel multimodal stack). The third is the valuable one: in many companies captioning is not a user-facing feature at all, it is the <strong>adapter that plugs images into the text world</strong>.</p>
+<div class="ev">
+<div class="evh">Evidence from industry · not claims from the book, but what these companies and projects say publicly</div>
+<ul>
+<li><strong>Google (Conceptual Captions)</strong>: openly states the training descriptions were dug out of web pages — "the raw descriptions are harvested from the Alt-text HTML attribute associated with web images" — behind an automated extract–filter–transform process aimed at "a balance of cleanliness, informativeness, fluency, and learnability", ending in <code>3.3 million</code> pairs. <strong>The real work on the data side is not collection, it is filtering.</strong><span class="src"><a href="https://github.com/google-research-datasets/conceptual-captions" rel="noopener" target="_blank">google-research-datasets/conceptual-captions ↗</a></span></li>
+<li><strong>The official COCO caption evaluation toolkit</strong>: ships BLEU, METEOR, ROUGE-L, CIDEr and SPICE <strong>bundled into one library</strong>. The packaging is itself the argument: <strong>no single metric can settle this task.</strong><span class="src"><a href="https://github.com/tylin/coco-caption" rel="noopener" target="_blank">MS COCO Caption Evaluation ↗</a></span></li>
+<li><strong>CLIPScore (EMNLP 2021)</strong>: says it plainly — "unlike BLEU or CIDEr, CLIPScore doesn't require reference captions". <strong>Moving the question from "does it look like those reference sentences" to "does it fit this image" is a genuine change of gear in how the task is evaluated.</strong><span class="src"><a href="https://github.com/jmhessel/clipscore" rel="noopener" target="_blank">jmhessel/clipscore ↗</a></span></li>
+<li><strong>Google Cloud (Imagen 2, GA 13 Dec 2023)</strong>: turned captioning into an API capability — "Imagen 2's enhanced image understanding capabilities enable customers to create descriptive, long-form captions and get detailed answers to questions about elements within the image." <strong>Purpose-built captioners are being absorbed by general vision-language models; the reason to build your own has shifted from quality to cost, latency and data compliance.</strong><span class="src"><a href="https://cloud.google.com/blog/products/ai-machine-learning/imagen-2-on-vertex-ai-is-now-generally-available" rel="noopener" target="_blank">Google Cloud Blog · Imagen 2 GA ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/multimodal-day23.en.html" rel="noopener" target="_blank">AI/ML · Day 23 Multimodal</a> — put this chapter's image-in, text-out path back on the wider multimodal map: contrastive learning, cross-modal attention and unified representations, and where each one stops working</aside>
+<h2>Traps and disputes</h2>
+<ul>
+<li><strong>Treating it as classification with more detail.</strong> The difference between a label and a sentence is not granularity, it is <strong>having a verb</strong>; evaluation, data shape and failure modes all change with it.</li>
+<li><strong>Making CIDEr the only gate.</strong> Surface n-gram matching is nearly blind to a reversed relation; three points of metric gain with no movement in user experience is an ordinary week in this field.</li>
+<li><strong>Hallucination hidden by fluency.</strong> The most dangerous output is the smoothest sentence — the listener cannot see the image and has no way to check. In accessibility, say less and be sure.</li>
+<li><strong>Letting the model guess attributes of people.</strong> Gender, race, age and emotion are high-risk guesses where being wrong costs far more than staying silent. The industry norm is to <strong>describe visible facts and never infer identity</strong> — a product red line, not a modelling metric.</li>
+<li><strong>Ignoring dataset bias.</strong> If kitchens co-occur with women and sports fields with men in the training data, the model treats co-occurrence as rule and fills in the stereotype whenever visual evidence runs thin.</li>
+<li><strong>The silent cost of beam search.</strong> It flatters the average score while systematically erasing rare-but-correct phrasings; the loss of diversity rarely shows up in the metrics.</li>
+<li><strong>Dated in one respect.</strong> The chapter is built around a purpose-built captioner; around the time it was written, general vision-language models had begun producing zero-shot captions on par with specialised ones, and evaluation was migrating towards strong models acting as judges. One constraint has not moved: <strong>open-ended description has no single right answer, and quality can only be triangulated from approximations.</strong></li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. The chapter is not about "understanding the image" — it is about <strong>cross-modal alignment</strong> and <strong>scoring without ground truth</strong>.</p>
+<p>2. Labels drop relations: "person throws frisbee to dog" and "dog brings frisbee to person" share a label set — <strong>what you need is a sentence with a verb</strong>.</p>
+<p>3. The skeleton is vision encoder + projection/adapter + language decoder, with cross-attention moving as the sentence advances.</p>
+<p>4. Scale sense: <code>224×224</code> → <code>196</code> visual tokens, a caption of just <code>10–20</code> tokens, tens of milliseconds per image; go to <code>448×448</code> and attention cost grows with the square of token count.</p>
+<p>5. The default start is <strong>freeze both ends, train the layer in between</strong>: a few percent of parameters, and swapping components is cheap.</p>
+<p>6. Human data is clean but capped in the hundreds of thousands; web alt text is billions and filthy — <strong>the craft is in the filtering pipeline</strong>, and synthetic backfill spends compute instead of annotation.</p>
+<p>7. Teacher forcing buys speed and leaves exposure bias; beam search is safe and dull, sampling is vivid and hallucinates — accessibility takes the former.</p>
+<p>8. Evaluation runs in three generations: n-gram overlap (CIDEr suppressing boilerplate via TF-IDF) → scene-graph reconciliation (SPICE) → reference-free fit (CLIPScore). They prop each other up; none concludes alone.</p>
+<p>9. The launch gate is human review plus the <strong>object hallucination rate</strong>: a fluent error is far more dangerous than a clumsy correct one.</p>
+<p>10. The product red line: describe what is visible, never infer identity — models copy co-occurrence in the data straight back out as rule.</p>
+</div>
+</div>
+<footer>Book Deep Read · Reading this page ≈ getting the core of the chapter; for the full case study, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
