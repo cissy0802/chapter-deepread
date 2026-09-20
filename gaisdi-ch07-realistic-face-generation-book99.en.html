@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Generative AI System Design Interview Ch 7 · Realistic Face Generation — Book Deep Read 99</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">Book Deep Read · Generative AI System Design Interview · Ch 7</p>
+<h1>Realistic Face Generation: you think you are training a painter — you are training a yardstick</h1>
+<p class="sub">Generative AI System Design Interview · Ch 7 · Ali Aminian, Hao Sheng &amp; Alex Xu · 2024</p>
+<p class="langbar"><a href="gaisdi-ch07-realistic-face-generation-book99.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You have seen these photos online: someone smiling naturally, every hair, pore and earlobe lit correctly — and that person has never existed. This chapter is about how a machine paints a real face out of nothing, and about a harder question: <strong>once it is painted, who says whether it is any good?</strong></p>
+<h2>A strange thing first</h2>
+<p>Every other task has a right answer. Cat or dog — right is right. But "paint a face" has none. <strong>You cannot point at any photograph and say "this is what you should have painted."</strong> No answer means no score, and no score means no way to tell the machine which way to move next.</p>
+<h2>Why the old ways don't work</h2>
+<p>The early idea was to have it paint toward the average of everyone. The result is absurd: average ten thousand faces position by position and you get <strong>a grey smear with the features melted together</strong> — averaging ten thousand faces never gives you a good face, only a face that is nobody. Want sharpness, stop averaging; stop averaging, and you are back to having no way to score.</p>
+<h2>How it actually works</h2>
+<p>The fix is strange: <strong>if nobody can be the judge, then train a judge too.</strong></p>
+<p>Put two people in a room. One is a <strong>forger</strong>, starting out by smearing paint around blindly. The other is an <strong>appraiser</strong>, with a stack of genuine photographs on the desk and whatever the forger just handed over, and exactly one job: point at the fake. The forger wants to fool the appraiser; the appraiser wants not to be fooled. <strong>The beauty is that the appraiser improves too</strong> — a blur gets through today; tomorrow the appraiser has learned to read the eyes; the day after, ears and hairlines. The yardstick keeps getting stricter, so the forger gets pushed all the way to indistinguishable.</p>
+<p>Later the forger was given a <strong>layered palette</strong>: settle the big things first (which way the head faces, the shape of the face), then the middle (features, expression), and only then the fine things (skin tone, stray hairs, pores). To change the hairstyle without touching the face shape, you turn only the middle dial — that is where control comes from. There is one more handy trick: have it paint <strong>a little closer to the average face</strong>, so it makes fewer mistakes and looks more convincing; the price is that everyone it paints starts to look faintly related.</p>
+<h2>So how do you know it has learned?</h2>
+<p>Still not by looking at one picture. Lay out fifty thousand real photographs and fifty thousand painted ones, and compare <strong>the character of the two piles</strong> — the real pile has old and young, profiles, people in hats; if the painted pile spreads just as wide and holds just as much detail, it passes. This is the general move against "no right answer": <strong>one picture cannot be graded, a crowd can.</strong></p>
+<h2>What you gain, and what it costs</h2>
+<p>The gain is speed: once trained, a face comes out in the blink of an eye, which is why live avatars, stock imagery and using synthetic faces in place of real ones for testing all lean on it. The cost is one sentence, and a hard one: <strong>the sparring can break down at any moment — most often by the forger discovering one face that always works and painting nothing else ever again.</strong></p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p>You think the hard part is painting something lifelike. The hard part is that <strong>nobody can say what "lifelike" means</strong>. The whole cleverness of this chapter is turning an unstateable standard into an opponent that is also learning.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, notation and diagrams? <a data-mode="deep">→ switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">You think the invention behind the generative adversarial network (GAN) is the generator that paints, but the real invention is <strong>handing the loss function itself to a second network to learn</strong> — because "does this face look real" cannot be written as a formula, so you train an ever-stricter discriminator to serve as the yardstick. The engineering line worth keeping from the whole chapter: <strong>the yardstick is learned, so it wobbles, it can be gamed, and it cannot be read as a progress bar</strong>. GAN's three diseases (non-convergence, mode collapse, discriminator overfitting) and distribution-level metrics like FID are all the bill for that one choice.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Generative model</strong>: its job is not to judge but to <em>produce</em> — learn roughly what real faces look like, then make one nobody has seen.</li>
+<li><strong>Latent vector / noise z</strong>: a string of random numbers (<code>512</code> dimensions is typical for faces) that seeds one image; the same z always yields the same face.</li>
+<li><strong>Generator (G)</strong>: the network that turns z into a picture.</li>
+<li><strong>Discriminator (D)</strong>: the network that looks at a picture and outputs the probability it came from the real dataset.</li>
+<li><strong>Adversarial training</strong>: training two networks in alternation, each as the other's opponent.</li>
+<li><strong>Mode collapse</strong>: the generator emits only a few kinds of sample; diversity caves in.</li>
+<li><strong>Fidelity / diversity</strong>: is one image convincing / is the batch varied. Two things, usually in tension.</li>
+<li><strong>AdaIN (adaptive instance normalisation)</strong>: use a vector to set the mean and variance of one layer's features — effectively "give this layer a style".</li>
+<li><strong>Truncation trick (<code>ψ</code>)</strong>: at generation time, pull the latent toward the "average face"; the harder you pull, the safer and the more monotonous.</li>
+<li><strong>FID (Fréchet Inception Distance)</strong>: fit a Gaussian to the features of real images and another to those of generated ones, then measure the distance between them. Lower is better.</li>
+<li><strong>Inception network</strong>: an off-the-shelf image classifier trained on ImageNet, borrowed here only for its mid-layer features.</li>
+<li><strong>Nash equilibrium</strong>: the state in a game where neither side can improve unilaterally — what adversarial training converges toward, rather than a minimum.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The sixth of the ten case studies in Part II, and the opener of the image-generation trilogy (Ch7 faces, Ch8 high-resolution synthesis, Ch9 text-to-image). It follows Ch5 image captioning — image in, text out — and inverts it: nothing in, an image out. This chapter takes the GAN route; Ch8 switches to diffusion, and only reading both shows you the route war. In the real world it maps to avatars and stock imagery, de-identification of face data, and the risk engineering around deepfakes.</p>
+<h2>What this chapter is solving</h2>
+<p><strong>The core tension in one line: discriminative tasks have labels, generative tasks do not.</strong> "Does this X-ray show a lesion" has one answer you can check against. "Paint a face" has none — given a random seed, no photograph is what it <em>should</em> have become. No right answer means no error, which means no objective to descend.</p>
+<p><strong>What happens if you force a per-pixel error anyway?</strong> A blurry face. The reason is plain: the distribution of real faces is multi-modal (profiles and frontals, long hair and shaved heads), and the minimiser of pixel-wise mean squared error is <strong>the average over all possibilities</strong> — averaging ten thousand faces gives not a good face but a fog that is nobody. <strong>Sharpness requires giving up averaging.</strong></p>
+<p>So what this chapter must deliver is an <strong>optimisable objective</strong> that pins down two things which usually fight: <strong>fidelity</strong> (one image holds up) and <strong>diversity</strong> (a batch spreads out and covers the real population). What if you don't? Iteration falls back to people eyeballing grids, the feedback loop stretches from minutes to days, and two reviewers can reach opposite verdicts on the same batch.</p>
+<h2>The core, properly explained</h2>
+<h3>① Handing over the yardstick: how adversarial training works</h3>
+<p><strong>What it is</strong>: two networks. The generator <code>G</code> turns a random vector z into an image; the discriminator <code>D</code> looks at an image and answers "what is the probability this came from the real dataset". They update in alternation: with G frozen, feed D real and fake images so it learns to separate them; with D frozen, push G in whatever direction raises D's score on its output.</p>
+<p><strong>The intuition</strong>: a forger sparring with an appraiser. What matters is not how strong the forger is but <strong>that the appraiser improves too</strong> — a blur passes today, tomorrow D has learned eye symmetry, the day after it starts picking at ear shapes and hairlines. <strong>The yardstick itself tightens, so there is never a day when the generator is "done".</strong></p>
+<p><strong>Notation</strong>: usually written <code>min_G max_D V(D,G)</code>, which in plain words is "D tries hard to separate real from fake, G tries hard to make it fail". Note this is not minimising a function; it is searching for an equilibrium between two opponents — and that single fact causes everything that follows.</p>
+<p><strong>Why design it this way</strong>: because nobody can write "looks like a real face" as a formula. Hand-written metrics (pixel difference, edge similarity) can all be fooled by something that satisfies the metric and looks nothing like a face. If you can't write it, <strong>learn it</strong> — that is GAN's central move, and the source of its entire bill.</p>
+<figure>
+<svg viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect x="14" y="110" width="86" height="40" rx="6" fill="rgba(255,255,255,0.03)" stroke="#5a6069" stroke-width="1.2"></rect>
+<text x="57" y="135" fill="#b9c0ca" font-size="12" text-anchor="middle">Noise z</text>
+<line x1="102" y1="130" x2="126" y2="130" stroke="#7c8593" stroke-width="1.4" marker-end="url(#a1)"></line>
+<rect x="130" y="100" width="100" height="60" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9" stroke-width="1.6"></rect>
+<text x="180" y="124" fill="#8fbaff" font-size="12.5" text-anchor="middle">Generator G</text>
+<text x="180" y="144" fill="#7c8593" font-size="10.5" text-anchor="middle">learns to fake</text>
+<line x1="232" y1="130" x2="254" y2="130" stroke="#7c8593" stroke-width="1.4" marker-end="url(#a1)"></line>
+<rect x="258" y="110" width="92" height="40" rx="6" fill="rgba(255,255,255,0.03)" stroke="#5a6069" stroke-width="1.2"></rect>
+<text x="304" y="135" fill="#b9c0ca" font-size="12" text-anchor="middle">Fake face</text>
+<rect x="258" y="34" width="92" height="40" rx="6" fill="rgba(255,255,255,0.03)" stroke="#5a6069" stroke-width="1.2"></rect>
+<text x="304" y="59" fill="#b9c0ca" font-size="12" text-anchor="middle">Real faces</text>
+<line x1="352" y1="130" x2="386" y2="126" stroke="#7c8593" stroke-width="1.4" marker-end="url(#a1)"></line>
+<line x1="352" y1="56" x2="386" y2="102" stroke="#7c8593" stroke-width="1.4" marker-end="url(#a1)"></line>
+<rect x="390" y="88" width="112" height="60" rx="6" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="1.6"></rect>
+<text x="446" y="112" fill="#c3a6ff" font-size="12" text-anchor="middle">Discriminator D</text>
+<text x="446" y="132" fill="#7c8593" font-size="10.5" text-anchor="middle">learns to judge</text>
+<line x1="504" y1="118" x2="524" y2="118" stroke="#7c8593" stroke-width="1.4" marker-end="url(#a1)"></line>
+<rect x="528" y="98" width="100" height="42" rx="6" fill="rgba(255,255,255,0.03)" stroke="#5a6069" stroke-width="1.2"></rect>
+<text x="578" y="124" fill="#b9c0ca" font-size="11.5" text-anchor="middle">Real or fake?</text>
+<path d="M446,150 L446,206 L180,206 L180,164" fill="none" stroke="#5b9df9" stroke-width="1.3" stroke-dasharray="5 4" marker-end="url(#a1)"></path>
+<text x="313" y="198" fill="#5b9df9" font-size="11" text-anchor="middle">gradients: change toward fooling it better</text>
+<text x="20" y="24" fill="#7c8593" font-size="11">The yardstick is not written down — it is a network that keeps getting stricter</text>
+</svg>
+<figcaption>Adversarial training: G can only learn from D's feedback, and D tightens at every step</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/generative-adversarial-networks-paper16.en.html" target="_blank" rel="noopener">CS Papers · Generative Adversarial Networks</a> — Goodfellow 2014 in full: the minimax objective, why the global optimum has D output 0.5 everywhere, and the non-saturating loss fix</aside>
+<h3>② Three diseases, all because the yardstick moves</h3>
+<p><strong>Non-convergence and oscillation.</strong> Ordinary training walks downhill, so a falling loss means progress. Adversarial training is a tug of war, and <strong>a falling G loss usually just means D went soft this minute</strong>. Hence GAN's most counter-intuitive rule of practice: <strong>the loss curve is not a quality progress bar</strong>; judgement comes only from sampling images regularly plus distribution-level metrics.</p>
+<p><strong>Mode collapse.</strong> If one kind of face reliably fools the current D, G dives into it and maps every z onto those few faces. <strong>What makes it lethal is that fidelity is unharmed</strong> — every image is sharp and attractive, they are simply all alike, and a demo will never reveal it.</p>
+<p><strong>Discriminator overfitting.</strong> With little data, D starts memorising the specific training images instead of learning "realness"; once the yardstick is meaningless, training diverges.</p>
+<p><strong>The fixes</strong>, one line each: the <em>non-saturating loss</em> rewrites G's objective so it still has usable gradients while being crushed; <em>WGAN-GP's gradient penalty</em> and <em>spectral normalisation</em> cap how steeply D may change, keeping the yardstick from jumping; <em>TTUR</em> (two different learning rates) lets D learn slightly faster, maintaining an opponent that is useful but not overwhelming; <em>discriminator augmentation</em> applies random transforms to every image D sees — real and fake alike — forcing it to learn features rather than memorise pictures.</p>
+<figure>
+<svg viewBox="0 0 640 200" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<rect x="18" y="38" width="278" height="130" rx="8" fill="rgba(255,255,255,0.02)" stroke="#5a6069" stroke-width="1.2"></rect>
+<text x="157" y="28" fill="#8fbaff" font-size="12" text-anchor="middle">What you want: the population covered</text>
+<circle cx="70" cy="75" r="13" fill="rgba(91,157,249,0.5)"></circle><circle cx="140" cy="62" r="13" fill="rgba(91,157,249,0.5)"></circle><circle cx="215" cy="80" r="13" fill="rgba(91,157,249,0.5)"></circle><circle cx="95" cy="130" r="13" fill="rgba(91,157,249,0.5)"></circle><circle cx="175" cy="135" r="13" fill="rgba(91,157,249,0.5)"></circle><circle cx="255" cy="125" r="13" fill="rgba(91,157,249,0.5)"></circle>
+<text x="157" y="188" fill="#7c8593" font-size="11" text-anchor="middle">old, young, profiles, hats — every cluster sampled</text>
+<rect x="344" y="38" width="278" height="130" rx="8" fill="rgba(255,255,255,0.02)" stroke="#5a6069" stroke-width="1.2"></rect>
+<text x="483" y="28" fill="#c3a6ff" font-size="12" text-anchor="middle">Mode collapse: everything in one heap</text>
+<circle cx="396" cy="75" r="13" fill="none" stroke="#5a6069" stroke-width="1.1" stroke-dasharray="3 3"></circle><circle cx="466" cy="62" r="13" fill="none" stroke="#5a6069" stroke-width="1.1" stroke-dasharray="3 3"></circle><circle cx="541" cy="80" r="13" fill="none" stroke="#5a6069" stroke-width="1.1" stroke-dasharray="3 3"></circle><circle cx="421" cy="130" r="13" fill="none" stroke="#5a6069" stroke-width="1.1" stroke-dasharray="3 3"></circle><circle cx="581" cy="125" r="13" fill="none" stroke="#5a6069" stroke-width="1.1" stroke-dasharray="3 3"></circle>
+<circle cx="501" cy="135" r="26" fill="rgba(155,108,245,0.55)"></circle>
+<text x="483" y="188" fill="#7c8593" font-size="11" text-anchor="middle">each one sharp, all alike — a demo hides it</text>
+</svg>
+<figcaption>Mode collapse cuts diversity without cutting fidelity, which is why demos never expose it</figcaption>
+</figure>
+<h3>③ The StyleGAN move: giving control back to people</h3>
+<p>In a plain GAN, z is <strong>entangled</strong>: nudge one number and face shape, hair colour and pose all shift together — a box you can only shake as a whole. StyleGAN fixes this in three steps.</p>
+<p><strong>Disentangle first</strong>: z no longer enters the painting pipeline directly. It passes through a small <em>mapping network</em> and becomes <code>w</code>, a space in which attributes that were crowded together get spread apart, making "change only the hair colour" possible.</p>
+<p><strong>Then inject per layer</strong>: the image is grown from <code>4×4</code> up to <code>1024×1024</code>, and <code>w</code> is <strong>injected once at every level</strong> (via AdaIN — w sets that layer's feature mean and variance, i.e. that layer's style). Control therefore comes pre-sorted by granularity: low-resolution layers govern pose and face shape, middle layers features and expression, high-resolution layers skin tone and hair. <strong>"New hairstyle, same person" works precisely because those things were always handled by different layers.</strong></p>
+<p><strong>Finally, separate the randomness</strong>: pore placement and the drift of stray hairs — details that should differ on every draw without changing who this is — travel on their own per-layer noise channel instead of consuming w's capacity.</p>
+<p><strong>The truncation trick</strong>: at generation time, pull w toward the training set's average w, with the strength written <code>ψ</code>. A smaller <code>ψ</code> sits closer to the average face, visibly cuts the failure rate and reads as more convincing; the price is that <strong>everyone starts to look faintly related</strong>. This is the dial to remember from the whole chapter — <strong>there is no switch between fidelity and diversity, only a continuous slider</strong> — and almost every stunning face demo online is running a low <code>ψ</code>.</p>
+<figure>
+<svg viewBox="0 0 640 290" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect x="14" y="26" width="96" height="36" rx="6" fill="rgba(255,255,255,0.03)" stroke="#5a6069" stroke-width="1.2"></rect>
+<text x="62" y="49" fill="#b9c0ca" font-size="12" text-anchor="middle">Noise z</text>
+<line x1="62" y1="64" x2="62" y2="84" stroke="#7c8593" stroke-width="1.4" marker-end="url(#a2)"></line>
+<rect x="14" y="88" width="96" height="54" rx="6" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="1.5"></rect>
+<text x="62" y="110" fill="#c3a6ff" font-size="12" text-anchor="middle">Mapping net</text>
+<text x="62" y="129" fill="#7c8593" font-size="10.5" text-anchor="middle">disentangle</text>
+<line x1="62" y1="144" x2="62" y2="164" stroke="#7c8593" stroke-width="1.4" marker-end="url(#a2)"></line>
+<rect x="14" y="168" width="96" height="36" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="1.5"></rect>
+<text x="62" y="191" fill="#8fbaff" font-size="11.5" text-anchor="middle">Style vector w</text>
+<path d="M112,180 C142,180 148,52 176,52" fill="none" stroke="#5b9df9" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#a2)"></path>
+<path d="M112,182 C144,182 150,126 176,126" fill="none" stroke="#5b9df9" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#a2)"></path>
+<path d="M112,186 C144,186 152,200 176,200" fill="none" stroke="#5b9df9" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#a2)"></path>
+<rect x="180" y="32" width="150" height="40" rx="6" fill="rgba(255,255,255,0.03)" stroke="#5a6069" stroke-width="1.2"></rect>
+<text x="255" y="57" fill="#b9c0ca" font-size="12" text-anchor="middle">Start block 4×4</text>
+<line x1="255" y1="74" x2="255" y2="104" stroke="#7c8593" stroke-width="1.4" marker-end="url(#a2)"></line>
+<rect x="180" y="106" width="150" height="40" rx="6" fill="rgba(255,255,255,0.03)" stroke="#5a6069" stroke-width="1.2"></rect>
+<text x="255" y="131" fill="#b9c0ca" font-size="12" text-anchor="middle">Mid block 32×32</text>
+<line x1="255" y1="148" x2="255" y2="178" stroke="#7c8593" stroke-width="1.4" marker-end="url(#a2)"></line>
+<rect x="180" y="180" width="150" height="40" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9" stroke-width="1.4"></rect>
+<text x="255" y="205" fill="#8fbaff" font-size="12" text-anchor="middle">Output 1024×1024</text>
+<text x="344" y="57" fill="#7c8593" font-size="11.5">coarse: pose · face shape</text>
+<text x="344" y="131" fill="#7c8593" font-size="11.5">mid: features · expression</text>
+<text x="344" y="205" fill="#7c8593" font-size="11.5">fine: skin tone · hair</text>
+<rect x="430" y="228" width="192" height="50" rx="6" fill="rgba(255,255,255,0.03)" stroke="#5a6069" stroke-width="1.2" stroke-dasharray="4 3"></rect>
+<text x="526" y="248" fill="#b9c0ca" font-size="11.5" text-anchor="middle">Per-layer noise</text>
+<text x="526" y="266" fill="#7c8593" font-size="10.5" text-anchor="middle">pores · stray hairs</text>
+<text x="20" y="248" fill="#5b9df9" font-size="11.5">Truncation ψ: pull w toward the average face</text>
+<text x="20" y="268" fill="#7c8593" font-size="11.5">small ψ = safer, duller; large ψ = varied, more oddities</text>
+</svg>
+<figcaption>Per-layer injection gives control its granularity: change a layer, move only that band of attributes</figcaption>
+</figure>
+<h3>④ Evaluation: what FID actually measures</h3>
+<p>With no right answer for a single image, evaluation has to move up a level: <strong>compare distributions, not pictures.</strong></p>
+<p><strong>The mechanism, in plain words</strong>: take <code>50,000</code> real images and as many generated ones, push both through an off-the-shelf image classifier (Inception) and pull <code>2048</code>-dimensional features from a middle layer; treat each pile of features as one high-dimensional Gaussian, fitting a mean and a covariance; measure the distance between the two Gaussians. <strong>The smaller the number, the more the two piles look like the same crowd in that feature space.</strong></p>
+<p><strong>Why design it this way</strong>: the metric punishes both failures at once — blur shifts the mean, collapsed diversity shrinks the covariance. One number, both ends covered.</p>
+<p><strong>The costs and traps</strong>: precisely because one number covers both ends, <strong>when it goes bad you cannot tell which end broke</strong>. Production therefore adds a layer: <em>precision and recall</em> measure fidelity and coverage separately (low precision = oddities, low recall = whole segments of the population missing). It also leans on an ImageNet-trained network as its yardstick, which need not be sensitive to facial detail; and change the sample count or the implementation and the number moves — <strong>FID is only meaningful compared within one evaluation pipeline; numbers copied across papers do not line up.</strong></p>
+<figure>
+<svg viewBox="0 0 640 208" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a3" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect x="14" y="30" width="140" height="40" rx="6" fill="rgba(255,255,255,0.03)" stroke="#5a6069" stroke-width="1.2"></rect>
+<text x="84" y="55" fill="#b9c0ca" font-size="11.5" text-anchor="middle">50k real images</text>
+<rect x="14" y="132" width="140" height="40" rx="6" fill="rgba(255,255,255,0.03)" stroke="#5a6069" stroke-width="1.2"></rect>
+<text x="84" y="157" fill="#b9c0ca" font-size="11.5" text-anchor="middle">50k generated images</text>
+<line x1="156" y1="50" x2="176" y2="80" stroke="#7c8593" stroke-width="1.4" marker-end="url(#a3)"></line>
+<line x1="156" y1="152" x2="176" y2="122" stroke="#7c8593" stroke-width="1.4" marker-end="url(#a3)"></line>
+<rect x="180" y="72" width="140" height="58" rx="6" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="1.5"></rect>
+<text x="250" y="95" fill="#c3a6ff" font-size="11.5" text-anchor="middle">Inception features</text>
+<text x="250" y="115" fill="#7c8593" font-size="10.5" text-anchor="middle">2048-d mid layer</text>
+<line x1="322" y1="92" x2="358" y2="66" stroke="#7c8593" stroke-width="1.4" marker-end="url(#a3)"></line>
+<line x1="322" y1="112" x2="358" y2="140" stroke="#7c8593" stroke-width="1.4" marker-end="url(#a3)"></line>
+<ellipse cx="432" cy="56" rx="66" ry="30" fill="rgba(91,157,249,0.18)" stroke="#5b9df9" stroke-width="1.4"></ellipse>
+<text x="432" y="61" fill="#8fbaff" font-size="11.5" text-anchor="middle">the real cloud</text>
+<ellipse cx="432" cy="150" rx="66" ry="30" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="1.4"></ellipse>
+<text x="432" y="155" fill="#c3a6ff" font-size="11.5" text-anchor="middle">the fake cloud</text>
+<line x1="432" y1="88" x2="432" y2="118" stroke="#e7ebf1" stroke-width="1.4" marker-end="url(#a3)"></line>
+<text x="506" y="97" fill="#e7ebf1" font-size="11.5">the gap between</text>
+<text x="506" y="116" fill="#7c8593" font-size="11">= FID, lower is better</text>
+<text x="20" y="196" fill="#7c8593" font-size="11">blur → the mean shifts; collapse → the cloud shrinks. One number, both ends.</text>
+</svg>
+<figcaption>FID swaps "is this picture right" for "does this crowd look like that crowd"</figcaption>
+</figure>
+<h2>The trade-offs that matter</h2>
+<p>The first choice is the route war. When an interview asks "why a GAN", this table is the answer.</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Route</th><th>Cost per image</th><th>Training stability</th><th>Coverage / diversity</th><th>When to pick it</th></tr></thead>
+<tbody>
+<tr><th>GAN</th><td><strong>1 forward pass</strong>; a <code>1024²</code> face in tens of milliseconds on one modern GPU</td><td>Worst: all three diseases must be defended against</td><td>Weaker; mode collapse is a standing risk</td><td>Latency and unit cost are hard constraints: live avatars, super-resolution, on-device</td></tr>
+<tr><th>Diffusion</th><td><strong><code>20–50</code> steps</strong> of iterative denoising; one to two orders of magnitude slower</td><td>Good: essentially a regression task, trains stably</td><td>Best; covers the distribution naturally</td><td>Quality and controllability first, seconds of latency acceptable: the text-to-image workhorse (Ch8–9)</td></tr>
+<tr><th>VAE</th><td>1 forward pass, fastest</td><td>Best</td><td>Good, but inclined to average</td><td>You want a compact representation more than top-tier fidelity; also the latent compressor under diffusion</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">The costs sit in columns two and three: GAN buys fast inference with hard training; diffusion trades the other way.</p>
+<p>The second choice happens inside one model — <strong>where you set <code>ψ</code></strong>. It is not a tuning detail but a product decision:</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Scenario</th><th>ψ leans</th><th>What you get</th><th>What it costs</th></tr></thead>
+<tbody>
+<tr><th>Landing page demo</th><td>Low (conservative)</td><td>Almost no oddities; every image presentable</td><td>Homogenised faces that all look related</td></tr>
+<tr><th>Synthetic training data</th><td>High (varied)</td><td>The long tail gets covered, so downstream models don't skew</td><td>More rejects; you need automatic filtering behind it</td></tr>
+<tr><th>Chasing FID in a paper</th><td>Tuned to the sweet spot</td><td>The best-looking metric</td><td><strong>That ψ need not be the ψ your product should ship</strong></td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Same weights, different ψ, two different products — a common source of "great FID in the paper, ordinary feel in production".</p>
+<h2>Why it matters / in real systems</h2>
+<p>The famous deployment is NVIDIA's StyleGAN family and the "this person does not exist" style demo page, which made "synthetic faces have passed the naked eye" common knowledge. Three uses are real work: <strong>avatars and stock imagery</strong> (games, e-commerce models, profile pictures — no shoot, no licensing); <strong>de-identification of face data</strong> (synthetic faces standing in for real ones in demos and tests, sidestepping consent and compliance); and <strong>data augmentation</strong> (long-tail samples for downstream models). Realism is itself the risk surface: the more convincing it gets, the cheaper impersonation becomes, so <strong>provenance and watermarking belong in the design up front, not as an afterthought</strong>.</p>
+<p>The interview question this chapter really feeds is not "how do you train a GAN" but <strong>"how do you prove a model with no right answer got better"</strong> — and the answer is layered: a distribution metric (FID) for the whole, precision/recall to split fidelity from coverage, and blind human comparison as the final arbiter. None of the three is optional.</p>
+<div class="ev">
+<div class="evh">Industry evidence · these are the companies' and projects' own public claims, not the book's</div>
+<ul>
+<li><strong>NVIDIA (FFHQ dataset)</strong>: the official README states the face dataset "consists of 70,000 high-quality PNG images at 1024×1024 resolution", that the images "were crawled from Flickr, thus inheriting all the biases of that website", were "automatically aligned and cropped using dlib", and that "Amazon Mechanical Turk was used to remove the occasional statues, paintings, or photos of photos". <strong>That is the data side of this chapter in three sentences: scale, alignment, and bias inherited verbatim.</strong><span class="src"><a href="https://github.com/NVlabs/ffhq-dataset" target="_blank" rel="noopener">NVlabs/ffhq-dataset ↗</a></span></li>
+<li><strong>NVIDIA (StyleGAN2-ADA)</strong>: the project says outright that "training generative adversarial networks (GAN) using too little data typically leads to discriminator overfitting, causing training to diverge", and reports that with adaptive discriminator augmentation "good results are now possible using only a few thousand training images, often matching StyleGAN2 results with an order of magnitude fewer images". <strong>Discriminator overfitting is not folklore; it is a named failure in the official README.</strong><span class="src"><a href="https://github.com/NVlabs/stylegan2-ada-pytorch" target="_blank" rel="noopener">NVlabs/stylegan2-ada-pytorch ↗</a></span></li>
+<li><strong>pytorch-fid (the widely used FID implementation)</strong>: its docs define FID as "the Fréchet distance between two Gaussians fitted to feature representations of the Inception network", and warn that because of interpolation and backend differences the results "still differ slightly from the original implementation" — for numbers strictly comparable to published ones you must use the official TensorFlow version. <strong>FID does not line up across implementations.</strong><span class="src"><a href="https://github.com/mseitzer/pytorch-fid" target="_blank" rel="noopener">mseitzer/pytorch-fid ↗</a></span></li>
+<li><strong>C2PA / Content Credentials</strong>: the coalition describes its work as "addressing the prevalence of misleading information online through the development of technical standards for certifying the source and history (or provenance) of media content", with the open-source library creating, signing, embedding and validating those manifests. <strong>The industry's answer is not "detect the fake" but give the genuine a verifiable birth certificate.</strong><span class="src"><a href="https://github.com/contentauth/c2pa-rs" target="_blank" rel="noopener">contentauth/c2pa-rs ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/generative-models-day20.en.html" target="_blank" rel="noopener">AI/ML · Day 20 Generative Models</a> — the mathematical skeletons of GANs, VAEs, flows and diffusion, how they relate, and the evaluation conventions of each</aside>
+<h2>Traps and disputes</h2>
+<ul>
+<li><strong>Reading the loss curve as a progress bar.</strong> The most common misconception. In adversarial training a falling loss usually just means the opponent went soft; only periodic samples plus distribution metrics are trustworthy.</li>
+<li><strong>Watching FID alone.</strong> A good FID does not mean nothing collapsed — it compresses fidelity and diversity into one number and cannot say which end broke. Pair it with precision and recall at minimum.</li>
+<li><strong>Believing lost diversity can be fixed with a bigger model.</strong> Mode collapse is a property of the objective, not a capacity shortfall; more parameters buy you a crisper model that is just as monotonous.</li>
+<li><strong>Being fooled by the demo.</strong> Those stunning face walls usually combine a low <code>ψ</code> with hand-picking. Evaluate <strong>unfiltered random batches</strong> — the cheapest and sharpest question in any due diligence.</li>
+<li><strong>Ignoring inherited bias.</strong> Whoever the data came from is whose "realness" you generate; NVIDIA states plainly that FFHQ inherits Flickr's biases. In a face system this turns directly into a product incident.</li>
+<li><strong>Period limits and disputes.</strong> The chapter runs on GANs, while industry image generation moved largely to diffusion after 2022 (the book itself picks that up in Ch8–9). GANs are not out: they hold the ground where a <strong>single forward pass and low latency</strong> matter. The other dispute worth keeping is what StyleGAN3 fixed — detail "appearing to be glued to image coordinates instead of the surfaces of depicted objects", which a still image's FID cannot see and motion exposes instantly. <strong>What a metric misses, the metric will not tell you.</strong></li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① The invention here is not the generator but <strong>handing the loss function to a second network</strong>, because "looks like a real face" cannot be written as a formula.</p>
+<p>② Generative tasks have no right answer; forcing per-pixel error makes <strong>the average over all possibilities</strong> optimal, which is a blurry face that is nobody.</p>
+<p>③ The objective must hold two things that fight: <strong>fidelity</strong> (one image holds up) and <strong>diversity</strong> (a batch spreads out).</p>
+<p>④ G and D alternate toward an equilibrium, not a minimum — so <strong>a GAN's loss is not a quality progress bar</strong>.</p>
+<p>⑤ Three diseases: non-convergence, mode collapse (cuts only diversity, invisible in a demo), and discriminator overfitting (divergence when data is scarce).</p>
+<p>⑥ Each stabiliser covers one stretch: non-saturating loss keeps gradients, gradient penalty and spectral norm cap the yardstick's steepness, TTUR sets the pace, discriminator augmentation stops memorisation.</p>
+<p>⑦ StyleGAN returns control in three steps: a mapping network to disentangle, <code>w</code> injected per layer (coarse for pose, fine for hair), and noise on its own channel.</p>
+<p>⑧ Truncation <code>ψ</code> is a <strong>continuous slider</strong> between fidelity and diversity, not a switch; a beautiful demo is mostly a low ψ.</p>
+<p>⑨ FID compares distributions, not images: fit a Gaussian to each pile and measure the gap — one number for both failure modes, which is also why it cannot say which one broke, and why it does not transfer across implementations.</p>
+<p>⑩ Selection in one line: <strong>GANs buy fast inference with hard training</strong> (one forward pass, tens of milliseconds), diffusion buys stability and coverage with dozens of steps; and the more realistic the output, the earlier provenance and watermarking must enter the design.</p>
+</div>
+</div>
+<footer>Book Deep Read · Reading this page ≈ getting the core of this chapter; for the full case study, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
