@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>生成式 AI 系统设计面试 第 6 章 · 检索增强生成 — 专业书籍精读 Book 98</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · Generative AI System Design Interview · 第 6 章</p>
+<h1>检索增强生成：你以为是在给模型补知识，其实是在给它装一条能被核对的证据链</h1>
+<p class="sub">Generative AI System Design Interview · Ch 6 · Ali Aminian, Hao Sheng &amp; Alex Xu · 2024</p>
+<p class="langbar"><a href="gaisdi-ch06-retrieval-augmented-generation-book98.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你问公司的 AI 助手「出差住宿能报多少」，它答得又快又顺——可这条规定上个月才改，它凭什么知道？这一章讲的就是让机器<strong>先翻资料、再开口</strong>的那套办法。</p>
+<h2>先说个怪事</h2>
+<p>一个不知道答案的人，通常会说「我不清楚」。可这类机器不会。<strong>它没学过的事，它照样答，而且答得和真话一模一样顺。</strong>更糟的是你没法追问它「这是哪来的」——它自己也说不清，一切都糊在它读过的几万亿字里，指不出具体哪一句。</p>
+<h2>旧世界为什么难</h2>
+<p>两条老路都走不通。一条是<strong>重新教它一遍</strong>：把新文件塞进教材让它重读——这像为改一个电话号码重印整本字典，贵、慢，而且下周文件又改了。另一条是<strong>全摊在桌上</strong>：把整个档案室搬到它面前。桌子就那么大，摊不下；勉强摊下了，一屋子纸里找一句话也容易看花眼，越靠中间的越容易被跳过去。</p>
+<h2>它是怎么做到的</h2>
+<p>真正管用的办法是<strong>请一个图书管理员</strong>，分两步走。</p>
+<p><strong>第一步是平时的活：整理卡片柜。</strong>把文件提前裁成一段段卡片，再按<em>意思</em>归档——说同一件事的放一起，哪怕用词完全不同（「住宿标准」和「酒店费用上限」进同一格）。这活在没人提问时就做完了。</p>
+<p><strong>第二步是你提问的那一刻：</strong>管理员冲进卡片柜抓出最像的一百张，筛一遍留下最相关的五张，连同问题递给答题的人。答题人手上只有这五张，规矩只有一条：<strong>只准照卡片上写的答，还得标出这句出自哪一张。</strong>没抓到卡片时，正确答法是「档案里没有」。</p>
+<h2>带来了什么 / 该怎么选</h2>
+<p>三样好处立刻到手：文件今天改今天生效，不用重教；答案能顺着标注翻回原文核对；不许这个人看的文件，在抓卡片那步就拦掉了。代价只有一句，但很硬：<strong>上限被「抓卡片」那一步锁死——卡片抓错，后面答得越流畅越糟</strong>，因为错得像真的。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>它的产出不只是一个答案，而是<strong>一个答案外加它的出处</strong>。你以为这套东西是在给机器补知识，其实是在把「凭空说」改成「照着说」——从此每句话都有地方可查。</p>
+</div>
+<p class="switch-hint">想进到具体机制、记号和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">你以为检索增强生成（RAG，retrieval-augmented generation）是「给模型补知识」的省钱替代品，其实它真正交付的是一条<strong>可核对的证据链</strong>：知识当天可换、来源可点回、答错了能定位到是哪一环坏的——这三样微调和超长上下文都给不了。而整章最该记住的工程结论只有一句：<strong>RAG 的质量上限由检索那一半决定，生成模型只是在这个上限之下打折。</strong></p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>参数记忆（parametric memory）</strong>：模型训练时把知识压进权重里，用的时候凭「记得」作答，指不出出处。</li>
+<li><strong>嵌入（embedding）</strong>：把一段文字表示成一串数字（常见 <code>384–1536</code> 维），意思相近的文字数字也相近。</li>
+<li><strong>分块（chunking）</strong>：把长文档切成一段段可单独检索的片段。</li>
+<li><strong>向量数据库（vector database）</strong>：专门存嵌入、并能快速找出「最像的几条」的存储。</li>
+<li><strong>稀疏检索 / BM25</strong>：按关键词计分的经典检索，词对上才算命中。</li>
+<li><strong>稠密检索（dense retrieval）</strong>：按嵌入的距离找相近的，词不同也能命中。</li>
+<li><strong>ANN（近似最近邻）</strong>：不逐条比对，用索引结构快速找出「大概率最近」的那几条，拿一点召回换几个数量级的速度。</li>
+<li><strong>HNSW</strong>：一种分层图式 ANN 索引，查询时从稀疏的高层往下跳、逐层逼近目标。</li>
+<li><strong>recall@k</strong>：正确答案所在的片段，出现在返回的前 k 条里的比例——检索侧最该盯的指标。</li>
+<li><strong>重排序器（reranker）/ cross-encoder</strong>：把「问题 + 片段」拼成一条一起算分的模型，准得多也慢得多，只用来精排少量候选。</li>
+<li><strong>接地（grounding）</strong>：让回答严格依据给定材料，而不是模型自己的记忆。</li>
+<li><strong>忠实度（faithfulness）</strong>：回答里的每句话，是否都能在给它的片段中找到支撑。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>Part II 十道真题的第五道，也是文本簇的收官题。上承 Ch4 ChatGPT——那里的知识全靠参数记忆；这一章第一次把<strong>外部知识库</strong>接进生成链路，Ch7 起则转入图像生成。现实对应企业知识库问答、客服助手、文档助理，以及今天所有带「引用来源」的搜索型 AI 产品。</p>
+<h2>这章要解决什么</h2>
+<p>参数记忆有三宗罪，且每一宗都不是把模型做大能解决的。</p>
+<p><strong>一是过期。</strong>权重冻结在训练截止那天，而知识库每天都有文档在改。为一次政策更新重跑微调，从数据准备到评估上线通常以<strong>周</strong>计，而文档改动以<strong>分钟</strong>计——差了四五个数量级，不是调优能补上的。</p>
+<p><strong>二是指不出出处。</strong>模型说「住宿上限 800 元」时，这个数字糊在几万亿 token 的语料里，定位不到任何一句原文。而在法务、医疗、金融场景，<strong>不能核对的正确答案和错误答案价值相同</strong>——你分不出手里这条是哪种。</p>
+<p><strong>三是私有数据进不去。</strong>内网文档、用户自己的资料、有权限分级的材料，不该也不能塞进一份全员共享的权重——<strong>权重没有 ACL（访问控制表）</strong>，一旦记住，就没法只对一部分人忘掉。</p>
+<p>不解决会怎样？模型在它不知道的事情上依然流畅作答，且全链路没有任何一处可供核对。这正是上一章那个结论的升级版：<strong>生成式系统最危险的失败不是答不上来，是错得流畅。</strong></p>
+<h2>核心内容，讲透</h2>
+<h3>① 两个阶段：离线把知识摆好，在线只做取用</h3>
+<p>整条流水线被一条硬边界切成两半，看懂它，后面所有权衡都好解释。</p>
+<p><strong>离线（索引期）</strong>：文档 → 分块 → 逐块算嵌入 → 写进向量索引。百万级文档切成千万级片段、算完嵌入建好索引，是个批处理作业，耗时按小时算——因为没人在等。</p>
+<p><strong>在线（问答期）</strong>：问题 → 算嵌入 → 检索 → 重排序 → 拼进 prompt → 生成。整体要压在<strong>一两秒</strong>内，而生成往往就吃掉一秒以上，留给检索加重排的常只有 <code>100–300</code> 毫秒——<strong>这个预算才是后面索引选型的真正约束</strong>。</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 262" font-family="-apple-system,sans-serif">
+<defs><marker id="r1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text x="20" y="18" fill="#7c8593" font-size="10" font-family="monospace">离线 · 按小时算，没人在等</text>
+<rect x="20" y="28" width="104" height="42" rx="6" fill="rgba(91,157,249,0.1)" stroke="#5b9df9" stroke-width="1.4"></rect>
+<text x="72" y="47" fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle">文档库</text>
+<text x="72" y="62" fill="#8fbaff" font-size="9" text-anchor="middle">百万篇</text>
+<line x1="126" x2="142" y1="49" y2="49" stroke="#7c8593" stroke-width="1.4" marker-end="url(#r1)"></line>
+<rect x="144" y="28" width="104" height="42" rx="6" fill="rgba(91,157,249,0.1)" stroke="#5b9df9" stroke-width="1.4"></rect>
+<text x="196" y="47" fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle">分块</text>
+<text x="196" y="62" fill="#8fbaff" font-size="9" text-anchor="middle">千万段</text>
+<line x1="250" x2="266" y1="49" y2="49" stroke="#7c8593" stroke-width="1.4" marker-end="url(#r1)"></line>
+<rect x="268" y="28" width="104" height="42" rx="6" fill="rgba(91,157,249,0.1)" stroke="#5b9df9" stroke-width="1.4"></rect>
+<text x="320" y="47" fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle">嵌入模型</text>
+<text x="320" y="62" fill="#8fbaff" font-size="9" text-anchor="middle">每段一串数</text>
+<line x1="374" x2="390" y1="49" y2="49" stroke="#7c8593" stroke-width="1.4" marker-end="url(#r1)"></line>
+<rect x="392" y="28" width="118" height="42" rx="6" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="1.8"></rect>
+<text x="451" y="47" fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle">向量索引</text>
+<text x="451" y="62" fill="#c9a8ff" font-size="9" text-anchor="middle">HNSW / IVF-PQ</text>
+<path d="M451,74 L451,100 L196,100 L196,132" fill="none" stroke="#9b6cf5" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#r1)"></path>
+<text x="470" y="96" fill="#7c8593" font-size="9">查询时只读它</text>
+<text x="20" y="128" fill="#7c8593" font-size="10" font-family="monospace">在线 · 全程预算 1–2 秒，检索只分到 100–300 毫秒</text>
+<rect x="20" y="136" width="104" height="42" rx="6" fill="rgba(91,157,249,0.1)" stroke="#5b9df9" stroke-width="1.4"></rect>
+<text x="72" y="161" fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle">用户提问</text>
+<line x1="126" x2="142" y1="157" y2="157" stroke="#7c8593" stroke-width="1.4" marker-end="url(#r1)"></line>
+<rect x="144" y="136" width="104" height="42" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="1.8"></rect>
+<text x="196" y="155" fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle">检索</text>
+<text x="196" y="170" fill="#8fbaff" font-size="9" text-anchor="middle">取 100 条</text>
+<line x1="250" x2="266" y1="157" y2="157" stroke="#7c8593" stroke-width="1.4" marker-end="url(#r1)"></line>
+<rect x="268" y="136" width="104" height="42" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="1.8"></rect>
+<text x="320" y="155" fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle">重排序</text>
+<text x="320" y="170" fill="#8fbaff" font-size="9" text-anchor="middle">留 3–5 条</text>
+<line x1="374" x2="390" y1="157" y2="157" stroke="#7c8593" stroke-width="1.4" marker-end="url(#r1)"></line>
+<rect x="392" y="136" width="104" height="42" rx="6" fill="rgba(91,157,249,0.1)" stroke="#5b9df9" stroke-width="1.4"></rect>
+<text x="444" y="155" fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle">装配 Prompt</text>
+<text x="444" y="170" fill="#8fbaff" font-size="9" text-anchor="middle">片段 + 问题</text>
+<line x1="496" x2="512" y1="157" y2="157" stroke="#7c8593" stroke-width="1.4" marker-end="url(#r1)"></line>
+<rect x="514" y="136" width="106" height="42" rx="6" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="1.8"></rect>
+<text x="567" y="155" fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle">生成</text>
+<text x="567" y="170" fill="#c9a8ff" font-size="9" text-anchor="middle">带引用的答案</text>
+<text x="20" y="206" fill="#7c8593" font-size="9.5">上限在这里被定死：正确片段没被检索到，后面两步再强也救不回来</text>
+<path d="M144,196 L620,196" stroke="rgba(91,157,249,0.3)" stroke-width="1" stroke-dasharray="3 3"></path>
+<text x="20" y="232" fill="#8fbaff" font-size="9.5">文档改了只需重算这几块的嵌入 —— 这就是「当天生效」的全部秘密</text>
+<path d="M20,222 L124,222" stroke="rgba(155,108,245,0.4)" stroke-width="1" stroke-dasharray="3 3"></path>
+</svg>
+<figcaption>图 1 · 一条被离线 / 在线切成两半的流水线：知识的整理在无人等待时完成，问答期只做取用与拼装</figcaption>
+</figure>
+<h3>② 分块：全链路最被低估的一个决策</h3>
+<p>检索的单位不是文档，是<strong>块</strong>。块怎么切，几乎决定了后面能不能检到。</p>
+<p>直觉是「越小越准」：一块只讲一件事，嵌入不被稀释，容易对上。但小块会把完整论述撕成两半——模型拿到半截话，更容易自行补全出错的那一半。块太大则一块混了五六个主题，<strong>嵌入被平均成一个谁也不像的向量</strong>，检索分数低，还白占 prompt 预算。</p>
+<p>常见落点是 <code>200–500</code> token 一块、相邻块留 <code>10%–20%</code> 重叠（overlap，防止答案正好卡在切口上）。但比调参更重要的是三件事：<strong>按结构切</strong>（沿标题与段落边界，别按固定字数把表格拦腰砍断）；<strong>带上元数据</strong>（标题、章节路径、日期、权限标签，既用于过滤也用于排序）；<strong>上下文化</strong>——把所属章节标题或一句摘要拼回块首。最后一条针对一个具体毛病：一块写着「该上限自次月起调整为 1000 元」，孤立看根本不知道说的是哪项费用，检索永远对不上。</p>
+<h3>③ 检索：关键词、向量与它们的合并</h3>
+<p>两条路的失手方式几乎正好互补。</p>
+<p><strong>BM25（关键词）</strong>在精确串上无敌：错误码 <code>ERR_5021</code>、型号 <code>X-200</code>、人名、法条编号——这些东西算嵌入毫无意义，字面匹配却百发百中。死穴是同义改写：用户问「怎么退钱」、文档写「退款流程」，词面不重合就是零分。</p>
+<p><strong>稠密检索（向量）</strong>正好相反：能跨过用词差异抓语义，却常在罕见专名上翻车——嵌入模型没见过这个型号，就当它是一串普通字符，返回一堆「看着像技术文档」的无关块。</p>
+<p><strong>混合检索</strong>把两路的排名合起来（常用倒数排名融合 RRF：按名次而非分数加权，省掉两套分数量纲不一致的麻烦）。这是绝大多数生产系统的默认选择，代价是两套索引都要维护、还多一个融合权重要调。</p>
+<p>另一层是<strong>怎么在千万级向量里快速找出最近的几条</strong>。逐条算距离召回 100%，但千万量级下单次查询要几百毫秒到秒级，直接撑爆预算。ANN 用结构换速度：HNSW 建一张分层邻居图，查询从稀疏的顶层起跳、逐层逼近，能压到<strong>毫秒级</strong>，代价是可能漏掉真正的最近邻。漏多少由搜索宽度这一个旋钮控制，调大则召回和延迟同涨。<strong>它是连续可调的旋钮、不是开关——该当成 SLO 的一部分来定，而不是抄个默认值。</strong></p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/hybrid-search-day31.html" target="_blank" rel="noopener">System Design · Day 31 混合检索与重排序</a> — BM25 与向量两路召回怎么融合、RRF 的权重怎么定，以及多阶段检索每一级该留多少候选</aside>
+<h3>④ 重排序与上下文装配：把一百条压成五条</h3>
+<p>检索阶段是<strong>双塔</strong>：问题和片段各自独立编码，片段向量能离线算好存起来——这正是它快的原因，但两边从未「见过面」，只能比粗略的相似度。</p>
+<p><strong>重排序器</strong>反过来：把问题和片段拼成一条送进模型一起算，能捕捉「这段是否真的回答了这个问题」。代价是它没法预计算，每个候选都要现场跑一次——所以它比双塔慢一到两个数量级，只能用在少量候选上。标准做法因此是<strong>漏斗</strong>：ANN 粗召 <code>100</code> 条 → 重排精算 → 留 <code>3–5</code> 条进 prompt。</p>
+<p>「装配」还有两个易漏的细节。其一，<strong>位置有影响</strong>：摆在长上下文正中间的材料最容易被忽略，所以最相关的片段该放首尾，而不是按相似度一路铺下去。其二，<strong>每块都按 token 收费、也按 token 吃延迟</strong>：5 块 × 400 token = 2000 token，每问一次付一次。k 从 5 调到 20，答对率通常不怎么涨，账单和首字延迟却实打实地涨。</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 196" font-family="-apple-system,sans-serif">
+<rect x="30" y="26" width="580" height="30" rx="4" fill="rgba(91,157,249,0.08)" stroke="rgba(91,157,249,0.4)"></rect>
+<text x="44" y="46" fill="#e7ebf1" font-size="11" font-weight="700">全部片段 · 千万量级</text>
+<text x="596" y="46" fill="#7c8593" font-size="9.5" text-anchor="end">离线建好索引</text>
+<rect x="110" y="70" width="420" height="30" rx="4" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="124" y="90" fill="#e7ebf1" font-size="11" font-weight="700">ANN 粗召 · 约 100 条</text>
+<text x="516" y="90" fill="#8fbaff" font-size="9.5" text-anchor="end">毫秒级 · 召回优先</text>
+<rect x="190" y="114" width="260" height="30" rx="4" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"></rect>
+<text x="204" y="134" fill="#e7ebf1" font-size="11" font-weight="700">重排序 · 留 3–5 条</text>
+<text x="436" y="134" fill="#c9a8ff" font-size="9.5" text-anchor="end">几十毫秒 · 精度优先</text>
+<rect x="250" y="158" width="140" height="28" rx="4" fill="rgba(155,108,245,0.28)" stroke="#9b6cf5" stroke-width="1.6"></rect>
+<text x="320" y="177" fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle">进 Prompt</text>
+<text x="404" y="177" fill="#7c8593" font-size="9.5">≈ 2000 token，每问一次付一次</text>
+</svg>
+<figcaption>图 2 · 检索漏斗：每一级都在用「保住召回」换「压住成本」，越往下越贵、也越准</figcaption>
+</figure>
+<h3>⑤ 生成侧：接地、引用与拒答</h3>
+<p>拿到片段后，生成的任务不是「发挥」，而是<strong>受约束地复述</strong>。三条落地要求：提示里写死「只依据给定材料作答」；<strong>逐句挂片段编号</strong>，让引用能被程序校验而不只是给人看；<strong>允许说不知道</strong>——检索分数低于阈值或片段互相矛盾时，正确输出是「材料中未提及」。</p>
+<p>最后一条是整套系统里最反直觉的产品决策：<strong>拒答率是一个要主动调的旋钮，不是一个越低越好的缺陷</strong>。企业问答场景宁可多拒答几个百分点，也不愿放出一条看不出错的编造。</p>
+<h2>关键权衡与选型</h2>
+<p>第一个决策在动手之前：这份知识到底该怎么进模型。</p>
+<p class="tcap">表 1 · 四条给模型补知识的路</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>直接写进提示词</th><th>RAG</th><th>微调</th><th>长上下文全塞</th></tr></thead>
+<tbody>
+<tr><th>知识多新</th><td>实时</td><td><strong>分钟级（重算那几块）</strong></td><td>以周计，且要重跑评估</td><td>实时</td></tr>
+<tr><th>能否溯源</th><td>能</td><td><strong>能，可逐句挂引用</strong></td><td>不能</td><td>勉强，需模型自报位置</td></tr>
+<tr><th>知识规模上限</th><td>几千 token</td><td><strong>几乎无上限</strong></td><td>受训练语料限制</td><td>受上下文窗口限制</td></tr>
+<tr><th>单次问答成本</th><td>最低</td><td>低（只带几块）</td><td>低（不带材料）</td><td><strong>最高，每次都为整份资料付费</strong></td></tr>
+<tr><th>权限控制</th><td>调用方自己管</td><td><strong>在检索层按元数据过滤</strong></td><td>做不到，权重没有 ACL</td><td>调用方自己管</td></tr>
+<tr><th>主要代价</th><td>放不下多少东西</td><td>多一整套检索系统要维护和评估</td><td>贵、慢、会灾难性遗忘</td><td>延迟与账单随资料线性涨；中段材料易被忽略</td></tr>
+<tr><th>适合</th><td>少量稳定规则</td><td><strong>知识量大、常变、要可核对</strong></td><td>改语气、学格式、固化领域风格</td><td>单份长文档的一次性问答</td></tr>
+</tbody></table></div>
+<p>注意最后一行：<strong>微调和 RAG 从来不是竞品</strong>——前者改「怎么说」，后者补「说什么」，生产系统里常常同时存在。</p>
+<p>第二个决策是检索路线，它直接决定 recall@k 的天花板。</p>
+<p class="tcap">表 2 · 四种检索配置</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>只用 BM25</th><th>只用稠密向量</th><th>混合</th><th>混合 + 重排序</th></tr></thead>
+<tbody>
+<tr><th>擅长</th><td>错误码、型号、人名、法条号</td><td>同义改写、口语化提问</td><td><strong>两者兼顾</strong></td><td>兼顾，且能判断「是否真的回答了」</td></tr>
+<tr><th>典型失手</th><td>用户换个说法就零命中</td><td>罕见专名被当成乱码</td><td>融合权重调不好时互相拖累</td><td>预算吃紧时被迫砍候选数</td></tr>
+<tr><th>在线开销</th><td>最低</td><td>低（毫秒级 ANN）</td><td>两路并发，取较慢的一路</td><td><strong>额外几十毫秒 + 一次模型调用</strong></td></tr>
+<tr><th>运维负担</th><td>一套倒排索引</td><td>一套向量索引 + 嵌入模型版本管理</td><td>两套索引都要保持同步</td><td>再加一个模型要监控</td></tr>
+<tr><th>什么时候用</th><td>语料高度术语化、查询也术语化</td><td>原型验证、语料口语化</td><td><strong>绝大多数生产系统的默认起点</strong></td><td><strong>精度敏感、且延迟预算允许</strong></td></tr>
+</tbody></table></div>
+<p>第三个决策是索引形态，本质是在<strong>召回、延迟、内存、更新代价</strong>四者之间挑两样。</p>
+<p class="tcap">表 3 · 三类向量索引</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>暴力精确检索</th><th>HNSW（图）</th><th>IVF + 量化压缩</th></tr></thead>
+<tbody>
+<tr><th>召回</th><td><strong>100%</strong></td><td>高，且可用搜索宽度连续调</td><td>中高，压缩越狠掉得越多</td></tr>
+<tr><th>延迟</th><td>随数据量线性涨，千万级不可用</td><td><strong>毫秒级</strong></td><td>毫秒级</td></tr>
+<tr><th>内存</th><td>存原始向量</td><td><strong>最吃内存：原始向量 + 图结构</strong></td><td><strong>最省：向量被压成几十字节</strong></td></tr>
+<tr><th>增删改</th><td>最简单</td><td>可增量插入，长期大量删改后质量退化</td><td>需按批重建或定期重训码本</td></tr>
+<tr><th>适合</th><td>十万条以内，或作为召回率基准线</td><td><strong>单机放得下的主流规模</strong></td><td>十亿级、内存是硬约束时</td></tr>
+</tbody></table></div>
+<p>一条实用建议：<strong>无论最终上哪种索引，都先用暴力检索在一批标注好的问题上量一次 recall@k 当基准线。</strong>ANN 掉了多少召回、值不值，只有对着这条线才谈得清。</p>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>三个落点已在大规模跑：<strong>企业知识库问答</strong>（内网文档 + 权限过滤，商业价值最集中）、<strong>带引用的搜索型回答</strong>（答案下方挂可点来源，用户自己核对）、<strong>客服与技术支持</strong>（工单、手册、变更记录一起索引，答案能追到具体哪份文档的哪一段）。第三个最能看出它的真身：这不是一个更聪明的模型，而是<strong>把组织已有文字资产接进生成链路的基础设施</strong>。</p>
+<div class="ev">
+<div class="evh">大厂实证 · 这些主张不是书里说的，是公司 / 项目自己公开说的</div>
+<ul>
+<li><strong>Google Cloud（2024-12-03）</strong>：把接地定义为「给大模型提供外部信息，使其回答扎根于现实，从而降低它产生幻觉或编造的几率」，并强调结果「会提供来源链接，供你事实核查或进一步了解」。<strong>「可核查」被官方摆在和「更准」同等的位置上——这正是本章说的证据链。</strong><span class="src"><a href="https://cloud.google.com/blog/products/ai-machine-learning/how-vertex-ai-grounding-helps-build-more-reliable-models" target="_blank" rel="noopener">Google Cloud Blog · Vertex AI grounding ↗</a></span></li>
+<li><strong>Google Cloud（Vertex AI RAG Engine，2025-01-10 正式可用）</strong>：把这项托管服务解决的难题逐项点名为「高效的向量存储、智能分块、最优检索策略与精准增强」。<strong>大厂自己给出的四个难点，和本章拆的四段流水线一一对上——尤其是分块被正式列为一个工程难题，而不是预处理小事。</strong><span class="src"><a href="https://cloud.google.com/blog/products/ai-machine-learning/introducing-vertex-ai-rag-engine" target="_blank" rel="noopener">Google Cloud Blog · RAG Engine GA ↗</a></span></li>
+<li><strong>Meta / FAIR（Faiss）</strong>：官方说明它「可扩展到单机内存中的数十亿向量」，并坦白部分方法使用「向量的压缩表示」，换来的是「精度较低的检索」。<strong>召回不是免费的：省内存、提速度，都在同一笔账上扣。</strong><span class="src"><a href="https://github.com/facebookresearch/faiss" target="_blank" rel="noopener">facebookresearch/faiss ↗</a></span></li>
+<li><strong>Microsoft（GraphRAG）</strong>：把它定位成「用大模型从非结构化文本中抽取有意义的结构化数据的数据流水线」，主张「用知识图谱式的记忆结构来增强大模型输出」。<strong>这是对朴素 RAG 的一次公开质疑：按片段检索天然答不了「这堆文档整体在讲什么」这类全局问题。</strong><span class="src"><a href="https://github.com/microsoft/graphrag" target="_blank" rel="noopener">microsoft/graphrag ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/ai-product-backend-day33.html" target="_blank" rel="noopener">System Design · Day 33 AI 产品后端</a> — 把这条流水线放进真实后端：索引更新、权限过滤、缓存分层与人机协同该各自落在哪一层</aside>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>只评生成、不评检索。</strong> 最常见的错误。要分两段量：检索侧看 recall@k，生成侧看忠实度与拒答率。<strong>答得不好，八九成是没检到，不是模型笨。</strong></li>
+<li><strong>把「相似」当成「相关」。</strong> 向量检索永远返回 k 条，哪怕库里根本没有答案——它没有「查无此项」这个输出。不自己设分数阈值，模型就会拿着一堆无关片段硬答。</li>
+<li><strong>以为块越小越好。</strong> 块小提升的是命中率，牺牲的是完整性；被撕成两半的论述反而更容易诱发编造。</li>
+<li><strong>引用变成装饰。</strong> 模型标了片段编号，不等于那句话真的出自那一块。引用必须被程序校验，否则它只是幻觉的一层包装。</li>
+<li><strong>权限靠提示词兜底。</strong> 「不要透露 HR 文档」这种话挡不住任何东西。过滤必须发生在<strong>检索层</strong>：无权的片段根本不该进候选集。</li>
+<li><strong>索引陈旧无人察觉。</strong> 文档改了、嵌入没重算，系统会自信地给出旧答案且毫无异常信号。索引新鲜度要像数据管道一样监控。</li>
+<li><strong>争议：长上下文会不会吃掉 RAG。</strong> 窗口越做越大，「全塞进去」看着越发可行。但三件事没变：每次问答都为整份资料付 token 费、延迟随材料线性涨、整个知识库本来就塞不进任何窗口。更现实的判断是二者合流——<strong>用检索收窄范围，再用大窗口容下更多候选</strong>。</li>
+<li><strong>时代局限。</strong> 本章以「一次提问 → 一次检索」的单轮形态为主线；此后实践大量转向多轮与代理式检索（模型自己决定要不要再查、查什么），以及 GraphRAG 这类针对全局性问题的结构化路线。底层结论一条没变：<strong>检索决定上限。</strong></li>
+</ul>
+<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/rag-systems-day4.html" target="_blank" rel="noopener">AI/ML · Day 4 RAG 体系</a> — 嵌入模型怎么选、分块与重排的消融实验怎么做，以及 RAG 各环节的评估指标体系</aside>
+<h2>要点</h2>
+<div class="tl">
+<p>① RAG 的真正产出不是答案，是<strong>可核对的证据链</strong>：知识分钟级更新、来源可点回、错了能定位到哪一环。</p>
+<p>② 参数记忆的三宗罪——过期、指不出出处、私有数据进不去（<strong>权重没有 ACL</strong>）——做大模型都解决不了。</p>
+<p>③ 流水线被切成两半：离线建索引按小时算，在线问答全程 <code>1–2</code> 秒，检索加重排只分到 <code>100–300</code> 毫秒。</p>
+<p>④ <strong>检索决定上限</strong>，生成只在上限之下打折；正确片段没召回，后面再强也救不回来。</p>
+<p>⑤ 分块是最被低估的决策：常见 <code>200–500</code> token、<code>10%–20%</code> 重叠，但按结构切、带元数据、把章节标题拼回块首，比调参更重要。</p>
+<p>⑥ BM25 和向量的失手方式互补——前者死于同义改写，后者死于罕见专名；混合检索是生产默认。</p>
+<p>⑦ ANN 用召回换速度，搜索宽度是<strong>连续旋钮</strong>；先用暴力检索量一条 recall@k 基准线，再谈掉多少值不值。</p>
+<p>⑧ 漏斗形状固定：粗召 <code>100</code> 条 → 重排留 <code>3–5</code> 条；重排慢一到两个数量级，所以只能用在少量候选上。</p>
+<p>⑨ 装配两条纪律：最相关的放首尾（中段易被忽略）；k 调大账单和延迟实打实涨，答对率往往不涨。</p>
+<p>⑩ 拒答率是要主动调的旋钮，不是缺陷；引用必须被程序校验，权限必须在检索层过滤。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

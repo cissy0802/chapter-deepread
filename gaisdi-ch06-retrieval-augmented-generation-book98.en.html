@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Generative AI System Design Interview Ch 6 · Retrieval-Augmented Generation — Book Deep Read 98</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">Book Deep Read · Generative AI System Design Interview · Ch 6</p>
+<h1>Retrieval-Augmented Generation: you think you are topping up the model's knowledge — you are giving it a checkable evidence trail</h1>
+<p class="sub">Generative AI System Design Interview · Ch 6 · Ali Aminian, Hao Sheng &amp; Alex Xu · 2024</p>
+<p class="langbar"><a href="gaisdi-ch06-retrieval-augmented-generation-book98.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You ask your company's AI assistant how much you can expense for a hotel, and it answers fast and fluently — but that rule changed last month. How could it possibly know? This chapter is about the machinery that makes a machine <strong>look things up first and only then speak</strong>.</p>
+<h2>A strange thing first</h2>
+<p>Someone who doesn't know the answer usually says so. This kind of machine doesn't. <strong>It answers anyway, and the made-up answer sounds exactly as smooth as a true one.</strong> Worse, you can't ask where it got that. It can't tell you either — everything it knows is smeared across trillions of words it once read, and it cannot point at any particular sentence.</p>
+<h2>Why the old ways don't work</h2>
+<p>Two obvious routes both fail. One is to <strong>teach it all over again</strong>: fold the new documents into its textbooks and have it reread them. That's reprinting a whole dictionary to change one phone number — expensive, slow, and the documents change again next week. The other is to <strong>spread everything on the desk</strong>: haul in the entire filing room. The desk is only so big; and even when it just about fits, finding one sentence in a roomful of paper is hard, and whatever sits in the middle of the pile is the most likely to be skipped.</p>
+<h2>How it actually works</h2>
+<p>The trick that works is to <strong>hire a librarian</strong>, and split the job in two.</p>
+<p><strong>Step one happens on quiet days: build the card catalogue.</strong> Cut every document into cards ahead of time, then file them by <em>meaning</em> — cards about the same thing sit together even when the wording is completely different ("accommodation policy" and "hotel spending cap" land in the same drawer). None of this happens while anyone is waiting.</p>
+<p><strong>Step two happens the moment you ask:</strong> the librarian grabs the hundred most similar cards, skims them down to the five that really bear on your question, and hands those five to the person who answers, along with your question. That person has nothing but the five cards, and exactly one rule: <strong>answer only from what is written on them, and mark which card each sentence came from.</strong> When no card fits, the correct answer is "it's not in the files."</p>
+<h2>What you gain, and what it costs</h2>
+<p>Three benefits arrive immediately: a document edited today takes effect today, with no retraining; every answer can be traced back to the original text and checked; and files this person isn't allowed to see get blocked at the card-grabbing step. The cost is a single sentence, but a hard one: <strong>the whole thing is capped by that card-grabbing step — pick the wrong cards and the more fluent the answer, the worse it is</strong>, because it is wrong in a way that reads like truth.</p>
+<h2>Remember this one line</h2>
+<div class="tl">
+<p>What it produces is not just an answer, but <strong>an answer plus where it came from</strong>. You think this is about topping up what the machine knows; really it converts "speaking from memory" into "reading off the page" — and from then on, every sentence has somewhere you can go and check.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the notation and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">You think retrieval-augmented generation (RAG) is the cheap substitute for "teaching the model more," but what it actually ships is a <strong>checkable evidence trail</strong>: knowledge you can swap out the same day, sources you can click back to, and failures you can localise to one stage. Fine-tuning and giant context windows give you none of the three. And the engineering conclusion worth carrying out of this chapter is a single sentence: <strong>a RAG system's quality ceiling is set by retrieval; the generator only applies a discount beneath it.</strong></p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Parametric memory</strong>: knowledge pressed into the weights during training; the model answers from "recall" and can point at no source.</li>
+<li><strong>Embedding</strong>: a piece of text represented as a list of numbers (commonly <code>384–1536</code> of them); similar meanings land on similar numbers.</li>
+<li><strong>Chunking</strong>: cutting long documents into passages that can be retrieved on their own.</li>
+<li><strong>Vector database</strong>: storage built to hold embeddings and quickly return "the most similar few."</li>
+<li><strong>Sparse retrieval / BM25</strong>: classic keyword scoring — a hit requires the words to match.</li>
+<li><strong>Dense retrieval</strong>: matching by distance between embeddings, so different wording can still hit.</li>
+<li><strong>ANN (approximate nearest neighbour)</strong>: instead of comparing every vector, use an index structure to find the probable nearest few — trading a little recall for orders of magnitude of speed.</li>
+<li><strong>HNSW</strong>: a layered graph ANN index; a query starts on a sparse top layer and hops downward, closing in on the target.</li>
+<li><strong>recall@k</strong>: the fraction of questions whose answer-bearing chunk appears in the top k returned — the metric to watch on the retrieval side.</li>
+<li><strong>Reranker / cross-encoder</strong>: a model that scores question and passage jointly; far more accurate and far slower, so it only ever reorders a short candidate list.</li>
+<li><strong>Grounding</strong>: making the answer follow the supplied material rather than the model's own memory.</li>
+<li><strong>Faithfulness</strong>: whether every sentence of the answer is actually supported by the passages it was given.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The fifth of the ten case studies in Part II, and the closing problem of the text cluster. It follows Ch4 ChatGPT, where all knowledge lived in parametric memory; here an <strong>external knowledge base</strong> is wired into the generation path for the first time, and from Ch7 onward the book turns to image generation. In the wild it maps to enterprise knowledge-base Q&amp;A, support assistants, document copilots, and every search-style AI product that shows its sources.</p>
+<h2>What this chapter is solving</h2>
+<p>Parametric memory has three sins, and none of them is fixed by making the model bigger.</p>
+<p><strong>One: it goes stale.</strong> The weights freeze on the training cutoff date, while a knowledge base has documents changing every day. Re-running a fine-tune for one policy update takes <strong>weeks</strong> end to end, from data prep to evaluation and rollout; documents change by the <strong>minute</strong>. Four or five orders of magnitude apart — not a gap tuning can close.</p>
+<p><strong>Two: it can't cite.</strong> When the model says "the cap is $120," that number is smeared across trillions of tokens of training text and traces to no sentence anywhere. In legal, medical and financial settings, <strong>a correct answer you cannot verify is worth exactly as much as a wrong one</strong> — you can't tell which one you are holding.</p>
+<p><strong>Three: private data can't get in.</strong> Internal documents, a user's own files, material with access tiers — none of it should or can be pressed into one set of shared weights. <strong>Weights have no ACL (access control list)</strong>: once memorised, knowledge cannot be un-remembered for just some people.</p>
+<p>What happens if you don't solve it? The model keeps answering fluently about things it does not know, and nowhere in the pipeline is there anything to check against. Which is the upgraded form of the previous chapter's conclusion: <strong>the dangerous failure of a generative system is not silence, it is fluent wrongness.</strong></p>
+<h2>The core, properly explained</h2>
+<h3>① Two phases: arrange the knowledge offline, only fetch it online</h3>
+<p>One hard boundary splits the pipeline in two, and once you see it, every later trade-off explains itself.</p>
+<p><strong>Offline (indexing)</strong>: documents → chunks → an embedding per chunk → write into the vector index. Turning a million documents into ten million passages, embedding them and building the index is a batch job measured in hours — because nobody is waiting.</p>
+<p><strong>Online (answering)</strong>: question → embed → retrieve → rerank → assemble the prompt → generate. The whole thing has to fit inside <strong>one or two seconds</strong>, and generation alone often eats more than a second, leaving retrieval plus reranking perhaps <code>100–300</code> milliseconds — <strong>and that budget, not the data size, is the real constraint behind every index choice below</strong>.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 262" font-family="-apple-system,sans-serif">
+<defs><marker id="r1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text x="20" y="18" fill="#7c8593" font-size="10" font-family="monospace">OFFLINE · hours are fine, nobody is waiting</text>
+<rect x="20" y="28" width="104" height="42" rx="6" fill="rgba(91,157,249,0.1)" stroke="#5b9df9" stroke-width="1.4"></rect>
+<text x="72" y="47" fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle">Documents</text>
+<text x="72" y="62" fill="#8fbaff" font-size="9" text-anchor="middle">~1M files</text>
+<line x1="126" x2="142" y1="49" y2="49" stroke="#7c8593" stroke-width="1.4" marker-end="url(#r1)"></line>
+<rect x="144" y="28" width="104" height="42" rx="6" fill="rgba(91,157,249,0.1)" stroke="#5b9df9" stroke-width="1.4"></rect>
+<text x="196" y="47" fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle">Chunking</text>
+<text x="196" y="62" fill="#8fbaff" font-size="9" text-anchor="middle">~10M passages</text>
+<line x1="250" x2="266" y1="49" y2="49" stroke="#7c8593" stroke-width="1.4" marker-end="url(#r1)"></line>
+<rect x="268" y="28" width="104" height="42" rx="6" fill="rgba(91,157,249,0.1)" stroke="#5b9df9" stroke-width="1.4"></rect>
+<text x="320" y="47" fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle">Embedding</text>
+<text x="320" y="62" fill="#8fbaff" font-size="9" text-anchor="middle">one vector each</text>
+<line x1="374" x2="390" y1="49" y2="49" stroke="#7c8593" stroke-width="1.4" marker-end="url(#r1)"></line>
+<rect x="392" y="28" width="118" height="42" rx="6" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="1.8"></rect>
+<text x="451" y="47" fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle">Vector index</text>
+<text x="451" y="62" fill="#c9a8ff" font-size="9" text-anchor="middle">HNSW / IVF-PQ</text>
+<path d="M451,74 L451,100 L196,100 L196,132" fill="none" stroke="#9b6cf5" stroke-width="1.4" stroke-dasharray="4 3" marker-end="url(#r1)"></path>
+<text x="470" y="96" fill="#7c8593" font-size="9">read-only at query time</text>
+<text x="20" y="128" fill="#7c8593" font-size="10" font-family="monospace">ONLINE · 1–2s total; retrieval gets only 100–300ms</text>
+<rect x="20" y="136" width="104" height="42" rx="6" fill="rgba(91,157,249,0.1)" stroke="#5b9df9" stroke-width="1.4"></rect>
+<text x="72" y="161" fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle">Question</text>
+<line x1="126" x2="142" y1="157" y2="157" stroke="#7c8593" stroke-width="1.4" marker-end="url(#r1)"></line>
+<rect x="144" y="136" width="104" height="42" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="1.8"></rect>
+<text x="196" y="155" fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle">Retrieve</text>
+<text x="196" y="170" fill="#8fbaff" font-size="9" text-anchor="middle">top ~100</text>
+<line x1="250" x2="266" y1="157" y2="157" stroke="#7c8593" stroke-width="1.4" marker-end="url(#r1)"></line>
+<rect x="268" y="136" width="104" height="42" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="1.8"></rect>
+<text x="320" y="155" fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle">Rerank</text>
+<text x="320" y="170" fill="#8fbaff" font-size="9" text-anchor="middle">keep 3–5</text>
+<line x1="374" x2="390" y1="157" y2="157" stroke="#7c8593" stroke-width="1.4" marker-end="url(#r1)"></line>
+<rect x="392" y="136" width="104" height="42" rx="6" fill="rgba(91,157,249,0.1)" stroke="#5b9df9" stroke-width="1.4"></rect>
+<text x="444" y="155" fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle">Assemble</text>
+<text x="444" y="170" fill="#8fbaff" font-size="9" text-anchor="middle">passages + query</text>
+<line x1="496" x2="512" y1="157" y2="157" stroke="#7c8593" stroke-width="1.4" marker-end="url(#r1)"></line>
+<rect x="514" y="136" width="106" height="42" rx="6" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="1.8"></rect>
+<text x="567" y="155" fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle">Generate</text>
+<text x="567" y="170" fill="#c9a8ff" font-size="9" text-anchor="middle">answer + citations</text>
+<text x="20" y="206" fill="#7c8593" font-size="9.5">The ceiling is set here: a passage never retrieved cannot be rescued downstream</text>
+<path d="M144,196 L620,196" stroke="rgba(91,157,249,0.3)" stroke-width="1" stroke-dasharray="3 3"></path>
+<text x="20" y="232" fill="#8fbaff" font-size="9.5">Edit a document, re-embed only its chunks — that is the whole "same-day" trick</text>
+<path d="M20,222 L124,222" stroke="rgba(155,108,245,0.4)" stroke-width="1" stroke-dasharray="3 3"></path>
+</svg>
+<figcaption>Fig 1 · One pipeline cut in half: knowledge is arranged while nobody waits; answering only fetches and assembles</figcaption>
+</figure>
+<h3>② Chunking: the most underrated decision in the whole chain</h3>
+<p>The unit of retrieval is not the document, it is the <strong>chunk</strong>. How you cut all but decides whether anything can be found.</p>
+<p>The instinct is "smaller is sharper": one chunk, one topic, an undiluted embedding, an easier match. But small chunks tear a complete argument in half — handed the first half of a sentence, the model is more likely to invent the second. Too large and a single chunk carries five or six topics, so <strong>the embedding averages out into a vector that resembles nothing</strong>, scores poorly, and wastes prompt budget besides.</p>
+<p>The usual landing zone is <code>200–500</code> tokens per chunk with <code>10%–20%</code> overlap (so an answer straddling a cut isn't lost). But three things matter more than those numbers: <strong>cut along structure</strong> (headings and paragraph boundaries, not a fixed character count that saws a table in half); <strong>carry metadata</strong> (title, section path, date, access labels — used for filtering as well as ranking); and <strong>contextualise</strong> — prepend the section heading or a one-line summary so the chunk stands on its own. That last one targets a concrete failure: a chunk reading "this cap rises to $150 from next month" is, in isolation, about nothing identifiable, and will never match a query.</p>
+<h3>③ Retrieval: keywords, vectors, and merging the two</h3>
+<p>The two routes fail in almost perfectly complementary ways.</p>
+<p><strong>BM25 (keywords)</strong> is unbeatable on exact strings: error code <code>ERR_5021</code>, part number <code>X-200</code>, proper names, statute numbers. Embedding those is meaningless; literal matching never misses. Its fatal flaw is paraphrase: the user asks "how do I get my money back," the document says "refund procedure," no shared terms, score zero.</p>
+<p><strong>Dense retrieval (vectors)</strong> is the mirror image: it crosses wording differences to catch meaning, but derails on rare proper nouns — an embedding model that has never seen that part number treats it as an ordinary string and returns a pile of chunks that merely look technical.</p>
+<p><strong>Hybrid retrieval</strong> merges the two rankings (commonly with reciprocal rank fusion, which weights by position rather than score and so sidesteps two incompatible score scales). It is the default in most production systems; the price is two indexes to keep in sync and one more fusion weight to tune.</p>
+<p>A second layer is <strong>how you find the nearest few among ten million vectors</strong>. Scoring every one gives 100% recall but costs hundreds of milliseconds to seconds at that scale — the budget is gone. ANN buys speed with structure: HNSW builds a layered neighbour graph, and a query starts on the sparse top layer and hops down, landing in <strong>single-digit milliseconds</strong>, at the risk of missing the true nearest neighbour. How much it misses is governed by one dial, the search width; turn it up and recall and latency rise together. <strong>It is a continuous dial, not a switch — set it as part of your SLO instead of copying a default.</strong></p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/hybrid-search-day31.en.html" target="_blank" rel="noopener">System Design · Day 31 Hybrid Search and Reranking</a> — how BM25 and vector candidates are fused, how RRF weights are chosen, and how many candidates each stage of a multi-stage retriever should keep</aside>
+<h3>④ Reranking and assembly: a hundred candidates down to five</h3>
+<p>Retrieval uses a <strong>bi-encoder</strong>: question and passage are encoded separately, which is precisely why passage vectors can be computed offline and stored — and also why the two sides never meet, leaving only a coarse similarity to compare.</p>
+<p>A <strong>reranker</strong> inverts that: question and passage go through the model together, so it can judge whether this passage actually answers this question. The cost is that nothing can be precomputed — every candidate is a fresh forward pass — which makes it one to two orders of magnitude slower than the bi-encoder and usable only on a short list. Hence the standard <strong>funnel</strong>: ANN pulls <code>100</code>, the reranker scores them, <code>3–5</code> reach the prompt.</p>
+<p>Assembly hides two more details. First, <strong>position matters</strong>: material parked in the middle of a long context is the most likely to be overlooked, so the strongest passages belong at the start and the end rather than laid out in similarity order. Second, <strong>every chunk costs tokens and costs latency</strong>: 5 chunks × 400 tokens = 2000 tokens, paid again on every single question. Going from k=5 to k=20 rarely moves accuracy much, while the bill and time-to-first-token move for real.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 196" font-family="-apple-system,sans-serif">
+<rect x="30" y="26" width="580" height="30" rx="4" fill="rgba(91,157,249,0.08)" stroke="rgba(91,157,249,0.4)"></rect>
+<text x="44" y="46" fill="#e7ebf1" font-size="11" font-weight="700">All passages · tens of millions</text>
+<text x="596" y="46" fill="#7c8593" font-size="9.5" text-anchor="end">indexed offline</text>
+<rect x="110" y="70" width="420" height="30" rx="4" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="124" y="90" fill="#e7ebf1" font-size="11" font-weight="700">ANN recall · ~100 candidates</text>
+<text x="516" y="90" fill="#8fbaff" font-size="9.5" text-anchor="end">milliseconds · recall first</text>
+<rect x="190" y="114" width="260" height="30" rx="4" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"></rect>
+<text x="204" y="134" fill="#e7ebf1" font-size="11" font-weight="700">Rerank · keep 3–5</text>
+<text x="436" y="134" fill="#c9a8ff" font-size="9.5" text-anchor="end">tens of ms · precision first</text>
+<rect x="250" y="158" width="140" height="28" rx="4" fill="rgba(155,108,245,0.28)" stroke="#9b6cf5" stroke-width="1.6"></rect>
+<text x="320" y="177" fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle">Into the prompt</text>
+<text x="404" y="177" fill="#7c8593" font-size="9.5">≈ 2000 tokens, paid per question</text>
+</svg>
+<figcaption>Fig 2 · The retrieval funnel: each stage trades "keep recall" against "hold down cost" — deeper means pricier and sharper</figcaption>
+</figure>
+<h3>⑤ The generation side: grounding, citations, refusal</h3>
+<p>Once the passages arrive, generation's job is not to shine but to <strong>restate under constraint</strong>. Three concrete requirements: state in the prompt that the answer must come only from the supplied material; <strong>attach passage ids per sentence</strong>, so citations can be validated by code rather than admired by humans; and <strong>allow "I don't know"</strong> — when retrieval scores fall below threshold or passages contradict each other, the correct output is "not covered by the material."</p>
+<p>That last one is the most counterintuitive product decision in the system: <strong>the refusal rate is a dial to be set deliberately, not a defect to be driven to zero</strong>. Enterprise Q&amp;A would rather refuse a few more percent of questions than ship one invention nobody can spot.</p>
+<h2>Key trade-offs and choices</h2>
+<p>The first decision comes before any code: how should this knowledge reach the model at all?</p>
+<p class="tcap">Table 1 · Four ways to give a model knowledge</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Put it in the prompt</th><th>RAG</th><th>Fine-tuning</th><th>Stuff the long context</th></tr></thead>
+<tbody>
+<tr><th>Freshness</th><td>Real time</td><td><strong>Minutes (re-embed those chunks)</strong></td><td>Weeks, plus a re-run of evals</td><td>Real time</td></tr>
+<tr><th>Traceable?</th><td>Yes</td><td><strong>Yes, citations per sentence</strong></td><td>No</td><td>Barely; the model must self-report</td></tr>
+<tr><th>Knowledge ceiling</th><td>A few thousand tokens</td><td><strong>Effectively unbounded</strong></td><td>Bounded by the training corpus</td><td>Bounded by the context window</td></tr>
+<tr><th>Cost per question</th><td>Lowest</td><td>Low (a handful of chunks)</td><td>Low (no material carried)</td><td><strong>Highest — you pay for the whole corpus every time</strong></td></tr>
+<tr><th>Access control</th><td>Caller's problem</td><td><strong>Filter at retrieval by metadata</strong></td><td>Impossible; weights have no ACL</td><td>Caller's problem</td></tr>
+<tr><th>Main cost</th><td>Not much fits</td><td>A whole retrieval system to run and evaluate</td><td>Slow, costly, risks catastrophic forgetting</td><td>Latency and bill grow linearly; mid-context material gets skipped</td></tr>
+<tr><th>Good for</th><td>A few stable rules</td><td><strong>Large, changing knowledge that must be checkable</strong></td><td>Tone, format, domain style</td><td>One-off Q&amp;A over a single long document</td></tr>
+</tbody></table></div>
+<p>Note the last row: <strong>fine-tuning and RAG were never competitors</strong> — one changes <em>how</em> the model speaks, the other supplies <em>what</em> it says. Production systems routinely run both.</p>
+<p>The second decision is the retrieval route, which sets the ceiling on recall@k directly.</p>
+<p class="tcap">Table 2 · Four retrieval configurations</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>BM25 only</th><th>Dense only</th><th>Hybrid</th><th>Hybrid + rerank</th></tr></thead>
+<tbody>
+<tr><th>Strong at</th><td>Error codes, part numbers, names, statutes</td><td>Paraphrase, colloquial questions</td><td><strong>Both</strong></td><td>Both, plus "does this actually answer it?"</td></tr>
+<tr><th>Typical miss</th><td>Any rewording scores zero</td><td>Rare proper nouns read as noise</td><td>A badly tuned fusion weight drags both down</td><td>A tight budget forces the candidate list shorter</td></tr>
+<tr><th>Online cost</th><td>Lowest</td><td>Low (millisecond ANN)</td><td>Two parallel routes; the slower one wins</td><td><strong>Tens of ms more plus a model call</strong></td></tr>
+<tr><th>Ops burden</th><td>One inverted index</td><td>Vector index + embedding version management</td><td>Two indexes to keep in sync</td><td>One more model to monitor</td></tr>
+<tr><th>When to use</th><td>Jargon-heavy corpus and jargon-heavy queries</td><td>Prototyping; conversational corpora</td><td><strong>Default starting point for most systems</strong></td><td><strong>Precision-sensitive, with latency to spare</strong></td></tr>
+</tbody></table></div>
+<p>The third decision is the index itself — really a matter of picking two out of four: recall, latency, memory, and update cost.</p>
+<p class="tcap">Table 3 · Three classes of vector index</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Exact brute force</th><th>HNSW (graph)</th><th>IVF + quantization</th></tr></thead>
+<tbody>
+<tr><th>Recall</th><td><strong>100%</strong></td><td>High, tunable via search width</td><td>Medium-high; harsher compression costs more</td></tr>
+<tr><th>Latency</th><td>Linear in corpus size; unusable at 10M</td><td><strong>Milliseconds</strong></td><td>Milliseconds</td></tr>
+<tr><th>Memory</th><td>Raw vectors</td><td><strong>Heaviest: raw vectors + graph</strong></td><td><strong>Lightest: vectors squeezed to tens of bytes</strong></td></tr>
+<tr><th>Updates</th><td>Trivial</td><td>Incremental inserts fine; quality degrades after heavy churn</td><td>Periodic rebuilds or codebook retraining</td></tr>
+<tr><th>Good for</th><td>Under 100k vectors, or as a recall baseline</td><td><strong>Mainstream scale that fits one machine</strong></td><td>Billions, when memory is the hard constraint</td></tr>
+</tbody></table></div>
+<p>One practical rule: <strong>whatever index you end up shipping, first measure recall@k with brute force on a labelled question set and keep it as your baseline.</strong> How much recall ANN gave away, and whether that was worth it, is only discussable against that line.</p>
+<h2>Why it matters / in real systems</h2>
+<p>Three landing zones already run at scale: <strong>enterprise knowledge-base Q&amp;A</strong> (internal documents plus access filtering — where the commercial value concentrates), <strong>search-style answers with citations</strong> (clickable sources under the answer, so users verify for themselves), and <strong>customer and technical support</strong> (tickets, manuals and change logs indexed together, so an answer traces to a specific passage of a specific document). The third reveals what this really is: not a smarter model, but <strong>the infrastructure that wires an organisation's existing written assets into the generation path</strong>.</p>
+<div class="ev">
+<div class="evh">Industry evidence · these claims are the companies' own public words, not the book's</div>
+<ul>
+<li><strong>Google Cloud (2024-12-03)</strong> defines grounding as "providing an LLM with external information to root its response in reality, which reduces the chances of it hallucinating or making things up," and stresses that the result "even provides source links so you can fact check or learn more." <strong>Verifiability is placed level with accuracy in the vendor's own framing — exactly the evidence trail this chapter is about.</strong><span class="src"><a href="https://cloud.google.com/blog/products/ai-machine-learning/how-vertex-ai-grounding-helps-build-more-reliable-models" target="_blank" rel="noopener">Google Cloud Blog · Vertex AI grounding ↗</a></span></li>
+<li><strong>Google Cloud (same post)</strong> ships "dynamic retrieval," letting the model predict whether a query needs fresh external information, for a blunt reason: "high-quality results when you need them, and lower costs, because Gemini will only tap Google Search when needed." <strong>Whether to retrieve at all is itself a cost dial, not a fixed step.</strong><span class="src"><a href="https://cloud.google.com/blog/products/ai-machine-learning/how-vertex-ai-grounding-helps-build-more-reliable-models" target="_blank" rel="noopener">Same post · dynamic retrieval ↗</a></span></li>
+<li><strong>Google Cloud (Vertex AI RAG Engine, GA 2025-01-10)</strong> names the problems its managed service exists to absorb: "efficient vector storage, intelligent chunking, optimal retrieval strategies, and precise augmentation." <strong>A vendor's own list of the four hard parts maps one-to-one onto this chapter's pipeline — chunking included, as an engineering problem rather than a preprocessing chore.</strong><span class="src"><a href="https://cloud.google.com/blog/products/ai-machine-learning/introducing-vertex-ai-rag-engine" target="_blank" rel="noopener">Google Cloud Blog · RAG Engine GA ↗</a></span></li>
+<li><strong>Meta / FAIR (Faiss)</strong> states the library can "scale to billions of vectors in main memory on a single server," while admitting that methods built on a "compressed representation of the vectors" deliver "less precise search." <strong>Recall is never free: saving memory and buying speed come out of the same account.</strong><span class="src"><a href="https://github.com/facebookresearch/faiss" target="_blank" rel="noopener">facebookresearch/faiss ↗</a></span></li>
+<li><strong>Microsoft (GraphRAG)</strong> positions itself as "a data pipeline and transformation suite that is designed to extract meaningful, structured data from unstructured text using the power of LLMs," arguing for "using knowledge graph memory structures to enhance LLM outputs." <strong>A public challenge to plain RAG: passage-level retrieval structurally cannot answer "what is this whole corpus about?"</strong><span class="src"><a href="https://github.com/microsoft/graphrag" target="_blank" rel="noopener">microsoft/graphrag ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/ai-product-backend-day33.en.html" target="_blank" rel="noopener">System Design · Day 33 AI Product Backend</a> — where index refresh, permission filtering, cache tiers and human-in-the-loop each belong once this pipeline meets a real backend</aside>
+<h2>Pitfalls and open arguments</h2>
+<ul>
+<li><strong>Evaluating generation only.</strong> The most common mistake. Measure two stages separately: recall@k on retrieval, faithfulness and refusal rate on generation. <strong>A bad answer is, nine times in ten, a retrieval miss — not a dim model.</strong></li>
+<li><strong>Mistaking "similar" for "relevant."</strong> Vector search always returns k results, even when the corpus holds no answer — there is no "no such record" output. Without your own score threshold, the model will answer from a pile of irrelevant passages.</li>
+<li><strong>Believing smaller chunks are always better.</strong> Small chunks buy hit rate and sell completeness; an argument torn in half invites the model to invent the missing half.</li>
+<li><strong>Citations as decoration.</strong> A passage id in the output does not mean the sentence came from that passage. Citations must be checked by code, or they are just a wrapper around a hallucination.</li>
+<li><strong>Enforcing permissions in the prompt.</strong> "Do not reveal HR documents" stops nothing. Filtering belongs in <strong>retrieval</strong>: unauthorised passages should never enter the candidate set.</li>
+<li><strong>Silent index staleness.</strong> A document changed, its embedding didn't, and the system confidently serves the old answer with no anomaly anywhere. Index freshness deserves the monitoring you give a data pipeline.</li>
+<li><strong>The open argument: will long context eat RAG?</strong> As windows grow, "just paste everything" looks ever more plausible. Three things haven't changed: you pay tokens for the whole corpus on every question, latency grows linearly with the material, and no window holds an entire knowledge base anyway. The likelier outcome is convergence — <strong>retrieval narrows the field, a big window then holds more candidates</strong>.</li>
+<li><strong>Period limits.</strong> The chapter's spine is the single-shot form: one question, one retrieval. Practice since has moved heavily toward multi-turn and agentic retrieval (the model decides whether and what to look up again), and toward structured routes like GraphRAG for corpus-level questions. The underlying conclusion has not moved: <strong>retrieval sets the ceiling.</strong></li>
+</ul>
+<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/rag-systems-day4.en.html" target="_blank" rel="noopener">AI/ML · Day 4 RAG Systems</a> — choosing embedding models, running ablations on chunking and reranking, and the metric stack for each stage of a RAG pipeline</aside>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① What RAG really ships is not an answer but a <strong>checkable evidence trail</strong>: minute-level freshness, clickable sources, and failures you can localise.</p>
+<p>② Parametric memory's three sins — staleness, no citations, private data locked out (<strong>weights have no ACL</strong>) — survive any increase in model size.</p>
+<p>③ The pipeline splits in two: indexing runs offline in hours; answering fits in <code>1–2</code> seconds, of which retrieval plus reranking gets <code>100–300</code> ms.</p>
+<p>④ <strong>Retrieval sets the ceiling</strong> and generation discounts from it; a passage never retrieved cannot be rescued downstream.</p>
+<p>⑤ Chunking is the underrated decision: <code>200–500</code> tokens with <code>10%–20%</code> overlap is typical, but cutting along structure, carrying metadata and prepending the section heading matter more than the numbers.</p>
+<p>⑥ BM25 and dense retrieval fail complementarily — one dies on paraphrase, the other on rare proper nouns; hybrid is the production default.</p>
+<p>⑦ ANN trades recall for speed through a <strong>continuous dial</strong>; measure a brute-force recall@k baseline first, then argue about what the trade is worth.</p>
+<p>⑧ The funnel shape is fixed: pull <code>100</code>, rerank, keep <code>3–5</code>. Rerankers are one to two orders of magnitude slower, so they only ever touch a short list.</p>
+<p>⑨ Two assembly rules: strongest passages at the ends (the middle gets skipped), and a larger k reliably raises cost and latency while rarely raising accuracy.</p>
+<p>⑩ Refusal rate is a dial you set on purpose; citations must be machine-validated; permissions must be enforced at retrieval.</p>
+</div>
+</div>
+<footer>Book Deep Read · Reading this page ≈ getting the core of this chapter; for the full case study, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
