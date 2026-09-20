@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Generative AI System Design Interview Ch 8 · High-Resolution Image Synthesis — Books Deep Read Book 100</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">Book Deep Read · Generative AI System Design Interview · Ch 8</p>
+<h1>High-Resolution Image Synthesis: the hard part is not painting finer — it is not painting at full size</h1>
+<p class="sub">Generative AI System Design Interview · Ch 8 · Ali Aminian, Hao Sheng &amp; Alex Xu · 2024</p>
+<p class="langbar"><a href="gaisdi-ch08-high-resolution-image-synthesis-book100.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You type "a cabin below a snowy mountain, dusk" into your phone, and a few seconds later out comes something you would use as a wallpaper. This chapter is about the machinery behind that. It answers one very concrete engineering question: <strong>how do you get a machine to paint a large, sharp picture without burning through all your compute?</strong></p>
+<h2>Start with something odd</h2>
+<p>The most effective way to teach a machine to paint turns out to be <strong>teaching it to ruin a painting first</strong>. Take a real photo, sprinkle a little static onto it, do that a thousand times, and you end up with a screen of pure snow. That ruining step is so simple it needs no learning at all — you just follow a fixed recipe. Then you train a network to do exactly one thing: <strong>look at a speckled picture and point out which parts are the speckles</strong>. Point them out, subtract them, and the picture gets a little cleaner.</p>
+<h2>Why going backwards works better</h2>
+<p>Because it turns one hard job into a thousand easy ones. Asking a machine to paint a whole face from nothing in a single shot is hard — the older approach from the previous chapter, where two networks fight each other, often collapses mid-training. But asking it to "clean up a slightly fuzzy picture a little" is far easier, and <strong>you have unlimited practice material</strong>: grab any photo, sprinkle your own static on it, and the correct answer is exactly the static you just sprinkled. Nobody has to label anything.</p>
+<p>So painting becomes this: start from a screen of pure snow, let the network wipe once, wipe again, wipe again — and after a few dozen wipes, a picture develops out of the noise.</p>
+<h2>The real obstacle: switch to a smaller sheet of paper</h2>
+<p>Here is the catch. A 512-by-512 picture has a few hundred thousand dots in it, and each wipe has to push every one of those dots through the network — dozens to hundreds of times. Do all that at full size and your graphics card falls over.</p>
+<p>The key move in this chapter is to <strong>switch sheets of paper</strong>. You separately train a pair of helpers — a compressor and a restorer. The compressor squeezes a photo down to a palm-sized sketch holding roughly one-fiftieth of the information; the restorer blows the sketch back up to full size. Then <strong>all those wipes happen on the little sketch</strong>, and you restore it just once at the end. The cost per step drops by an order of magnitude, and that is what made "a picture from a home graphics card" possible at all.</p>
+<p>The price is real: the squeeze is lossy, and the finest strokes get wiped out — which is exactly why small text, fingers and dense grids come out mangled so often in these pictures.</p>
+<h2>How many wipes is a dial you can turn</h2>
+<p>Wipe more and the detail is steadier but it takes longer; wipe less and it is fast but the composition occasionally falls apart. So in a product this is a <strong>dial with a published price</strong>: fewer wipes for a quick preview, more wipes for the final take. That beats "swap in a bigger model" by a mile — it needs no retraining and you can turn it live.</p>
+<h2>Remember this one line</h2>
+<div class="tl">
+<p>Run "paint a picture" backwards into "wipe off the static step by step", and one hard job becomes a thousand easy ones; then move all that wiping onto a <strong>small sketch sheet</strong>, and the compute finally comes down. How many wipes is the dial you get to turn.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, notation and diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">This chapter turns the <strong>diffusion model</strong> into a system that can ship high-resolution images, and its central claim is counter-intuitive: <strong>the bottleneck at high resolution is not "can it paint fine detail" but "how large a canvas are you repeating those tens-to-hundreds of steps on"</strong>. So the answer comes in two halves — first rewrite one-shot generation as a long chain of easy denoising steps (buying training stability), then move that whole chain onto a <code>64×64</code> latent (buying affordable compute). The mental model to walk away with: <strong>the design variables of a generative system are not "which model" but "how big the canvas, how many steps"</strong>.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Diffusion model</strong>: a family of generative models. Training teaches it to subtract noise from an image; generation starts from pure noise and subtracts repeatedly until a picture develops.</li>
+<li><strong>Gaussian noise</strong>: a blob of numbers drawn from a normal distribution; laid over an image it looks like static. It follows a fixed recipe and is not learned.</li>
+<li><strong>Timestep t</strong>: how far along the noising process you are. Larger <code>t</code> means a blurrier image; at <code>t=T</code> it is essentially pure noise.</li>
+<li><strong>U-Net</strong>: a convolutional network that downsamples then upsamples, with skip connections joining matching scales. Input and output share a shape, which suits per-pixel prediction.</li>
+<li><strong>Autoencoder</strong>: a pair of networks. Encoder <code>E</code> squeezes an image into a small block of numbers; decoder <code>D</code> restores it. The training goal is simply "restore it faithfully".</li>
+<li><strong>Latent / latent space</strong>: the space those squeezed numbers live in. Far smaller than pixels, but it keeps the semantics and the composition.</li>
+<li><strong>Sampling steps</strong>: how many denoising passes you actually run to produce one image. It converts directly into latency and cost.</li>
+<li><strong>Super-resolution</strong>: a model that enlarges a small image and fills in detail; often chained after a generator.</li>
+<li><strong>FID (Fréchet Inception Distance)</strong>: the standard automatic metric. It pushes real and generated images through a pretrained classifier, then measures the distance between the two feature distributions. <strong>Lower is better.</strong></li>
+<li><strong>VRAM</strong>: the GPU's own memory. Weights plus intermediate activations must fit inside it, or the model will not run.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This is the seventh of the ten case studies in Part II. <strong>It follows</strong> Ch 7 on face generation with GANs — where a generator and a discriminator fight, training is unstable and mode collapse looms; here the adversarial game is replaced by a plain regression task. <strong>It sets up</strong> Ch 9 on text-to-image, which bolts text conditioning and classifier-free guidance onto exactly this skeleton. Real systems it maps to: Stable Diffusion, DALL·E 2, Imagen, Midjourney — the whole current generation of image products.</p>
+<h2>What this chapter is trying to solve</h2>
+<p>Two pains: one about <strong>unstable training</strong>, one about <strong>unaffordable compute</strong>.</p>
+<p>The instability is inherited from the previous chapter. A GAN optimises a game between two networks; whenever one pulls ahead the other's gradient goes flat, the balance gets harder as resolution climbs, and mode collapse (it only ever paints the same few faces) is always in reach. The engineering consequence is that <strong>training becomes unpredictable</strong> — same code, same data, a different random seed, and the run is wasted. For a team that has to schedule and reproduce work, that is fatal.</p>
+<p>The compute problem belongs to this chapter. A <code>512×512</code> RGB image is <code>512×512×3 = 786,432</code> numbers. Diffusion runs the denoiser <code>T</code> times, and the original DDPM used <code>T=1000</code> — a thousand full-size forward passes per image. Worse, self-attention inside the U-Net grows with the square of the number of positions (<code>O(n²)</code> — double the positions and the cost quadruples): <code>512×512</code> is over 262,000 positions, so global attention at that scale simply does not work in practice.</p>
+<p><strong>What happens if you do not solve it</strong>: you are stuck training <code>64×64</code> models and propping them up with a stack of super-resolution stages — each trained separately, deployed separately, each compounding the previous stage's errors. Image generation stays a game only for companies with large datacentres.</p>
+<h2>The core, properly</h2>
+<h3>1. Rewrite "generate" as "denoise": one hard job becomes a thousand easy ones</h3>
+<p>A diffusion model defines two processes running in opposite directions. <strong>Forward</strong>: take a real image <code>x₀</code> and, following a <em>fixed recipe</em>, mix in Gaussian noise step by step until after <code>T</code> steps it is pure noise <code>x_T</code>. This half has <strong>no learnable parameters at all</strong> — it is an addition formula. <strong>Reverse</strong>: start from pure noise and subtract the noise back out, step by step, until an image develops. That half is what the network learns.</p>
+<p>Why is this rewrite the bedrock of the chapter? Because it makes <strong>the supervision signal carry its own answer</strong>: pick a random image, pick a random timestep <code>t</code>, mix in the noise yourself — and what the network ought to output (the blob of noise you just mixed in) is <em>known</em>. No human labels, and no adversary network acting as judge. The reason GANs are hard to train is precisely that their "right answer" comes from another network that is also moving; diffusion swaps that moving target for a fixed one.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 215" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="fa" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker>
+<marker id="fb" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="18">1 · Forward q: add noise by a fixed recipe — nothing is learned here</text>
+<line marker-end="url(#fa)" stroke="#5b9df9" stroke-width="1.4" x1="26" x2="606" y1="34" y2="34"></line>
+<rect fill="rgba(91,157,249,0.06)" height="52" rx="7" stroke="#7c8593" width="100" x="20" y="48"></rect>
+<text fill="#e7ebf1" font-size="13" font-weight="700" text-anchor="middle" x="70" y="70">x₀</text><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="70" y="88">original</text>
+<rect fill="rgba(91,157,249,0.10)" height="52" rx="7" stroke="#7c8593" width="100" x="140" y="48"></rect>
+<text fill="#e7ebf1" font-size="13" font-weight="700" text-anchor="middle" x="190" y="70">x₁</text><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="190" y="88">faint static</text>
+<rect fill="rgba(124,132,147,0.10)" height="52" rx="7" stroke="#7c8593" width="100" x="260" y="48"></rect>
+<text fill="#b9c0ca" font-size="13" font-weight="700" text-anchor="middle" x="310" y="70">⋯</text><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="310" y="88">blurrier</text>
+<rect fill="rgba(155,108,245,0.14)" height="52" rx="7" stroke="#7c8593" width="100" x="380" y="48"></rect>
+<text fill="#e7ebf1" font-size="13" font-weight="700" text-anchor="middle" x="430" y="70">x_t</text><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="430" y="88">half noise</text>
+<rect fill="rgba(155,108,245,0.26)" height="52" rx="7" stroke="#9b6cf5" stroke-width="2" width="100" x="500" y="48"></rect>
+<text fill="#e7ebf1" font-size="13" font-weight="700" text-anchor="middle" x="550" y="70">x_T</text><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="550" y="88">pure noise</text>
+<line marker-end="url(#fb)" stroke="#9b6cf5" stroke-width="1.4" x1="606" x2="26" y1="118" y2="118"></line>
+<text fill="#9b6cf5" font-size="12.5" font-weight="700" x="20" y="142">2 · Reverse p: the U-Net predicts the noise added, and subtracts it</text>
+<rect fill="rgba(91,157,249,0.05)" height="48" rx="7" stroke="rgba(91,157,249,0.30)" stroke-dasharray="5 4" width="586" x="20" y="154"></rect>
+<text fill="#b9c0ca" font-size="11" x="34" y="175">Train: random image + random t → add your own noise → <tspan fill="#8fbaff" font-weight="700">the answer is that noise, free</tspan></text>
+<text fill="#b9c0ca" font-size="11" x="34" y="193">Generate: start at x_T, walk back to x₀ step by step — how many steps is your choice</text>
+</svg>
+<figcaption>Figure 1 · The forward pass is not learned; only the reverse denoiser is. The forward pass hands every training sample its own answer.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/ddpm-paper28.en.html" rel="noopener" target="_blank">CS Papers · DDPM (Denoising Diffusion Probabilistic Models)</a> — the full derivation of both processes, why the loss collapses into a single mean-squared error, and where <code>T=1000</code> came from</aside>
+<h3>2. What the network actually learns is a subtraction</h3>
+<p>The training objective is so plain it hardly looks like a generative model: <code>L = ‖ε − ε_θ(x_t, t)‖²</code>. In words — the noise <code>ε</code> that was genuinely mixed in, versus the <code>ε_θ</code> the network guesses from the noisy image <code>x_t</code>; the gap between them is the loss. <strong>An ordinary regression problem</strong>, with stable gradients, reproducible runs and a loss curve you can schedule against. That is its engineering advantage over a GAN.</p>
+<p>The backbone is a <strong>U-Net</strong>: downsample to capture large structure, upsample to restore detail, with skip connections handing high-frequency information straight across at matching scales. Because input and output share a shape, it fits per-pixel prediction naturally. The timestep <code>t</code> is embedded into a vector and injected into every block, which tells one set of weights <em>which step this is, and therefore how hard to wipe</em>. That matters: <strong>all steps share a single set of parameters</strong>, or the model size would be multiplied by a thousand.</p>
+<h3>3. Latent space: move those steps onto a sketch pad</h3>
+<p>This is the real turn of the chapter. You <strong>train a separate autoencoder first</strong>: encoder <code>E</code> compresses <code>512×512×3</code> down to <code>64×64×4</code>, decoder <code>D</code> restores it. The information drops from <code>786,432</code> numbers to <code>16,384</code> — a ratio of <strong>48:1</strong>. Then <strong>the entire diffusion process runs only on the latent</strong>, and you decode exactly once at the end.</p>
+<p>Why does that work? Most of the bits in a natural image are spent on high-frequency texture the eye barely registers, and a deterministic decoder can reproduce that well enough. The diffusion network's capacity should go into <strong>semantics and composition</strong> — what is in the picture and where it sits — not into reproducing skin pores. It also settles the attention bill: positions drop from over 262,000 to <code>4,096</code>, and a squared cost falls by three orders of magnitude, which is what makes global attention viable again.</p>
+<p><strong>The cost has to be stated plainly</strong>: the encode/decode round trip is <em>lossy</em>, and the more aggressive the compression (downsampling factor <code>f=16</code>, <code>f=32</code>), the more small structure dissolves. Small text, human hands and dense regular grids are the worst hit — a fair share of this generation's signature artifacts are not the diffusion network painting wrong, but <strong>the decoder failing to bring detail back</strong>.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 245" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="fc" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#7c8593" font-size="12.5" font-weight="700" x="20" y="18">1 · Pixel-space diffusion — every step runs at full size</text>
+<rect fill="rgba(91,157,249,0.06)" height="46" rx="7" stroke="#7c8593" width="120" x="20" y="32"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="80" y="51">noise / image</text><text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="80" y="67">512×512×3</text>
+<line marker-end="url(#fc)" stroke="#7c8593" x1="142" x2="164" y1="55" y2="55"></line>
+<rect fill="rgba(224,107,107,0.12)" height="46" rx="7" stroke="#e06b6b" stroke-width="1.6" width="190" x="166" y="32"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="261" y="51">U-Net denoise × T steps</text><text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="261" y="67">786,432 numbers per step</text>
+<line marker-end="url(#fc)" stroke="#7c8593" x1="358" x2="380" y1="55" y2="55"></line>
+<rect fill="rgba(91,157,249,0.06)" height="46" rx="7" stroke="#7c8593" width="110" x="382" y="32"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="437" y="51">output</text><text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="437" y="67">512×512</text>
+<text fill="#e06b6b" font-size="10.5" font-weight="700" x="504" y="52">attention pos.</text><text fill="#e06b6b" font-family="monospace" font-size="10.5" font-weight="700" x="504" y="68">262,144</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="20" y="118">2 · Latent diffusion — encode once, run on the sketch, decode once</text>
+<rect fill="rgba(91,157,249,0.06)" height="50" rx="7" stroke="#7c8593" width="85" x="20" y="132"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="62" y="152">noise / image</text><text fill="#7c8593" font-family="monospace" font-size="9" text-anchor="middle" x="62" y="169">512×512×3</text>
+<line marker-end="url(#fc)" stroke="#7c8593" x1="107" x2="117" y1="157" y2="157"></line>
+<rect fill="rgba(155,108,245,0.12)" height="50" rx="7" stroke="#9b6cf5" width="85" x="120" y="132"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="162" y="152">Encoder E</text><text fill="#b9c0ca" font-size="9" text-anchor="middle" x="162" y="169">48× smaller</text>
+<line marker-end="url(#fc)" stroke="#7c8593" x1="207" x2="217" y1="157" y2="157"></line>
+<rect fill="rgba(91,157,249,0.10)" height="50" rx="7" stroke="#7c8593" width="85" x="220" y="132"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="262" y="152">latent z</text><text fill="#7c8593" font-family="monospace" font-size="9" text-anchor="middle" x="262" y="169">64×64×4</text>
+<line marker-end="url(#fc)" stroke="#7c8593" x1="307" x2="317" y1="157" y2="157"></line>
+<rect fill="rgba(91,157,249,0.22)" height="50" rx="7" stroke="#5b9df9" stroke-width="2" width="85" x="320" y="132"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="362" y="152">U-Net denoise</text><text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="362" y="169">× N steps</text>
+<line marker-end="url(#fc)" stroke="#7c8593" x1="407" x2="417" y1="157" y2="157"></line>
+<rect fill="rgba(155,108,245,0.12)" height="50" rx="7" stroke="#9b6cf5" width="85" x="420" y="132"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="462" y="152">Decoder D</text><text fill="#b9c0ca" font-size="9" text-anchor="middle" x="462" y="169">restore</text>
+<line marker-end="url(#fc)" stroke="#7c8593" x1="507" x2="517" y1="157" y2="157"></line>
+<rect fill="rgba(91,157,249,0.06)" height="50" rx="7" stroke="#7c8593" width="85" x="520" y="132"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="562" y="152">output</text><text fill="#7c8593" font-family="monospace" font-size="9" text-anchor="middle" x="562" y="169">512×512</text>
+<rect fill="rgba(91,157,249,0.05)" height="44" rx="7" stroke="rgba(91,157,249,0.30)" stroke-dasharray="5 4" width="586" x="20" y="192"></rect>
+<text fill="#b9c0ca" font-size="10.5" x="34" y="210">Only <tspan fill="#8fbaff" font-weight="700">16,384</tspan> numbers per step ≈ 1/48 of pixel space; attention positions 262,144 → <tspan fill="#8fbaff" font-weight="700">4,096</tspan></text>
+<text fill="#b9c0ca" font-size="10.5" x="34" y="228">Cost: E / D are lossy — small text, fingers and dense grids do not come back</text>
+</svg>
+<figcaption>Figure 2 · Latent diffusion: encode and decode once each, and run all N steps on a canvas 1/48 the size.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/generative-models-day20.en.html" rel="noopener" target="_blank">AI/ML · Day 20 Generative Models</a> — what VAE, GAN and diffusion objectives each optimise, and why a latent space can serve compression and generation at the same time</aside>
+<h3>4. Getting to 1024: cascaded super-resolution vs a bigger latent canvas</h3>
+<p>Latent space makes <code>512×512</code> practical, but products want <code>1024×1024</code> and beyond. Two roads.</p>
+<p><strong>Road A · cascaded</strong>: generate at low resolution, then chain one or two <em>diffusion super-resolution</em> stages to enlarge (say <code>64 → 256 → 1024</code>). Each stage is small, can be trained and swapped independently, and the low-resolution stage gets to spend its compute on composition. The cost is that <strong>errors propagate down the chain</strong> — if stage one paints a bad hand, the next two only render that hand more sharply — total latency is the <em>sum</em> of every stage's steps, and you now operate three models.</p>
+<p><strong>Road B · enlarge the latent</strong>: keep the pipeline and move the latent from <code>64×64</code> to <code>128×128</code> (which decodes to <code>1024×1024</code>). One pipeline, end to end, no seams between stages. The cost is that VRAM and per-step time scale with latent area — double the side and the area quadruples — and the model usually needs another fine-tuning round at the target resolution, or you get duplicated composition (the same subject painted twice).</p>
+<p>In practice the two get mixed: the main pipeline takes road B to <code>1024</code>, with one lightweight super-resolution stage bolted on to reach <code>2048</code> and above.</p>
+<h3>5. Sampling steps: the one dial you can turn live</h3>
+<p>Original DDPM sampling walks all <code>T=1000</code> steps. DDIM rewrites sampling as a deterministic process that can skip ahead, reaching comparable quality in <strong>20–50 steps</strong> — and note that <strong>the model is not retrained</strong>; only the sampler changes.</p>
+<p>What this means for system design is underrated: <strong>step count is the only parameter in the whole pipeline you can set per request, live, and trade almost linearly for latency and cost</strong>. Same weights: 20 steps for a preview, 50 for the final take, a 2.5× cost difference, and no second model to deploy. Swapping models, by contrast, means reloading weights and re-warming — minutes, not milliseconds.</p>
+<p>The other half is <strong>batching</strong>. Every diffusion step is the same large matrix operation, so packing the same step from several requests into one GPU call saturates utilisation and lifts throughput considerably — but forming a batch means waiting, which pushes single-request <code>p99</code> up. The usual answer is a batching window of a few tens of milliseconds: take a smaller batch rather than let the tail get away from you.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/inference-optimization-day9.en.html" rel="noopener" target="_blank">AI/ML · Day 9 Inference Optimization</a> — what batching, quantisation, distillation and operator fusion each trade away, and why throughput and tail latency so often pull in opposite directions</aside>
+<h2>The trade-offs, and how to choose</h2>
+<p>This chapter really comes down to two choices: <strong>which canvas you compute on</strong>, and <strong>how many steps you take</strong>. The first fixes your cost ceiling and your quality ceiling; the second fixes per-request latency.</p>
+<p class="tcap">Table 1 · Four generation routes, and when each one is right</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Route</th><th>Training stability</th><th>Cost / latency per image</th><th>Quality ceiling</th><th>When to pick it</th></tr></thead>
+<tbody>
+<tr><th>GAN</th><td><strong>Poor</strong>: an adversarial game that is hard to balance; mode collapse</td><td><strong>Lowest</strong>: one forward pass, milliseconds</td><td>Very high in a narrow domain (faces); struggles open-domain</td><td>Narrow domain, hard latency budget, on-device (live face swap, avatar styling)</td></tr>
+<tr><th>Pixel-space diffusion</th><td>Good: a plain regression objective</td><td><strong>Highest</strong>: every step over <code>786k</code> numbers</td><td>High, but compute caps the resolution</td><td>Largely research and low-res baselines now; superseded in production</td></tr>
+<tr><th>Latent diffusion</th><td>Good: same objective as pixel-space</td><td>Middling: roughly <code>1/48</code> of pixel space per step</td><td>High; fine detail is bounded by the decoder</td><td><strong>The default</strong>: open-domain text-to-image / image-to-image, deployable on one GPU</td></tr>
+<tr><th>Cascaded diffusion</th><td>Good, but 2–3 models to train</td><td>Mid-high: total steps are the <em>sum</em> across stages</td><td>Very high; the upscaling stage restores sharpness</td><td>You need extreme resolution and accept multi-model ops plus error propagation</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · Choosing a step count (same weights, switchable in production)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Step band</th><th>Relative cost</th><th>Typical problem</th><th>Where it fits</th></tr></thead>
+<tbody>
+<tr><th>1–4 steps (distilled)</th><td><code>~1/25</code></td><td>Visible loss of detail and composition; needs purpose-distilled weights</td><td>Live preview, generate-as-you-type, on-device inference</td></tr>
+<tr><th>20–30 steps</th><td><code>~1/2</code></td><td>Occasional unstable composition; complex scenes drop elements</td><td>The default for interactive generation — the image a user is waiting on</td></tr>
+<tr><th>50+ steps</th><td><code>1×</code> baseline</td><td>Returns fall off fast; extra steps are mostly wasted money</td><td>Final renders, offline batch generation, detail-sensitive commercial assets</td></tr>
+</tbody></table></div>
+<p>One more choice that tends to get skipped: <strong>the downsampling factor <code>f</code></strong>. At <code>f=4</code> the decoder is more faithful but the latent is larger (4× the compute); <code>f=8</code> is the industry's balance point; at <code>f=16</code> and above you save compute but detail collapses badly. Picking <code>f</code> is drawing a line between "how much the decoder can restore" and "how long diffusion takes" — and <strong>once set it is very hard to change</strong>, because it fixes the input shape of every diffusion weight you train.</p>
+<h2>Why it matters / real systems</h2>
+<p>This chapter is not about the internals of one model; it is about <strong>the skeleton every image product built after 2022 shares</strong>: an autoencoder that fixes the canvas, a U-Net that denoises, a sampler that fixes the step count. Stable Diffusion, DALL·E 2, Imagen and Midjourney differ mainly in data, in how conditioning is injected, and in their resolution strategy — those three bones are the same. Get the skeleton straight and Ch 9 (text-to-image), Ch 10 (personalisation) and Ch 11 (text-to-video) all read as things bolted onto it.</p>
+<p>In interviews the follow-up is almost always about <strong>cost</strong>: given a million image requests a day at <code>1024×1024</code>, how do you set step count, how do you batch, when do you switch to distilled weights, where in the pipeline does super-resolution belong. Getting "steps × latent area × batch size" right to the correct order of magnitude is worth far more than reciting the DDPM derivation.</p>
+<div class="ev">
+<div class="evh">Evidence from industry</div>
+<ul>
+<li><strong>OpenAI: diffusion beat GANs on ImageNet.</strong> Its official <code>guided-diffusion</code> repository opens with "This is the codebase for <em>Diffusion Models Beat GANs on Image Synthesis</em>" and publishes FID at each resolution: <code>2.07</code> at <code>64×64</code>, <code>4.59</code> at <code>256×256</code>, <code>7.72</code> at <code>512×512</code> (best <code>3.85</code> when upsampled). These are the numbers most often cited for diffusion displacing GANs as the mainstream route.<span class="src">OpenAI · guided-diffusion official repository (2021) · <a href="https://github.com/openai/guided-diffusion" rel="noopener" target="_blank">github.com/openai/guided-diffusion</a></span></li>
+<li><strong>CompVis / Stability AI: latent space pulled generation onto consumer GPUs.</strong> The official Stable Diffusion v1 repository describes the model as "a downsampling-factor 8 autoencoder with an 860M UNet and CLIP ViT-L/14 text encoder", fine-tuned on <code>512×512</code> images from a subset of LAION-5B, and states plainly that it "runs on a GPU with at least 10GB VRAM". That <strong>10GB</strong> figure is this chapter's latent-space design cashed out in the real world.<span class="src">CompVis · Stable Diffusion official repository (2022) · <a href="https://github.com/CompVis/stable-diffusion" rel="noopener" target="_blank">github.com/CompVis/stable-diffusion</a></span></li>
+<li><strong>Stanford: swap the sampler, keep the weights.</strong> The DDIM authors (Song, Meng, Ermon) note in their official repository that the model is "trained with the same procedure as Denoising Diffusion Probabilistic Model" but "costs much less time and compute if you want to sample from it" — one set of weights, a different sampler, and the step count falls from a thousand to a few dozen.<span class="src">Stanford (Ermon Group) · DDIM official repository (2020) · <a href="https://github.com/ermongroup/ddim" rel="noopener" target="_blank">github.com/ermongroup/ddim</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and open arguments</h2>
+<ul>
+<li><strong>"More steps is always better" is wrong.</strong> Returns fall off fast; going from 50 to 150 steps is often visually indistinguishable at three times the cost. Step count should be set by the <em>use case</em>, not by "crank it to max to be safe".</li>
+<li><strong>FID is not image quality.</strong> It measures the distance between two feature distributions and is nearly blind to what people actually notice — finger counts, spelling, object counts. It is also sensitive to sample size, running systematically high with few samples, so <strong>comparing FID numbers across papers usually does not hold</strong>; it only means something within one evaluation setup. Human evaluation stays mandatory before launch.</li>
+<li><strong>Blaming every artifact on diffusion.</strong> The lossy compression is a separate layer: mangled small text and scrambled grids are often the decoder failing to restore, and a bigger U-Net will not help. You have to change <code>f</code> or change the decoder.</li>
+<li><strong>"Diffusion models retrieve and collage training images" is a misconception</strong> — they store parameters, not a library of pictures. But that does not make training-data licensing a non-issue; it is a separate argument, and a technical rebuttal should not be used to wave it away.</li>
+<li><strong>Dated in places.</strong> The book was written in 2024, and two things have visibly rewritten this chapter since. First, <strong>few-step distillation</strong> (consistency models, adversarial distillation) pushed usable step counts down to 1–4, so the top band of Table 2 moved from experimental to routine. Second, the backbone is shifting <strong>from U-Net to Transformer (DiT)</strong>, which scales better. The core judgement — compress to a latent first, then iterate denoising — has not changed.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1 · The central claim: the bottleneck at high resolution is not fine detail but <strong>how large a canvas you repeat tens-to-hundreds of steps on</strong>.</p>
+<p>2 · Diffusion rewrites one-shot generation as step-by-step denoising. The forward pass has <strong>no learnable parameters</strong>, so training answers are free and no adversary is needed — that is the root of its stability over GANs.</p>
+<p>3 · The network learns a subtraction (predict the noise that was added); the backbone is a U-Net, the timestep <code>t</code> is injected as an embedding, and <strong>all steps share one set of weights</strong>.</p>
+<p>4 · Latent space is the turn: <code>512×512×3</code> compressed to <code>64×64×4</code>, <strong>48:1</strong>; attention positions fall from over 262,000 to 4,096, collapsing a squared cost.</p>
+<p>5 · The price is lossiness: small text, fingers and dense texture do not come back — those artifacts usually live in the decoder, not the denoiser.</p>
+<p>6 · Two roads to 1024: <strong>cascaded super-resolution</strong> (divide and conquer, but errors propagate) vs <strong>a bigger latent canvas</strong> (end-to-end consistent, but VRAM and per-step time scale with area).</p>
+<p>7 · <strong>Step count is the only dial you can turn live for near-linear latency</strong>: 20 steps for preview, 50 for final, same weights; batching lifts throughput but raises <code>p99</code>.</p>
+<p>8 · Evidence anchors: OpenAI's ImageNet FID (<code>4.59</code> at <code>256×256</code>) showed diffusion beating GANs; Stable Diffusion's <code>f=8</code> latent plus an 860M U-Net brought generation onto a <strong>10GB VRAM</strong> consumer card.</p>
+</div>
+</div>
+<footer>Books Deep Read · reading this page ≈ the core of this chapter; for full case studies and depth, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
