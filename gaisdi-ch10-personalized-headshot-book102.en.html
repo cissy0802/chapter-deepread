@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Generative AI System Design Interview Ch 10 · Personalized Headshot Generation — Book Deep-Read Book 102</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">Book Deep-Read · Generative AI System Design Interview · Chapter 10</p>
+<h1>Personalized Headshots: a Face Is the One Condition You Cannot Write Into a Prompt</h1>
+<p class="sub">Generative AI System Design Interview · Ch 10 · Ali Aminian, Hao Sheng &amp; Alex Xu · 2024</p>
+<p class="langbar"><a href="gaisdi-ch10-personalized-headshot-book102.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You upload a dozen phone selfies, pick a "professional headshot" style, wait a few minutes, and get back dozens of studio-lit portraits in a suit — <strong>with your face still being your face.</strong> This chapter is about how that pipeline is built.</p>
+<h2>A strange thing first</h2>
+<p>Last chapter's model was already very good at drawing. Tell it "a professional headshot of a woman in her thirties" and it produces something fast and beautiful — <strong>but it is a stranger.</strong> Add details: monolid eyes, a high nose bridge, a mole on the left cheek… by the twentieth adjective it is still somebody else.</p>
+<p>Think about it and you already know why: could you describe your mother in words well enough that a stranger could pick her out of a crowd? <strong>The words simply do not exist.</strong> What makes a face recognizable lives in millimetre-scale geometry, and adjectives are a very blunt instrument.</p>
+<h2>So stop describing — show it instead</h2>
+<p>If it can't be said, teach it differently: <strong>put a handful of your photos in front of the model, let it take a short class, and give you a brand-new name that means only you.</strong> Afterwards you say "draw that name standing on a snowy mountain" and it knows who to draw.</p>
+<p>There are two ways to run that class. One is to <strong>let it relearn everything</strong>: the memory sticks best, but every single user then needs their own full copy of the retrained "brain", several gigabytes each — and it easily overdoes it, getting so absorbed in you that afterwards everyone it draws looks like you.</p>
+<p>The other is what nearly every product picks: <strong>leave the original skills completely untouched and pin a tiny badge beside them.</strong> A few dozen megabytes, clipped on when you want a picture and taken off afterwards — so one brain can serve thousands of people in turn.</p>
+<h2>An easy trap</h2>
+<p>Overdo the class and what it learned is not "your face" but <strong>those dozen photos memorized whole</strong>. Ask for you on a snowy mountain and you get the same white study wall as before, just with a more accurate face.</p>
+<p>So "does it look like me" <strong>cannot be read alone</strong> — while it climbs, "does it do what I asked" is falling. What you want is where the two cross. It is also why a dozen photos from <em>different places and different angles</em> beat forty taken in front of the same wall.</p>
+<h2>And this chapter carries something extra</h2>
+<p>Earlier chapters generated fictional people; this one generates <strong>a real person</strong>. So a whole set of things the earlier chapters never needed has to be built into the flow: confirming on upload that the face really is yours, blocking what shouldn't be produced, leaving a traceable mark on the image, and — when someone deletes their account — <strong>destroying that badge along with the photos</strong>, because it amounts to a standing ability to recreate that person.</p>
+<p>The cost is concrete too: every user needs their own training run, a per-head compute bill none of the earlier chapters had.</p>
+<h2>Remember this one line</h2>
+<div class="tl">
+<p>Identity is the one condition you cannot talk your way into, so it has to be <strong>taught with samples</strong>; the winning way to teach is not "relearn everything" but "pin on a few-dozen-megabyte badge", because that lets one brain be shared by everyone and lets the memory <strong>be deleted cleanly</strong>; and "does it look like me" must always be read alongside "does it do what I asked", or you end up with a model that only recites its training photos.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the notation and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">Last chapter's condition was <strong>a sentence</strong>; this chapter's is <strong>a handful of photos</strong> — identity is the one condition that cannot be encoded into a prompt. The fix is to write it into the model from few samples: learn a single word vector (Textual Inversion), fine-tune the whole network with a built-in antidote (DreamBooth's prior preservation), or hang a low-rank bypass (LoRA). But the real systems problem sits outside the model: storing and hot-swapping <strong>one artifact per user</strong>, an evaluation where <strong>"looks like me" and "does what I asked" pull against each other</strong>, and likeness rights — the one chapter in the book where abuse prevention is not a bonus but the requirement itself.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Base model</strong>: last chapter's general text-to-image model — the one set of weights every user shares.</li>
+<li><strong>Fine-tuning</strong>: continuing to train an already-trained model on a little new data, nudging it in some direction.</li>
+<li><strong>Few-shot</strong>: learning from single digits to a few dozen samples, as opposed to training from scratch.</li>
+<li><strong>Embedding</strong>: representing a word or a face as a string of numbers; similar things end up with nearby strings.</li>
+<li><strong>Adapter</strong>: a small block of trainable parameters hung beside a frozen main model, holding the extra memory for one task or one identity.</li>
+<li><strong>Rank</strong>: how many genuinely independent directions a matrix has; lower rank means fewer expressible variations and fewer parameters.</li>
+<li><strong>Overfitting</strong>: the model memorizing the training samples instead of the pattern behind them; it falls apart in a new setting.</li>
+<li><strong>Face embedding</strong>: the string of numbers a face-recognition model outputs (commonly 512 dimensions); different photos of the same person land close together.</li>
+<li><strong>Cosine similarity</strong>: a measure of how closely two such strings point the same way, from −1 to 1; closer to 1 means more alike.</li>
+<li><strong>Biometric data</strong>: bodily features that uniquely identify a natural person — a face is the classic case, and most jurisdictions put extra constraints on it.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Question 9 of the ten in Part II. Ch9 wired <em>text</em> into a diffusion model; this chapter swaps in <em>images</em>, and the next one adds <em>time</em> — one more dimension of conditioning per chapter is the quiet thread running through the book's second half. It maps onto AI headshot apps and the "reference portrait / character consistency" features in mainstream image tools.</p>
+<h2>What this chapter is solving</h2>
+<p>Pin the scenario down first: a user uploads <strong>10–20 selfies</strong>, picks a style pack, and the system returns dozens of professional headshots within <strong>a few minutes</strong> — an inherently asynchronous product shape, not Ch9's second-scale synchronous generation.</p>
+<p>Why isn't Ch9's machinery enough? Because <strong>77 tokens cannot hold a face</strong>. Text conditioning has been discretized by language; it can only express things language has words for. What makes a face recognizable sits in millimetre-scale geometry — inter-eye distance, nasolabial folds, cheekbone projection — and a face-recognition model needs a <code>512</code>-dimensional continuous vector to hold it. Language has no words along those dimensions.</p>
+<p>What happens if you don't solve it? There is no "fluently wrong" escape hatch here, unlike last chapter: however polished the headshot, if it isn't you the product value is zero — <strong>users reject it at a glance</strong>.</p>
+<p>Two more constraints all but single-handedly determine the technical choices below:</p>
+<ul>
+<li><strong>The cost shape changed.</strong> Ch9 was "one model serves everyone"; this chapter is "one set of weights per person". Stored as full models, a million users × several GB is <strong>petabyte-scale storage</strong> — and those weights cannot share GPU memory with anyone else at inference time. The arithmetic doesn't close.</li>
+<li><strong>The input is a real face.</strong> Is the uploader the person? Can the output be used to deceive? In this chapter compliance and abuse prevention are not non-functional requirements in an appendix; they are the requirement.</li>
+</ul>
+<h2>The core content, properly</h2>
+<h3>1. The shared skeleton: make the samples themselves the condition</h3>
+<p>Since identity can't be described, it has to be <strong>taught with samples</strong>. The training objective never changes — it is still Ch8's denoising loss: add noise to your photo, have the model restore it. Exactly one thing varies: <strong>which parameters this round is allowed to change.</strong> That is the entire difference between the three mainstream routes: a single new slot in the token-embedding table, the whole denoising network, or a very narrow bypass beside the attention layers.</p>
+<figure>
+<svg viewBox="0 0 640 256" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<rect x="12" y="8" width="196" height="238" rx="10" fill="none" stroke="rgba(91,157,249,0.30)" stroke-dasharray="5 4"></rect>
+<rect x="222" y="8" width="196" height="238" rx="10" fill="none" stroke="rgba(91,157,249,0.30)" stroke-dasharray="5 4"></rect>
+<rect x="432" y="8" width="196" height="238" rx="10" fill="none" stroke="rgba(91,157,249,0.30)" stroke-dasharray="5 4"></rect>
+<text x="110" y="32" font-size="12" font-weight="700" fill="#8fbaff" text-anchor="middle">Textual Inversion</text>
+<text x="320" y="32" font-size="12" font-weight="700" fill="#8fbaff" text-anchor="middle">DreamBooth (full)</text>
+<text x="530" y="32" font-size="12" font-weight="700" fill="#8fbaff" text-anchor="middle">LoRA (low-rank)</text>
+<rect x="30" y="46" width="160" height="28" rx="5" fill="rgba(91,157,249,0.26)" stroke="#5b9df9" stroke-width="2.5"></rect>
+<text x="110" y="65" font-size="10.5" fill="#e7ebf1" text-anchor="middle">Embedding table +1</text>
+<rect x="30" y="82" width="160" height="28" rx="5" fill="rgba(255,255,255,0.03)" stroke="#7c8593" stroke-dasharray="4 3"></rect>
+<text x="110" y="101" font-size="10.5" fill="#7c8593" text-anchor="middle">Text encoder (frozen)</text>
+<rect x="30" y="118" width="160" height="70" rx="5" fill="rgba(255,255,255,0.03)" stroke="#7c8593" stroke-dasharray="4 3"></rect>
+<text x="110" y="158" font-size="10.5" fill="#7c8593" text-anchor="middle">Denoiser (frozen)</text>
+<text x="110" y="208" font-size="10" fill="#b9c0ca" text-anchor="middle">One new word vector only</text>
+<text x="110" y="230" font-size="10" fill="#9b6cf5" font-family="monospace" text-anchor="middle">artifact ≈ a few KB</text>
+<rect x="240" y="46" width="160" height="28" rx="5" fill="rgba(255,255,255,0.03)" stroke="#7c8593" stroke-dasharray="4 3"></rect>
+<text x="320" y="65" font-size="10.5" fill="#7c8593" text-anchor="middle">Embedding table (frozen)</text>
+<rect x="240" y="82" width="160" height="28" rx="5" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-dasharray="4 3"></rect>
+<text x="320" y="101" font-size="10.5" fill="#b9c0ca" text-anchor="middle">Text encoder (often too)</text>
+<rect x="240" y="118" width="160" height="70" rx="5" fill="rgba(155,108,245,0.26)" stroke="#9b6cf5" stroke-width="2.5"></rect>
+<text x="320" y="152" font-size="11" fill="#e7ebf1" text-anchor="middle" font-weight="700">Denoising network</text>
+<text x="320" y="170" font-size="10.5" fill="#e7ebf1" text-anchor="middle">all weights retrained</text>
+<text x="320" y="208" font-size="10" fill="#b9c0ca" text-anchor="middle">Best likeness, one model each</text>
+<text x="320" y="230" font-size="10" fill="#9b6cf5" font-family="monospace" text-anchor="middle">artifact ≈ 2–4 GB</text>
+<rect x="450" y="46" width="160" height="28" rx="5" fill="rgba(255,255,255,0.03)" stroke="#7c8593" stroke-dasharray="4 3"></rect>
+<text x="530" y="65" font-size="10.5" fill="#7c8593" text-anchor="middle">Embedding table (frozen)</text>
+<rect x="450" y="82" width="160" height="28" rx="5" fill="rgba(255,255,255,0.03)" stroke="#7c8593" stroke-dasharray="4 3"></rect>
+<text x="530" y="101" font-size="10.5" fill="#7c8593" text-anchor="middle">Text encoder (frozen)</text>
+<rect x="450" y="118" width="160" height="70" rx="5" fill="rgba(255,255,255,0.03)" stroke="#7c8593" stroke-dasharray="4 3"></rect>
+<text x="512" y="146" font-size="10.5" fill="#7c8593" text-anchor="middle">Denoiser (frozen)</text>
+<rect x="576" y="126" width="24" height="15" rx="3" fill="rgba(155,108,245,0.35)" stroke="#9b6cf5" stroke-width="2"></rect>
+<rect x="576" y="146" width="24" height="15" rx="3" fill="rgba(155,108,245,0.35)" stroke="#9b6cf5" stroke-width="2"></rect>
+<rect x="576" y="166" width="24" height="15" rx="3" fill="rgba(155,108,245,0.35)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="512" y="176" font-size="9.5" fill="#9b6cf5" text-anchor="middle" font-family="monospace">beside attention →</text>
+<text x="530" y="208" font-size="10" fill="#b9c0ca" text-anchor="middle">Originals untouched; bypass only</text>
+<text x="530" y="230" font-size="10" fill="#9b6cf5" font-family="monospace" text-anchor="middle">artifact ≈ tens of MB</text>
+</svg>
+<figcaption>The three routes differ in exactly one respect: which parameters this round may change. Artifact size, likeness ceiling and whether the base can be shared all follow from that choice.</figcaption>
+</figure>
+<h3>2. Textual Inversion: don't change the model, change the dictionary</h3>
+<p>The lightest route. The diffusion model and the text encoder are <strong>entirely frozen</strong>; you open one pseudo-word <code>S*</code> in the vocabulary and take gradients only on that single embedding vector — so that shown "a photo of <code>S*</code>", the model can restore your photo out of noise.</p>
+<p>In plain terms: <strong>none of the model's skill moved, you only added an entry to its dictionary</strong>. From then on <code>S*</code> enters prompts like any noun: "<code>S*</code> in a spacesuit, oil painting".</p>
+<p>The upside is seductive: the artifact is <strong>one vector, a few KB</strong>, entries compose freely, and it cannot possibly contaminate the base — you changed nothing.</p>
+<p>The cost is equally plain: <strong>expressiveness is capped by what one vector can hold</strong>. Likeness is the lowest of the three, and precisely the identifying details — a mole, a hairline — tend to disappear. With so few trainable parameters the gradient signal is weak, so it actually trains <strong>slower than LoRA</strong>, often needing thousands of steps. It suits a <em>style</em> or an <em>object</em> — and what this chapter needs is a face.</p>
+<h3>3. DreamBooth: full fine-tuning, and the antidote it must carry</h3>
+<p>The other extreme. A prompt built from a <strong>rare identifier plus a class word</strong> (shaped like "a <code>sks</code> person") fine-tunes the entire denoising network, often the text encoder with it.</p>
+<p>Why must the identifier be rare? Because you need <strong>a symbol the model has almost no prior for</strong> to hang this face on. Use "john" and you fight the john it already knows, ending up half you and half its imagined john. A meaningless short string like <code>sks</code> is an empty lot in the vocabulary.</p>
+<p>But it has two unavoidable side effects:</p>
+<ul>
+<li><strong>Language drift.</strong> Train repeatedly on the class word "person" and the model's understanding of <em>person</em> as a whole gets dragged toward your dozen photos — after which everyone it draws looks a bit like you. You contaminated not a word but an entire category.</li>
+<li><strong>Overfitting to background and pose.</strong> A dozen selfies usually come from one room, one angle, one light; the model can't tell "which parts are this person" from "which parts are just that wall".</li>
+</ul>
+<p>The antidote is the <strong>prior preservation loss</strong>: during training you also feed a batch of <strong>the model's own generated</strong> images of the same class ("a photo of a person" — implementations commonly use a couple of hundred), and require its output on that batch to stay essentially unchanged. In plain terms, <strong>you teach it "<code>sks</code> is you" while constantly reminding it what an ordinary person looks like</strong> — regularizing the model with its own prior knowledge.</p>
+<p>It reveals a general rule: <em>whenever you change a large model with a small amount of data, you must simultaneously arrange to preserve what it already knew</em>, or you get a model that is stronger in a narrow domain and dumber everywhere else.</p>
+<p>Likeness and controllability are the best of the three, but the artifact is <strong>a full copy of the weights</strong> (Stable Diffusion-family snapshots run <code>2–4 GB</code>), one per user — a storage dead end that keeps it out of consumer products.</p>
+<h3>4. LoRA: compress the change itself to low rank, and the serving problem dissolves</h3>
+<p>The engineering landing point of the chapter. LoRA's observation: what fine-tuning wants to do — move the weight matrix <code>W</code> a little — <strong>does not need a full-rank move</strong>. So freeze <code>W</code> and wire a narrow channel alongside it:</p>
+<p><code>output = W·x + B·A·x</code>, where <code>A</code> is <code>r×d</code>, <code>B</code> is <code>d×r</code>, and the rank <code>r</code> is typically <code>4–32</code></p>
+<p>What that formula is saying in plain terms: <strong>constrain "how much you may move" into a very narrow shape</strong>. Parameters drop from <code>d×d</code> to <code>2×d×r</code> — about <code>1/64</code> when <code>d=1024</code> and <code>r=8</code>. Only <code>A</code> and <code>B</code> train; not a byte of the original weights changes. It hangs on <strong>the attention layers' projection matrices</strong> — exactly where conditioning entered in Ch9. To change "how the model gets steered by its condition", those layers are the best value.</p>
+<p>The artifact lands at <strong>a few MB to a bit over a hundred MB</strong>, two to three orders of magnitude below a full model. But storage is only the paper win; <strong>the real dividend is the serving shape</strong>: the base model stays resident in GPU memory, and at inference you stack the adapter on by <code>user_id</code> and peel it off afterwards, so one GPU can serve thousands of users in turn. Full fine-tuning cannot do this — each user occupies their own copy of GPU memory, and utilization is doomed by design. Being a standalone file, the adapter can also enter a user's deletion pipeline, which matters below.</p>
+<p>Quality is <strong>close to DreamBooth</strong>, so the most common practice combines them: DreamBooth's recipe (rare identifier plus prior preservation), with the artifact emitted as a LoRA.</p>
+<p>There is also a route with no training at all: train an <strong>identity encoder</strong>, pull an identity vector from an off-the-shelf face-recognition model, and inject it through a separate cross-attention path decoupled from text — the user arrives and you simply run inference, <strong>no training, seconds to an image</strong>, at the price of a personalization ceiling fixed once and for all by that encoder. The book was written in 2024, when per-user fine-tuning was still the mainline.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/meta-learning-day39.en.html" rel="noopener" target="_blank">AI/ML · Day 39 Meta-Learning &amp; Few-Shot</a> — "train once per new task" versus "train a model that adapts to new tasks" are the two few-shot paradigms, and these two routes map straight onto them</aside>
+<h3>5. Evaluation: higher likeness is not necessarily better</h3>
+<p>Three yardsticks, pulling against each other:</p>
+<ul>
+<li><strong>Identity similarity</strong>: run the generated image and the user's originals through an off-the-shelf face-recognition model and take the <strong>cosine similarity of the face embeddings</strong>; the chapter's primary metric.</li>
+<li><strong>Prompt fidelity</strong>: Ch9's <code>CLIP score</code> — did it actually deliver the suit, the mountain, the lighting.</li>
+<li><strong>Quality and diversity</strong>: <code>FID</code> plus human review.</li>
+</ul>
+<p>The chapter's most counter-intuitive point: <strong>a monotonically rising identity similarity is not good news.</strong> Push the step count and similarity does keep climbing — but the later gains come from the model starting to <strong>copy the training photos</strong>: ask for "on a snowy mountain" and you still get that white study wall, only with a more accurate face. Fidelity collapses, diversity implodes, and the primary metric glows green.</p>
+<p>So <strong>plot two curves</strong>: training intensity (steps, learning rate, rank <code>r</code>) on the x-axis, identity similarity and prompt fidelity on the y-axis, and <strong>stop early where they cross</strong>. This is the same disease as <code>FID</code> and <code>CLIP score</code> moving against each other along <code>w</code> in Ch9 — the dial just moved from sampling time to training time. Add one yardstick unique to this chapter: <strong>"is it copying"</strong> — run near-duplicate detection between generated images and training photos, and a hit is hard proof of overfitting.</p>
+<figure>
+<svg viewBox="0 0 640 252" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<text x="16" y="22" font-size="12" font-weight="700" fill="#5b9df9">Train longer and the two yardsticks move apart</text>
+<rect x="248" y="38" width="88" height="162" rx="6" fill="rgba(91,157,249,0.10)" stroke="#5b9df9" stroke-dasharray="5 4"></rect>
+<text x="292" y="34" font-size="10.5" fill="#8fbaff" text-anchor="middle">sweet spot · stop here</text>
+<line x1="70" y1="30" x2="70" y2="200" stroke="rgba(124,133,147,0.6)"></line>
+<line x1="70" y1="200" x2="612" y2="200" stroke="rgba(124,133,147,0.6)"></line>
+<path d="M70,192 C140,142 200,106 280,90 C380,72 480,64 600,60" fill="none" stroke="#5b9df9" stroke-width="2.5"></path>
+<path d="M70,68 C150,66 212,68 280,78 C380,98 480,152 600,186" fill="none" stroke="#9b6cf5" stroke-width="2.5"></path>
+<text x="596" y="48" font-size="10.5" fill="#8fbaff" text-anchor="end">identity similarity</text>
+<text x="596" y="170" font-size="10.5" fill="#9b6cf5" text-anchor="end">prompt fidelity / diversity</text>
+<text x="70" y="220" font-size="10.5" fill="#7c8593">training intensity: steps / learning rate / rank r  →</text>
+<text x="16" y="242" font-size="10" fill="#7c8593">That last bit of likeness is bought by memorizing the photos: ask for a mountain, get the same study wall.</text>
+</svg>
+<figcaption>Identity similarity and prompt fidelity move in opposite directions along training intensity. Report only the primary metric and the winner is guaranteed to be the overfitted checkpoint.</figcaption>
+</figure>
+<h3>6. Turning it into a service: async training, hot-swapped adapters, clean deletion</h3>
+<p><strong>Training is an async job, not a synchronous request.</strong> Training one user's LoRA on a single mainstream training card takes <strong>minutes</strong> (commonly five to twenty), far beyond any HTTP timeout. The shape is therefore fixed: upload → verify → enqueue → GPU worker → artifact to object storage → callback. That is why these products all say "we'll notify you" instead of spinning.</p>
+<p><strong>Inference shares the base and hot-swaps the adapter.</strong> The first image for a given user pulls tens of MB from object storage — hundreds of milliseconds in-region; an LRU cache keyed on activity makes the cold start effectively invisible.</p>
+<p><strong>Deletion is a hard requirement here.</strong> On account closure you must delete not just the original photos but <strong>the adapter itself</strong> — it is data derived from biometrics, and keeping it means keeping a standing ability to recreate that person. That yields one hard architectural constraint: <strong>never merge the adapter into shared weights</strong>. Once baked into the base it cannot be separated out or cleanly deleted; stacking at runtime and peeling off afterwards is the deletable shape.</p>
+<figure>
+<svg viewBox="0 0 640 258" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs>
+<marker id="p1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="p2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text x="12" y="18" font-size="11.5" font-weight="700" fill="#5b9df9">① Enrollment: one-off, asynchronous</text>
+<rect x="12" y="26" width="104" height="40" rx="6" fill="rgba(91,157,249,0.10)" stroke="#5b9df9"></rect>
+<text x="64" y="44" font-size="10.5" fill="#e7ebf1" text-anchor="middle">User upload</text>
+<text x="64" y="59" font-size="10" fill="#b9c0ca" text-anchor="middle">10–20 selfies</text>
+<line x1="118" y1="46" x2="130" y2="46" stroke="#7c8593" marker-end="url(#p1)"></line>
+<rect x="134" y="26" width="112" height="40" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
+<text x="190" y="44" font-size="10.5" fill="#b9c0ca" text-anchor="middle">Identity check</text>
+<text x="190" y="59" font-size="10" fill="#7c8593" text-anchor="middle">liveness · celebrity</text>
+<line x1="248" y1="46" x2="260" y2="46" stroke="#7c8593" marker-end="url(#p1)"></line>
+<rect x="264" y="26" width="92" height="40" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
+<text x="310" y="44" font-size="10.5" fill="#b9c0ca" text-anchor="middle">Async job</text>
+<text x="310" y="59" font-size="10" fill="#7c8593" text-anchor="middle">queue</text>
+<line x1="358" y1="46" x2="370" y2="46" stroke="#7c8593" marker-end="url(#p1)"></line>
+<rect x="374" y="26" width="128" height="40" rx="6" fill="rgba(91,157,249,0.18)" stroke="#5b9df9" stroke-width="2"></rect>
+<text x="438" y="44" font-size="10.5" fill="#e7ebf1" text-anchor="middle">GPU train worker</text>
+<text x="438" y="59" font-size="10" fill="#8fbaff" text-anchor="middle">minutes</text>
+<line x1="504" y1="46" x2="516" y2="46" stroke="#7c8593" marker-end="url(#p1)"></line>
+<rect x="520" y="26" width="108" height="40" rx="6" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5"></rect>
+<text x="574" y="44" font-size="10.5" fill="#e7ebf1" text-anchor="middle">Adapter</text>
+<text x="574" y="59" font-size="10" fill="#b9c0ca" text-anchor="middle">tens of MB</text>
+<path d="M574,68 L574,84 L446,84 L446,98" fill="none" stroke="#9b6cf5" stroke-dasharray="5 4" marker-end="url(#p2)"></path>
+<rect x="196" y="100" width="248" height="34" rx="6" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5" stroke-dasharray="5 4"></rect>
+<text x="320" y="121" font-size="10.5" fill="#e7ebf1" text-anchor="middle">Object storage: user_id → adapter</text>
+<text x="152" y="156" font-size="11.5" font-weight="700" fill="#5b9df9">② Generation: online, shared base</text>
+<path d="M320,136 L320,150 L194,150 L194,164" fill="none" stroke="#9b6cf5" stroke-dasharray="5 4" marker-end="url(#p2)"></path>
+<text x="12" y="156" font-size="10" fill="#9b6cf5" font-family="monospace">hot-swap ↓</text>
+<rect x="12" y="166" width="92" height="40" rx="6" fill="rgba(91,157,249,0.10)" stroke="#5b9df9"></rect>
+<text x="58" y="184" font-size="10.5" fill="#e7ebf1" text-anchor="middle">Request</text>
+<text x="58" y="199" font-size="10" fill="#b9c0ca" text-anchor="middle">+ style prompt</text>
+<line x1="106" y1="186" x2="122" y2="186" stroke="#7c8593" marker-end="url(#p1)"></line>
+<rect x="126" y="166" width="140" height="40" rx="6" fill="rgba(91,157,249,0.18)" stroke="#5b9df9" stroke-width="2"></rect>
+<text x="196" y="184" font-size="10.5" fill="#e7ebf1" text-anchor="middle">Resident base model</text>
+<text x="196" y="199" font-size="10" fill="#8fbaff" text-anchor="middle">+ that user's adapter</text>
+<line x1="268" y1="186" x2="284" y2="186" stroke="#7c8593" marker-end="url(#p1)"></line>
+<rect x="288" y="166" width="100" height="40" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
+<text x="338" y="191" font-size="10.5" fill="#b9c0ca" text-anchor="middle">Denoise</text>
+<line x1="390" y1="186" x2="406" y2="186" stroke="#7c8593" marker-end="url(#p1)"></line>
+<rect x="410" y="166" width="122" height="40" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
+<text x="471" y="184" font-size="10.5" fill="#b9c0ca" text-anchor="middle">Output filter</text>
+<text x="471" y="199" font-size="10" fill="#7c8593" text-anchor="middle">+ invisible watermark</text>
+<line x1="534" y1="186" x2="550" y2="186" stroke="#7c8593" marker-end="url(#p1)"></line>
+<rect x="554" y="166" width="74" height="40" rx="6" fill="rgba(91,157,249,0.10)" stroke="#5b9df9"></rect>
+<text x="591" y="191" font-size="10.5" fill="#e7ebf1" text-anchor="middle">Return</text>
+<text x="12" y="232" font-size="10" fill="#7c8593">On account closure: the photos AND that adapter in object storage both go — which is why you never merge</text>
+<text x="12" y="248" font-size="10" fill="#7c8593">the adapter into the resident base; once baked in, it cannot be separated out or cleanly deleted.</text>
+</svg>
+<figcaption>The system is two independent paths: enrollment trains an adapter asynchronously, generation hot-swaps it onto the shared base — and precisely because it stays a standalone file, it can be deleted cleanly.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/privacy-compliance-day43.en.html" rel="noopener" target="_blank">System Design · Day 43 Privacy &amp; Compliance Architecture</a> — when "delete" is no longer a DELETE: clearing derived data, backups and index copies together, and how to design the deletion pipeline</aside>
+<h3>7. Likeness rights and abuse prevention: the one requirement you cannot treat as a bonus</h3>
+<p>The same capability, pointed at someone else's photos, is a deepfake. So protection has to be <strong>designed into the flow</strong>, not bolted on as a filter afterwards:</p>
+<ul>
+<li><strong>Input side: confirm it's the person.</strong> A guided selfie (randomized on-the-spot actions) beats "upload an album" by a wide margin — the latter lets anyone model a colleague or an ex. This is not a UX detail; it decides whether your system can be used as a forgery tool.</li>
+<li><strong>Training side: block celebrities.</strong> Match uploads against a celebrity face set and refuse on a hit.</li>
+<li><strong>Output side: filtering is mandatory, and one notch stricter than Ch9.</strong> There the output was a fictional person; here every inappropriate image points at a specific, recognizable human being.</li>
+<li><strong>Provenance: invisible watermark plus content-credential metadata.</strong> But be honest about its limits — screenshots, recompression and cropping all weaken it. It is <strong>a chain of evidence, not a defence</strong>.</li>
+<li><strong>Compliance: faces are special-category data.</strong> Most jurisdictions classify face data used to uniquely identify a natural person as requiring <strong>separate, explicit consent</strong>; that consent cannot be buried in general terms, and the retention period must be stated.</li>
+</ul>
+<h2>Key trade-offs and choices</h2>
+<p class="tcap">Table 1 · Choosing among the four personalization routes</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Route</th><th>What changes</th><th>Artifact / training</th><th>Cost</th><th>When to pick it</th></tr></thead>
+<tbody>
+<tr><th>Textual Inversion</th><td>One new word's embedding vector</td><td>A few KB; trains slowly</td><td><strong>Lowest likeness</strong>, details lost</td><td>Styles or objects; faces are a stretch</td></tr>
+<tr><th>DreamBooth, full</th><td>Whole denoiser (often the text encoder too)</td><td><code>2–4 GB</code>; minutes</td><td>One full model per person, <strong>no shared GPU memory</strong></td><td>Quality ceiling reference; unviable for consumer scale</td></tr>
+<tr><th>LoRA (+ DreamBooth recipe)</th><td>Low-rank bypass <code>B·A</code> beside attention</td><td>A few MB–100+ MB; minutes</td><td>Slightly below full; rank <code>r</code> needs tuning</td><td><strong>The default</strong>: shared base, hot-swap, deletable</td></tr>
+<tr><th>Identity encoder (zero-shot)</th><td>No per-user training; inject a face vector at inference</td><td>No per-user artifact; <strong>seconds</strong></td><td>Likeness and personalization ceiling fixed by the encoder</td><td>Where a few minutes' wait is unacceptable</td></tr>
+</tbody>
+</table>
+</div>
+<p class="tcap">Table 2 · Setting training intensity (steps / rank <code>r</code> / learning rate)</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Setting</th><th>You get</th><th>You pay</th><th>How to spot it</th></tr></thead>
+<tbody>
+<tr><th>Too weak</th><td>Prompts obeyed in full, background and pose freely changeable</td><td><strong>Not you</strong> — more like a distant relative</td><td>Cosine similarity clearly below the same-person baseline</td></tr>
+<tr><th>Sweet spot</th><td>Recognizably you, and the requested setting / outfit / lighting mostly lands</td><td>You must sweep the intensity to find it</td><td>Where the two curves cross; keep several snapshots and pick by hand</td></tr>
+<tr><th>Too strong</th><td>Highest identity similarity, best-looking primary metric</td><td><strong>Copies the training photos</strong>: background and pose memorized too, prompt ignored</td><td>Near-duplicate detection hits; <code>CLIP score</code> drops</td></tr>
+</tbody>
+</table>
+</div>
+<p>One lever fits in no table and is the cheapest of all: <strong>how you collect the photos</strong>. A dozen selfies across <em>different settings, angles and lighting</em> clearly beat forty taken in front of one wall — what overfitting feeds on is exactly the shared background and pose. That lever lives in your onboarding copy and costs no compute at all.</p>
+<h2>Why it matters / in real systems</h2>
+<p>Asked in an interview how you'd do personalization, "fine-tune it" is a non-answer. This chapter gives three separately actionable layers: <strong>what changes</strong> (word vector / full model / low-rank bypass), <strong>where you train</strong> (once per user / one encoder once) and <strong>how you serve</strong> (dedicated GPU memory / shared base with hot-swap). Keeping those three apart already beats most answers.</p>
+<p>LoRA's significance also long ago outgrew this chapter: it is today <strong>the default shape of all large-model customization</strong> — domain adaptation for language models, style packs for image models, the same "freeze the trunk, hang a low-rank bypass".</p>
+<div class="ev">
+<div class="evh">Industry evidence</div>
+<ul>
+<li><strong>Google Research: the "few" in few-shot is single digits.</strong> The official DreamBooth dataset repo states that "The dataset includes 30 subjects of 15 different classes" and that "The dataset contains a variable number of images per subject (4-6)". <strong>Four to six images per subject</strong> — that magnitude is both the premise of the whole chapter and the reason overfitting is its number one enemy.<span class="src">Google Research · dreambooth repo (2023) · <a href="https://github.com/google/dreambooth" rel="noopener" target="_blank">github.com/google/dreambooth</a></span></li>
+<li><strong>The Textual Inversion authors drew the ceiling of a single word vector themselves.</strong> The official repo says that "Using only 3-5 images of a user-provided concept" you can "learn to represent it through new 'words' in the embedding space of a frozen text-to-image model", and argues that "a single word embedding is sufficient for capturing unique and varied concepts". Note the word <em>concepts</em> — concepts and styles; holding a face that must be recognized is not its strength.<span class="src">Rinon Gal et al. · textual_inversion repo (2022) · <a href="https://github.com/rinongal/textual_inversion" rel="noopener" target="_blank">github.com/rinongal/textual_inversion</a></span></li>
+<li><strong>Microsoft: a low-rank bypass turns "one artifact per user" from unviable into viable.</strong> The official LoRA repo states that "LoRA reduces the number of trainable parameters by learning pairs of rank-decomposition matrices while freezing the original weights", and its README example takes RoBERTa base from <code>125M</code> trainable parameters down to <code>0.8M</code>. That ratio, not image quality, is the decisive variable in this chapter's technical choice.<span class="src">Microsoft · LoRA repo (2021) · <a href="https://github.com/microsoft/LoRA" rel="noopener" target="_blank">github.com/microsoft/LoRA</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/super-individual/image-gen-day47.en.html" rel="noopener" target="_blank">Super Individual · Day 47 Image Generation Engineering</a> — turning generation into a deliverable workflow: managing adapters, reusing styles, and the cost and QA of batch output</aside>
+<h2>Pitfalls and disputes</h2>
+<ul>
+<li><strong>Treating identity similarity as the only metric.</strong> The winner it crowns will always be the "copies the training photos" run. Read it alongside prompt fidelity, with near-duplicate detection as a backstop.</li>
+<li><strong>Thinking LoRA's value is saved storage.</strong> Storage is the paper win; the real dividends are <strong>GPU utilization from a shared base</strong> and the <strong>deletability</strong> of a standalone adapter file. Merge it into the base and both disappear at once.</li>
+<li><strong>Treating the rare identifier as an incantation.</strong> <code>sks</code> is just an empty lot in the vocabulary where the prior is weakest; a common first name fights the semantics already there.</li>
+<li><strong>Forgetting prior preservation.</strong> Without it, full fine-tuning drags the whole class word along — after which everyone it draws looks a bit like you. Not a hyperparameter issue; a mandatory part of the method.</li>
+<li><strong>Dating.</strong> The book was written in 2024, with per-user fine-tuning as the mainline. Since then <strong>encoder-based zero-shot personalization</strong> has spread widely through consumer products, compressing "wait a few minutes" into seconds at the price of likeness and personalization ceiling. The skeleton is unchanged: identity is always injected as a path <em>independent of text</em>.</li>
+<li><strong>The real dispute is not technical.</strong> This capability and its abuse are <strong>the same thing</strong> — there is no technical switch that only generates the uploader. The constraints can only come from the process: identity verification, retention and deletion, provenance, explicit consent. Answering this chapter as pure engineering is the biggest misreading of it.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① The core claim: <strong>identity is the one condition you cannot write into a prompt</strong> — 77 tokens cannot hold a face, whose recognizability needs a <code>512</code>-dimensional continuous vector. It can only be taught with samples.</p>
+<p>② The three routes differ in exactly one respect: <strong>which parameters this round may change</strong> — one new slot in the embedding table (Textual Inversion), the whole denoiser (DreamBooth), a low-rank bypass beside attention (LoRA). A fourth trains nothing: an <strong>identity encoder</strong> injecting a face vector at inference, seconds fast but ceilinged.</p>
+<p>③ <strong>DreamBooth must carry a prior preservation loss</strong>: teach "<code>sks</code> is you" while reminding it with its own generated class images what an ordinary person looks like, or language drift makes everyone look like you.</p>
+<p>④ <strong>LoRA is the product default</strong>: <code>W·x + B·A·x</code>, rank <code>r</code> of 4–32, artifact tens of MB. The real dividend is not storage but <strong>hot-swapping on a shared base</strong> (GPU utilization) and <strong>deletability</strong> (never merge it into the base).</p>
+<p>⑤ The most counter-intuitive evaluation point: <strong>monotonically rising identity similarity is not good</strong> — the later gains are bought by copying the training photos. Plot two curves, stop early where they cross, and add near-duplicate detection.</p>
+<p>⑥ Training duration dictates the serving shape: minutes means an <strong>async queue plus callback</strong>; inference shares the base and hot-swaps the adapter by <code>user_id</code>.</p>
+<p>⑦ The cheapest lever is on the product side: <strong>ask users for photos across different settings, angles and lighting</strong> — a dozen of those beat forty from the same wall.</p>
+<p>⑧ Abuse prevention <strong>is a requirement, not an appendix</strong>: liveness on upload, celebrity blocking at training, one-notch-stricter output filtering, watermarks as evidence only, and faces as special-category data requiring explicit consent.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Reading this page ≈ getting the core of the chapter; for the full case study, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
