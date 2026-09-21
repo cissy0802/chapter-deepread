@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Generative AI System Design Interview Ch 9 · Text-to-Image Generation — Books Deep Read Book 101</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">Book Deep Read · Generative AI System Design Interview · Ch 9</p>
+<h1>Text-to-Image: the hard part is not looking good, it is obeying</h1>
+<p class="sub">Generative AI System Design Interview · Ch 9 · Ali Aminian, Hao Sheng &amp; Alex Xu · 2024</p>
+<p class="langbar"><a href="gaisdi-ch09-text-to-image-generation-book101.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You type "a shiba inu wearing an astronaut helmet, watercolour" into your phone, and seconds later an image appears. That pipeline is this chapter. But its subject is not <em>how to make the picture look good</em> — the previous chapter already settled that. From start to finish it chases one question: <strong>how do you make that sentence actually govern that picture?</strong></p>
+<h2>Here is the strange part</h2>
+<p>A model that paints beautifully and a model that obeys are two different things. You say "wearing a helmet" and it hands you a gorgeous shiba with no helmet. What makes this failure nasty is that <strong>it does not throw an error and it does not leave a blank — it quietly drops half of what you asked for.</strong> Worse, the automatic scoring tools will still rate it highly, because the picture really does look like a real photograph.</p>
+<h2>How it listens</h2>
+<p>The trick is that the sentence is not mentioned once at the start and then forgotten. The model paints by wiping and redoing the canvas over and over, and <strong>every time it redoes a small patch, it goes back and rereads that sentence</strong> — like a cook who keeps glancing at the order slip. Working on the dog's head, it asks "anything specified about the head?"; working on the background, it asks "what style again?". That is why "helmet" lands where it belongs instead of smearing across the whole canvas.</p>
+<h2>The main move: paint it twice</h2>
+<p>That alone is still not obedient enough. The move that actually works is slightly counterintuitive: <strong>in the same step, have the model paint twice — once reading your request, once ignoring it completely.</strong> The difference between the two <em>is</em> the direction your sentence pulls the picture in. And then the system is not content with that much difference: it <strong>keeps pushing further along that same direction</strong>. Want it more obedient? Turn up how far it pushes.</p>
+<p>That multiplier is a dial you can turn in real time, and it is the most valuable design on the whole pipeline: without retraining anything, you can slide between well-behaved and wild.</p>
+<h2>How far to turn it</h2>
+<p>Turn it down and the picture is lovely but freewheeling — your details go in one ear and out the other. Turn it up and it follows you to the letter, but the image stiffens, the colours go garish, the compositions all start to rhyme: <strong>obedient to the point of lifeless.</strong> Most products settle somewhere in the middle and expose a slider for the rest.</p>
+<p>There is also a cheap by-product. Since one of the two passes ignores your request anyway, you may as well point that pass at the things you <em>don't</em> want ("blurry, extra fingers, watermark") — and the push becomes "get away from these". That is the "negative prompt" in drawing tools. It is not folklore, it is the same move seen from behind.</p>
+<p>The cost is blunt: painting twice per step <strong>doubles the compute and the electricity bill.</strong></p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p>The real engineering problem in text-to-image is not fidelity, it is <strong>obedience</strong>: rereading the sentence at every brushstroke puts each requirement in the right place, and painting twice and then over-shooting along the difference turns obedience into a dial you can turn live — tighter means more faithful, but also stiffer, and it costs double.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, notation and diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">The previous chapter solved "fast and large"; this one supplies the other half: <strong>control</strong>. The answer is two moves — <strong>cross-attention</strong> injects the text into every denoising layer so each position can look back and query the sentence, and <strong>classifier-free guidance (CFG)</strong> extrapolates the "obedience direction" by a multiplier at sampling time, turning compliance into a dial you can turn live without retraining. What is most often underrated here is the layers <strong>outside the model</strong>: safety, rewriting, negative prompts and caching.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Diffusion model</strong>: a generative model that starts from pure noise and "wipes off a little noise" dozens of times until an image emerges.</li>
+<li><strong>Latent space</strong>: compress the image into a much smaller "sketch" first (<code>512×512×3</code> → <code>64×64×4</code>), denoise on the sketch, then decode back to full size — the core of the previous chapter.</li>
+<li><strong>Conditioning</strong>: the extra input fed to a generative model to constrain what it produces; here, the prompt.</li>
+<li><strong>Token</strong>: the small pieces text is cut into (roughly words or word stems), each represented as a list of numbers (a vector); a prompt is usually a few dozen tokens.</li>
+<li><strong>Attention</strong>: an operation that "fetches information by relevance" — the asking side emits a <em>Query</em>, the asked side emits <em>Key / Value</em>, and the closer a Key matches the Query, the more of its Value gets taken.</li>
+<li><strong>U-Net / DiT</strong>: the network that decides "how much noise to wipe off this step" — convolutional in the first case, Transformer-based in the second.</li>
+<li><strong>CLIP</strong>: a pair of encoders trained on vast numbers of image–caption pairs, so the image vector and the text vector for the same thing sit close together.</li>
+<li><strong>FID</strong>: measures how much a <em>batch</em> of generated images looks like real photographs; lower is better. It looks at distributions only, never at what you asked for.</li>
+<li><strong>CLIP score</strong>: encode the generated image and the prompt and measure how close they are — used to judge whether the model obeyed.</li>
+<li><strong>Seed</strong>: the starting point of the random number stream; fix it and the same input reproduces the same image.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Question 8 of the ten case studies in Part II, and the middle link of the book's image trilogy: Ch7 (GAN faces) solves <em>looking real</em>, Ch8 (latent diffusion) solves <em>being affordable</em>, this one solves <em>being right</em>, and it sets up Ch10 — where the condition stops being a sentence and becomes a handful of selfies. It maps onto the full pipeline behind Stable Diffusion, DALL·E, Imagen and Midjourney.</p>
+<h2>The problem this chapter attacks</h2>
+<p>The diffusion model from the last chapter gives you a beautiful but ungoverned image. What the product wants is "<em>a shiba inu wearing an astronaut helmet, watercolour</em>" — the model has to land <strong>subject, attribute, relation and style</strong> all at once, and missing any one of them means the user rerolls.</p>
+<p>What happens if you do not solve it? You get the most expensive failure mode in generative systems: <strong>fluently wrong</strong> — no error, no blank, just a quiet omission of "wearing a helmet" at first-rate image quality. Worse, <strong>the automatic metrics cannot see it</strong>: <code>FID</code> measures whether a batch of images looks like real photographs, so a high-quality image that ignores the prompt entirely can still post a beautiful FID. So this chapter's problem is really a pair: <strong>how the condition gets in (mechanism)</strong>, and <strong>how you measure whether it was heard (evaluation)</strong>.</p>
+<p>A cost constraint squeezes the design space further. A <code>512×512</code>, 50-step request takes seconds on a single A100 — and CFG below <strong>runs the network twice on every step</strong>, so per-request cost is multiplied by 2. Here, "how obedient" is not an academic parameter; it is a dial billed by the multiple.</p>
+<h2>The core, properly</h2>
+<h3>1. Turn the sentence into vectors: three choices of text encoder</h3>
+<p>Step one hands the prompt to a <strong>text encoder</strong> — usually an off-the-shelf language model <strong>kept frozen during training</strong> — which emits one vector per token (77 token slots in the Stable Diffusion line). That sequence is the "condition" everything downstream reads. <strong>Not training the encoder, and letting the diffusion network learn to read it</strong>, saves compute and makes the text side swappable as a block — which is exactly why picking an encoder is a genuine system decision. Three routes:</p>
+<ul>
+<li><strong>CLIP's text tower</strong>: trained jointly with images, so it natively "sees" visual semantics — hear "golden retriever" and a picture is already there. Weakness: it mostly saw short captions, so long sentences, negation and grammatical structure are shaky.</li>
+<li><strong>A pure text LLM (the T5 family)</strong>: far better at long sentences, subordinate clauses, counting and spatial relations. Weakness: it has <em>never seen an image</em>, so the diffusion network must map language space onto vision by itself, which makes training harder.</li>
+<li><strong>Both</strong>: concatenate the two outputs so the diffusion network gets visual intuition and grammatical precision together. This is SDXL's route.</li>
+</ul>
+<p>A useful analogy: CLIP's text tower is <strong>an art director who has seen ten million captioned pictures</strong> — one word and they know roughly what it looks like, but they lose the thread of a long sentence. T5 is <strong>a literary editor who has only ever read books</strong> — impeccable at parsing structure, with no picture in their head.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/clip-paper6.en.html" rel="noopener" target="_blank">CS Papers · CLIP: Learning to See from Natural Language Supervision</a> — how contrastive learning pulls image and text vectors together, and why that alignment can be lifted wholesale into a text-to-image conditioning encoder</aside>
+<h3>2. Cross-attention: the condition is re-queried at every layer, not stated once</h3>
+<p>Given the text vectors, the naive move is to add them to the network's input. <strong>That works badly</strong> — it is a one-shot, global remark, and by the time the network is painting a local patch it no longer remembers.</p>
+<p>What works is a <strong>cross-attention layer inside every block</strong> of the denoising network (U-Net or DiT): each position in the latent emits a <em>Query</em>, the text tokens emit <em>Key / Value</em>. In plain terms — while working on the top-left patch, the network <strong>goes back and asks the sentence again</strong>: "what should this patch look like?", then fetches information from each word by relevance.</p>
+<p>This explains a lot. Why does "helmet" land on the dog's head rather than smearing across the canvas? Because attention is inherently <strong>per-position asking</strong>, so a soft "who listens to whom" alignment table grows on its own during generation; the hat region and the scarf region are querying <em>different words</em> of the same sentence.</p>
+<p>The cost is small: text is only a few dozen tokens, so this layer is nearly free next to self-attention over the whole image. The trap is elsewhere — <strong>that alignment table is soft and unsupervised</strong>, so "red hat, blue scarf" often swaps into a blue hat and a red scarf, and "three cats" often comes out as two. Attribute binding and counting are structural weaknesses; no amount of tuning fixes them.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 310" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="a1" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="a2" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<rect fill="rgba(91,157,249,0.10)" height="34" rx="6" stroke="#5b9df9" width="176" x="16" y="20"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="104" y="42">"shiba in a space helmet"</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="194" x2="234" y1="37" y2="37"></line>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="6" stroke="#7c8593" width="140" x="238" y="20"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="308" y="42">text encoder (frozen)</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="380" x2="418" y1="37" y2="37"></line>
+<rect fill="rgba(155,108,245,0.20)" height="20" rx="3" stroke="#9b6cf5" width="20" x="424" y="27"></rect>
+<rect fill="rgba(155,108,245,0.20)" height="20" rx="3" stroke="#9b6cf5" width="20" x="450" y="27"></rect>
+<rect fill="rgba(155,108,245,0.20)" height="20" rx="3" stroke="#9b6cf5" width="20" x="476" y="27"></rect>
+<rect fill="rgba(155,108,245,0.20)" height="20" rx="3" stroke="#9b6cf5" width="20" x="502" y="27"></rect>
+<rect fill="rgba(155,108,245,0.20)" height="20" rx="3" stroke="#9b6cf5" width="20" x="528" y="27"></rect>
+<text fill="#9b6cf5" font-family="monospace" font-size="10" x="424" y="66">token vectors = condition</text>
+<rect fill="none" height="196" rx="10" stroke="rgba(91,157,249,0.45)" stroke-dasharray="5 4" width="608" x="16" y="92"></rect>
+<text fill="#5b9df9" font-size="11.5" font-weight="700" x="30" y="112">one denoising block — redone at every layer</text>
+<rect fill="rgba(91,157,249,0.08)" height="22" rx="3" stroke="#7c8593" width="22" x="44" y="132"></rect>
+<rect fill="rgba(91,157,249,0.08)" height="22" rx="3" stroke="#7c8593" width="22" x="70" y="132"></rect>
+<rect fill="rgba(91,157,249,0.22)" height="22" rx="3" stroke="#5b9df9" stroke-width="2" width="22" x="96" y="132"></rect>
+<rect fill="rgba(91,157,249,0.08)" height="22" rx="3" stroke="#7c8593" width="22" x="44" y="158"></rect>
+<rect fill="rgba(91,157,249,0.08)" height="22" rx="3" stroke="#7c8593" width="22" x="70" y="158"></rect>
+<rect fill="rgba(91,157,249,0.08)" height="22" rx="3" stroke="#7c8593" width="22" x="96" y="158"></rect>
+<rect fill="rgba(91,157,249,0.08)" height="22" rx="3" stroke="#7c8593" width="22" x="44" y="184"></rect>
+<rect fill="rgba(91,157,249,0.08)" height="22" rx="3" stroke="#7c8593" width="22" x="70" y="184"></rect>
+<rect fill="rgba(91,157,249,0.08)" height="22" rx="3" stroke="#7c8593" width="22" x="96" y="184"></rect>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="85" y="224">latent</text>
+<text fill="#8fbaff" font-size="10" text-anchor="middle" x="92" y="242">each position: a Query</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="128" x2="216" y1="168" y2="168"></line>
+<rect fill="rgba(91,157,249,0.12)" height="58" rx="8" stroke="#5b9df9" stroke-width="2" width="164" x="222" y="139"></rect>
+<text fill="#e7ebf1" font-size="12" font-weight="700" text-anchor="middle" x="304" y="163">cross-attention</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="304" y="182">fetch by relevance</text>
+<line marker-end="url(#a2)" stroke="#9b6cf5" x1="466" x2="392" y1="168" y2="168"></line>
+<rect fill="rgba(155,108,245,0.10)" height="58" rx="8" stroke="#9b6cf5" width="150" x="470" y="139"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="545" y="163">text tokens</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="545" y="182">Key / Value</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="304" x2="304" y1="199" y2="238"></line>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="304" y="258">→ updated latent, passed to the next layer</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="304" y="278">the highlighted cell asks: "what should this patch be?"</text>
+</svg>
+<figcaption>The text is not stated once at the input; it is re-queried by every position inside every denoising block — which is what keeps the helmet on the dog's head.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/multimodal-day23.en.html" rel="noopener" target="_blank">AI/ML · Day 23 Multimodality</a> — which cross-modal joins (concatenation, cross-attention, projection adapters) suit which case, and how to balance modalities carrying unequal information</aside>
+<h3>3. Classifier-free guidance: extrapolate the obedience direction</h3>
+<p>With cross-attention alone, the model treats the prompt more like a suggestion. To push compliance to the limit, the chapter's protagonist arrives.</p>
+<p>Its predecessor is <strong>classifier guidance</strong>: train a separate model that can classify <em>noisy</em> images and use its gradient to steer sampling toward a target class. Two problems — you must train an extra noise-aware classifier, and it can only steer toward a "class", never an arbitrary sentence.</p>
+<p><strong>CFG's idea is to throw that classifier away entirely.</strong> During training, randomly drop the condition (about one sample in ten is fed an empty prompt), so <strong>one set of weights learns both "denoise while reading the prompt" and "denoise reading nothing"</strong>. At sampling time you run both, get two predictions, and extrapolate along their difference:</p>
+<p><code>ε̂ = ε_uncond + w · (ε_cond − ε_uncond)</code></p>
+<p>In plain terms: <strong>the difference between the two predictions is the direction this sentence drags the picture in</strong>, and <code>w</code> is how many times you amplify that pull. <code>w=1</code> is no amplification (ordinary conditional generation); <code>w=7</code> means travelling six times further along it. Intuitively it tells the model: <em>don't just consult the sentence — go further toward looking like it.</em></p>
+<p>Three properties to remember. First, <strong>it lives at sampling time and never touches the weights</strong> — the same checkpoint can expose <code>w</code> as a user-facing slider. Second, <strong>it costs two forward passes per step, doubling compute and latency</strong> (batching the two branches together absorbs some overhead, but the FLOPs really are doubled). Third, <strong>turning it up is not free money</strong>: adherence rises while diversity and realism fall — oversaturation, formulaic composition, and at extreme <code>w</code> the numerical blowouts that Imagen's dynamic thresholding was introduced to suppress.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="b1" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="b2" markerHeight="10" markerWidth="10" orient="auto" refX="7" refY="3.5"><path d="M0,0 L7,3.5 L0,7 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text fill="#5b9df9" font-size="12" font-weight="700" x="16" y="22">two passes inside one sampling step</text>
+<rect fill="rgba(91,157,249,0.12)" height="36" rx="6" stroke="#5b9df9" width="210" x="16" y="38"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="121" y="61">conditional (reads the prompt)</text>
+<rect fill="rgba(255,255,255,0.03)" height="36" rx="6" stroke="#7c8593" width="210" x="16" y="88"></rect>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="121" y="111">unconditional (empty prompt)</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="230" x2="264" y1="56" y2="76"></line>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="230" x2="264" y1="106" y2="86"></line>
+<rect fill="rgba(155,108,245,0.12)" height="42" rx="8" stroke="#9b6cf5" width="162" x="268" y="60"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="349" y="78">difference = the pull</text>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="349" y="95">"where the sentence drags it"</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="349" x2="349" y1="106" y2="166"></line>
+<line stroke="rgba(124,133,147,0.5)" x1="60" x2="600" y1="176" y2="176"></line>
+<circle cx="120" cy="176" fill="#0f1216" r="6" stroke="#7c8593" stroke-width="2"></circle>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="120" y="200">uncond</text>
+<circle cx="220" cy="176" fill="#0f1216" r="6" stroke="#5b9df9" stroke-width="2"></circle>
+<text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="220" y="200">cond</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="220" y="216">w = 1</text>
+<line marker-end="url(#b2)" stroke="#9b6cf5" stroke-dasharray="6 4" stroke-width="2.5" x1="228" x2="512" y1="176" y2="176"></line>
+<circle cx="520" cy="176" fill="rgba(155,108,245,0.35)" r="8" stroke="#9b6cf5" stroke-width="2.5"></circle>
+<text fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle" x="520" y="202">extrapolated here</text>
+<text fill="#9b6cf5" font-family="monospace" font-size="10" text-anchor="middle" x="520" y="218">w = 7</text>
+<text fill="#7c8593" font-size="10.5" x="60" y="240">further right: closer to the prompt, less diverse and less realistic · cost: two passes per step, compute ×2</text>
+</svg>
+<figcaption>CFG changes no weights; at sampling time it simply extrapolates the "conditional − unconditional" gap by a multiplier — which is what makes obedience a live dial.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/ddpm-paper28.en.html" rel="noopener" target="_blank">CS Papers · DDPM (Denoising Diffusion Probabilistic Models)</a> — CFG modifies exactly the reverse sampling loop from this paper: see what each step predicts before looking at where the guidance term is added</aside>
+<h3>4. Who owns the prompt at the system layer</h3>
+<p>This is the most system-design-ish section of the chapter, and the easiest to dismiss as product detail. <strong>The user's sentence cannot go straight to the model</strong>; at least four layers sit in between:</p>
+<ul>
+<li><strong>Safety on both sides.</strong> Filter the prompt on the way in (classifier plus rules), and filter the generated image on the way out (adult content, real people's likenesses, trademarks). <strong>Both are required</strong>: text filters are trivially bypassed — respell it, use a metaphor, split it into pieces, and the model still understands.</li>
+<li><strong>Prompt rewriting / expansion.</strong> A user writes "a cat", while the captions the model trained on were long and specific. Putting an LLM in between to expand a short prompt into a detailed description improves adherence substantially. The cost is that <strong>you have altered the user's intent</strong>, so you generally echo the rewritten prompt back and leave a "use my wording" switch.</li>
+<li><strong>Negative prompts.</strong> A counterintuitive free lunch: nothing says CFG's "unconditional" branch <em>has</em> to be an empty prompt. Point it at "blurry, extra fingers, watermark" and the extrapolation direction automatically becomes "away from these". <strong>It is not folklore, it is the same formula read backwards</strong> — one line of code, zero extra compute, since that pass runs anyway.</li>
+<li><strong>Determinism and caching.</strong> Make <code>(prompt, seed, steps, w, model version)</code> the cache key: the same inputs must yield the same image. One design buys three things — reproducibility (support can replay what the user saw), auditability (you can trace which version produced it) and savings (a hit skips the entire denoising loop). In a product with viral prompts, this is the single biggest saving.</li>
+</ul>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 230" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="c1" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="c2" markerHeight="9" markerWidth="9" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<rect fill="rgba(155,108,245,0.10)" height="36" rx="6" stroke="#9b6cf5" stroke-dasharray="5 4" width="290" x="150" y="12"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="295" y="35">cache key = (prompt, seed, steps, w, model version)</text>
+<path d="M150,30 L96,30 L96,96" fill="none" marker-end="url(#c2)" stroke="#9b6cf5" stroke-dasharray="5 4"></path>
+<path d="M440,30 L560,30 L560,96" fill="none" marker-end="url(#c2)" stroke="#9b6cf5" stroke-dasharray="5 4"></path>
+<text fill="#9b6cf5" font-family="monospace" font-size="9.5" text-anchor="middle" x="500" y="52">a hit skips it all</text>
+<rect fill="rgba(91,157,249,0.10)" height="38" rx="6" stroke="#5b9df9" width="110" x="16" y="100"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="71" y="123">user prompt</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="128" x2="152" y1="119" y2="119"></line>
+<rect fill="rgba(255,255,255,0.03)" height="38" rx="6" stroke="#7c8593" width="96" x="156" y="100"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="204" y="116">input safety</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="204" y="131">block / pass</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="254" x2="276" y1="119" y2="119"></line>
+<rect fill="rgba(255,255,255,0.03)" height="38" rx="6" stroke="#7c8593" width="96" x="280" y="100"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="328" y="116">rewrite / expand</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="328" y="131">+ negative prompt</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="378" x2="400" y1="119" y2="119"></line>
+<rect fill="rgba(91,157,249,0.18)" height="38" rx="6" stroke="#5b9df9" stroke-width="2" width="108" x="404" y="100"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="458" y="116">denoise ×N steps</text>
+<text fill="#8fbaff" font-size="9.5" text-anchor="middle" x="458" y="131">CFG: two passes each</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="514" x2="534" y1="119" y2="119"></line>
+<rect fill="rgba(255,255,255,0.03)" height="38" rx="6" stroke="#7c8593" width="86" x="538" y="100"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="581" y="123">decode</text>
+<path d="M581,142 L581,168 L340,168" fill="none" marker-end="url(#c1)" stroke="#7c8593"></path>
+<rect fill="rgba(155,108,245,0.12)" height="34" rx="6" stroke="#9b6cf5" width="180" x="152" y="151"></rect>
+<text fill="#e7ebf1" font-size="10" text-anchor="middle" x="242" y="172">output safety + watermark</text>
+<line marker-end="url(#c1)" stroke="#7c8593" x1="150" x2="120" y1="168" y2="168"></line>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="end" x="112" y="172">back to user</text>
+<text fill="#7c8593" font-size="10" x="16" y="212">The model is one box in the middle; more than half the engineering sits on either side of it.</text>
+</svg>
+<figcaption>The real shape of a text-to-image service: the model is one box in the middle, while safety, rewriting, negative prompts and caching take up the other half of the work.</figcaption>
+</figure>
+<h2>Trade-offs and how to choose</h2>
+<p>Two decisions in this chapter are actually actionable: what to use on the text path, and how high to set <code>w</code>.</p>
+<p class="tcap">Table 1 · Choosing a text encoder</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Choice</th><th>Good at</th><th>Cost / weakness</th><th>When to pick it</th></tr></thead>
+<tbody>
+<tr><th>CLIP text tower</th><td>Native visual semantics, high hit rate on style and subject words; light, fast, mature ecosystem</td><td>Short context (~77 tokens in that line); weak on long sentences, negation, counting</td><td>Consumer products dominated by short, stylised prompts</td></tr>
+<tr><th>Pure text LLM (T5 family)</th><td>Markedly better on long sentences, clauses, counting and spatial relations</td><td>Never saw an image, so diffusion-side training is harder; the encoder itself is large, raising VRAM and cold-start cost</td><td>Long prompts, and anywhere "what you say is what you get" really matters</td></tr>
+<tr><th>Dual encoders</th><td>Visual intuition and grammatical precision together; in practice the most reliable tier today</td><td>Two sets of weights, two encoding passes; complexity and VRAM both go up</td><td>Flagship models (<strong>SDXL takes this route</strong>); the default when cost can be amortised</td></tr>
+</tbody>
+</table>
+</div>
+<p class="tcap">Table 2 · Setting the CFG scale <code>w</code></p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Range</th><th>You get</th><th>You pay</th><th>Typical use</th></tr></thead>
+<tbody>
+<tr><th><code>w</code> ≈ 1–3</th><td>High diversity, natural images; the same prompt yields genuinely different results</td><td>Details in the prompt are routinely ignored; complex instructions are barely followed</td><td>Exploration — "give me a few directions"</td></tr>
+<tr><th><code>w</code> ≈ 5–8</th><td>The balance zone of adherence and naturalness; where most products land by default</td><td>Attribute mix-ups and counting errors persist, just less often</td><td>The general-purpose default, usually also exposed as a slider</td></tr>
+<tr><th><code>w</code> ≳ 10</th><td>Maximum literal compliance; specified elements almost always appear</td><td>Oversaturation, stiff composition, collapsing diversity; colour blowouts at extremes</td><td>Controlled cases that must match item by item, paired with something like dynamic thresholding</td></tr>
+</tbody>
+</table>
+</div>
+<p>One trade-off will not fit in a table: <strong>which side rewriting lives on</strong>. Inference-side expansion ships fast and rolls back instantly, but adds a hop of latency and a token bill to every request; training-side (retraining on detailed synthetic captions) is more thorough but takes weeks and cannot be reverted quickly. Most teams ship the inference side first and only then consider moving it into training.</p>
+<h2>Why it matters / in real systems</h2>
+<p>Asked in an interview "how do you make it obey better", answering "use a bigger model" is not an answer. This chapter gives three separable handles: <strong>swap the text encoder</strong> (expensive, needs retraining), <strong>change how the condition is injected</strong> (expensive, touches architecture), <strong>tune <code>w</code> and add a rewriting layer</strong> (cheap, shippable today). Read right to left by cost, that is an action order you can recite.</p>
+<p>Evaluation is equally examinable. <strong>Reporting one number is wrong</strong>: <code>FID</code> measures realism and is nearly blind to obedience; <code>CLIP score</code> measures adherence but can be gamed by painting the keywords in literally. Worse, the two move <strong>in opposite directions along <code>w</code></strong> — turn <code>w</code> up and CLIP score rises while FID degrades. So you sweep <code>w</code> and report a <strong>curve</strong>, not a point, and still backstop it with human evaluation.</p>
+<div class="ev">
+<div class="evh">Evidence from industry</div>
+<ul>
+<li><strong>OpenAI: CFG is the default path, not an option.</strong> The official GLIDE repository writes it into the most basic usage note — "how to use GLIDE (filtered) <em>with classifier-free guidance</em> to produce images conditioned on text prompts". The reference code for text-to-image has guidance switched on from the very first example; that is CFG's standing in engineering practice.<span class="src">OpenAI · glide-text2im official repository (2021) · <a href="https://github.com/openai/glide-text2im" rel="noopener" target="_blank">github.com/openai/glide-text2im</a></span></li>
+<li><strong>Stability AI: the flagship shipped two text encoders.</strong> The SDXL repository states that "The base model uses OpenCLIP-ViT/G and CLIP-ViT/L for text encoding whereas the refiner model only uses the OpenCLIP model", and that the base "was trained on a variety of aspect ratios on images with resolution 1024^2". <strong>Doubling the text encoder</strong> is the most direct industrial evidence for this chapter's claim that conditioning quality sets the ceiling.<span class="src">Stability AI · generative-models official repository (2023) · <a href="https://github.com/Stability-AI/generative-models" rel="noopener" target="_blank">github.com/Stability-AI/generative-models</a></span></li>
+<li><strong>Google: FID alone was not enough, so they shipped a prompt set.</strong> The Parti repository reports a "state-of-the-art zero-shot FID score of 7.23 and finetuned FID score of 3.22 on MS-COCO" while simultaneously releasing "PartiPrompts (P2)… a rich set of over 1600 prompts in English". <strong>The same work that set a SOTA FID still had to build 1,600 prompts to test obedience</strong> — that is this chapter's pair of problems as a real team lives them.<span class="src">Google Research · parti official repository (2022) · <a href="https://github.com/google-research/parti" rel="noopener" target="_blank">github.com/google-research/parti</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and disputes</h2>
+<ul>
+<li><strong>Treating CFG as a quality dial.</strong> It is an <em>adherence</em> dial. Turning it up often degrades quality — oversaturation, formulaic composition. When users complain the images look bad, check <code>w</code> before reaching for a different model.</li>
+<li><strong>Assuming CFG is free.</strong> Two forward passes per step means compute ×2 per request. Capacity estimates that count one pass will overstate throughput by half.</li>
+<li><strong>Attribute binding, counting and text rendering are known weaknesses.</strong> The cross-attention alignment table is soft and unsupervised, so "red hat, blue scarf" swapping colours and "three cats" coming out as two are structural, not tuning problems. Text inside images stayed weak for a long time, improved mainly by stronger text encoders and character-level handling.</li>
+<li><strong>Treating negative prompts as folklore.</strong> They merely replace CFG's unconditional branch with a sentence; once you understand the formula you know what belongs in there (things to move <em>away</em> from) rather than copying incantations.</li>
+<li><strong>Dated in two ways.</strong> The book was written in 2024; since then backbones have largely moved from U-Net to <strong>DiT</strong>, and <strong>few-step distillation</strong> has made 1–4 step generation routine — distilled models often bake guidance into the weights, so the external <code>w</code> no longer implies two passes. The skeleton of "cross-attention injection plus sampling-time extrapolation" has not changed.</li>
+<li><strong>Training-data licensing remains unresolved.</strong> The technical fact that "the model stores parameters, not a library of images" is not an answer to the licensing question — that is a separate axis, and it should not be brushed aside with it.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① The thesis: the hard part of text-to-image is not fidelity (settled last chapter) but <strong>control</strong>; the most expensive failure is being <strong>fluently wrong</strong> — no error, no blank, half the request quietly dropped, and <code>FID</code> still scores it well.</p>
+<p>② Text first passes through a <strong>frozen encoder</strong> into token vectors; choosing CLIP's text tower (visual intuition), the T5 family (grammatical precision) or both (SDXL's route) is a genuine system decision.</p>
+<p>③ The condition is injected by <strong>cross-attention</strong>: inside every denoising block, every position queries the sentence for itself — which is why "helmet" lands on the dog's head. The alignment table is soft, so attribute binding and counting stay unreliable.</p>
+<p>④ <strong>CFG</strong> throws the classifier away: drop the condition at random during training, run conditional and unconditional passes at sampling time, extrapolate <code>w</code>× along the difference.</p>
+<p>⑤ <code>w</code> is a <strong>sampling-time dial that never touches the weights</strong>: it can be a user slider, and usually defaults to 5–8. The cost is <strong>two forward passes per step, compute ×2</strong>, and turning it up sacrifices diversity and realism.</p>
+<p>⑥ <strong>Negative prompts are a free by-product of CFG</strong> — swap the unconditional branch for "what you don't want" and the extrapolation runs away from it, at zero extra compute.</p>
+<p>⑦ The model is one box in the pipeline: <strong>two-sided safety, rewriting/expansion, and a cache key of <code>(prompt, seed, steps, w, model version)</code></strong> take the other half of the engineering — and buy reproducibility, auditability and savings at once.</p>
+<p>⑧ Evaluation must come in pairs: <code>FID</code> and <code>CLIP score</code> move in opposite directions along <code>w</code>, so <strong>report a curve, not a point</strong>, and still backstop with humans — which is why Google shipped 1,600 PartiPrompts alongside its FID.</p>
+</div>
+</div>
+<footer>Books Deep Read · reading this page ≈ the core of this chapter; for full case studies and depth, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
