@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>GenAI 系统设计 第 11 章 · 文生视频 — 专业书籍精读 Book 103</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -53,7 +54,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </style></head><body>
 <div class="container">
 <p class="top">专业书籍精读 · Generative AI System Design Interview · 第 11 章</p>
-<h1>文生视频：难的不是画得像，是下一帧还认得出上一帧</h1>
+<h1 data-tts="48a5e997a10d3b12">文生视频：难的不是画得像，是下一帧还认得出上一帧</h1>
 <p class="sub">Generative AI System Design Interview · Ch 11 · Ali Aminian, Hao Sheng &amp; Alex Xu · 2024</p>
 <p class="langbar"><a href="gaisdi-ch11-text-to-video-generation-book103.en.html">EN →</a></p>
 <div class="modebar">
@@ -61,28 +62,28 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <button data-mode="deep">精读版</button>
 </div>
 <div class="mode mode-pop">
-<h2>这一章讲什么？</h2>
+<h2 data-tts="6371559b5f46eae4">这一章讲什么？</h2>
 <p>你大概已经见过 AI 画图：打一句话，几秒钟出一张。这一章问的是下一步——<strong>打一句话，出一段会动的视频</strong>。听起来只是「多画几张」，但整章都在说明一件事：这中间隔着的不是数量差别，而是一个全新的难题。</p>
-<h2>先说个怪事</h2>
+<h2 data-tts="0a5a0f03a16ffcbe">先说个怪事</h2>
 <p>把「一只橘猫跳上沙发」这句话喂给画图模型一百二十次，得到一百二十张图，按顺序播放——你会看到一段<strong>抽搐</strong>的画面：猫忽胖忽瘦，沙发花纹每一帧都在变，跳到一半猫甚至换了一只。每张单看都不错，连起来没法看。</p>
-<h2>旧世界为什么难</h2>
+<h2 data-tts="27099db718ee0fab">旧世界为什么难</h2>
 <p>因为画图模型<strong>没有记性</strong>。它每次都从一团随机噪点重新画一遍，不知道上一张画了什么。而视频的本质恰恰是「有记性的照片」：观众能容忍画质差一点，但一眼就能看出「这不是同一只猫」。<strong>人眼对时间上的不连贯，比对画质挑剔得多。</strong></p>
-<h2>这章的核心想法</h2>
+<h2 data-tts="d730a84b158e2ef5">这章的核心想法</h2>
 <p>把「时间」直接<strong>做进模型里</strong>，而不是事后补救。两个直觉：</p>
 <p>第一，<strong>让模型横着看一眼</strong>。除了让画面里的每一块互相参考（这管构图），还要让<strong>同一个位置在前后帧的样子互相参考</strong>（这管运动）。猫耳朵在这一帧长什么样，下一帧得先看一眼再落笔。</p>
 <p>第二，<strong>先打草稿，再补，再放大</strong>。像做动画片：先画几张关键动作的分镜，再补中间的过渡帧，最后统一放大上色。最难的那步只在最小、最粗糙的草稿纸上做一次，后面两步便宜得多。</p>
-<h2>带来了什么</h2>
+<h2 data-tts="b06011189650fee0">带来了什么</h2>
 <p>所以今天的产品长得都差不多：你打一句话，等几十秒甚至几分钟（不是几秒），拿回一段<strong>四到八秒的定长片段</strong>；想要更长，就把末尾几帧当新开头接着往下写。代价也很实在：<strong>越往后接越容易跑偏</strong>——接到第三四段时，开头那只橘猫可能已经悄悄变了颜色。</p>
-<h2>一句话记住</h2>
+<h2 data-tts="89feaceef69eabf6">一句话记住</h2>
 <div class="tl">
 <p>画一张图比的是「像不像」，生成一段视频比的是「下一帧还认不认得出上一帧」。解法是把时间放进模型、让同一个位置跨帧互相参考；而暴涨的算力只能靠「先草稿、再补帧、再放大」这种分步骤的办法摊薄。</p>
 </div>
 <p class="switch-hint">想进到具体机制、记号和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
 </div>
 <div class="mode mode-deep" hidden="">
-<h2>一句话</h2>
+<h2 data-tts="a6796eb933a7542e">一句话</h2>
 <p class="lead">文生视频不是「文生图 ×N」。本章的核心命题是：<strong>时间一致性（temporal consistency）必须作为一等公民写进模型结构，而不是事后修补</strong>；可一旦写进去，算力就沿「帧数 × 分辨率」两个方向同时爆炸。于是整章只有两条工程主线——<strong>怎么把时间建进去</strong>，和<strong>怎么把算力摊薄</strong>。今天所有视频生成系统的架构，几乎都是这两条线互相妥协的产物。</p>
-<h2>Glossary · 术语表</h2>
+<h2 data-tts="89a698ee5f00eeb6">Glossary · 术语表</h2>
 <div class="glossary">
 <ul>
 <li><strong>帧 / 帧率（frame / fps）</strong>：视频就是一串静止画面，每秒播多少张叫帧率；电影 24 fps，一段 5 秒的片子就是 120 张。</li>
@@ -96,63 +97,63 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>FVD（Fréchet Video Distance）</strong>：视频生成的常用自动指标，比较「生成视频的特征分布」与「真实视频的特征分布」有多接近，越小越好。</li>
 </ul>
 </div>
-<h2>坐标</h2>
+<h2 data-tts="fe44c00a7e113a41">坐标</h2>
 <p>本章是《Generative AI System Design Interview》Part II 十道真题的收官一题，也是全书算力最重的一道。它直接站在第 8 章（高分辨率图像合成 · 潜空间扩散）与第 9 章（文生图 · 交叉注意力与无分类器引导）的肩膀上——<strong>那两章解决的「一帧怎么画好、怎么让它听话」在这里被当成已知条件</strong>，本章只加一件新事：<strong>时间</strong>。对应现实里 Sora、Veo、Runway 这类产品，以及任何「提交任务、排队出片」的生成型后端。</p>
-<h2>这章要解决什么</h2>
+<h2 data-tts="74cac0d42555f16c">这章要解决什么</h2>
 <p>先把规模摆出来。一段 5 秒、24 fps 的片子是 <code>120</code> 帧。若照第 9 章那套逐帧生成，按单张图在一块 A100 上几秒的量级算，一百二十帧就是<strong>几分钟起步</strong>——而且换来的是一段没法看的画面：每一帧都从独立的随机噪声重新解一遍，内容在语义上毫无约束地漂移。</p>
 <p>不解决会怎样？两件坏事同时成立。<strong>其一，质量上限被钉死</strong>：人眼对时间不连贯远比对单帧画质敏感——一帧里多一根手指可能没人注意，但沙发花纹每帧都在变，小孩都看得出来。<strong>其二，成本上限被钉死</strong>：视频的像素数是 <code>帧数 × 高 × 宽</code>，同一个模型搬到视频上算力按乘积涨，没人付得起。本章要解决的本质问题因此是：<strong>在一个爆炸的算力预算里买到时间一致性。</strong></p>
-<h2>核心内容，讲透</h2>
-<h3>为什么「逐帧生成 + 插帧」救不了</h3>
+<h2 data-tts="0cfa727733263d92">核心内容，讲透</h2>
+<h3 data-tts="d7cb812d302a78f5">为什么「逐帧生成 + 插帧」救不了</h3>
 <p>一个必须先划清的区分：<em>插帧</em>只能<strong>把已经一致的运动补得更顺</strong>，它的前提假设是相邻两帧本来就是同一个场景的两个瞬间。而逐帧独立生成的失败不是「不够顺」，是<strong>语义漂移</strong>——第 40 帧的猫和第 41 帧的猫压根不是同一只猫，插出来的中间帧只会是两只猫的糊状混合。判据很朴素：<strong>插帧是一种平滑，救得了抖动，救不了「换了个东西」</strong>。</p>
 <p>结论因此很硬：时间必须进入<strong>生成过程本身</strong>，而不是接在它后面。</p>
-<h3>把 2D 模型「充气」成 3D：分解的时空注意力</h3>
+<h3 data-tts="9a63a98ba9f3f576">把 2D 模型「充气」成 3D：分解的时空注意力</h3>
 <p>主流做法叫<em>充气（inflation）</em>：拿一个训练好的文生图模型（第 8、9 章那套潜空间 U-Net 或 DiT），<strong>保留全部空间层不动，在每个块里插入新的时间层</strong>——沿着「同一空间位置、不同帧」这条轴做卷积或注意力。好处很直接：画质与提示词服从度原样继承，新增参数只学「怎么动」这一件事，所需的文本-视频配对数据因此少得多——这恰好补上视频数据远比图文稀缺的短板。</p>
 <p>为什么不干脆做全 3D 注意力？成本。设一段视频在潜空间里是 <code>T</code> 帧、每帧 <code>S</code> 个 token：整段拍平做一次全注意力，要算 <code>(T·S)²</code> 对关系；拆成「帧内空间注意力 + 跨帧时间注意力」则是 <code>T·S² + S·T²</code> 对。代入一个现实量级——<code>T=21</code>、<code>S=1024</code>——前者约 <code>4.6 亿</code> 对，后者约 <code>2250 万</code> 对，<strong>差 20 倍</strong>。这 20 倍，就是今天绝大多数视频模型采用分解式结构的全部理由。</p>
 <figure>
-<svg viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
-<defs><marker id="t1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
-<text x="20" y="22" fill="#5b9df9" font-size="13" font-weight="700">分解时空注意力：一次昂贵的 3D，拆成两次便宜的</text>
-<text x="30" y="48" fill="#8fbaff" font-size="11.5">① 空间注意力 · 帧内</text>
-<rect x="30" y="58" width="250" height="120" rx="8" fill="rgba(91,157,249,0.05)" stroke="rgba(91,157,249,0.3)"></rect>
-<rect x="42" y="68" width="66" height="28" rx="4" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
-<rect x="122" y="68" width="66" height="28" rx="4" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
-<rect x="202" y="68" width="66" height="28" rx="4" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
-<rect x="42" y="104" width="66" height="28" rx="4" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
-<rect x="122" y="104" width="66" height="28" rx="4" fill="rgba(91,157,249,0.22)" stroke="#5b9df9" stroke-width="2"></rect>
-<rect x="202" y="104" width="66" height="28" rx="4" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
-<rect x="42" y="140" width="66" height="28" rx="4" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
-<rect x="122" y="140" width="66" height="28" rx="4" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
-<rect x="202" y="140" width="66" height="28" rx="4" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
-<line x1="155" y1="118" x2="75" y2="82" stroke="#5b9df9" stroke-dasharray="3 3" opacity="0.8"></line>
-<line x1="155" y1="118" x2="235" y2="82" stroke="#5b9df9" stroke-dasharray="3 3" opacity="0.8"></line>
-<line x1="155" y1="118" x2="75" y2="154" stroke="#5b9df9" stroke-dasharray="3 3" opacity="0.8"></line>
-<line x1="155" y1="118" x2="235" y2="154" stroke="#5b9df9" stroke-dasharray="3 3" opacity="0.8"></line>
-<line x1="155" y1="118" x2="75" y2="118" stroke="#5b9df9" stroke-dasharray="3 3" opacity="0.8"></line>
-<line x1="155" y1="118" x2="235" y2="118" stroke="#5b9df9" stroke-dasharray="3 3" opacity="0.8"></line>
-<text x="155" y="196" fill="#b9c0ca" font-size="11" text-anchor="middle">同一帧内互相看 → 管画面结构</text>
-<text x="310" y="48" fill="#8fbaff" font-size="11.5">② 时间注意力 · 跨帧同一位置</text>
-<rect x="310" y="58" width="86" height="120" rx="8" fill="rgba(155,108,245,0.05)" stroke="rgba(155,108,245,0.3)"></rect>
-<rect x="412" y="58" width="86" height="120" rx="8" fill="rgba(155,108,245,0.05)" stroke="rgba(155,108,245,0.3)"></rect>
-<rect x="514" y="58" width="86" height="120" rx="8" fill="rgba(155,108,245,0.05)" stroke="rgba(155,108,245,0.3)"></rect>
-<rect x="338" y="102" width="30" height="26" rx="4" fill="rgba(155,108,245,0.28)" stroke="#9b6cf5" stroke-width="2"></rect>
-<rect x="440" y="102" width="30" height="26" rx="4" fill="rgba(155,108,245,0.28)" stroke="#9b6cf5" stroke-width="2"></rect>
-<rect x="542" y="102" width="30" height="26" rx="4" fill="rgba(155,108,245,0.28)" stroke="#9b6cf5" stroke-width="2"></rect>
-<line x1="370" y1="115" x2="436" y2="115" stroke="#9b6cf5" marker-end="url(#t1)"></line>
-<line x1="472" y1="115" x2="538" y2="115" stroke="#9b6cf5" marker-end="url(#t1)"></line>
-<text x="353" y="196" fill="#7c8593" font-size="10.5" text-anchor="middle">第 1 帧</text>
-<text x="455" y="196" fill="#7c8593" font-size="10.5" text-anchor="middle">第 2 帧</text>
-<text x="557" y="196" fill="#7c8593" font-size="10.5" text-anchor="middle">第 3 帧</text>
-<text x="455" y="216" fill="#b9c0ca" font-size="11" text-anchor="middle">跨帧同位置互相看 → 管运动连贯</text>
-<text x="320" y="240" fill="#7c8593" font-size="11" font-family="monospace" text-anchor="middle">成本：全 3D (T·S)²  →  分解后 T·S² + S·T²</text>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="t1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="13" font-weight="700" x="20" y="22">分解时空注意力：一次昂贵的 3D，拆成两次便宜的</text>
+<text fill="#8fbaff" font-size="11.5" x="30" y="48">① 空间注意力 · 帧内</text>
+<rect fill="rgba(91,157,249,0.05)" height="120" rx="8" stroke="rgba(91,157,249,0.3)" width="250" x="30" y="58"></rect>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="4" stroke="#7c8593" width="66" x="42" y="68"></rect>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="4" stroke="#7c8593" width="66" x="122" y="68"></rect>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="4" stroke="#7c8593" width="66" x="202" y="68"></rect>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="4" stroke="#7c8593" width="66" x="42" y="104"></rect>
+<rect fill="rgba(91,157,249,0.22)" height="28" rx="4" stroke="#5b9df9" stroke-width="2" width="66" x="122" y="104"></rect>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="4" stroke="#7c8593" width="66" x="202" y="104"></rect>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="4" stroke="#7c8593" width="66" x="42" y="140"></rect>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="4" stroke="#7c8593" width="66" x="122" y="140"></rect>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="4" stroke="#7c8593" width="66" x="202" y="140"></rect>
+<line opacity="0.8" stroke="#5b9df9" stroke-dasharray="3 3" x1="155" x2="75" y1="118" y2="82"></line>
+<line opacity="0.8" stroke="#5b9df9" stroke-dasharray="3 3" x1="155" x2="235" y1="118" y2="82"></line>
+<line opacity="0.8" stroke="#5b9df9" stroke-dasharray="3 3" x1="155" x2="75" y1="118" y2="154"></line>
+<line opacity="0.8" stroke="#5b9df9" stroke-dasharray="3 3" x1="155" x2="235" y1="118" y2="154"></line>
+<line opacity="0.8" stroke="#5b9df9" stroke-dasharray="3 3" x1="155" x2="75" y1="118" y2="118"></line>
+<line opacity="0.8" stroke="#5b9df9" stroke-dasharray="3 3" x1="155" x2="235" y1="118" y2="118"></line>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="155" y="196">同一帧内互相看 → 管画面结构</text>
+<text fill="#8fbaff" font-size="11.5" x="310" y="48">② 时间注意力 · 跨帧同一位置</text>
+<rect fill="rgba(155,108,245,0.05)" height="120" rx="8" stroke="rgba(155,108,245,0.3)" width="86" x="310" y="58"></rect>
+<rect fill="rgba(155,108,245,0.05)" height="120" rx="8" stroke="rgba(155,108,245,0.3)" width="86" x="412" y="58"></rect>
+<rect fill="rgba(155,108,245,0.05)" height="120" rx="8" stroke="rgba(155,108,245,0.3)" width="86" x="514" y="58"></rect>
+<rect fill="rgba(155,108,245,0.28)" height="26" rx="4" stroke="#9b6cf5" stroke-width="2" width="30" x="338" y="102"></rect>
+<rect fill="rgba(155,108,245,0.28)" height="26" rx="4" stroke="#9b6cf5" stroke-width="2" width="30" x="440" y="102"></rect>
+<rect fill="rgba(155,108,245,0.28)" height="26" rx="4" stroke="#9b6cf5" stroke-width="2" width="30" x="542" y="102"></rect>
+<line marker-end="url(#t1)" stroke="#9b6cf5" x1="370" x2="436" y1="115" y2="115"></line>
+<line marker-end="url(#t1)" stroke="#9b6cf5" x1="472" x2="538" y1="115" y2="115"></line>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="353" y="196">第 1 帧</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="455" y="196">第 2 帧</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="557" y="196">第 3 帧</text>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="455" y="216">跨帧同位置互相看 → 管运动连贯</text>
+<text fill="#7c8593" font-family="monospace" font-size="11" text-anchor="middle" x="320" y="240">成本：全 3D (T·S)²  →  分解后 T·S² + S·T²</text>
 </svg>
 <figcaption>图 1 · 分解式时空注意力：空间层管一帧之内长什么样，时间层管同一个位置在前后帧怎么变——代价是两者不在同一步里相见。</figcaption>
 </figure>
 <p>代价必须讲诚实：分解意味着<strong>一个 token 没法在一步里同时看到「别的位置 + 别的时刻」</strong>，长程时空关联只能靠多层堆叠间接建立。所以分解式模型最容易在「大幅运镜」「物体快速横穿画面」这类需要同时挪位置又挪时刻的场景上露馅——这正是后来「把时空一起切成 patch、直接做全注意力」那条路线（Sora 是代表）的动机。</p>
-<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/frontier-architectures-day34.html" target="_blank" rel="noopener">AI/ML 详解 · Day 34 前沿架构</a> — 时空 patch、DiT 与长上下文注意力：全注意力路线为什么在算力涨上来之后反而成了更省心的选择</aside>
-<h3>时间也要压：视频 VAE 与那个不起眼的「+1」</h3>
+<aside class="xref"><a href="https://hub.cissychen.com/ai-ml/frontier-architectures-day34.html" rel="noopener" target="_blank">AI/ML 详解 · Day 34 前沿架构</a> — 时空 patch、DiT 与长上下文注意力：全注意力路线为什么在算力涨上来之后反而成了更省心的选择</aside>
+<h3 data-tts="2beab3ad3fb7ba09">时间也要压：视频 VAE 与那个不起眼的「+1」</h3>
 <p>第 8 章已经把去噪搬进潜空间——画面先被自编码器在空间上压缩若干倍，去噪在压缩图上做完再解码。视频要再压一个维度：<strong>时间</strong>。典型做法是<em>因果 3D 自编码器</em>：空间压 <code>8×8</code>、时间压 <code>4×</code>，合起来把视频压到原来的 <code>1/256</code> 量级（通道数另算）。没有这一步，级联和长上下文都无从谈起。</p>
 <p>一个能记住的细节：智谱 CogVideoX 的官方仓库把可生成帧数写死成 <code>8N+1</code>（5B 版）或 <code>16N+1</code>（1.5 版，默认 <code>81</code> 帧）。那个 <code>+1</code> 不是凑数——它来自<strong>首帧被单独编码、其余帧按固定倍率成组压缩</strong>的因果设计：首帧必须能独立还原，「给一张图、续成一段视频」这种最常见的用法才成立。接口上一个看起来莫名其妙的约束，背后是自编码器的结构。</p>
-<h3>级联：最难的那步，只在最小的画布上做一次</h3>
+<h3 data-tts="9954dd910465d216">级联：最难的那步，只在最小的画布上做一次</h3>
 <p>这是整章最该带走的工程结构。与其在目标分辨率、目标帧率上跑完整个去噪，不如拆成一条接力：</p>
 <ul>
 <li><strong>基础模型</strong>：在低分辨率、低帧率上生成「骨架」——内容、构图与大致运动都在这一步定下来，最难、最贵；</li>
@@ -161,38 +162,38 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </ul>
 <p>为什么划算：算力大致正比于 <code>帧数 × 边长²</code>。把最贵的完整去噪放在帧数与边长都最小的画布上做一次，后两级虽然面积大，但模型可以做得浅、步数可以少。Google 的 Imagen Video（2022）就是一个基础模型串起一连串交替的时间 / 空间超分模型；今天 Vertex AI 把「放大到 1080p / 4K」做成<strong>与生成分离的独立能力</strong>，正是同一结构在产品层的投影。</p>
 <figure>
-<svg viewBox="0 0 640 215" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
-<defs><marker id="t2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
-<text x="20" y="22" fill="#5b9df9" font-size="13" font-weight="700">级联：先定骨架，再补帧，再放大</text>
-<rect x="8" y="54" width="110" height="56" rx="8" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
-<text x="63" y="88" fill="#b9c0ca" font-size="12.5" text-anchor="middle">提示词</text>
-<rect x="136" y="54" width="110" height="56" rx="8" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5" stroke-width="2"></rect>
-<text x="191" y="88" fill="#e7ebf1" font-size="12.5" text-anchor="middle">基础模型</text>
-<rect x="264" y="54" width="110" height="56" rx="8" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"></rect>
-<text x="319" y="88" fill="#e7ebf1" font-size="12.5" text-anchor="middle">时间超分</text>
-<rect x="392" y="54" width="110" height="56" rx="8" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"></rect>
-<text x="447" y="88" fill="#e7ebf1" font-size="12.5" text-anchor="middle">空间超分</text>
-<rect x="520" y="54" width="110" height="56" rx="8" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
-<text x="575" y="88" fill="#b9c0ca" font-size="12.5" text-anchor="middle">成片</text>
-<line x1="118" y1="82" x2="132" y2="82" stroke="#7c8593" marker-end="url(#t2)"></line>
-<line x1="246" y1="82" x2="260" y2="82" stroke="#7c8593" marker-end="url(#t2)"></line>
-<line x1="374" y1="82" x2="388" y2="82" stroke="#7c8593" marker-end="url(#t2)"></line>
-<line x1="502" y1="82" x2="516" y2="82" stroke="#7c8593" marker-end="url(#t2)"></line>
-<text x="191" y="128" fill="#9b6cf5" font-size="10" text-anchor="middle">低分 · 少帧 · 最贵</text>
-<text x="319" y="128" fill="#7c8593" font-size="10" text-anchor="middle">帧数补上去</text>
-<text x="447" y="128" fill="#7c8593" font-size="10" text-anchor="middle">每帧放大</text>
-<text x="575" y="128" fill="#7c8593" font-size="10" text-anchor="middle">高分 · 足帧</text>
-<rect x="20" y="146" width="600" height="56" rx="8" fill="none" stroke="rgba(91,157,249,0.3)" stroke-dasharray="5 4"></rect>
-<text x="320" y="170" fill="#b9c0ca" font-size="11.5" text-anchor="middle">算力大致正比于 帧数 × 边长²</text>
-<text x="320" y="190" fill="#7c8593" font-size="11" text-anchor="middle">所以把最难的完整去噪压到最小的画布上做一次，放大交给更浅、更少步的模型</text>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 215" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="t2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="13" font-weight="700" x="20" y="22">级联：先定骨架，再补帧，再放大</text>
+<rect fill="rgba(91,157,249,0.08)" height="56" rx="8" stroke="#7c8593" width="110" x="8" y="54"></rect>
+<text fill="#b9c0ca" font-size="12.5" text-anchor="middle" x="63" y="88">提示词</text>
+<rect fill="rgba(155,108,245,0.2)" height="56" rx="8" stroke="#9b6cf5" stroke-width="2" width="110" x="136" y="54"></rect>
+<text fill="#e7ebf1" font-size="12.5" text-anchor="middle" x="191" y="88">基础模型</text>
+<rect fill="rgba(91,157,249,0.1)" height="56" rx="8" stroke="#5b9df9" width="110" x="264" y="54"></rect>
+<text fill="#e7ebf1" font-size="12.5" text-anchor="middle" x="319" y="88">时间超分</text>
+<rect fill="rgba(91,157,249,0.1)" height="56" rx="8" stroke="#5b9df9" width="110" x="392" y="54"></rect>
+<text fill="#e7ebf1" font-size="12.5" text-anchor="middle" x="447" y="88">空间超分</text>
+<rect fill="rgba(91,157,249,0.08)" height="56" rx="8" stroke="#7c8593" width="110" x="520" y="54"></rect>
+<text fill="#b9c0ca" font-size="12.5" text-anchor="middle" x="575" y="88">成片</text>
+<line marker-end="url(#t2)" stroke="#7c8593" x1="118" x2="132" y1="82" y2="82"></line>
+<line marker-end="url(#t2)" stroke="#7c8593" x1="246" x2="260" y1="82" y2="82"></line>
+<line marker-end="url(#t2)" stroke="#7c8593" x1="374" x2="388" y1="82" y2="82"></line>
+<line marker-end="url(#t2)" stroke="#7c8593" x1="502" x2="516" y1="82" y2="82"></line>
+<text fill="#9b6cf5" font-size="10" text-anchor="middle" x="191" y="128">低分 · 少帧 · 最贵</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="319" y="128">帧数补上去</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="447" y="128">每帧放大</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="575" y="128">高分 · 足帧</text>
+<rect fill="none" height="56" rx="8" stroke="rgba(91,157,249,0.3)" stroke-dasharray="5 4" width="600" x="20" y="146"></rect>
+<text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="320" y="170">算力大致正比于 帧数 × 边长²</text>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="320" y="190">所以把最难的完整去噪压到最小的画布上做一次，放大交给更浅、更少步的模型</text>
 </svg>
 <figcaption>图 2 · 级联管线：难度与成本沿流水线递减，但误差沿同一条线递增——基础模型给错的运动，后两级只会放大它。</figcaption>
 </figure>
 <p>代价同样明确：级联是一条<strong>误差会累积的流水线</strong>——基础模型给错的运动，后面两级只会把它放大得更清楚；而且多套模型要各自训练、各自部署、各自监控，端到端调优几乎不可能。</p>
-<h3>长视频：一次生成不了，就接着写</h3>
+<h3 data-tts="ef57744bde710629">长视频：一次生成不了，就接着写</h3>
 <p>上面这套的产物通常只有几秒。要更长，书里给的主路是<strong>自回归续写</strong>：拿已生成片段的末尾若干帧当条件，生成下一段。Stability AI 的官方仓库把这个量级写得很直白：Stable Video Diffusion 基础版「trained to generate 14 frames」，XT 版「finetuned for 25 frame generation」——<strong>十几到二十几帧，按常用帧率也就两三秒</strong>，更长的全是接出来的。</p>
 <p>接的代价是<em>漂移（drift）</em>：每段都以上一段的输出为输入，误差沿链累积，颜色、光照、人物身份缓慢跑偏；而且续写天然串行，加卡也并行不掉。缓解手段是<strong>每段都重新注入全局条件</strong>（提示词嵌入、首帧、参考图），让每段锚回同一个源头，而不是锚回上一段。</p>
-<h2>关键权衡与选型</h2>
+<h2 data-tts="7e6789f0a8f16faa">关键权衡与选型</h2>
 <p>这一章的灵魂是「在算力和一致性之间怎么买」——三条路线，没有一条免费。</p>
 <p class="tcap">表 1 · 三条生成路线怎么选</p>
 <div class="tblwrap"><table class="cmp">
@@ -211,8 +212,8 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <tr><th>层次化：<br/>先关键帧再填充</th><td>先稀疏生成全程关键帧，再在段内补帧</td><td>全局一致性最好，但关键帧之间的大跨度运动最难对齐，容易出现「瞬移」</td></tr>
 </tbody></table></div>
 <p>选型可以压成一句：<strong>如果你的场景是「几秒钟、可预览、可重生成」，级联 + 定长片段几乎总是对的；只有当「一镜到底、机位大幅移动」本身是核心卖点时，才值得去付全时空注意力那笔账。</strong>这和文生图的选型逻辑完全不同——那里的主要变量是画质与服从度，这里的主要变量是<strong>一致性能撑多久</strong>。</p>
-<aside class="xref"><a href="https://hub.cissychen.com/system-design/cost-capacity-engineering-day27.html" target="_blank" rel="noopener">System Design · Day 27 成本与容量工程</a> — GPU 按秒计价的服务怎么在不破 SLO 的前提下把单位成本压下来：批处理、抢占式调度与预览-成片两段式交付</aside>
-<h2>为什么重要 / 落到真实系统</h2>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/cost-capacity-engineering-day27.html" rel="noopener" target="_blank">System Design · Day 27 成本与容量工程</a> — GPU 按秒计价的服务怎么在不破 SLO 的前提下把单位成本压下来：批处理、抢占式调度与预览-成片两段式交付</aside>
+<h2 data-tts="5449b8f9f4f76b75">为什么重要 / 落到真实系统</h2>
 <p><strong>产品形态几乎被算力决定了。</strong>视频生成基本都是<em>异步任务</em>——提交、排队、轮询、取件。这和文生图（同步等几秒）是两种后端：你需要任务队列、可抢占的 GPU 调度、可恢复的作业状态，以及「<strong>先出低分辨率预览、用户确认后再出成片</strong>」的两段式交付，因为一次重生成的代价是按 GPU 分钟计的。</p>
 <p><strong>成本是设计约束，不是事后账单。</strong>对外按秒计价已是常态；训练侧，开源项目 Open-Sora 把 11B 模型的训练成本公开标成 <code>$200K</code>——这个数字的意义不在于便宜，而在于它把「能不能训」变成了一道能算清的预算题。</p>
 <p><strong>安全与合规比图像更紧。</strong>提示词侧过滤 + 输出侧检测 + 来源标注（水印 / C2PA）三件套缺一不可：动起来的伪造在可信度上远超静态图，肖像与版权风险因此不在一个量级。</p>
@@ -220,15 +221,15 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <div class="ev">
 <div class="evh">大厂实证</div>
 <ul>
-<li><strong>Google：音画在一次生成里同时出来，而不是事后配音。</strong> Google Cloud 介绍 Veo 3 时的说法是「Synchronize your audio and visuals in a single pass」，并称其「Produces rich soundscapes containing everything from dialogue and ambient noise, to sound effects and background music」。<em>single pass</em> 这个词值得留意——它和本章「时间不能事后补」是同一个论断在音轨上的延伸。<span class="src">Google Cloud Blog · Veo 3 on Vertex AI（2025）· <a href="https://cloud.google.com/blog/products/ai-machine-learning/veo-3-available-for-everyone-in-public-preview-on-vertex-ai" target="_blank" rel="noopener">cloud.google.com</a></span></li>
-<li><strong>Google：放大仍然是一个独立的阶段。</strong> Vertex AI 的升级公告写明「the new Veo upscaling capability allows you to enhance your videos up to 1080p and 4K, regardless of whether they were generated by Veo, another AI model, or a traditional camera」。空间超分被做成一个<strong>与生成解耦、甚至能处理摄像机素材</strong>的独立能力——级联结构在产品层的直接证据。<span class="src">Google Cloud Blog · Veo 3.1 Lite 与 Veo 放大能力（2025）· <a href="https://cloud.google.com/blog/products/ai-machine-learning/veo-3-1-lite-and-a-new-veo-upscaling-capability-on-vertex-ai" target="_blank" rel="noopener">cloud.google.com</a></span></li>
-<li><strong>Stability AI：原生窗口只有十几帧。</strong> 官方仓库写明 SVD「was trained to generate 14 frames at resolution 576x1024 given a context frame of the same size」，SVD-XT 则是「Same architecture as SVD but finetuned for 25 frame generation」。<strong>两三秒</strong>就是一个开源主力模型的原生时间窗——更长的全靠接。<span class="src">Stability AI · generative-models 官方仓库（2023）· <a href="https://github.com/Stability-AI/generative-models" target="_blank" rel="noopener">github.com/Stability-AI/generative-models</a></span></li>
-<li><strong>智谱 CogVideoX：帧数不是你想填多少就填多少。</strong> 官方仓库把帧数约束写成「Should be <code>16N + 1</code> where N &lt;= 10 (default 81)」，对应「5 seconds or 10 seconds」「16 frames / second」「1360 * 768」，而 5B 版是 <code>8N+1</code>、「6 seconds」、「720 * 480」。<strong>接口上的 <code>+1</code>，泄露的是自编码器的时间压缩结构。</strong><span class="src">THUDM · CogVideo 官方仓库（2024）· <a href="https://github.com/THUDM/CogVideo" target="_blank" rel="noopener">github.com/THUDM/CogVideo</a></span></li>
-<li><strong>Lightricks：预览先到，成片后到。</strong> LTX-Video 官方仓库描述其蒸馏模型「generates HD videos in 10 seconds, with low-res preview after just 3 seconds (on H100)」。这正是上面那套两段式交付的实现——<strong>先用 3 秒把「是不是你要的」交还给用户</strong>，再花剩下的算力出成片。<span class="src">Lightricks · LTX-Video 官方仓库（2024–2025）· <a href="https://github.com/Lightricks/LTX-Video" target="_blank" rel="noopener">github.com/Lightricks/LTX-Video</a></span></li>
+<li><strong>Google：音画在一次生成里同时出来，而不是事后配音。</strong> Google Cloud 介绍 Veo 3 时的说法是「Synchronize your audio and visuals in a single pass」，并称其「Produces rich soundscapes containing everything from dialogue and ambient noise, to sound effects and background music」。<em>single pass</em> 这个词值得留意——它和本章「时间不能事后补」是同一个论断在音轨上的延伸。<span class="src">Google Cloud Blog · Veo 3 on Vertex AI（2025）· <a href="https://cloud.google.com/blog/products/ai-machine-learning/veo-3-available-for-everyone-in-public-preview-on-vertex-ai" rel="noopener" target="_blank">cloud.google.com</a></span></li>
+<li><strong>Google：放大仍然是一个独立的阶段。</strong> Vertex AI 的升级公告写明「the new Veo upscaling capability allows you to enhance your videos up to 1080p and 4K, regardless of whether they were generated by Veo, another AI model, or a traditional camera」。空间超分被做成一个<strong>与生成解耦、甚至能处理摄像机素材</strong>的独立能力——级联结构在产品层的直接证据。<span class="src">Google Cloud Blog · Veo 3.1 Lite 与 Veo 放大能力（2025）· <a href="https://cloud.google.com/blog/products/ai-machine-learning/veo-3-1-lite-and-a-new-veo-upscaling-capability-on-vertex-ai" rel="noopener" target="_blank">cloud.google.com</a></span></li>
+<li><strong>Stability AI：原生窗口只有十几帧。</strong> 官方仓库写明 SVD「was trained to generate 14 frames at resolution 576x1024 given a context frame of the same size」，SVD-XT 则是「Same architecture as SVD but finetuned for 25 frame generation」。<strong>两三秒</strong>就是一个开源主力模型的原生时间窗——更长的全靠接。<span class="src">Stability AI · generative-models 官方仓库（2023）· <a href="https://github.com/Stability-AI/generative-models" rel="noopener" target="_blank">github.com/Stability-AI/generative-models</a></span></li>
+<li><strong>智谱 CogVideoX：帧数不是你想填多少就填多少。</strong> 官方仓库把帧数约束写成「Should be <code>16N + 1</code> where N &lt;= 10 (default 81)」，对应「5 seconds or 10 seconds」「16 frames / second」「1360 * 768」，而 5B 版是 <code>8N+1</code>、「6 seconds」、「720 * 480」。<strong>接口上的 <code>+1</code>，泄露的是自编码器的时间压缩结构。</strong><span class="src">THUDM · CogVideo 官方仓库（2024）· <a href="https://github.com/THUDM/CogVideo" rel="noopener" target="_blank">github.com/THUDM/CogVideo</a></span></li>
+<li><strong>Lightricks：预览先到，成片后到。</strong> LTX-Video 官方仓库描述其蒸馏模型「generates HD videos in 10 seconds, with low-res preview after just 3 seconds (on H100)」。这正是上面那套两段式交付的实现——<strong>先用 3 秒把「是不是你要的」交还给用户</strong>，再花剩下的算力出成片。<span class="src">Lightricks · LTX-Video 官方仓库（2024–2025）· <a href="https://github.com/Lightricks/LTX-Video" rel="noopener" target="_blank">github.com/Lightricks/LTX-Video</a></span></li>
 </ul>
 </div>
-<aside class="xref"><a href="https://hub.cissychen.com/system-design/video-streaming-day16.html" target="_blank" rel="noopener">System Design · Day 16 视频流系统</a> — 成片之后的另一半：转码流水线、多码率分层与 CDN 分发，生成系统的出口直接接在这上面</aside>
-<h2>易错点与争议</h2>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/video-streaming-day16.html" rel="noopener" target="_blank">System Design · Day 16 视频流系统</a> — 成片之后的另一半：转码流水线、多码率分层与 CDN 分发，生成系统的出口直接接在这上面</aside>
+<h2 data-tts="948edbef1d71b1b3">易错点与争议</h2>
 <ul>
 <li><strong>以为插帧能救闪烁。</strong> 插帧是一种平滑，只对「本来就连贯、只是不够顺」有效。逐帧生成失败在语义漂移上，插出来的只会是两个不同东西的糊状过渡。</li>
 <li><strong>把 FVD 当裁判。</strong> FVD 比的是特征分布距离，对<strong>小幅但刺眼的时间伪影</strong>（闪烁、抖动）并不敏感，还对样本量与预处理高度敏感。分数漂亮和人看着舒服，经常是两回事——本章的评估小节最终仍落在人评上。</li>
@@ -237,7 +238,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>忘了数据这道老坎。</strong> 高质量的文本-视频配对远少于图文对，很多标注是自动生成的字幕，噪声直接变成「提示词跟不住」。这也是「保留图像模型、只训时间层」这条路线的根本动机。</li>
 <li><strong>时代局限与争议。</strong> 本章成书于 2024 年，当时主流是 U-Net + 分解注意力 + 级联；此后算力上来，「时空 patch + 长上下文全注意力 + 音画同出」成了新默认，级联层数在减少。更大的争议是：这些模型学会的是物理，还是「看起来像物理的像素统计」——罕见物理交互下的失败仍然常见。</li>
 </ul>
-<h2>要点</h2>
+<h2 data-tts="47708a0068e9b4f9">要点</h2>
 <div class="tl">
 <p>① <strong>问题</strong>：文生视频不是文生图 ×N。人眼对时间不连贯的敏感度远高于对单帧画质，而算力按 <code>帧数 × 边长²</code> 涨——一致性与成本同时被钉死。</p>
 <p>② <strong>核心命题</strong>：时间一致性必须写进模型结构，不能事后修补；插帧只是平滑，救不了语义漂移。</p>
