@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Continuous Delivery Ch 6 · Build and Deployment Scripting — Books Deep-Read Book 104</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOKS DEEP-READ · CONTINUOUS DELIVERY · CH 6</p>
+<h1>Build and Deployment Scripting</h1>
+<p class="sub">Continuous Delivery · Ch 6 · Jez Humble &amp; David Farley · 2010</p>
+<p class="langbar"><a href="contdelivery-ch06-build-and-deployment-scripting-book104.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The app on your phone updates every week or so. Between the code an engineer finished and the working version on your device sits a chain of actions: compile, package, copy to servers, adjust configuration, restart. Chapter 6 of <em>Continuous Delivery</em> is about <strong>how that chain should be written as scripts</strong> — not a few commands typed from memory, but something written the way you write real product code.</p>
+
+<h2>An analogy first</h2>
+<p>Think of a release as <strong>cooking</strong>. Manual deployment is a chef improvising: an extra spoon of salt today, a burner left on tomorrow. Scripting it means <strong>writing the recipe down and letting a machine follow it</strong>. But this chapter goes further: the recipe should not live on a sticky note on the fridge — scribbled ad hoc, one per kitchen, messier with every edit. It should be <strong>maintained like a published work</strong>: versioned, reviewed, and traceable back to the edition that went wrong.</p>
+
+<h2>A true story first</h2>
+<p>In August 2012 the US brokerage Knight Capital rolled out new code by hand to eight production servers and <strong>missed one</strong>. Dormant old code on that machine was woken up by a repurposed switch, fired off bad orders, and in roughly 45 minutes burned more than <strong>$460 million</strong> — effectively ending the firm. The root cause is not exotic: <strong>deployment was done by a person, machine by machine, with nothing guaranteeing the eight were identical.</strong></p>
+
+<h2>Three words that carry the chapter</h2>
+<p><strong>One, the same script.</strong> Development, test, production — all run <strong>the same</strong> deployment script, and the differences between environments live only in an external configuration file. Once each environment gets its own script, they drift apart, and the thing you rehearsed twenty times in test is not the code that runs in production.</p>
+<p><strong>Two, run it as often as you like.</strong> A good script does not say "do these 12 steps"; it says "<strong>make sure it ends up looking like this</strong>" — skip what is already installed, fix what is installed wrong. So when it dies halfway, you just run it again instead of cleaning up by hand first.</p>
+<p><strong>Three, layers.</strong> Split "install the OS and middleware", "place the application", "apply configuration" and "migrate data" into four separate scripts, because they change at wildly different rates: configuration might change three times a day, the OS once a year. Fused together, changing one config line means reinstalling middleware.</p>
+
+<h2>Where to start</h2>
+<p>Don't try to script everything at once. The chapter's advice is practical: <strong>start with the step that hurts most</strong> — whatever part of every release you dread and keep getting wrong — script that, then grow outward from it.</p>
+<p>And the cost is real: scripting is not free. <strong>These scripts have their own bugs and need their own maintenance</strong>; you are now carrying another codebase. It still pays, because errors in manual deployment never show up in the test environment — only in production.</p>
+
+<h2>One thing to remember</h2>
+<div class="tl">
+<p>Writing deployment down as a script is not enough. <strong>Every environment must share the same script</strong> (differences live in configuration), <strong>running it twice must change nothing</strong>, and it must be <strong>treated like production code</strong>: in version control, reviewed, refactorable.</p>
+</div>
+<p class="switch-hint">Want the two schools of build tools, how idempotence actually works, and the comparison tables? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">Chapter 6 handles the pipeline's manual labour: <strong>how to write build and deployment as scripts</strong>. Its core claim is a single line — <strong>build and deployment scripts are production code, not a pile of one-off commands</strong>: they belong in version control, they get layered, refactored and tested. Three hard rules follow: <strong>every environment shares one deployment script</strong> (differences only in external configuration), <strong>deployment must be idempotent</strong>, and <strong>deployment is layered by rate of change</strong>.</p>
+
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Build</strong>: turning source code into something runnable (compile, package). The output is an <strong>artifact</strong> — a jar, an installer, an image.</li>
+<li><strong>Deployment</strong>: putting an artifact and its configuration onto a machine and making it run. Distinct from <strong>release</strong>, which means exposing it to users.</li>
+<li><strong>Build tool</strong>: Make, Ant, Maven, Rake, Gradle — programs whose job is to execute a build process.</li>
+<li><strong>Dependency graph / DAG</strong>: a directed acyclic graph of "what must finish before what". Traversing it is essentially all a build tool does.</li>
+<li><strong>Target</strong>: an individually callable unit in a build script, such as <code>compile</code> or <code>test</code>.</li>
+<li><strong>Idempotent</strong>: running the operation once and running it many times produce the same result.</li>
+<li><strong>Declarative vs imperative</strong>: the former describes what the end state should be; the latter describes which steps to perform in order.</li>
+<li><strong>Smoke test</strong>: a tiny set of checks run right after deployment, verifying only "is it alive, can it reach its dependencies", not business detail.</li>
+<li><strong>Environment</strong>: a complete set of machines, middleware and configuration capable of running the app — development, staging, production.</li>
+<li><strong>Native OS package</strong>: RPM / deb on Linux, MSI on Windows — installed, removed and queried by the system's own package manager.</li>
+</ul>
+</div>
+
+<h2>Where it sits</h2>
+<p>This chapter belongs to Part II, "The Deployment Pipeline", and follows directly from Ch5: <strong>Ch5 draws the shape of the gates; this chapter answers what actually executes inside each box</strong>. It leans on Ch2 "Configuration Management" (the "same script plus external configuration" rule needs Ch2 to be real) and leads into Ch7 "The Commit Stage" and Ch11 "Managing Infrastructure". The real-world problem it maps to: <strong>why nobody on the team dares touch <code>build.xml</code>, the <code>Makefile</code> or <code>deploy.sh</code> after three years of evolution.</strong></p>
+
+<h2>What problem it solves</h2>
+<p>Anyone can draw the pipeline diagram. What actually drags teams down is <strong>the pile of scripts that executes it</strong>. Their usual fate: a three-thousand-line <code>build.xml</code> only its author understands; <code>deploy-dev.sh</code> / <code>deploy-uat.sh</code> / <code>deploy-prod.sh</code>, each separately patched until they no longer resemble one another; and a wiki line saying "before running this, stop service A by hand."</p>
+<p>What happens if you don't fix it? <strong>The chronic cost</strong>: nobody dares restructure the script, so every new requirement arrives as another <code>if</code>; build time climbs from 3 minutes to 25, blowing past the ten-minute budget Ch7 sets for the commit stage — developers stop waiting for the result, and continuous integration is dead in all but name. <strong>The acute cost</strong>: the Knight Capital 45 minutes from the plain version. The SEC's 2013 enforcement document faulted the firm's deployment process for lacking automation and verification of consistency. <strong>"One of eight machines is different" is exactly what scripting plus idempotence exists to eliminate.</strong></p>
+
+<h2>The core content, properly</h2>
+
+<h3>1. A build tool is a dependency graph — the split is over what the nodes are</h3>
+<figure>
+<svg viewBox="0 0 640 268" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text x="18" y="24" fill="#5b9df9" font-size="13" font-weight="700">1. Task-oriented (Ant / Rake / Gradle): a node is a thing to do</text>
+<rect x="18" y="40" width="112" height="34" rx="6" fill="rgba(91,157,249,0.10)" stroke="#5b9df9"></rect><text x="74" y="62" fill="#e7ebf1" font-size="11.5" text-anchor="middle">compile</text>
+<line x1="132" y1="57" x2="168" y2="57" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="172" y="40" width="112" height="34" rx="6" fill="rgba(91,157,249,0.10)" stroke="#5b9df9"></rect><text x="228" y="62" fill="#e7ebf1" font-size="11.5" text-anchor="middle">test</text>
+<line x1="286" y1="57" x2="322" y2="57" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="326" y="40" width="112" height="34" rx="6" fill="rgba(91,157,249,0.10)" stroke="#5b9df9"></rect><text x="382" y="62" fill="#e7ebf1" font-size="11.5" text-anchor="middle">package</text>
+<line x1="440" y1="57" x2="476" y2="57" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="480" y="40" width="112" height="34" rx="6" fill="rgba(91,157,249,0.10)" stroke="#5b9df9"></rect><text x="536" y="62" fill="#e7ebf1" font-size="11.5" text-anchor="middle">deploy</text>
+<text x="18" y="97" fill="#7c8593" font-size="11" font-family="monospace">Dependencies declared; skip logic is yours to write -&gt; default is "run everything"</text>
+<line x1="18" y1="112" x2="622" y2="112" stroke="rgba(91,157,249,0.18)"></line>
+<text x="18" y="138" fill="#9b6cf5" font-size="13" font-weight="700">2. Product-oriented (Make): a node is a file to produce</text>
+<rect x="18" y="154" width="84" height="30" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect><text x="60" y="174" fill="#b9c0ca" font-size="11" text-anchor="middle">a.c</text>
+<rect x="18" y="198" width="84" height="30" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect><text x="60" y="218" fill="#b9c0ca" font-size="11" text-anchor="middle">b.c</text>
+<line x1="104" y1="169" x2="150" y2="169" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="104" y1="213" x2="150" y2="213" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="154" y="154" width="84" height="30" rx="6" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5"></rect><text x="196" y="174" fill="#e7ebf1" font-size="11" text-anchor="middle">a.o</text>
+<rect x="154" y="198" width="84" height="30" rx="6" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5"></rect><text x="196" y="218" fill="#e7ebf1" font-size="11" text-anchor="middle">b.o</text>
+<line x1="240" y1="169" x2="292" y2="184" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="240" y1="213" x2="292" y2="198" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="296" y="176" width="92" height="30" rx="6" fill="rgba(155,108,245,0.22)" stroke="#9b6cf5" stroke-width="2"></rect><text x="342" y="196" fill="#e7ebf1" font-size="11" text-anchor="middle">app</text>
+<text x="404" y="180" fill="#b9c0ca" font-size="11.5">Rebuild only if source is newer</text>
+<text x="404" y="200" fill="#e8794b" font-size="11.5">Warning: timestamps, 1s resolution</text>
+<text x="18" y="252" fill="#7c8593" font-size="11" font-family="monospace">Both do the same thing: topological sort, then execute. They differ on whether the skip test can be trusted.</text>
+</svg>
+<figcaption>Fig 1 · Two ways to model a build: nodes as tasks or nodes as output files. The choice determines how the tool decides what it can skip.</figcaption>
+</figure>
+<p>Every build tool does the same thing: <strong>break the build into targets with dependencies, topologically sort them, execute in order</strong>. The disagreement is over <strong>what a node is</strong>.</p>
+<p><strong>Product-oriented</strong>, exemplified by Make: a node is <strong>a file to be produced</strong>. <code>app</code> depends on <code>a.o</code>, <code>a.o</code> depends on <code>a.c</code>; Make compares <strong>file timestamps</strong> and rebuilds only when the source is newer. Incremental builds come for free — but the test is fragile. Timestamps are one-second resolution on many filesystems, so edits within the same second are silently missed, and a fresh checkout stamps every file with "now". Teams end up in the habit of "when in doubt, clean build", handing back everything incrementality bought them.</p>
+<p><strong>Task-oriented</strong>, exemplified by Ant / NAnt: a node is <strong>a thing to do</strong>. You can express whatever you want without forcing it to map onto a file; the cost is that the tool has no idea whether work can be skipped, so the skip logic is yours to write inside each target and <strong>the default behaviour is to run everything</strong>.</p>
+<p>The chapter names a third route: <strong>convention over configuration</strong>, exemplified by Maven. It fixes the directory layout and lifecycle (<code>src/main/java</code>; compile → test → package → install) so you configure rather than script. The authors' verdict is honestly two-sided: <strong>new projects work out of the box and teams share one shape; the moment you need to deviate from the convention, cost rises steeply</strong> — usually into writing a plugin, which is harder to read than the script it replaced.</p>
+<p>And a fourth: <strong>just use a real programming language</strong> — Rake (Ruby), Psake (PowerShell), later Gradle. Once build logic needs conditionals, loops and abstraction, expressing it in XML is self-harm. The cost is that <strong>an unconstrained language lets the build script grow into a second application</strong> — which is why this route requires the discipline in the next section.</p>
+
+<h3>2. Build scripts are production code, so govern them like production code</h3>
+<p>This is the soul of the chapter and the part most often skipped. <strong>Build and deployment scripts go into version control, in the same repository and branch as the code they serve, through the same review.</strong> The reasoning is direct: <strong>a given version of the code can only be built and deployed correctly by the matching version of the scripts</strong>. Keep them elsewhere — in a CI server's "build configuration" screen, in someone's home directory — and you have permanently lost the ability to go back to the version from three months ago and reproduce it exactly.</p>
+<p>The same rule yields concrete discipline: <strong>layer and de-duplicate</strong>, factoring shared logic into reusable modules instead of copy-paste; <strong>always use relative paths</strong>, because a script with <code>/opt/app</code> hard-coded runs only on its author's machine; <strong>write build output outside the source tree</strong>, or "clean" depends on <code>.gitignore</code> and luck; <strong>bind artifacts to the revision</strong>, putting the commit id in the filename or metadata so a production incident can be traced back to a line of code.</p>
+<p>And one that is commonly done backwards: <strong>a failing test must fail the build, but must not abort it immediately</strong>. Record "something failed" as a flag, let this round of tests finish, and fail at the end — so one build shows you every failure instead of one, then the next, then another ten-minute wait.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/deployment-release-day22.en.html" target="_blank" rel="noopener">System Design · Day 22 Deployment and Release</a> — what happens after the script delivers the artifact to production: ramp pacing, bake windows, and how to design the rollback switch</aside>
+
+<h3>3. The same script deploys to every environment</h3>
+<figure>
+<svg viewBox="0 0 640 256" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text x="18" y="22" fill="#5b9df9" font-size="12.5" font-weight="700">One artifact, one script; environment differences live only in configuration</text>
+<rect x="16" y="86" width="150" height="72" rx="8" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="91" y="113" fill="#e7ebf1" font-size="11.5" text-anchor="middle">Same artifact</text>
+<text x="91" y="134" fill="#e7ebf1" font-size="11.5" text-anchor="middle">Same deploy script</text>
+<line x1="168" y1="110" x2="244" y2="64" stroke="#7c8593" marker-end="url(#a2)"></line>
+<line x1="168" y1="122" x2="244" y2="122" stroke="#7c8593" marker-end="url(#a2)"></line>
+<line x1="168" y1="134" x2="244" y2="180" stroke="#7c8593" marker-end="url(#a2)"></line>
+<rect x="248" y="48" width="118" height="32" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593" stroke-dasharray="4 3"></rect><text x="307" y="69" fill="#b9c0ca" font-size="11" text-anchor="middle">dev config</text>
+<rect x="248" y="106" width="118" height="32" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593" stroke-dasharray="4 3"></rect><text x="307" y="127" fill="#b9c0ca" font-size="11" text-anchor="middle">staging config</text>
+<rect x="248" y="164" width="118" height="32" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593" stroke-dasharray="4 3"></rect><text x="307" y="185" fill="#b9c0ca" font-size="11" text-anchor="middle">prod config</text>
+<line x1="368" y1="64" x2="424" y2="64" stroke="#7c8593" marker-end="url(#a2)"></line>
+<line x1="368" y1="122" x2="424" y2="122" stroke="#7c8593" marker-end="url(#a2)"></line>
+<line x1="368" y1="180" x2="424" y2="180" stroke="#7c8593" marker-end="url(#a2)"></line>
+<rect x="428" y="48" width="140" height="32" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect><text x="498" y="69" fill="#e7ebf1" font-size="11" text-anchor="middle">Development / CI</text>
+<rect x="428" y="106" width="140" height="32" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect><text x="498" y="127" fill="#e7ebf1" font-size="11" text-anchor="middle">Staging</text>
+<rect x="428" y="164" width="140" height="32" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect><text x="498" y="185" fill="#e7ebf1" font-size="11" text-anchor="middle">Production</text>
+<text x="18" y="228" fill="#e8794b" font-size="11.5">Anti-pattern: deploy-dev.sh / deploy-uat.sh / deploy-prod.sh, each drifting on its own.</text>
+<text x="18" y="246" fill="#e8794b" font-size="11.5">The one that runs in production has never run anywhere else.</text>
+</svg>
+<figcaption>Fig 2 · One script across every environment: that is how the script itself accumulates dozens of executions, and earns the right to be trusted on release day.</figcaption>
+</figure>
+<p>This is the most actionable rule in the chapter: <strong>developer machines, CI, staging and production all run the same deployment script</strong>, and differences between environments <strong>exist only as external configuration</strong> (per Ch2: configuration is version-controlled too, just managed separately from code).</p>
+<p>Why so absolute? Because <strong>the deployment script is itself a thing under test</strong>. You rehearsed the deployment twenty times in staging; if production runs a different script, those twenty runs <strong>never touched the code that actually matters</strong>. "Code that executes for the first time on release day" <em>is</em> the risk — and a script per environment is a machine for manufacturing exactly that code.</p>
+<p>The cost is real: the script must be parameterised, and parameters breed complexity of their own, so you need a configuration management approach (a config repository, template rendering, secret storage) to carry it. The principle is <strong>let environments differ in configuration, never in behaviour</strong> — the moment one environment needs "one extra step", ask whether that step could be done in all of them.</p>
+
+<h3>4. Idempotence: a script describes state, not steps</h3>
+<figure>
+<svg viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a3" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="a4" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text x="16" y="24" fill="#5b9df9" font-size="12.5" font-weight="700">1. Layer by rate of change, one script per layer</text>
+<rect x="16" y="188" width="278" height="34" rx="6" fill="rgba(91,157,249,0.06)" stroke="#7c8593"></rect><text x="155" y="210" fill="#b9c0ca" font-size="11" text-anchor="middle">OS and middleware (yearly)</text>
+<rect x="16" y="148" width="278" height="34" rx="6" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect><text x="155" y="170" fill="#b9c0ca" font-size="11" text-anchor="middle">Application binary / artifact (weekly)</text>
+<rect x="16" y="108" width="278" height="34" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect><text x="155" y="130" fill="#e7ebf1" font-size="11" text-anchor="middle">Configuration (daily)</text>
+<rect x="16" y="68" width="278" height="34" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"></rect><text x="155" y="90" fill="#e7ebf1" font-size="11" text-anchor="middle">Data / schema migration (not idempotent)</text>
+<line x1="16" y1="238" x2="624" y2="238" stroke="rgba(91,157,249,0.14)"></line>
+<text x="336" y="24" fill="#9b6cf5" font-size="12.5" font-weight="700">2. Idempotent: N runs = 1 run</text>
+<rect x="336" y="68" width="186" height="34" rx="6" fill="rgba(91,157,249,0.10)" stroke="#5b9df9"></rect><text x="429" y="90" fill="#e7ebf1" font-size="11" text-anchor="middle">Read current state</text>
+<line x1="429" y1="104" x2="429" y2="128" stroke="#7c8593" marker-end="url(#a3)"></line>
+<rect x="336" y="132" width="186" height="34" rx="6" fill="rgba(91,157,249,0.10)" stroke="#5b9df9"></rect><text x="429" y="154" fill="#e7ebf1" font-size="11" text-anchor="middle">Compare to target</text>
+<line x1="429" y1="168" x2="429" y2="192" stroke="#7c8593" marker-end="url(#a3)"></line>
+<rect x="336" y="196" width="186" height="34" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"></rect><text x="429" y="218" fill="#e7ebf1" font-size="11" text-anchor="middle">Change only the deltas</text>
+<path d="M522,213 L560,213 L560,85 L528,85" fill="none" stroke="#9b6cf5" stroke-dasharray="4 3" marker-end="url(#a4)"></path>
+<text x="568" y="140" fill="#9b6cf5" font-size="10.5" font-family="monospace">re-run</text>
+<text x="568" y="156" fill="#9b6cf5" font-size="10.5" font-family="monospace">always</text>
+<text x="568" y="172" fill="#9b6cf5" font-size="10.5" font-family="monospace">safe</text>
+</svg>
+<figcaption>Fig 3 · Left: deployment layered by rate of change, with data migration as the non-idempotent exception. Right: the execution loop of a convergent script.</figcaption>
+</figure>
+<p><strong>Idempotence</strong> means: whatever state the target machine is in now, after the script runs it is in the <strong>correct state</strong>; run it again and nothing changes.</p>
+<p>The difference from "record the manual steps as shell" is fundamental. An imperative script says "unpack, create directory, write config, start service"; when step three dies, the machine sits in an <strong>intermediate state</strong> — re-running fails because the directory already exists, and you go in by hand. A convergent script says "this directory should exist, this config file should have these contents, this service should be running", reading current state first and changing only what disagrees. <strong>The result is that "just run it again" becomes a permanently safe action</strong> — and that property is the precondition for automation anyone dares leave unattended.</p>
+<p>This is the shared design of the Puppet / Chef generation around 2010 (and Ansible shortly after). The chapter pairs it with a related discipline: <strong>layer deployment by rate of change</strong> — OS and middleware, application binary, configuration, data and schema each get their own script and their own cadence. Fused together, changing one config line means reinstalling the middleware.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/container-orchestration-day49.en.html" target="_blank" rel="noopener">System Design · Day 49 Containers and Orchestration</a> — what idempotent convergence looks like taken to its limit: declare the desired state, let a controller keep pulling reality back to it</aside>
+
+<h3>5. Prefer native packaging; always end with a smoke test</h3>
+<p>The chapter offers an engineer's-taste suggestion that pays off: <strong>if RPM / deb / MSI will do, don't invent your own packaging format</strong>. They come with dependency declarations, standard install / remove / upgrade actions, and a queryable database of what versions are on a machine — all of which you would otherwise rebuild in scripts, probably worse. The cost is that <strong>cross-platform means maintaining several packages</strong>, and the package manager's abstraction gets in the way when you need fine control.</p>
+<p>Finally, the <strong>integrated smoke test</strong>: the last step of a deployment script should be a short "is it actually alive" check — process up, port reachable, database connectable. It takes seconds, and it separates two things routinely conflated: <strong>"the script exited 0" is not "the service works"</strong>.</p>
+
+<h2>Key trade-offs and how to choose</h2>
+<p class="tcap">Table 1 · Four families of build tool: what each buys, what each costs</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Product-oriented: Make</th><th>Task-oriented: Ant/NAnt</th><th>Convention-first: Maven</th><th>General language: Rake/Gradle</th></tr></thead>
+<tbody>
+<tr><th>What a node is</th><td>A file to produce</td><td>A thing to do</td><td>A fixed lifecycle phase</td><td>Arbitrary code</td></tr>
+<tr><th>Incremental test</th><td>File timestamps</td><td>Written by you, per target</td><td>Decided by each plugin</td><td>Yours (modern ones hash inputs)</td></tr>
+<tr><th>Complex logic</th><td>Very poor</td><td>Poor (branching inside XML)</td><td>Requires a plugin</td><td><strong>Good</strong></td></tr>
+<tr><th>Main cost</th><td>Timestamps are unreliable, forcing clean builds</td><td>Runs everything by default; slow</td><td><strong>Cost spikes once you deviate</strong></td><td>Grows into a second application</td></tr>
+<tr><th>When to pick it</th><td>File-to-file compile chains such as C/C++</td><td>Legacy projects, simple flows</td><td>New Java projects with standard shape</td><td>Build logic with genuine complexity</td></tr>
+</tbody></table></div>
+
+<p class="tcap">Table 2 · Deployment scripts: one shared script vs one per environment</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>One script + external config (the chapter's position)</th><th>One script per environment</th></tr></thead>
+<tbody>
+<tr><th>Has the production code path been tested?</th><td><strong>Yes — dozens of runs across every environment</strong></td><td>No. It has only ever run in production</td></tr>
+<tr><th>Adding a new environment</th><td>Add one configuration</td><td>Copy a script, and gain another source of drift</td></tr>
+<tr><th>Changing shared logic</th><td>Change it in one place</td><td>Change N places; miss one and it's an incident</td></tr>
+<tr><th>When environments really do differ</th><td>Must be explicit in config: diffable, reviewable</td><td>Buried in the script; nobody can state the difference</td></tr>
+<tr><th>Cost</th><td>Needs a config management approach; parameters multiply</td><td>Cheapest short term, most expensive long term</td></tr>
+</tbody></table></div>
+
+<p class="tcap">Table 3 · Three deployment paradigms: imperative, idempotent convergence, immutable replacement</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Imperative step script</th><th>Idempotent convergence (Puppet/Chef/Ansible)</th><th>Immutable replacement (images / containers, post-book)</th></tr></thead>
+<tbody>
+<tr><th>Failure midway</th><td>Stuck in an intermediate state; needs a human</td><td><strong>Just run it again</strong></td><td>Throw it away, take a fresh one</td></tr>
+<tr><th>Configuration drift</th><td>Accumulates</td><td>Converged away each run</td><td><strong>Cannot occur — machines are replaced, not edited</strong></td></tr>
+<tr><th>Cost to adopt</th><td>Lowest</td><td>Medium: learn the declarative model</td><td>Higher: needs image builds and orchestration</td></tr>
+<tr><th>Main cost</th><td>Not re-runnable, so automation can't be unattended</td><td>The convergence logic has its own bugs; edge cases are hard</td><td>Stateful parts (data, caches) still need another answer</td></tr>
+<tr><th>When to pick it</th><td>One-off tasks, scaffolding</td><td>Long-lived existing hosts</td><td>Stateless services on cloud / containers</td></tr>
+</tbody></table></div>
+
+<h2>Why it matters / in real systems</h2>
+<p>The chapter's three rules are industry default today, only renamed: <strong>"build scripts in version control" became CI configuration as code</strong> (<code>Jenkinsfile</code>, workflow YAML, sitting in the application repository); <strong>"the same script to every environment" became one container image plus per-environment parameters</strong>; <strong>"idempotence" became the founding property of declarative infrastructure</strong> — Terraform's plan / apply and Kubernetes' reconciliation loop are both the loop on the right of Fig 3.</p>
+<p>The interview question about why one artifact should travel all the way through rather than be rebuilt per environment has a second half — <strong>the script travels all the way through too</strong> — and that half is this chapter.</p>
+<div class="ev">
+<div class="evh">Industry evidence · claims the companies made themselves, not the book's</div>
+<ul>
+<li><strong>Google · Bazel</strong>: Google open-sourced its build system under the tagline <code>{Fast, Correct} - Choose two</code>, claiming "Bazel rebuilds only what is necessary. With advanced local and distributed caching, optimized dependency analysis and parallel execution, you get fast and incremental builds." — <strong>the chapter's "dependency graph plus incrementality" taken to its limit, with Make's timestamps replaced by precise modelling of inputs</strong>. <span class="src"><a href="https://github.com/bazelbuild/bazel" target="_blank" rel="noopener">bazelbuild/bazel README ↗</a></span></li>
+<li><strong>Ansible</strong>: states its design goal as "Describe infrastructure in a language that is both machine and human friendly", calls itself "a radically simple IT automation system", and lists "Focus on security and easy auditability/review/rewriting of content." — <strong>the productised form of this chapter's rule that deployment scripts must be readable and reviewable</strong>. <span class="src"><a href="https://github.com/ansible/ansible" target="_blank" rel="noopener">ansible/ansible README ↗</a></span></li>
+<li><strong>Etsy · Deployinator</strong>: Etsy open-sourced its deployment tool, describing it as "a deployment framework extracted from Etsy" and noting "We've been using it since late 2009 / early 2010." — <strong>a public artefact contemporary with the book: deployment made into one repeatable thing with an interface, rather than a scattering of shell</strong>. <span class="src"><a href="https://github.com/etsy/deployinator" target="_blank" rel="noopener">etsy/deployinator README ↗</a></span></li>
+<li><strong>Netflix, Google and others · Spinnaker</strong>: described as "an open-source continuous delivery platform for releasing software changes with high velocity and confidence", "built upon the work of Netflix, Google, Microsoft, Amazon and numerous other companies" — <strong>where deployment scripts end up: converging from one per team into a shared platform</strong>. <span class="src"><a href="https://github.com/spinnaker/spinnaker" target="_blank" rel="noopener">spinnaker/spinnaker README ↗</a></span></li>
+</ul>
+</div>
+
+<h2>Common mistakes and open arguments</h2>
+<ul>
+<li><strong>Reading "scripting" as "record the manual steps".</strong> Recorded shell only hardens human error into machine error: not re-runnable, not readable, not testable. The chapter asks for <strong>layering, idempotence and version control</strong>, not merely "there is a script".</li>
+<li><strong>Using the build tool to deploy.</strong> The book explicitly discourages it: Ant and Maven were designed to build, and bending them into ssh-ing to twenty machines to rewrite configuration is awkward and drags build-time dependencies onto production hosts. <strong>Deploy with deployment tools.</strong></li>
+<li><strong>Idempotence is not universal; data is the exception.</strong> "Run it again" does not hold for database migrations — adding a column or changing a value is inherently not repeatable, so you need versioned migration scripts plus a migrations table (Ch12 covers this). Treating idempotence as a universal slogan is the fastest way to come unstuck at the data layer.</li>
+<li><strong>"Don't check binaries into version control" needs a footnote.</strong> What the book opposes is mixing jars with source in one repository, not keeping artifacts at all — artifacts belong in an <strong>artifact repository</strong> (Nexus, Artifactory, a container registry): addressable, traceable, prunable.</li>
+<li><strong>Period limits.</strong> Written in 2010, the tool list stops at Ant / Maven / Rake / Psake, with Puppet and Chef newly arrived. Today Gradle and Bazel own the build, and containers plus orchestration own deployment. More interestingly, <strong>idempotence has been partly routed around</strong>: immutable infrastructure does not "change the machine into the correct state", it "never changes the machine, it replaces it" — stronger than idempotence, since it also eliminates the risk that the convergence logic itself is wrong. <strong>That does not overturn the chapter; it substitutes a more thorough implementation of the same goal</strong>: one script, one artifact, all the way to production — those three are untouched.</li>
+<li><strong>The open argument: is convention over configuration worth it?</strong> The fair statement is that <strong>it turned "building a simple project" from a problem into a non-problem, and turned "building a complex project" from hard into painful</strong>. The question to ask before choosing it is not "is it good" but "will this project likely need to deviate from the convention".</li>
+</ul>
+
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. In one line: <strong>build and deployment scripts are production code</strong> — version-controlled, layered, refactorable, testable. Every other rule in the chapter grows from this one.</p>
+<p>2. A build tool is a dependency-graph traversal; the split is whether nodes are <strong>files</strong> (Make: timestamps, a fragile test) or <strong>tasks</strong> (Ant: runs everything by default).</p>
+<p>3. Convention-first (Maven) gives standard projects a working build for free, at the price of a steep cost once you deviate; a general-purpose DSL is expressive, at the price of growing into a second application.</p>
+<p>4. The hardest rule: <strong>every environment shares one deployment script, differences only in external configuration</strong> — otherwise the code running in production has never been tested.</p>
+<p>5. <strong>Idempotence</strong>: the script describes a target state, not steps; N runs equal one run. This is the precondition for unattended automation.</p>
+<p>6. <strong>Layer deployment by rate of change</strong>: OS and middleware, application, configuration, data — one script and one cadence each.</p>
+<p>7. Engineering discipline: relative paths, output outside the source tree, artifacts bound to a revision, failing tests fail the build but only after the round finishes, native packages over homemade ones.</p>
+<p>8. The last step of deployment is a <strong>smoke test</strong> — "exited 0" and "the service works" are different claims.</p>
+<p>9. Data is the exception to idempotence: schema migration is inherently non-repeatable and needs versioned migration scripts (Ch12).</p>
+<p>10. In today's terms: CI configuration as code, one image across environments, and the declarative reconciliation of Terraform and Kubernetes are all direct descendants of this chapter.</p>
+</div>
+</div>
+<footer>Books Deep-Read · Finish this page and you have the chapter's core; go to the book itself for full cases and depth.</footer>
+</div>
+
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
