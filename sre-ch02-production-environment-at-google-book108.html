@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>SRE 第 2 章 · Google 的生产环境 — 专业书籍精读 Book 108</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · SRE · 第 2 章</p>
+<h1>Google 的生产环境：一台数据中心大小的计算机</h1>
+<p class="sub">Site Reliability Engineering · Ch 2 · Google（JC van Winkel）· 2016</p>
+<p class="langbar"><a href="sre-ch02-production-environment-at-google-book108.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你在 Google 搜一个词，零点几秒出结果。这背后不是「一台特别强的机器」，而是<strong>几万台普通机器</strong>，外加一整套软件把它们黏成<strong>一台机器</strong>。SRE 这本书的第 2 章就是带你参观这台「数据中心那么大的计算机」——它不教任何做法，只交代后面十几章所有做法的<strong>物理前提</strong>。</p>
+<h2>先打个比方</h2>
+<p>把它想成一座巨型工厂。以前的运维像<strong>养宠物</strong>：每台机器有名字、有脾气，谁病了谁半夜爬起来照顾。机器只有十台时这么干没问题，十万台就不行了——按概率算，每天都有一批在坏。</p>
+<p>于是 Google 换了个办法：请一个<strong>总工头</strong>。你不再说「让 37 号机器去跑这个程序」，而是贴一张任务单——「这活要 20 份，每份给我一个 2 核 4G 的工位，别把 20 份全塞在同一排」。工头自己去排班；哪个工人病了，它把活挪给别人，你连知道都不用知道。</p>
+<h2>旧世界为什么难</h2>
+<p>难点不在「机器会坏」，而在<strong>数量一大，坏就从意外变成了日常</strong>。人盯不过来，也不该盯。真正要做的是把「哪台机器」这件事整个藏起来，让人只关心「服务还在不在、快不快」。这章的价值就在于：它把这套藏法摊开给你看。</p>
+<h2>核心机制直觉：「机器」不是「服务器」</h2>
+<p>这一章开头先抠一个词。日常说的「服务器」其实是两样东西：<strong>一台铁疙瘩</strong>，和<strong>跑在它上面的一段程序</strong>。书里把它们硬性分开——铁疙瘩叫「机器」，程序叫「服务器」。一台机器上常年同时跑着好几个不相干的程序；反过来，一个服务的几十份程序散落在几十台机器上。分清这两件事，你才能听懂那句关键的话：<strong>机器死了，服务没死。</strong></p>
+<p>剩下的就是三样底座。一个<strong>总调度</strong>，负责把程序摆到机器上，坏了就重摆；一套<strong>层层垒起来的存储</strong>，你存一份文件，它自动摊到几千块盘上，坏几块不影响你；一张<strong>快得离谱的内部网</strong>，让「跨机器」这件事便宜到可以随便跨——这正是拆成几万台小机器还能协同干活的前提。另外还有个不起眼但要命的角色：一块所有人都信的<strong>公告板</strong>，「现在谁是主」「某个服务在哪」都写在上面，大家照着它走，就不会各执一词。</p>
+<h2>带来了什么</h2>
+<p>好处是：机器坏掉从事故降级成日常，人不用起夜，扩容变成改一个数字。代价也就一句话——所有人都踩在同一批底座上，那块公告板要是糊了，<strong>全体一起糊</strong>。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>Google 的生产环境不是「很多台服务器」，而是<strong>一台数据中心那么大的计算机</strong>：调度、存储、网络被抽象成统一底座，人只声明「我要什么」，不关心「它落在哪台机器上」。</p>
+</div>
+<p class="switch-hint">想看具体组件、分层图和权衡？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">你以为 SRE 管的是一堆机器，其实他们管的是<strong>一台数据中心大小的计算机</strong>。第 2 章不讲任何实践，只交代物理前提：Google 用 Borg（调度）、Colossus（存储）、Jupiter / B4（网络）、Chubby（协调）、Stubby（RPC）把几万台廉价机器抽象成一台<strong>可编程的机器</strong>。看懂这套底座，后面十几章讲的监控、自动化、过载防护才不是悬空的口号。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>机器（machine）</strong>：一台物理硬件（或虚拟机）。<strong>服务器（server）</strong>：一段对外提供服务的程序。本章把这两个词硬性分开，全书沿用。</li>
+<li><strong>作业 / 任务（job / task）</strong>：一个 job 是「同一个程序的 N 份副本」这张订单，每一份副本叫一个 task，分别跑在不同机器上。</li>
+<li><strong>集群（cluster）</strong>：一批统一调度的机器，是 Google 日常说的部署单位；一个数据中心里有若干个集群。</li>
+<li><strong>RPC（远程过程调用）</strong>：让 A 程序像调本地函数一样调 B 程序，网络细节被框架藏起来。</li>
+<li><strong>分布式文件系统</strong>：把一份文件切块散到很多机器的盘上、并多存几份，对使用者仍呈现成一个普通目录树。</li>
+<li><strong>NoSQL</strong>：不走关系表和 SQL 的数据库，通常用「键 → 值」访问，换来更容易横向扩展。</li>
+<li><strong>主选举（master election）</strong>：一组机器就「现在谁说了算」达成一致，避免两个主同时写。底层常用 Paxos 这类共识算法。</li>
+<li><strong>装箱（bin packing）</strong>：把大小不一的任务塞进固定容量的机器里、尽量不浪费，调度器的核心难题。</li>
+<li><strong>对分带宽（bisection bandwidth）</strong>：把整个网络从中间劈成两半，两半之间能同时跑多少数据——衡量「机器之间能不能随便说话」的硬指标。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>本章属于 SRE 书 Part I「导论」，紧接第 1 章之后，是全书唯一一章<strong>纯描述性</strong>的内容——作者 JC van Winkel 相当于给你发了一张厂区地图。后面几乎每一章都踩在它上面：监控（Ch 6 / Ch 10 的 Borgmon）、自动化（Ch 7 的 Borg 操作）、过载与级联失效（Ch 21 / 22 的 RPC 与负载均衡）、关键状态（Ch 23 的 Chubby）。对应到今天的现实，它就是 <strong>Kubernetes + 对象存储 + 服务网格</strong> 那一整套的原型。</p>
+<h2>这章要解决什么</h2>
+<p>这章要解决的是一件不起眼但致命的事：<strong>词对不上，后面全读不懂</strong>。同一句「把任务挪到另一台机器上」，在传统运维耳朵里是一次需要审批的变更，在 Borg 世界里是每天发生几千次的默认行为。不先统一心智模型，读者会把 Google 的做法误读成「他们胆子大」。</p>
+<p>更深一层的理由是<strong>规模改变性质</strong>。一个集群可以有数万台机器；按业界公开的硬盘年化故障率（个位数百分比）粗算，这种规模下<strong>每天都有机器在坏</strong>。一个跑着 2000 个 task 的服务，几乎天天都有 task 被重启或被更高优先级的作业挤掉。所以 Google 的选择不是「让机器别坏」，而是<strong>把「机器」这个概念从开发者的视野里删掉</strong>——你声明要什么，不问它落在哪。不这么做的代价很直白：人会被机器数量淹没，SRE 那条「运维工作不超过 50% 时间」的红线一天都守不住。</p>
+<h2>核心内容，讲透</h2>
+<h3>先把词说清：机器 ≠ 服务器</h3>
+<p>本章开篇定义：<em>机器</em>是硬件（或虚拟机），<em>服务器</em>是实现某个服务的软件。这不是咬文嚼字——一台机器上同时跑着搜索的后端、一个日志清理任务和别人的 MapReduce；而「搜索前端」这个服务的几百个副本散在几百台机器上。两者是<strong>多对多</strong>，不是一对一。传统运维之所以难扩展，正是因为默认它俩是一对一的（一台机器 = 一个服务 = 一个名字 = 一个负责人）。</p>
+<p>硬件本身是分层的：机架（rack）里装几十台机器，机架排成排（row），一排或几排构成一个<strong>集群</strong>，一栋数据中心里有若干集群，几栋相邻的数据中心组成园区（campus）。这个层级不是装修风格，而是<strong>故障域和带宽的边界</strong>：同机架的两台机器之间又快又便宜，但机架掉电会一起死；跨数据中心不会一起死，但延迟涨一个量级。后面所有「副本放哪」的讨论，用的都是这把尺子。</p>
+<figure>
+<svg viewBox="0 0 640 215" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect x="50" y="42" width="140" height="46" rx="7" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="120" y="62" font-size="12.5" fill="#e7ebf1" text-anchor="middle">机器 machine</text>
+<text x="120" y="79" font-size="10" fill="#7c8593" text-anchor="middle">硬件；上面跑多个 server</text>
+<rect x="250" y="42" width="140" height="46" rx="7" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="320" y="62" font-size="12.5" fill="#e7ebf1" text-anchor="middle">机架 rack</text>
+<text x="320" y="79" font-size="10" fill="#7c8593" text-anchor="middle">数十台；共享供电与交换机</text>
+<rect x="450" y="42" width="140" height="46" rx="7" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="520" y="62" font-size="12.5" fill="#e7ebf1" text-anchor="middle">排 row</text>
+<text x="520" y="79" font-size="10" fill="#7c8593" text-anchor="middle">一排机架</text>
+<line x1="190" y1="65" x2="243" y2="65" stroke="#7c8593" marker-end="url(#a1)"></line>
+<text x="216" y="35" font-size="10" fill="#9b6cf5" text-anchor="middle">×数十</text>
+<line x1="390" y1="65" x2="443" y2="65" stroke="#7c8593" marker-end="url(#a1)"></line>
+<text x="416" y="35" font-size="10" fill="#9b6cf5" text-anchor="middle">×若干</text>
+<path d="M520,88 V108 H120 V132" fill="none" stroke="#7c8593" marker-end="url(#a1)"></path>
+<rect x="50" y="138" width="140" height="46" rx="7" fill="rgba(91,157,249,0.18)" stroke="#5b9df9" stroke-width="2"></rect>
+<text x="120" y="158" font-size="12.5" fill="#e7ebf1" text-anchor="middle">集群 cluster</text>
+<text x="120" y="175" font-size="10" fill="#8fbaff" text-anchor="middle">Borg 调度的单位</text>
+<rect x="250" y="138" width="140" height="46" rx="7" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="320" y="158" font-size="12.5" fill="#e7ebf1" text-anchor="middle">数据中心</text>
+<text x="320" y="175" font-size="10" fill="#7c8593" text-anchor="middle">一栋楼；数万台机器</text>
+<rect x="450" y="138" width="140" height="46" rx="7" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="520" y="158" font-size="12.5" fill="#e7ebf1" text-anchor="middle">园区 campus</text>
+<text x="520" y="175" font-size="10" fill="#7c8593" text-anchor="middle">相邻几栋楼</text>
+<line x1="190" y1="161" x2="243" y2="161" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="390" y1="161" x2="443" y2="161" stroke="#7c8593" marker-end="url(#a1)"></line>
+<text x="320" y="205" font-size="10" fill="#7c8593" text-anchor="middle">越往右，故障越不相关；同时延迟越大</text>
+</svg>
+<figcaption>硬件的层级：机器 → 机架 → 排 → 集群 → 数据中心 → 园区。这条链同时是故障域的边界。</figcaption>
+</figure>
+<h3>Borg：把一整个集群当成一台机器来编程</h3>
+<p>Borg 是<strong>集群操作系统</strong>——本章把它类比为 Apache Mesos。你提交的不是「在 37 号机器上启动进程」，而是一份<strong>声明</strong>：这个 job 要 20 个 task，每个 task 要 2 核 4G、8G 磁盘，别把它们放在同一个机架上。Borgmaster（控制面，本身多副本选主）算出摆法，各机器上的 Borglet 拉起二进制、监控存活；task 挂了或机器没了，Borg 在别处重建一份。</p>
+<p>三个设计要点值得记住。其一，<strong>声明式</strong>：你描述期望状态，调度器负责收敛——今天 Kubernetes 的全部哲学都在这句里。其二，<strong>装箱与超卖</strong>：把在线服务和批处理混跑在同一批机器上，用低优先级作业填满在线服务留出的余量，机器利用率因此大幅高于「一个服务一批机器」的做法。其三，<strong>抢占</strong>：资源紧张时，高优先级作业可以把低优先级作业踢掉。代价也在这里——你的批处理作业<strong>本来就可能被随时杀掉</strong>，所以必须写成可重试、可续跑的。</p>
+<p>还有一个容易被跳过但很关键的细节：任务不用 IP 互相寻址，而是用 <strong>BNS 名字</strong>（Borg 命名服务，形如 <code>/bns/&lt;集群&gt;/&lt;用户&gt;/&lt;job&gt;/&lt;序号&gt;</code>），由底层解析成当前的 IP 和端口。正因为有这层间接，task 换机器对调用方是透明的。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/container-orchestration-day49.html" target="_blank" rel="noopener">System Design · Day 49 容器与编排</a> — 声明式控制平面、调谐循环与自愈的完整机制，以及 Kubernetes 从 Borg 继承与舍弃了什么</aside>
+<h3>存储栈：一层一层垒上去</h3>
+<p>Google 的存储不是一个产品，而是一摞。最底下是 <strong>D</strong>（几乎每台机器上都跑的盘服务），它只负责「把这台机器的盘暴露出去」，不懂文件系统。上面一层是 <strong>Colossus</strong>（GFS 的后继），它把成千上万个 D 拼成一个<strong>集群级文件系统</strong>，负责切块、多副本 / 纠删码、坏盘替换。再往上才是我们熟悉的数据库层：<strong>Bigtable</strong>（NoSQL，按「行键 + 列 + 时间戳」寻址的稀疏大表，可到 PB 级）、<strong>Spanner</strong>（提供类 SQL 接口和全球强一致）、<strong>Blobstore</strong>（存大块不可变对象，如图片视频）。</p>
+<p>为什么要分这么多层？因为<strong>每层只解决一类问题，上层才能假设下层不会骗它</strong>：Colossus 假设单盘会坏，于是做冗余；Bigtable 假设文件系统可靠，于是只管数据模型和分片。这也是分布式系统最常见的结构——不是一个巨系统，而是一摞彼此信任的小系统。</p>
+<figure>
+<svg viewBox="0 0 640 262" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<rect x="20" y="20" width="400" height="40" rx="6" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"></rect>
+<text x="220" y="37" font-size="12" fill="#e7ebf1" text-anchor="middle">应用：前端 / 后端 job（Shakespeare 服务就在这层）</text>
+<text x="220" y="53" font-size="10" fill="#8fbaff" text-anchor="middle">只声明需求，不关心机器</text>
+<rect x="20" y="70" width="400" height="40" rx="6" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5"></rect>
+<text x="220" y="87" font-size="12" fill="#e7ebf1" text-anchor="middle">Bigtable · Spanner · Blobstore</text>
+<text x="220" y="103" font-size="10" fill="#7c8593" text-anchor="middle">数据模型：稀疏大表 / 强一致 SQL / 大对象</text>
+<rect x="20" y="120" width="400" height="40" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
+<text x="220" y="137" font-size="12" fill="#e7ebf1" text-anchor="middle">Colossus（GFS 后继）</text>
+<text x="220" y="153" font-size="10" fill="#7c8593" text-anchor="middle">集群级文件系统：切块、冗余、坏盘替换</text>
+<rect x="20" y="170" width="400" height="36" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
+<text x="220" y="192" font-size="12" fill="#e7ebf1" text-anchor="middle">D：每台机器上的盘服务</text>
+<rect x="20" y="216" width="400" height="36" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
+<text x="220" y="238" font-size="12" fill="#b9c0ca" text-anchor="middle">硬件：数万台机器 + Jupiter 网络</text>
+<rect x="440" y="20" width="180" height="108" rx="7" fill="rgba(91,157,249,0.08)" stroke="#5b9df9" stroke-dasharray="5 4"></rect>
+<text x="530" y="42" font-size="12" fill="#8fbaff" text-anchor="middle">Borg</text>
+<text x="530" y="62" font-size="10" fill="#7c8593" text-anchor="middle">把 job 摆到机器上</text>
+<text x="530" y="78" font-size="10" fill="#7c8593" text-anchor="middle">挂了就在别处重建</text>
+<text x="530" y="98" font-size="10" fill="#7c8593" text-anchor="middle">装箱 · 优先级抢占</text>
+<text x="530" y="116" font-size="10" fill="#7c8593" text-anchor="middle">横跨上面所有层</text>
+<rect x="440" y="140" width="180" height="50" rx="7" fill="rgba(155,108,245,0.08)" stroke="#9b6cf5" stroke-dasharray="5 4"></rect>
+<text x="530" y="160" font-size="11.5" fill="#e7ebf1" text-anchor="middle">Chubby / BNS</text>
+<text x="530" y="178" font-size="10" fill="#7c8593" text-anchor="middle">谁是主 · 服务在哪</text>
+<rect x="440" y="202" width="180" height="50" rx="7" fill="rgba(155,108,245,0.08)" stroke="#9b6cf5" stroke-dasharray="5 4"></rect>
+<text x="530" y="222" font-size="11.5" fill="#e7ebf1" text-anchor="middle">Borgmon</text>
+<text x="530" y="240" font-size="10" fill="#7c8593" text-anchor="middle">时序指标 · 告警</text>
+</svg>
+<figcaption>软件底座：左边是自下而上的存储栈，右边是横跨所有层的调度、协调与监控。</figcaption>
+</figure>
+<h3>网络：把「跨机器」做到便宜</h3>
+<p>这摞抽象能成立，前提是<strong>机器之间说话足够便宜</strong>。Google 的数据中心网络（Jupiter 一代）用自研交换硬件加软件定义网络（SDN，控制逻辑集中在软件里而非每台交换机各自为政），把整个数据中心做成一张近似「任意两台机器都能全速互通」的网；跨数据中心则由 <strong>B4</strong> 这张软件定义广域网承担。</p>
+<p>流量入口是 <strong>GSLB</strong>（全局软件负载均衡），它在三个层面同时做分流：<strong>地理层</strong>（DNS 把用户导到就近的数据中心）、<strong>服务层</strong>（在该地的多个前端之间分）、<strong>RPC 层</strong>（后端实例之间分）。三层是必要的——只靠 DNS，粒度太粗且缓存改不动；只靠 RPC 层，用户已经绕了半个地球才开始被均衡。</p>
+<p>程序之间的通信一律走 <strong>Stubby</strong>（Google 内部 RPC 框架，公开版本是 gRPC），数据用 <strong>protocol buffers</strong> 编码——书里给的量级是：比 XML 小 3 到 10 倍、序列化快 20 到 100 倍。这不是锦上添花：当一次用户请求要扇出成几十次内部调用时，编解码开销会直接出现在尾延迟里。</p>
+<h3>Chubby 与 Borgmon：小零件，大依赖</h3>
+<p><strong>Chubby</strong> 是基于 Paxos 的锁服务兼小体量强一致存储，干两件事：<strong>存少量所有人都必须看到同一份的信息</strong>（比如 Borgmaster 现在在哪），以及<strong>主选举</strong>——一组副本里谁当主，由 Chubby 裁决，从而避免两个主同时写。它存的数据量极小，重要性却极高：几乎所有系统都在用它，它一旦不可用，一片服务跟着不可用。</p>
+<p><strong>Borgmon</strong> 是监控：从每个 task 暴露的端点<strong>定期抓指标</strong>，存成时间序列，再用规则算出告警。关键设计是告警建立在<strong>可聚合的指标表达式</strong>上（「这个服务整体错误率超过 x%」），而不是逐台机器的阈值——机器随时在换，按机器告警的第一天就会被噪声淹没。这一套后来被 Prometheus 公开复刻（第 10 章专讲它）。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/chubby-paper20.html" target="_blank" rel="noopener">CS Papers · The Chubby Lock Service</a> — 为什么 Google 把共识包装成「锁服务」而不是共识库，以及粗粒度锁、缓存与 KeepAlive 的设计取舍</aside>
+<h3>一个请求的一生</h3>
+<p>本章用一个玩具服务把所有零件串起来：<strong>Shakespeare</strong>——索引莎士比亚全集，支持查「某个词出现在哪些剧本里」。离线侧是一条 MapReduce 流水线读全部文本、建索引、写进 Bigtable；在线侧是前端 job 和后端 job，各自在多个集群里跑着多份副本。</p>
+<p>用户请求的路径是：DNS 经 GSLB 落到就近数据中心的<strong>前端 task</strong> → 前端用 BNS 名字发 <strong>Stubby RPC</strong> 给<strong>后端 task</strong> → 后端查 <strong>Bigtable</strong> → 原路返回。整条链上<strong>没有任何一跳认识具体机器</strong>，每一跳都可以被 Borg 换掉而不打断服务。这就是全章想让你建立的画面。</p>
+<figure>
+<svg viewBox="0 0 640 235" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker></defs>
+<rect x="18" y="52" width="92" height="40" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
+<text x="64" y="77" font-size="12" fill="#e7ebf1" text-anchor="middle">用户</text>
+<rect x="148" y="52" width="110" height="40" rx="6" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"></rect>
+<text x="203" y="70" font-size="12" fill="#e7ebf1" text-anchor="middle">GSLB</text>
+<text x="203" y="85" font-size="9.5" fill="#7c8593" text-anchor="middle">DNS · 地理就近</text>
+<rect x="296" y="26" width="326" height="150" rx="9" fill="none" stroke="rgba(91,157,249,0.45)" stroke-dasharray="5 4"></rect>
+<text x="459" y="44" font-size="10" fill="#7c8593" text-anchor="middle">就近集群（所有 task 由 Borg 摆放与重建）</text>
+<rect x="312" y="56" width="128" height="42" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="376" y="73" font-size="12" fill="#e7ebf1" text-anchor="middle">前端 job</text>
+<text x="376" y="89" font-size="9.5" fill="#7c8593" text-anchor="middle">多份 task</text>
+<rect x="478" y="56" width="128" height="42" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="542" y="73" font-size="12" fill="#e7ebf1" text-anchor="middle">后端 job</text>
+<text x="542" y="89" font-size="9.5" fill="#7c8593" text-anchor="middle">多份 task</text>
+<rect x="420" y="126" width="186" height="40" rx="6" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5"></rect>
+<text x="513" y="143" font-size="12" fill="#e7ebf1" text-anchor="middle">Bigtable</text>
+<text x="513" y="158" font-size="9.5" fill="#7c8593" text-anchor="middle">莎士比亚全集索引</text>
+<line x1="110" y1="72" x2="141" y2="72" stroke="#5b9df9" marker-end="url(#a2)"></line>
+<line x1="258" y1="72" x2="305" y2="72" stroke="#5b9df9" marker-end="url(#a2)"></line>
+<line x1="440" y1="77" x2="471" y2="77" stroke="#5b9df9" marker-end="url(#a2)"></line>
+<text x="455" y="115" font-size="9.5" fill="#8fbaff" text-anchor="middle">Stubby RPC · BNS 名字</text>
+<path d="M542,98 V126" fill="none" stroke="#5b9df9" marker-end="url(#a2)"></path>
+<text x="320" y="200" font-size="10.5" fill="#7c8593">离线侧：MapReduce 读全部文本 → 建索引 → 写入 Bigtable</text>
+<text x="20" y="200" font-size="10.5" fill="#7c8593">全链路无人认识 IP</text>
+<text x="20" y="218" font-size="10.5" fill="#7c8593">任一跳都可被换掉</text>
+</svg>
+<figcaption>一个请求的一生：用户 → GSLB → 前端 task → Stubby RPC → 后端 task → Bigtable，全程只认名字不认机器。</figcaption>
+</figure>
+<h2>关键权衡与选型</h2>
+<p>这章最实用的一张表，是把 Google 的内部件翻译成你能真正用上的东西——几乎每个组件都有公开对应物，读懂它就等于读懂了现代基础设施的来路。</p>
+<p class="tcap">Google 内部件 ↔ 公开对应物</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Google 内部</th><th>公开对应物</th><th>它到底解决什么</th></tr></thead>
+<tbody>
+<tr><th>Borg</th><td>Kubernetes / Mesos / Nomad</td><td>把「程序 → 机器」的摆放交给调度器，机器故障变成自动重建</td></tr>
+<tr><th>Colossus（GFS 后继）</th><td>HDFS / Ceph / S3 类对象存储</td><td>把成千上万块盘变成一个可靠的命名空间</td></tr>
+<tr><th>Bigtable</th><td>HBase / Cassandra</td><td>PB 级、按行键顺序分片的宽表，写入吞吐优先</td></tr>
+<tr><th>Spanner</th><td>CockroachDB / TiDB</td><td>跨地域强一致 + SQL，代价是写入延迟</td></tr>
+<tr><th>Chubby</th><td>ZooKeeper / etcd</td><td>少量数据的强一致存储与主选举</td></tr>
+<tr><th>Borgmon</th><td>Prometheus</td><td>拉取式时序指标 + 规则告警</td></tr>
+<tr><th>Stubby + protobuf</th><td>gRPC + protobuf</td><td>高效 RPC 与紧凑编码，压住扇出场景的尾延迟</td></tr>
+<tr><th>Blaze</th><td>Bazel</td><td>可复现、可缓存的分布式构建</td></tr>
+</tbody>
+</table>
+</div>
+<p>存储那一层的选型则是本章留给读者的第二道题：<strong>一致性和延迟不能同时要满</strong>。</p>
+<p class="tcap">存储三选一：什么场景选什么</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>选择</th><th>适合</th><th>诚实的代价</th></tr></thead>
+<tbody>
+<tr><th>Bigtable 类宽表</th><td>海量键值 / 时序 / 索引，读写按行键，单行操作即可满足</td><td>跨行没有事务；跨地域副本通常只能拿到最终一致，读到旧值要应用自己兜</td></tr>
+<tr><th>Spanner 类强一致库</th><td>钱、库存、配额这类<strong>读到旧值就是错</strong>的数据</td><td>跨地域提交要等多数派确认，写延迟按几十到上百毫秒计；成本更高</td></tr>
+<tr><th>Blobstore 类对象存储</th><td>图片、视频、备份等大块不可变数据</td><td>不能改只能覆盖；不适合小而频繁的更新</td></tr>
+</tbody>
+</table>
+</div>
+<p>还有一个更大的权衡藏在 Borg 背后：<strong>共享集群 vs 专用机器</strong>。共享把利用率做上去了，也把隔离问题带了进来——邻居的批处理作业抢走内存带宽，你的 p99 就抖。Google 的答案是接受这份代价、用优先级和资源隔离去管；如果你的业务只有几十台机器，这份代价换不回同等收益，那就别抄。</p>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>这一章的价值，是把一句被说滥的话变成具体画面：<strong>「把数据中心当计算机」到底要有哪些零件</strong>。调度、集群文件系统、强一致协调、统一 RPC、统一监控——五件缺一不可。今天你在云上拼 Kubernetes + S3 + etcd + gRPC + Prometheus，拼的就是同一张图。面试里被问「你怎么设计一个能跑上万台机器的平台」，这五件套就是骨架；回答里能说清「谁负责哪一层故障」，比背组件名有用得多。</p>
+<div class="ev">
+<div class="evh">大厂实证</div>
+<ul>
+<li><strong>网络是这套抽象的地基。</strong> Google 的 Amin Vahdat 写道：「我们这一代的 Jupiter 网络架构，能提供<strong>超过 1 Pb/s 的总对分带宽</strong>……这个容量足够让 10 万台服务器各自以 10Gb/s 互相交换数据。」正因为跨机器通信便宜到这个程度，「把一个服务拆到几百台机器上」才是合算的。<span class="src">Google Cloud 博客，2015-06-17 · <a href="https://cloud.google.com/blog/products/gcp/a-look-inside-googles-data-center-networks" target="_blank" rel="noopener">A Look Inside Google's Data Center Networks</a></span></li>
+<li><strong>存储分层不是理论洁癖。</strong> Google 在 2021 年解释 Colossus 时说：它是「我们的集群级文件系统，GFS 的后继」，「单个集群可扩展到 EB 级存储和数万台机器」，而它把<strong>文件系统元数据存进了 Bigtable</strong>——「让 Colossus 比最大的 GFS 集群又扩了 100 倍以上」。注意这层递归：数据库建在文件系统上，文件系统的元数据又放回数据库里。<span class="src">Google Cloud 博客，2021-04-19 · <a href="https://cloud.google.com/blog/products/storage-data-transfer/a-peek-behind-colossus-googles-file-system" target="_blank" rel="noopener">A peek behind Colossus</a></span></li>
+<li><strong>Borg 的规模有公开数字。</strong> Google 在 Borg 论文里自述：它「运行着数十万个 job、来自数千个不同应用，跑在若干个各自可达数万台机器的集群上」，靠准入控制、高效装箱、超卖和机器共享把利用率做上去。这也是 Kubernetes 公开继承的那套设计的出处。<span class="src">Verma 等，《Large-scale cluster management at Google with Borg》，EuroSys 2015</span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/scalability-day1.html" target="_blank" rel="noopener">System Design · Day 1 Scalability 基础</a> — 从单机到千万 QPS 的每一步扩展动作，以及每一步真正解除的是哪个瓶颈</aside>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>最大的误读：把它当成施工图。</strong> 这章是<strong>描述</strong>，不是建议。Google 建这套东西是因为它有几十万台机器；你有 50 台时照抄，买到的多半只是复杂度。判据很简单——<strong>你的机器故障率高到人处理不过来了吗？</strong>没到就别上。</li>
+<li><strong>「机器会坏所以不用管机器」是断章取义。</strong> 自动重建解决的是<strong>单台</strong>故障；相关性故障（整个机架掉电、一次坏配置推全网）照样会把服务打穿，而且容量规划一点没省——被抢占的作业总得有地方去。</li>
+<li><strong>共享底座是双刃的。</strong> Chubby 这类组件被所有人依赖，它的可用性就是全公司可用性的上界。Google 自己的对策相当反直觉：<strong>给它安排计划内的停机</strong>，逼依赖方承认它会挂、别把它当永动机（书中另有一章详述这个做法）。</li>
+<li><strong>「内部件都有公开对应物」不等于等价。</strong> Kubernetes 不是 Borg，etcd 不是 Chubby——它们抄了模型，没抄十几年的运维经验和配套的组织。工具能买到，运维文化买不到。</li>
+<li><strong>时代局限</strong>：本书 2016 年成书，此后 Colossus 与 Jupiter 都已换代、Bigtable 也提供了更多一致性与事务选项，Borg 的公开后裔 Kubernetes 更是变了模样。但「五件套 + 只认名字不认机器」这个骨架，十年过去依然是对的。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 一句话：本章是全书的<strong>物理前提</strong>——Google 的生产环境不是一堆服务器，而是一台被软件黏成的、数据中心大小的计算机。</p>
+<p>② 全章基石是一条定义：<strong>机器（硬件）≠ 服务器（软件）</strong>，二者多对多；传统运维的一对一假设正是扩展不上去的根源。</p>
+<p>③ 硬件层级 机器 → 机架 → 排 → 集群 → 数据中心 → 园区，本质是<strong>故障域与延迟的刻度尺</strong>。</p>
+<p>④ <strong>Borg</strong> 是集群操作系统：声明式提交 job / task，装箱提高利用率，优先级抢占，故障自动重建；代价是低优先级作业随时可能被杀。</p>
+<p>⑤ 存储是一摞：<strong>D → Colossus → Bigtable / Spanner / Blobstore</strong>，每层只解决一类问题，上层才敢信任下层。</p>
+<p>⑥ 网络（Jupiter、B4）便宜到可以随便跨机器，是整套抽象成立的前提；<strong>GSLB 在地理 / 服务 / RPC 三层同时做负载均衡</strong>。</p>
+<p>⑦ <strong>Chubby</strong>（强一致协调与主选举）与 <strong>Borgmon</strong>（时序指标 + 规则告警）体量小、依赖面极广，是可用性的上界。</p>
+<p>⑧ 一个请求的一生：GSLB → 前端 task → Stubby RPC → 后端 task → Bigtable，<strong>全链路只认 BNS 名字、不认 IP</strong>。</p>
+<p>⑨ 最该带走的判断：这套东西<strong>是规模逼出来的，不是品味</strong>；规模没到就照抄，买到的只有复杂度。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

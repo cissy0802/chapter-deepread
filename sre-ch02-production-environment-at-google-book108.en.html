@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>SRE Ch 2 · The Production Environment at Google — Book Deep Read Book 108</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOK DEEP READ · SRE · CHAPTER 2</p>
+<h1>The Production Environment at Google: A Computer the Size of a Datacenter</h1>
+<p class="sub">Site Reliability Engineering · Ch 2 · Google (JC van Winkel) · 2016</p>
+<p class="langbar"><a href="sre-ch02-production-environment-at-google-book108.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You type a word into Google and get results in a fraction of a second. Behind that is not "one very powerful machine" but <strong>tens of thousands of ordinary machines</strong>, plus a stack of software that glues them into <strong>a single machine</strong>. Chapter 2 of the SRE book is a guided tour of that computer-the-size-of-a-datacenter. It teaches no practice at all; it establishes the <strong>physical premise</strong> for every practice in the dozen chapters that follow.</p>
+<h2>An analogy</h2>
+<p>Think of a giant factory. Old-school operations treated machines like <strong>pets</strong>: each had a name, a personality, and someone who got out of bed at 3 a.m. when it got sick. That works for ten machines. At a hundred thousand it does not — statistically, some of them are broken every single day.</p>
+<p>So Google hired a <strong>foreman</strong>. You no longer say "run this program on machine 37." You post a work order: "I need twenty copies of this, each with a two-core, four-gigabyte workstation, and don't put all twenty in the same row." The foreman does the scheduling. When a worker falls ill, it moves the work to someone else — and you never even hear about it.</p>
+<h2>Why the old world was hard</h2>
+<p>The hard part isn't that machines break. It's that <strong>once there are enough of them, breaking stops being an incident and becomes the weather</strong>. Humans can't watch that, and shouldn't. The real job is to hide "which machine" entirely, so people only care whether the service is up and fast. This chapter's value is that it opens the hood on how that hiding is done.</p>
+<h2>The core intuition: a "machine" is not a "server"</h2>
+<p>The chapter opens by splitting one word in two. In everyday speech "server" means two different things: <strong>a box of metal</strong>, and <strong>a program running on it</strong>. The book forces them apart — the metal is a <em>machine</em>, the program is a <em>server</em>. One machine routinely runs several unrelated programs at once; conversely, one service's dozens of copies are scattered across dozens of machines. Once you hold those apart, the crucial sentence finally parses: <strong>the machine died, the service didn't.</strong></p>
+<p>The rest is three foundations. A <strong>scheduler</strong> that places programs onto machines and re-places them when things break. A <strong>stack of storage</strong> where you save one file and it is spread across thousands of disks, several of which can die without you noticing. And an <strong>absurdly fast internal network</strong> that makes "crossing between machines" cheap enough to do freely — which is exactly what lets the work be split across tens of thousands of small machines in the first place. Plus one unglamorous, load-bearing piece: a <strong>notice board</strong> everyone trusts, holding "who is the leader right now" and "where does this service live," so nobody disagrees about the basics.</p>
+<h2>What it buys, and what it costs</h2>
+<p>Machine failure is demoted from incident to routine, nobody gets paged at night, and scaling becomes editing a number. The cost fits in one sentence: everyone stands on the same foundations, so if that notice board gets muddled, <strong>everybody gets muddled together</strong>.</p>
+<h2>Remember this</h2>
+<div class="tl">
+<p>Google's production environment is not "a lot of servers." It is <strong>one computer the size of a datacenter</strong>: scheduling, storage and networking are abstracted into a shared substrate, and people declare what they need instead of asking which machine it lands on.</p>
+</div>
+<p class="switch-hint">Want the actual components, the layer diagrams and the trade-offs? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think SREs manage a pile of machines. They manage <strong>one computer the size of a datacenter</strong>. Chapter 2 teaches no practice; it states the physical premise. Google uses Borg (scheduling), Colossus (storage), Jupiter / B4 (networking), Chubby (coordination) and Stubby (RPC) to abstract tens of thousands of cheap machines into a single <strong>programmable machine</strong>. Understand that substrate and the monitoring, automation and overload chapters that follow stop being slogans.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Machine</strong>: a piece of hardware (or a VM). <strong>Server</strong>: a piece of software that implements a service. The chapter forces these apart and the whole book keeps them apart.</li>
+<li><strong>Job / task</strong>: a job is the order — "N copies of this program"; each copy is a task, running on a different machine.</li>
+<li><strong>Cluster</strong>: a set of machines scheduled as one unit; it is the deployment unit SREs talk about daily. A datacenter holds several clusters.</li>
+<li><strong>RPC (remote procedure call)</strong>: lets program A call program B as if it were a local function, with the network hidden by the framework.</li>
+<li><strong>Distributed file system</strong>: chops a file into chunks spread over many machines' disks, keeps several copies, and still presents an ordinary directory tree.</li>
+<li><strong>NoSQL</strong>: a database that skips relational tables and SQL, usually accessed by key, trading query power for easier horizontal scaling.</li>
+<li><strong>Master election</strong>: a group of machines agreeing on who is in charge right now, so two leaders never write at once. Usually built on a consensus algorithm such as Paxos.</li>
+<li><strong>Bin packing</strong>: fitting differently sized tasks into fixed-capacity machines with minimal waste — the scheduler's central problem.</li>
+<li><strong>Bisection bandwidth</strong>: cut the network in half; how much data can flow between the halves at once. The hard measure of "can any two machines talk freely?"</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This chapter belongs to Part I, Introduction, right after Chapter 1, and it is the book's only purely <strong>descriptive</strong> chapter — author JC van Winkel is handing you a site map. Almost everything later stands on it: monitoring (Ch 6, and Borgmon in Ch 10), automation (Ch 7, which operates Borg), overload and cascading failure (Ch 21–22, RPC and load balancing), critical state (Ch 23, Chubby). In today's terms, it is the prototype of the whole <strong>Kubernetes + object storage + service mesh</strong> arrangement.</p>
+<h2>What the chapter is solving</h2>
+<p>It solves something unglamorous and fatal: <strong>if the vocabulary doesn't line up, nothing later parses</strong>. "Move that task to another machine" means a change request requiring approval to a traditional ops team, and a few thousand times a day to Borg. Without a shared mental model, readers misread Google's practices as mere bravado.</p>
+<p>The deeper reason is that <strong>scale changes the nature of the problem</strong>. A cluster can hold tens of thousands of machines; at published industry disk failure rates (low single-digit percent annually), something is broken <strong>every day</strong> at that size. A service with 2000 tasks will see tasks restarted or preempted more or less daily. So Google's answer is not "stop machines from failing" but <strong>delete the concept of "machine" from the developer's field of view</strong>: you declare what you need and never ask where it lands. The cost of not doing this is blunt — people drown in machine count, and the SRE rule that operational work stays under 50% of the time does not survive a single day.</p>
+<h2>The core, explained</h2>
+<h3>First, fix the words: machine is not server</h3>
+<p>The chapter's opening definition: a <em>machine</em> is hardware (or a VM); a <em>server</em> is software implementing a service. This is not pedantry. One machine simultaneously runs a search backend, a log-cleanup task and someone else's MapReduce; meanwhile the "search frontend" service has hundreds of copies spread over hundreds of machines. The relationship is <strong>many-to-many</strong>, not one-to-one. Traditional ops scales badly precisely because it assumes one-to-one: one machine = one service = one hostname = one owner.</p>
+<p>The hardware itself is layered: a rack holds dozens of machines, racks are arranged in rows, one or more rows form a <strong>cluster</strong>, a datacenter building holds several clusters, and adjacent buildings form a campus. That hierarchy is not decor — it is the boundary of <strong>failure domains and bandwidth</strong>. Two machines in one rack talk fast and cheap, but lose power together; across datacenters they don't die together, but latency jumps an order of magnitude. Every later argument about "where do the replicas go" uses this ruler.</p>
+<figure>
+<svg viewBox="0 0 640 215" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect x="50" y="42" width="140" height="46" rx="7" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="120" y="62" font-size="12.5" fill="#e7ebf1" text-anchor="middle">Machine</text>
+<text x="120" y="79" font-size="10" fill="#7c8593" text-anchor="middle">hardware; runs many servers</text>
+<rect x="250" y="42" width="140" height="46" rx="7" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="320" y="62" font-size="12.5" fill="#e7ebf1" text-anchor="middle">Rack</text>
+<text x="320" y="79" font-size="10" fill="#7c8593" text-anchor="middle">dozens; shared power</text>
+<rect x="450" y="42" width="140" height="46" rx="7" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="520" y="62" font-size="12.5" fill="#e7ebf1" text-anchor="middle">Row</text>
+<text x="520" y="79" font-size="10" fill="#7c8593" text-anchor="middle">a row of racks</text>
+<line x1="190" y1="65" x2="243" y2="65" stroke="#7c8593" marker-end="url(#a1)"></line>
+<text x="216" y="35" font-size="10" fill="#9b6cf5" text-anchor="middle">xN</text>
+<line x1="390" y1="65" x2="443" y2="65" stroke="#7c8593" marker-end="url(#a1)"></line>
+<text x="416" y="35" font-size="10" fill="#9b6cf5" text-anchor="middle">xN</text>
+<path d="M520,88 V108 H120 V132" fill="none" stroke="#7c8593" marker-end="url(#a1)"></path>
+<rect x="50" y="138" width="140" height="46" rx="7" fill="rgba(91,157,249,0.18)" stroke="#5b9df9" stroke-width="2"></rect>
+<text x="120" y="158" font-size="12.5" fill="#e7ebf1" text-anchor="middle">Cluster</text>
+<text x="120" y="175" font-size="10" fill="#8fbaff" text-anchor="middle">what Borg schedules</text>
+<rect x="250" y="138" width="140" height="46" rx="7" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="320" y="158" font-size="12.5" fill="#e7ebf1" text-anchor="middle">Datacenter</text>
+<text x="320" y="175" font-size="10" fill="#7c8593" text-anchor="middle">a building; 10k+ machines</text>
+<rect x="450" y="138" width="140" height="46" rx="7" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="520" y="158" font-size="12.5" fill="#e7ebf1" text-anchor="middle">Campus</text>
+<text x="520" y="175" font-size="10" fill="#7c8593" text-anchor="middle">adjacent buildings</text>
+<line x1="190" y1="161" x2="243" y2="161" stroke="#7c8593" marker-end="url(#a1)"></line>
+<line x1="390" y1="161" x2="443" y2="161" stroke="#7c8593" marker-end="url(#a1)"></line>
+<text x="320" y="205" font-size="10" fill="#7c8593" text-anchor="middle">rightward: failures less correlated, latency higher</text>
+</svg>
+<figcaption>The hardware hierarchy: machine to rack to row to cluster to datacenter to campus — and the same chain marks the failure domains.</figcaption>
+</figure>
+<h3>Borg: programming a whole cluster as one machine</h3>
+<p>Borg is a <strong>cluster operating system</strong> — the chapter likens it to Apache Mesos. What you submit is not "start a process on machine 37" but a <strong>declaration</strong>: this job needs 20 tasks, each with 2 cores, 4 GB of RAM and 8 GB of disk, and don't put them all in one rack. Borgmaster (the control plane, itself replicated with an elected leader) computes a placement; a Borglet on each machine fetches binaries and watches liveness. When a task dies or a machine vanishes, Borg rebuilds it elsewhere.</p>
+<p>Three design points are worth keeping. First, it is <strong>declarative</strong>: you describe the desired state and the scheduler converges on it — the entire philosophy of today's Kubernetes lives in that sentence. Second, <strong>bin packing and overcommit</strong>: batch work and serving jobs share machines, with low-priority work filling the headroom serving jobs must reserve, so utilization lands far above the "one service, one fleet" approach. Third, <strong>preemption</strong>: when resources tighten, high-priority jobs evict low-priority ones. The cost sits right there — your batch job <strong>can be killed at any moment by design</strong>, so it has to be written as retryable and resumable.</p>
+<p>One detail that is easy to skip and shouldn't be: tasks don't address each other by IP but by a <strong>BNS name</strong> (the Borg Naming Service, shaped like <code>/bns/&lt;cluster&gt;/&lt;user&gt;/&lt;job&gt;/&lt;task number&gt;</code>), resolved to the current IP and port. That layer of indirection is exactly why a task changing machines is invisible to its callers.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/container-orchestration-day49.en.html" target="_blank" rel="noopener">System Design · Day 49 Containers &amp; Orchestration</a> — declarative control planes, reconciliation loops and self-healing, and what Kubernetes inherited from Borg versus what it dropped</aside>
+<h3>The storage stack: layer upon layer</h3>
+<p>Google's storage is not one product but a pile. At the bottom sits <strong>D</strong>, a disk server running on nearly every machine, which only exposes that machine's disks and knows nothing about file systems. Above it, <strong>Colossus</strong> (successor to GFS) stitches thousands of D instances into a <strong>cluster-wide file system</strong>: chunking, replication or erasure coding, dead-disk replacement. Only above that come the familiar database layers: <strong>Bigtable</strong> (NoSQL, a sparse table addressed by row key, column and timestamp, scaling to petabytes), <strong>Spanner</strong> (SQL-like interface with global strong consistency) and <strong>Blobstore</strong> (large immutable objects such as images and video).</p>
+<p>Why so many layers? Because <strong>each solves exactly one class of problem, so the layer above can assume the one below isn't lying to it</strong>. Colossus assumes disks die and adds redundancy; Bigtable assumes the file system is reliable and worries only about data model and sharding. This is the most common shape in distributed systems: not one enormous system, but a stack of small ones that trust each other.</p>
+<figure>
+<svg viewBox="0 0 640 262" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<rect x="20" y="20" width="400" height="40" rx="6" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"></rect>
+<text x="220" y="37" font-size="12" fill="#e7ebf1" text-anchor="middle">Applications: frontend / backend jobs</text>
+<text x="220" y="53" font-size="10" fill="#8fbaff" text-anchor="middle">declare needs, never name machines</text>
+<rect x="20" y="70" width="400" height="40" rx="6" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5"></rect>
+<text x="220" y="87" font-size="12" fill="#e7ebf1" text-anchor="middle">Bigtable · Spanner · Blobstore</text>
+<text x="220" y="103" font-size="10" fill="#7c8593" text-anchor="middle">data models: sparse table / strong-consistent SQL / blobs</text>
+<rect x="20" y="120" width="400" height="40" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
+<text x="220" y="137" font-size="12" fill="#e7ebf1" text-anchor="middle">Colossus (successor to GFS)</text>
+<text x="220" y="153" font-size="10" fill="#7c8593" text-anchor="middle">cluster file system: chunking, redundancy, disk repair</text>
+<rect x="20" y="170" width="400" height="36" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
+<text x="220" y="192" font-size="12" fill="#e7ebf1" text-anchor="middle">D: per-machine disk server</text>
+<rect x="20" y="216" width="400" height="36" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
+<text x="220" y="238" font-size="12" fill="#b9c0ca" text-anchor="middle">Hardware: 10k+ machines + Jupiter network</text>
+<rect x="440" y="20" width="180" height="108" rx="7" fill="rgba(91,157,249,0.08)" stroke="#5b9df9" stroke-dasharray="5 4"></rect>
+<text x="530" y="42" font-size="12" fill="#8fbaff" text-anchor="middle">Borg</text>
+<text x="530" y="62" font-size="10" fill="#7c8593" text-anchor="middle">places jobs on machines</text>
+<text x="530" y="78" font-size="10" fill="#7c8593" text-anchor="middle">rebuilds them elsewhere</text>
+<text x="530" y="98" font-size="10" fill="#7c8593" text-anchor="middle">bin packing · preemption</text>
+<text x="530" y="116" font-size="10" fill="#7c8593" text-anchor="middle">cuts across every layer</text>
+<rect x="440" y="140" width="180" height="50" rx="7" fill="rgba(155,108,245,0.08)" stroke="#9b6cf5" stroke-dasharray="5 4"></rect>
+<text x="530" y="160" font-size="11.5" fill="#e7ebf1" text-anchor="middle">Chubby / BNS</text>
+<text x="530" y="178" font-size="10" fill="#7c8593" text-anchor="middle">who leads · where things live</text>
+<rect x="440" y="202" width="180" height="50" rx="7" fill="rgba(155,108,245,0.08)" stroke="#9b6cf5" stroke-dasharray="5 4"></rect>
+<text x="530" y="222" font-size="11.5" fill="#e7ebf1" text-anchor="middle">Borgmon</text>
+<text x="530" y="240" font-size="10" fill="#7c8593" text-anchor="middle">time series · alerting</text>
+</svg>
+<figcaption>The software substrate: a bottom-up storage stack on the left, and scheduling, coordination and monitoring cutting across all of it on the right.</figcaption>
+</figure>
+<h3>Networking: making "cross-machine" cheap</h3>
+<p>The whole abstraction only holds if <strong>machines can talk cheaply</strong>. Google's datacenter network (the Jupiter generation) combines custom switching hardware with software-defined networking — SDN, where the control logic is centralized in software instead of each switch deciding for itself — to make a building behave roughly like "any two machines can talk at full speed." Across datacenters, the <strong>B4</strong> software-defined WAN carries the traffic.</p>
+<p>Traffic enters through <strong>GSLB</strong>, the global software load balancer, which splits load at three levels at once: <strong>geographic</strong> (DNS sends users to a nearby datacenter), <strong>service</strong> (across frontends in that location) and <strong>RPC</strong> (across backend instances). All three are needed: DNS alone is too coarse and cached beyond your control, while RPC-level balancing alone means the user already crossed half the planet before anything got balanced.</p>
+<p>Programs talk to each other over <strong>Stubby</strong> (Google's internal RPC framework; gRPC is the public version), encoding data with <strong>protocol buffers</strong> — the book's numbers are 3 to 10 times smaller than XML and 20 to 100 times faster to serialize. That is not a garnish: when one user request fans out into dozens of internal calls, encoding overhead shows up directly in tail latency.</p>
+<h3>Chubby and Borgmon: small parts, enormous dependency</h3>
+<p><strong>Chubby</strong> is a Paxos-based lock service and small strongly-consistent store. It does two jobs: holding the small amount of information <strong>everyone must see identically</strong> (such as where Borgmaster currently lives), and <strong>master election</strong> — deciding which replica leads, so two leaders never write at once. It stores almost no data and matters enormously: nearly every system uses it, and when it is unavailable a swathe of services goes with it.</p>
+<p><strong>Borgmon</strong> is monitoring: it <strong>scrapes metrics</strong> periodically from an endpoint each task exposes, stores them as time series, and computes alerts from rules. The key design is that alerts rest on <strong>aggregatable expressions</strong> ("this service's overall error rate exceeds x%") rather than per-machine thresholds — machines are constantly being swapped, and per-machine alerting drowns in noise on day one. Prometheus is the public re-implementation; Chapter 10 covers it in full.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/chubby-paper20.en.html" target="_blank" rel="noopener">CS Papers · The Chubby Lock Service</a> — why Google packaged consensus as a lock service instead of a library, and the trade-offs behind coarse-grained locks, caching and KeepAlives</aside>
+<h3>The life of a request</h3>
+<p>The chapter threads every part together with a toy service: <strong>Shakespeare</strong>, an index over Shakespeare's complete works answering "which plays contain this word?" Offline, a MapReduce pipeline reads all the texts, builds the index and writes it into Bigtable. Online, a frontend job and a backend job each run several replicas across several clusters.</p>
+<p>A request's path: DNS and GSLB land it on a <strong>frontend task</strong> in a nearby datacenter; the frontend sends a <strong>Stubby RPC</strong> to a <strong>backend task</strong> by BNS name; the backend queries <strong>Bigtable</strong>; the answer returns the same way. <strong>No hop in that chain knows a specific machine</strong>, and every hop can be replaced by Borg without interrupting service. That picture is the whole point of the chapter.</p>
+<figure>
+<svg viewBox="0 0 640 235" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker></defs>
+<rect x="18" y="52" width="92" height="40" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
+<text x="64" y="77" font-size="12" fill="#e7ebf1" text-anchor="middle">User</text>
+<rect x="148" y="52" width="110" height="40" rx="6" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"></rect>
+<text x="203" y="70" font-size="12" fill="#e7ebf1" text-anchor="middle">GSLB</text>
+<text x="203" y="85" font-size="9.5" fill="#7c8593" text-anchor="middle">DNS · nearest DC</text>
+<rect x="296" y="26" width="326" height="150" rx="9" fill="none" stroke="rgba(91,157,249,0.45)" stroke-dasharray="5 4"></rect>
+<text x="459" y="44" font-size="10" fill="#7c8593" text-anchor="middle">nearby cluster (all tasks placed and rebuilt by Borg)</text>
+<rect x="312" y="56" width="128" height="42" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="376" y="73" font-size="12" fill="#e7ebf1" text-anchor="middle">Frontend job</text>
+<text x="376" y="89" font-size="9.5" fill="#7c8593" text-anchor="middle">many tasks</text>
+<rect x="478" y="56" width="128" height="42" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="542" y="73" font-size="12" fill="#e7ebf1" text-anchor="middle">Backend job</text>
+<text x="542" y="89" font-size="9.5" fill="#7c8593" text-anchor="middle">many tasks</text>
+<rect x="420" y="126" width="186" height="40" rx="6" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5"></rect>
+<text x="513" y="143" font-size="12" fill="#e7ebf1" text-anchor="middle">Bigtable</text>
+<text x="513" y="158" font-size="9.5" fill="#7c8593" text-anchor="middle">Shakespeare index</text>
+<line x1="110" y1="72" x2="141" y2="72" stroke="#5b9df9" marker-end="url(#a2)"></line>
+<line x1="258" y1="72" x2="305" y2="72" stroke="#5b9df9" marker-end="url(#a2)"></line>
+<line x1="440" y1="77" x2="471" y2="77" stroke="#5b9df9" marker-end="url(#a2)"></line>
+<text x="455" y="115" font-size="9.5" fill="#8fbaff" text-anchor="middle">Stubby RPC · BNS name</text>
+<path d="M542,98 V126" fill="none" stroke="#5b9df9" marker-end="url(#a2)"></path>
+<text x="316" y="200" font-size="10.5" fill="#7c8593">offline: MapReduce reads the texts, builds the index, writes Bigtable</text>
+<text x="20" y="200" font-size="10.5" fill="#7c8593">nobody knows an IP</text>
+<text x="20" y="218" font-size="10.5" fill="#7c8593">any hop is replaceable</text>
+</svg>
+<figcaption>The life of a request: user to GSLB to frontend task to backend task to Bigtable — names all the way down, never machines.</figcaption>
+</figure>
+<h2>Key trade-offs and choices</h2>
+<p>The most useful table in this chapter translates Google's internal parts into things you can actually use. Nearly every component has a public counterpart, and reading the mapping is reading where modern infrastructure came from.</p>
+<p class="tcap">Google internals and their public counterparts</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Inside Google</th><th>Public counterpart</th><th>What it actually solves</th></tr></thead>
+<tbody>
+<tr><th>Borg</th><td>Kubernetes / Mesos / Nomad</td><td>hands "program to machine" placement to a scheduler; machine failure becomes automatic rebuild</td></tr>
+<tr><th>Colossus (after GFS)</th><td>HDFS / Ceph / S3-style object stores</td><td>turns thousands of disks into one reliable namespace</td></tr>
+<tr><th>Bigtable</th><td>HBase / Cassandra</td><td>petabyte-scale wide table sharded by row key, write throughput first</td></tr>
+<tr><th>Spanner</th><td>CockroachDB / TiDB</td><td>cross-region strong consistency plus SQL, paid for in write latency</td></tr>
+<tr><th>Chubby</th><td>ZooKeeper / etcd</td><td>strongly-consistent store for small data, plus master election</td></tr>
+<tr><th>Borgmon</th><td>Prometheus</td><td>pull-based time-series metrics with rule-based alerting</td></tr>
+<tr><th>Stubby + protobuf</th><td>gRPC + protobuf</td><td>efficient RPC and compact encoding, holding down fan-out tail latency</td></tr>
+<tr><th>Blaze</th><td>Bazel</td><td>reproducible, cacheable distributed builds</td></tr>
+</tbody>
+</table>
+</div>
+<p>The storage layer is the second exercise the chapter leaves you: <strong>you cannot have consistency and latency at full strength at once</strong>.</p>
+<p class="tcap">Pick one of three: what to use when</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Choice</th><th>Fits</th><th>The honest cost</th></tr></thead>
+<tbody>
+<tr><th>Bigtable-style wide table</th><td>huge key-value, time-series or index data accessed by row key, where single-row operations suffice</td><td>no cross-row transactions; cross-region replicas are typically eventually consistent, so the application absorbs stale reads</td></tr>
+<tr><th>Spanner-style strong store</th><td>money, inventory, quota — data where <strong>a stale read is simply wrong</strong></td><td>cross-region commits wait for a quorum; write latency runs from tens to hundreds of milliseconds, at higher cost</td></tr>
+<tr><th>Blobstore-style object store</th><td>images, video, backups — large immutable data</td><td>overwrite rather than edit; a bad fit for small frequent updates</td></tr>
+</tbody>
+</table>
+</div>
+<p>A larger trade-off hides behind Borg: <strong>shared clusters versus dedicated machines</strong>. Sharing lifts utilization and drags isolation problems in with it — a neighbor's batch job eats memory bandwidth and your p99 wobbles. Google's answer is to accept that cost and manage it with priorities and resource isolation. If your business runs on a few dozen machines, that cost does not buy the same return, so don't copy it.</p>
+<h2>Why it matters in real systems</h2>
+<p>The chapter's value is turning an overused phrase into a concrete picture: <strong>what parts "treat the datacenter as a computer" actually requires</strong>. Scheduling, a cluster file system, strongly-consistent coordination, a uniform RPC layer, uniform monitoring — five pieces, none optional. When you assemble Kubernetes + S3 + etcd + gRPC + Prometheus in the cloud today, you are assembling that same diagram. Asked in an interview how you would build a platform for tens of thousands of machines, those five are the skeleton — and being able to say <strong>which layer owns which failure</strong> is worth far more than reciting component names.</p>
+<div class="ev">
+<div class="evh">EVIDENCE FROM INDUSTRY</div>
+<ul>
+<li><strong>The network is the foundation of the whole abstraction.</strong> Google's Amin Vahdat wrote: "Our current generation — Jupiter fabrics — can deliver <strong>more than 1 Petabit/sec of total bisection bandwidth</strong>… such capacity would be enough for 100,000 servers to exchange information at 10Gb/s each." Cross-machine communication being that cheap is exactly why splitting one service across hundreds of machines pays.<span class="src">Google Cloud blog, 2015-06-17 · <a href="https://cloud.google.com/blog/products/gcp/a-look-inside-googles-data-center-networks" target="_blank" rel="noopener">A Look Inside Google's Data Center Networks</a></span></li>
+<li><strong>Layered storage is not architectural fastidiousness.</strong> Explaining Colossus in 2021, Google called it "our cluster-level file system, successor to the Google File System (GFS)," noted that "a single cluster is scalable to exabytes of storage and tens of thousands of machines," and said storing file metadata in Bigtable "allowed Colossus to scale up by over 100x over the largest GFS clusters." Note the recursion: the database sits on the file system, and the file system's metadata sits back in the database.<span class="src">Google Cloud blog, 2021-04-19 · <a href="https://cloud.google.com/blog/products/storage-data-transfer/a-peek-behind-colossus-googles-file-system" target="_blank" rel="noopener">A peek behind Colossus</a></span></li>
+<li><strong>Borg's scale is on the public record.</strong> Google's own Borg paper describes a system that "runs hundreds of thousands of jobs, from many thousands of different applications, across a number of clusters each with up to tens of thousands of machines," achieving high utilization through admission control, efficient task-packing, over-commitment and machine sharing. That is the lineage Kubernetes publicly inherits.<span class="src">Verma et al., "Large-scale cluster management at Google with Borg," EuroSys 2015</span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/scalability-day1.en.html" target="_blank" rel="noopener">System Design · Day 1 Scalability Fundamentals</a> — every step from one box to ten million QPS, and which bottleneck each step actually removes</aside>
+<h2>Pitfalls and disputes</h2>
+<ul>
+<li><strong>The big misreading: treating this as a blueprint.</strong> The chapter <strong>describes</strong>; it does not recommend. Google built this because it has hundreds of thousands of machines. Copy it at 50 machines and mostly what you buy is complexity. The test is simple: <strong>is your machine failure rate high enough that humans can't keep up?</strong> If not, don't.</li>
+<li><strong>"Machines fail, so ignore machines" is a half-quote.</strong> Automatic rebuild handles <strong>single</strong> failures. Correlated failures — a rack losing power, one bad config pushed everywhere — still take the service down, and capacity planning is not saved either: preempted work has to go somewhere.</li>
+<li><strong>A shared substrate cuts both ways.</strong> Because everyone depends on something like Chubby, its availability is the ceiling on everyone's. Google's own countermeasure is delightfully counterintuitive: <strong>schedule planned outages for it</strong>, forcing dependents to admit it can fail rather than treating it as a perpetual-motion machine (another chapter covers this practice in detail).</li>
+<li><strong>"Every internal part has a public counterpart" is not equivalence.</strong> Kubernetes is not Borg and etcd is not Chubby — they copied the model, not a decade of operational experience or the organization around it. You can buy the tool; you cannot buy the operational culture.</li>
+<li><strong>Period limits</strong>: the book is from 2016. Colossus and Jupiter have both gone through generations since, Bigtable has gained more consistency and transaction options, and Kubernetes, Borg's public descendant, looks quite different now. But the skeleton — the five pieces, and names instead of machines — has held up for a decade.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. In one line: this chapter is the book's <strong>physical premise</strong> — Google's production environment is not a pile of servers but one computer, the size of a datacenter, glued together by software.</p>
+<p>2. The foundation is one definition: <strong>machine (hardware) is not server (software)</strong>, and they are many-to-many. Traditional ops fails to scale precisely because it assumes one-to-one.</p>
+<p>3. Machine, rack, row, cluster, datacenter, campus is a <strong>ruler for failure domains and latency</strong>, not a decorating scheme.</p>
+<p>4. <strong>Borg</strong> is the cluster OS: declarative jobs and tasks, bin packing for utilization, priority preemption, automatic rebuild — and low-priority work that can be killed at any time.</p>
+<p>5. Storage is a stack: <strong>D to Colossus to Bigtable / Spanner / Blobstore</strong>, each layer solving one class of problem so the layer above dares to trust it.</p>
+<p>6. The network (Jupiter, B4) makes crossing machines cheap enough for the abstraction to hold, and <strong>GSLB balances at the geographic, service and RPC levels simultaneously</strong>.</p>
+<p>7. <strong>Chubby</strong> (strong coordination and master election) and <strong>Borgmon</strong> (time series plus rule-based alerts) are tiny and universally depended upon — which makes them the ceiling on availability.</p>
+<p>8. Life of a request: GSLB, frontend task, Stubby RPC, backend task, Bigtable — <strong>BNS names the whole way, never IPs</strong>.</p>
+<p>9. The judgment to take away: this machinery <strong>was forced by scale, it is not a matter of taste</strong>. Copy it before the scale arrives and complexity is all you get.</p>
+</div>
+</div>
+<footer>Book Deep Read · Read this page and you have the chapter; for full cases and depth, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
