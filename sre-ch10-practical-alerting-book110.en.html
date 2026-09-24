@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>SRE Ch 10 · Practical Alerting from Time-Series Data — Books Deep-Read Book 110</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+
+<div class="container">
+<p class="top">BOOKS DEEP-READ · SRE · CH 10</p>
+<h1>Practical Alerting from Time-Series Data</h1>
+<p class="sub">Site Reliability Engineering · Ch 10 · Google · 2016</p>
+<p class="langbar"><a href="sre-ch10-practical-alerting-book110.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The reason you can order something at 2am and it just works is that someone is on call — phone on the nightstand, ready to get up and fix things. This chapter isn't about the fixing. It's about <strong>when that phone should ring at all</strong>: how Google turns the numbers scattered across hundreds of thousands of machines into a single judgement, "somebody has to act, now."</p>
+<h2>A strange thing first</h2>
+<p>You probably assume the hard part of monitoring is <strong>noticing problems</strong>. In practice the hard part is <strong>not crying wolf</strong>. An alarm that has gone off a hundred times and meant nothing ninety-nine of them has already taught the on-call engineer to ignore it — that's not laziness, that's how people respond to false alarms. So the real question of this chapter is: how do you make the phone ring less, without missing the real thing?</p>
+<h2>Why the old world was hard</h2>
+<p>Early monitoring worked like <strong>bolting a smoke detector onto every machine</strong>: ask each one in turn "is your CPU high? is your disk full?" and let whoever crosses a line shout. That's fine for a few dozen machines and awful past a few thousand. A routine rolling restart sets off hundreds of detectors at once while no user notices anything; meanwhile the failures that actually hurt often look fine machine by machine — one percent of requests failing on each box adds up to a great many people staring at an error page. Worse, a detector like that can only say "over the line right now". You can't ask it what the number was last Tuesday at this hour, or how long this trend has before it hits the wall.</p>
+<h2>How it actually works</h2>
+<p>The idea is to flip it: <strong>machines don't judge themselves, they just report numbers.</strong></p>
+<p>Every program keeps a little chalkboard by its front door: how many requests I've handled in total, how many of those failed, how many people are queued up right now. The monitoring system walks the neighbourhood every ten seconds and <strong>copies the boards down</strong>. What it collects is not "good" or "bad" — it's <strong>numbers over time</strong>, like a temperature chart rather than the sentence "he's sick".</p>
+<p>Each copied line carries a few tags: which service, which datacenter, which machine. So "should we call someone" becomes arithmetic on those lines: <strong>add up the thousands of machines belonging to one service</strong> (stop looking at them one by one), <strong>turn it into a proportion</strong> (what fraction of requests failed, so the rule works whether you run three machines or three thousand), and finally <strong>require it to stay over the line for five minutes</strong> — anything that twitches once and heals itself was never worth a phone call.</p>
+<p>The lovely part is that one set of copied numbers serves three jobs at once: it fires the page, it draws the dashboards, and during an investigation it lets you go back and ask what yesterday looked like. And the judgement has moved from "which machine feels unwell" to <strong>"are users actually being hurt"</strong>.</p>
+<h2>What it costs</h2>
+<p>Copying numbers is so cheap that everyone copies everything, and a few years later there are more charts than anyone can account for — storing them, and finding the one that matters, becomes its own problem.</p>
+<h2>Remember one thing</h2>
+<div class="tl">
+<p>Good alerting isn't about picking the right threshold. It's about <strong>recording the world as curves you can do arithmetic on, and then making "should we wake someone" an expression over those curves</strong> — an expression can be reviewed, changed and reused. Ten thousand thresholds scattered across ten thousand machines cannot.</p>
+</div>
+<p class="switch-hint">Want /varz instrumentation, labelled time series, the rate-and-ratio rule algebra and the diagrams? <a data-mode="deep">→ switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">The claim of this chapter: <strong>alerting should not be "a threshold per machine" but "an expression evaluated over labelled time-series data"</strong> — take a rate, aggregate across instances, turn it into a ratio, then require it to cross a line and stay there. Google's Borgmon is one implementation; its ideas reached the rest of us as Prometheus. The chapter's epigraph is a traditional SRE blessing: <em>May the queries flow, and the pager stay silent.</em></p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Time series</strong>: one quantity recorded over time as a sequence of timestamp-value pairs, e.g. a service's cumulative request count sampled every 10 seconds.</li>
+<li><strong>Label</strong>: a key-value pair attached to a time series (service, datacenter, instance) used to select and group it.</li>
+<li><strong>White-box / black-box monitoring</strong>: the former reads numbers the program exports about itself; the latter probes from outside, the way a user would.</li>
+<li><strong>Scrape (pull)</strong>: the monitoring system periodically fetches current values from each instance; the opposite is the program pushing them out.</li>
+<li><strong>Counter / gauge</strong>: a counter only goes up (total requests served); a gauge goes up and down (current queue length).</li>
+<li><strong>Rate</strong>: a counter's increase between two samples divided by the elapsed time — "how many per second".</li>
+<li><strong>Service discovery</strong>: automatically answering "which instances does this service have right now, and where"; inside Google that is BNS.</li>
+<li><strong>SLO / error budget</strong>: a service level objective ("99.9% of requests succeed"); one minus the objective is how much badness you are allowed (Chs. 3–4).</li>
+<li><strong>Cardinality</strong>: how many distinct time series a metric fans out into once you multiply its label values together.</li>
+<li><strong>p99</strong>: sort a hundred request latencies and take the 99th slowest — what the unluckiest users experience.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This chapter opens Part III, "Practices". It follows Ch. 6 (<em>Monitoring Distributed Systems</em>, which settles <em>what</em> to monitor: the four golden signals, alert on symptoms) and Ch. 4 (<em>SLOs</em>, which settles <em>where the threshold comes from</em>), and leads into Ch. 11 (<em>Being On-Call</em>) and Ch. 12 (<em>Effective Troubleshooting</em>) — what happens after the phone rings. It is one of the few chapters that shows a specific tool, Borgmon, and its real-world counterpart is the standard stack you use today: Prometheus plus Alertmanager plus Grafana.</p>
+<h2>The problem it attacks</h2>
+<p>Everyone says "add monitoring". The hard part is that <strong>at scale the old model collapses in three places at once</strong>. The old model is host-based checking, à la Nagios: run a script against each machine, read its exit code as good-or-bad, shout when it crosses a line.</p>
+<p><strong>① Threshold explosion.</strong> 1,000 machines × 20 checks each = 20,000 independent thresholds. One rolling restart turns hundreds of them red while no user notices a thing — the textbook source of noise.</p>
+<p><strong>② It doesn't aggregate.</strong> One percent of requests failing on each machine is inside every per-machine threshold, yet across 1,000 machines it is a thousand failed requests a second. Conversely a machine can be pegged at 100% CPU with its traffic already drained by the load balancer, harming nobody. <strong>"Which machine feels unwell" and "are users hurt" are different questions</strong>, and host-based checks can only express the first.</p>
+<p><strong>③ No history, only now.</strong> A check script yields good-or-bad, not a number. So the three questions you actually ask during an incident are unanswerable: what was this last Tuesday at this hour? how long until this slope hits the wall? when exactly did it start bending?</p>
+<p>The consequence isn't "we noticed late". It's that <strong>the whole alerting system loses credibility</strong>: noise buries the real signal and the on-call learns to look away. A Google Cloud team later put it bluntly: <em>"If everything is important, nothing is important."</em></p>
+<h2>The core of it</h2>
+<h3>Instrumentation: let the program report, don't guess from outside</h3>
+<p>The first foundation is <strong>white-box instrumentation</strong>. Every Google service binary carries an HTTP endpoint, <code>/varz</code>, that dumps a plain-text list: one variable name and its current value per line. Adding a metric is roughly a one-line change for the developer — <strong>the cost of exporting a variable is pushed to nearly zero</strong>, which is the precondition for everything that follows and the most underrated design decision in the chapter; a mature binary exporting hundreds or thousands of variables is normal.</p>
+<p>What matters is that <strong>the program has no idea the monitoring system exists</strong>. It only lays its internal state out by the door; who copies it, how it's computed and what alerts fall out is decided elsewhere. That is the real benefit of pulling — not saving a few packets, but <strong>fully decoupling "what we collect" from "how we judge"</strong>: you can change the alerting criteria without touching production code.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 680 350" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="b2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<rect fill="rgba(91,157,249,0.06)" height="30" rx="6" stroke="#7c8593" width="112" x="14" y="62"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="70" y="81">task A · /varz</text>
+<rect fill="rgba(91,157,249,0.06)" height="30" rx="6" stroke="#7c8593" width="112" x="14" y="106"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="70" y="125">task B · /varz</text>
+<rect fill="rgba(91,157,249,0.06)" height="30" rx="6" stroke="#7c8593" width="112" x="14" y="150"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="70" y="169">task C · /varz</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="70" y="196">tasks only report</text>
+<path d="M126,77 L150,77 L150,116 L168,116" fill="none" marker-end="url(#b1)" stroke="#7c8593"></path>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="126" x2="168" y1="121" y2="121"></line>
+<path d="M126,165 L150,165 L150,126 L168,126" fill="none" marker-end="url(#b1)" stroke="#7c8593"></path>
+<rect fill="rgba(91,157,249,0.1)" height="52" rx="7" stroke="#5b9df9" width="116" x="172" y="96"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="230" y="118">Borgmon scrape</text>
+<text fill="#8fbaff" font-size="9.5" text-anchor="middle" x="230" y="135">every 10s · discovery</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="288" x2="326" y1="122" y2="122"></line>
+<rect fill="rgba(91,157,249,0.1)" height="52" rx="7" stroke="#5b9df9" width="116" x="330" y="96"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="388" y="118">time-series arena</text>
+<text fill="#8fbaff" font-size="9.5" text-anchor="middle" x="388" y="135">in memory · labelled</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="446" x2="484" y1="122" y2="122"></line>
+<rect fill="rgba(155,108,245,0.18)" height="52" rx="7" stroke="#9b6cf5" width="116" x="488" y="96"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="546" y="118">rule evaluation</text>
+<text fill="#c4a8ff" font-size="9.5" text-anchor="middle" x="546" y="135">vector algebra</text>
+<path d="M388,96 L388,58 L466,58" fill="none" marker-end="url(#b2)" stroke="#9b6cf5" stroke-dasharray="4 3"></path>
+<rect fill="rgba(155,108,245,0.1)" height="30" rx="6" stroke="#9b6cf5" stroke-dasharray="4 3" width="200" x="470" y="42"></rect>
+<text fill="#c4a8ff" font-size="10" text-anchor="middle" x="570" y="61">upper Borgmon · cross-cluster</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="388" x2="388" y1="148" y2="198"></line>
+<rect fill="rgba(255,255,255,0.03)" height="40" rx="6" stroke="#7c8593" width="116" x="330" y="202"></rect>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="388" y="220">dashboards</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="388" y="235">ad hoc queries</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="546" x2="546" y1="148" y2="198"></line>
+<rect fill="rgba(91,157,249,0.1)" height="40" rx="6" stroke="#5b9df9" width="116" x="488" y="202"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="546" y="220">alerting rules</text>
+<text fill="#8fbaff" font-size="9.5" text-anchor="middle" x="546" y="235">over the line, for N</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="546" x2="546" y1="242" y2="266"></line>
+<rect fill="rgba(91,157,249,0.1)" height="40" rx="6" stroke="#5b9df9" width="116" x="488" y="270"></rect>
+<text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="546" y="288">Alertmanager</text>
+<text fill="#8fbaff" font-size="9.5" text-anchor="middle" x="546" y="303">dedup · group · inhibit</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="546" x2="546" y1="310" y2="326"></line>
+<text fill="#c4a8ff" font-size="10.5" text-anchor="middle" x="546" y="342">page / file a ticket</text>
+<text fill="#5b9df9" font-size="11.5" font-weight="700" x="14" y="26">One dataset, three jobs: alerts, dashboards, debugging</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="160" y="342">judgement lives outside collection</text>
+</svg>
+<figcaption>The Borgmon pipeline: programs only export numbers, judgement stays outside, and the same time series feeds alerts, dashboards and ad hoc queries</figcaption>
+</figure>
+<h3>The data model is the foundation: labelled series, not "host plus check"</h3>
+<p>Every scraped value is stored as a <strong>time series</strong> identified by a variable name plus a set of labels: <code>job</code> (which service), <code>instance</code> (which task), <code>datacenter</code> (where). Borgmon gets its target list from service discovery and scrapes each one, so scaling up or down needs no config change; on each scrape it also <strong>synthesises a few time series of its own</strong> (did this scrape succeed, how long did it take), so "collection itself is broken" can be alerted on by the same rules — an easily missed loop.</p>
+<p>The data lives in a fixed-size in-memory <strong>arena</strong>: a ring buffer per series where new points evict the oldest, checkpointed to disk periodically. Why dare keep it all in RAM? Do the arithmetic: at a 10-second interval, 12 hours is 4,320 points; at a couple of dozen bytes per point that's about 100 KB per series, so a hundred thousand series is on the order of 10 GB. <strong>What you buy is re-evaluating every rule every few tens of seconds</strong> — alerting latency is purchased with memory.</p>
+<p>Labels look mundane and are the watershed of the chapter: they make <strong>one rule cover an entire service</strong> possible. You no longer write "the error rate of machine A" but "the summed error rate of every instance where job equals checkout" — go from 3 instances to 3,000 and the rule doesn't change a character.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/observability-day21.en.html" rel="noopener" target="_blank">System Design · Day 21 Observability</a> — what metrics, logs and traces can each answer, and where high-cardinality dimensions belong</aside>
+<h3>Rules are algebra: counter → rate → aggregate → ratio</h3>
+<p>Borgmon rules are arithmetic expressions over <strong>vectors</strong> (all series matching a selector), evaluated periodically, with results written back into the arena as new series. They come in two kinds: <strong>computation rules</strong> turn raw data into meaningful quantities (reused by dashboards and later rules), and <strong>alerting rules</strong> add a threshold on top.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 680 210" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b3" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<rect fill="rgba(91,157,249,0.05)" height="86" rx="7" stroke="rgba(91,157,249,0.3)" width="146" x="12" y="46"></rect>
+<polyline fill="none" points="26,122 52,112 78,96 104,80 130,58" stroke="#5b9df9" stroke-width="2"></polyline>
+<text fill="#e7ebf1" font-size="10.5" x="16" y="38">① counter</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="85" y="150">monotonic total</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="85" y="166">meaningless on its own</text>
+<line marker-end="url(#b3)" stroke="#9b6cf5" x1="162" x2="184" y1="89" y2="89"></line>
+<rect fill="rgba(91,157,249,0.05)" height="86" rx="7" stroke="rgba(91,157,249,0.3)" width="146" x="188" y="46"></rect>
+<polyline fill="none" points="202,100 228,92 254,104 280,88 306,96" stroke="#5b9df9" stroke-width="2"></polyline>
+<text fill="#e7ebf1" font-size="10.5" x="192" y="38">② take the rate</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="261" y="150">how many per second</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="261" y="166">a missed sample is fine</text>
+<line marker-end="url(#b3)" stroke="#9b6cf5" x1="338" x2="360" y1="89" y2="89"></line>
+<rect fill="rgba(91,157,249,0.05)" height="86" rx="7" stroke="rgba(91,157,249,0.3)" width="146" x="364" y="46"></rect>
+<polyline fill="none" points="378,120 404,118 430,112 456,74 482,70" stroke="#5b9df9" stroke-width="2"></polyline>
+<text fill="#e7ebf1" font-size="10.5" x="368" y="38">③ sum, then divide</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="437" y="150">aggregate across tasks</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="437" y="166">bad as a share of total</text>
+<line marker-end="url(#b3)" stroke="#9b6cf5" x1="514" x2="536" y1="89" y2="89"></line>
+<rect fill="rgba(155,108,245,0.14)" height="86" rx="7" stroke="#9b6cf5" width="132" x="540" y="46"></rect>
+<line stroke="#e8794b" stroke-dasharray="4 3" x1="550" x2="662" y1="86" y2="86"></line>
+<polyline fill="none" points="552,122 578,118 604,112 630,70 660,66" stroke="#c4a8ff" stroke-width="2"></polyline>
+<rect fill="rgba(232,121,75,0.18)" height="22" width="40" x="622" y="64"></rect>
+<text fill="#e7ebf1" font-size="10.5" x="544" y="38">④ over, and stays</text>
+<text fill="#e8794b" font-size="9.5" text-anchor="middle" x="606" y="150">orange = SLO-derived line</text>
+<text fill="#c4a8ff" font-size="9.5" text-anchor="middle" x="606" y="166">5 minutes before paging</text>
+<text fill="#5b9df9" font-size="11.5" font-weight="700" x="12" y="18">Four transforms from "numbers on a machine" to "wake someone"</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="340" y="196">each step's output is a new series, reusable by dashboards and other rules</text>
+</svg>
+<figcaption>Four transforms: the rate removes the accumulation, aggregation removes the single-machine view, the ratio removes scale, the duration removes jitter</figcaption>
+</figure>
+<p><strong>Step one: take the rate of a counter.</strong> The cumulative value means nothing on its own ("8.4 billion requests served" says nothing about now); what means something is its slope, <code>rate()</code>, i.e. per second. Here the chapter states a counter-intuitive preference: <strong>use a counter rather than a gauge whenever you can</strong>. A gauge (current queue length) captures one instant per sample, and any spike between two samples is lost forever; a counter accumulates everything that happened in the interval, so even if you miss a scrape, the rate computed at the next one is still correct. <strong>Counters are immune to missed samples, gauges are not</strong> — worth memorising. (The price: a counter resets to zero when a task restarts, and the rate implementation must recognise that, or it will produce an absurd negative number.)</p>
+<p><strong>Steps two and three: aggregate across instances, then make it a ratio.</strong> Sum the error rate and the request rate across every instance of a <code>job</code> and divide, giving a <strong>dimensionless</strong> error fraction. Why insist on a ratio? Because it is independent of traffic: <code>errors / requests &gt; 0.01</code> holds equally at 300 QPS overnight and 30,000 QPS at peak, whereas an absolute "more than 50 failures per second" is guaranteed to either cry wolf by day or stay silent at night. Latency is the same story — export bucketed durations and compute <code>p99</code> rather than a mean, or a few very slow requests get averaged away by many fast ones.</p>
+<h3>From "the condition holds" to "actually wake someone"</h3>
+<p><strong>Step four is duration.</strong> A condition holding for one instant is not a reason to call: a network blip or a GC pause can push a ratio over the line. So alerting rules carry a minimum duration (in Prometheus, <code>for: 5m</code>): the condition must hold continuously before it fires. This is the chapter's most practical little mechanism, and an explicit bill: <strong>a 5-minute window buys quiet at the cost of 5 minutes of detection delay</strong>, and how that bill should be paid depends on your error budget — a 99.9% monthly SLO allows only about 43 minutes, so 5 of them is a ninth of the month's allowance.</p>
+<p>Once fired, an alert does not become a phone call directly; it goes to the <strong>Alertmanager</strong>: <strong>deduplication</strong> (one problem firing on dozens of instances sends one notification), <strong>grouping</strong> (related alerts in one envelope), <strong>inhibition</strong> (an upstream alert suppresses the downstream cascade — when a whole datacenter is off the network, you should not get one page per service inside it), <strong>silences</strong> (shut up during planned maintenance), and finally routing: <strong>page only when somebody must act this minute, otherwise file a ticket</strong>. This layer is the most overlooked, yet it is where "number of rule firings" gets compressed into "number of human interruptions".</p>
+<h3>Sharding and hierarchy: Borgmon scraping Borgmon</h3>
+<p>One Borgmon cannot scrape the planet. The solution is elegant: <strong>Borgmon exports its own time series in the same format, so an upper-tier Borgmon can treat a lower one as just another scrape target</strong>. Each tier keeps only aggregated results, so volume narrows as you go up — cluster-level Borgmon holds the detail, the global one only watches cross-cluster totals. This is exactly Prometheus federation today.</p>
+<p>One more necessary complement: white-box monitoring cannot see "users can't reach us at all". Broken DNS, a misconfigured load balancer, an expired certificate — internal metrics look perfect. So Google also runs a <strong>black-box prober</strong> that issues requests like a user and exports its results as time series, judged by the same rules. <strong>White-box tells you why it's broken; black-box tells you whether users are actually broken.</strong> Neither substitutes for the other.</p>
+<h2>Key trade-offs</h2>
+<p>The soul of this chapter isn't "which tool" but <strong>which criterion you use to declare trouble</strong>. The four are not mutually exclusive — real systems run two or three at once — but they cost different things.</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Criterion</th><th>How it decides</th><th>Strength</th><th>Cost / what it misses</th></tr></thead>
+<tbody>
+<tr><th>Per-machine<br/>threshold</th><td>one check per host, shout when over</td><td>direct, points at a specific machine; fine for hardware faults</td><td>king of noise at scale (1,000 hosts × 20 checks); cannot express user impact</td></tr>
+<tr><th>Aggregated ratio<br/>(this chapter)</th><td>sum across instances, take a ratio, over the line for N minutes</td><td>scale-independent; one rule per service; aimed straight at symptoms</td><td>needs instrumentation and a TSDB first; hides a single sick instance (keep a per-instance rule as backstop)</td></tr>
+<tr><th>Error-budget<br/>burn rate</th><td>how fast the current badness would burn the monthly budget</td><td>alert density tracks business tolerance; lowest noise</td><td>requires mature SLOs; slow burns are caught late, so you stack windows (fast 1h / slow 6h)</td></tr>
+<tr><th>Black-box probe</th><td>request from outside, like a user</td><td>catches DNS, load balancer and certificate failures that metrics can't see</td><td>sparse sampling, covers only the probed path; can't tell you why</td></tr>
+</tbody>
+</table>
+</div>
+<p class="tcap">The second table is a choice you face at almost every instrumentation point — and get wrong almost as often.</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th></th><th>Counter</th><th>Gauge</th></tr></thead>
+<tbody>
+<tr><th>Meaning</th><td>a monotonically increasing total</td><td>a current value that rises and falls</td></tr>
+<tr><th>How to use it</th><td>take the rate, then aggregate</td><td>read the value, or its max / percentiles</td></tr>
+<tr><th>Missed sample</th><td>no distortion; the next rate is still right</td><td>that interval's spike is gone forever</td></tr>
+<tr><th>Classic trap</th><td>resets to zero on task restart; the implementation must detect it</td><td>taking a rate of a gauge, producing a meaningless number</td></tr>
+<tr><th>Good for</th><td>requests, errors, bytes, summed latency</td><td>queue depth, memory in use, open connections, temperature</td></tr>
+</tbody>
+</table>
+</div>
+<p>One decision rule the chapter never formalises but you can use as is: <strong>an alert is worth existing only if, when it fires, some person must do something at that moment</strong>. If the answer is "it can wait until morning", make it a ticket; if it's "a script could handle this", go write the script.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/low-base-rate-alerting-day51.en.html" rel="noopener" target="_blank">System Design · Day 51 Alerting Under a Low Base Rate</a> — when real incidents are rare, even a tiny false-positive rate buries the true ones: how to compute the threshold</aside>
+<h2>Why it matters / in real systems</h2>
+<p>The weight of this chapter is that <strong>the monitoring stack you use today is its direct descendant</strong>. Prometheus maps onto Borgmon almost one to one: <code>/metrics</code> for <code>/varz</code>, scraping for scraping, labelled series for labelled series, PromQL's <code>rate()</code> and label aggregation for Borgmon's rule algebra, Alertmanager for Alertmanager. Learning this chapter gives you the <strong>shared mental model</strong> behind Prometheus, Grafana, Datadog and every cloud provider's monitoring.</p>
+<p>What came next is public too: Borgmon runs <strong>one deployment per cluster</strong>, so configuration and operational burden grow linearly with cluster count. In 2020 Google published the Monarch paper at VLDB, describing the planet-scale, multi-tenant in-memory time-series database that replaced it — the method was right, the shape keeps changing.</p>
+<div class="ev">
+<div class="evh">Industry evidence · not the book's claims — these companies said it publicly</div>
+<ul>
+<li><strong>Google</strong>: "Borgmon... is a system for alerting based on time-series data," and "For over a decade, it has provided Google SRE teams insight into system behavior and trends" — confirmed in writing by a Google technical program manager in 2020. <span class="src"><a href="https://cloud.google.com/blog/products/devops-sre/welcome-to-the-museum-of-modern-borgmon-art" rel="noopener" target="_blank">Google Cloud, "Welcome to the Museum of Modern Borgmon Art" · Salim Virji · 2020 ↗</a></span></li>
+<li>The <strong>Prometheus project</strong>'s verdict on the old model matches this chapter word for word: "Nagios is host-based. Each host can have one or more services and each service can perform one check. <strong>There is no notion of labels or a query language.</strong>" <span class="src"><a href="https://raw.githubusercontent.com/prometheus/docs/main/docs/introduction/comparison.md" rel="noopener" target="_blank">Prometheus docs repo · docs/introduction/comparison.md ↗</a></span></li>
+<li>The <strong>Prometheus project</strong> also writes the flip side of cheap instrumentation into its official guidance: "Each labelset is an additional time series that has RAM, CPU, disk, and network costs." With hard numbers: keep a metric's cardinality below <strong>10</strong>, and if it "has a cardinality over 100 or the potential to grow that large, investigate alternate solutions" — their example, adding a per-user dimension to machine metrics, "would quickly reach a double digit number of millions with 10,000 users on 10,000 nodes. This is too much for the current implementation of Prometheus." <span class="src"><a href="https://raw.githubusercontent.com/prometheus/docs/main/docs/practices/instrumentation.md" rel="noopener" target="_blank">Prometheus docs repo · docs/practices/instrumentation.md ↗</a></span></li>
+<li><strong>Google Cloud</strong> puts "symptoms only" more sharply than the book does: "Users don't care <em>why</em> something is not working, but <em>that</em> it is not working"; "<strong>Alerting less, and only on symptoms, should be our goal</strong>"; and on alerting on causes, "We run a risk of being overwhelmed with causal failures. Alert fatigue and a high noise-to-signal ratio do not help us fix things faster." <span class="src"><a href="https://cloud.google.com/blog/topics/developers-practitioners/why-focus-symptoms-not-causes" rel="noopener" target="_blank">Google Cloud, "Why Focus on Symptoms, Not Causes?" · Aron Eidelman · 2022 ↗</a></span></li>
+<li><strong>Google Cloud</strong> even named the failure mode: "If everything is important, nothing is important," and "the zombie strategy of alerting, where too many metrics have alerts, potentially leads to a situation where the critical issues do not stand out." <span class="src"><a href="https://cloud.google.com/blog/products/management-tools/good-relevance-and-outcomes-for-alerting-and-monitoring" rel="noopener" target="_blank">Google Cloud, "Good relevance and outcomes for alerting and monitoring" · 2023 ↗</a></span></li>
+</ul>
+</div>
+<h2>Traps and disputes</h2>
+<ul>
+<li><strong>Reading "collection is cheap" as "collect anything"</strong>: exporting a variable is nearly free, but every combination of label values is a real series. Putting user IDs, email addresses or request URLs in labels is the number one way to kill a monitoring system (the official rule: keep cardinality under 10, rethink past 100).</li>
+<li><strong>Rating a gauge, or reading a counter raw</strong>: both mistakes yield a number that looks fine and means nothing — and neither raises an error, it just quietly misleads you.</li>
+<li><strong>Putting the threshold on a cause</strong>: "page when CPU &gt; 90%" is the canonical anti-pattern. High CPU can be entirely harmless, and CPU can be low while users can't load the page. The only test is: if this signal degrades, are users necessarily hurt?</li>
+<li><strong>Alerting rules fail silently</strong>: rename a metric, mistype a label, retire a service, and the rule doesn't error — it simply <strong>never fires again</strong>. An alert that can never fire looks exactly like "everything is fine". So rules belong in version control, get reviewed, get tested, and get deliberately triggered from time to time.</li>
+<li><strong>Dated in places</strong>: written in 2016 around "one Borgmon per cluster", whose configuration complexity and operational load were acknowledged pain points; internally Monarch has taken over. And the pull model assumes targets live long enough to have stable addresses, which fails for serverless and second-lived batch jobs — industry patches that with push gateways.</li>
+<li><strong>The strongest counterargument</strong>: metrics are <strong>pre-aggregated</strong>, and the dimensions you aggregated away cannot be recovered later. "Which class of user, on which code path, got slow" is something time-series metrics structurally cannot answer; you need tracing and logs. The later observability debate grew out of exactly this model's boundary.</li>
+</ul>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/fail-obviously-day54.en.html" rel="noopener" target="_blank">System Design · Day 54 Fail Obviously</a> — designing for visible failure: why "silently doing nothing" is the most dangerous way to be broken</aside>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① In one line: alerting is not a threshold per machine, it is <strong>an expression evaluated over labelled time series</strong>. Borgmon is the implementation; Prometheus is its public heir.</p>
+<p>② Host-based checking collapses in three places: threshold explosion, no aggregation (can't answer "are users hurt"), and no history — only now.</p>
+<p>③ The foundation is <strong>white-box instrumentation</strong>: programs lay their counters out on <code>/varz</code> at near-zero cost, unaware monitoring exists, which decouples "what we collect" from "how we judge".</p>
+<p>④ The data model is the watershed: <strong>name plus labels</strong> identifies a series, so one rule covers a whole service and going from 3 to 3,000 instances changes nothing.</p>
+<p>⑤ An all-in-memory arena buys re-evaluating every rule every few tens of seconds — alerting latency is bought with RAM.</p>
+<p>⑥ Judgement is four steps of algebra: <strong>rate → aggregate across instances → ratio → over the line and staying</strong>; each step's output is a new series reusable elsewhere.</p>
+<p>⑦ <strong>Prefer counters to gauges</strong>: counters are immune to missed samples, gauges permanently lose the spike between two scrapes.</p>
+<p>⑧ Ratios beat absolutes, percentiles beat means: the first makes rules scale-independent, the second keeps slow requests from being averaged away.</p>
+<p>⑨ The Alertmanager layer (dedup, grouping, inhibition, silences, page-versus-ticket routing) is where "rule firings" becomes "human interruptions"; the duration window trades detection delay for quiet.</p>
+<p>⑩ Scale comes from <strong>Borgmon scraping Borgmon</strong> (hierarchical federation) and the user's view comes from <strong>black-box probes</strong>: white-box says why it broke, black-box says whether users are broken.</p>
+</div>
+</div>
+<footer>Books Deep-Read · Read this page ≈ get the chapter's core; for the full cases and depth, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
