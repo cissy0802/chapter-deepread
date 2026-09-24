@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Google SRE Ch 18 · Software Engineering in SRE — Books Deep-Read 112</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOKS DEEP-READ · GOOGLE SRE · CH 18</p>
+<h1>Software Engineering in SRE</h1>
+<p class="sub">Site Reliability Engineering · Ch 18 · Google · 2016</p>
+<p class="langbar"><a href="sre-ch18-software-engineering-in-sre-book112.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>When you check out on Black Friday and the site doesn't fall over, something unglamorous made that possible: months earlier, somebody worked out how many machines to buy and which buildings to put them in. That job is called <strong>capacity planning</strong>. Chapter 18 of Google's SRE book is about how they handed that chore to a program.</p>
+<h2>A strange thing first</h2>
+<p>The whole book is about running production systems well. This one chapter suddenly changes register: it's about <strong>the operations team writing a real software product</strong>. That sounds like a distraction — why should the fire brigade open a factory? Because some chores take a week by hand and are stale the moment you finish. Only by turning one into software does that week of effort accumulate into anything.</p>
+<h2>Why the old way was hard</h2>
+<p>The old way was an enormous spreadsheet: this service gets this much in that building, cell by cell, then a round of meetings to sign it off. The trouble is that the sheet records <strong>conclusions, not reasons</strong>. Change one assumption — growth came in faster, a batch of machines is two months late, a launch slipped — and the whole sheet has to be filled in again. The previous week's work is gone. Tired people start padding their numbers, because too many is safer than too few. That's how the money burns.</p>
+<h2>The idea: hand over conditions, not answers</h2>
+<p>The idea is plain. When you brief a builder, "three lights in the living room" is worse than "the living room must be bright enough, the switch goes by the door, and the whole job stays under budget." The first one has to be rewritten the moment the house changes; with the second, <strong>the house can change and not a word of your brief moves — the plan recalculates itself</strong>.</p>
+<p>Google did exactly that. Instead of handing over "50 machines in building A," they wrote down the <strong>conditions</strong>: this service must absorb the traffic we expect, it must survive losing a whole building and still keep two spare copies, it must sit near its users, and the total bill should be as small as possible. Then a program that is good at puzzles takes over: it treats every condition as a rule that must hold at once, and picks the cheapest arrangement inside those rules. When an assumption changes, you re-run it — a new plan in minutes, and nobody fills in a sheet.</p>
+<h2>What it costs</h2>
+<p>One honest caveat: <strong>if you leave a condition out, the program will not warn you.</strong> It will simply give you the cheapest answer in the gap you left — forget to say "keep spare copies" and it will keep none. So the human work doesn't disappear. It moves from filling in cells to thinking clearly about what you actually require.</p>
+<h2>Remember one thing</h2>
+<div class="tl">
+<p>Rather than recomputing "how many machines" by hand, write down <strong>why that many</strong> and let a program do the arithmetic. Answers go stale; conditions don't. And the reason the ops team should write this software themselves is that only the people who use it daily know how to state the conditions.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the notation and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You'd think SRE writes software to do less work. Really it's so that operations finally has an output that <strong>compounds</strong>. This is the one chapter in the book that isn't about running systems but about an ops team building a product: using Google's internal capacity-planning tool <strong>Auxon</strong> as its case study, it argues for replacing hand-picked resource numbers with <strong>intent-based capacity planning</strong> — engineers declare constraints and goals, and a solver computes the allocation.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>SRE (Site Reliability Engineering)</strong>: Google's role that applies software engineering to operations; the book's hard rule is that manual ops work stays under 50% of each person's time.</li>
+<li><strong>Toil</strong>: work that is manual, repetitive, automatable, of no enduring value, and that <strong>scales linearly with the service</strong>. That last clause is what makes it toil.</li>
+<li><strong>Capacity planning</strong>: deciding in advance how much of each service sits in each location at some future date. It is not autoscaling — the timescale is quarters, not minutes.</li>
+<li><strong>Demand forecast</strong>: the estimate of future traffic that feeds the plan.</li>
+<li><strong>Cluster</strong>: a commonly scheduled pool of machines in one location; a service usually spans many of them.</li>
+<li><strong>N+2 redundancy</strong>: N copies to serve normal load, plus two spares — so one can fail while another is being upgraded.</li>
+<li><strong>Allocation plan</strong>: the output of capacity planning — which service gets how much in which cluster.</li>
+<li><strong>Mixed-integer programming (MIP)</strong>: an optimization problem where variables must be whole numbers (you can't run 2.7 replicas), minimizing some objective subject to a set of inequalities.</li>
+<li><strong>Declarative</strong>: stating the result you want rather than the steps to get there; the opposite of imperative.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This chapter sits in the middle of Part III, "Practices": after Ch17 on testing for reliability, before the frontend and datacenter load-balancing chapters. Structurally it is the odd one out — everything around it is about holding production up, and only this one is about how an SRE team ships software. What it really interlocks with is Ch5 on eliminating toil and the 50% cap from Ch1: this chapter answers "what is the other 50% actually for?"</p>
+<h2>The problem it attacks</h2>
+<p>Traditional capacity planning is a four-step loop: <strong>gather demand forecasts → build an allocation plan → review and sign off → deploy and configure the resources</strong>. Its artifact is a large table of concrete numbers: "service Foo gets 50 cores in cluster X, 30 in Y."</p>
+<p>The trouble is that this table stores <strong>the conclusion, not the reasoning</strong>. The moment any input moves — the forecast is revised, a machine delivery slips, a dependency gets heavier, a launch shifts a quarter — the whole table has to be recomputed, and recomputing it means spreadsheets plus a round of cross-team alignment: days to weeks per iteration. The book's word for this is <strong>brittle</strong>. It isn't that the process is slow; it's that every change costs a full restart.</p>
+<p>Two consequences follow. The plan is <strong>stale as soon as it's finished</strong>, so teams pad for the worst case and burn money on idle machines; and the workload <strong>grows linearly with the number of services</strong> — order-of-magnitude, one mid-size service across a few dozen clusters with a dozen dependencies is already hundreds to thousands of cells, times every service. That is the definition of toil, word for word.</p>
+<figure>
+<svg viewBox="0 0 640 262" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs>
+<marker id="a1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="a2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text x="16" y="22" fill="#e8794b" font-size="13" font-weight="700">1. Traditional: any input moves, the whole chain restarts</text>
+<rect x="16" y="36" width="104" height="34" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="68" y="57" fill="#b9c0ca" font-size="11" text-anchor="middle">Forecast</text>
+<line x1="122" y1="53" x2="150" y2="53" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="154" y="36" width="104" height="34" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="206" y="57" fill="#b9c0ca" font-size="11" text-anchor="middle">Hand-built plan</text>
+<line x1="260" y1="53" x2="288" y2="53" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="292" y="36" width="104" height="34" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="344" y="57" fill="#b9c0ca" font-size="11" text-anchor="middle">Review, sign off</text>
+<line x1="398" y1="53" x2="426" y2="53" stroke="#7c8593" marker-end="url(#a1)"></line>
+<rect x="430" y="36" width="116" height="34" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect><text x="488" y="57" fill="#e7ebf1" font-size="11" text-anchor="middle">Plan (raw numbers)</text>
+<path d="M488,74 L488,94 L68,94 L68,76" fill="none" stroke="#e8794b" stroke-dasharray="4 3" marker-end="url(#a1)"></path>
+<text x="278" y="110" fill="#e8794b" font-size="10.5" font-family="monospace" text-anchor="middle">one assumption moves = days to weeks of rework</text>
+<line x1="16" y1="126" x2="624" y2="126" stroke="rgba(91,157,249,0.18)"></line>
+<text x="16" y="150" fill="#5b9df9" font-size="13" font-weight="700">2. Intent-based: maintain conditions, re-run the plan</text>
+<rect x="16" y="166" width="150" height="58" rx="6" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5"></rect>
+<text x="91" y="188" fill="#e7ebf1" font-size="11" text-anchor="middle">Intent (long-lived)</text>
+<text x="91" y="206" fill="#b9c0ca" font-size="10" text-anchor="middle">deps · ratios · priority</text>
+<line x1="168" y1="195" x2="200" y2="195" stroke="#9b6cf5" marker-end="url(#a2)"></line>
+<rect x="204" y="166" width="150" height="58" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="279" y="188" fill="#b9c0ca" font-size="11" text-anchor="middle">Solver</text>
+<text x="279" y="206" fill="#7c8593" font-size="10" text-anchor="middle">satisfy all, minimize cost</text>
+<line x1="356" y1="195" x2="388" y2="195" stroke="#9b6cf5" marker-end="url(#a2)"></line>
+<rect x="392" y="166" width="154" height="58" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect>
+<text x="469" y="188" fill="#e7ebf1" font-size="11" text-anchor="middle">Plan (disposable)</text>
+<text x="469" y="206" fill="#7c8593" font-size="10" text-anchor="middle">recomputed in minutes</text>
+<text x="279" y="246" fill="#8fbaff" font-size="10.5" font-family="monospace" text-anchor="middle">the inputs change, the human work does not</text>
+</svg>
+<figcaption>Traditional planning compiles reasons into numbers and throws the reasons away. Intent-based planning keeps the reasons; the answer becomes a disposable artifact.</figcaption>
+</figure>
+<h2>The core material</h2>
+<h3>Intent-based planning: replace "how much" with "why that much"</h3>
+<p>The central concept is <strong>intent</strong>: <em>the requirements and constraints that make a plan valid</em>, rather than the numbers those requirements produce. A traditional plan ships the binary and discards the source; intent-based planning ships the source, and the binary can be recompiled at any time. The book uses a ladder to show that "intent" is a spectrum, not a switch:</p>
+<div class="tcap">The intent ladder: further down is more abstract — more room for automation, but more the system must understand</div>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Rung</th><th>What you hand the system</th><th>What it must figure out</th><th>Cost / risk</th></tr></thead>
+<tbody>
+<tr><th>1. Exact resources</th><td>"Foo gets 50 cores each in clusters X, Y, Z"</td><td>Nothing — just execute</td><td><strong>Most brittle</strong>: one cluster or forecast change voids it</td></tr>
+<tr><th>2. Relaxed placement</th><td>"Foo gets 50 cores across any 3 clusters in region A"</td><td>Which clusters are in A, and what's free</td><td>The quantity is still hand-picked</td></tr>
+<tr><th>3. Declare the goal<br/>(the book's sweet spot)</th><td>"Let Foo absorb region A's forecast demand at N+2"</td><td>Demand-to-resource ratios, the dependency graph, redundancy semantics</td><td>A wrong ratio propagates fleet-wide</td></tr>
+<tr><th>4. Declare reliability</th><td>"Run Foo at 99.999% availability"</td><td>A full mapping from reliability to resources</td><td>That mapping is still immature — <strong>the book calls this out of reach</strong></td></tr>
+</tbody>
+</table>
+</div>
+<p>The judgement is refreshingly concrete: <strong>rung 3 is the sweet spot</strong> — abstract enough for a machine to take over, specific enough to actually solve. Rung 4 sounds best, but too many links are missing between "five nines" and "this many cores, placed here," and the chapter explicitly marks it as not yet achievable. That is the most portable lesson here: <em>raise intent to the "demand plus redundancy" level and stop; don't chase a one-sentence answer to everything.</em></p>
+<figure>
+<svg viewBox="0 0 640 210" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a3" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<rect x="24" y="152" width="156" height="28" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="102" y="171" fill="#b9c0ca" font-size="10.5" text-anchor="middle">1. Named clusters, cores</text>
+<rect x="104" y="114" width="156" height="28" rx="5" fill="rgba(91,157,249,0.10)" stroke="#7c8593"></rect><text x="182" y="133" fill="#b9c0ca" font-size="10.5" text-anchor="middle">2. Region and total</text>
+<rect x="184" y="76" width="156" height="28" rx="5" fill="rgba(155,108,245,0.22)" stroke="#9b6cf5" stroke-width="2"></rect><text x="262" y="95" fill="#e7ebf1" font-size="10.5" text-anchor="middle">3. Demand + N+2</text>
+<rect x="264" y="38" width="156" height="28" rx="5" fill="rgba(91,157,249,0.06)" stroke="#5a6069" stroke-dasharray="4 3"></rect><text x="342" y="57" fill="#7c8593" font-size="10.5" text-anchor="middle">4. Reliability target only</text>
+<text x="350" y="95" fill="#9b6cf5" font-size="10.5" font-family="monospace">&lt;- sweet spot</text>
+<text x="430" y="57" fill="#5a6069" font-size="10.5" font-family="monospace">mapping missing</text>
+<line x1="470" y1="178" x2="470" y2="46" stroke="#9b6cf5" marker-end="url(#a3)"></line>
+<text x="482" y="120" fill="#8fbaff" font-size="10.5" font-family="monospace">automation up</text>
+<text x="482" y="138" fill="#7c8593" font-size="10.5" font-family="monospace">difficulty up</text>
+<text x="24" y="200" fill="#7c8593" font-size="10.5" font-family="monospace">concrete · human decides</text>
+<text x="352" y="200" fill="#7c8593" font-size="10.5" font-family="monospace">abstract · system decides</text>
+</svg>
+<figcaption>The intent ladder: four rungs from "specify the resources" to "declare the reliability." The book treats rung 3 as the engineering optimum.</figcaption>
+</figure>
+<h3>Intent is made of three things</h3>
+<p>"Declare your intent" is empty advice on its own, so the chapter decomposes it into three mandatory inputs. Miss one and the machine can't turn:</p>
+<ul>
+<li><strong>Dependencies</strong>: how 1,000 extra queries per second to Foo land on downstream Bar and Baz. Without the dependency graph you can only plan each service alone, and you miss <strong>amplification</strong> along the path — a 20% rise at the frontend can be a 60% rise in some heavily reused service underneath.</li>
+<li><strong>Performance metrics</strong>: the <strong>exchange rate</strong> from demand to resources, in the shape "1,000 QPS needs 2.5 cores and 4 GB." The chapter insists this coefficient be <strong>derived automatically from load tests or production measurement</strong>, never typed in by hand — it multiplies through the whole chain, so 30% off here is 30% off everywhere.</li>
+<li><strong>Prioritization</strong>: who gets served first when resources run short. This is the one teams skip and the one that matters most: without priorities, a solver can only tell you "infeasible," when what you needed to know was "which service do we sacrifice and still ship."</li>
+</ul>
+<h3>How Auxon computes: capacity planning as an optimization problem</h3>
+<p>Auxon is the capacity-planning tool Google's SREs wrote for themselves, and it is the chapter's single case study. Its shape is a compile-and-solve pipeline:</p>
+<ul>
+<li><strong>Inputs</strong>: the intent config (written in a purpose-built configuration language), per-service demand forecasts, resource supply (machines you have plus machines already ordered), <strong>resource pricing</strong> (relative cost across clusters and machine types), and performance data.</li>
+<li><strong>Configuration language engine</strong>: compiles human-written intent into formal variables and constraints.</li>
+<li><strong>Solver</strong>: a <strong>mixed-integer program</strong> — minimize total cost subject to every constraint. In notation, roughly <code>minimize Σ price·alloc</code> subject to inequalities like "usage in each cluster ≤ supply" and "replicas ≥ demand + 2," with <code>alloc</code> forced to whole numbers because you can't run 2.7 replicas. In plain words: <em>write every hard requirement as an inequality, attach a "cheaper is better" objective, and let the solver search an enormous space for the best arrangement.</em></li>
+<li><strong>Output</strong>: the <strong>allocation plan</strong> — how much each service gets in each cluster.</li>
+</ul>
+<p>Two properties explain the design. First, <strong>a changed input only needs a re-run</strong>; nobody recomputes by hand, and an iteration drops from weeks to minutes. Second, <strong>when nothing satisfies the constraints, the solver can point at which one is binding</strong> — far more useful than a spreadsheet that won't close, because it turns "we're short" into a negotiable fact like "N+2 in region A is incompatible with current supply."</p>
+<p>The honest cost: MIP is NP-hard, and at scale you cannot guarantee a globally optimal answer in acceptable time, so in practice you accept approximations and decompose the problem by region. The chapter doesn't dodge this — <strong>capacity planning is decision-making on top of an uncertain forecast anyway, and a fast approximation beats an exact answer that has gone stale.</strong></p>
+<figure>
+<svg viewBox="0 0 640 268" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a4" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="a5" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text x="16" y="20" fill="#7c8593" font-size="10.5" font-family="monospace">INPUTS</text>
+<rect x="16" y="30" width="152" height="26" rx="5" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"></rect><text x="92" y="47" fill="#e7ebf1" font-size="10.5" text-anchor="middle">Intent config</text>
+<rect x="16" y="62" width="152" height="26" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="92" y="79" fill="#b9c0ca" font-size="10.5" text-anchor="middle">Demand forecast</text>
+<rect x="16" y="94" width="152" height="26" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="92" y="111" fill="#b9c0ca" font-size="10.5" text-anchor="middle">Performance data</text>
+<rect x="16" y="126" width="152" height="26" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="92" y="143" fill="#b9c0ca" font-size="10.5" text-anchor="middle">Resource supply</text>
+<rect x="16" y="158" width="152" height="26" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="92" y="175" fill="#b9c0ca" font-size="10.5" text-anchor="middle">Resource pricing</text>
+<line x1="170" y1="43" x2="212" y2="90" stroke="#9b6cf5" marker-end="url(#a5)"></line>
+<line x1="170" y1="107" x2="212" y2="107" stroke="#7c8593" marker-end="url(#a4)"></line>
+<line x1="170" y1="171" x2="212" y2="124" stroke="#7c8593" marker-end="url(#a4)"></line>
+<rect x="218" y="62" width="150" height="90" rx="8" fill="rgba(91,157,249,0.10)" stroke="#5b9df9"></rect>
+<text x="293" y="88" fill="#e7ebf1" font-size="11" text-anchor="middle">Config engine</text>
+<text x="293" y="107" fill="#7c8593" font-size="10" text-anchor="middle">intent to constraints</text>
+<line x1="248" y1="116" x2="338" y2="116" stroke="rgba(91,157,249,0.3)"></line>
+<text x="293" y="134" fill="#8fbaff" font-size="10" text-anchor="middle">a formal program</text>
+<line x1="370" y1="107" x2="410" y2="107" stroke="#7c8593" marker-end="url(#a4)"></line>
+<rect x="416" y="62" width="150" height="90" rx="8" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="491" y="88" fill="#e7ebf1" font-size="11" text-anchor="middle">Solver (MIP)</text>
+<text x="491" y="107" fill="#7c8593" font-size="10" text-anchor="middle">satisfy every constraint</text>
+<text x="491" y="126" fill="#7c8593" font-size="10" text-anchor="middle">minimize total cost</text>
+<line x1="491" y1="154" x2="491" y2="188" stroke="#9b6cf5" marker-end="url(#a5)"></line>
+<rect x="386" y="194" width="210" height="34" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"></rect>
+<text x="491" y="215" fill="#e7ebf1" font-size="11" text-anchor="middle">Allocation plan</text>
+<path d="M386,211 L196,211 L196,196" fill="none" stroke="#e8794b" stroke-dasharray="4 3" marker-end="url(#a4)"></path>
+<text x="196" y="212" fill="#e8794b" font-size="10.5" font-family="monospace" text-anchor="middle">infeasible? name the binding constraint</text>
+<text x="320" y="252" fill="#7c8593" font-size="10.5" font-family="monospace" text-anchor="middle">any input changes, re-run the pipeline; no human in the loop</text>
+</svg>
+<figcaption>Auxon's data flow: five inputs compile into an optimization problem; the solver emits an allocation plan, or names the constraint that blocks it.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/capacity-estimation-day26.en.html" target="_blank" rel="noopener">System Design · Day 26 Capacity Estimation</a> — getting QPS, storage and bandwidth right to an order of magnitude on a whiteboard: the by-hand version of the ratios Auxon solves for</aside>
+<h3>Why SRE has to write it</h3>
+<p>The chapter's other half is organizational: <strong>this kind of software should come from the SRE team itself</strong>. Not because nobody else will, but for three structural reasons — SREs are <em>both the developers and the users</em>, which is the shortest feedback loop there is; they hold <strong>production domain knowledge</strong> no external vendor can obtain (real dependencies, real failure modes, real procurement constraints); and engineering output breaks the link between team value and headcount.</p>
+<p>It also solves a people problem: a genuine software output gives SREs a growth path that doesn't require switching roles. But the chapter attaches a hard constraint — <strong>don't lower your standards</strong>. This software makes resource decisions for production, so it must be built to product quality (design docs, tests, named owners and a real support commitment), not as "just an internal tool."</p>
+<h2>Key trade-offs</h2>
+<p>Pin down the confusion first: <strong>autoscaling is not capacity planning</strong>. Autoscaling redistributes machines you already have, on a scale of minutes. Capacity planning decides on a scale of quarters whether to buy, how much, and where to put it. The first cannot conjure machines that haven't been delivered; the second cannot track your lunchtime peak. Two different timescales; neither substitutes for the other.</p>
+<div class="tcap">Should you build intent-based capacity planning?</div>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Your situation</th><th>Verdict</th><th>Why</th><th>Honest cost</th></tr></thead>
+<tbody>
+<tr><th>Few services, few placements<br/>(under a dozen cells)</th><td><strong>Don't build</strong> — a spreadsheet is fine</td><td>Few enough cells that one person holds them all; a solver costs more than it saves</td><td>You'll be a step late when it grows; leave a migration path</td></tr>
+<tr><th>Cloud-only, elastic,<br/>capacity never scarce</th><td><strong>Don't build</strong> — autoscale plus a cost dashboard</td><td>Remove the "can't buy it" constraint and the main value disappears</td><td>The bill absorbs your overprovisioning; treat cost separately</td></tr>
+<tr><th>Dozens of services × regions,<br/>real procurement lead times</th><td><strong>Worth building</strong></td><td>Cell count explodes and assumptions move constantly — the solver's home turf</td><td>Product-grade investment: design, tests, on-call</td></tr>
+<tr><th>Scarce resources<br/>(GPU / TPU quota, private links)</th><td><strong>Worth building</strong></td><td>Scarcity forces explicit priorities, or contention is settled by whoever shouts loudest</td><td>Someone must own the priorities; tech can't fix politics</td></tr>
+<tr><th>No product-grade<br/>engineering capacity</th><td><strong>Not yet</strong></td><td>A half-built tool making production decisions is worse than the manual sheet</td><td>You keep the toil, but it stays legible</td></tr>
+</tbody>
+</table>
+</div>
+<div class="tcap">Three ways to do the same job</div>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th></th><th>Hand-built plan</th><th>Reactive autoscaling</th><th>Intent-based planning</th></tr></thead>
+<tbody>
+<tr><th>Timescale</th><td>Quarters</td><td>Seconds to minutes</td><td>Quarters, recomputable anytime</td></tr>
+<tr><th>Cost of a changed input</th><td>Days to weeks</td><td>N/A</td><td>One re-run</td></tr>
+<tr><th>Handles lead times?</th><td>Yes, by memory</td><td><strong>No</strong></td><td>Yes — supply is an explicit input</td></tr>
+<tr><th>Main failure mode</th><td>Stale plans, habitual padding</td><td>Nothing left to scale into</td><td><strong>Omitted constraint gets optimized away</strong></td></tr>
+</tbody>
+</table>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/cost-capacity-engineering-day27.en.html" target="_blank" rel="noopener">System Design · Day 27 Cost and Capacity Engineering</a> — driving unit cost down without breaking your SLO: exactly where overprovisioning burns money, and how to measure it</aside>
+<h2>Why it matters in real systems</h2>
+<p>The idea is everywhere today under other names. Kubernetes' <strong>declarative API</strong> (you write desired state, controllers converge on it), Terraform's desired-state model, every cloud's reserved-instance planner — all of them are "hand over conditions, not steps." Auxon's distinction is that it writes the objective function down explicitly as "minimize total cost" and genuinely puts a mathematical solver behind it.</p>
+<p>In an interview the use is concrete: asked "how do you do capacity planning," <strong>ask back which rung of the ladder they mean</strong> — "last year's peak times 1.5" and "declare N+2 and let the system compute" come from completely different levels of organizational maturity. Then explain why autoscaling is not capacity planning, and you're most of the way there.</p>
+<div class="ev">
+<div class="evh">FROM THE FIELD</div>
+<ul>
+<li><strong>Google (the SRE practice)</strong>: toil is defined as work that is "manual, repetitive, automatable, tactical, devoid of enduring value, and that scales linearly as a service grows," with a hard ceiling — <em>"Within Google SRE, we aim to keep toil below 50% of each SRE's time, to preserve the other 50% for engineering project work."</em> This chapter is what that other 50% is for. <span class="src">Google Cloud Blog, "Identifying and tracking toil using SRE principles" · <a href="https://cloud.google.com/blog/products/management-tools/identifying-and-tracking-toil-using-sre-principles" target="_blank" rel="noopener">source</a></span></li>
+<li><strong>Google (measured gain from automating sizing)</strong>: Autopilot replaced hand-set resource limits with automatic recommendations; the paper's abstract reports that autopiloted jobs run at <strong>23% slack versus 46% for manually managed jobs</strong>, and that the number of jobs severely affected by out-of-memory kills drops <strong>by roughly a factor of ten</strong>. Quantified evidence, on Google's own fleet, that the machine sizes better than the human. <span class="src">"Autopilot: workload autoscaling at Google," EuroSys 2020 (the paper page is unreachable from this sandbox, so this is a text-only citation)</span></li>
+<li><strong>Google (the honest counterweight)</strong>: describing a tools-only SRE team, Google Cloud states the risk in the same breath — <em>"a tooling SRE team runs the risk of solving the wrong problems for the business, so it needs to work hard to stay aware of the practical problems of the teams tackling front-line reliability."</em> Which is precisely this chapter's warning: don't build for the sake of building. <span class="src">Google Cloud Blog, "SRE at Google: How to structure your SRE team" · <a href="https://cloud.google.com/blog/products/devops-sre/how-sre-teams-are-organized-and-how-to-get-started" target="_blank" rel="noopener">source</a></span></li>
+<li><strong>Meta (independent confirmation of the same approach)</strong>: describing its global capacity management, Meta likewise models fleet allocation as a <strong>mixed-integer linear program</strong> whose objective is minimizing the servers required — different company, same road. <span class="src">Engineering at Meta, "Viewing the world as a computer: Global capacity management," 2022 (site unreachable from this sandbox; text-only citation)</span></li>
+</ul>
+</div>
+<h2>Pitfalls and open questions</h2>
+<ul>
+<li><strong>The common misreading: intent-based planning as fancy autoscaling.</strong> It isn't. The timescales differ by five orders of magnitude and they solve different problems — one asks "start a few more now," the other "will there be anything to start in three months."</li>
+<li><strong>Assuming the solver makes humans idle.</strong> The opposite: the work moves from filling cells to stating constraints correctly, which is harder. A solver optimizes exactly what you wrote down, so <strong>anything you left out of the constraints will be optimized away</strong> — forget N+2 and you get N.</li>
+<li><strong>The exchange rate is an underrated single point of failure.</strong> Get "1,000 QPS needs 2.5 cores" wrong by 30% and the whole fleet plan is wrong by 30%, very quietly — which is why the chapter insists it be measured, not typed.</li>
+<li><strong>Optimal is not explainable.</strong> A MIP allocation is often opaque to humans: nobody can say why it chose that shape, which makes both incident debugging and management conversations harder. A real cost the chapter doesn't fully develop.</li>
+<li><strong>A product of its time.</strong> The 2016 Auxon faced owned datacenters and long procurement cycles. On-demand cloud briefly made the problem look obsolete — and then GPU and TPU quota became scarce again, bookable months ahead, and "intent plus solver" came back unchanged, only for a different resource.</li>
+<li><strong>Reproducibility.</strong> Auxon was never open-sourced and the chapter gives no detail sufficient to rebuild it — the configuration language and the solver's scaling strategy are only gestured at. Outsiders take away the idea and the ladder, not the implementation: read it as a case study, not an implementation guide.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. The one chapter about an ops team shipping a product, told through Auxon, a capacity-planning tool.</p>
+<p>2. The old disease: traditional planning ships <strong>numbers instead of reasons</strong>, so any changed assumption means starting over — brittle, and linear in the number of services, which is the definition of toil.</p>
+<p>3. The idea: <strong>intent-based capacity planning</strong> — declare requirements and constraints, let a solver compute the allocation. Answers go stale; conditions don't.</p>
+<p>4. Four rungs: named clusters and cores → region and total → <strong>demand plus N+2 (the sweet spot)</strong> → a bare reliability target (judged out of reach).</p>
+<p>5. Intent needs three things: <strong>the dependency graph, the demand-to-resource ratio, and priorities</strong>. Without priorities, "infeasible" is all you ever get back.</p>
+<p>6. Auxon's shape: five inputs → a config language compiles constraints → <strong>mixed-integer programming</strong> minimizes cost subject to them → an allocation plan; infeasibility names the binding constraint.</p>
+<p>7. The distinction to keep: <strong>autoscaling ≠ capacity planning</strong>, five orders of magnitude apart in timescale.</p>
+<p>8. Why SRE writes it: developer and user at once, exclusive production knowledge — but <strong>don't lower your standards</strong>; it decides things for production.</p>
+<p>9. The biggest trap: a solver optimizes only what you wrote, so <strong>an omitted constraint is a constraint given away</strong>; the exchange rate is the quiet single point of error.</p>
+<p>10. The echo today: Kubernetes' declarative API, Terraform's desired state, cloud reservation planners, and the GPU-quota era — same idea, different resource.</p>
+</div>
+</div>
+<footer>Books Deep-Read · Read this page and you have the chapter's core; for the full case studies, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
