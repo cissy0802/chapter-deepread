@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>SRE Ch 17 · Testing for Reliability — Chapter Deepread Book 111</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">CHAPTER DEEPREAD · SRE · CH 17</p>
+<h1>Testing for Reliability</h1>
+<p class="sub">Site Reliability Engineering · Ch 17 · Google · 2016</p>
+<p class="langbar"><a href="sre-ch17-testing-for-reliability-book111.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The apps on your phone update almost weekly, and the services behind them change dozens of times a day. The odd thing is how rarely an update takes everything down. Chapter 17 of Google's <em>SRE</em> book is about exactly that: <strong>change is unavoidable, so how do you keep change from breaking things?</strong> The answer is a whole discipline of tasting before serving.</p>
+<h2>An analogy first</h2>
+<p>Think of shipping a new version as a restaurant <strong>putting a new dish on the menu</strong>. You changed the recipe, so you don't send it straight to a full dining room. First you taste it yourself in the kitchen. Then you run the whole thing end to end — plating, timing, service. Then you serve it <strong>to one table by the window</strong> and watch how they react. Only then does it go out to everyone. And regardless of new dishes, every day you send someone in to <strong>order a plate pretending to be a customer</strong>, just to confirm the kitchen is still alive. Those steps map onto the kinds of checks this chapter describes.</p>
+<h2>Why the old way was hard</h2>
+<p>Not changing code is the safest thing you can do, and also the end of your business. The real difficulty is that things break not because someone got a line wrong, but because of <strong>the things that only exist in production</strong> — real user traffic, real configuration, the real number of machines. Everything tastes fine in the kitchen and falls apart in the dining room. Worse, many teams have exactly one move after shipping: stare at the dashboards and <strong>hope</strong>, letting users find the problem first.</p>
+<h2>The central idea: not catching bugs, but making bugs cheap</h2>
+<p>The most counterintuitive line here is this: <strong>the value of testing isn't finding a problem, it's deciding at which step the problem gets found</strong>. If a dish is too salty and the kitchen catches it, the cost is one remade plate. If the customer catches it, the cost is an apology, a refund, and your reputation. Software works the same way. A bug stopped by an automated check before release is nearly free to fix. A bug that leaks into production is a 3 a.m. page, an investigation, a rollback, and a postmortem — there goes your night.</p>
+<p>So the lesson isn't "write more tests." It's <strong>put each gate where the cost is lowest</strong>, and be honest about what each gate misses — the kitchen can't taste the crowding in the dining room, and one table by the window doesn't speak for every customer.</p>
+<h2>So how do you choose?</h2>
+<p>A small system you can undo in a minute can afford looser gates and lean on "pull it back the moment it looks wrong." A large system that takes hours to recover has to move its gates earlier and stop bad changes before they ship. <strong>The honest cost: more gates means slower releases — and a check that passes sometimes and fails other times is worse than no check at all, because it teaches everyone to ignore red lights.</strong></p>
+<h2>One thing to remember</h2>
+<div class="tl">
+<p>Testing isn't about proving nothing is broken. It's about <strong>making sure breakage is discovered at the cheapest possible place</strong>. Taste before serving, serve one table first, and keep sending in a fake customer — three gates, each covering a different stretch, none of them optional.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, diagrams and real systems? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think testing exists to find bugs. This chapter makes a sharper claim: <strong>testing is how an SRE quantifies confidence, and what it really changes is not the number of bugs but the cost of fixing them</strong>. The chapter opens by saying that one key responsibility of Site Reliability Engineers is to quantify confidence in the systems they maintain — and that reliability is a function of <strong>mean time to failure (MTTF) and mean time to repair (MTTR)</strong>. The economics of testing land squarely on the MTTR side: a bug blocked before it ships has a repair time of roughly zero.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Binary / push</strong>: the compiled program you deploy; pushing is the act of sending it to production.</li>
+<li><strong>MTTF / MTTR / MTBF</strong>: mean time to failure (how long until it breaks), mean time to repair (how long to fix it), mean time between failures. <strong>Reliability is determined by these together.</strong></li>
+<li><strong>Unit test</strong>: exercises one smallest unit — a function, a class — in milliseconds, touching no database and no network.</li>
+<li><strong>Dependency injection</strong>: handing a component its external dependencies from outside, so tests can swap in fakes (mocks).</li>
+<li><strong>Regression</strong>: an old, already-fixed bug coming back; the test written to prevent that is a regression test.</li>
+<li><strong>Canary</strong>: releasing a new version to a small slice of servers and users first, watching for a while, then widening. Named for the bird miners took underground.</li>
+<li><strong>Prober</strong>: a small program that continuously sends known requests at production and checks whether the responses match expectations — black-box monitoring.</li>
+<li><strong>Flaky test</strong>: a test that passes sometimes and fails other times on identical code, usually from a race condition or environmental noise.</li>
+<li><strong>Error budget</strong>: the amount of unreliability your SLO permits; when it runs out you stop shipping features and go fix things.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This chapter belongs to Part III, "Practices," right after the incident-handling cluster that includes Ch 15 on postmortem culture. It builds on Ch 3's error budgets and Ch 8's release engineering, and it sets up Ch 19–22 on load balancing and overload, and Ch 27 on launch coordination. In today's terms it maps onto one pipeline: <strong>CI → canary release → black-box probing</strong>, now marketed as progressive delivery and synthetic monitoring.</p>
+<h2>The problem this chapter attacks</h2>
+<p>SREs get asked one question every single day: <strong>"can this version go out?"</strong> Past reliability can be settled by looking at monitoring history; future reliability can only be predicted. And prediction requires that the system hasn't changed — but systems change constantly. The chapter's answer: <strong>testing is the mechanism you use to demonstrate specific areas of equivalence when changes occur</strong>. Every test that passes both before and after a change removes one piece of uncertainty.</p>
+<p>What happens if you don't solve it? Both extremes are common. One is <strong>fear of shipping</strong>: every release pulls the whole team in for manual checks, cadence falls to once a month, features pile up into one enormous change, and failures get harder to localize. The other is <strong>shipping blind</strong>: push, watch dashboards, let users be your probes. A production bug costs you alert → diagnose → roll back → postmortem, easily hours; the same bug caught by CI costs one red build and one commit.</p>
+<h2>The core, explained</h2>
+<h3>1. What testing really does: move the bug to the cell with the lowest MTTR</h3>
+<p>One formulation in the chapter is worth copying down: when a system-level test applied to a subsystem detects exactly the same problem that monitoring would detect, that test lets the push be blocked so the bug never reaches production — <strong>repairing such "zero MTTR" bugs by blocking a push is both quick and convenient</strong>.</p>
+<p>That line redefines testing from a quality activity into an <strong>economic</strong> one. You are not eliminating bugs, which is impossible. You are <strong>choosing where they get discovered</strong>, and the location sets the price.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 272" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="22" y="22">Same bug, caught at different gates — repair cost differs by orders of magnitude</text>
+<line stroke="rgba(120,120,130,0.45)" x1="22" x2="620" y1="215" y2="215"></line>
+<rect fill="rgba(91,157,249,0.18)" height="26" rx="4" stroke="#5b9df9" width="125" x="25" y="189"></rect>
+<text fill="#8fbaff" font-family="monospace" font-size="11" text-anchor="middle" x="87" y="181">MTTR ≈ 0</text>
+<rect fill="rgba(91,157,249,0.3)" height="56" rx="4" stroke="#5b9df9" width="125" x="180" y="159"></rect>
+<text fill="#8fbaff" font-family="monospace" font-size="11" text-anchor="middle" x="242" y="151">minutes</text>
+<rect fill="rgba(155,108,245,0.28)" height="96" rx="4" stroke="#9b6cf5" width="125" x="335" y="119"></rect>
+<text fill="#c3a6fb" font-family="monospace" font-size="11" text-anchor="middle" x="397" y="111">tens of min · 1% hit</text>
+<rect fill="rgba(224,107,107,0.22)" height="150" rx="4" stroke="#e06b6b" width="125" x="490" y="65"></rect>
+<text fill="#e06b6b" font-family="monospace" font-size="11" text-anchor="middle" x="552" y="57">hours + postmortem</text>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="87" y="235">① unit / integration</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="87" y="252">red build, one commit</text>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="242" y="235">② system / release</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="242" y="252">push is blocked</text>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="397" y="235">③ canary</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="397" y="252">auto rollback</text>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="552" y="235">④ production alert</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="552" y="252">all users affected</text>
+</svg>
+<figcaption>Fig. 1 · The economics of testing: the bug count is unchanged; where it is caught sets the MTTR. Further right means costlier and wider blast radius.</figcaption>
+</figure>
+<h3>2. Traditional tests: unit → integration → system</h3>
+<p>The first family runs against an <strong>undeployed binary</strong> on constructed, known data. Three layers:</p>
+<ul>
+<li><strong>Unit tests</strong> exercise the smallest unit, run in milliseconds, are the most numerous, and form the base of the pyramid.</li>
+<li><strong>Integration tests</strong> run assembled components together, using <em>dependency injection</em> to replace the real database and the real downstream with fakes — collapsing cross-process logic into a few seconds.</li>
+<li><strong>System tests</strong> run against a complete but undeployed system, and come in three flavours: a <em>smoke test</em> checks the simplest yet most critical behaviour and runs first, so a failure spares you the rest; <em>performance tests</em> guard against latency and resource usage drifting version by version; <em>regression tests</em> freeze every bug you've fixed into a permanent case.</li>
+</ul>
+<p>Regression testing carries one highly actionable rule: <strong>when you find a bug, first write a test that reproduces it reliably, then fix it</strong>. That rule also answers "where do I start on a legacy project with no tests?" — you don't backfill full coverage; you accumulate cases one fixed bug at a time.</p>
+<h3>3. Production tests: configuration, stress, canary</h3>
+<p>The second family runs against an <strong>already deployed</strong> system, because some things exist only in production.</p>
+<ul>
+<li><strong>Configuration test</strong>: compare the configuration actually in effect in production against what the version control system says should be in effect, and alert on divergence. It gets its own category because configuration is a leading source of incidents yet often isn't in CI at all — Terraform's <code>plan</code> and drift detection are today's version of the same idea.</li>
+<li><strong>Stress test</strong>: go find the limits. How full can the database get before writes start failing? How many QPS before overload? How little free disk before the alert fires? <strong>If you don't test it, you don't know where the edge is</strong> — and production's way of telling you is an outage.</li>
+<li><strong>Canary</strong>: send the new version to a small subset of servers first, let it bake under real traffic, then widen.</li>
+</ul>
+<p>On canaries the book makes a point that is routinely missed: <strong>a canary test isn't really a test; rather, it's structured user acceptance</strong>. Configuration and stress tests confirm a specific condition over deterministic software; a canary is more ad hoc — it exposes the code under test only to less predictable live production traffic, so it isn't perfect and <strong>doesn't always catch newly introduced faults</strong>. Treat it as your last line of insurance, not as proof that the change is good.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-family="monospace" font-size="11" x="25" y="28">BEFORE RELEASE · undeployed binary + known data</text>
+<rect fill="rgba(91,157,249,0.1)" height="34" rx="6" stroke="#7c8593" width="108" x="25" y="42"></rect><text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="79" y="64">unit</text>
+<rect fill="rgba(91,157,249,0.1)" height="34" rx="6" stroke="#7c8593" width="108" x="163" y="42"></rect><text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="217" y="64">integration</text>
+<rect fill="rgba(91,157,249,0.1)" height="34" rx="6" stroke="#7c8593" width="126" x="301" y="42"></rect><text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="364" y="64">system</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="364" y="90">smoke / perf / regression</text>
+<rect fill="rgba(91,157,249,0.16)" height="34" rx="6" stroke="#5b9df9" width="108" x="457" y="42"></rect><text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="511" y="64">release candidate</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="133" x2="159" y1="59" y2="59"></line>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="271" x2="297" y1="59" y2="59"></line>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="427" x2="453" y1="59" y2="59"></line>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="511" x2="511" y1="76" y2="128"></line>
+<text fill="#9b6cf5" font-family="monospace" font-size="11" x="25" y="132">AFTER RELEASE · deployed binary + real environment</text>
+<rect fill="rgba(155,108,245,0.1)" height="34" rx="6" stroke="#7c8593" width="108" x="25" y="146"></rect><text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="79" y="168">configuration</text>
+<rect fill="rgba(155,108,245,0.1)" height="34" rx="6" stroke="#7c8593" width="108" x="163" y="146"></rect><text fill="#b9c0ca" font-size="11.5" text-anchor="middle" x="217" y="168">stress</text>
+<rect fill="rgba(155,108,245,0.26)" height="34" rx="6" stroke="#9b6cf5" stroke-width="2" width="108" x="301" y="146"></rect><text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="355" y="168">canary</text>
+<text fill="#7c8593" font-size="9.5" text-anchor="middle" x="355" y="194">1% traffic · bake time</text>
+<rect fill="rgba(91,157,249,0.16)" height="34" rx="6" stroke="#5b9df9" width="108" x="457" y="146"></rect><text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="511" y="168">full rollout</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="133" x2="159" y1="163" y2="163"></line>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="271" x2="297" y1="163" y2="163"></line>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="409" x2="453" y1="163" y2="163"></line>
+<rect fill="rgba(155,108,245,0.08)" height="42" rx="8" stroke="#9b6cf5" stroke-dasharray="5 4" width="540" x="25" y="230"></rect>
+<text fill="#c3a6fb" font-size="11.5" text-anchor="middle" x="295" y="248">Prober · sends known requests at production, validates the response payload</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="295" y="266">decoupled from releases — runs 24/7</text>
+<line marker-end="url(#a1)" stroke="#9b6cf5" stroke-dasharray="4 3" x1="511" x2="511" y1="180" y2="228"></line>
+</svg>
+<figcaption>Fig. 2 · The gates a release passes: three traditional layers before deployment, configuration / stress / canary after, plus a prober that is decoupled from releases and always running.</figcaption>
+</figure>
+<h3>4. Probers: the cell that neither testing nor monitoring reaches</h3>
+<p>Lay the pieces out on a two-by-two and one cell is conspicuously empty. <strong>Traditional testing = known input × undeployed binary. Monitoring = unknown real traffic × deployed binary.</strong> So who owns <strong>known input × deployed binary</strong>? Probers.</p>
+<p>The chapter names the cause of the gap precisely: the release test probably wrapped the integrated server with a frontend and a <em>fake</em> backend, while the probe test wraps the release binary with a load-balancing frontend and a separate, genuinely scalable persistent backend. In other words, <strong>the configuration actually running in production is one that was never tested as a whole</strong>. Google fills that cell with a tool called Prober, which runs a protocol check against a target and reports success or failure; it can validate the response payload itself — the HTML contents of an HTTP response, say — and even extract values and export them as time series.</p>
+<p>Probers have costs too. They issue <strong>real requests</strong> against production, so you must handle write side effects (usually dedicated test accounts and disposable data), quota consumption, and the question of who is at fault when the prober itself dies — its alerts have to distinguish "the service is broken" from "the prober is broken."</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 268" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle" x="252" y="42">undeployed binary</text>
+<text fill="#5b9df9" font-size="12" font-weight="700" text-anchor="middle" x="462" y="42">deployed binary (production)</text>
+<text fill="#9b6cf5" font-size="11.5" text-anchor="end" x="140" y="100">known / constructed input</text>
+<text fill="#9b6cf5" font-size="11.5" text-anchor="end" x="140" y="180">real / unknown traffic</text>
+<rect fill="rgba(91,157,249,0.1)" height="70" stroke="rgba(91,157,249,0.3)" width="210" x="147" y="55"></rect>
+<text fill="#e7ebf1" font-size="12" text-anchor="middle" x="252" y="84">traditional tests</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="252" y="104">unit / integration / system</text>
+<rect fill="rgba(155,108,245,0.24)" height="70" stroke="#9b6cf5" stroke-width="2" width="210" x="357" y="55"></rect>
+<text fill="#e7ebf1" font-size="12" text-anchor="middle" x="462" y="84">Prober ← usually missing</text>
+<text fill="#c3a6fb" font-size="10" text-anchor="middle" x="462" y="104">known requests, checked responses</text>
+<rect fill="rgba(91,157,249,0.06)" height="70" stroke="rgba(91,157,249,0.3)" width="210" x="147" y="125"></rect>
+<text fill="#e7ebf1" font-size="12" text-anchor="middle" x="252" y="154">stress / fuzz tests</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="252" y="174">random or extreme input</text>
+<rect fill="rgba(91,157,249,0.1)" height="70" stroke="rgba(91,157,249,0.3)" width="210" x="357" y="125"></rect>
+<text fill="#e7ebf1" font-size="12" text-anchor="middle" x="462" y="154">monitoring</text>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="462" y="174">black-box view of real traffic</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="357" y="220">Top-left only: you know nothing about the combination that actually runs.</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="357" y="240">Bottom-right only: you will always hear it from users first.</text>
+</svg>
+<figcaption>Fig. 3 · Input × deployment state. Traditional tests, stress tests and monitoring each occupy one cell; probers fill the "known requests against production" cell.</figcaption>
+</figure>
+<h3>5. Three problems that only appear at scale</h3>
+<p><strong>① The tools SREs write are software too.</strong> Draining traffic from a cluster, restarting in bulk, reclaiming data, adjusting quota — these have a larger blast radius than most product code and frequently have no tests at all. The chapter offers a crisp rule: <strong>how thoroughly a tool is tested determines how often it is appropriate to use that tool against production</strong>. An untested tool runs only in a window with a human watching; a well-tested one has earned automation.</p>
+<p><strong>② How do you test disaster recovery tooling?</strong> By nature it only runs on the worst day, so you can't wait for a real disaster to validate it. The chapter's move is elegant: many disaster recovery tools can be carefully designed to operate <strong>offline</strong> and compute a checkpoint state equivalent to cleanly stopping the service, then push that checkpoint to be loadable by existing non-disaster validation tools. <strong>Turn a disaster into a snapshot you can validate offline</strong> — the single most portable trick in the chapter.</p>
+<p><strong>③ Speed is availability.</strong> The longer tests take, the longer the lag between check-in and feedback, and the more engineers route around them. <em>Flakiness</em> is the subtler poison: what an engineer actually wants to know is whether their code has an unanticipated race condition, and a test that flips red and green on its own buries that signal in noise. <strong>An intermittently failing test is worse than no test — it trains the whole team to ignore red.</strong></p>
+<p>All three are tied together by one control loop: <strong>as MTBF rises in response to better testing, developers are encouraged to release features faster; new bugs push release velocity back down</strong>. In practice that loop is the error budget — keep shipping while the SLO has room, stop and reinvest in testing when the budget is spent.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/deployment-release-day22.en.html" rel="noopener" target="_blank">System Design · Day 22 Deployment &amp; Release</a> — how blue-green, canary and feature flags compose, and how to build the loop that rolls a bad version back in five minutes</aside>
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 1 · Seven checks: what each catches, what each misses</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Check</th><th>Runs where</th><th>Catches</th><th>Misses / cost</th></tr></thead>
+<tbody>
+<tr><th>Unit</th><td>undeployed, milliseconds</td><td>logic errors in one function or class</td><td>blind to all interaction between components</td></tr>
+<tr><th>Integration</th><td>undeployed, seconds</td><td>contract errors once components are assembled</td><td>dependencies are mocked, so real downstream behaviour slips through</td></tr>
+<tr><th>System</th><td>undeployed, full system</td><td>end-to-end behaviour, perf drift, old bugs returning</td><td>slow; still fake data and fake topology</td></tr>
+<tr><th>Configuration</th><td>production, continuous</td><td><strong>live config diverging from version control</strong></td><td>config that is "correct" but semantically wrong still passes</td></tr>
+<tr><th>Stress</th><td>production or staging</td><td>capacity and degradation limits (full disk, overload)</td><td>consumes real resources; overdone, it becomes your outage</td></tr>
+<tr><th>Canary</th><td>production, 1% traffic</td><td>problems that only real traffic exposes</td><td><strong>the book is explicit: not a test, doesn't always catch new faults</strong>; costs bake time</td></tr>
+<tr><th>Prober</th><td>production, 24/7</td><td>is the combination that actually runs still alive?</td><td>covers only the few explicitly asserted paths; write side effects</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · Where to spend: start from your MTTR</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Spend on "stop it before release"</th><th>Spend on "pull it back fast"</th></tr></thead>
+<tbody>
+<tr><th>Fits</th><td>rollback takes tens of minutes to hours: stateful services, data migrations, schema changes, client / embedded releases</td><td>rollback in seconds to minutes: stateless services, feature flags, instantly switchable frontends</td></tr>
+<tr><th>Main levers</th><td>a thicker test pyramid, configuration tests, pre-release stress tests</td><td>canary plus automated judgment, feature flags, one-click rollback</td></tr>
+<tr><th>Cost</th><td>release cadence is pinned by test duration; the suite itself needs maintenance</td><td>some real users always act as probes; demands mature monitoring and automation</td></tr>
+<tr><th>Failure mode</th><td>tests too slow → bypassed; flaky → ignored</td><td>canary signal too weak or bake time too short → it blows up after widening</td></tr>
+</tbody></table></div>
+<p>These aren't alternatives; they're two sides of one equation. <strong>Reliability is a function of MTTF and MTTR, and you can buy it from either side.</strong> The actual mistake is funding neither and trusting luck.</p>
+<h2>Why it matters in real systems</h2>
+<p>Almost every modern delivery practice has its prototype in this chapter: layered CI tests map onto Bazel and GitHub Actions pipelines; configuration tests onto Terraform <code>plan</code> and drift detection; canaries onto Spinnaker, Argo Rollouts and Flagger; probers onto Prometheus <code>blackbox_exporter</code>, Datadog Synthetics and every synthetic-check product. <strong>Reading this chapter gives you the manual for why those tools look the way they do</strong> — and lets you answer "how do you make a release safe?" starting from MTTR rather than from a list of tool names.</p>
+<div class="ev">
+<div class="evh">EVIDENCE FROM INDUSTRY · not the book's claims, but what the companies said themselves</div>
+<ul>
+<li><strong>Google</strong> has published the real scale of its continuous testing: roughly <code>4.2 million</code> individual tests running continuously and about <code>150 million</code> test executions per day — an average of <code>35</code> runs per test per day — with <code>99%</code> of executions passing. <strong>That is the hard evidence behind "speed is availability"</strong>: at this volume, suite duration and flakiness directly set how fast an engineer gets feedback. <span class="src"><a href="https://dl.acm.org/doi/10.1109/ICSE-SEIP.2017.16" rel="noopener" target="_blank">A. Memon et al., "Taming Google-Scale Continuous Testing," ICSE-SEIP 2017 ↗</a></span></li>
+<li><strong>Netflix</strong> automated the canary judgment itself: Kayenta uses confidence intervals computed by the Mann-Whitney U test to decide whether canary and baseline metrics differ significantly, and hands Spinnaker a score that drives continue-or-roll-back. At its 2018 announcement it already ran about <code>30%</code> of Netflix's production canary judgments, averaging <code>200</code> judgments a day — <strong>confirming the book's framing that a canary is user acceptance, needing statistical judgment rather than an assertion</strong>. <span class="src"><a href="https://netflixtechblog.com/automated-canary-analysis-at-netflix-with-kayenta-3260bc7acc69" rel="noopener" target="_blank">Netflix Tech Blog, "Automated Canary Analysis at Netflix with Kayenta," Apr 2018 ↗</a></span></li>
+<li><strong>Google</strong> runs DiRT, an annual company-wide, multi-day disaster recovery testing event that <strong>deliberately causes failures in critical systems and business processes to find vulnerabilities and fix them before those failures happen in an uncontrolled way</strong> — the organizational version of this chapter's insistence that disaster tooling must be tested. <span class="src"><a href="https://queue.acm.org/detail.cfm?id=2371516" rel="noopener" target="_blank">K. Krishnan, "Weathering the Unexpected," ACM Queue 10(9) / CACM 2012 ↗</a></span></li>
+<li><strong>Google (the chapter itself)</strong>: when a system-level test detects exactly the problem monitoring would have detected, the push is blocked and the bug never reaches production — <strong>repairing these "zero MTTR" bugs by blocking a push is both quick and convenient</strong>; the prober cell is filled by the internal Prober tool. <span class="src"><a href="https://sre.google/sre-book/testing-reliability/" rel="noopener" target="_blank">"Site Reliability Engineering," Ch 17, O'Reilly / Google, 2016 ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/chaos-engineering-day44.en.html" rel="noopener" target="_blank">System Design · Day 44 Chaos Engineering</a> — from DiRT to Chaos Monkey: how to induce failure scientifically in production, and how to bound the blast radius</aside>
+<h2>Pitfalls and open questions</h2>
+<ul>
+<li><strong>Treating the canary as a test.</strong> The most common misreading, and the book pre-empts it: a canary is structured user acceptance and does not catch all newly introduced faults.</li>
+<li><strong>Mistaking coverage for safety.</strong> Coverage measures that code was executed, not that behaviour was asserted — and configuration, dependency versions and deployment topology, the things that actually break, don't enter the coverage number at all.</li>
+<li><strong>Forgetting to test your own SRE tooling.</strong> The code with the largest blast radius is routinely the code with no tests. The rule stands: if it isn't tested enough, don't let it run unattended.</li>
+<li><strong>Tolerating flaky tests.</strong> The damage compounds — first the test gets re-run, then it joins an ignore list, and eventually nobody reads red at all.</li>
+<li><strong>Dated in places.</strong> Written in 2016, before mature automated canary judgment (Kayenta was open-sourced in 2018), before service-mesh-grade traffic splitting, and before OpenTelemetry unified the probing layer. Progressive delivery has since engineered the canary further than this chapter anticipated.</li>
+<li><strong>A strong counterargument that is really the same coin.</strong> The continuous-delivery camp says: rather than funding a longer test suite, drive MTTR down to minutes. That sounds like opposition but is exactly this chapter's own reasoning — reliability is a function of MTTF and MTTR, and both sides are purchasable. The real disagreement is only whether your system can roll back in seconds.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① In one line: testing is how SREs <strong>quantify confidence</strong>; it changes not the number of bugs but where they are found, and therefore what they cost.</p>
+<p>② Core claim: reliability is a function of <strong>MTTF and MTTR</strong>; a bug blocked before release has <strong>near-zero MTTR</strong>, and fixing it by blocking a push is quick and convenient.</p>
+<p>③ Traditional tests (undeployed + known data): <strong>unit → integration → system</strong>, with system splitting into smoke, performance and regression.</p>
+<p>④ Production tests (deployed): <strong>configuration tests</strong> (live config vs. version control), <strong>stress tests</strong> (go find the limits), and <strong>canaries</strong>.</p>
+<p>⑤ The book is explicit: <strong>a canary isn't a test, it's structured user acceptance</strong> — exposed only to a small slice of unpredictable real traffic, and not always catching new faults.</p>
+<p>⑥ The missing cell is the <strong>prober</strong>: known requests against the deployed system, because the real production combination was never tested as a whole.</p>
+<p>⑦ Three problems at scale: <strong>SRE tooling needs tests too</strong> (test depth decides how often it may touch production); <strong>disaster tooling is tested offline</strong> (compute a checkpoint equivalent to a clean stop, then validate it); <strong>speed is availability</strong> (a flaky test is worse than no test).</p>
+<p>⑧ The control loop: better tests → higher MTBF → faster releases → new bugs → velocity pushed back. Its practical form is the <strong>error budget</strong>.</p>
+<p>⑨ The judgment to keep: <strong>don't ask "are we testing enough?" — ask "which cell will this bug be caught in, and what is that cell's MTTR?"</strong></p>
+</div>
+</div>
+<footer>Chapter Deepread · Read this page ≈ get the chapter's core; for full cases and depth, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
