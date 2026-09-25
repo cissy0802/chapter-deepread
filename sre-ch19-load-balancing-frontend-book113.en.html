@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>SRE Ch 19 · Load Balancing at the Frontend — Books Deep Read 113</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOKS DEEP READ · SRE · CH 19</p>
+<h1>Load Balancing at the Frontend</h1>
+<p class="sub">Site Reliability Engineering · Ch 19 · Google · 2016</p>
+<p class="langbar"><a href="sre-ch19-load-balancing-frontend-book113.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You open a global site on your phone — mail, video, a cross-border shop — and the request lands on one particular machine. Why that one? Chapter 19 of Google's SRE book is about exactly that: <strong>how traffic gets handed out before a request ever reaches a datacenter</strong>. It is not "put a box in front of the building." It is a relay, with three legs.</p>
+<h2>An analogy</h2>
+<p>Think of a global restaurant chain. Getting fed takes three steps: ① you <strong>ask for directions</strong> — "where's the nearest branch?"; ② you drive there, and the forks in the road decide which branch you actually walk into; ③ inside, a <strong>host</strong> seats you at a table. Each step is a different mechanism, and <strong>each one knows different things and reacts at a different speed — which is why none of them can replace the others</strong>.</p>
+<h2>The odd thing about asking directions</h2>
+<p>You think you're asking head office. You're actually asking the fellow at the end of your street — your phone doesn't query the site directly, it delegates to a middleman. So head office knows <strong>where the middleman is standing</strong>, not where you are. He may be a hundred miles away, and you get sent to a far-off branch.</p>
+<p>Worse, he <strong>writes the answer in a notebook</strong> and reads it back next time. So if head office wants to close a branch temporarily, it has to wait for every notebook to go stale — <strong>this leg is slow, too slow to use in an emergency</strong>.</p>
+<h2>Three moves that fix it</h2>
+<p><strong>One: have the middleman mention roughly where you live.</strong> When he asks, he adds "I'm asking on behalf of someone over on the east side," and head office can point better. The cost: his notebook now needs a separate page per neighbourhood, so it gets fat.</p>
+<p><strong>Two: make one street address valid in many cities at once.</strong> Everybody worldwide uses the same address and the road network delivers you to the closest branch. Nice: no directions needed, and you can pull a branch out simply by taking its sign down. Not nice: "closest" is measured by the road map, not by how long the drive takes — and if the roads get re-signed halfway, you may be dumped at the same-named branch in another city, and the order you just placed is gone.</p>
+<p><strong>Three: seat people by calculation, not by bookkeeping.</strong> There's more than one host at the door. If they keep a ledger of "who sits where," handing over to the next host breaks it. Instead, <strong>compute a fixed table from your name</strong> — whoever greets you computes the same table. No reconciliation between hosts, and losing one host changes nothing. There's a companion move too: <strong>don't route the food back past the host's desk.</strong> The kitchen carries it straight to your table, because the food going out is far heavier than the order coming in.</p>
+<h2>So how do you choose?</h2>
+<p>Coarse decisions go to the directions step (which region); fine decisions go to the door (which machine). <strong>The honest cost</strong>: computing seats instead of recording them saves the ledger, but when a branch really does open or close, a small share of people get recomputed — and the meal they were in the middle of is interrupted.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p>Handing out traffic is a <strong>three-leg relay</strong>: the directions leg (DNS) can only point coarsely and slowly at a region, the road network drops you into some datacenter, and the machine is actually chosen at the door — where the trick is to <strong>compute rather than remember</strong>, and to keep the return trip away from yourself.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, notation and diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">You think frontend load balancing is "a box in front of the datacenter." It is really <strong>a three-layer relay in which no single layer can carry the job alone</strong>: DNS can only do coarse, sluggish geographic steering; routing (anycast) can only deliver to whatever is "near" in topology terms; and the thing that actually pins a connection to one backend is the network load balancer at the VIP layer — whose core craft is <strong>replacing the connection table with share-nothing consistent hashing</strong>, and keeping return traffic off itself.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>DNS</strong> — the directory service that turns a name into an IP address; the <strong>authoritative nameserver</strong> gives the final answer for a domain.</li>
+<li><strong>Recursive resolver</strong> — the middleman that runs the whole lookup on the user's behalf, usually run by an ISP or a public DNS service (say <code>8.8.8.8</code>). This is what the authoritative server sees — not the user.</li>
+<li><strong>VIP (virtual IP address)</strong> — a service address bound to no single network interface, announced jointly by a set of load balancers.</li>
+<li><strong>Anycast</strong> — the same IP announced to the internet from many locations at once; routing delivers the packet to whichever one is "nearest."</li>
+<li><strong>BGP</strong> — the protocol networks use to tell each other which way to send packets for a given address.</li>
+<li><strong>5-tuple</strong> — source/destination IP, source/destination port, protocol: what uniquely identifies one connection.</li>
+<li><strong>Consistent hashing</strong> — a hashing scheme in which adding or removing a node reshuffles only a small fraction of the keys instead of all of them.</li>
+<li><strong>Encapsulation · GRE / IPIP</strong> — wrapping a whole IP packet inside another IP packet. <strong>DSR (direct server return)</strong> — the backend replies straight to the client instead of going back through the load balancer.</li>
+<li><strong>MTU</strong> — the largest number of bytes a link carries in one go; an added outer header eats into that budget.</li>
+<li><strong>ECMP (equal-cost multi-path)</strong> — routers spray traffic for one destination across several devices by hash.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This is the first half of the load-balancing pair in Part III, Practices: <strong>Ch19 covers everything before traffic enters a datacenter</strong> (DNS, anycast, VIPs), Ch20 covers what happens once it is inside (subsetting, weighted round robin, lame duck). Next comes Ch21, Handling Overload — because however well you hand traffic out, there is always a moment when it cannot be handed out. The real-world counterpart is a whole class of systems: CDNs and global frontends, cloud providers' global load balancers, and that row of L4 boxes in front of your own racks.</p>
+<h2>The problem this chapter attacks</h2>
+<p>The chapter opens by arguing that <strong>power isn't the answer</strong>: more datacenters and bigger machines do not add up to users being served well. Three reasons.</p>
+<ul>
+<li><strong>Capacity is not in one place.</strong> Your service lives in several sites worldwide, and spare room in site A does nothing for overload in site B — unless traffic can be steered there.</li>
+<li><strong>Distance converts directly into latency.</strong> Orders of magnitude: a transatlantic round trip runs about <code>70–90</code> ms, transpacific about <code>100–160</code> ms, and a full TLS 1.2 handshake costs 2 round trips. <strong>Pick the wrong entry point and you have donated one or two hundred milliseconds before the page even starts loading.</strong></li>
+<li><strong>Requests are not equal.</strong> A static request that hits cache and a search request that has to reach a backend can differ by one or two orders of magnitude in cost — so "requests per second" is by itself not enough to describe load.</li>
+</ul>
+<p>What happens if you don't solve it? Two symptoms: <strong>hot and cold</strong> — one site queueing badly enough to spike p99 while another idles at 30% CPU; and the more painful one, <strong>you can't drain</strong> — a site needs maintenance or has already failed, and there is no knob that moves traffic away within minutes, because the decision is scattered across DNS caches all over the world.</p>
+<h2>The core content, properly</h2>
+<figure>
+<svg viewBox="0 0 640 326" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="m1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="m2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text x="16" y="24" fill="#5b9df9" font-size="12.5" font-weight="700">1. DNS: the authoritative server sees the resolver, not you</text>
+<rect x="16" y="38" width="70" height="30" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect><text x="51" y="58" fill="#b9c0ca" font-size="11" text-anchor="middle">user</text>
+<line x1="88" x2="114" y1="53" y2="53" stroke="#7c8593" marker-end="url(#m1)"></line>
+<rect x="116" y="38" width="120" height="30" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect><text x="176" y="58" fill="#b9c0ca" font-size="10.5" text-anchor="middle">recursive resolver</text>
+<line x1="238" x2="264" y1="53" y2="53" stroke="#7c8593" marker-end="url(#m1)"></line>
+<rect x="266" y="38" width="118" height="30" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect><text x="325" y="58" fill="#b9c0ca" font-size="10.5" text-anchor="middle">authoritative DNS</text>
+<line x1="386" x2="412" y1="53" y2="53" stroke="#7c8593" marker-end="url(#m1)"></line>
+<rect x="414" y="38" width="200" height="30" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect><text x="514" y="58" fill="#e7ebf1" font-size="10.5" text-anchor="middle">returns a VIP: 203.0.113.7</text>
+<text x="16" y="86" fill="#7c8593" font-size="10.5">the resolver may be hundreds of km away — only EDNS0 client subnet corrects for that</text>
+<text x="16" y="120" fill="#5b9df9" font-size="12.5" font-weight="700">2. Anycast + BGP: one VIP announced from many sites, routing picks one</text>
+<rect x="16" y="134" width="70" height="30" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"></rect><text x="51" y="154" fill="#e7ebf1" font-size="11" text-anchor="middle">packet</text>
+<rect x="190" y="126" width="96" height="26" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect><text x="238" y="144" fill="#b9c0ca" font-size="11" text-anchor="middle">site A</text>
+<rect x="190" y="160" width="96" height="26" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect><text x="238" y="178" fill="#b9c0ca" font-size="11" text-anchor="middle">site B</text>
+<line x1="88" x2="186" y1="145" y2="139" stroke="#7c8593" marker-end="url(#m1)"></line>
+<line x1="88" x2="186" y1="155" y2="172" stroke="#7c8593" marker-end="url(#m1)"></line>
+<text x="300" y="143" fill="#7c8593" font-size="10.5">"near" in BGP means hops, not latency</text>
+<text x="300" y="177" fill="#7c8593" font-size="10.5">a mid-flow reroute to another site resets it</text>
+<text x="16" y="212" fill="#5b9df9" font-size="12.5" font-weight="700">3. VIP layer: consistent hashing picks the backend, one flow stays put</text>
+<rect x="16" y="224" width="300" height="82" rx="8" fill="none" stroke="rgba(91,157,249,0.5)" stroke-dasharray="5 4"></rect>
+<text x="166" y="242" fill="#7c8593" font-size="10" text-anchor="middle">site A · ECMP sprays packets across any of them</text>
+<rect x="28" y="250" width="84" height="26" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect><text x="70" y="267" fill="#b9c0ca" font-size="10.5" text-anchor="middle">Maglev 1</text>
+<rect x="124" y="250" width="84" height="26" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect><text x="166" y="267" fill="#b9c0ca" font-size="10.5" text-anchor="middle">Maglev 2</text>
+<rect x="220" y="250" width="84" height="26" rx="5" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect><text x="262" y="267" fill="#b9c0ca" font-size="10.5" text-anchor="middle">Maglev 3</text>
+<rect x="358" y="228" width="98" height="24" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="407" y="245" fill="#b9c0ca" font-size="10.5" text-anchor="middle">backend 1</text>
+<rect x="358" y="260" width="98" height="24" rx="5" fill="rgba(155,108,245,0.22)" stroke="#9b6cf5" stroke-width="2"></rect><text x="407" y="277" fill="#e7ebf1" font-size="10.5" text-anchor="middle">backend 2</text>
+<rect x="358" y="292" width="98" height="24" rx="5" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect><text x="407" y="309" fill="#b9c0ca" font-size="10.5" text-anchor="middle">backend 3</text>
+<line x1="316" x2="354" y1="268" y2="242" stroke="#7c8593" marker-end="url(#m1)"></line>
+<line x1="316" x2="354" y1="272" y2="272" stroke="#9b6cf5" marker-end="url(#m2)"></line>
+<line x1="316" x2="354" y1="276" y2="304" stroke="#7c8593" marker-end="url(#m1)"></line>
+<text x="470" y="268" fill="#8fbaff" font-size="10.5">one TCP flow</text>
+<text x="470" y="286" fill="#8fbaff" font-size="10.5">always same host</text>
+</svg>
+<figcaption>Fig 1 · The three-leg relay before traffic enters a datacenter: DNS picks a region (coarse, slow), anycast picks a site (fast, but routing-blind), the VIP layer picks a machine (fine, and health-aware).</figcaption>
+</figure>
+<h3>1. DNS steering: usable, but it is distribution, not balancing</h3>
+<p>The plainest form: the authoritative server returns different addresses depending on where the query came from, or one name carries several A records for round robin. Cheap, universal, no data-plane cost. But the chapter lays out its three hard walls very clearly.</p>
+<p><strong>First, you don't see the user, you see the resolver.</strong> The authoritative server almost never talks to the user; a recursive resolver sits in between. You know the resolver's address, not how many users are behind it nor how far away they are. The patch is the <strong>EDNS0 client-subnet extension</strong> (later standardised as RFC 7871, 2016): the resolver carries a prefix of the user's IP (say a <code>/24</code>) in the query so the authoritative server can decide per user rather than per resolver. The costs are real, and there are three: it only works with resolvers that implement it; one answer becomes one answer per subnet, which fragments the resolver's cache; and it hands over part of the user's address — an acknowledged privacy trade.</p>
+<p><strong>Second, you don't control caching.</strong> TTL is a suggestion. Resolvers cache, some raise TTLs they consider too short, and clients and application layers cache on top. So when you want a site out, what you are waiting on is <strong>the longest-lived copy</strong>, not the TTL you configured. Dropping to tens of seconds improves reaction time; the price is an extra resolution round trip every time it expires (straight onto the user's time to first byte) and proportionally more queries.</p>
+<p><strong>Third, you don't control how the client picks.</strong> Given several records, a client typically takes the first, but may sort them itself or try them in parallel; and the reply has a size budget (the classic <code>512</code>-byte limit for UDP, which takes EDNS0 to lift), so only a handful of addresses fit.</p>
+<p>Hence the chapter's restrained conclusion: <strong>use DNS for coarse geographic steering and do not expect it to balance anything</strong> — it cannot see live load, and it cannot take back an answer it has already given out.</p>
+<h3>2. Anycast: let routing pick the site</h3>
+<p>Announce <strong>the same VIP</strong> from several sites over BGP and internet routing delivers each user's packets to one of them. The upside is immediate: no per-region DNS answers, no hostage to caching, and when a site fails you simply <strong>withdraw the announcement</strong> — routing converges elsewhere in seconds to minutes. That is the most useful emergency switch at this layer.</p>
+<p>The trade-off: "near" in BGP's eyes means near <strong>in path attributes</strong> (hop count, policy preference), not near in latency, so you can land on a site that is the long way round. The harder one is <strong>connection stability</strong>: if routing changes while a TCP connection is alive, later packets arrive at a different site which holds no state for it, and the user gets a reset. In practice two things soften this — making the load balancers inside a site <strong>stateless, identical and unanimous</strong> (next section), and putting a global proxy at the frontend so any site can forward a request to the backend it belongs to, at which point "changed site" no longer has to mean "connection void."</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/cdn-edge-day28.en.html" target="_blank" rel="noopener">System Design · Day 28 CDN and Edge</a> — anycast, edge selection and cache tiering: what the routing problem looks like once compute and content sit 50 km from the user</aside>
+<h3>3. The VIP layer: one connection must always land on one backend</h3>
+<p>A VIP belongs to no interface; a set of <strong>network load balancers</strong> announce it jointly, upstream routers spray packets across any of them by ECMP, and each one decides which backend this packet belongs to. There is exactly one difficulty, and it is hard: TCP is stateful, so <strong>every packet of a connection must go to the same backend</strong> or the connection dies instantly. Two ways:</p>
+<ul>
+<li><strong>A connection tracking table</strong>, keyed by 5-tuple: "this flow went there." Intuitive, but it is state — memory grows with concurrent flows (a few million flows puts this table alone in the GB range), and the moment that load balancer restarts, or ECMP re-sprays a flow onto a different balancer because a device was added or removed, the table no longer matches.</li>
+<li><strong>Consistent hashing</strong>: derive the backend from the 5-tuple directly and <strong>store nothing</strong>. Every balancer in the set computes the same answer for the same flow, so ECMP can spray however it likes, and a restart loses no decisions.</li>
+</ul>
+<p>Google's <strong>Maglev</strong> <strong>stacks both</strong>: consistent hashing as the foundation (stateless, recomputable at any time) with the connection table only as a layer on top — to protect already-established connections when the backend set really does change.</p>
+<p>Why must it be consistent hashing; why won't plain <code>hash mod N</code> do? Do the arithmetic. Go from <code>10</code> backends to <code>11</code> and nearly every result changes: only about <code>1/11 ≈ 9%</code> of flows happen to land where they were, so <strong>roughly 91% of connections are broken</strong>. Consistent hashing inverts that number: about <code>1/11</code> of flows have to move and the rest stay put. The cost is that it only guarantees that everyone <strong>computes the same thing</strong>, <strong>not that load comes out even</strong> — skew has to be flattened with virtual nodes (or a pre-generated lookup table, Maglev-style).</p>
+<figure>
+<svg viewBox="0 0 640 170" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<line x1="320" x2="320" y1="14" y2="160" stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4"></line>
+<text x="163" y="26" fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle">hash mod N</text>
+<text x="163" y="46" fill="#7c8593" font-size="10.5" text-anchor="middle">backends: 10 to 11</text>
+<rect x="31" y="58" width="20" height="26" rx="3" fill="rgba(224,107,107,0.3)" stroke="#e06b6b"></rect>
+<rect x="55" y="58" width="20" height="26" rx="3" fill="rgba(224,107,107,0.3)" stroke="#e06b6b"></rect>
+<rect x="79" y="58" width="20" height="26" rx="3" fill="rgba(224,107,107,0.3)" stroke="#e06b6b"></rect>
+<rect x="103" y="58" width="20" height="26" rx="3" fill="rgba(224,107,107,0.3)" stroke="#e06b6b"></rect>
+<rect x="127" y="58" width="20" height="26" rx="3" fill="rgba(224,107,107,0.3)" stroke="#e06b6b"></rect>
+<rect x="151" y="58" width="20" height="26" rx="3" fill="rgba(224,107,107,0.3)" stroke="#e06b6b"></rect>
+<rect x="175" y="58" width="20" height="26" rx="3" fill="rgba(224,107,107,0.3)" stroke="#e06b6b"></rect>
+<rect x="199" y="58" width="20" height="26" rx="3" fill="rgba(224,107,107,0.3)" stroke="#e06b6b"></rect>
+<rect x="223" y="58" width="20" height="26" rx="3" fill="rgba(224,107,107,0.3)" stroke="#e06b6b"></rect>
+<rect x="247" y="58" width="20" height="26" rx="3" fill="rgba(224,107,107,0.3)" stroke="#e06b6b"></rect>
+<rect x="271" y="58" width="20" height="26" rx="3" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="163" y="104" fill="#7c8593" font-size="10" text-anchor="middle">11 in-flight connections</text>
+<text x="163" y="130" fill="#e06b6b" font-size="12.5" font-weight="700" text-anchor="middle">~91% moved</text>
+<text x="163" y="150" fill="#7c8593" font-size="10" text-anchor="middle">almost every old connection dies</text>
+<text x="477" y="26" fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle">consistent hashing</text>
+<text x="477" y="46" fill="#7c8593" font-size="10.5" text-anchor="middle">backends: 10 to 11</text>
+<rect x="345" y="58" width="20" height="26" rx="3" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<rect x="369" y="58" width="20" height="26" rx="3" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<rect x="393" y="58" width="20" height="26" rx="3" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<rect x="417" y="58" width="20" height="26" rx="3" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<rect x="441" y="58" width="20" height="26" rx="3" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<rect x="465" y="58" width="20" height="26" rx="3" fill="rgba(224,107,107,0.3)" stroke="#e06b6b"></rect>
+<rect x="489" y="58" width="20" height="26" rx="3" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<rect x="513" y="58" width="20" height="26" rx="3" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<rect x="537" y="58" width="20" height="26" rx="3" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<rect x="561" y="58" width="20" height="26" rx="3" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<rect x="585" y="58" width="20" height="26" rx="3" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="477" y="104" fill="#7c8593" font-size="10" text-anchor="middle">the same 11 connections</text>
+<text x="477" y="130" fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle">~9% moved</text>
+<text x="477" y="150" fill="#7c8593" font-size="10" text-anchor="middle">only the ones that had to move</text>
+</svg>
+<figcaption>Fig 2 · Modulo hashing vs consistent hashing: the share of flows remapped — that is, connections broken — when backends go from 10 to 11. Roughly 91% against roughly 9%.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/sharding-day4.en.html" target="_blank" rel="noopener">System Design · Day 4 Database Sharding</a> — the hash ring, virtual nodes and rebalancing: the same arithmetic in its full form, plus what to do about hotspots</aside>
+<h3>4. Getting the packet to the backend: NAT, or encapsulation plus DSR</h3>
+<p>Having chosen a backend you still have to deliver the packet. Two roads, with very different costs.</p>
+<p><strong>NAT</strong>: rewrite the destination address. The cost is that <strong>the return trip must come back through the load balancer</strong> (otherwise the client sees the wrong source address), so the balancer carries both directions. And the downstream direction dwarfs the upstream — a request is a few hundred bytes, a response tens of KB to a few MB, <strong>commonly a 10x difference or more</strong> — so the balancer becomes the bandwidth bottleneck, and it must hold state per flow.</p>
+<p><strong>Encapsulation plus DSR</strong>: wrap the original packet whole inside a new IP packet (GRE or IPIP) addressed to the backend; the backend decapsulates, still sees the original destination (the VIP is configured on its loopback), and <strong>sends the response straight back to the client</strong>, never touching the balancer. The balancer now handles only the ingress direction, so its capacity is measured in inbound packet rate rather than total bandwidth — far cheaper to scale out.</p>
+<p>Spell out the costs: the outer header eats MTU (from <code>20</code> bytes for IPIP, <code>24</code> for GRE), and once path MTU discovery is broken by some middlebox the symptom is "small requests fine, large requests hang" — among the nastiest failures to diagnose. The backend must have the VIP configured and must not answer ARP for it. And the balancer never sees responses, so observability has to be built elsewhere.</p>
+<figure>
+<svg viewBox="0 0 640 256" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="m3" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="m4" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text x="16" y="24" fill="#5b9df9" font-size="12.5" font-weight="700">1. NAT: rewrite the destination, and the return trip must come back</text>
+<rect x="16" y="40" width="80" height="34" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect><text x="56" y="61" fill="#b9c0ca" font-size="11" text-anchor="middle">client</text>
+<rect x="176" y="40" width="112" height="34" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect><text x="232" y="61" fill="#e7ebf1" font-size="10.5" text-anchor="middle">load balancer</text>
+<rect x="368" y="40" width="80" height="34" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect><text x="408" y="61" fill="#b9c0ca" font-size="11" text-anchor="middle">backend</text>
+<line x1="98" x2="172" y1="50" y2="50" stroke="#7c8593" marker-end="url(#m3)"></line>
+<line x1="290" x2="364" y1="50" y2="50" stroke="#7c8593" marker-end="url(#m3)"></line>
+<line x1="364" x2="292" y1="66" y2="66" stroke="#9b6cf5" marker-end="url(#m4)"></line>
+<line x1="172" x2="100" y1="66" y2="66" stroke="#9b6cf5" marker-end="url(#m4)"></line>
+<text x="462" y="49" fill="#7c8593" font-size="10.5">responses also transit the LB</text>
+<text x="462" y="69" fill="#e06b6b" font-size="10.5">the LB is the bottleneck</text>
+<text x="16" y="98" fill="#7c8593" font-size="10">egress is often 10x ingress or more, and all of it lands on the balancer</text>
+<text x="16" y="136" fill="#5b9df9" font-size="12.5" font-weight="700">2. Encapsulation + DSR: the backend replies directly, LB off the return path</text>
+<rect x="16" y="156" width="80" height="34" rx="6" fill="rgba(91,157,249,0.1)" stroke="#7c8593"></rect><text x="56" y="177" fill="#b9c0ca" font-size="11" text-anchor="middle">client</text>
+<rect x="176" y="156" width="112" height="34" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect><text x="232" y="177" fill="#e7ebf1" font-size="10.5" text-anchor="middle">load balancer</text>
+<rect x="368" y="156" width="160" height="34" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"></rect><text x="448" y="177" fill="#e7ebf1" font-size="10.5" text-anchor="middle">backend · VIP on loopback</text>
+<line x1="98" x2="172" y1="173" y2="173" stroke="#7c8593" marker-end="url(#m3)"></line>
+<line x1="290" x2="364" y1="173" y2="173" stroke="#7c8593" marker-end="url(#m3)"></line>
+<text x="296" y="150" fill="#9b6cf5" font-size="9.5">GRE wrap</text>
+<path d="M448,192 L448,222 L56,222 L56,194" fill="none" stroke="#5b9df9" marker-end="url(#m4)"></path>
+<text x="252" y="212" fill="#8fbaff" font-size="10.5" text-anchor="middle">response goes straight to the client (DSR)</text>
+<text x="16" y="246" fill="#7c8593" font-size="10">cost: the outer header eats MTU, and the LB cannot see responses — health checks must come from elsewhere</text>
+</svg>
+<figcaption>Fig 3 · NAT makes the balancer carry both directions; encapsulation plus DSR leaves it carrying only ingress, with the backend answering the client itself.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/networking-fundamentals-day48.en.html" target="_blank" rel="noopener">System Design · Day 48 Networking Fundamentals</a> — how many round trips a request really takes: TCP/TLS handshake cost, MTU and fragmentation, and why broken PMTUD is so hard to find</aside>
+<h2>The trade-offs, and how to choose</h2>
+<p class="tcap">Table 1 · The three steering layers: what each can do, and what it costs</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Mechanism</th><th>Granularity</th><th>Time to drain</th><th>Sees real load?</th><th>Main cost</th></tr></thead>
+<tbody>
+<tr><th>DNS</th><td>Site / region</td><td>Bounded by the <strong>longest cache</strong>: minutes to hours</td><td>No</td><td>Caching out of your hands; you see resolvers, not users; client choice out of your hands</td></tr>
+<tr><th>Anycast + BGP</th><td>Site</td><td><strong>Seconds to minutes</strong> after withdrawing</td><td>No (routing only)</td><td>"Near" is not low-latency; a mid-flow reroute can reset connections</td></tr>
+<tr><th>VIP + consistent hashing</th><td><strong>One backend / one connection</strong></td><td>Immediate, on changing the backend set</td><td>Yes (health checks, weights)</td><td>L4 only; a few connections still suffer when the backend set changes</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · Pinning a flow to a backend: connection table vs consistent hashing</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Connection tracking table</th><th>Consistent hashing</th></tr></thead>
+<tbody>
+<tr><th>State</th><td>One entry per flow; millions of flows is <strong>GB-scale</strong></td><td><strong>Stateless</strong>, recomputable any time</td></tr>
+<tr><th>LB restart / ECMP re-spray</th><td>Table no longer matches, connections die</td><td>Unaffected</td></tr>
+<tr><th>Backends 10 to 11</th><td>Existing flows stay valid (<strong>this is its value</strong>)</td><td>About <code>1/11</code> of flows remap</td></tr>
+<tr><th>Even load?</th><td>Naturally even</td><td>Needs virtual nodes / a lookup table</td></tr>
+<tr><th>Role</th><td>An <strong>optimisation</strong> above consistent hashing</td><td>The <strong>foundation</strong></td></tr>
+</tbody></table></div>
+<p class="tcap">Table 3 · Delivering the packet: NAT vs encapsulation plus DSR</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>NAT</th><th>Encapsulation + DSR</th></tr></thead>
+<tbody>
+<tr><th>Return path</th><td>Must transit the LB</td><td>Backend <strong>answers the client directly</strong></td></tr>
+<tr><th>Bandwidth on the LB</th><td>Ingress + egress (egress often 10x)</td><td><strong>Ingress only</strong></td></tr>
+<tr><th>State</th><td>Required per flow</td><td>Can be fully stateless</td></tr>
+<tr><th>MTU</th><td>Unchanged</td><td>Outer header eats <code>20–24</code> bytes; mind PMTUD</td></tr>
+<tr><th>Observability</th><td>LB sees responses and timings</td><td>LB sees no responses; build it elsewhere</td></tr>
+<tr><th>Fits</th><td>Small scale, or when you need L7</td><td><strong>Large-scale L4 frontends</strong> (Maglev and Katran both)</td></tr>
+</tbody></table></div>
+<p>In one line: <strong>the three layers do not replace each other, they stack</strong> — each step down is finer-grained and faster to react, but sees less. If you may keep only one, keep the VIP layer: it is the only one that actually knows whether a backend is alive.</p>
+<h2>Why it matters / in real systems</h2>
+<p>The value of this chapter is that it <strong>splits the single phrase "load balancing" into three separate questions</strong>: which region the user is sent to (DNS), which site the packets enter (routing), which machine the connection is pinned to (the VIP layer). Different components answer each one, and conflating them is how people end up concluding that lowering a TTL is load balancing. The three questions most often pressed in interviews are exactly these three mechanisms: why DNS cannot balance load, why consistent hashing beats modulo, and why DSR changes the balancer's capacity unit from bandwidth to packet rate.</p>
+<div class="ev">
+<div class="evh">EVIDENCE FROM INDUSTRY · IN THE COMPANIES' OWN WORDS</div>
+<ul>
+<li><strong>Google Cloud</strong> puts global load balancing behind "a <strong>single Anycast Virtual IPv4 or IPv6 address</strong>," so you "can deploy capacity in multiple regions without having to modify the DNS entries or add new load balancer front-end IP address (VIPs)." It names the DNS approach's failings outright: "clients caching IP addresses or regional siloed resources resulting in sub-optimal load balancing and utilization of backends instances." The same post notes Maglev has been "<strong>in production since 2008</strong>," distributes by 5-tuple hash, and uses consistent hashing to "minimize the negative impact of unexpected faults on connection-oriented protocols" — <strong>all three mechanisms of this chapter shipping in one product</strong>.<span class="src"><a href="https://cloud.google.com/blog/products/networking/google-cloud-networking-in-depth-cloud-load-balancing-deconstructed" rel="noopener" target="_blank">Google Cloud Blog, "Cloud Load Balancing deconstructed" ↗</a></span></li>
+<li><strong>Meta</strong>'s open-source L4 balancer <strong>Katran</strong> states in its README that it "<strong>works only in DSR (direct service response) mode</strong>," uses "ipip encapsulation for packet forwarding from L4 lb to L7 lb," and applies "<strong>Modified Maglev hashing for connections</strong>," which "provides good resiliency in case of failure and excellent load balancing features" — <strong>a second hyperscaler independently landing on the same pair: consistent hashing plus DSR</strong>.<span class="src"><a href="https://github.com/facebookincubator/katran" rel="noopener" target="_blank">facebookincubator/katran README ↗</a></span></li>
+<li><strong>Seesaw v2</strong>, open-sourced by Google engineers (its README notes "this is not an official Google product"), turns this layer into a feature list: "full support for anycast VIPs," announced over BGP while available and withdrawn while not, plus DSR — <strong>confirming that "withdraw the announcement to drain the site" is what this layer is prized for</strong>.<span class="src"><a href="https://github.com/google/seesaw" rel="noopener" target="_blank">google/seesaw README ↗</a></span></li>
+</ul>
+</div>
+<h2>Traps and disputes</h2>
+<ul>
+<li><strong>Using DNS as a load balancer.</strong> A low TTL does not buy you control, because the caches are not yours; if you really need to drain, withdrawing a BGP announcement or changing the backend set is the reliable knob.</li>
+<li><strong>Assuming anycast is automatically nearby.</strong> BGP's "near" is near in hops and policy; being dragged to another continent is not rare, so anycast sites need correcting against measured latency too.</li>
+<li><strong>Assuming consistent hashing balances load as a bonus.</strong> It solves consistency, not evenness; without virtual nodes or a lookup table, backend skew in the low tens of percent is normal.</li>
+<li><strong>Forgetting MTU.</strong> The classic failure of every encapsulation scheme is "handshake fine, large transfers hang" — verify that path MTU discovery works before you ship.</li>
+<li><strong>Dated in places.</strong> The chapter is from 2016 and covers the L4 slice. Since then the mainstream has pushed more intelligence up into L7 global proxies, and eBPF / XDP have moved this forwarding plane off appliances and into ordinary server kernels (Katran, Cilium). <strong>But the layering conclusion — DNS coarse, routing middle, VIP fine — has not been overturned.</strong></li>
+<li><strong>One honest objection.</strong> For any service that is not global in scale, all of this is over-engineering: a pair of off-the-shelf L4 balancers plus one geographic DNS record carries you a very long way, and what arrives first when you adopt anycast and a homegrown forwarding plane is complexity.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. Frontend load balancing is not a box, it is a <strong>three-leg relay</strong>: DNS picks the region, anycast + BGP picks the site, the VIP layer picks the machine. The opening argument is that <strong>power isn't the answer</strong> — capacity isn't in one place, distance converts into latency (a cross-ocean round trip of <code>70–160</code> ms), and requests aren't equal.</p>
+<p>2. DNS's three hard walls: you see the <strong>recursive resolver</strong>, not the user (patched by EDNS0 client subnet, at the cost of cache fragmentation and privacy); caching and TTL are out of your control; and so is how the client picks. It is <strong>distribution</strong>, not balancing.</p>
+<p>3. Anycast's gift is draining by withdrawing an announcement (seconds to minutes); its cost is that BGP's "near" isn't low latency, and a mid-flow reroute breaks connections.</p>
+<p>4. The VIP layer's one difficulty: <strong>every packet of a connection must land on the same backend</strong>. A connection table is state (GB-scale at millions of flows, and mismatched after a restart or an ECMP re-spray); consistent hashing is stateless and recomputable.</p>
+<p>5. The numbers: going from <code>10</code> to <code>11</code> backends, modulo hashing breaks <strong>~91%</strong> of connections while consistent hashing moves <strong>~9%</strong> — but the latter only guarantees agreement, so evenness still needs virtual nodes. Maglev = consistent hashing as foundation, connection table as optimisation.</p>
+<p>6. Two ways to deliver: NAT makes the balancer carry both directions (egress often 10x ingress); <strong>encapsulation + DSR</strong> lets the backend answer the client and the balancer carry ingress only — paid for in MTU, ARP configuration and blindness to responses.</p>
+<p>7. In the field: Google Cloud's global LB is a single anycast VIP + Maglev + consistent hashing, and Meta's Katran independently chose the same combination.</p>
+</div>
+</div>
+<footer>Books Deep Read · Finish this page and you have the chapter's core; for the full cases and extensions, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
