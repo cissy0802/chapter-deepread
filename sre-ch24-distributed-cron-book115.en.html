@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>SRE Ch 24 · Distributed Periodic Scheduling with Cron — Books Deep-Read 115</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOKS DEEP-READ · SRE · CH 24</p>
+<h1>Distributed Periodic Scheduling: Turning Cron Into a Service That Won't Double-Run</h1>
+<p class="sub">Site Reliability Engineering · Ch 24 · Google (Štěpán Davidovič) · 2016</p>
+<p class="langbar"><a href="sre-ch24-distributed-cron-book115.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>Think of the standing order on your bank account that pays the rent on the 8th of every month. Paying twice is a mess; not paying at all is also a mess. On servers, the little butler that does "run this thing every day at such-and-such time" is called <strong>cron</strong>. SRE Chapter 24 is about what happens to that butler when the job no longer belongs to one machine, but to a whole datacenter.</p>
+
+<h2>A strange thing first</h2>
+<p>On a single machine, cron is the most boring tool in the box — nobody has worried about it for decades. But once you have a hundred machines, the utterly ordinary sentence <strong>"run this once a day at 2am" stops being guaranteed</strong>. Either it never ran that day and nobody noticed, or it ran twice and paid everyone twice.</p>
+
+<h2>Why the old world is hard</h2>
+<p>There are only two naive options, and both fail. <strong>Give the alarm clock to one designated machine</strong>: the day that machine dies, the alarm and the whole list of alarms die with it — and they die <em>silently</em>, because an alarm that never rang doesn't page anyone. You may not find out until Monday. <strong>Put the same alarm on every machine</strong>: at the appointed second, a hundred machines all start working, and the same job gets done a hundred times.</p>
+
+<h2>The fix: elect someone on duty, then keep one shared ledger</h2>
+<p>First, the machines <strong>elect one of themselves to be on duty</strong> — nobody may self-appoint; it takes a majority to agree. Only the one on duty starts jobs. The others don't start anything, but they must <strong>write the same ledger</strong>, so any of them can take over at a moment's notice.</p>
+<p>How the ledger is kept is the whole trick. For every job, the one on duty writes <strong>two lines</strong>: before starting, "I am about to do this"; after starting, "I started it, its name is X." Why bother with the first line? Because the one on duty <strong>can collapse at exactly the moment of starting</strong>. The stand-in opens the ledger, sees the first line but not the second, and knows this job <strong>may or may not have happened</strong> — it is stuck in a window nobody can read. So the stand-in goes and asks the workshop, "is there a job called X running in there?" If the answer comes back, fine. If it doesn't, all that's left is the rule you agreed on in advance.</p>
+
+<h2>The cut you have to make: rather skip than repeat</h2>
+<p>Google's rule is: <strong>rather miss a run than run it twice</strong>. The reasoning is practical — a missed run is visible (a gap in the data, an alert) and you can just run it again; a duplicate run (two emails, two charges) often cannot be taken back.</p>
+<p>The price is stated plainly too: it means <strong>your job really will occasionally not run</strong>, so you must add an alert for "this didn't happen" — otherwise you have only traded noise for silence.</p>
+
+<h2>One more thing: stop crowding the top of the hour</h2>
+<p>Almost everyone writes "midnight" in their schedule. So at the stroke of the hour thousands of jobs ask the datacenter for machines at once, a flash flood — and the other 59 minutes sit idle. Which is why this cron lets you say "pick any moment inside this window for me," flattening the peak.</p>
+
+<h2>Remember one thing</h2>
+<div class="tl">
+<p>The moment a scheduled job leaves a single machine it stops being a small tool and becomes a service that <strong>has to elect a leader and keep a shared ledger</strong>. And it cannot have it both ways: <strong>you must choose in advance between missing and repeating</strong>, then put an alert on whichever one you didn't choose.</p>
+</div>
+<p class="switch-hint">Want the crash-window timeline, where the state lives, and what Kubernetes admits in public? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">On one machine cron is a tool nobody has thought about in decades; move it into a datacenter and it instantly becomes a <strong>stateful service that only distributed consensus can make correct</strong>. And the hardest line in the chapter is this: <strong>it cannot have exactly-once</strong> — you pick a side between "may skip" and "may repeat," then cover the other side with idempotency and alerting.</p>
+
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>cron / crontab</strong>: the Unix daemon that runs commands on a schedule; <code>crontab</code> is the schedule itself, and <code>0 2 * * *</code> means "every day at 02:00."</li>
+<li><strong>Datacenter scheduler</strong>: the system that decides which machine a job actually runs on — Borg at Google, Kubernetes in the open-source world.</li>
+<li><strong>Leader election</strong>: picking exactly one process out of a set of replicas that is allowed to act.</li>
+<li><strong>Paxos</strong>: a family of consensus algorithms that gets replicas to agree, irrevocably, on what the next log entry is.</li>
+<li><strong>Idempotent</strong>: doing the operation once and doing it ten times leave the same result — a re-run doesn't charge the card again.</li>
+<li><strong>Thundering herd</strong>: a mass of requests hitting the same resource in the same instant, producing a spike.</li>
+<li><strong>At-most-once / at-least-once / exactly-once</strong>: three delivery semantics — may skip, may repeat, neither. Across a system boundary the third is unavailable.</li>
+<li><strong>fsync</strong>: the syscall that really pushes data onto disk so a power cut can't lose it; typically a few milliseconds.</li>
+<li><strong>Fencing</strong>: attaching a monotonically increasing number to each grant so downstream rejects stale writers — the defence against "my lock expired but I'm still writing."</li>
+<li><strong>DST</strong>: daylight saving time. On the switch day, local 02:30 may not exist at all, or may happen twice.</li>
+</ul>
+</div>
+
+<h2>Where it sits</h2>
+<p>Written by Štěpán Davidovič, this chapter belongs to the run of Part III ("Practices") chapters about <strong>reliability of stateful systems</strong>. <strong>It follows Ch23, Managing Critical State</strong> — that chapter is about consensus itself, and this one is its <strong>smallest, most concrete application</strong>: the state the whole system must hold under consensus amounts to little more than "when did each job last launch." <strong>It leads into Ch25, Data Processing Pipelines</strong> — the periodic jobs cron fires. Real-world counterparts: Kubernetes CronJob, scheduled triggers in Airflow and Argo, managed cloud schedulers, and every "runs nightly" reconciliation, cleanup and reporting job you own.</p>
+
+<h2>What problem this chapter is solving</h2>
+<p>Single-machine cron has a one-line reliability model: <strong>it equals the reliability of that machine</strong>. It quietly assumes two things — <em>the process stays alive</em> and <em>local state doesn't vanish</em>. Neither holds in a datacenter: machines get preempted, reimaged, or lose a whole rack of power. And the <code>crontab</code> lives on that machine too, so when it goes, even the list of what should have run goes with it.</p>
+<p>The lethal part isn't the probability, though — it's the <strong>failure mode</strong>. A request that turns into a 500 shows up on a dashboard. <strong>A scheduled job that did not happen emits nothing at all</strong>: no error, no log line, no metric. The classic discovery path is somebody asking on Monday morning, "where's Friday's report?"</p>
+<p>So at scale two things become mandatory: <strong>(1) decouple "start on time" from any one machine</strong>, and <strong>(2) record "did it run" somewhere that cannot die</strong>. And the moment several machines could each execute while the state must be visible across all of them, you have walked straight into the chapter's real problem: <strong>double launches</strong> and <strong>missed launches</strong> — one of the two will happen to you.</p>
+
+<h2>The core, properly explained</h2>
+
+<h3>Who starts it: consensus elects exactly one launcher</h3>
+<p>The design makes cron a replicated service: replicas elect a leader via Paxos, and <strong>only the leader actually launches</strong>. Followers launch nothing, but they must track the same state, because any of them may have to take over.</p>
+<p>The tempting shortcut — "run it everywhere and dedupe with a distributed lock" — is not enough here: <strong>holding the lock doesn't mean downstream honours it</strong>. A holder can stall for tens of seconds between acquiring the lock and launching (a long GC, a congested network); the lock expires, somebody else takes it, and the stalled process wakes up and launches anyway. Two "unique launchers" now coexist. To make a lock actually safe you need <em>fencing</em>: each grant carries an increasing number and the downstream — here, the datacenter scheduler — rejects stale ones. Which is exactly Ch23's punchline: <strong>you thought you were using a lock; you were implementing consensus.</strong></p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/consensus-coordination-day46.en.html" target="_blank" rel="noopener">System Design · Day 46 Consensus &amp; Coordination</a> — leader election, leases and fencing tokens in full, plus how etcd and ZooKeeper are actually used for this</aside>
+
+<figure>
+<svg viewBox="0 0 640 236" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="c1" markerWidth="8" markerHeight="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line x1="272" x2="272" y1="12" y2="224" stroke="rgba(120,120,130,0.3)" stroke-dasharray="4 4"></line>
+<text x="16" y="24" fill="#e06b6b" font-size="12.5" font-weight="700">1 · Single-machine cron</text>
+<rect x="18" y="40" width="228" height="74" rx="8" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="132" y="64" fill="#b9c0ca" font-size="11.5" text-anchor="middle">one machine</text>
+<text x="132" y="84" fill="#8fbaff" font-size="10.5" text-anchor="middle">crond process + local crontab</text>
+<text x="132" y="102" fill="#7c8593" font-size="10" text-anchor="middle">state hidden in a local directory</text>
+<text x="132" y="140" fill="#e06b6b" font-size="11" text-anchor="middle">machine dies</text>
+<text x="132" y="158" fill="#e06b6b" font-size="11" text-anchor="middle">→ alarms and the list die with it</text>
+<text x="132" y="182" fill="#7c8593" font-size="10" text-anchor="middle">silently: an alarm that never rang never pages</text>
+<text x="296" y="24" fill="#5b9df9" font-size="12.5" font-weight="700">2 · Distributed cron</text>
+<rect x="292" y="36" width="136" height="122" rx="8" fill="none" stroke="rgba(91,157,249,0.3)" stroke-dasharray="4 3"></rect>
+<rect x="300" y="46" width="120" height="32" rx="6" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="1.6"></rect>
+<text x="360" y="66" fill="#8fbaff" font-size="10.5" text-anchor="middle">replica A (leader)</text>
+<rect x="300" y="84" width="120" height="28" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
+<text x="360" y="102" fill="#b9c0ca" font-size="10.5" text-anchor="middle">replica B (tracks)</text>
+<rect x="300" y="118" width="120" height="28" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
+<text x="360" y="136" fill="#b9c0ca" font-size="10.5" text-anchor="middle">replica C (tracks)</text>
+<text x="360" y="176" fill="#7c8593" font-size="10" text-anchor="middle">majority election + one shared log</text>
+<line x1="430" x2="484" y1="62" y2="62" stroke="#7c8593" marker-end="url(#c1)"></line>
+<text x="457" y="52" fill="#9b6cf5" font-size="9.5" text-anchor="middle">leader only</text>
+<rect x="488" y="44" width="136" height="38" rx="6" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5"></rect>
+<text x="556" y="68" fill="#c4a8ff" font-size="10.5" text-anchor="middle">datacenter scheduler</text>
+<line x1="556" x2="556" y1="84" y2="112" stroke="#7c8593" marker-end="url(#c1)"></line>
+<rect x="488" y="116" width="136" height="36" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
+<text x="556" y="139" fill="#b9c0ca" font-size="10.5" text-anchor="middle">instance job-X@T</text>
+<text x="556" y="176" fill="#7c8593" font-size="10" text-anchor="middle">how long it runs is its problem</text>
+</svg>
+<figcaption>Fig 1: single-machine cron is exactly as reliable as one machine; distributed cron gives "who starts it" to consensus and "how it runs" to the datacenter scheduler.</figcaption>
+</figure>
+
+<h3>What to record: two synchronization points and the window in between</h3>
+<p>This is the technical heart of the chapter. At each scheduled point the leader performs not one action but three: <strong>(1) write "about to launch X for schedule time T" into the consensus log; (2) call the datacenter scheduler; (3) once it returns, write "launched" back into the log.</strong></p>
+<p>Why the first write? Because the leader can vanish at any instant. Three cases: a crash <em>before</em> (1) — the new leader sees nothing, so it <strong>knows nothing launched</strong> and can launch; a crash <em>after</em> (3) — it <strong>knows it launched</strong> and skips; a crash <em>between</em> (1) and (3) — <strong>unknown</strong>: the request may never have left, or the scheduler may have accepted it and only the acknowledgement was lost. That window is usually tens to hundreds of milliseconds wide, and it never goes away.</p>
+<p>The way out is to make "just go and ask" possible: <strong>derive each launch's instance name deterministically from (job name, schedule time)</strong> — say <code>job-X@2026-09-25T02:00</code>. The incoming leader takes that name to the scheduler and asks whether such an instance exists. Found: record it as launched. Definitively absent: launch it. Only when the scheduler <em>itself</em> can't answer (restarting, request timing out) do you fall through to the default policy.</p>
+<p>What to take away: <strong>cron and the scheduler are two systems, and there is no atomic commit across two systems.</strong> Every exactly-once fantasy dies in that seam. The chapter's virtue is that it refuses to pretend the seam can be closed and instead <strong>picks a side out loud</strong>: Google's cron prefers <strong>to skip rather than to double-run</strong>, because a skip is observable and repairable while a duplicated external side effect usually isn't.</p>
+
+<figure>
+<svg viewBox="0 0 640 212" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="c2" markerWidth="8" markerHeight="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect x="150" y="86" width="336" height="46" fill="rgba(224,107,107,0.13)" stroke="rgba(224,107,107,0.4)" stroke-dasharray="4 3" rx="4"></rect>
+<text x="318" y="78" fill="#e06b6b" font-size="11" font-weight="700" text-anchor="middle">unknown window — a crash here is unreadable</text>
+<line x1="34" x2="606" y1="132" y2="132" stroke="#7c8593" marker-end="url(#c2)"></line>
+<circle cx="72" cy="132" r="4.5" fill="#5b9df9"></circle>
+<text x="72" y="152" fill="#b9c0ca" font-size="10.5" text-anchor="middle">due at T</text>
+<circle cx="182" cy="132" r="4.5" fill="#9b6cf5"></circle>
+<text x="182" y="112" fill="#c4a8ff" font-size="10.5" text-anchor="middle">1 · write "about to"</text>
+<text x="182" y="152" fill="#7c8593" font-size="10" text-anchor="middle">consensus log</text>
+<circle cx="334" cy="132" r="4.5" fill="#9b6cf5"></circle>
+<text x="334" y="112" fill="#c4a8ff" font-size="10.5" text-anchor="middle">2 · call scheduler</text>
+<text x="334" y="152" fill="#7c8593" font-size="10" text-anchor="middle">cross-system call</text>
+<circle cx="470" cy="132" r="4.5" fill="#9b6cf5"></circle>
+<text x="470" y="112" fill="#c4a8ff" font-size="10.5" text-anchor="middle">3 · write "launched"</text>
+<text x="470" y="152" fill="#7c8593" font-size="10" text-anchor="middle">consensus log</text>
+<text x="34" y="30" fill="#5cc98a" font-size="10.5">crash here: known not launched</text>
+<text x="34" y="46" fill="#7c8593" font-size="10">→ successor launches it</text>
+<text x="486" y="30" fill="#5cc98a" font-size="10.5">crash here: known launched</text>
+<text x="486" y="46" fill="#7c8593" font-size="10">→ successor skips</text>
+<line x1="122" x2="122" y1="52" y2="124" stroke="rgba(92,201,138,0.5)" stroke-dasharray="3 3"></line>
+<line x1="546" x2="546" y1="52" y2="124" stroke="rgba(92,201,138,0.5)" stroke-dasharray="3 3"></line>
+<text x="318" y="182" fill="#b9c0ca" font-size="10.5" text-anchor="middle">resolution: ask the scheduler for job-X@T by name; if it can't answer, fall back to "rather skip"</text>
+</svg>
+<figcaption>Fig 2: two synchronization points split every crash into three regions — only the middle one is ambiguous, and resolving it needs a deterministically derivable instance name.</figcaption>
+</figure>
+
+<h3>Where the state lives: your own consensus log, or someone else's store</h3>
+<p>The state that must survive is <strong>astonishingly small</strong>: per job, the schedule time of the last launch, plus any pending launch intent. That makes "carry your own consensus log" a very good deal — the whole state fits in memory with periodic snapshots, and one launch costs <strong>one round trip plus one fsync</strong> (sub-millisecond within a datacenter, a few milliseconds for the fsync — single-digit milliseconds in total), which is nothing against a schedule measured in minutes.</p>
+<p>Hanging the state on etcd, ZooKeeper or a database works too and saves you writing replication, but it pins cron's availability to another system — and worse, when that system is down you cannot even answer "did this run?"</p>
+
+<h3>The boundary: cron launches, it does not babysit</h3>
+<p>The chapter draws a firm line: distributed cron's job <strong>ends when the task has been handed to the datacenter scheduler</strong>. How long it runs and whether it produced the right answer belong to the scheduler and the task. That isn't laziness, it's scope control — <strong>the moment cron starts tracking long-running lifecycles and expressing "run B after A succeeds," it has become a workflow engine</strong>, which is a harder problem wearing the same clothes.</p>
+<p>The practical rule that falls out: <strong>keep whatever cron fires as short as possible</strong>, ideally just the launch; give genuine multi-step flows to a workflow engine.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/workflow-engine-day39.en.html" target="_blank" rel="noopener">System Design · Day 39 Workflow Engines</a> — durable execution, replay and compensation for long flows: exactly the layer cron is right to refuse</aside>
+
+<h3>Time itself is an adversary: herds and time zones</h3>
+<p>Humans have a powerful bias toward round numbers. Suppose a cluster carries 2,000 periodic jobs and 40% of them say <code>0 0 * * *</code>: that is <strong>800 jobs asking for resources in the same second</strong>, the scheduler queues, startup latency spikes — and the next 59 minutes are idle. So this cron extends the crontab syntax to let you say "<strong>pick any value in this range for me</strong>," spreading launches across the window. The overwhelming majority of daily jobs genuinely do not care whether they start at 00:00 or 00:37.</p>
+<p>Time zones are the second trap: on a DST switch day, local time loses or repeats an hour, so "every day at 02:30" either doesn't exist or fires twice. The standard engineering answer is to <strong>keep all internal bookkeeping in UTC</strong> and convert only for display.</p>
+
+<figure>
+<svg viewBox="0 0 640 178" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<text x="20" y="22" fill="#e06b6b" font-size="11.5" font-weight="700">everyone writes 0 0 * * *</text>
+<line x1="20" x2="290" y1="128" y2="128" stroke="#7c8593"></line>
+<rect x="26" y="40" width="18" height="88" fill="rgba(224,107,107,0.55)"></rect>
+<text x="35" y="34" fill="#e06b6b" font-size="10" text-anchor="middle">800</text>
+<text x="20" y="146" fill="#7c8593" font-size="9.5">00:00</text>
+<text x="252" y="146" fill="#7c8593" font-size="9.5">01:00</text>
+<text x="155" y="166" fill="#7c8593" font-size="10" text-anchor="middle">one second of flood, 59 idle minutes</text>
+<text x="350" y="22" fill="#5b9df9" font-size="11.5" font-weight="700">"pick any time in this window"</text>
+<line x1="350" x2="620" y1="128" y2="128" stroke="#7c8593"></line>
+<rect x="356" y="110" width="18" height="18" fill="rgba(91,157,249,0.55)"></rect>
+<rect x="386" y="106" width="18" height="22" fill="rgba(91,157,249,0.55)"></rect>
+<rect x="416" y="112" width="18" height="16" fill="rgba(91,157,249,0.55)"></rect>
+<rect x="446" y="104" width="18" height="24" fill="rgba(91,157,249,0.55)"></rect>
+<rect x="476" y="110" width="18" height="18" fill="rgba(91,157,249,0.55)"></rect>
+<rect x="506" y="107" width="18" height="21" fill="rgba(91,157,249,0.55)"></rect>
+<rect x="536" y="113" width="18" height="15" fill="rgba(91,157,249,0.55)"></rect>
+<rect x="566" y="108" width="18" height="20" fill="rgba(91,157,249,0.55)"></rect>
+<text x="350" y="146" fill="#7c8593" font-size="9.5">00:00</text>
+<text x="582" y="146" fill="#7c8593" font-size="9.5">01:00</text>
+<text x="485" y="166" fill="#7c8593" font-size="10" text-anchor="middle">peak down roughly 8x, no scheduler queue</text>
+</svg>
+<figcaption>Fig 3: the top-of-the-hour herd versus letting the system place launches inside a window — same workload, an order of magnitude lower peak.</figcaption>
+</figure>
+
+<h2>Trade-offs and how to choose</h2>
+<p class="tcap">Table 1 · Skip or repeat: pick a side by the nature of the job, and say which side you picked</p>
+<div class="tblwrap">
+<table class="cmp"><thead><tr><th>Job type</th><th>Lean toward</th><th>Why</th><th>How to cover the other side</th></tr></thead><tbody>
+<tr><th>Push / email / charge / issue credit</th><td><strong>Rather skip</strong></td><td>External, irreversible side effect; one duplicate is a real loss</td><td>Idempotency keys all the way to the payment gateway and mail provider; alert on "this run did not start"</td></tr>
+<tr><th>Daily / monthly close, regulatory reports</th><td><strong>Rather repeat</strong></td><td>A miss is a compliance incident; a recompute only costs machines</td><td>Write results keyed by (job, period) as an overwrite — re-runs are naturally idempotent</td></tr>
+<tr><th>Cache warming, index rebuilds, cleanup</th><td>Either</td><td>Naturally idempotent; a repeat just burns CPU</td><td>Set concurrency policy to "skip this run if the last one is still going"</td></tr>
+<tr><th>A stage of a data pipeline</th><td><strong>Rather repeat</strong></td><td>Downstream overwrites by time partition, so re-runs converge</td><td>Put the schedule timestamp in the output path; never append</td></tr>
+</tbody></table>
+</div>
+<p class="tcap">Table 2 · Where "did it run" is stored</p>
+<div class="tblwrap">
+<table class="cmp"><thead><tr><th>Option</th><th>Cost per launch</th><th>Failure surface</th><th>Fits</th></tr></thead><tbody>
+<tr><th>Own consensus log</th><td>1 RTT + 1 fsync, single-digit ms</td><td>Self-contained, no external dependency</td><td>The chapter's choice: the state is tiny, so owning it is cheap</td></tr>
+<tr><th>External strongly consistent store</th><td>One remote write plus that store's latency</td><td>One more hard dependency; when it's down you can't answer "did it run"</td><td>Teams already running etcd or ZooKeeper</td></tr>
+<tr><th>A lock and no recorded state</th><td>Cheapest</td><td><strong>A successor cannot answer "did the last one run?"</strong></td><td>Don't</td></tr>
+</tbody></table>
+</div>
+<p class="tcap">Table 3 · Which tier you actually need</p>
+<div class="tblwrap">
+<table class="cmp"><thead><tr><th>Situation</th><th>Choice</th><th>Cost / precondition</th></tr></thead><tbody>
+<tr><th>One machine, misses tolerable</th><td>System cron</td><td>Machine dies, everything stops; <strong>you must add a "didn't run" alert</strong></td></tr>
+<tr><th>Already on Kubernetes</th><td>CronJob</td><td>It only promises "approximately once"; set <code>concurrencyPolicy</code> and <code>startingDeadlineSeconds</code> explicitly</td></tr>
+<tr><th>Multi-step, dependencies, retries</th><td>Workflow engine (Airflow / Argo / Temporal)</td><td>Another system to operate, in exchange for replayable, observable intermediate state</td></tr>
+<tr><th>Cross-datacenter, tens of thousands of jobs</th><td>Build distributed cron</td><td>Consensus, resolution logic and herd-flattening are all yours to carry</td></tr>
+</tbody></table>
+</div>
+
+<h2>Why it matters / in real systems</h2>
+<p>The value of this chapter isn't that it teaches you to build a cron. It's that it <strong>reopens a problem everyone assumed was solved</strong> and hands you an answer you can copy honestly: admit exactly-once is unavailable, and state which side you chose. Every mainstream scheduler today is saying the same thing in its own words.</p>
+<div class="ev">
+<p class="evh">EVIDENCE FROM THE FIELD</p>
+<ul>
+<li><strong>The Kubernetes documentation</strong> concedes the seam directly: "A CronJob creates a Job object approximately once per execution time of its schedule," because "The scheduling is approximate because there are certain circumstances where two Jobs might be created, or no Job might be created." Word for word, this chapter's diagnosis.<span class="src">Kubernetes docs, CronJob · <a href="https://github.com/kubernetes/website/blob/main/content/en/docs/concepts/workloads/controllers/cron-jobs.md" target="_blank" rel="noopener">source in kubernetes/website</a></span></li>
+<li><strong>The Kubernetes controller source</strong> turns the abstraction into plain English around its missed-run cap: "if controller gets wedged on friday at 5:01pm when everyone has gone home, and someone comes in on tuesday AM ... more than 80 of them for one hourly cronJob, should all start running," before the author admits "I've somewhat arbitrarily picked 100." Past that it emits <code>too many missed start times ... or check clock skew</code>. <strong>Missed runs aren't a theoretical risk; they're a constant you have to hard-code.</strong><span class="src">kubernetes/kubernetes · <a href="https://github.com/kubernetes/kubernetes/blob/master/pkg/controller/cronjob/utils.go" target="_blank" rel="noopener">pkg/controller/cronjob/utils.go</a></span></li>
+<li><strong>Apache Airflow</strong> writes the constraint straight into its user guidance: "Airflow can retry a task if it fails. Thus, the tasks should produce the same outcome on every re-run." It picked the other side — rather repeat — and therefore <strong>hands idempotency explicitly to the task author</strong>.<span class="src">Airflow Best Practices · <a href="https://github.com/apache/airflow/blob/main/airflow-core/docs/best-practices.rst" target="_blank" rel="noopener">source in apache/airflow</a></span></li>
+</ul>
+</div>
+<p><strong>In an interview</strong>: asked to "design a distributed scheduled-job system," the scoring rubric is essentially this chapter's table of contents — who launches (election), where "did it run" lives (state under consensus), how the crash window is resolved (two synchronization points plus a derivable instance name), which semantics you chose and declared (skip vs repeat), how the herd is flattened, and where the boundary is (no babysitting long jobs). Saying "exactly-once isn't available here" unprompted already wins half the room.</p>
+
+<h2>Traps and open questions</h2>
+<ul>
+<li><strong>Believing cron is stateless.</strong> Single-machine cron merely hides its state in a local directory and a process assumed never to restart. Go multi-replica and that state has to be modelled explicitly — which is what this whole chapter is.</li>
+<li><strong>Believing idempotency is free.</strong> The idempotency key must reach <strong>the layer that actually produces the side effect</strong> — the payment gateway, the SMS provider. Deduping only in the scheduler is guarding your own front door while the effect happens in someone else's house.</li>
+<li><strong>Trusting a lock as a guarantee.</strong> Between acquiring and executing you can stall on GC or the network while the lock expires. Without fencing, a lock only means "probably no collision."</li>
+<li><strong>Using cron as a workflow engine.</strong> The instant you want "run B only if A succeeded" or "retry three times with backoff," cron is the wrong tool.</li>
+<li><strong>Monitoring failures but not absences.</strong> This is cron's signature incident: nothing happened. Critical jobs need an alert on "no launch observed within the window" — and that alert matters more than the job's own failure alert.</li>
+<li><strong>Dated in one respect.</strong> The 2016 design assumes <em>the scheduler can be queried</em> — the crash window is resolved by asking. The mainstream answer has since shifted toward <strong>durable execution</strong> (Temporal, Cadence and friends): stop chasing exactly-once launches, make the whole flow's state replayable, and push idempotency down into every step. That doesn't refute the chapter; it <strong>lifts its conclusion one level up</strong> — the seam is still there, just moved somewhere easier to cover.</li>
+</ul>
+<aside class="xref"><a href="https://hub.cissychen.com/super-individual/durable-agents-day58.en.html" target="_blank" rel="noopener">Super Individual · Day 58 Durable Agent Execution</a> — how durable execution makes "resume after a crash" the default, and how it relates to at-least-once semantics</aside>
+
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. <strong>Once cron leaves a single machine it is a stateful service that needs consensus.</strong> Single-machine cron is as reliable as that machine, and its failures are silent.</p>
+<p>2. Core structure: <strong>replicas plus Paxos leader election; only the leader launches.</strong> Followers launch nothing but must track state to be able to take over.</p>
+<p>3. Core mechanism: <strong>two synchronization points</strong> — write "about to launch" before, "launched" after. A crash between them is the <strong>unknown window</strong>.</p>
+<p>4. Resolve it with a <strong>deterministically derivable instance name</strong> (job + schedule time): the successor asks the datacenter scheduler by name, and only falls back to policy when it gets no answer.</p>
+<p>5. <strong>No atomic commit across systems, therefore no exactly-once.</strong> Google's cron chooses <strong>skip over double-run</strong> — a trade-off, not a truth; reconciliation jobs should choose the opposite.</p>
+<p>6. The durable state is tiny (one "last launch time" per job), so <strong>owning a consensus log is the cheap option</strong>: roughly 1 RTT + 1 fsync, single-digit milliseconds per launch.</p>
+<p>7. <strong>Hold the boundary</strong>: cron launches and does not track long jobs. Dependencies and retries mean you want a workflow engine.</p>
+<p>8. <strong>Treat the herd</strong>: let the system place launches inside a window instead of stacking everything on <code>0 0 * * *</code>; keep internal time in UTC.</p>
+<p>9. <strong>Alert on absence.</strong> If you chose "rather skip," you owe the system a way to turn that silence back into a signal — which is all Kubernetes' "approximately once" really says.</p>
+</div>
+</div>
+<footer>Books Deep-Read · reading this page ≈ the core of this chapter; for full case studies and depth, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>SRE 第 24 章 · 分布式周期任务调度 — 专业书籍精读 Book 115</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · SRE · 第 24 章</p>
+<h1>分布式周期任务调度：把 cron 做成一个不会重跑的服务</h1>
+<p class="sub">Site Reliability Engineering · Ch 24 · Google（Štěpán Davidovič）· 2016</p>
+<p class="langbar"><a href="sre-ch24-distributed-cron-book115.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你银行卡上那笔「每月 8 号自动扣房租」——扣两次很麻烦，一次没扣也麻烦。服务器上负责「每天几点几分自动干一件事」的那个小管家，叫 <strong>cron（定时任务）</strong>。SRE 第 24 章讲的就是：当这件事不再交给一台机器、而是交给一整个机房时，这个小管家要怎么重做。</p>
+
+<h2>先说个怪事</h2>
+<p>在一台机器上，cron 是最不起眼的老工具，几十年没人操心过它。可一旦机器变成一百台，<strong>「每天凌晨两点跑一次」这句再普通不过的话，突然就保证不了了</strong>——要么那天根本没跑、而且没人发现；要么同时跑了两遍，把工资发了两次。</p>
+
+<h2>旧世界为什么难</h2>
+<p>老办法只有两种，都不行。<strong>把闹钟交给一台指定的机器</strong>：这台机器哪天坏了，闹钟和闹钟清单一起消失——而且是<strong>静悄悄地消失</strong>，因为没响的闹钟不会报警，等你发现时可能已经过去一个周末。<strong>给每台机器都装同一个闹钟</strong>：一到点，一百台机器一起开工，同一件事被干了一百遍。</p>
+
+<h2>办法：选个值班的，再记一本共用的流水账</h2>
+<p>先让这群机器<strong>选一个值班的</strong>——谁也不能自封，得过半数点头。只有值班那台按点开工，其余的不开工，但必须<strong>跟着记同一本账</strong>，随时能接班。</p>
+<p>账怎么记才是关键。值班的每次开工要记<strong>两笔</strong>：开工前先写一句「我马上要干这件事了」，发起完再写一句「我发起了，编号 X」。为什么非要多写第一笔？因为值班的<strong>可能正好倒在开工那一瞬间</strong>。接班的翻开账本，看见只有前一笔、没有后一笔，就知道这件事<strong>可能干了、也可能没干</strong>——它卡在一个说不清的窗口里。这时接班的先去干活的车间问一声「有没有一个叫 X 的活儿在跑」；问得到就好办，问不到，就只能按事先定好的规矩办。</p>
+
+<h2>那一刀必须砍：宁可漏，不可重</h2>
+<p>Google 的规矩是：<strong>宁可漏跑一次，也不重跑</strong>。理由很实在——漏跑了你能看见，数据缺一块、报警响一声，补一次就行；重跑的后果（邮件发两遍、钱扣两回）常常收不回来。</p>
+<p>代价也得说清楚：这意味着<strong>你的任务真的会偶尔不跑</strong>，所以必须专门为「这次没发生」配一个报警，否则你只是把吵闹换成了沉默。</p>
+
+<h2>还有件小事：别都挤在整点</h2>
+<p>几乎所有人写定时任务都写「凌晨 0 点」。于是整点一到，成千个任务同时向机房要机器，挤成一波洪峰，剩下 59 分钟机器闲着。所以这套 cron 允许你说一句「这一小时里你随便挑个时间」，把洪峰摊平。</p>
+
+<h2>一句话记住</h2>
+<div class="tl">
+<p>定时任务一旦跨出一台机器，就不再是个小工具，而是一个<strong>要选主、要记账</strong>的服务；而它的正确性做不到两全——<strong>漏跑和重跑之间你必须先选一边</strong>，然后给没选的那一边配上报警。</p>
+</div>
+<p class="switch-hint">想看崩溃窗口的时序、状态存哪、以及 Kubernetes 的公开对照？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">cron 在单机上是个几十年没人操心的小工具；搬进数据中心，它立刻变成一个<strong>有状态、必须靠分布式共识才能做对的服务</strong>。而本章最硬的一句是：<strong>它天然拿不到「恰好一次」</strong>——你只能在「可能漏跑」与「可能重跑」之间先选一边，再用幂等与报警去兜住另一边。</p>
+
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>cron / crontab</strong>：Unix 上按时间表自动执行命令的后台程序；<code>crontab</code> 是那张时间表，<code>0 2 * * *</code> 意思是「每天 2:00 跑一次」。</li>
+<li><strong>数据中心调度器（datacenter scheduler）</strong>：决定「这个任务去哪台机器上跑」的系统，Google 的叫 Borg，开源世界对应 Kubernetes。</li>
+<li><strong>领导者选举（leader election）</strong>：一组副本里选出唯一一个有权行动的进程。</li>
+<li><strong>Paxos</strong>：一族分布式共识算法，让多个副本对「下一条日志是什么」达成一致且不反悔。</li>
+<li><strong>幂等（idempotent）</strong>：同一个操作做一遍和做十遍，结果一样——重跑不会多扣一次钱。</li>
+<li><strong>惊群（thundering herd）</strong>：大量请求在同一瞬间涌向同一个资源，形成尖峰。</li>
+<li><strong>至多一次 / 至少一次 / 恰好一次</strong>：三种投递语义——可能漏、可能重、都不会；跨系统边界时第三种拿不到。</li>
+<li><strong>fsync</strong>：把数据真正刷进磁盘（掉电不丢）的系统调用，一次通常几毫秒。</li>
+<li><strong>fencing（栅栏）</strong>：给每次授权配一个递增序号，让下游拒收序号过期的写，防止「锁早就过期了、持有者却还在写」。</li>
+<li><strong>DST</strong>：夏令时。切换那天，本地时间的 2:30 可能不存在，也可能出现两次。</li>
+</ul>
+</div>
+
+<h2>坐标</h2>
+<p>本章作者 Štěpán Davidovič，属《SRE》Part III「实践」中围绕<strong>有状态系统可靠性</strong>的那一串。<strong>上承 Ch23《管理关键状态》</strong>——那章讲共识本身，本章是它<strong>最小、最具体的一次落地</strong>：整个系统要靠共识维护的状态，少到只有「每个任务上一次什么时候启动过」；<strong>下启 Ch25《数据处理管线》</strong>——那章讲的正是被 cron 触发的那些周期作业。现实对应：Kubernetes CronJob、Airflow / Argo 的定时触发、云上的托管调度器，以及任何一句「每天凌晨跑一次」的对账、清理与报表任务。</p>
+
+<h2>这章要解决什么</h2>
+<p>单机 cron 的可靠性模型只有一句话：<strong>等于那一台机器的可靠性</strong>。它悄悄藏了两个假设——<em>进程一直活着</em>、<em>本地状态不会丢</em>。数据中心里这两条都不成立：机器会被抢占、会被重装、会整机架断电；而 <code>crontab</code> 本身也在那台机器上，机器没了，连「该跑什么」的清单都一起没了。</p>
+<p>但真正致命的不是概率，是<strong>失败模式</strong>：一次成功的请求变成 500，你在监控上能看见；<strong>一次没有发生的定时任务不产生任何信号</strong>。它不报错、不写日志、不进指标——它只是没发生。这类事故的典型发现路径是「周一早上有人问：上周五的报表呢？」</p>
+<p>于是规模一上来就必须做两件事：<strong>①把「按点开工」这件事和单台机器解绑</strong>；<strong>②把「跑没跑」记在一个死不了的地方</strong>。而只要多台机器都可能执行、状态又必须跨机器可见，你就一头撞进这章真正的问题：<strong>重复启动</strong>与<strong>漏掉启动</strong>，二者必居其一。</p>
+
+<h2>核心内容，讲透</h2>
+
+<h3>谁开工：用共识选出唯一的发起者</h3>
+<p>做法是把 cron 做成一个多副本服务：副本之间用 Paxos 选出 leader，<strong>只有 leader 会真的发起任务</strong>，其余副本不发起，但必须跟住同一份状态——因为它们随时要接班。</p>
+<p>一个常见的偷懒替代是「每台都跑，靠抢一把分布式锁去重」。这在本章的语境里是不够的：<strong>抢到锁不等于下游认这把锁</strong>。持有者可能在拿到锁之后、真正发起之前卡住几十秒（长 GC、网络拥塞），锁早已过期被别人拿走，而它醒来后照样发起——两个「唯一发起者」就这么并存了。要让锁真正管用，必须配 <em>fencing</em>：每次授权带一个递增序号，下游（这里是数据中心调度器）校验并拒收旧序号。这就是 Ch23 的老结论：<strong>你以为在用锁，其实在实现共识。</strong></p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/consensus-coordination-day46.html" target="_blank" rel="noopener">System Design · Day 46 分布式共识与协调</a> — 选主、租约与 fencing token 的完整机制，以及 etcd / ZooKeeper 在这类场景下的具体用法</aside>
+
+<figure>
+<svg viewBox="0 0 640 236" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="c1" markerWidth="8" markerHeight="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<line x1="266" x2="266" y1="12" y2="224" stroke="rgba(120,120,130,0.3)" stroke-dasharray="4 4"></line>
+<text x="16" y="24" fill="#e06b6b" font-size="12.5" font-weight="700">① 单机 cron</text>
+<rect x="18" y="40" width="216" height="74" rx="8" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="126" y="64" fill="#b9c0ca" font-size="11.5" text-anchor="middle">一台机器</text>
+<text x="126" y="84" fill="#8fbaff" font-size="10.5" text-anchor="middle">crond 进程 + 本地 crontab</text>
+<text x="126" y="102" fill="#7c8593" font-size="10" text-anchor="middle">状态藏在本地目录里</text>
+<text x="126" y="140" fill="#e06b6b" font-size="11" text-anchor="middle">机器没了</text>
+<text x="126" y="158" fill="#e06b6b" font-size="11" text-anchor="middle">→ 闹钟和清单一起没了</text>
+<text x="126" y="182" fill="#7c8593" font-size="10" text-anchor="middle">而且静默：没响的闹钟不报警</text>
+<text x="292" y="24" fill="#5b9df9" font-size="12.5" font-weight="700">② 分布式 cron</text>
+<rect x="288" y="36" width="140" height="122" rx="8" fill="none" stroke="rgba(91,157,249,0.3)" stroke-dasharray="4 3"></rect>
+<rect x="298" y="46" width="120" height="32" rx="6" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="1.6"></rect>
+<text x="358" y="66" fill="#8fbaff" font-size="10.5" text-anchor="middle">副本 A（leader）</text>
+<rect x="298" y="84" width="120" height="28" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
+<text x="358" y="102" fill="#b9c0ca" font-size="10.5" text-anchor="middle">副本 B（跟状态）</text>
+<rect x="298" y="118" width="120" height="28" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
+<text x="358" y="136" fill="#b9c0ca" font-size="10.5" text-anchor="middle">副本 C（跟状态）</text>
+<text x="358" y="176" fill="#7c8593" font-size="10" text-anchor="middle">过半数选主 + 共用共识日志</text>
+<line x1="430" x2="484" y1="62" y2="62" stroke="#7c8593" marker-end="url(#c1)"></line>
+<text x="457" y="52" fill="#9b6cf5" font-size="9.5" text-anchor="middle">只有 leader 发起</text>
+<rect x="488" y="44" width="136" height="38" rx="6" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5"></rect>
+<text x="556" y="68" fill="#c4a8ff" font-size="10.5" text-anchor="middle">数据中心调度器</text>
+<line x1="556" x2="556" y1="84" y2="112" stroke="#7c8593" marker-end="url(#c1)"></line>
+<rect x="488" y="116" width="136" height="36" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"></rect>
+<text x="556" y="139" fill="#b9c0ca" font-size="10.5" text-anchor="middle">任务实例 job-X@T</text>
+<text x="556" y="176" fill="#7c8593" font-size="10" text-anchor="middle">跑多久、跑没跑对，归它管</text>
+</svg>
+<figcaption>图 1：单机 cron 的可靠性等于一台机器；分布式 cron 把「谁发起」交给共识，把「怎么跑」交给数据中心调度器。</figcaption>
+</figure>
+
+<h3>记什么：两个同步点，和那个说不清的窗口</h3>
+<p>这是全章的技术核心。leader 每到一个调度点，做的不是一个动作而是三个：<strong>①先把「我即将启动 X、本次调度时间 T」写进共识日志；②再向数据中心调度器发起；③发起返回后，把「已启动」写回日志。</strong></p>
+<p>为什么要多写第一笔？因为 leader 可以在任何一个瞬间消失。分三种情况看：崩在 ① 之前——新 leader 什么都没看见，<strong>确定没启动</strong>，按点补发即可；崩在 ③ 之后——<strong>确定已启动</strong>，跳过；崩在 ① 与 ③ 之间——<strong>不确定</strong>：请求可能压根没发出去，也可能已经被调度器收下、只是回执没写成。这个窗口通常只有几十到几百毫秒，但它不会消失。</p>
+<p>消解办法是把「问一句」变得可行：<strong>让每次启动的实例名由（任务名，调度时间）唯一确定</strong>，比如 <code>job-X@2026-09-25T02:00</code>。新 leader 接班后拿这个名字去问调度器「有没有这个实例」——问到了，记为已启动；确认没有，补发一次。只有当调度器<em>自己</em>也答不上来（它正在重启、或请求超时）时，才落到那条兜底策略上。</p>
+<p>这里要看透的是：<strong>cron 和调度器是两个系统，两个系统之间没有原子提交。</strong>所有「恰好一次」的幻觉，都死在这条缝里。本章的诚实之处，就是不假装这条缝能被填上，而是<strong>明码标价地选一边</strong>：Google 的这套 cron 选择<strong>宁可漏跑，不可重跑</strong>——漏跑是可观测、可补救的；重复的对外副作用往往不可撤回。</p>
+
+<figure>
+<svg viewBox="0 0 640 212" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="c2" markerWidth="8" markerHeight="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<rect x="150" y="86" width="330" height="46" fill="rgba(224,107,107,0.13)" stroke="rgba(224,107,107,0.4)" stroke-dasharray="4 3" rx="4"></rect>
+<text x="315" y="78" fill="#e06b6b" font-size="11" font-weight="700" text-anchor="middle">不确定窗口（崩在这里 → 说不清启没启动）</text>
+<line x1="34" x2="606" y1="132" y2="132" stroke="#7c8593" marker-end="url(#c2)"></line>
+<circle cx="70" cy="132" r="4.5" fill="#5b9df9"></circle>
+<text x="70" y="152" fill="#b9c0ca" font-size="10.5" text-anchor="middle">到点 T</text>
+<circle cx="180" cy="132" r="4.5" fill="#9b6cf5"></circle>
+<text x="180" y="112" fill="#c4a8ff" font-size="10.5" text-anchor="middle">① 写「即将启动」</text>
+<text x="180" y="152" fill="#7c8593" font-size="10" text-anchor="middle">共识日志</text>
+<circle cx="330" cy="132" r="4.5" fill="#9b6cf5"></circle>
+<text x="330" y="112" fill="#c4a8ff" font-size="10.5" text-anchor="middle">② 向调度器发起</text>
+<text x="330" y="152" fill="#7c8593" font-size="10" text-anchor="middle">跨系统调用</text>
+<circle cx="466" cy="132" r="4.5" fill="#9b6cf5"></circle>
+<text x="466" y="112" fill="#c4a8ff" font-size="10.5" text-anchor="middle">③ 写「已启动」</text>
+<text x="466" y="152" fill="#7c8593" font-size="10" text-anchor="middle">共识日志</text>
+<text x="34" y="30" fill="#5cc98a" font-size="10.5">崩在这段：确定没启动</text>
+<text x="34" y="46" fill="#7c8593" font-size="10">→ 接班后直接补发</text>
+<text x="500" y="30" fill="#5cc98a" font-size="10.5">崩在这段：确定已启动</text>
+<text x="500" y="46" fill="#7c8593" font-size="10">→ 接班后跳过</text>
+<line x1="120" x2="120" y1="52" y2="124" stroke="rgba(92,201,138,0.5)" stroke-dasharray="3 3"></line>
+<line x1="540" x2="540" y1="52" y2="124" stroke="rgba(92,201,138,0.5)" stroke-dasharray="3 3"></line>
+<text x="315" y="182" fill="#b9c0ca" font-size="10.5" text-anchor="middle">消解：拿 job-X@T 这个确定的名字去问调度器；问不出答案时，按默认策略「宁可漏」</text>
+</svg>
+<figcaption>图 2：两个同步点把崩溃分成三段——只有中间那段说不清，而它的消解要靠一个可确定推算的实例名。</figcaption>
+</figure>
+
+<h3>状态存哪：自带共识日志，还是外挂一个存储</h3>
+<p>需要持久化的状态<strong>小得惊人</strong>：每个任务只要一条「上一次启动的调度时间」以及那条未决的启动意图。这就让「自带共识日志」变得非常划算——状态可以整份放内存、定期快照，一次启动只对应一次共识写，代价是<strong>1 个网络往返 + 1 次 fsync</strong>（同机房往返亚毫秒、fsync 几毫秒，合计个位数毫秒），相对于一个按分钟计的调度周期完全可以忽略。</p>
+<p>反过来把状态外挂到 etcd / ZooKeeper / 数据库也能做，省掉自建复制的工程量，但把 cron 的可用性钉在另一个系统上——更糟的是，那个系统挂掉时，你连「这次到底跑没跑」都答不出来。</p>
+
+<h3>边界：cron 只管发起，不管跑完</h3>
+<p>本章划了一条很清楚的界：分布式 cron 的职责<strong>止于把任务交给数据中心调度器</strong>，之后任务跑多久、跑成什么样，是调度器和任务自己的事。这不是偷懒，是防止职责蔓延——<strong>一旦 cron 开始追踪长任务的生命周期、表达「A 跑完才跑 B」，它就变成了一个工作流引擎</strong>，而那是另一个更难的问题。</p>
+<p>落到实践就是一条很实用的经验：<strong>cron 触发的东西越短越好</strong>，最好只是「发起」这一下；真正的多步长流程交给专门的工作流引擎。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/workflow-engine-day39.html" target="_blank" rel="noopener">System Design · Day 39 工作流引擎</a> — 让崩溃后还能接着跑的长流程：持久化执行、重放与补偿，正好接住 cron 不该管的那一层</aside>
+
+<h3>时间本身也是敌人：惊群与时区</h3>
+<p>人写 crontab 有强烈的整点偏好。假设一个集群上有 2000 个周期任务、其中四成写着 <code>0 0 * * *</code>，那就是 <strong>800 个任务在同一秒</strong>同时向调度器要资源——调度器排队、启动延迟飙升，而接下来的 59 分钟机器闲着。所以这套 cron 在 crontab 语法上做了扩展：允许你表达「<strong>在这个范围里你随便挑一个时间</strong>」，由系统把启动点摊到整段窗口里。绝大多数「每天跑一次」的任务其实完全不在乎是 0:00 还是 0:37。</p>
+<p>时区是第二个坑：夏令时切换那天，本地时间可能少一个小时或重复一个小时，于是「每天 2:30」这一条要么不存在、要么触发两次。工程上的通行做法是<strong>内部一律按 UTC 记账</strong>，只在展示层换算。</p>
+
+<figure>
+<svg viewBox="0 0 640 178" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<text x="20" y="22" fill="#e06b6b" font-size="11.5" font-weight="700">全写 0 0 * * *</text>
+<line x1="20" x2="290" y1="128" y2="128" stroke="#7c8593"></line>
+<rect x="26" y="40" width="18" height="88" fill="rgba(224,107,107,0.55)"></rect>
+<text x="35" y="34" fill="#e06b6b" font-size="10" text-anchor="middle">800</text>
+<text x="20" y="146" fill="#7c8593" font-size="9.5">00:00</text>
+<text x="252" y="146" fill="#7c8593" font-size="9.5">01:00</text>
+<text x="155" y="166" fill="#7c8593" font-size="10" text-anchor="middle">一秒挤完，其余 59 分钟闲置</text>
+<text x="350" y="22" fill="#5b9df9" font-size="11.5" font-weight="700">允许「此范围内随便挑」</text>
+<line x1="350" x2="620" y1="128" y2="128" stroke="#7c8593"></line>
+<rect x="356" y="110" width="18" height="18" fill="rgba(91,157,249,0.55)"></rect>
+<rect x="386" y="106" width="18" height="22" fill="rgba(91,157,249,0.55)"></rect>
+<rect x="416" y="112" width="18" height="16" fill="rgba(91,157,249,0.55)"></rect>
+<rect x="446" y="104" width="18" height="24" fill="rgba(91,157,249,0.55)"></rect>
+<rect x="476" y="110" width="18" height="18" fill="rgba(91,157,249,0.55)"></rect>
+<rect x="506" y="107" width="18" height="21" fill="rgba(91,157,249,0.55)"></rect>
+<rect x="536" y="113" width="18" height="15" fill="rgba(91,157,249,0.55)"></rect>
+<rect x="566" y="108" width="18" height="20" fill="rgba(91,157,249,0.55)"></rect>
+<text x="350" y="146" fill="#7c8593" font-size="9.5">00:00</text>
+<text x="582" y="146" fill="#7c8593" font-size="9.5">01:00</text>
+<text x="485" y="166" fill="#7c8593" font-size="10" text-anchor="middle">峰值降到约 1/8，调度器不排队</text>
+</svg>
+<figcaption>图 3：整点惊群 vs 允许系统在窗口内随机落点——同样的任务量，峰值可以降一个量级。</figcaption>
+</figure>
+
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 1 · 漏跑与重跑，按任务性质选边（这一刀必须自己砍，且要公开声明）</p>
+<div class="tblwrap">
+<table class="cmp"><thead><tr><th>任务类型</th><th>该偏哪边</th><th>为什么</th><th>怎么兜住另一边</th></tr></thead><tbody>
+<tr><th>推送 / 发信 / 扣款 / 发券</th><td><strong>宁可漏</strong></td><td>副作用对外且不可撤回，重复一次就是真实损失</td><td>幂等键一路传到支付网关、邮件服务商；配「本次未启动」报警</td></tr>
+<tr><th>日结 / 月结 / 监管报表</th><td><strong>宁可重</strong></td><td>漏一次是合规事故，重算一次只是多花机器</td><td>结果按（任务，周期）覆盖写，重跑天然幂等</td></tr>
+<tr><th>缓存预热 / 索引重建 / 清理</th><td>都行</td><td>天然幂等，重跑只费算力</td><td>并发策略设成「上一次没跑完就跳过本次」</td></tr>
+<tr><th>数据管线的一段</th><td><strong>宁可重</strong></td><td>下游按时间分区覆盖写，重跑结果收敛</td><td>输出路径带调度时间戳，禁止追加写</td></tr>
+</tbody></table>
+</div>
+<p class="tcap">表 2 · 「跑没跑」这份状态存在哪</p>
+<div class="tblwrap">
+<table class="cmp"><thead><tr><th>方案</th><th>一次启动的代价</th><th>故障面</th><th>适用</th></tr></thead><tbody>
+<tr><th>自带共识日志</th><td>1 个 RTT + 1 次 fsync，个位数毫秒</td><td>自包含，没有外部依赖</td><td>本章的选择：状态极小，自带最划算</td></tr>
+<tr><th>外挂强一致存储</th><td>一次远程写 + 该存储的延迟</td><td>多一个必挂依赖；它挂了你连「跑没跑」都答不出</td><td>已经有 etcd / ZK 的团队</td></tr>
+<tr><th>只抢锁、不记状态</th><td>最便宜</td><td><strong>接班者无法回答「上一次跑了吗」</strong></td><td>不要这么做</td></tr>
+</tbody></table>
+</div>
+<p class="tcap">表 3 · 你到底该用哪一档</p>
+<div class="tblwrap">
+<table class="cmp"><thead><tr><th>处境</th><th>选择</th><th>代价 / 前提</th></tr></thead><tbody>
+<tr><th>单机、任务可以漏</th><td>系统自带 cron</td><td>机器挂了就全停；<strong>必须另配「没跑」报警</strong></td></tr>
+<tr><th>已在 Kubernetes 上</th><td>CronJob</td><td>官方只承诺「大约一次」；<code>concurrencyPolicy</code> 与 <code>startingDeadlineSeconds</code> 必须显式配</td></tr>
+<tr><th>多步、有依赖、要重试</th><td>工作流引擎（Airflow / Argo / Temporal）</td><td>多一套系统要运维，但换来可重放与可观测的中间态</td></tr>
+<tr><th>跨数据中心、任务上万</th><td>自建分布式 cron</td><td>共识、消解逻辑、惊群摊平全要自己扛</td></tr>
+</tbody></table>
+</div>
+
+<h2>为什么重要 / 落到真实系统</h2>
+<p>这一章的价值不在于「教你造一个 cron」，而在于它<strong>把一个人人都以为已经解决了的老问题重新撕开</strong>，并且给出了一个可以照抄的诚实答案：承认拿不到恰好一次，公开声明你选了哪一边。今天所有主流调度器给出的，都是同一个结论的不同说法。</p>
+<div class="ev">
+<p class="evh">大厂实证</p>
+<ul>
+<li><strong>Kubernetes 官方文档</strong>直接承认这条缝：「A CronJob creates a Job object approximately once per execution time of its schedule.」并解释「The scheduling is approximate because there are certain circumstances where two Jobs might be created, or no Job might be created.」——和本章的诊断一字不差。<span class="src">Kubernetes 文档《CronJob》 · <a href="https://github.com/kubernetes/website/blob/main/content/en/docs/concepts/workloads/controllers/cron-jobs.md" target="_blank" rel="noopener">kubernetes/website 仓库原文</a></span></li>
+<li><strong>Kubernetes 控制器源码</strong>里那个「漏跑上限」的常量，把这章的抽象问题写成了大白话：「if controller gets wedged on friday at 5:01pm when everyone has gone home, and someone comes in on tuesday AM ... more than 80 of them for one hourly cronJob, should all start running」，最后作者坦白「I've somewhat arbitrarily picked 100」；超过就报 <code>too many missed start times ... or check clock skew</code>。<strong>漏跑不是理论风险，是要写进常量里的日常。</strong><span class="src">kubernetes/kubernetes · <a href="https://github.com/kubernetes/kubernetes/blob/master/pkg/controller/cronjob/utils.go" target="_blank" rel="noopener">pkg/controller/cronjob/utils.go</a></span></li>
+<li><strong>Apache Airflow</strong> 把这条约束直接写进用户守则：「Airflow can retry a task if it fails. Thus, the tasks should produce the same outcome on every re-run.」——它选的是另一边（宁可重跑），于是<strong>把幂等的责任显式交给了任务作者</strong>。<span class="src">Airflow 官方 Best Practices · <a href="https://github.com/apache/airflow/blob/main/airflow-core/docs/best-practices.rst" target="_blank" rel="noopener">apache/airflow 文档原文</a></span></li>
+</ul>
+</div>
+<p><strong>面试里怎么用</strong>：被问到「设计一个分布式定时任务系统」，评分点几乎就是本章的目录——谁发起（选主）、跑没跑记在哪（状态与共识）、崩溃窗口怎么消解（两个同步点 + 可推算的实例名）、语义选哪一边并公开声明（漏 vs 重）、惊群怎么摊平、以及边界在哪（不追踪长任务）。只要你主动说出「恰好一次做不到」，就已经赢了一半。</p>
+
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>以为 cron 是无状态的。</strong>单机 cron 只是把状态藏在本地目录和一个「假定永不重启」的进程里。一旦多副本，这份状态必须被显式建模——这一章本质上就是在讲这件事。</li>
+<li><strong>以为幂等是免费的。</strong>幂等键必须一路穿到<strong>真正产生副作用的那一层</strong>（支付网关、短信通道）。只在调度层去重，等于在自家门口拦截，而副作用发生在别人家里。</li>
+<li><strong>把锁当保证。</strong>拿到锁到真正执行之间可能被 GC 或网络卡住，锁早已过期而你仍在写。没有 fencing 的锁只是「大概率不会撞车」。</li>
+<li><strong>拿 cron 当工作流引擎。</strong>只要你开始想表达「A 成功了才跑 B」「失败了退避重试三次」，你要的就不是 cron。</li>
+<li><strong>只监控失败，不监控「没发生」。</strong>这是 cron 最典型的事故形态：什么都没发生。关键任务必须配「窗口内未观察到本次启动就报警」，这条报警比任务本身的失败报警更重要。</li>
+<li><strong>时代局限与后续发展。</strong>本章 2016 年的方案有个前提：<em>调度器可以被查询</em>——崩溃窗口靠「去问一句」消解。此后主流答案往<strong>持久化执行</strong>偏移（Temporal / Cadence 那一路）：不再追求启动的恰好一次，而是保证整个流程的状态可重放、把幂等下沉到每一步。这不是推翻本章，而是把它的结论<strong>抬高了一层</strong>——缝还在那儿，只是被搬到了更容易兜住的位置。</li>
+</ul>
+<aside class="xref"><a href="https://hub.cissychen.com/super-individual/durable-agents-day58.html" target="_blank" rel="noopener">超级个体 · Day 58 Durable Agent Execution</a> — 持久化执行怎么把「崩了之后接着跑」做成默认能力，以及它和至少一次语义的关系</aside>
+
+<h2>要点收尾</h2>
+<div class="tl">
+<p>① <strong>cron 跨出一台机器，就变成一个有状态、需要共识的服务</strong>；单机 cron 的可靠性等于那台机器，且失败是静默的。</p>
+<p>② 核心结构：<strong>多副本 + Paxos 选主，只有 leader 发起</strong>；follower 不发起但必须跟住状态，随时接班。</p>
+<p>③ 核心机制：<strong>两个同步点</strong>——启动前写「即将启动」、启动后写「已启动」；崩在两者之间就是那个<strong>说不清的窗口</strong>。</p>
+<p>④ 消解靠<strong>可推算的实例名</strong>（任务名 + 调度时间），接班者拿它去问数据中心调度器；问不出答案才落到默认策略。</p>
+<p>⑤ <strong>跨系统没有原子提交，所以拿不到恰好一次。</strong>Google 这套选择<strong>宁可漏跑、不可重跑</strong>——但这是取舍不是真理，对账类任务该选反过来。</p>
+<p>⑥ 状态极小（每任务一条「上次启动时间」），所以<strong>自带共识日志最划算</strong>：一次启动 ≈ 1 RTT + 1 fsync，个位数毫秒。</p>
+<p>⑦ <strong>边界要守住</strong>：cron 只负责发起，不追踪长任务；需要依赖与重试就上工作流引擎。</p>
+<p>⑧ <strong>惊群要治</strong>：允许「窗口内随机落点」，别让所有任务挤在 <code>0 0 * * *</code>；时间一律按 UTC 记。</p>
+<p>⑨ <strong>为「没发生」配报警</strong>——选了「宁可漏」，就必须把沉默变回信号。Kubernetes 官方那句「大约一次」，是同一个结论的另一种写法。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
