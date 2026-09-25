@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>SRE Ch 20 · Load Balancing in the Datacenter — Book Deep Read 114</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+pre{background:#171b21;border:1px solid rgba(91,157,249,0.16);border-radius:8px;padding:13px 15px;margin:14px 0;overflow-x:auto;font-size:0.84rem;line-height:1.7;color:#b9c2cf;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+blockquote{border-left:3px solid #9b6cf5;background:rgba(155,108,245,0.06);border-radius:0 8px 8px 0;padding:12px 16px;margin:16px 0;color:#ccd2da}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOK DEEP READ · SRE · CHAPTER 20</p>
+<h1>Load Balancing in the Datacenter</h1>
+<p class="sub">Site Reliability Engineering · Ch 20 · Google · 2016</p>
+<p class="langbar"><a href="sre-ch20-load-balancing-datacenter-book114.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You tap something in an app and the request lands in a datacenter. Inside, maybe a thousand machines are running the exact same program — <strong>so which one gets your request?</strong> The previous chapter was about <em>which building</em> the request enters. This one is about what happens once it is inside: <strong>picking one machine out of a pile of identical machines, and on what basis.</strong></p>
+<h2>A strange thing first</h2>
+<p>At the supermarket you naturally join the shortest queue. But suppose one cashier's terminal is broken, so every customer is bounced back in a second with "payment failed, next please" — <strong>that queue is always the shortest</strong>. Everyone piles into it, and nobody gets checked out.</p>
+<p>This happens in datacenters every day: <strong>pick the machine with the fewest jobs in hand, and the broken one looks permanently idle.</strong></p>
+<h2>So why not just take turns?</h2>
+<p>One each, in rotation — sounds perfectly fair. Two problems.</p>
+<p><strong>Jobs differ wildly in size.</strong> One customer buys a bottle of water, the next wheels up a full trolley. Counting <em>items</em> is not counting <em>work</em>.</p>
+<p><strong>Cashiers differ wildly in speed.</strong> Machines in the same room are of different vintages, and other programs next door are competing for resources. Same ten customers: one cashier finishes in ten minutes, another takes half an hour.</p>
+<p>So one queue always ends up much longer. And you have to staff for the <strong>most crowded</strong> queue — which means paying for people who sit idle.</p>
+<h2>Three moves</h2>
+<p><strong>One: don't say hello to everyone.</strong> A thousand callers times a thousand machines is millions of open lines; both ends pay memory, and each line needs a periodic "are you still alive?". So each caller <strong>knows only a few dozen of them</strong>. And the picking matters: pick at random and some machines get known by crowds while others get nobody; <strong>assigning by rule</strong> is what makes every machine known by the same number of callers.</p>
+<p><strong>Two: let the machine hold up its own sign.</strong> Don't guess how busy it is from outside — have it <strong>report its own busyness on the way back</strong>, riding along with the reply, costing no extra trip. Whoever reports idle gets more. Of the three approaches, this one works best.</p>
+<p><strong>Three: whoever is going off shift puts up a sign first.</strong> A machine that is about to restart shouldn't just switch off the lights and walk out — the customers in its hands get dropped. The right move is to post "<strong>this lane takes no new customers; those already in line will be served</strong>", then leave once the line is empty. The book calls that sign <strong>lame duck</strong>. Without it, a routine restart means a batch of users see errors on the spot.</p>
+<h2>What it buys you</h2>
+<p>The coarse decision was already made at the door (which building); <strong>inside there is only one job left: pick one of a pile of identical machines, and the basis for picking must come from the machine itself, not from guesswork outside.</strong></p>
+<p><strong>The honest cost</strong>: a machine's self-reported busyness describes the little slice of time that just passed — when load spikes suddenly, the caller's information is always half a beat behind.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p>Load balancing inside a datacenter is <strong>a decision the caller makes for itself</strong>: first shrink the set of machines you keep in touch with, then let the machines report their own busyness to divide the work, and finally make a departing machine post its "no new customers" sign. The most counter-intuitive part: <strong>"fewest jobs in hand" does not mean idlest — it may mean broken.</strong></p>
+</div>
+<p class="switch-hint">Want the actual mechanisms, algorithms and diagrams? <a data-mode="deep">→ switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">You think datacenter load balancing means "send the request to whichever backend has the least work in hand" — but <strong>"least work in hand" is a contaminated signal</strong>: a broken backend that returns errors in a millisecond ranks first by that measure, forever. This chapter is about the three parts of client-side load balancing: <strong>subsetting</strong> turns the connection count from a multiplication back into an addition, <strong>weighted round robin on backend-reported load</strong> replaces guessing from outside, and the <strong>lame duck state</strong> makes a task leave without producing user-visible errors.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Backend task</strong>: one process instance running the service binary; a service often has hundreds or thousands.</li>
+<li><strong>Client</strong>: here, the <strong>calling service</strong> — not a user's browser. Almost all intra-datacenter traffic is service-to-service.</li>
+<li><strong>RPC</strong>: remote procedure call, one "send request, await reply" round trip. Google's internal system is Stubby; the open-source equivalent is gRPC.</li>
+<li><strong>Subset</strong>: the small handful of backends a client actually opens connections to, rather than all of them. <strong>Active requests</strong>: requests sent but not yet answered.</li>
+<li><strong>Round robin</strong>: send to each backend in turn. <strong>Utilization</strong>: the resource usage fraction a backend measures on itself, usually CPU.</li>
+<li><strong>Lame duck</strong>: a backend state — still able to finish in-flight requests, but explicitly asking clients to stop sending new ones. <strong>p99</strong>: the 99th-slowest of a hundred requests.</li>
+<li><strong>Rendezvous hashing</strong>: a hash that scores and ranks "which backends are mine" such that adding or removing one backend changes at most one entry in each client's list.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This is the second half of the load-balancing pair in Part III, "Practices": Ch19 covers traffic before it reaches the datacenter (DNS, anycast, VIPs), <strong>Ch20 covers what happens after it arrives — picking one of a pile of homogeneous backends</strong>; Ch21, "Handling Overload", then deals with the share that cannot be distributed at all. Real-world counterparts: the LB policies inside RPC client libraries such as gRPC and Finagle, and what a service-mesh sidecar does.</p>
+<h2>What problem it solves</h2>
+<p>The ideal takes one sentence: <strong>every backend carries an equal share of load and nobody is overloaded</strong>. The chapter says up front that this is unreachable in a real datacenter, and lays out three reasons — <strong>which are also, exactly, the complete list of reasons simple round robin fails</strong>:</p>
+<ul>
+<li><strong>Requests are not equally expensive.</strong> A cache hit and a query that has to scan an index can differ in CPU cost by one or two orders of magnitude — counting requests is not counting work.</li>
+<li><strong>Machines are not homogeneous.</strong> CPU generations and clock speeds differ within one datacenter; worse, antagonist tasks on the same machine compete for CPU and memory bandwidth, so the performance difference is <strong>dynamic and unpredictable</strong>.</li>
+<li><strong>Subsets are small.</strong> A client connects to only a few dozen backends, and with a small sample, random variance does not average out.</li>
+</ul>
+<p>What happens if you don't solve it? Two bills.</p>
+<p><strong>The capacity bill.</strong> The measured order of magnitude the chapter reports: under simple round robin, <strong>the busiest task's CPU is roughly twice the least busy one's</strong>. Capacity has to be provisioned for the busiest task — which means buying double headroom for the whole service, while p99 is set single-handedly by that one task.</p>
+<p><strong>The connection bill.</strong> If every client connects to every backend, the count is a <strong>multiplication</strong>: 10,000 clients × 1,000 backends = <strong>10 million connections</strong>. An RPC connection costs a few to a few tens of KB of memory on each end, plus CPU for periodic health checks; at a conservative <code>10 KB</code> per end, the connections alone are <strong>hundreds of GB</strong> of memory, paid for nothing.</p>
+<h2>The core, properly explained</h2>
+<h3>1. The decision belongs to the caller</h3>
+<p>The Ch19 layer had <strong>a device decide for you</strong>. This chapter inverts that: <strong>there is no middleman — the client's own RPC library computes which backend to use.</strong> Why? Intra-datacenter service-to-service traffic dwarfs the traffic arriving from outside, and inserting a proxy into every hop adds a round trip and one more thing that can fail. The cost: the decision <strong>rests only on what that client can see</strong> — it has no idea how much fifty other clients are sending to the same backend. <strong>This limitation is the common root of every compromise in the chapter.</strong></p>
+<h3>2. Healthy, refusing, lame duck: knowing which task is unusable</h3>
+<p>A backend is in one of three states as far as a client is concerned: <strong>healthy</strong>, <strong>refusing connections</strong>, <strong>lame duck</strong>. The first two are self-explanatory. The crudest gate is flow control: the client tracks its own active-request count per backend and, <strong>above a limit, treats that backend as unhealthy and stops sending</strong> — which catches a backend that is already clogged.</p>
+<p>Lame duck catches something else: <strong>a planned departure</strong>. When a backend task is told to stop, exiting immediately turns the requests in its hands into <strong>user-visible errors</strong>. Lame duck splits that into steps: the backend broadcasts to all its active clients "stop sending to me, I am still finishing what I have" → clients stop sending new requests → the backend waits for in-flight work to drain → only then does it exit.</p>
+<p>For scale: one rolling update of a 1,000-task service is 1,000 departures. <strong>Without lame duck, every routine release pours a batch of errors onto users — and those errors are 100% self-inflicted.</strong> It requires clients that <strong>receive and respect</strong> the notice, which makes it an RPC-framework capability; no ops script can retrofit it.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 212" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="16" y="20">1. No lame duck: the task exits the instant it is told to stop</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="5" stroke="#5b9df9" width="200" x="92" y="34"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="192" y="52">serving normally</text>
+<line stroke="#7c8593" stroke-dasharray="4 3" x1="300" x2="300" y1="28" y2="66"></line>
+<rect fill="rgba(224,107,107,0.22)" height="26" rx="5" stroke="#e06b6b" width="130" x="302" y="34"></rect>
+<text fill="#f0c4c4" font-size="10" text-anchor="middle" x="367" y="52">in-flight requests cut</text>
+<text fill="#e06b6b" font-size="11" x="442" y="52">users see errors</text>
+<text fill="#7c8593" font-size="10.5" x="300" y="84">stop signal arrives, process exits immediately</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="16" y="122">2. Lame duck: stop new traffic first, then drain</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" rx="5" stroke="#5b9df9" width="200" x="92" y="136"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="192" y="154">serving normally</text>
+<line stroke="#7c8593" stroke-dasharray="4 3" x1="300" x2="300" y1="130" y2="168"></line>
+<rect fill="rgba(155,108,245,0.2)" height="26" rx="5" stroke="#9b6cf5" width="226" x="302" y="136"></rect>
+<text fill="#e7ebf1" font-size="9.5" text-anchor="middle" x="415" y="154">lame duck: drain in-flight, take no new</text>
+<line stroke="#7c8593" stroke-dasharray="4 3" x1="528" x2="528" y1="130" y2="168"></line>
+<text fill="#8fbaff" font-size="10.5" x="534" y="154">clean exit</text>
+<text fill="#7c8593" font-size="10.5" x="300" y="186">stop signal, then broadcast: stop sending to me</text>
+<text fill="#7c8593" font-size="10.5" x="300" y="204">exits only after in-flight drains (right dashed line)</text>
+</svg>
+<figcaption>Fig 1 · Departure timelines. Exiting straight away converts in-flight requests into user-visible errors; lame duck splits "stop taking orders" from "exit the process".</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/reliability-day23.en.html" rel="noopener" target="_blank">System Design · Day 23 Reliability</a> — graceful shutdown, connection draining and health checks: how one flaky downstream instance is kept from propagating errors up the whole call chain</aside>
+<h3>3. Subsetting: each client connects to only a handful of backends</h3>
+<p>How big should a subset be? The chapter's figure is <strong>20 to 100 tasks</strong>. Too large and the connection bill stays; too small and variance grows, plus <strong>you have nowhere to go when backends are unavailable</strong> — with a subset of 10 of which 2 are restarting, you have lost <code>20%</code> of your usable capacity while the service as a whole has plenty to spare. The hard part is <strong>how to pick that handful</strong>.</p>
+<p><strong>Random subsetting</strong>: each client picks at random. The problem is a lopsided connection distribution — some backends are picked by many clients, some by almost none. The chapter's comparison uses <strong>300 clients, 300 backends, subset of 30</strong>, and the skew is pronounced; to flatten it by randomness alone the subset has to grow to <strong>about three quarters</strong> of all backends, which abandons the point of subsetting.</p>
+<p><strong>Deterministic subsetting</strong>: group clients into rounds, have every client in a round share one shuffle seeded by the round number, then slice out a contiguous run by the client's index within that round:</p>
+<pre>subsets per round = total backends / subset size
+round            = client id / subsets per round   (integer)
+seed the shuffle with the round number, shuffle the backend list
+subset id        = client id % subsets per round
+subset           = the run starting at (subset id x subset size)</pre>
+<p>The property is elegant: <strong>every backend is connected to exactly the same number of times</strong>, skew reduced to zero; and a restarted client computes the same subset, so no connection churn. The cost is concrete: every client must agree on <strong>the order of the backend list</strong> and on <strong>its own id</strong>; and when the list changes the shuffle changes, so subset membership can turn over wholesale — which is precisely where it was later challenged.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 196" xmlns="http://www.w3.org/2000/svg">
+<line stroke="rgba(120,120,130,0.35)" stroke-dasharray="4 4" x1="320" x2="320" y1="12" y2="190"></line>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="160" y="24">Random subsetting</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="160" y="42">each client picks on its own</text>
+<line stroke="#9b6cf5" stroke-dasharray="5 4" x1="24" x2="296" y1="102" y2="102"></line>
+<text fill="#9b6cf5" font-size="9.5" x="24" y="98">mean</text>
+<rect fill="rgba(91,157,249,0.18)" height="56" stroke="#5b9df9" width="16" x="28" y="94"></rect>
+<rect fill="rgba(91,157,249,0.18)" height="24" stroke="#5b9df9" width="16" x="50" y="126"></rect>
+<rect fill="rgba(224,107,107,0.26)" height="72" stroke="#e06b6b" width="16" x="72" y="78"></rect>
+<rect fill="rgba(91,157,249,0.18)" height="40" stroke="#5b9df9" width="16" x="94" y="110"></rect>
+<rect fill="rgba(224,107,107,0.26)" height="88" stroke="#e06b6b" width="16" x="116" y="62"></rect>
+<rect fill="rgba(91,157,249,0.18)" height="32" stroke="#5b9df9" width="16" x="138" y="118"></rect>
+<rect fill="rgba(91,157,249,0.18)" height="64" stroke="#5b9df9" width="16" x="160" y="86"></rect>
+<rect fill="rgba(91,157,249,0.18)" height="48" stroke="#5b9df9" width="16" x="182" y="102"></rect>
+<rect fill="rgba(224,107,107,0.26)" height="80" stroke="#e06b6b" width="16" x="204" y="70"></rect>
+<rect fill="rgba(91,157,249,0.18)" height="24" stroke="#5b9df9" width="16" x="226" y="126"></rect>
+<rect fill="rgba(91,157,249,0.18)" height="56" stroke="#5b9df9" width="16" x="248" y="94"></rect>
+<rect fill="rgba(91,157,249,0.18)" height="40" stroke="#5b9df9" width="16" x="270" y="110"></rect>
+<line stroke="#7c8593" x1="24" x2="296" y1="150" y2="150"></line>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="160" y="166">connections per backend</text>
+<text fill="#e06b6b" font-size="10.5" font-weight="700" text-anchor="middle" x="160" y="186">a few sit far above the mean</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" text-anchor="middle" x="480" y="24">Deterministic subsetting</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="480" y="42">shuffle by round, slice by index</text>
+<line stroke="#9b6cf5" stroke-dasharray="5 4" x1="344" x2="616" y1="102" y2="102"></line>
+<text fill="#9b6cf5" font-size="9.5" x="344" y="98">mean</text>
+<rect fill="rgba(91,157,249,0.18)" height="48" stroke="#5b9df9" width="16" x="348" y="102"></rect>
+<rect fill="rgba(91,157,249,0.18)" height="48" stroke="#5b9df9" width="16" x="370" y="102"></rect>
+<rect fill="rgba(91,157,249,0.18)" height="48" stroke="#5b9df9" width="16" x="392" y="102"></rect>
+<rect fill="rgba(91,157,249,0.18)" height="48" stroke="#5b9df9" width="16" x="414" y="102"></rect>
+<rect fill="rgba(91,157,249,0.18)" height="48" stroke="#5b9df9" width="16" x="436" y="102"></rect>
+<rect fill="rgba(91,157,249,0.18)" height="48" stroke="#5b9df9" width="16" x="458" y="102"></rect>
+<rect fill="rgba(91,157,249,0.18)" height="48" stroke="#5b9df9" width="16" x="480" y="102"></rect>
+<rect fill="rgba(91,157,249,0.18)" height="48" stroke="#5b9df9" width="16" x="502" y="102"></rect>
+<rect fill="rgba(91,157,249,0.18)" height="48" stroke="#5b9df9" width="16" x="524" y="102"></rect>
+<rect fill="rgba(91,157,249,0.18)" height="48" stroke="#5b9df9" width="16" x="546" y="102"></rect>
+<rect fill="rgba(91,157,249,0.18)" height="48" stroke="#5b9df9" width="16" x="568" y="102"></rect>
+<rect fill="rgba(91,157,249,0.18)" height="48" stroke="#5b9df9" width="16" x="590" y="102"></rect>
+<line stroke="#7c8593" x1="344" x2="616" y1="150" y2="150"></line>
+<text fill="#7c8593" font-size="10" text-anchor="middle" x="480" y="166">connections per backend</text>
+<text fill="#5b9df9" font-size="10.5" font-weight="700" text-anchor="middle" x="480" y="186">identical everywhere, zero skew</text>
+</svg>
+<figcaption>Fig 2 · How the choice of subset shapes the connection distribution (illustrative): picking at random leaves a few backends far above the mean; deterministic subsetting connects every backend the same number of times.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/networking-fundamentals-day48.en.html" rel="noopener" target="_blank">System Design · Day 48 Networking Fundamentals</a> — what a connection actually costs: TCP/TLS handshake round trips, keep-alive and pooling, and why "connect to fewer machines" is real money saved</aside>
+<h3>4. Three policies: round robin, least-loaded, weighted</h3>
+<p><strong>Simple round robin</strong>: send to each backend in the subset in turn. It fails for the three reasons above, with the busiest task measuring about twice the least busy. Its one virtue is zero signal, zero state, zero configuration.</p>
+<p><strong>Least-loaded round robin</strong>: the client sends to whichever backend has <strong>the fewest active requests</strong> by its own count, round-robining among ties. The direction is right — a slow backend accumulates active requests and is automatically sent less. But it has two hard failures, and the first is the line worth memorizing from this chapter:</p>
+<blockquote>A broken backend that returns an error in a millisecond for every request has an active-request count of <code>0</code> forever — by this measure it <strong>is the idlest</strong>, so it swallows all new requests.</blockquote>
+<p>The fix is plain and inelegant: <strong>count recent errors as active requests for a period</strong>, so its "active count" is no longer 0. The general lesson: <strong>any load signal that only looks at work-in-flight must account for failures separately, or failure becomes attractiveness.</strong></p>
+<p>The second failure was noted above: <strong>the active-request count is only the client's own share</strong> — the same backend may be stuffed full by fifty other clients while looking idle to you.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 222" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ga" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="gb" markerheight="10" markerwidth="10" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#e06b6b"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="16" y="20">Why least-loaded fails: the one with 0 active requests may be broken</text>
+<rect fill="rgba(91,157,249,0.12)" height="40" rx="6" stroke="#5b9df9" width="96" x="16" y="98"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="64" y="123">client</text>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="5" stroke="#7c8593" width="264" x="300" y="38"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="432" y="57">backend 1 · 4 active · healthy, 40ms each</text>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="5" stroke="#7c8593" width="264" x="300" y="76"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="432" y="95">backend 2 · 5 active · healthy, 45ms each</text>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="5" stroke="#7c8593" width="264" x="300" y="114"></rect>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="432" y="133">backend 3 · 4 active · healthy, 40ms each</text>
+<rect fill="rgba(224,107,107,0.2)" height="28" rx="5" stroke="#e06b6b" stroke-width="2" width="264" x="300" y="152"></rect>
+<text fill="#f0c4c4" font-size="10" text-anchor="middle" x="432" y="171">backend 4 · 0 active · broken, errors in 1ms</text>
+<line marker-end="url(#ga)" stroke="#7c8593" x1="114" x2="296" y1="112" y2="54"></line>
+<line marker-end="url(#ga)" stroke="#7c8593" x1="114" x2="296" y1="115" y2="92"></line>
+<line marker-end="url(#ga)" stroke="#7c8593" x1="114" x2="296" y1="121" y2="130"></line>
+<line marker-end="url(#gb)" stroke="#e06b6b" stroke-width="2.6" x1="114" x2="296" y1="126" y2="168"></line>
+<text fill="#e06b6b" font-size="10.5" x="120" y="152">all new requests</text>
+<text fill="#7c8593" font-size="10.5" x="16" y="200">Sorting by active requests alone makes the fastest failer rank first</text>
+<text fill="#8fbaff" font-size="10.5" x="16" y="216">Fix: count recent errors as active requests for a while, so its count is not 0</text>
+</svg>
+<figcaption>Fig 3 · The dead-fish trap: the faster a backend fails, the idler it looks by active-request count — so the broken one becomes the most attractive.</figcaption>
+</figure>
+<p><strong>Weighted round robin</strong>: let <strong>the backend report for itself</strong> — it puts the utilization, query rate and error rate it measured <strong>into the RPC response on the way back</strong>; the client keeps a moving average per backend and derives weights from it.</p>
+<p>Why does this one win? <strong>The signal comes from the thing being measured</strong> (utilization is measured by the backend itself, far more accurate than counting active requests from outside), <strong>it costs no extra probe</strong> (it rides the response, marginal cost near zero), and <strong>it absorbs machine heterogeneity for free</strong> — a machine whose CPU is being stolen by a neighbour reports high utilization by itself, and the client never needs to know why. The cost: it reports an average over the slice of time just past, so <strong>the information lags whenever load shifts abruptly</strong>; and how error rate folds into the weight is a knob — turn it too far and one blip empties a backend completely.</p>
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 1 · Three load balancing policies: where the signal comes from, what it catches, what it costs</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Policy</th><th>Signal source</th><th>Spots slow backends</th><th>Spots broken backends</th><th>Main cost / failure mode</th></tr></thead>
+<tbody>
+<tr><th>Simple round robin</th><td>none</td><td>no</td><td>no</td><td>busiest task's CPU <strong>about 2x the least busy</strong>; capacity must be sized for it</td></tr>
+<tr><th>Least-loaded</th><td>the client's own <strong>active-request count</strong></td><td>yes</td><td><strong>inverted — it is drawn to them</strong></td><td>a backend erroring instantly has 0 active, so it ranks first; and the count is only your own share</td></tr>
+<tr><th>Weighted round robin</th><td><strong>backend-reported</strong> utilization / qps / error rate</td><td>yes</td><td>yes (error rate folded into the weight)</td><td>signal lags by one window; the error-rate coefficient needs tuning</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · Picking the subset: what each approach costs</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th></th><th>Random</th><th>Deterministic</th><th>Random + rendezvous hashing</th></tr></thead>
+<tbody>
+<tr><th>Connection spread</th><td>visibly skewed</td><td><strong>perfectly even</strong></td><td>approaches even as clients grow</td></tr>
+<tr><th>Add / remove one backend</th><td>doesn't matter</td><td>the shuffle changes; subsets can <strong>turn over wholesale</strong></td><td>each client's list changes <strong>at most 1 entry</strong></td></tr>
+<tr><th>Global coordination</th><td>none</td><td>required: client ids and backend list order must agree</td><td>none</td></tr>
+<tr><th>Best for</th><td>when subsets can be large</td><td><strong>stable</strong> backend sets with assignable ids</td><td>backends that scale up and down often</td></tr>
+</tbody></table></div>
+<p>To close: <strong>the three mechanisms each solve a different dimension and none substitutes for another</strong> — subsetting answers "who do I connect to", the LB policy answers "who do I send to", lame duck answers "how do I leave cleanly". If you may keep only one, keep lame duck: the first two affect cost and p99, this one affects the error rate — and the error rate is the part users see directly.</p>
+<h2>Why it matters / in real systems</h2>
+<p>The value of this chapter is that it <strong>splits "load balancing" from one noun into three unrelated questions</strong>: who to connect to, who to send to, how to leave. Conflate them and you end up at "just use least-connections", which amplifies faults on real backends. The three best interview follow-ups live here too: why simple round robin isn't enough, why "least-loaded" walks straight into a bad node, and why backend self-reporting beats client-side observation.</p>
+<div class="ev">
+<div class="evh">REAL-WORLD EVIDENCE · NOT THE BOOK'S CLAIMS — THE PROJECTS' OWN PUBLIC WORDS</div>
+<ul>
+<li><strong>gRPC</strong> turned this chapter's weighted round robin into a first-class policy, <code>weighted_round_robin</code>. The reason opens the proposal: gRPC "<strong>does not have any first-class support for weighted round robin load balancing</strong>", and faking it by feeding <code>round_robin</code> duplicate addresses takes "a lot of machinery". The weight is computed from backend-reported utilization, qps and error rate: <code>weight = qps / (utilization + eps/qps × error_utilization_penalty)</code> — <strong>even the patch "error rate must be folded in separately" made it into the formula</strong>, which is exactly this chapter's fix for the dead-fish trap. The companion A51 has backends attach the metrics "<strong>in the trailing metadata when the corresponding RPC finishes</strong>". <span class="src"><a href="https://github.com/grpc/proposal/blob/master/A58-client-side-weighted-round-robin-lb-policy.md" rel="noopener" target="_blank">gRFC A58, "weighted_round_robin LB policy" ↗</a> · <a href="https://github.com/grpc/proposal/blob/master/A51-custom-backend-metrics.md" rel="noopener" target="_blank">gRFC A51, "Custom Backend Metrics" ↗</a></span></li>
+<li><strong>Envoy</strong>'s own documentation concedes that "least-loaded" <strong>is never implemented the textbook way</strong>: with equal weights its least-request policy uses an <code>O(1)</code> algorithm that "<strong>selects N random available hosts as specified in the configuration (2 by default) and picks the host which has the fewest active requests</strong>" — power of two choices — because this "<strong>is nearly as good as an O(N) full scan</strong>" and shows "resistance to herding behavior". <strong>The chapter says "use least-loaded"; Envoy adds "but don't actually scan them all".</strong> <span class="src"><a href="https://github.com/envoyproxy/envoy/blob/main/docs/root/intro/arch_overview/upstream/load_balancing/load_balancers.rst" rel="noopener" target="_blank">Envoy architecture docs, "Load Balancers" ↗</a></span></li>
+<li><strong>Counter-evidence: gRPC did not adopt deterministic subsetting.</strong> Its subsetting proposal settled on <strong>random subsetting with rendezvous hashing</strong>, noting that the deterministic version's "<strong>previous pull request</strong>" had "<strong>received pushback</strong>". The reason for rendezvous hashing lands squarely on this chapter's weak spot: it guarantees "<strong>that if a single server is either added or removed to the endpoints list, every client will update at most 1 entry in its subset</strong>". The same proposal confirms the chapter's premise — having every server hold as many connections as there are clients is "<strong>unnecessarily costly when there are many clients</strong>". <span class="src"><a href="https://github.com/grpc/proposal/blob/master/A68-random-subsetting.md" rel="noopener" target="_blank">gRFC A68, "Random Subsetting with Rendezvous Hashing" ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/scalability-day1.en.html" rel="noopener" target="_blank">System Design · Day 1 Scalability</a> — from one box to tens of millions of QPS: stateless horizontal scaling, sizing for peak versus mean, and how to price that "double headroom" bill</aside>
+<h2>Pitfalls and open questions</h2>
+<ul>
+<li><strong>Treating "least connections / least loaded" as the default optimum.</strong> It walks straight toward whichever backend fails fastest. Any policy built on work-in-flight has to discount recent errors, or a fault gets amplified into full traffic on a bad node.</li>
+<li><strong>Assuming client-side LB sees the whole picture.</strong> It sees only what it sent. Backend self-reporting is the only signal source that aggregates across clients — the root reason weighted round robin wins.</li>
+<li><strong>Deterministic subsetting is overrated.</strong> It gives a perfectly even connection spread, but demands globally consistent client ids and backend list ordering, and turns subsets over wholesale when the fleet scales. <strong>"Perfectly even" and "changes little when things change" are two different goals, and this chapter optimized the first</strong>; the gRPC community moved to random subsetting with rendezvous hashing for that reason.</li>
+<li><strong>Period limits.</strong> Written in 2016, the chapter describes policies inside Stubby-era client libraries. Today the same ideas land on service meshes, xDS and ORCA, and approaches the chapter does not cover have appeared. <strong>But its three conclusions — the signal must come from the backend, failures must be counted separately, departures must take two steps — were not overturned; they were standardized.</strong></li>
+<li><strong>An honest counter-argument.</strong> For a service with a dozen backends and a handful of callers, this whole apparatus is over-engineering: simple round robin plus a decent health check carries you to a considerable scale, and subsetting is a no-op when there are fewer backends than the subset size.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. Datacenter load balancing is <strong>client-side</strong>: the caller's RPC library picks the backend, with no device in between. The cost is that it <strong>only sees its own share of traffic</strong> — every compromise in the chapter descends from this.</p>
+<p>2. The ideal (equal share for all, nobody overloaded) is unreachable, and the three reasons are exactly why simple round robin fails: <strong>requests cost differently, machines are not homogeneous, subsets are small so variance is large</strong>. Measured cost: the busiest task's CPU is <strong>about twice the least busy one's</strong>, and capacity must be sized for it.</p>
+<p>3. Connections are a <strong>multiplication</strong>: 10,000 clients × 1,000 backends = 10 million connections, hundreds of GB of memory at <code>10 KB</code> per end — hence <strong>subsetting</strong>, at <strong>20–100 tasks</strong>. Picking at random skews visibly (you would need about three quarters of the fleet to even it out, which defeats the point); <strong>deterministic subsetting</strong> — shuffle seeded by round number, slice by index — connects every backend the same number of times, at the price of globally consistent ids and list order, and wholesale turnover when the list changes.</p>
+<p>4. The most counter-intuitive line in the chapter: <strong>a broken backend that errors in a millisecond has 0 active requests, so it is the most attractive backend under "least-loaded".</strong> The fix is to count recent errors as active requests for a period. Generalized: <strong>any signal that only looks at work-in-flight must book failures separately, or failure becomes attractiveness.</strong></p>
+<p>5. <strong>Weighted round robin</strong> wins: the backend puts utilization / qps / error rate <strong>into the RPC response</strong>, and the client weights by a moving average. The signal comes from the measured party, costs no extra probe, and absorbs machine heterogeneity; the cost is a one-window lag.</p>
+<p>6. <strong>Lame duck</strong> splits departure in two: broadcast "stop sending to me", drain in-flight, then exit. One rolling update of a 1,000-task service is 1,000 departures — without it, every routine release pours errors onto users. It has to be a framework capability.</p>
+<p>7. Landings and revisions: gRPC made weighted round robin first-class (<code>weighted_round_robin</code> + ORCA), with the error-rate discount written into the weight formula; Envoy concedes nobody really does an <code>O(N)</code> full scan and uses power-of-two-choices instead; and deterministic subsetting was replaced by random subsetting with rendezvous hashing.</p>
+</div>
+</div>
+<footer>Book Deep Read · Finish this page and you have the chapter's core; for the full case studies, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
