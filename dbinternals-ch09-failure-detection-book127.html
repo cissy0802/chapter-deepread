@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals 第 9 章 · 故障检测 — 专业书籍精读 Book 127</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -53,7 +54,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </style></head><body>
 <div class="container">
 <p class="top">专业书籍精读 · Database Internals · 第 9 章</p>
-<h1>故障检测</h1>
+<h1 data-tts="379bbbd071410a87">故障检测</h1>
 <p class="sub">Database Internals · Ch 9 · Alex Petrov · 2019</p>
 <p class="langbar"><a href="dbinternals-ch09-failure-detection-book127.en.html">EN →</a></p>
 <div class="modebar">
@@ -61,13 +62,13 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <button data-mode="deep">精读版</button>
 </div>
 <div class="mode mode-pop">
-<h2>这一章讲什么？</h2>
+<h2 data-tts="6bc6824a0c52342b">这一章讲什么？</h2>
 <p>你给同事发了条消息，十分钟没回。他在开会？手机没电？还是出事了？你分不清。一堆机器合作干活时，每台机器每秒都在替彼此回答同一个问题：<strong>那台机器是死了，还是只是慢？</strong>《Database Internals》第 9 章讲的就是这件事——怎么判断一个节点挂了，以及为什么这件事根本做不到「判得准」。</p>
-<h2>麻烦在于：「没消息」不是消息</h2>
+<h2 data-tts="c8ce957cc8318414">麻烦在于：「没消息」不是消息</h2>
 <p>人走了不会自己发讣告。机器崩溃时也不会留一句「我要没了」的告别——它<strong>就是不说话了</strong>。只能反着推：这么久没吭声，八成是没了。可「这么久」到底多久？没人知道。这就是整章的死结：<strong>沉默既可能是死亡，也可能只是堵车</strong>，从外面看一模一样。</p>
-<h2>旧世界为什么难：等多久都是错的</h2>
+<h2 data-tts="70acec4735f4ccd1">旧世界为什么难：等多久都是错的</h2>
 <p>最朴素的办法是定个闹钟：3 秒不回就当他死了。<strong>等太短</strong>——对方只是网络抖了一下、或者正清理内存卡了两秒，你就把一个活人宣判死亡。这叫误杀，代价很贵：系统以为头儿没了、重新选一个，结果两个头同时下令；或者把几百 GB 数据往别处搬，把本来只是抖了一下的网络彻底压垮——<strong>检测器亲手制造了它要检测的那场故障</strong>。<strong>等太长</strong>——真死的机器，请求还在往它身上发，用户干等三十秒。短了误杀，长了迟钝，中间不存在「刚刚好」的数字。</p>
-<h2>核心的点子：从「死没死」改成「有多可疑」</h2>
+<h2 data-tts="45b2218786daba46">核心的点子：从「死没死」改成「有多可疑」</h2>
 <p>这一章最好用的想法是：<strong>别再逼系统回答是非题</strong>。四个办法层层递进——</p>
 <ul>
 <li><strong>报平安</strong>：让每台机器每隔一秒喊一声「我还在」。听不到就开始计时。</li>
@@ -75,19 +76,19 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>换条路再问一声</strong>：你打不通，不代表他关机了，也可能只是你俩之间那段路断了。那就托旁边几个人替你敲敲门。</li>
 <li><strong>八卦式扩散</strong>：每台机器把「我最近听谁说过话」随口讲给几个邻居，邻居再接着往外讲。几轮之后全场都知道谁最近没声了，<strong>不需要一个中心裁判挨个点名</strong>。</li>
 </ul>
-<h2>该怎么选</h2>
+<h2 data-tts="7599375214b10201">该怎么选</h2>
 <p>真正的取舍不是「怎么判得更准」，而是<strong>「判错了，哪个方向更亏」</strong>：银行转账宁可慢也不能误杀——冒出两个头会把账写坏；聊天软件的小绿点判错无所谓，要的是快。</p>
 <p>诚实的代价是：<strong>这些办法一个都不保证正确</strong>——只要消息可以任意迟到，「慢」和「死」就分不开，所有检测器都在赌概率。</p>
-<h2>一句话记住</h2>
+<h2 data-tts="cabd208b6b10c40e">一句话记住</h2>
 <div class="tl">
 <p>你永远无法确定另一台机器是死了还是只是慢。所以别追求「判得对」，而要把「死 / 活」的是非题换成<strong>「有多可疑」的分数</strong>，让不同的动作按自己的代价各自定线——同时承认：你迟早会判错，系统必须扛得住那一次判错。</p>
 </div>
 <p class="switch-hint">想看具体算法、阈值怎么定和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
 </div>
 <div class="mode mode-deep" hidden="">
-<h2>一句话</h2>
+<h2 data-tts="9c59bda9644f0e06">一句话</h2>
 <p class="lead">你以为故障检测是「判断一台机器死没死」，其实它真正的目标是：<strong>在「永远判不准」这个前提下，把判错的代价管住</strong>。这一章先把死结摆明——异步网络里「崩溃」和「很慢」从外部观察不可区分——再给出工程上最有价值的那一步转向：<strong>别让检测器输出布尔值，让它输出一个可调的怀疑度，把定线的权力交给用它的人</strong>。</p>
-<h2>Glossary · 术语表</h2>
+<h2 data-tts="2f7330eaf90a719c">Glossary · 术语表</h2>
 <div class="glossary">
 <ul>
 <li><strong>异步系统（asynchronous system）</strong>：对消息延迟和进程速度<em>不设任何上界</em>的模型。真实网络最接近它，本章的困难全从这里来。</li>
@@ -102,108 +103,108 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>租约（lease）</strong>：一段有期限的授权。到期不续就自动失效，不需要别人来宣判。</li>
 </ul>
 </div>
-<h2>坐标</h2>
+<h2 data-tts="aeed26a8565a4af5">坐标</h2>
 <p>Part II「分布式系统」的第二章。上承第 8 章——那一章刚把链路有多可靠、时钟有多可信、节点会怎么坏这张假设表填好；下启第 10 章领导者选举：<strong>选主的第一步永远是「先认定老的那个死了」</strong>。再往后的复制、反熵、共识，都把故障检测当成一个可插拔的底层零件。对应现实里哪些东西？Cassandra 判定节点存活、ZooKeeper / etcd 的会话过期、Kubernetes 把节点标成 NotReady、Kafka 发现 broker 掉线——全是这一章。</p>
-<h2>这章要解决什么</h2>
+<h2 data-tts="c7f6e5663298fac9">这章要解决什么</h2>
 <p>先说不解决会怎样，两个方向都很贵。</p>
 <p><strong>漏判的代价</strong>：一个 3 节点的强一致集群，主挂了却没人发现，整个集群就写不进去——不是慢，是彻底不可写，直到有人手动介入。故障检测决定「多久之后系统开始自救」，这个数字直接就是 RTO（恢复时间目标）的下限。</p>
 <p><strong>误杀的代价更隐蔽、也更贵</strong>：两百节点的集群把 5 个健康节点判死，会立刻触发副本重建和数据再平衡——跨机架搬几百 GB，把本来只抖了 200 毫秒的网络彻底打死，于是更多节点被判死，雪崩。这就是本章最该先建立的认知：<strong>故障检测器不是传感器，是执行器</strong>。它一开口，系统就切主、挪流量、搬数据，全是很贵或不可撤销的动作。所以误判不是「读数不准」，是<strong>真实的破坏行为</strong>。</p>
 <p>而「做准」本身就不可能。同机房一次往返通常 0.2 毫秒上下，抖到 5–20 毫秒很常见；一次 JVM Full GC 能把进程冻住 0.5 到 5 秒；跨区链路抖几百毫秒是家常便饭。超时设 1 秒，一次 GC 就足以误杀健康节点；设 30 秒，真死时用户干等 30 秒。<strong>这不是参数没调好，是异步模型下的原理性障碍</strong>：不设延迟上界，就永远分不开「慢」和「死」。这一章要回答的是<em>既然判不准，那该怎么办</em>。</p>
-<h2>核心内容，讲透</h2>
-<h3>一、两把尺子：完备性与准确性，为什么不能都要</h3>
+<h2 data-tts="0cfa727733263d92">核心内容，讲透</h2>
+<h3 data-tts="8f3d7146f7e14cab">一、两把尺子：完备性与准确性，为什么不能都要</h3>
 <p>书里沿用 Chandra 与 Toueg 的经典框架，用两条性质给检测器打分：</p>
 <ul>
 <li><strong>完备性（completeness）</strong>：每个真的崩溃了的进程，最终都会被怀疑。这是<em>活性</em>——该抓的终归抓得到。</li>
 <li><strong>准确性（accuracy）</strong>：活着的进程不该被怀疑。这是<em>安全性</em>——不冤枉好人。</li>
 </ul>
 <p>异步网络里两条不可兼得，拉扯方向也一目了然：超时调长，准确性升、完备性变慢；调短则反之。书里的处理很务实——<strong>完备性很便宜（只要肯一直等，早晚会怀疑到它头上），难的是准确性</strong>。所以真实检测器一律走同一条路：保证完备性，尽力压低误判，并<strong>允许撤回怀疑</strong>——先标成「可疑（suspect）」，对方又说话了就取消；只有在不可逆的动作前（比如踢出集群）才升级成「定罪（convict）」。这个两级结构是本章所有算法共同的骨架。</p>
-<h3>二、心跳与 ping：超时既是唯一的信息，也是唯一的错误来源</h3>
+<h3 data-tts="c10ee4a82b9dfa81">二、心跳与 ping：超时既是唯一的信息，也是唯一的错误来源</h3>
 <p>拿信息只有两种姿势：<strong>ping</strong> 是监控方主动问、等对方回；<strong>心跳</strong>是被监控方定期报平安。心跳省掉一半消息但要求对方配合，ping 顺带能量出往返时延。两者软肋完全一样：<strong>唯一判据是超时</strong>，而超时只说明「这段时间内我没收到」。</p>
 <figure>
-<svg viewBox="0 0 640 270" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
-<defs><marker id="fd1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
-<text x="24" y="22" fill="#5b9df9" font-size="12.5" font-weight="700">① 超时调短：一次 GC 停顿就误杀活节点</text>
-<rect x="190" y="56" width="210" height="44" fill="rgba(155,108,245,0.16)" rx="4"/>
-<text x="295" y="50" fill="#cdd3db" font-size="11" text-anchor="middle">GC 停顿 2.5 秒（节点还活着）</text>
-<line x1="40" y1="78" x2="610" y2="78" stroke="#7c8593"/>
-<circle cx="70" cy="78" r="4" fill="#5b9df9"/><circle cx="110" cy="78" r="4" fill="#5b9df9"/><circle cx="150" cy="78" r="4" fill="#5b9df9"/><circle cx="190" cy="78" r="4" fill="#5b9df9"/><circle cx="410" cy="78" r="4" fill="#5b9df9"/>
-<text x="70" y="100" fill="#7c8593" font-size="10" font-family="monospace">心跳 1s/次</text>
-<text x="416" y="100" fill="#7c8593" font-size="10" font-family="monospace">心跳恢复</text>
-<line x1="240" y1="40" x2="240" y2="112" stroke="#e8794b" stroke-dasharray="4 4"/>
-<text x="248" y="124" fill="#e8794b" font-size="11">超时到期 → 判死 ✕ 误杀</text>
-<text x="24" y="166" fill="#5b9df9" font-size="12.5" font-weight="700">② 超时调长：真故障拖很久才被发现</text>
-<line x1="40" y1="210" x2="610" y2="210" stroke="#7c8593"/>
-<circle cx="70" cy="210" r="4" fill="#5b9df9"/><circle cx="110" cy="210" r="4" fill="#5b9df9"/><circle cx="150" cy="210" r="4" fill="#5b9df9"/>
-<text x="172" y="215" fill="#e8794b" font-size="15" font-weight="700">✕</text>
-<text x="190" y="198" fill="#e8794b" font-size="11">节点真的崩溃</text>
-<line x1="190" y1="236" x2="518" y2="236" stroke="#7c8593" marker-end="url(#fd1)"/>
-<text x="352" y="254" fill="#7c8593" font-size="10.5" text-anchor="middle" font-family="monospace">这段时间请求还在往它身上发</text>
-<line x1="520" y1="180" x2="520" y2="242" stroke="#8fbaff" stroke-dasharray="4 4"/>
-<text x="514" y="176" fill="#8fbaff" font-size="11" text-anchor="end">超时到期 → 才开始自救</text>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 270" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="fd1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="24" y="22">① 超时调短：一次 GC 停顿就误杀活节点</text>
+<rect fill="rgba(155,108,245,0.16)" height="44" rx="4" width="210" x="190" y="56"></rect>
+<text fill="#cdd3db" font-size="11" text-anchor="middle" x="295" y="50">GC 停顿 2.5 秒（节点还活着）</text>
+<line stroke="#7c8593" x1="40" x2="610" y1="78" y2="78"></line>
+<circle cx="70" cy="78" fill="#5b9df9" r="4"></circle><circle cx="110" cy="78" fill="#5b9df9" r="4"></circle><circle cx="150" cy="78" fill="#5b9df9" r="4"></circle><circle cx="190" cy="78" fill="#5b9df9" r="4"></circle><circle cx="410" cy="78" fill="#5b9df9" r="4"></circle>
+<text fill="#7c8593" font-family="monospace" font-size="10" x="70" y="100">心跳 1s/次</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" x="416" y="100">心跳恢复</text>
+<line stroke="#e8794b" stroke-dasharray="4 4" x1="240" x2="240" y1="40" y2="112"></line>
+<text fill="#e8794b" font-size="11" x="248" y="124">超时到期 → 判死 ✕ 误杀</text>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="24" y="166">② 超时调长：真故障拖很久才被发现</text>
+<line stroke="#7c8593" x1="40" x2="610" y1="210" y2="210"></line>
+<circle cx="70" cy="210" fill="#5b9df9" r="4"></circle><circle cx="110" cy="210" fill="#5b9df9" r="4"></circle><circle cx="150" cy="210" fill="#5b9df9" r="4"></circle>
+<text fill="#e8794b" font-size="15" font-weight="700" x="172" y="215">✕</text>
+<text fill="#e8794b" font-size="11" x="190" y="198">节点真的崩溃</text>
+<line marker-end="url(#fd1)" stroke="#7c8593" x1="190" x2="518" y1="236" y2="236"></line>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle" x="352" y="254">这段时间请求还在往它身上发</text>
+<line stroke="#8fbaff" stroke-dasharray="4 4" x1="520" x2="520" y1="180" y2="242"></line>
+<text fill="#8fbaff" font-size="11" text-anchor="end" x="514" y="176">超时到期 → 才开始自救</text>
 </svg>
 <figcaption>固定超时的两难：调短，一次 GC 停顿就把活节点判死；调长，真故障要拖很久才发现。中间不存在一个「刚刚好」的值。</figcaption>
 </figure>
-<h3>三、无超时检测器：把「等了多久」换成「谁总垫底」</h3>
+<h3 data-tts="ca94e6002a15468f">三、无超时检测器：把「等了多久」换成「谁总垫底」</h3>
 <p>第一个跳出超时的思路（Mostéfaoui、Mourgaya、Raynal 提出）：<strong>不看时钟，只看相对顺序</strong>。每个进程周期性向所有人广播带轮次号的心跳；收方每轮<em>只等最先到的 n−f 个</em>（n 是节点数，f 是允许崩溃的上限），凑够就进下一轮，把持续垫底的标为可疑。</p>
 <p>直觉：不问「他慢了几毫秒」，只问「<strong>在所有人里他是不是总垫底</strong>」。好处很漂亮——机房整体变慢时大家一起变慢、排名不变，不会集体误杀，而这恰是固定超时最容易翻车的场景。代价是两条前提：最多 f 个进程崩溃、链路公平损失（无限重发必有送达）；而且每轮全员广播，消息量 <code>O(n²)</code>——节点翻倍消息翻四倍，适合几十个节点，不适合上千。</p>
-<h3>四、外包心跳：打不通，先换条路再敲一次门</h3>
+<h3 data-tts="35cdbe5d522126bb">四、外包心跳：打不通，先换条路再敲一次门</h3>
 <p>一个便宜又有效的技巧：A 收不到 B 的回应时先别定罪，而是<strong>请 k 个邻居代自己去探 B</strong>；只要任一邻居听到 B 的回音，A 就撤销怀疑。它把两件常被混为一谈的事拆开了：<strong>「A 到 B 这段路坏了」和「B 真的坏了」</strong>。多数「某台机器莫名掉线又回来」的事故，根子都在前者。代价是多一跳延迟和 k 倍探测消息。</p>
-<h3>五、φ-accrual：把是非题换成一条连续的怀疑度</h3>
+<h3 data-tts="a93bdfad7f380069">五、φ-accrual：把是非题换成一条连续的怀疑度</h3>
 <p>全章最值得带走的设计（Hayashibara 等人 2004 年提出）。三步：维护最近若干次（实现里常取几百到上千次）<strong>心跳到达间隔</strong>的滑动窗口 → 用样本拟合一个分布 → 当下已沉默 <code>t</code> 毫秒时，算出「正常心跳比 <code>t</code> 还晚才到」的概率，取负对数输出：<code>φ = -log₁₀ P(比 t 还晚)</code>。</p>
 <p>白话讲，<strong>φ 就是「这么久没动静有多离谱」的分贝数</strong>：<code>φ=1</code> 意味着此刻定罪大约有 10% 的可能是冤枉的，<code>φ=2</code> 是 1%，<code>φ=3</code> 是 0.1%——<strong>每加 1，误判概率降一个数量级</strong>。它不需要你读懂这个式子，只需要记住这个换算。</p>
 <figure>
-<svg viewBox="0 0 640 240" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
-<text x="24" y="22" fill="#5b9df9" font-size="12.5" font-weight="700">① 先记住它平时的节奏</text>
-<line x1="34" y1="150" x2="216" y2="150" stroke="#7c8593"/>
-<rect x="40" y="142" width="16" height="8" fill="rgba(91,157,249,0.45)"/><rect x="60" y="132" width="16" height="18" fill="rgba(91,157,249,0.45)"/><rect x="80" y="116" width="16" height="34" fill="rgba(91,157,249,0.6)"/><rect x="100" y="98" width="16" height="52" fill="#5b9df9"/><rect x="120" y="90" width="16" height="60" fill="#5b9df9"/><rect x="140" y="110" width="16" height="40" fill="rgba(91,157,249,0.6)"/><rect x="160" y="128" width="16" height="22" fill="rgba(91,157,249,0.45)"/><rect x="180" y="140" width="16" height="10" fill="rgba(91,157,249,0.45)"/>
-<text x="122" y="170" fill="#7c8593" font-size="10.5" text-anchor="middle" font-family="monospace">心跳到达间隔</text>
-<text x="122" y="188" fill="#7c8593" font-size="10.5" text-anchor="middle">最近上千次的分布</text>
-<text x="270" y="22" fill="#9b6cf5" font-size="12.5" font-weight="700">② 沉默越久，怀疑度 φ 越高</text>
-<line x1="300" y1="40" x2="300" y2="200" stroke="#7c8593"/>
-<line x1="300" y1="200" x2="616" y2="200" stroke="#7c8593"/>
-<text x="294" y="46" fill="#8fbaff" font-size="12" text-anchor="end" font-family="monospace">φ</text>
-<line x1="300" y1="150" x2="470" y2="150" stroke="#5b9df9" stroke-dasharray="4 4"/>
-<text x="478" y="168" fill="#8fbaff" font-size="11">φ=3 先挪走流量</text>
-<line x1="300" y1="70" x2="470" y2="70" stroke="#9b6cf5" stroke-dasharray="4 4"/>
-<text x="478" y="62" fill="#c3a6fb" font-size="11">φ=8 才定罪判死</text>
-<path d="M300,198 C 400,196 450,172 500,120 S 572,62 606,44" fill="none" stroke="#9b6cf5" stroke-width="2.2"/>
-<text x="458" y="220" fill="#7c8593" font-size="10.5" text-anchor="middle" font-family="monospace">距上次心跳的时间</text>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 240" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="24" y="22">① 先记住它平时的节奏</text>
+<line stroke="#7c8593" x1="34" x2="216" y1="150" y2="150"></line>
+<rect fill="rgba(91,157,249,0.45)" height="8" width="16" x="40" y="142"></rect><rect fill="rgba(91,157,249,0.45)" height="18" width="16" x="60" y="132"></rect><rect fill="rgba(91,157,249,0.6)" height="34" width="16" x="80" y="116"></rect><rect fill="#5b9df9" height="52" width="16" x="100" y="98"></rect><rect fill="#5b9df9" height="60" width="16" x="120" y="90"></rect><rect fill="rgba(91,157,249,0.6)" height="40" width="16" x="140" y="110"></rect><rect fill="rgba(91,157,249,0.45)" height="22" width="16" x="160" y="128"></rect><rect fill="rgba(91,157,249,0.45)" height="10" width="16" x="180" y="140"></rect>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle" x="122" y="170">心跳到达间隔</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="122" y="188">最近上千次的分布</text>
+<text fill="#9b6cf5" font-size="12.5" font-weight="700" x="270" y="22">② 沉默越久，怀疑度 φ 越高</text>
+<line stroke="#7c8593" x1="300" x2="300" y1="40" y2="200"></line>
+<line stroke="#7c8593" x1="300" x2="616" y1="200" y2="200"></line>
+<text fill="#8fbaff" font-family="monospace" font-size="12" text-anchor="end" x="294" y="46">φ</text>
+<line stroke="#5b9df9" stroke-dasharray="4 4" x1="300" x2="470" y1="150" y2="150"></line>
+<text fill="#8fbaff" font-size="11" x="478" y="168">φ=3 先挪走流量</text>
+<line stroke="#9b6cf5" stroke-dasharray="4 4" x1="300" x2="470" y1="70" y2="70"></line>
+<text fill="#c3a6fb" font-size="11" x="478" y="62">φ=8 才定罪判死</text>
+<path d="M300,198 C 400,196 450,172 500,120 S 572,62 606,44" fill="none" stroke="#9b6cf5" stroke-width="2.2"></path>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle" x="458" y="220">距上次心跳的时间</text>
 </svg>
 <figcaption>φ-accrual：左边统计它平时的心跳间隔，右边把「已经沉默多久」换算成一条连续上升的怀疑度；不同动作按自己的代价各取各的阈值。</figcaption>
 </figure>
 <p>最关键的设计意图常被忽略：<strong>它把「定阈值」从检测器手里交还给了使用方</strong>。同一份怀疑度，路由层可以在 <code>φ=3</code> 就把新请求挪走（可撤销、代价低），选主逻辑等到 <code>φ=8</code> 才定罪（不可逆、代价高）——一个检测器同时服务代价迥异的几方，布尔输出做不到。它还<strong>自适应</strong>：机房整体变慢时窗口里的分布跟着右移，阈值一字不改，判死时间自动放宽。代价：需要热身期攒样本；对<em>突变</em>（网络瞬间从 1 毫秒劣化到 1 秒）反应比固定超时还慢；常用的正态分布假设在长尾很重的真实网络里并不总成立。</p>
-<h3>六、gossip 式检测：不要中心裁判</h3>
+<h3 data-tts="a3492e41672ca040">六、gossip 式检测：不要中心裁判</h3>
 <p>前面的方案都隐含「谁监控谁」的拓扑，gossip 式检测（van Renesse 等 1998 年提出）把这层结构也去掉：每个节点维护一张表，记着<strong>它所知道的每个节点的心跳计数</strong>。每轮把自己那格加一，随机挑几个同伴交换整张表，合并时<strong>同一行取较大的计数</strong>。某行计数在 <code>T_fail</code> 内没涨过就本地判它可疑，再等 <code>T_cleanup</code> 才从表里删掉——这个缓冲是为了防止一条迟到的旧消息把它「复活」。</p>
 <figure>
-<svg viewBox="0 0 640 215" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
-<defs><marker id="fd3" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"/></marker></defs>
-<text x="24" y="22" fill="#5b9df9" font-size="12.5" font-weight="700">每个节点存一张「谁的心跳数到几了」</text>
-<rect x="34" y="44" width="140" height="94" rx="8" fill="rgba(91,157,249,0.07)" stroke="#7c8593"/>
-<text x="104" y="64" fill="#e7ebf1" font-size="12" text-anchor="middle">节点 A</text>
-<text x="104" y="86" fill="#b9c0ca" font-size="11" text-anchor="middle" font-family="monospace">A : 17</text><text x="104" y="104" fill="#b9c0ca" font-size="11" text-anchor="middle" font-family="monospace">B : 12</text><text x="104" y="122" fill="#b9c0ca" font-size="11" text-anchor="middle" font-family="monospace">C : 3</text>
-<rect x="250" y="44" width="140" height="94" rx="8" fill="rgba(91,157,249,0.07)" stroke="#7c8593"/>
-<text x="320" y="64" fill="#e7ebf1" font-size="12" text-anchor="middle">节点 B</text>
-<text x="320" y="86" fill="#b9c0ca" font-size="11" text-anchor="middle" font-family="monospace">A : 14</text><text x="320" y="104" fill="#b9c0ca" font-size="11" text-anchor="middle" font-family="monospace">B : 20</text><text x="320" y="122" fill="#b9c0ca" font-size="11" text-anchor="middle" font-family="monospace">C : 3</text>
-<rect x="466" y="44" width="140" height="94" rx="8" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5" stroke-width="2"/>
-<text x="536" y="64" fill="#e7ebf1" font-size="12" text-anchor="middle">节点 C ✕</text>
-<text x="536" y="86" fill="#7c8593" font-size="11" text-anchor="middle" font-family="monospace">A : 9</text><text x="536" y="104" fill="#7c8593" font-size="11" text-anchor="middle" font-family="monospace">B : 11</text><text x="536" y="122" fill="#7c8593" font-size="11" text-anchor="middle" font-family="monospace">C : 3</text>
-<line x1="176" y1="91" x2="246" y2="91" stroke="#5b9df9" marker-end="url(#fd3)"/>
-<line x1="246" y1="79" x2="176" y2="79" stroke="#5b9df9" marker-end="url(#fd3)"/>
-<text x="211" y="70" fill="#8fbaff" font-size="10" text-anchor="middle" font-family="monospace">gossip</text>
-<line x1="394" y1="84" x2="462" y2="84" stroke="#7c8593" stroke-dasharray="4 4"/>
-<text x="428" y="79" fill="#e8794b" font-size="13" text-anchor="middle" font-weight="700">✕</text>
-<text x="428" y="104" fill="#7c8593" font-size="11" text-anchor="middle">没有回音</text>
-<text x="320" y="168" fill="#cdd3db" font-size="11.5" text-anchor="middle">合并时同一行取较大的计数；谁的计数长时间不涨，谁就可疑</text>
-<text x="320" y="192" fill="#7c8593" font-size="10.5" text-anchor="middle" font-family="monospace">C 停在 3 不动 → 几轮转述之内全场都会知道</text>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 215" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="fd3" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="24" y="22">每个节点存一张「谁的心跳数到几了」</text>
+<rect fill="rgba(91,157,249,0.07)" height="94" rx="8" stroke="#7c8593" width="140" x="34" y="44"></rect>
+<text fill="#e7ebf1" font-size="12" text-anchor="middle" x="104" y="64">节点 A</text>
+<text fill="#b9c0ca" font-family="monospace" font-size="11" text-anchor="middle" x="104" y="86">A : 17</text><text fill="#b9c0ca" font-family="monospace" font-size="11" text-anchor="middle" x="104" y="104">B : 12</text><text fill="#b9c0ca" font-family="monospace" font-size="11" text-anchor="middle" x="104" y="122">C : 3</text>
+<rect fill="rgba(91,157,249,0.07)" height="94" rx="8" stroke="#7c8593" width="140" x="250" y="44"></rect>
+<text fill="#e7ebf1" font-size="12" text-anchor="middle" x="320" y="64">节点 B</text>
+<text fill="#b9c0ca" font-family="monospace" font-size="11" text-anchor="middle" x="320" y="86">A : 14</text><text fill="#b9c0ca" font-family="monospace" font-size="11" text-anchor="middle" x="320" y="104">B : 20</text><text fill="#b9c0ca" font-family="monospace" font-size="11" text-anchor="middle" x="320" y="122">C : 3</text>
+<rect fill="rgba(155,108,245,0.12)" height="94" rx="8" stroke="#9b6cf5" stroke-width="2" width="140" x="466" y="44"></rect>
+<text fill="#e7ebf1" font-size="12" text-anchor="middle" x="536" y="64">节点 C ✕</text>
+<text fill="#7c8593" font-family="monospace" font-size="11" text-anchor="middle" x="536" y="86">A : 9</text><text fill="#7c8593" font-family="monospace" font-size="11" text-anchor="middle" x="536" y="104">B : 11</text><text fill="#7c8593" font-family="monospace" font-size="11" text-anchor="middle" x="536" y="122">C : 3</text>
+<line marker-end="url(#fd3)" stroke="#5b9df9" x1="176" x2="246" y1="91" y2="91"></line>
+<line marker-end="url(#fd3)" stroke="#5b9df9" x1="246" x2="176" y1="79" y2="79"></line>
+<text fill="#8fbaff" font-family="monospace" font-size="10" text-anchor="middle" x="211" y="70">gossip</text>
+<line stroke="#7c8593" stroke-dasharray="4 4" x1="394" x2="462" y1="84" y2="84"></line>
+<text fill="#e8794b" font-size="13" font-weight="700" text-anchor="middle" x="428" y="79">✕</text>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="428" y="104">没有回音</text>
+<text fill="#cdd3db" font-size="11.5" text-anchor="middle" x="320" y="168">合并时同一行取较大的计数；谁的计数长时间不涨，谁就可疑</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle" x="320" y="192">C 停在 3 不动 → 几轮转述之内全场都会知道</text>
 </svg>
 <figcaption>gossip 式故障检测：心跳计数随机扩散、按最大值合并；没有中心裁判，每个节点自己得出结论。</figcaption>
 </figure>
 <p>好处三条都很硬：<strong>没有单点</strong>；每节点每轮消息量固定、<strong>与集群规模无关</strong>（传遍全场的轮数只随节点数的对数增长，几百节点通常几轮之内）；多条转述路径天然抗丢包。坏处同样实在：<strong>你手上的信息是二手的</strong>——判 B 可疑的依据可能是 C 三秒前的转述，所以 <code>T_fail</code> 必须给传播留余量，判死一定更慢。<strong>gossip 是用「慢」换了「省」和「不会散架」。</strong></p>
-<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/dynamo-paper54.html" target="_blank" rel="noopener">CS Papers · Dynamo：亚马逊的高可用键值存储</a> — 无主架构里 gossip 怎么同时承担成员管理、故障检测与 hinted handoff，以及 Amazon 为什么选了「纯本地」的失败判定</aside>
-<h3>七、反过来想：FUSE 把「检测」换成「保证送达的通知」</h3>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/dynamo-paper54.html" rel="noopener" target="_blank">CS Papers · Dynamo：亚马逊的高可用键值存储</a> — 无主架构里 gossip 怎么同时承担成员管理、故障检测与 hinted handoff，以及 Amazon 为什么选了「纯本地」的失败判定</aside>
+<h3 data-tts="651bb59c026f74f7">七、反过来想：FUSE 把「检测」换成「保证送达的通知」</h3>
 <p>本章最后换了个问法：前面所有方案都在答「B 死了吗」，FUSE（Dunagan 等，2004）问的是<strong>我们这次协作还能不能继续</strong>。它把一组相关进程绑成一个<em>失败组</em>，只承诺一件事——<strong>只要组里任何一处出问题（某个进程崩了，或网络把这组切开），所有还活着的成员都会在有限时间内收到通知</strong>；任何成员也能主动引爆它。</p>
 <p>价值在于：上层不必再各自维护一份互相矛盾的「谁还活着」，而是拿到一个<strong>全组一致的信号</strong>——「不确定」被换成「统一放弃、统一重来」。代价同样清楚：粒度从单节点粗化到整组，一个成员出事全组陪葬，是<strong>共命运（shared fate）</strong>的设计，误判爆炸半径更大，只适合本来就一荣俱荣的协作。</p>
-<h2>关键权衡与选型</h2>
+<h2 data-tts="11c40747c3552458">关键权衡与选型</h2>
 <p>这一章的灵魂不是「哪个算法最好」，而是<strong>你愿意往哪个方向犯错</strong>。先横着比机制：</p>
 <p class="tcap">表 1 · 五种故障检测思路的代价对照</p>
 <div class="tblwrap">
@@ -232,19 +233,19 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </table>
 </div>
 <p>一条能直接用的经验：<strong>把动作按「可不可撤销」分层，越不可撤销的用越高的阈值</strong>。挪流量可撤销，几秒就该动；切主和搬数据不可撤销，值得多等十几秒换准确性。φ-accrual 在工业界赢下来，正是因为它是唯一天然支持这种分层的输出形式。</p>
-<h2>为什么重要 / 落到真实系统</h2>
+<h2 data-tts="a576a0686494f687">为什么重要 / 落到真实系统</h2>
 <p>任何「这套系统怎么做高可用」的架构讨论或面试题，第一刀都落在这里——<strong>切主之前总得先有人认定老主死了</strong>。把「超时设多少」答成「输出连续的怀疑度、让不同动作按代价分级取阈值、并在执行端加 fencing」，档次立刻不一样。</p>
 <p>点名几个真家伙：<strong>Cassandra</strong> 用 gossip 传播心跳、用 φ-accrual 的变体判定；<strong>Akka Cluster</strong> 同样用 φ-accrual；<strong>Consul / Serf</strong> 走 SWIM 系的 gossip 加「疑似」中间态；<strong>Kubernetes</strong> 让 kubelet 每 10 秒上报状态，控制面在数十秒宽限期后把节点标成 NotReady 再驱逐 Pod。<strong>etcd / ZooKeeper</strong> 则走另一条路——<strong>租约</strong>：不是别人判你死，而是租约到期自动失效。它的安全性容易证明（只要时钟漂移有界），代价是判死时间的下限被租约长度锁死。</p>
 <div class="ev">
 <div class="evh">大厂实证</div>
 <ul>
-<li><strong>Apache Cassandra 官方文档</strong>把 φ-accrual 写进了架构说明：<em>「Every node in Cassandra runs a variant of the Phi Accrual Failure Detector, in which every node is constantly making an independent decision of if their peer nodes are available or not.」</em>——每个节点<strong>独立</strong>判定，没有全局裁判。<span class="src">Apache Cassandra 文档源文件 · <a href="https://github.com/apache/cassandra/blob/trunk/doc/modules/cassandra/pages/architecture/dynamo.adoc" target="_blank" rel="noopener">architecture/dynamo.adoc</a></span></li>
-<li><strong>HashiCorp（2017）</strong>公布了 SWIM 误判的真实代价与改法：Lifeguard 这组扩展<em>「reduce by 50x the false positives produced by the failure detector」</em>，并且<em>「we can detect failures in almost half the time with 7x fewer false positives」</em>——<strong>快和准可以同时改善，但靠换算法（让节点先怀疑是不是自己卡住了），不是把超时调小</strong>。<span class="src">HashiCorp Blog · Making Gossip More Robust with Lifeguard · <a href="https://www.hashicorp.com/blog/making-gossip-more-robust-with-lifeguard" target="_blank" rel="noopener">原文</a></span></li>
-<li><strong>Microsoft Research（HotOS 2017）</strong>给出了反面：<em>「a key feature of gray failure is differential observability: that the system's failure detectors may not notice problems even when applications are afflicted by them.」</em>——云上真正拖垮可用性的多半不是干脆的宕机，而是<strong>检测器全绿、应用已经挂了</strong>。<span class="src">Gray Failure: The Achilles' Heel of Cloud-Scale Systems · <a href="https://www.microsoft.com/en-us/research/publication/gray-failure-achilles-heel-cloud-scale-systems/" target="_blank" rel="noopener">MSR 论文页</a></span></li>
+<li><strong>Apache Cassandra 官方文档</strong>把 φ-accrual 写进了架构说明：<em>「Every node in Cassandra runs a variant of the Phi Accrual Failure Detector, in which every node is constantly making an independent decision of if their peer nodes are available or not.」</em>——每个节点<strong>独立</strong>判定，没有全局裁判。<span class="src">Apache Cassandra 文档源文件 · <a href="https://github.com/apache/cassandra/blob/trunk/doc/modules/cassandra/pages/architecture/dynamo.adoc" rel="noopener" target="_blank">architecture/dynamo.adoc</a></span></li>
+<li><strong>HashiCorp（2017）</strong>公布了 SWIM 误判的真实代价与改法：Lifeguard 这组扩展<em>「reduce by 50x the false positives produced by the failure detector」</em>，并且<em>「we can detect failures in almost half the time with 7x fewer false positives」</em>——<strong>快和准可以同时改善，但靠换算法（让节点先怀疑是不是自己卡住了），不是把超时调小</strong>。<span class="src">HashiCorp Blog · Making Gossip More Robust with Lifeguard · <a href="https://www.hashicorp.com/blog/making-gossip-more-robust-with-lifeguard" rel="noopener" target="_blank">原文</a></span></li>
+<li><strong>Microsoft Research（HotOS 2017）</strong>给出了反面：<em>「a key feature of gray failure is differential observability: that the system's failure detectors may not notice problems even when applications are afflicted by them.」</em>——云上真正拖垮可用性的多半不是干脆的宕机，而是<strong>检测器全绿、应用已经挂了</strong>。<span class="src">Gray Failure: The Achilles' Heel of Cloud-Scale Systems · <a href="https://www.microsoft.com/en-us/research/publication/gray-failure-achilles-heel-cloud-scale-systems/" rel="noopener" target="_blank">MSR 论文页</a></span></li>
 </ul>
 </div>
-<aside class="xref"><a href="https://hub.cissychen.com/system-design/consensus-coordination-day46.html" target="_blank" rel="noopener">System Design · Day 46 分布式共识与协调</a> — 故障检测的下游：租约、会话过期与 fencing token 怎么把「可能判错」兜成「判错也不出事」</aside>
-<h2>易错点与争议</h2>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/consensus-coordination-day46.html" rel="noopener" target="_blank">System Design · Day 46 分布式共识与协调</a> — 故障检测的下游：租约、会话过期与 fencing token 怎么把「可能判错」兜成「判错也不出事」</aside>
+<h2 data-tts="4c08f201487f6879">易错点与争议</h2>
 <ul>
 <li><strong>把超时当死亡证明</strong>。全章最该带走的一条：超时只证明「这段时间内没收到回音」。真正的防线不在检测器里，而在<strong>执行端</strong>——用 fencing token / epoch 编号，让被误杀的旧主睡醒了也写不进去。<strong>检测器不可靠是前提，不是 bug；系统要设计成「判错也不出事」，而不是「保证不判错」。</strong></li>
 <li><strong>以为调参能解决</strong>。任何固定阈值都是在赌网络分布不变。HashiCorp 那组数字说明出路在算法，不在数字。</li>
@@ -252,8 +253,8 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>以为探测方越多越准</strong>。探测方增多提高完备性、却拉低准确性（任一方误判都会产生怀疑），要配 quorum 式确认：k 个里 m 个同意才定罪。</li>
 <li><strong>时代局限</strong>。本书 2019 年成书，重心在经典检测器；此后工业界实际被两派占住——SWIM 系（Serf / Consul）和租约系（etcd / Kubernetes）。Chandra–Toueg 的 ◇P / ◇S 分类更多是「知道它存在」，很少被直接实现；书中也没展开会撒谎的节点（拜占庭故障）下的检测。</li>
 </ul>
-<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/tail-at-scale-paper27.html" target="_blank" rel="noopener">CS Papers · The Tail at Scale</a> — 「慢」就是新的「死」：尾延迟放大怎么发生，以及对冲请求为什么比等检测器判死更管用</aside>
-<h2>要点</h2>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/tail-at-scale-paper27.html" rel="noopener" target="_blank">CS Papers · The Tail at Scale</a> — 「慢」就是新的「死」：尾延迟放大怎么发生，以及对冲请求为什么比等检测器判死更管用</aside>
+<h2 data-tts="8e198b2801dac2c3">要点</h2>
 <div class="tl">
 <p>① 核心命题：异步网络里「崩溃」与「很慢」不可区分，<strong>故障检测天然不可靠</strong>；目标不是判得准，是判错了代价可控。</p>
 <p>② 两把尺子：<strong>完备性</strong>（该抓的终会抓到，属活性）与<strong>准确性</strong>（不冤枉好人，属安全性）不可兼得；完备性便宜，准确性才难。</p>
