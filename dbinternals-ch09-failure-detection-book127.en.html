@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals Ch 9 · Failure Detection — Books Deep-Read Book 127</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOKS DEEP-READ · DATABASE INTERNALS · CH 9</p>
+<h1>Failure Detection</h1>
+<p class="sub">Database Internals · Ch 9 · Alex Petrov · 2019</p>
+<p class="langbar"><a href="dbinternals-ch09-failure-detection-book127.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You message a colleague. Ten minutes, no reply. Are they in a meeting? Out of battery? In trouble? You can't tell. When a pile of machines works together, every machine spends every second answering that same question about the others: <strong>is that box dead, or just slow?</strong> Chapter 9 of <em>Database Internals</em> is about exactly that — how you decide a node has failed, and why you can never decide it correctly.</p>
+<h2>The catch: silence is not a message</h2>
+<p>People don't publish their own obituary. A crashed machine doesn't send a farewell note either — it <strong>simply stops talking</strong>. So you have to reason backwards: it's been quiet this long, it's probably gone. But how long is "this long"? Nobody knows. That is the knot the whole chapter is tied around: <strong>silence can mean death, or it can mean traffic</strong>, and from the outside the two look identical.</p>
+<h2>Why the old way is hard: every wait is the wrong wait</h2>
+<p>The obvious fix is a stopwatch: no answer in 3 seconds, call it dead. <strong>Wait too little</strong> — the other side merely hit a network hiccup, or spent two seconds tidying up memory, and you have just pronounced a living machine dead. That's a false positive, and it's expensive: the system thinks the boss is gone, elects a new one, and now two bosses are giving orders; or it starts hauling hundreds of gigabytes to other machines and finishes off a network that was only wobbling — <strong>the detector has manufactured the very outage it was watching for</strong>. <strong>Wait too long</strong> and requests keep flowing to a genuinely dead box while users sit there for thirty seconds. Too short kills the living, too long is oblivious, and there is no "just right" number in between.</p>
+<h2>The idea: stop asking "dead or alive", ask "how suspicious"</h2>
+<p>The most useful move in this chapter is to <strong>stop forcing the system to answer a yes/no question</strong>. Four ideas, each building on the last —</p>
+<ul>
+<li><strong>Check in</strong>: have every machine shout "still here" once a second. When the shouting stops, start the clock.</li>
+<li><strong>Learn the habit instead of fixing a rule</strong>: rather than hard-coding "3 seconds", remember how this particular machine normally talks. One that chimes once a second like a metronome going quiet for 5 seconds is deeply weird; another that was always erratic going quiet for 5 seconds may be perfectly normal. So the output stops being "dead / alive" and becomes a <strong>suspicion score</strong> — like a forecast saying "80% chance of rain" instead of insisting "it will rain". Whoever uses the score picks their own line: to stop handing it new work, 60% is plenty; to evict it from the cluster, wait for 95%.</li>
+<li><strong>Try another road before you give up</strong>: you can't reach them, but that doesn't mean their phone is off — the road between you two may simply be out. So ask a few neighbours to go knock instead.</li>
+<li><strong>Let it spread as gossip</strong>: each machine casually tells a few neighbours who it has heard from lately, and those neighbours pass it on. A few rounds later the whole room knows who has gone quiet, <strong>with no central referee calling the roll</strong>.</li>
+</ul>
+<h2>So how do you choose?</h2>
+<p>The real trade-off isn't "how do I judge more accurately" but <strong>"when I judge wrong, which direction hurts more"</strong>: a bank transfer would rather be slow than kill a living node — two bosses will corrupt the ledger; a chat app's little green dot can be wrong all day as long as it's fast.</p>
+<p>The honest cost: <strong>none of these methods is guaranteed correct</strong>. As long as messages can be arbitrarily late, "slow" and "dead" cannot be told apart, and every detector is just playing the odds.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p>You can never be sure whether another machine is dead or merely slow. So don't chase being right — replace the "dead / alive" yes/no question with a <strong>"how suspicious" score</strong> and let each action draw its own line according to what it costs. And accept it: sooner or later you will judge wrong, and the system has to survive that.</p>
+</div>
+<p class="switch-hint">Want the actual algorithms, the thresholds and the diagrams? <a data-mode="deep">→ switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">You think failure detection is about deciding whether a machine is dead. Its real goal is <strong>keeping the cost of being wrong under control, given that you can never be right</strong>. The chapter first states the knot plainly — in an asynchronous network, "crashed" and "very slow" are indistinguishable from the outside — and then makes the move that matters in practice: <strong>stop having the detector emit a boolean, have it emit a tunable degree of suspicion, and hand the threshold to whoever consumes it</strong>.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Asynchronous system</strong>: a model that puts <em>no upper bound</em> on message delay or process speed. Real networks are closest to it, and every difficulty in this chapter follows from it.</li>
+<li><strong>Crash fault</strong>: a process simply stops and sends nothing further; it never sends wrong messages. The default fault model here.</li>
+<li><strong>Heartbeat</strong>: a periodic "I'm alive" message sent <em>by</em> the monitored process.</li>
+<li><strong>Timeout</strong>: an upper bound on waiting. It only proves "I received nothing in this window" — never that the other side is dead.</li>
+<li><strong>False positive</strong>: calling a live node dead. The reverse — missing a dead one — is a false negative.</li>
+<li><strong>Safety and liveness</strong>: safety = nothing bad ever happens; liveness = something good eventually happens. The chapter's two yardsticks map onto these one each.</li>
+<li><strong>Gossip</strong>: every node periodically picks a few random peers and exchanges state; several rounds of retelling spread the news to everyone.</li>
+<li><strong>Split-brain</strong>: two nodes in one cluster both believe they are the leader and both accept writes; the data never reconciles.</li>
+<li><strong>GC pause</strong>: garbage collection freezes the whole process for tens of milliseconds to several seconds — during which it looks exactly like a crash from outside.</li>
+<li><strong>Lease</strong>: a time-limited grant. It expires by itself unless renewed; nobody has to pronounce you dead.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Second chapter of Part II, "Distributed Systems". It follows Chapter 8, which filled in the assumption table — how reliable the link is, how trustworthy time is, how nodes fail — and it sets up Chapter 10, leader election: <strong>the first step of electing a leader is always deciding the old one is dead</strong>. Everything after that — replication, anti-entropy, consensus — treats failure detection as a pluggable component underneath. What does it map to in the wild? Cassandra deciding a node is up, ZooKeeper and etcd expiring sessions, Kubernetes marking a node NotReady, Kafka noticing a broker is gone.</p>
+<h2>The problem it solves</h2>
+<p>Start with what happens if you don't solve it. Both directions are expensive.</p>
+<p><strong>The cost of missing a death</strong>: in a 3-node strongly consistent cluster, if the leader dies and nobody notices, the cluster cannot be written to at all — not slow, unwritable — until a human steps in. Failure detection sets "how long until the system starts saving itself", and that number <em>is</em> the floor on your RTO.</p>
+<p><strong>The cost of a false positive is subtler and bigger</strong>: a 200-node cluster that declares 5 healthy nodes dead immediately kicks off replica rebuilds and rebalancing — hundreds of gigabytes across racks, finishing off a network that had merely wobbled for 200 ms, so more nodes get declared dead, and it avalanches. Which is the mental model to install first: <strong>a failure detector is not a sensor, it is an actuator</strong>. The moment it speaks, the system fails over, reroutes and moves data — all expensive or irreversible. A wrong verdict is not "a bad reading", it is <strong>real destruction</strong>.</p>
+<p>And getting it right is impossible in principle. A same-datacenter round trip is typically around 0.2 ms, with 5–20 ms spikes being common; one JVM full GC can freeze a process for 0.5 to 5 seconds; cross-region links jitter by hundreds of milliseconds routinely. Set the timeout to 1 second and a single GC pause is enough to kill a healthy node; set it to 30 seconds and users wait 30 seconds on a real failure. <strong>This is not a badly tuned parameter, it is a structural obstacle of the asynchronous model</strong>: with no bound on delay, "slow" and "dead" can never be separated. What the chapter answers is <em>given that you can't be right, now what</em>.</p>
+<h2>The core, properly explained</h2>
+<h3>1. Two yardsticks: completeness and accuracy, and why you can't have both</h3>
+<p>The book uses the classic Chandra–Toueg framing, scoring a detector on two properties:</p>
+<ul>
+<li><strong>Completeness</strong>: every process that really crashed is eventually suspected. This is <em>liveness</em> — whatever should be caught is caught in the end.</li>
+<li><strong>Accuracy</strong>: a live process should not be suspected. This is <em>safety</em> — don't convict the innocent.</li>
+</ul>
+<p>In an asynchronous network the two are irreconcilable, and the tug-of-war is obvious: lengthen the timeout and accuracy rises while completeness slows; shorten it and the reverse. The book's handling is pragmatic — <strong>completeness is cheap (keep waiting long enough and you will eventually suspect it), accuracy is the hard part</strong>. So every real detector takes the same road: guarantee completeness, push false positives down as far as you can, and <strong>allow suspicion to be withdrawn</strong> — first mark a node <em>suspected</em>, and cancel it if the node speaks again; only before an irreversible action (evicting it from the cluster, say) escalate to <em>convicted</em>. That two-stage structure is the shared skeleton of every algorithm here.</p>
+<h3>2. Heartbeats and pings: the timeout is the only signal, and the only source of error</h3>
+<p>There are exactly two postures. With a <strong>ping</strong> the monitor asks and waits for an answer; with a <strong>heartbeat</strong> the monitored side checks in on a schedule. Heartbeats halve the message count but need cooperation; pings also measure round-trip time for free. Their weak spot is identical: <strong>the only evidence is a timeout</strong>, and a timeout only says "I received nothing in this window".</p>
+<figure>
+<svg viewBox="0 0 640 270" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="fd1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<text x="24" y="22" fill="#5b9df9" font-size="12.5" font-weight="700">1. Short timeout: one GC pause kills a healthy node</text>
+<rect x="190" y="56" width="210" height="44" fill="rgba(155,108,245,0.16)" rx="4"/>
+<text x="295" y="50" fill="#cdd3db" font-size="11" text-anchor="middle">GC pause, 2.5 s — node still alive</text>
+<line x1="40" y1="78" x2="610" y2="78" stroke="#7c8593"/>
+<circle cx="70" cy="78" r="4" fill="#5b9df9"/><circle cx="110" cy="78" r="4" fill="#5b9df9"/><circle cx="150" cy="78" r="4" fill="#5b9df9"/><circle cx="190" cy="78" r="4" fill="#5b9df9"/><circle cx="410" cy="78" r="4" fill="#5b9df9"/>
+<text x="62" y="100" fill="#7c8593" font-size="10" font-family="monospace">heartbeat 1/s</text>
+<text x="416" y="100" fill="#7c8593" font-size="10" font-family="monospace">heartbeat resumes</text>
+<line x1="240" y1="40" x2="240" y2="112" stroke="#e8794b" stroke-dasharray="4 4"/>
+<text x="248" y="124" fill="#e8794b" font-size="11">timeout fires → declared dead ✕ false positive</text>
+<text x="24" y="166" fill="#5b9df9" font-size="12.5" font-weight="700">2. Long timeout: a real crash goes unnoticed</text>
+<line x1="40" y1="210" x2="610" y2="210" stroke="#7c8593"/>
+<circle cx="70" cy="210" r="4" fill="#5b9df9"/><circle cx="110" cy="210" r="4" fill="#5b9df9"/><circle cx="150" cy="210" r="4" fill="#5b9df9"/>
+<text x="172" y="215" fill="#e8794b" font-size="15" font-weight="700">✕</text>
+<text x="190" y="198" fill="#e8794b" font-size="11">the node really crashed</text>
+<line x1="190" y1="236" x2="518" y2="236" stroke="#7c8593" marker-end="url(#fd1)"/>
+<text x="352" y="254" fill="#7c8593" font-size="10.5" text-anchor="middle" font-family="monospace">requests keep flowing to a dead node</text>
+<line x1="520" y1="180" x2="520" y2="242" stroke="#8fbaff" stroke-dasharray="4 4"/>
+<text x="514" y="176" fill="#8fbaff" font-size="11" text-anchor="end">timeout fires → recovery starts</text>
+</svg>
+<figcaption>The fixed-timeout dilemma: short, and one GC pause kills a live node; long, and a real failure goes unnoticed for ages. There is no "just right" value in between.</figcaption>
+</figure>
+<h3>3. Timeout-free detection: swap "how long did I wait" for "who is always last"</h3>
+<p>The first idea that escapes timeouts (from Mostéfaoui, Mourgaya and Raynal): <strong>ignore clocks entirely, look only at relative order</strong>. Each process periodically broadcasts a round-numbered heartbeat to everyone; in each round a receiver <em>waits only for the first n−f to arrive</em> (n nodes, f the tolerated number of crashes), then moves on, marking whoever is persistently last as suspected.</p>
+<p>The intuition: don't ask "how many milliseconds late is he", ask "<strong>is he always at the bottom of the pack</strong>". The payoff is elegant — when the whole datacenter slows down, everyone slows together, the ranking doesn't move, and you avoid the mass false positives that are exactly where fixed timeouts fall over. The price is two premises: at most f processes crash, and links are fair-loss (retransmit forever and it eventually gets through). Also, every round is an all-to-all broadcast, so traffic is <code>O(n²)</code> — double the nodes, quadruple the messages. Good for tens of nodes, not for thousands.</p>
+<h3>4. Outsourced heartbeats: knock on a different door before convicting</h3>
+<p>A cheap, effective trick: when A gets no answer from B, don't convict — <strong>ask k neighbours to probe B on your behalf</strong>, and withdraw the suspicion the moment any of them hears back. It separates two things routinely conflated: <strong>"the path from A to B is broken" and "B is actually broken"</strong>. Most "that box mysteriously dropped out and came back" incidents are the former. The cost is one extra hop of latency and k times the probe traffic.</p>
+<h3>5. Phi-accrual: turn a yes/no question into a continuous suspicion level</h3>
+<p>The design most worth taking away (Hayashibara et al., 2004). Three steps: keep a sliding window of the last few hundred to a thousand <strong>heartbeat inter-arrival times</strong> → fit a distribution to those samples → when the node has now been silent for <code>t</code> milliseconds, compute the probability that a normal heartbeat would arrive even later than <code>t</code>, and emit its negative logarithm: <code>φ = -log₁₀ P(later than t)</code>.</p>
+<p>In plain words, <strong>φ is the decibel scale of "how outrageous is this silence"</strong>: <code>φ=1</code> means convicting now has roughly a 10% chance of being wrong, <code>φ=2</code> means 1%, <code>φ=3</code> means 0.1% — <strong>every +1 divides the error probability by ten</strong>. You don't need to read the formula, only to remember that conversion.</p>
+<figure>
+<svg viewBox="0 0 640 240" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<text x="24" y="22" fill="#5b9df9" font-size="12.5" font-weight="700">1. Learn its normal rhythm</text>
+<line x1="34" y1="150" x2="216" y2="150" stroke="#7c8593"/>
+<rect x="40" y="142" width="16" height="8" fill="rgba(91,157,249,0.45)"/><rect x="60" y="132" width="16" height="18" fill="rgba(91,157,249,0.45)"/><rect x="80" y="116" width="16" height="34" fill="rgba(91,157,249,0.6)"/><rect x="100" y="98" width="16" height="52" fill="#5b9df9"/><rect x="120" y="90" width="16" height="60" fill="#5b9df9"/><rect x="140" y="110" width="16" height="40" fill="rgba(91,157,249,0.6)"/><rect x="160" y="128" width="16" height="22" fill="rgba(91,157,249,0.45)"/><rect x="180" y="140" width="16" height="10" fill="rgba(91,157,249,0.45)"/>
+<text x="122" y="170" fill="#7c8593" font-size="10.5" text-anchor="middle" font-family="monospace">heartbeat interval</text>
+<text x="122" y="188" fill="#7c8593" font-size="10.5" text-anchor="middle">last ~1000 samples</text>
+<text x="264" y="22" fill="#9b6cf5" font-size="12.5" font-weight="700">2. The longer the silence, the higher φ</text>
+<line x1="300" y1="40" x2="300" y2="200" stroke="#7c8593"/>
+<line x1="300" y1="200" x2="616" y2="200" stroke="#7c8593"/>
+<text x="294" y="46" fill="#8fbaff" font-size="12" text-anchor="end" font-family="monospace">φ</text>
+<line x1="300" y1="150" x2="470" y2="150" stroke="#5b9df9" stroke-dasharray="4 4"/>
+<text x="478" y="168" fill="#8fbaff" font-size="11">φ=3 → drain traffic</text>
+<line x1="300" y1="70" x2="470" y2="70" stroke="#9b6cf5" stroke-dasharray="4 4"/>
+<text x="478" y="62" fill="#c3a6fb" font-size="11">φ=8 → convict</text>
+<path d="M300,198 C 400,196 450,172 500,120 S 572,62 606,44" fill="none" stroke="#9b6cf5" stroke-width="2.2"/>
+<text x="458" y="220" fill="#7c8593" font-size="10.5" text-anchor="middle" font-family="monospace">time since last heartbeat</text>
+</svg>
+<figcaption>Phi-accrual: the left panel learns the node's usual heartbeat spacing; the right turns "how long it has been silent" into a continuously rising suspicion level, and each action picks the threshold its own cost justifies.</figcaption>
+</figure>
+<p>The design intent most often missed: <strong>it hands the job of picking a threshold back to the consumer</strong>. From one suspicion level, the routing layer can drain new requests at <code>φ=3</code> (reversible, cheap) while leader election waits until <code>φ=8</code> to convict (irreversible, expensive) — one detector serving parties with wildly different costs, which a boolean cannot do. It is also <strong>adaptive</strong>: when the datacenter slows down, the distribution in the window shifts right and the time-to-convict stretches automatically without touching a single threshold. The costs: it needs a warm-up period to collect samples; it reacts to a <em>step change</em> (the network going from 1 ms to 1 s instantly) more slowly than a fixed timeout would; and the usual normal-distribution assumption does not always hold on a heavy-tailed real network.</p>
+<h3>6. Gossip-based detection: no central referee</h3>
+<p>Every approach so far implies a "who monitors whom" topology. Gossip-based detection (van Renesse et al., 1998) removes that layer too: each node keeps a table of <strong>the heartbeat counter it knows for every node</strong>. Each round it increments its own cell, picks a few random peers and exchanges the whole table, merging <strong>row by row, keeping the larger counter</strong>. If a row hasn't increased within <code>T_fail</code>, the node locally marks it suspected; only after a further <code>T_cleanup</code> is it dropped from the table — that buffer exists to stop one late, stale message from resurrecting it.</p>
+<figure>
+<svg viewBox="0 0 640 215" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="fd3" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"/></marker></defs>
+<text x="24" y="22" fill="#5b9df9" font-size="12.5" font-weight="700">Each node keeps a table of heartbeat counters</text>
+<rect x="34" y="44" width="140" height="94" rx="8" fill="rgba(91,157,249,0.07)" stroke="#7c8593"/>
+<text x="104" y="64" fill="#e7ebf1" font-size="12" text-anchor="middle">Node A</text>
+<text x="104" y="86" fill="#b9c0ca" font-size="11" text-anchor="middle" font-family="monospace">A : 17</text><text x="104" y="104" fill="#b9c0ca" font-size="11" text-anchor="middle" font-family="monospace">B : 12</text><text x="104" y="122" fill="#b9c0ca" font-size="11" text-anchor="middle" font-family="monospace">C : 3</text>
+<rect x="250" y="44" width="140" height="94" rx="8" fill="rgba(91,157,249,0.07)" stroke="#7c8593"/>
+<text x="320" y="64" fill="#e7ebf1" font-size="12" text-anchor="middle">Node B</text>
+<text x="320" y="86" fill="#b9c0ca" font-size="11" text-anchor="middle" font-family="monospace">A : 14</text><text x="320" y="104" fill="#b9c0ca" font-size="11" text-anchor="middle" font-family="monospace">B : 20</text><text x="320" y="122" fill="#b9c0ca" font-size="11" text-anchor="middle" font-family="monospace">C : 3</text>
+<rect x="466" y="44" width="140" height="94" rx="8" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="536" y="64" fill="#e7ebf1" font-size="12" text-anchor="middle">Node C ✕</text>
+<text x="536" y="86" fill="#7c8593" font-size="11" text-anchor="middle" font-family="monospace">A : 9</text><text x="536" y="104" fill="#7c8593" font-size="11" text-anchor="middle" font-family="monospace">B : 11</text><text x="536" y="122" fill="#7c8593" font-size="11" text-anchor="middle" font-family="monospace">C : 3</text>
+<line x1="176" y1="91" x2="246" y2="91" stroke="#5b9df9" marker-end="url(#fd3)"/>
+<line x1="246" y1="79" x2="176" y2="79" stroke="#5b9df9" marker-end="url(#fd3)"/>
+<text x="211" y="70" fill="#8fbaff" font-size="10" text-anchor="middle" font-family="monospace">gossip</text>
+<line x1="394" y1="84" x2="462" y2="84" stroke="#7c8593" stroke-dasharray="4 4"/>
+<text x="428" y="79" fill="#e8794b" font-size="13" text-anchor="middle" font-weight="700">✕</text>
+<text x="428" y="104" fill="#7c8593" font-size="11" text-anchor="middle">no reply</text>
+<text x="320" y="168" fill="#cdd3db" font-size="11.5" text-anchor="middle">Merge row by row keeping the larger counter; a counter that stops rising is suspect</text>
+<text x="320" y="192" fill="#7c8593" font-size="10.5" text-anchor="middle" font-family="monospace">C is stuck at 3 → a few rounds of retelling and everyone knows</text>
+</svg>
+<figcaption>Gossip-based failure detection: heartbeat counters spread at random and merge by maximum; no central referee, every node reaches its own conclusion.</figcaption>
+</figure>
+<p>Three solid upsides: <strong>no single point</strong>; a fixed message volume per node per round, <strong>independent of cluster size</strong> (the number of rounds to reach everyone grows only with the logarithm of the node count — usually a handful for a few hundred nodes); and natural resistance to packet loss thanks to multiple retelling paths. The downside is equally concrete: <strong>your information is second-hand</strong> — you suspect B on the strength of what C said three seconds ago, so <code>T_fail</code> must leave room for propagation and convicting is necessarily slower. <strong>Gossip trades speed for cheapness and for not falling apart.</strong></p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/dynamo-paper54.en.html" target="_blank" rel="noopener">CS Papers · Dynamo: Amazon's Highly Available Key-value Store</a> — how gossip carries membership, failure detection and hinted handoff at once in a leaderless design, and why Amazon settled on a purely local notion of failure</aside>
+<h3>7. Turn the question around: FUSE makes detection a guaranteed notification</h3>
+<p>The chapter closes by reframing. Everything above answers "is B dead?"; FUSE (Dunagan et al., 2004) asks <strong>can this collaboration still continue?</strong> It binds a set of related processes into a <em>failure group</em> and promises exactly one thing — <strong>if anything anywhere in the group goes wrong (a process crashes, or the network cuts the group apart), every surviving member is notified within bounded time</strong>; any member can also trigger the notification deliberately.</p>
+<p>The value of that swap: the layer above no longer maintains its own mutually contradictory guesses about who is alive, it receives <strong>one signal the whole group agrees on</strong> — "uncertain" becomes "everyone abandons and everyone retries". The cost is just as clear: the granularity coarsens from a node to a group, and one member's trouble takes the group down with it. This is <strong>shared fate</strong> by design, with a larger blast radius for a wrong verdict, so it only suits collaborations that already sink or swim together.</p>
+<h2>The key trade-offs</h2>
+<p>The soul of this chapter isn't "which algorithm wins" but <strong>which direction you'd rather be wrong in</strong>. First, across the mechanisms:</p>
+<p class="tcap">Table 1 · What each failure-detection approach costs</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Mechanism</th><th>Time to convict</th><th>False positives</th><th>Message cost</th><th>Fits</th></tr></thead>
+<tbody>
+<tr><th>Fixed-timeout ping / heartbeat</th><td>Set directly by the timeout, seconds</td><td><strong>High</strong>, and drifts with network jitter</td><td>1–2 messages per pair per period</td><td>Small clusters, stable network, simplest to build</td></tr>
+<tr><th>Timeout-free (relative order)</th><td>Adapts to network speed</td><td>Low; a general slowdown convicts nobody</td><td><code>O(n²)</code>, tens of nodes at most</td><td>Small/mid clusters afraid of jitter-driven avalanches</td></tr>
+<tr><th>Outsourced heartbeats</th><td>One extra hop, slightly more</td><td>Low; separates a broken path from a broken node</td><td>k extra probes per suspicion</td><td>Cross-rack / cross-AZ, asymmetric links</td></tr>
+<tr><th>Phi-accrual</th><td>Set by the consumer's threshold, <strong>tiered</strong></td><td>Priceable: every +1 of <code>φ</code> divides it by ten</td><td>Same as heartbeats plus a little memory</td><td>When downstream actions differ wildly in cost</td></tr>
+<tr><th>Gossip heartbeat table</th><td><strong>Slow</strong>; must allow for propagation</td><td>Medium; the evidence is second-hand</td><td>Fixed per node, independent of size</td><td>Hundreds of nodes, no central referee</td></tr>
+</tbody>
+</table>
+</div>
+<p>Then vertically: given that you will be wrong, <strong>which way is more expensive</strong>? That is what decides where you lean.</p>
+<p class="tcap">Table 2 · Which direction of error hurts more</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Scenario</th><th>Cost of killing a live node</th><th>Cost of missing a dead one</th><th>Lean</th></tr></thead>
+<tbody>
+<tr><th>Leader election / failover</th><td><strong>Extreme</strong>: split-brain, two leaders taking writes, permanent divergence</td><td>High: cluster unwritable, but recoverable</td><td>Slow over wrong; add fencing</td></tr>
+<tr><th>Replica rebuild / rebalance</th><td><strong>Extreme</strong>: hundreds of GB moved for nothing, jitter becomes avalanche</td><td>Medium: temporarily under-replicated</td><td>Most conservative threshold, delay the trigger</td></tr>
+<tr><th>Request routing</th><td>Low: you skip a healthy box and lose a little capacity</td><td>High: requests hit a black hole, users time out</td><td>Skip eagerly; it's reversible</td></tr>
+<tr><th>Presence / membership display</th><td>Very low: the green dot flickers</td><td>Very low</td><td>Optimise for speed</td></tr>
+</tbody>
+</table>
+</div>
+<p>One rule you can apply directly: <strong>tier your actions by reversibility and give the irreversible ones higher thresholds</strong>. Draining traffic is reversible — act within seconds. Failing over and moving data are not — it is worth waiting another ten-plus seconds to buy accuracy. Phi-accrual won in industry precisely because it is the only output shape that supports that tiering natively.</p>
+<h2>Why it matters in real systems</h2>
+<p>Any architecture discussion or interview question about high availability lands here first — <strong>before you fail over, somebody has to decide the old leader is dead</strong>. Answering "how long should the timeout be" with "emit a continuous suspicion level, let each action pick a threshold matching its cost, and fence at the point of execution" is a different class of answer.</p>
+<p>Some real names: <strong>Cassandra</strong> spreads heartbeats over gossip and convicts with a phi-accrual variant; <strong>Akka Cluster</strong> also uses phi-accrual; <strong>Consul / Serf</strong> run SWIM-style gossip with a "suspect" intermediate state; <strong>Kubernetes</strong> has the kubelet report status every 10 seconds and the control plane mark a node NotReady after a grace period of tens of seconds before evicting pods. <strong>etcd and ZooKeeper</strong> take a different road — the <strong>lease</strong>: nobody pronounces you dead, your lease simply expires. Its safety is easy to argue (as long as clock drift is bounded), at the cost of a floor on time-to-convict set by the lease length.</p>
+<div class="ev">
+<div class="evh">FROM THE FIELD</div>
+<ul>
+<li><strong>Apache Cassandra's own documentation</strong> puts phi-accrual in the architecture description: <em>"Every node in Cassandra runs a variant of the Phi Accrual Failure Detector, in which every node is constantly making an independent decision of if their peer nodes are available or not."</em> — every node decides <strong>independently</strong>; there is no global referee.<span class="src">Apache Cassandra docs source · <a href="https://github.com/apache/cassandra/blob/trunk/doc/modules/cassandra/pages/architecture/dynamo.adoc" target="_blank" rel="noopener">architecture/dynamo.adoc</a></span></li>
+<li><strong>HashiCorp (2017)</strong> published both the real cost of SWIM false positives and the fix: the Lifeguard extensions <em>"reduce by 50x the false positives produced by the failure detector"</em>, and <em>"we can detect failures in almost half the time with 7x fewer false positives"</em> — <strong>faster and more accurate at once, but through a better algorithm (having a node suspect that it is the one stalling), not a smaller timeout</strong>.<span class="src">HashiCorp Blog · Making Gossip More Robust with Lifeguard · <a href="https://www.hashicorp.com/blog/making-gossip-more-robust-with-lifeguard" target="_blank" rel="noopener">article</a></span></li>
+<li><strong>Microsoft Research (HotOS 2017)</strong> supplies the counterpoint: <em>"a key feature of gray failure is differential observability: that the system's failure detectors may not notice problems even when applications are afflicted by them."</em> — what actually sinks cloud availability is usually not a clean crash but <strong>detectors all green while the application is already down</strong>.<span class="src">Gray Failure: The Achilles' Heel of Cloud-Scale Systems · <a href="https://www.microsoft.com/en-us/research/publication/gray-failure-achilles-heel-cloud-scale-systems/" target="_blank" rel="noopener">MSR publication page</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/consensus-coordination-day46.en.html" target="_blank" rel="noopener">System Design · Day 46 Consensus and Coordination</a> — what sits downstream of detection: leases, session expiry and fencing tokens, which turn "might be wrong" into "wrong without damage"</aside>
+<h2>Pitfalls and open questions</h2>
+<ul>
+<li><strong>Treating a timeout as a death certificate.</strong> The one thing to take away: a timeout only proves "no answer arrived in this window". The real defence is not in the detector but at the <strong>point of execution</strong> — fencing tokens or epoch numbers, so a wrongly-killed old leader cannot write even after it wakes up. <strong>An unreliable detector is the premise, not a bug; design for "wrong without damage", not for "never wrong".</strong></li>
+<li><strong>Thinking tuning will fix it.</strong> Every fixed threshold is a bet that the network's distribution won't change. HashiCorp's numbers show the way out is the algorithm, not the number.</li>
+<li><strong>Watching only for "is there a reply".</strong> The most common real-world failure mode is <em>replies that are very slow</em>, intermittent packet loss, or errors on a subset of requests — heartbeats all green, users all broken. You have to back the detector with application-level success rates and latency percentiles (<code>p99</code>).</li>
+<li><strong>Assuming more probers means more accuracy.</strong> More probers raises completeness but lowers accuracy (any one of them being wrong produces suspicion), so pair it with quorum confirmation: m of k must agree before convicting.</li>
+<li><strong>Period limits.</strong> The book was written in 2019 and centres on the classic detectors; industry has since been carved up between the SWIM family (Serf, Consul) and the lease family (etcd, Kubernetes). Chandra–Toueg's ◇P / ◇S taxonomy is more "good to know it exists" than something people implement directly, and the book does not cover detection when nodes can lie (Byzantine faults).</li>
+</ul>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/tail-at-scale-paper27.en.html" target="_blank" rel="noopener">CS Papers · The Tail at Scale</a> — slow is the new down: how tail latency gets amplified, and why hedged requests beat waiting for a detector to convict</aside>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. The core claim: in an asynchronous network "crashed" and "very slow" are indistinguishable, so <strong>failure detection is inherently unreliable</strong>; the goal is not accuracy but a controllable cost of being wrong.</p>
+<p>2. Two yardsticks: <strong>completeness</strong> (everything that should be caught eventually is — liveness) and <strong>accuracy</strong> (don't convict the innocent — safety) cannot both be had. Completeness is cheap; accuracy is the hard part.</p>
+<p>3. Every algorithm shares a <strong>suspect → convict</strong> two-stage structure: suspicion is withdrawable, and only irreversible actions escalate to conviction.</p>
+<p>4. Heartbeats and pings have only the timeout as evidence, hence the dilemma: short kills the living (one GC pause is enough), long is oblivious.</p>
+<p>5. Four escapes: <strong>relative ordering</strong> (no clocks, just who is last; immune to general slowdown, costs <code>O(n²)</code>), <strong>outsourced heartbeats</strong> (ask via another path; separates a broken link from a broken node), <strong>phi-accrual</strong> (a continuous suspicion level; every +1 of <code>φ</code> divides the error rate by ten), and <strong>gossip</strong> (no centre, cost independent of size, but slower to convict).</p>
+<p>6. FUSE inverts the question: instead of "who died", guarantee that <strong>every group member receives the failure notification</strong> — trading "uncertain" for "everyone retries", at the price of shared fate.</p>
+<p>7. The real selection question is <strong>which direction of error costs more</strong>: failover and rebuilds should be slow rather than wrong, routing should skip eagerly; tier thresholds by reversibility.</p>
+<p>8. In the wild: Cassandra and Akka use phi-accrual, Consul and Serf use SWIM, etcd and Kubernetes use leases and grace periods. The biggest trap is <strong>gray failure</strong> — detectors green, application down — which you must cover with business metrics and backstop with fencing.</p>
+</div>
+</div>
+<footer>Books Deep-Read · Reading this page ≈ getting the core of the chapter; for the full cases and depth, go back to the book itself.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
