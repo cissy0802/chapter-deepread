@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals Ch 8 · Introduction and Overview (Distributed Systems) — Chapter Deep Read Book 126</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">Chapter Deep Read · Database Internals · Ch 8</p>
+<h1>Introduction and Overview: Distributed Systems</h1>
+<p class="sub">Database Internals · Ch 8 · Alex Petrov · 2019</p>
+<p class="langbar"><a href="dbinternals-ch08-distributed-introduction-book126.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You tap "Confirm payment" on your phone. That message crosses a cell tower, some fiber, and several machines in a data center before it lands in a database. The first seven chapters were all about what happens <strong>inside one machine</strong>. From here on the stage changes: <strong>many machines, and the only way they can cooperate is by shouting at each other</strong>. This chapter teaches no technique. It tells you which things, on that stage, are <strong>impossible in principle</strong>.</p>
+<h2>A strange thing first</h2>
+<p>You text a friend "does 8pm work?" and ten minutes pass with no reply. Maybe the message never arrived. Maybe they replied and the reply got lost. Maybe they are typing right now. <strong>From the outside, all three look exactly the same.</strong> That indistinguishability is the sharpest edge in distributed systems: when something times out, you do not know whether the other side is dead, slow, or simply had its answer eaten on the way back.</p>
+<h2>Why the old world was easier</h2>
+<p>On a single machine, three things come for free: call a function and it <strong>will</strong> return; read a variable and you <strong>get</strong> the latest value; glance at the clock and time <strong>always</strong> moves forward. Across two machines, none of the three survives. A function call becomes "mail a letter and maybe never hear back". "The latest value" becomes "the last thing I heard". And the two clocks may drift seconds apart.</p>
+<h2>How it actually works</h2>
+<p>The chapter's move is not to hand you a cure. It is to <strong>pin down the vague parts</strong>, turning "the network is flaky" into three written-down assumption tables that every later algorithm is designed against:</p>
+<ul>
+<li><strong>How reliable is this line.</strong> The bottom layer says "letters may be lost, duplicated, or arrive out of order". Stack one layer on top: "keep resending until you get a receipt". Stack another: "the recipient remembers which tracking numbers it has already seen and throws away repeats". Only up there do you get to call the line reliable. The point: <strong>reliability is not a property of the wire; it is something you build out of retries and bookkeeping.</strong></li>
+<li><strong>How trustworthy is time.</strong> Must the other side answer within ten seconds? Is there no deadline at all? Or is it usually punctual but occasionally erratic? This choice decides whether you may treat "timed out" as "it died".</li>
+<li><strong>How will the other side break.</strong> Does it lose power and go quiet forever? Stay alive but miss the occasional message? Or lie outright, telling different people different numbers? The wilder the assumption, the more expensive the defense.</li>
+</ul>
+<h2>So what do you pick</h2>
+<p>Stronger promises cost more. The clearest case is "delivered exactly once, no more, no less" — that one is <strong>unachievable at the wire level</strong>: when the sender sees a failure, it can never tell "never arrived" from "arrived, was processed, and the receipt got lost". What you can actually do is <strong>send several times and let the recipient de-duplicate by tracking number</strong>. Payment idempotency keys and message-queue dedup tables are all instances of that one rule.</p>
+<p>The honest cost: these three tables buy you <strong>the ability to say why your design is correct</strong>, not reliability itself. Assume too little and no algorithm can run; assume too much and one bad day in the real world takes the whole thing down.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p>Distributed systems are hard not because there are many machines, but because <strong>nobody can see "now"</strong>. Every machine holds only a stale rumor. The one thing engineering can do is nail down how reliable the link is, how trustworthy the clock is, and how nodes break — and only then start building on top.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the notation and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think the hard part of distributed systems is having many machines. It is really that <strong>no observer can ever see "now"</strong>. This chapter contains not a single algorithm; it hands you the <strong>assumption table</strong> that every algorithm in Part II shares — how reliable the link is, how trustworthy time is, and how nodes fail. Fill those three cells in wrong and consensus, replication and anti-entropy are all built on sand.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Node / process</strong> — one running program instance on one machine that takes part in the cooperation. The chapter uses the two almost interchangeably.</li>
+<li><strong>Link</strong> — the channel that carries messages between two nodes. Not a physical cable, but the abstraction of "send a message / receive a message".</li>
+<li><strong>Message passing</strong> — the only way nodes communicate: send one, wait for one. No shared memory, no shared variables.</li>
+<li><strong>Replica</strong> — one of several copies of the same data held on different machines.</li>
+<li><strong>Timeout</strong> — giving up after waiting a while. Note it only tells you "I heard nothing in that window", never whether the other side is alive.</li>
+<li><strong>RTT (round-trip time)</strong> — time for one there-and-back. Roughly <code>0.1–0.5</code> ms inside a data center, commonly <code>100–200</code> ms across continents.</li>
+<li><strong>Idempotent</strong> — running the operation once and running it ten times produce the same result. Whether a retry is safe comes down entirely to this.</li>
+<li><strong>Quorum</strong> — how many nodes in a group must agree before something counts, usually a majority.</li>
+<li><strong>Consensus</strong> — a group of nodes arriving at one agreed answer to "what is the value". The destination of Part II.</li>
+<li><strong>Clock drift</strong> — quartz clocks on two machines run at slightly different rates and diverge, which is why they must be re-synchronized (NTP).</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Part I was about storage engines <strong>inside a single machine</strong> (B-Trees, LSM-Trees, transaction recovery). Part II steps outside, starting here. It follows Ch 7 and leads into Ch 9 failure detection, Ch 10 leader election, Ch 11 replication and consistency, Ch 12 anti-entropy and dissemination, and on to consensus in Ch 13–14. Which real systems does it map to? <strong>Everything with more than one replica</strong> — etcd / ZooKeeper, Cassandra / DynamoDB, Kafka, Spanner / CockroachDB. Their disagreements all live inside the coordinate system this chapter draws.</p>
+<h2>The problem it attacks</h2>
+<p>Single-machine programmers get three assumptions for free: a call returns, a read is current, a clock moves forward. Across machines all three die, and <strong>they die quietly</strong> — not with an error at first, but correctly under light load and wrongly under pressure. The book invokes Peter Deutsch's "fallacies of distributed computing" and names the first few: the network is reliable, latency is zero, bandwidth is infinite, topology doesn't change.</p>
+<p>What happens if you ignore this? Three classic crashes. <strong>Ordering events by wall-clock time</strong> — two machines' <code>now()</code> can differ by milliseconds to tens of milliseconds between NTP corrections, so the later write is judged earlier and data is silently overwritten. <strong>Treating a timeout as death</strong> — the old leader was merely in an 8-second GC pause, a new leader is already elected, and two leaders accept writes at once (split brain). <strong>Blindly retrying on a network error</strong> — the first attempt actually succeeded, so the customer is charged twice. None of these is a coding bug; each is <strong>a wrongly filled assumption table</strong>.</p>
+<h2>The core, explained</h2>
+<h3>1. Shared state: there is no such thing as a snapshot</h3>
+<p>The book's definition is plain: a distributed system is <strong>a set of independently executing processes that communicate only by passing messages</strong>. One consequence follows immediately — <strong>there is no "current global state"</strong>. Each node holds only two things: its own local state, and whatever messages have arrived. No god's-eye view, no snapshot you can take in one shot.</p>
+<p>So any claim about "what the system looks like right now" is only <strong>one node's guess at one moment</strong>, and it is stale by construction — stale by at least one one-way network delay. Deployed across continents, "latest" is at least <code>50</code> ms old. That is not a weak implementation; that is the speed of light.</p>
+<h3>2. The link ladder: unreliability is the floor, reliability is stacked on it</h3>
+<p>The most immediately useful section. It splits "the network" into three abstractions, each adding a guarantee:</p>
+<ul>
+<li><strong>Fair-loss link</strong> — messages may be lost, duplicated or reordered, with exactly one guarantee: <em>if you retransmit infinitely often, infinitely many get through</em>. It promises nothing about any single message, only that it will not single you out forever.</li>
+<li><strong>Stubborn link</strong> — fair-loss plus "resend forever, never stop". You now get <strong>eventual delivery</strong>, paid for with heavy duplication and no ordering.</li>
+<li><strong>Perfect link</strong> — stubborn plus de-duplication by message ID. It offers three properties: <em>validity</em> (what is sent is eventually delivered), <em>no duplication</em>, and <em>no creation</em> (nothing arrives that was never sent).</li>
+</ul>
+<p>The line to take away: <strong>a "reliable link" is not a property of the network; it is a floor you built on top of an unreliable one out of retries and bookkeeping.</strong> And you built it imperfectly — in practice "retransmit forever" is always "retry <code>N</code> times, then time out", so the perfect link is an ideal model, not a product you can buy.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 252" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="la" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="13" font-weight="700" x="18" y="22">Reliability is not given by the network — it is stacked up</text>
+<rect fill="rgba(120,120,130,0.10)" height="46" rx="7" stroke="#7c8593" width="262" x="24" y="186"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="155" y="206">Fair-loss link</text>
+<text fill="#b9c0ca" font-size="9" text-anchor="middle" x="155" y="223">may lose / duplicate / reorder; infinite resends get through</text>
+<line marker-end="url(#la)" stroke="#9b6cf5" stroke-dasharray="4 3" x1="155" x2="155" y1="186" y2="164"></line>
+<text fill="#9b6cf5" font-size="10" x="166" y="180">+ never stop resending</text>
+<rect fill="rgba(91,157,249,0.10)" height="46" rx="7" stroke="#5b9df9" width="262" x="24" y="114"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="155" y="134">Stubborn link</text>
+<text fill="#b9c0ca" font-size="9" text-anchor="middle" x="155" y="151">eventual delivery; paid in duplicates and disorder</text>
+<line marker-end="url(#la)" stroke="#9b6cf5" stroke-dasharray="4 3" x1="155" x2="155" y1="114" y2="92"></line>
+<text fill="#9b6cf5" font-size="10" x="166" y="108">+ de-duplicate by message ID</text>
+<rect fill="rgba(155,108,245,0.18)" height="46" rx="7" stroke="#9b6cf5" stroke-width="2" width="262" x="24" y="42"></rect>
+<text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="155" y="62">Perfect link</text>
+<text fill="#b9c0ca" font-size="9" text-anchor="middle" x="155" y="79">validity · no duplication · no creation</text>
+<rect fill="none" height="190" rx="8" stroke="rgba(120,120,130,0.35)" stroke-dasharray="5 4" width="284" x="316" y="42"></rect>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" x="328" y="62">What each layer is, to an algorithm</text>
+<text fill="#8fbaff" font-size="10.5" x="328" y="88">Top: "assume it is reliable" — the abstraction</text>
+<text fill="#b9c0ca" font-size="10.5" x="328" y="140">Middle: "resend until acknowledged" — retries live here</text>
+<text fill="#b9c0ca" font-size="10.5" x="328" y="200">Bottom: the network as it really is. No promises.</text>
+<text fill="#7c8593" font-size="9.5" x="328" y="222">In practice "infinite resends" = N retries + timeout,</text>
+<text fill="#7c8593" font-size="9.5" x="328" y="238">so the perfect link is a model, not a product.</text>
+</svg>
+<figcaption>Figure 1 · The three-rung link ladder: each rung is built out of the retries and dedup bookkeeping of the rung below it.</figcaption>
+</figure>
+<h3>3. Message order, and the truth about exactly-once</h3>
+<p>Ordering is a ladder too, four rungs from weak to strong: <strong>no order</strong> (arrive in any sequence) → <strong>FIFO order</strong> (messages from one sender are delivered in the order that sender emitted them) → <strong>causal order</strong> (causally related messages never invert; unrelated ones may arrive in any order) → <strong>total order</strong> (every node observes exactly the same sequence). Each rung costs more: FIFO needs one increasing counter per link; causal order needs causality metadata such as vector clocks; <strong>total order is essentially equivalent to running consensus</strong>, which is the job of Ch 13–14.</p>
+<p>Delivery semantics have three rungs as well: <strong>at-most-once</strong> (fire and forget, may be lost), <strong>at-least-once</strong> (retry until acknowledged, may be duplicated), and <strong>exactly-once</strong>. That third one is the sentence to carry out of the chapter: <strong>at the link level, exactly-once is impossible.</strong> When a sender sees a failure or a timeout, it cannot separate "the message never arrived" from "it arrived, was processed, and the acknowledgement was lost" — the only status it can trust is <em>success</em>. What the industry calls exactly-once is always <strong>at-least-once plus idempotent de-duplication at the receiver</strong>: every message carries a unique ID, and the receiver keeps a table of IDs it has already processed.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/time-clocks-ordering-paper31.en.html" rel="noopener" target="_blank">Paper Deep Read · Time, Clocks, and the Ordering of Events</a> — how Lamport defines causal order through "happened-before", and why logical clocks replace wall-clock time for ordering events</aside>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 272" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ta" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="tb" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text fill="#5b9df9" font-size="13" font-weight="700" x="18" y="22">One timeout, three endings — the client can tell none of them apart</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle" x="56" y="44">CLIENT</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle" x="406" y="44">SERVER</text>
+<line stroke="rgba(120,120,130,0.45)" stroke-dasharray="4 4" x1="56" x2="56" y1="52" y2="224"></line>
+<line stroke="rgba(120,120,130,0.45)" stroke-dasharray="4 4" x1="406" x2="406" y1="52" y2="224"></line>
+<text fill="#b9c0ca" font-size="10.5" x="70" y="72">1 · request lost on the way</text>
+<line marker-end="url(#ta)" stroke="#7c8593" x1="56" x2="212" y1="86" y2="86"></line>
+<text fill="#9b6cf5" font-size="15" font-weight="700" x="218" y="91">✕</text>
+<text fill="#7c8593" font-size="10" x="418" y="90">nothing happened</text>
+<text fill="#b9c0ca" font-size="10.5" x="70" y="122">2 · server did it, ack was lost</text>
+<line marker-end="url(#ta)" stroke="#7c8593" x1="56" x2="402" y1="136" y2="136"></line>
+<text fill="#8fbaff" font-size="10" x="418" y="140">executed ✓</text>
+<line marker-end="url(#tb)" stroke="#9b6cf5" x1="406" x2="256" y1="156" y2="156"></line>
+<text fill="#9b6cf5" font-size="15" font-weight="700" x="238" y="161">✕</text>
+<text fill="#b9c0ca" font-size="10.5" x="70" y="190">3 · server is just slow, still working</text>
+<line marker-end="url(#ta)" stroke="#7c8593" x1="56" x2="402" y1="204" y2="204"></line>
+<text fill="#8fbaff" font-size="10" x="418" y="208">in progress…</text>
+<text fill="#7c8593" font-size="9.5" x="150" y="222">the ack is still in flight (or never comes)</text>
+<rect fill="rgba(91,157,249,0.08)" height="28" rx="6" stroke="rgba(91,157,249,0.32)" width="572" x="34" y="234"></rect>
+<text fill="#8fbaff" font-size="11" text-anchor="middle" x="320" y="253">What the client observes is identical: a timeout. The only trustworthy status is success.</text>
+</svg>
+<figcaption>Figure 2 · The ambiguity of a timeout: lost request, lost acknowledgement, and slow server are indistinguishable to the client — which is exactly why exactly-once is impossible at the link level.</figcaption>
+</figure>
+<h3>4. Two Generals and FLP: two impossibility results</h3>
+<p><strong>The Two Generals' Problem</strong>: two armies on opposite sides of a valley can only coordinate a simultaneous attack through messengers who cross enemy ground and may be captured. The result: <strong>no matter how many rounds of confirmation you exchange, the sender of the last message can never know whether it arrived</strong>. Over a link that may drop messages, two parties cannot reach certain agreement.</p>
+<p><strong>FLP impossibility (Fischer–Lynch–Paterson, 1985)</strong>: in an <em>asynchronous</em> system, even if only one process may crash, there is no deterministic consensus algorithm that guarantees both <strong>termination</strong> and <strong>agreement</strong>. The root cause is the same old line — in an asynchronous system you cannot tell "crashed" from "merely slow".</p>
+<p>The point is not "so consensus is impossible", it is <strong>that you must loosen one screw</strong>: add timing assumptions (use timeouts to treat the system as partially synchronous — the Raft and Paxos route), give up determinism (randomized consensus), or give up the promise of termination (never wrong, but possibly unable to elect a leader under adversarial scheduling). Real systems almost always pick the first: <strong>trade timeouts for liveness, and accept that timeouts lie sometimes</strong>.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/consensus-coordination-day46.en.html" rel="noopener" target="_blank">System Design · Day 46 Consensus and Coordination</a> — how Paxos and Raft still get five machines to agree on one thing despite these impossibility results, and how leases and fencing tokens keep split brain out</aside>
+<h3>5. System synchrony: three timing assumptions</h3>
+<p>The same algorithm yields different conclusions under different timing assumptions, so this cell must be filled first:</p>
+<ul>
+<li><strong>Synchronous</strong> — message transfer and processing both have <em>known upper bounds</em>. Timeouts become a sound failure detector and algorithms get easy to write; real networks cannot supply that bound.</li>
+<li><strong>Asynchronous</strong> — no timing bounds at all, clocks unusable. Closest to reality, with FLP standing in the doorway.</li>
+<li><strong>Partially synchronous</strong> — bounded most of the time, occasionally not. This is where real systems live: Raft's election timeout and the φ-accrual detector of Ch 9 are both engineering inside this rung.</li>
+</ul>
+<h3>6. Failure models: how do you assume the other side breaks</h3>
+<p>The last cell is the shape of failure, cheap to expensive:</p>
+<ul>
+<li><strong>Crash-stop</strong> — once down, never back. Easiest to reason about, least realistic.</li>
+<li><strong>Crash-recovery</strong> — it comes back, carrying state that <em>may be stale</em>. This forces durable logs plus a catch-up mechanism.</li>
+<li><strong>Omission fault</strong> — the process is alive but drops some sends or receives: packet loss under overload, long GC pauses. The nastiest kind, precisely because it <strong>still looks alive</strong>.</li>
+<li><strong>Byzantine fault</strong> — arbitrary behavior, including lying and reporting different values to different nodes. The price is hard-coded: tolerating <code>f</code> crashes needs <code>2f+1</code> nodes; tolerating <code>f</code> Byzantine nodes needs <code>3f+1</code>.</li>
+</ul>
+<p>Database systems <strong>do not assume Byzantine faults by default</strong> — the machines sit in one organization's data center, and paying triple for the possibility of lying is not worth it. The scenarios that open that cell are blockchains and other mutually distrustful settings.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/byzantine-generals-paper38.en.html" rel="noopener" target="_blank">Paper Deep Read · The Byzantine Generals Problem</a> — why tolerating f lying nodes takes 3f+1 machines, and how oral versus signed messages move that bound</aside>
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 1 · Delivery semantics: what you promise is what you pay for</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Semantics</th><th>How it is built</th><th>Cost / risk</th><th>When to pick it</th></tr></thead>
+<tbody>
+<tr><th>At-most-once</th><td>Send and forget, no retry</td><td><strong>May be lost</strong>, and you will not know it was</td><td>Metrics, analytics events, telemetry that tolerates sampling loss</td></tr>
+<tr><th>At-least-once</th><td>Retry until acknowledged</td><td><strong>Duplicates are certain</strong>; ordering is lost too</td><td>The default rung for almost every messaging system</td></tr>
+<tr><th>"Exactly-once"</th><td>At-least-once + unique ID + receiver dedup table</td><td>The dedup table needs storage and an expiry policy; it holds only at <strong>one</strong> boundary and breaks again across systems</td><td>Charges, orders, billing — anywhere a replay costs money</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 2 · Timing assumptions: get this cell wrong and the algorithm either cannot be written or cannot stay up</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Model</th><th>Assumption</th><th>What follows</th><th>Where it lives</th></tr></thead>
+<tbody>
+<tr><th>Synchronous</th><td>Known upper bounds on transfer and processing</td><td>Timeout = sound failure detector; consensus is easy</td><td>Textbooks and special-purpose hardware networks</td></tr>
+<tr><th>Partially synchronous</th><td>Bounded most of the time, occasionally not</td><td>Trade timeouts for liveness; <strong>safety never depends on clocks</strong></td><td>Raft / Paxos implementations, etcd, CockroachDB</td></tr>
+<tr><th>Asynchronous</th><td>No timing bounds whatsoever</td><td>FLP: deterministic consensus is impossible</td><td>Closest to real networks, and the most powerless</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 3 · Failure models: the wilder the assumption, the more replicas it costs</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Model</th><th>How a node breaks</th><th>Nodes to tolerate f</th><th>Who uses it</th></tr></thead>
+<tbody>
+<tr><th>Crash-stop</th><td>Down and never back</td><td><code>2f+1</code></td><td>The starting point for analysis</td></tr>
+<tr><th>Crash-recovery</th><td>Comes back with possibly stale state</td><td><code>2f+1</code> + durable log</td><td>etcd, ZooKeeper, every practical consensus implementation</td></tr>
+<tr><th>Omission</th><td>Alive but dropping messages (GC, overload)</td><td>Same, but <strong>failure detectors misjudge it</strong></td><td>The most common failure in real production</td></tr>
+<tr><th>Byzantine</th><td>Arbitrary behavior, including lying</td><td><code>3f+1</code>, and more message rounds</td><td>Blockchains, cross-organization systems; databases opt out</td></tr>
+</tbody>
+</table></div>
+<h2>Why it matters / in real systems</h2>
+<p>The value of this chapter is that <strong>it converts the platitude "distributed systems are hard" into three questions you can ask out loud in a design review</strong> — which rung of link are we assuming? which timing model? which failure model? The same applies in interviews: asked "how do you guarantee messages are neither lost nor duplicated", answering "we use the MQ's exactly-once" scores nothing. Answering <strong>"exactly-once is impossible at the link level, so we do at-least-once delivery plus idempotent de-duplication at the consumer, with a dedup table keyed on the business ID and retained for 7 days"</strong> is the answer of someone who has done it.</p>
+<div class="ev">
+<div class="evh">FROM THE COMPANIES THEMSELVES · all quotes are their own words</div>
+<ul>
+<li><strong>Google Cloud Dataflow</strong> states the timeout ambiguity more bluntly than most textbooks: "An RPC returning a failure status generally indicates that the call <em>may or may not have succeeded</em>… many common RPC failures, such as Deadline Exceeded, are ambiguous", and concludes — <strong>"The only status that a sender can really trust is a successful one."</strong> Their fix is precisely this chapter's rule: "Every message sent is tagged with a unique identifier. Each receiver stores a catalog of all identifiers that have already been seen and processed", with the catalog held in Bigtable. <span class="src"><a href="https://cloud.google.com/blog/products/data-analytics/after-lambda-exactly-once-processing-in-google-cloud-dataflow-part-1" rel="noopener" target="_blank">Google Cloud Blog · Exactly-once in Dataflow ↗</a></span></li>
+<li><strong>etcd</strong> nails down the price of majorities in one table: a 3-node cluster tolerates 1 failure, a 4-node cluster still tolerates only 1, a 5-node cluster tolerates 2, and it says outright that "Adding a member to bring the size of cluster up to an even number <em>doesn't buy additional fault tolerance</em>". There is a second reason for odd sizes — "an odd number of members guarantees that there will always be a majority partition that can continue to operate and be the source of truth when the partition ends". <span class="src"><a href="https://github.com/etcd-io/website/blob/main/content/en/docs/v3.5/faq.md" rel="noopener" target="_blank">etcd FAQ · Failure tolerance ↗</a></span></li>
+<li><strong>Google (Eric Brewer on Spanner and CAP)</strong> supplies a rare measured answer to "how common are partitions really": "For distributed systems over a 'wide area,' it's generally viewed that partitions are inevitable, although not necessarily common." Spanner has "more than five 9s of availability (less than one failure in 10⁵)", and <strong>"We found that the network contributed less than 10% of Spanner's already rare outages."</strong> In other words, what bites you in the real world is usually not partitions but the omission and crash-recovery faults this chapter enumerates. <span class="src"><a href="https://cloud.google.com/blog/products/gcp/inside-cloud-spanner-and-the-cap-theorem" rel="noopener" target="_blank">Google Cloud Blog · Inside Cloud Spanner and the CAP Theorem ↗</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and disputes</h2>
+<ul>
+<li><strong>"It timed out, so it is dead" — wrong.</strong> A timeout only says "I heard nothing in that window". Treat it as a death certificate and you must accept occasional misjudgements; the real defense is not a better-tuned timeout but <strong>making the misjudgement harmless</strong> (fencing tokens, a leader that steps down when its lease expires).</li>
+<li><strong>"Retries are always safe" — only when the operation is idempotent.</strong> A retry on a non-idempotent operation is a probabilistic double-execution device you installed yourself.</li>
+<li><strong>"More machines mean more fault tolerance" — even numbers do not pay.</strong> Four nodes tolerate exactly what three do: one failure. The extra node only adds coordination cost and a way to deadlock during a partition.</li>
+<li><strong>"CAP says you must choose between C and A" — over-propagated.</strong> Brewer's own framing is that you only forfeit consistency or availability <em>during an actual partition</em>; the rest of the time you can have both.</li>
+<li><strong>"This is all theory, it doesn't matter in engineering" — the counterexample is above.</strong> Dataflow's "Deadline Exceeded is ambiguous" is the Two Generals' Problem showing up in one RPC status code.</li>
+<li><strong>The chapter's own limits.</strong> It is a map of terms and models — clean, but also dry: the engineering that actually makes partial synchrony work (leases, hybrid logical clocks, fencing tokens) is largely left undiscussed, waiting for later chapters or other books.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① A distributed system is independent processes cooperating only by messages; <strong>no global state, no snapshot, no god's-eye view</strong> — each node holds one stale rumor.</p>
+<p>② The three free single-machine assumptions (a call returns, a read is current, clocks move forward) all die across machines, and <strong>they only show it under load</strong>.</p>
+<p>③ <strong>The link ladder</strong>: fair-loss (lost / duplicated / reordered) → stubborn (infinite resends ⇒ eventual delivery) → perfect (dedup ⇒ validity / no duplication / no creation). Reliability is stacked, not given.</p>
+<p>④ <strong>The ordering ladder</strong>: none → FIFO → causal → total; total order is essentially one round of consensus, and the most expensive.</p>
+<p>⑤ <strong>Exactly-once is impossible at the link level.</strong> Engineering "exactly-once" is always at-least-once + unique IDs + a receiver dedup table.</p>
+<p>⑥ <strong>Two Generals</strong>: over a lossy link, the sender of the last message can never confirm it arrived.</p>
+<p>⑦ <strong>FLP</strong>: in an asynchronous system, even with just one possible crash, no deterministic algorithm gives both termination and agreement — because "crashed" and "slow" are indistinguishable.</p>
+<p>⑧ The way out is to loosen a screw: <strong>adding timing assumptions (partial synchrony)</strong> is the universal choice — timeouts buy liveness, while <strong>safety is never built on clocks</strong>.</p>
+<p>⑨ <strong>Failure models</strong>: crash-stop / crash-recovery / omission / Byzantine. <code>f</code> crashes need <code>2f+1</code> nodes, <code>f</code> Byzantine nodes need <code>3f+1</code>; databases decline to pay the Byzantine bill.</p>
+<p>⑩ The three review questions: <strong>which link rung, which timing model, which failure model are we assuming?</strong> Without answers, the replication and consensus that follow are castles in the air.</p>
+</div>
+</div>
+<footer>Chapter Deep Read · One page ≈ the core of the chapter; for full cases and extensions, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
