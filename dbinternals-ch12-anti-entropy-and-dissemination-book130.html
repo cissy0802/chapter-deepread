@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals 第 12 章 · 反熵与传播 — 专业书籍精读 Book 130</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · Database Internals · 第 12 章</p>
+<h1>反熵与传播</h1>
+<p class="sub">Database Internals · Ch 12 · Alex Petrov · 2019</p>
+<p class="langbar"><a href="dbinternals-ch12-anti-entropy-and-dissemination-book130.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你在群里发了条消息：多数人秒收，有人过了十分钟才刷出来，还有个人手机关机一整天——开机后消息照样补上了。《Database Internals》（《数据库系统内幕》）第 12 章讲的就是<strong>「照样补上」这件事是怎么做到的</strong>。上一章说「几份数据终究会一样」，这一章问：<strong>究竟靠什么让它一样？</strong></p>
+<h2>先说个怪事</h2>
+<p>你删掉的一条数据，过几天<strong>自己回来了</strong>。听着像灵异事件，原理却很朴素：你删的时候有台机器正好离线，它手上那份还是「有」。等它回来，它发现同伴手上没有这条，就热心地把「自己有的」补给了同伴——<strong>删除被撤销了</strong>。所以真正要设计的不是「怎么把数据送到」，而是<strong>「没送到的那部分，事后怎么把账补对」</strong>。</p>
+<h2>旧世界为什么难</h2>
+<p>最直觉的办法是「发的时候确保每个人都收到」。可那意味着每次写入都要等最慢的那台机器，有一台关机就谁也别想写——这正是上一章算过的账：太贵。于是真实系统选择<strong>先写完再说，欠的账另立机制还</strong>。麻烦在于，这笔账不会自己消失：漏掉一条写和漏掉一百万条写，对系统来说是同一种状态——<strong>不一样</strong>，而且没人知道差在哪。</p>
+<h2>三个还账的时机</h2>
+<p>这一章的骨架，就是三条互补的还账通道：</p>
+<ul>
+<li><strong>写的时候，先替他收着。</strong>发现某台机器离线，就把该给它的那条写<strong>记成一张便条</strong>暂存下来，等它回来再递过去。便宜，但便条有保质期，过期就作废。</li>
+<li><strong>读的时候，顺手校对。</strong>反正要问好几台机器，那就比一下谁的答案更新，把旧的那台<strong>顺手更新掉</strong>。妙处是完全搭读请求的便车；短处也明显——<strong>没人读的数据，永远轮不到修</strong>。</li>
+<li><strong>闲下来的时候，认真对账。</strong>两台机器逐条比对太慢，于是先比「总账指纹」：把一整箱账本压成一个短指纹，指纹相同就整箱跳过；不同再拆成两半各比一次，一路缩小到具体是哪几页对不上。几百万条记录，几次问答就定位到分歧。</li>
+</ul>
+<h2>消息怎么扩散：像传闲话</h2>
+<p>还有一类信息（谁活着、谁加入了集群）要让<strong>所有机器都知道</strong>。挨个通知太慢，指定一个「广播员」又会因它一挂全断。这一章用的办法是<strong>传闲话</strong>：每台机器每秒随便挑一个同伴，把自己知道的都说一遍。没有中心、断几条线也无所谓，而且扩散极快——知道的人数每轮翻几倍，机器数翻倍也只多一两轮。<strong>代价是：谁都说不准到底几秒钟传完</strong>，它只给「很快」，不给承诺。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p><strong>「终究会一样」不是等来的，是花钱买来的。</strong>系统要专门养三条补账通道——写时代收、读时顺手校、闲时对账，再加一种像传闲话一样的扩散方式。谁都不跑，那几份数据就会永远不一样，而且删掉的东西还会自己爬回来。</p>
+</div>
+<p class="switch-hint">想进到具体机制、记号和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">上一章的最终一致性承诺了「停写后终将收敛」，本章揭穿它：<strong>那个「终将」不是时间的恩赐，是一笔持续的运营支出</strong>。复制协议只负责<em>尝试</em>送达，送不到的部分必须由<strong>反熵（anti-entropy）</strong>另行补齐——书里把补齐的时机拆成三条互补通道（读时修复、写时暂存、后台比对），再用 <strong>gossip（流行病式传播）</strong>解决「怎么把信息扩散到全集群」。要建立的认知是：<strong>收敛是你雇人去做的事，不是协议的副产品</strong>；没人跑 repair 的最终一致集群，「最终」等于「永不」。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>发散 / 熵（divergence / entropy）</strong>：同一份数据的多个副本互不一致的程度；越久不同步，发散越大。</li>
+<li><strong>反熵（anti-entropy）</strong>：主动比对副本并把差异补平的后台过程，名字取自「对抗发散」。</li>
+<li><strong>读修复（read repair）</strong>：读的时候顺带发现某副本落后，就把新值写回去。</li>
+<li><strong>摘要读（digest read）</strong>：只向一个副本要完整数据，向其余副本要一个哈希摘要——摘要相同就无需传全量。</li>
+<li><strong>提示移交（hinted handoff）</strong>：目标副本离线时，协调者把这次写暂存成一条「提示（hint）」，等对方复活再重放。</li>
+<li><strong>Merkle 树（哈希树）</strong>：叶子是数据的哈希、父节点是子哈希的哈希；比根就能一句话判断「整体一不一样」。</li>
+<li><strong>gossip（流行病协议）</strong>：每个节点周期性随机挑几个同伴交换状态，信息像传染病一样扩散开。</li>
+<li><strong>扇出（fanout）</strong>：一个节点每轮 gossip 联系几个同伴，记作 <code>f</code>。</li>
+<li><strong>覆盖网络（overlay network）</strong>：在真实网络之上人为规定的「谁跟谁说话」的逻辑拓扑。</li>
+<li><strong>墓碑与 <code>gc_grace</code></strong>：删除写成一条「此处已删」的标记（墓碑），保留一段宽限期后才真正清掉。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>本章属 Part II「分布式系统」，接在 Ch11（复制与一致性）之后：上一章把一致性排成一条谱系，并把最便宜那档定义为「停写后终将收敛」；<strong>本章负责把那个「终将」兑现</strong>，也顺带给出集群元信息（成员、故障、schema 版本）的扩散办法。下接 Ch13–14（分布式事务与共识）——那是另一条路：<strong>不事后补账，而是事前协调</strong>。对应现实里 Cassandra 的 hints / read repair / <code>nodetool repair</code> / gossip 四件套、DynamoDB 与 Riak 的后台 AAE、Consul 与 Serf 的成员传播。</p>
+<h2>这章要解决什么</h2>
+<p>先看一个不算故障的场景：三副本、<code>QUORUM</code> 写（<code>w=2</code>）。协调者拿到两个确认就向客户端返回成功——<strong>此刻第三个副本上根本没有这条数据，而系统认为一切正常</strong>。发散不是异常路径，<strong>它就在正常路径上</strong>。</p>
+<p>再放大：一台节点滚动升级离线 20 分钟，期间集群承接 3000 QPS 写入、其中 1/3 归它负责——回来时它缺了约 <strong>360 万条</strong>写。而<strong>系统并不知道自己差在哪</strong>：漏一条和漏三百万条，对外都只表现为「有时读到旧值」。</p>
+<p><strong>不解决会怎样？</strong>三件事，一件比一件严重：① 陈旧读<strong>永久化</strong>——那条旧值不会自己消失，会一直被读到；② <strong>删除复活</strong>——墓碑过了宽限期被清理，而落后副本手上还留着老数据，下次比对时它会把「自己有、同伴没有」当成对方缺失，<strong>热心地把删掉的数据传回来</strong>；③ 「最终一致」沦为口号——没有上界的「终将」，工程上等于没有保证。</p>
+<h2>核心内容，讲透</h2>
+<h3>三个时机：读路径、写路径、后台</h3>
+<p>本章按<strong>「什么时候补账」</strong>组织而不是按算法。三条通道覆盖面与成本各异，<strong>互为补充而非互相替代</strong>——这是整章最该先装进脑子的结构。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 318" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker><marker id="a2" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="18" y="20">同一件事（把副本拉回一致），三个不同的时机</text>
+<rect fill="rgba(155,108,245,0.07)" height="82" rx="8" stroke="rgba(155,108,245,0.3)" width="604" x="18" y="32"></rect>
+<text fill="#9b6cf5" font-size="11.5" font-weight="700" x="32" y="52">写时 · 提示移交</text>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="6" stroke="#5b9df9" width="96" x="32" y="66"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="80" y="86">协调者</text>
+<line marker-end="url(#a2)" stroke="#5b9df9" x1="130" x2="256" y1="74" y2="66"></line>
+<line marker-end="url(#a2)" stroke="#5b9df9" x1="130" x2="256" y1="84" y2="94"></line>
+<text fill="#8fbaff" font-size="10.5" x="262" y="70">R1 ✓</text>
+<text fill="#8fbaff" font-size="10.5" x="262" y="99">R2 ✓</text>
+<text fill="#e06b6b" font-size="10.5" x="262" y="85">R3 离线</text>
+<rect fill="rgba(155,108,245,0.18)" height="30" rx="6" stroke="#9b6cf5" width="118" x="330" y="66"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="389" y="86">暂存 hint</text>
+<line marker-end="url(#a1)" stroke="#9b6cf5" stroke-dasharray="5 4" x1="450" x2="556" y1="81" y2="81"></line>
+<text fill="#b9c0ca" font-size="10.5" x="470" y="74">复活后重放</text>
+<text fill="#7c8593" font-size="10" x="470" y="101">超时即作废</text>
+<rect fill="rgba(91,157,249,0.07)" height="82" rx="8" stroke="rgba(91,157,249,0.3)" width="604" x="18" y="122"></rect>
+<text fill="#5b9df9" font-size="11.5" font-weight="700" x="32" y="142">读时 · 读修复</text>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="6" stroke="#5b9df9" width="96" x="32" y="156"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="80" y="176">协调者</text>
+<line marker-end="url(#a2)" stroke="#5b9df9" x1="130" x2="252" y1="171" y2="164"></line>
+<line marker-end="url(#a2)" stroke="#5b9df9" x1="130" x2="252" y1="176" y2="188"></line>
+<text fill="#8fbaff" font-size="10.5" x="258" y="168">R1 → v2 全量</text>
+<text fill="#e06b6b" font-size="10.5" x="258" y="193">R2 → v1 摘要不符</text>
+<line marker-end="url(#a1)" stroke="#9b6cf5" stroke-dasharray="5 4" x1="374" x2="556" y1="188" y2="188"></line>
+<text fill="#b9c0ca" font-size="10.5" x="400" y="181">把 v2 写回 R2</text>
+<text fill="#7c8593" font-size="10" x="400" y="206">只修被读到的数据</text>
+<rect fill="rgba(91,157,249,0.07)" height="86" rx="8" stroke="rgba(91,157,249,0.3)" width="604" x="18" y="212"></rect>
+<text fill="#5b9df9" font-size="11.5" font-weight="700" x="32" y="232">后台 · Merkle 对比（repair）</text>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="6" stroke="#5b9df9" width="96" x="32" y="246"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="80" y="266">R1 全量</text>
+<line marker-end="url(#a2)" stroke="#5b9df9" x1="134" x2="222" y1="261" y2="261"></line>
+<line marker-end="url(#a1)" stroke="#9b6cf5" x1="326" x2="238" y1="275" y2="275"></line>
+<text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="280" y="256">交换树根</text>
+<text fill="#9b6cf5" font-size="10.5" text-anchor="middle" x="280" y="291">逐层下降</text>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="6" stroke="#5b9df9" width="96" x="330" y="246"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="378" y="266">R3 全量</text>
+<text fill="#b9c0ca" font-size="10.5" x="446" y="261">覆盖全部数据</text>
+<text fill="#7c8593" font-size="10" x="446" y="283">代价：磁盘与网络 IO</text>
+</svg>
+<figcaption>图 1 · 三条通道：写时代收、读时顺手、后台兜底——覆盖面递增，成本也递增。</figcaption>
+</figure>
+<h3>读修复与摘要读：搭读请求的便车</h3>
+<p>读一次本来就要联系多个副本，那就顺便比一比。工程上的关键细节是<strong>摘要读</strong>：只让一个副本返回完整数据，其余只返回哈希摘要——<strong>摘要一致时网络上只走一份数据</strong>，对不上才补取全量。「顺手校对」的常态成本因此接近于零。</p>
+<p>另一个必须分清的开关是<strong>阻塞式还是非阻塞式</strong>：阻塞式<em>先把修复写下去、等够一致性级别再返回</em>，读延迟里多一次写往返，换来「单调 quorum 读」（不会出现上一章那种两次读先新后旧）；非阻塞式只在协调者内部合并出正确答案返回，<strong>不去修那个落后的副本</strong>。</p>
+<p><strong>它的根本局限只有一句：只修被读到的数据。</strong>冷数据、归档分区、写完再没人碰的 key，<strong>永远轮不到</strong>。所以读修复是压低常见陈旧度的好工具，<strong>但绝不是收敛的保证</strong>。</p>
+<h3>提示移交：写路径上的「代收快递」</h3>
+<p>目标副本联系不上时，协调者不必让整次写失败，而是把这条变更<strong>连同「本该给谁」存成一条提示（hint）</strong>，等对方复活再重放。它和 <strong>sloppy quorum（松散 quorum）</strong>是一对：写落在「前 <code>n</code> 个<em>健康</em>节点」上，而不必是本该负责的那 <code>n</code> 个——<strong>短时故障于是不再转化为写失败</strong>。</p>
+<p>代价在三处：<strong>① hint 有保质期</strong>（Cassandra 默认 3 小时），超时即丢弃，那个副本就一直落后到下次 repair；<strong>② hint 本身没有冗余</strong>——存它的协调者也挂了，这笔账直接蒸发；<strong>③ 恢复瞬间的重放流量</strong>容易把刚起来的节点再压垮。所以它的定位是<strong>「尽力而为」，不是保证</strong>。</p>
+<h3>Merkle 树：先比指纹，再逐层下降</h3>
+<p>后台兜底要回答的是：<strong>两个各存上亿条记录的副本，怎么在不传全量的前提下找出分歧？</strong>答案是哈希树——叶子是每段数据的哈希，父节点是子哈希的哈希，一路收到根。比对时<strong>先换根哈希：相同就整棵树跳过</strong>；不同则取两个子节点哈希，只沿不一致的那侧下降，直到定位到叶子。通信量于是从「数据量」降到<strong>「树高」量级</strong>，记作 <code>O(log n)</code>——数据翻一倍，只多问一层。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 276" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m2" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs><text fill="#5b9df9" font-size="12.5" font-weight="700" x="18" y="20">根不同 → 只沿不一致的那一侧往下走</text>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="150" y="44">副本 A</text>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="490" y="44">副本 B</text>
+<circle cx="150" cy="70" fill="rgba(224,107,107,0.2)" r="17" stroke="#e06b6b" stroke-width="2"></circle>
+<text fill="#e7ebf1" font-family="monospace" font-size="10" text-anchor="middle" x="150" y="74">a3f</text>
+<circle cx="490" cy="70" fill="rgba(224,107,107,0.2)" r="17" stroke="#e06b6b" stroke-width="2"></circle>
+<text fill="#e7ebf1" font-family="monospace" font-size="10" text-anchor="middle" x="490" y="74">7c1</text>
+<line stroke="#e06b6b" stroke-dasharray="4 4" x1="170" x2="470" y1="70" y2="70"></line>
+<text fill="#e06b6b" font-size="10.5" text-anchor="middle" x="320" y="64">根不同</text>
+<line stroke="#7c8593" x1="150" x2="96" y1="87" y2="122"></line>
+<line stroke="#7c8593" x1="150" x2="204" y1="87" y2="122"></line>
+<circle cx="96" cy="138" fill="rgba(91,157,249,0.12)" r="16" stroke="#5b9df9"></circle>
+<text fill="#b9c0ca" font-family="monospace" font-size="10" text-anchor="middle" x="96" y="142">11b</text>
+<circle cx="204" cy="138" fill="rgba(224,107,107,0.2)" r="16" stroke="#e06b6b" stroke-width="2"></circle>
+<text fill="#e7ebf1" font-family="monospace" font-size="10" text-anchor="middle" x="204" y="142">d90</text>
+<line stroke="#7c8593" x1="490" x2="436" y1="87" y2="122"></line>
+<line stroke="#7c8593" x1="490" x2="544" y1="87" y2="122"></line>
+<circle cx="436" cy="138" fill="rgba(91,157,249,0.12)" r="16" stroke="#5b9df9"></circle>
+<text fill="#b9c0ca" font-family="monospace" font-size="10" text-anchor="middle" x="436" y="142">11b</text>
+<circle cx="544" cy="138" fill="rgba(224,107,107,0.2)" r="16" stroke="#e06b6b" stroke-width="2"></circle>
+<text fill="#e7ebf1" font-family="monospace" font-size="10" text-anchor="middle" x="544" y="142">5ee</text>
+<text fill="#5b9df9" font-size="10.5" text-anchor="middle" x="266" y="142">左子树相同 → 整段跳过</text>
+<line stroke="#7c8593" x1="204" x2="176" y1="154" y2="182"></line>
+<line stroke="#7c8593" x1="204" x2="232" y1="154" y2="182"></line>
+<rect fill="rgba(91,157,249,0.1)" height="24" rx="5" stroke="#5b9df9" width="42" x="155" y="184"></rect>
+<text fill="#b9c0ca" font-family="monospace" font-size="9.5" text-anchor="middle" x="176" y="200">k1–k9</text>
+<rect fill="rgba(224,107,107,0.2)" height="24" rx="5" stroke="#e06b6b" stroke-width="2" width="42" x="211" y="184"></rect>
+<text fill="#e7ebf1" font-family="monospace" font-size="9.5" text-anchor="middle" x="232" y="200">k10–18</text>
+<line stroke="#7c8593" x1="544" x2="516" y1="154" y2="182"></line>
+<line stroke="#7c8593" x1="544" x2="572" y1="154" y2="182"></line>
+<rect fill="rgba(91,157,249,0.1)" height="24" rx="5" stroke="#5b9df9" width="42" x="495" y="184"></rect>
+<text fill="#b9c0ca" font-family="monospace" font-size="9.5" text-anchor="middle" x="516" y="200">k1–k9</text>
+<rect fill="rgba(224,107,107,0.2)" height="24" rx="5" stroke="#e06b6b" stroke-width="2" width="42" x="551" y="184"></rect>
+<text fill="#e7ebf1" font-family="monospace" font-size="9.5" text-anchor="middle" x="572" y="200">k10–18</text>
+<line marker-end="url(#m2)" stroke="#9b6cf5" stroke-dasharray="5 4" x1="256" x2="490" y1="222" y2="222"></line>
+<text fill="#9b6cf5" font-size="10.5" x="286" y="216">只传这一个叶子覆盖的整段数据</text>
+<text fill="#7c8593" font-size="10.5" x="18" y="252">通信量 ~ 树高而非数据量；但叶子粒度决定了「修 1 行 = 传整段」——这就是过度流式（over-streaming）。</text>
+</svg>
+<figcaption>图 2 · Merkle 树把「找出分歧」的代价从数据量压到树高量级。</figcaption>
+</figure>
+<p>三个必须一起记住的代价：<strong>① 粒度</strong>——叶子不是单条记录，而是一段 key 范围，<strong>一个叶子对不上就得传整段</strong>（过度流式），修 1 行可能搬几百兆；<strong>② 重算</strong>——树要覆盖全部数据才有意义，所以构建它要读全量数据，磁盘与网络 IO 都不便宜；<strong>③ 拓扑变化即失效</strong>——加减节点会让 key 范围重新划分，对应的树得重建。</p>
+<p>书里也给了针对「重算」的改进：<strong>位图版本向量（bitmap version vectors）</strong>——不比数据，<strong>只记「我见过谁的第几号写」</strong>，用一个位图紧凑表示已收到的写序号集合。副本交换这份摘要就能直接算出对方缺哪几条，只补这几条，完全不扫全量。代价是它只对<strong>近期</strong>缺失有效；长期失联或静默损坏仍要 Merkle 兜底。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/dynamo-paper54.html" rel="noopener" target="_blank">CS Papers · Dynamo：亚马逊的高可用键值存储</a> — 本章三条通道的原始出处：sloppy quorum、hinted handoff 与按 key 范围建 Merkle 树，在论文里怎么拼成一个无主存储</aside>
+<h3>Gossip：用冗余换鲁棒</h3>
+<p>另一半问题是<strong>传播</strong>：成员变更、故障怀疑、schema 版本这类元信息要让全集群都知道。直接广播要每个节点联系所有人（消息量随节点数平方增长），固定广播树又<strong>一断就整条支路失联</strong>。gossip 的答案是<strong>概率性扩散</strong>：每个节点每隔一个周期（Cassandra 是 1 秒）随机挑 <code>f</code> 个同伴交换状态。</p>
+<p>书里借流行病学的三态刻画它：<strong>易感</strong>（还没收到）、<strong>感染</strong>（收到且正在转发）、<strong>移除</strong>（收到但不再转发）。从「感染」转为「移除」的时机，就是<strong>这个协议真正的调参点</strong>：转得太早可能传不全网，转得太晚则满网重复消息。三种交换方式各有脾气：<strong>push</strong> 早期快、后期浪费；<strong>pull</strong> 收尾快；<strong>push-pull</strong> 收敛最快，代价是每轮消息更大。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 224" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="18" y="20">扇出 f=2：每轮知道的人数约乘 3</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="76" y="46">第 0 轮</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="226" y="46">第 1 轮</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="392" y="46">第 2 轮</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="556" y="46">第 3 轮</text>
+<circle cx="76" cy="100" fill="#9b6cf5" r="7"></circle>
+<circle cx="200" cy="80" fill="#9b6cf5" r="7"></circle>
+<circle cx="226" cy="104" fill="#9b6cf5" r="7"></circle>
+<circle cx="252" cy="128" fill="#9b6cf5" r="7"></circle>
+<circle cx="350" cy="68" fill="#9b6cf5" r="6"></circle>
+<circle cx="376" cy="86" fill="#9b6cf5" r="6"></circle>
+<circle cx="402" cy="72" fill="#9b6cf5" r="6"></circle>
+<circle cx="356" cy="104" fill="#9b6cf5" r="6"></circle>
+<circle cx="390" cy="112" fill="#9b6cf5" r="6"></circle>
+<circle cx="420" cy="100" fill="#9b6cf5" r="6"></circle>
+<circle cx="362" cy="136" fill="#9b6cf5" r="6"></circle>
+<circle cx="396" cy="146" fill="#9b6cf5" r="6"></circle>
+<circle cx="428" cy="132" fill="#9b6cf5" r="6"></circle>
+<rect fill="rgba(155,108,245,0.18)" height="96" rx="8" stroke="#9b6cf5" width="112" x="500" y="60"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="556" y="96">27 个</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="556" y="120">…以此类推</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="556" y="140">1000 节点约 7 轮</text>
+<line stroke="rgba(143,186,255,0.45)" stroke-dasharray="3 3" x1="90" x2="186" y1="98" y2="82"></line>
+<line stroke="rgba(143,186,255,0.45)" stroke-dasharray="3 3" x1="90" x2="212" y1="102" y2="104"></line>
+<line stroke="rgba(143,186,255,0.45)" stroke-dasharray="3 3" x1="264" x2="338" y1="126" y2="110"></line>
+<line stroke="rgba(143,186,255,0.45)" stroke-dasharray="3 3" x1="240" x2="338" y1="100" y2="80"></line>
+<text fill="#7c8593" font-size="10.5" x="18" y="184">轮数 ~ log(节点数)：集群翻倍，只多一轮左右；没有中心，断几条链路也照样传开。</text>
+<text fill="#7c8593" font-size="10.5" x="18" y="204">代价：同一条消息会被重复收到很多次，且「几轮传完」只是概率，不是承诺。</text>
+</svg>
+<figcaption>图 3 · gossip 的扩散是指数式的，轮数随节点数对数增长。</figcaption>
+</figure>
+<p>收敛轮数随节点数<strong>对数增长</strong>——记作 <code>O(log N)</code>，意思是集群从 100 台涨到 1000 台，传遍全网只多几轮而不是多十倍。这就是为什么成员管理几乎都用 gossip：<strong>它对规模不敏感，对故障也不敏感</strong>。</p>
+<h3>从随机到有结构：覆盖网络、混合 gossip、部分视图</h3>
+<p>纯随机 gossip 的痛处是<strong>消息冗余</strong>：同一条消息被同一个节点收到七八次很常见，带宽白烧。而一棵固定的生成树（每条消息只走 N-1 条边）效率最优，却<strong>一个内部节点挂掉，整条支路失联</strong>。本章给出的调和方案是<strong>混合 gossip（hybrid gossip）</strong>，代表是 Plumtree：</p>
+<ul>
+<li><strong>急切推送（eager push）</strong>：沿着一小撮「树边」直接把完整消息推过去——这部分承担绝大多数流量，效率接近生成树。</li>
+<li><strong>惰性推送（lazy push）</strong>：向其余邻居只发一条<strong>「我有消息 #42」的通告</strong>（几十字节）。正常情况下对方早从树边收到了，通告被丢弃；<strong>一旦树断了</strong>，只收到通告却等不来正文的节点就主动去拉，并<strong>把这条边升级成树边</strong>——树自己长好了。</li>
+</ul>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 230" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="18" y="20">实线 = 急切推送（走正文） · 虚线 = 惰性推送（只发「我有 #42」）</text>
+<circle cx="90" cy="100" fill="rgba(155,108,245,0.25)" r="18" stroke="#9b6cf5" stroke-width="2"></circle>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="90" y="104">源</text>
+<circle cx="246" cy="62" fill="rgba(91,157,249,0.14)" r="16" stroke="#5b9df9"></circle>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="246" y="66">B</text>
+<circle cx="246" cy="150" fill="rgba(91,157,249,0.14)" r="16" stroke="#5b9df9"></circle>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="246" y="154">C</text>
+<circle cx="430" cy="100" fill="rgba(91,157,249,0.14)" r="16" stroke="#5b9df9"></circle>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="430" y="104">D</text>
+<line stroke="#5b9df9" stroke-width="2" x1="108" x2="230" y1="92" y2="68"></line>
+<line stroke="#5b9df9" stroke-width="2" x1="108" x2="230" y1="110" y2="146"></line>
+<line stroke="#e06b6b" stroke-dasharray="6 5" stroke-width="2" x1="262" x2="414" y1="70" y2="94"></line>
+<text fill="#e06b6b" font-size="10.5" text-anchor="middle" x="338" y="72">树边断了</text>
+<line stroke="rgba(143,186,255,0.5)" stroke-dasharray="4 4" x1="262" x2="414" y1="146" y2="110"></line>
+<text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="342" y="172">只收到通告 → 主动拉正文</text>
+<text fill="#9b6cf5" font-size="10.5" text-anchor="middle" x="342" y="190">→ 这条边升级为树边</text>
+<text fill="#7c8593" font-size="10.5" x="18" y="212">平时按树走省带宽，故障时靠通告发现缺口并自愈——效率与鲁棒两头都要一点。</text>
+</svg>
+<figcaption>图 4 · 混合 gossip：用廉价的通告当安全网，让高效的广播树能自我修复。</figcaption>
+</figure>
+<p>最后一块拼图是<strong>部分视图（partial views）</strong>：节点不必认识全集群，只维护一小撮活跃邻居（<code>log N</code> 量级）加一份备用名单，挂了就补位（HyParView 一系）。<strong>单节点开销于是不随集群规模线性增长</strong>——上千节点才可能只靠 gossip 维持成员关系。</p>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 1 · 三条反熵通道：各补什么、漏什么</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>通道</th><th>触发时机</th><th>覆盖范围</th><th>常态成本</th><th>诚实代价 / 漏洞</th></tr></thead>
+<tbody>
+<tr><th>读修复</th><td>每次读，搭便车</td><td><strong>只有被读到的数据</strong></td><td>很低（摘要读时几乎为零）</td><td>冷数据永远修不到；阻塞式还会给读加一次写往返</td></tr>
+<tr><th>提示移交</th><td>写时发现副本离线</td><td>故障窗口内的写，且<strong>限时</strong></td><td>低，但故障期写放大</td><td>hint 过期（默认 3 小时）或协调者自身故障即丢；恢复瞬间重放易压垮新节点</td></tr>
+<tr><th>Merkle 树 repair</th><td>后台定期</td><td><strong>全量数据，唯一的保证</strong></td><td>高：要读全量、建树、跨节点传输</td><td>叶子粒度导致过度流式；拓扑变化要重建树；跑得太少就等着数据复活</td></tr>
+<tr><th>位图版本向量</th><td>后台，近期缺口</td><td>近期写的缺失</td><td><strong>很低：只比元数据、不读数据</strong></td><td>只覆盖近期；长期失联与静默损坏仍要 Merkle 兜底</td></tr>
+</tbody>
+</table>
+</div>
+<p class="tcap">表 2 · 传播方式：把消息送到全集群的四条路</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>方式</th><th>消息冗余</th><th>故障鲁棒性</th><th>延迟</th><th>什么时候选它</th></tr></thead>
+<tbody>
+<tr><th>直接广播</th><td>无冗余，但每个节点要联系所有人</td><td><strong>差</strong>：漏一个就是漏一个，无自愈</td><td>最低（一跳）</td><td>节点数很少、成员稳定（几十台以内）</td></tr>
+<tr><th>固定生成树</th><td><strong>最低</strong>：N-1 条边</td><td><strong>最差</strong>：内部节点一挂，整条支路失联</td><td>低（树高）</td><td>拓扑稳定、有人维护树结构</td></tr>
+<tr><th>纯 gossip</th><td><strong>高</strong>：同一消息被重复收多次</td><td><strong>最好</strong>：无中心、路径天然冗余</td><td><code>O(log N)</code> 轮，但<strong>无上界保证</strong></td><td>成员管理、故障怀疑、大规模易变集群</td></tr>
+<tr><th>混合 gossip</th><td>低：正文走树，其余只发通告</td><td>好：通告发现缺口后自愈重建树</td><td>接近生成树</td><td>要广播较大负载（如数据本身）又要容错</td></tr>
+</tbody>
+</table>
+</div>
+<p>判据压成两句。<strong>补账通道要全选</strong>：它们是三层防线不是备选项，只按数据热度调配比重——热数据靠读修复就能把陈旧度压到很低，冷数据只能指望 repair 的节奏。<strong>传播方式看「消息多大、成员多稳」</strong>：小而多变的元信息用纯 gossip；负载大又要容错，才值得上混合 gossip 那套复杂度。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/replication-day5.html" rel="noopener" target="_blank">System Design · Day 5 复制</a> — 从系统设计视角看复制滞后与修复：滞后怎么监控、怎么定 SLO、故障时怎么切</aside>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>这一章的实用价值是把一句运维直觉变成可设计的东西：<strong>最终一致系统的健康度，等于你的反熵预算</strong>。架构评审里最常见的错，是把「我们用了最终一致的存储」当结论，却没人回答「repair 多久跑一轮、跑得完吗、跑不完会怎样」。面试同理：能说清「读修复为什么替代不了 repair」「hint 过期后会发生什么」，比背出 gossip 三个字有分量得多。</p>
+<p>对照真实系统：<strong>Cassandra / ScyllaDB</strong> 把四件套（hints、read repair、<code>nodetool repair</code>、gossip）全套摆出来，是本章最直接的实现；<strong>DynamoDB 与 Riak</strong> 走 Dynamo 原路，Riak 的主动反熵（AAE）常驻哈希树；<strong>Consul / Serf</strong> 用 SWIM 式 gossip 管成员与故障；<strong>Redis Cluster</strong> 用 gossip 传播槽位与节点状态。反例同样重要：<strong>etcd 与 CockroachDB 走共识路线</strong>，写入时就必须过多数派，<strong>因此根本不需要反熵</strong>——这正说明反熵是「事后补账」这条路线特有的运营成本。</p>
+<div class="ev">
+<div class="evh">大厂实证</div>
+<ul>
+<li><strong>Apache Cassandra：三条通道里只有一条算「保证」。</strong>官方文档把分工写得极清楚：「<em>Cassandra has many best-effort techniques to drive convergence of replicas including Replica read repair in the read path and Hinted handoff in the write path</em>」，而「<em>to guarantee eventual consistency Cassandra implements anti-entropy repair where replicas calculate hierarchical hash trees over their datasets called Merkle trees</em>」。hints 文档更直白：「<em>Hints are best effort, however, and do not guarantee eventual consistency like anti-entropy repair does.</em>」默认保留窗口是 <code>3 h</code>，超时则「<em>the destination replica will be permanently out of sync until either read-repair or full/incremental anti-entropy repair propagates the mutation</em>」。<span class="src">Apache Cassandra 官方文档 · <a href="https://github.com/apache/cassandra/blob/trunk/doc/modules/cassandra/pages/architecture/dynamo.adoc" rel="noopener" target="_blank">Dynamo（architecture）</a> / <a href="https://github.com/apache/cassandra/blob/trunk/doc/modules/cassandra/pages/managing/operating/hints.adoc" rel="noopener" target="_blank">Hints</a></span></li>
+<li><strong>Cassandra 把「repair 频率」写成了硬性运维要求。</strong>repair 文档给出的不是建议而是底线：「<em>At a minimum, repair should be run often enough that the gc grace period never expires on unrepaired data. Otherwise, deleted data could reappear.</em>」并配了具体节奏：「<em>With a default gc grace period of 10 days, repairing every node in your cluster at least once every 7 days will prevent this</em>」。读修复的边界也写明了：「<em>only the data covered by a SELECT statement is repaired by a read repair</em>」——顺带一提，概率性后台读修复的两个老配置 <code>read_repair_chance</code> / <code>dclocal_read_repair_chance</code> 在 4.0 里被删掉了。<span class="src">Apache Cassandra 官方文档 · <a href="https://github.com/apache/cassandra/blob/trunk/doc/modules/cassandra/pages/managing/operating/repair.adoc" rel="noopener" target="_blank">Repair</a> / <a href="https://github.com/apache/cassandra/blob/trunk/doc/modules/cassandra/pages/managing/operating/read_repair.adoc" rel="noopener" target="_blank">Read repair</a></span></li>
+<li><strong>Amazon Dynamo：Merkle 树的好处与代价，论文自己写了。</strong>好处是「<em>each branch of the tree can be checked independently without requiring nodes to download the entire tree or the entire data set</em>」；做法是「<em>Each node maintains a separate Merkle tree for each key range</em>」；代价则毫不掩饰：「<em>The disadvantage with this scheme is that many key ranges change when a node joins or leaves the system thereby requiring the tree(s) to be recalculated.</em>」<span class="src">DeCandia et al., <a href="https://github.com/papers-we-love/papers-we-love/blob/main/datastores/dynamo-amazons-highly-available-key-value-store.pdf" rel="noopener" target="_blank">Dynamo: Amazon's Highly Available Key-value Store</a>, SOSP 2007, §4.7</span></li>
+<li><strong>HashiCorp：成员管理就交给 gossip，并且承认它只是「平均很快」。</strong>Consul / Nomad 底下的 memberlist 库直说自己「<em>is based on SWIM: Scalable Weakly-consistent Infection-style Process Group Membership Protocol</em>」，做了扩展「<em>to increase propagation speed and convergence rate</em>」，而对结果的措辞很克制：「<em>eventually consistent but converges quickly on average</em>」，且「<em>The speed at which it converges can be heavily tuned via various knobs on the protocol</em>」——这正是书里说的「概率保证、靠调参换延迟」。<span class="src">HashiCorp · <a href="https://github.com/hashicorp/memberlist" rel="noopener" target="_blank">memberlist</a>（README）</span></li>
+</ul>
+</div>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>最大的误解：以为读修复能代替 repair。</strong>它只修被 <code>SELECT</code> 覆盖到的数据，冷分区一辈子轮不到；把它当收敛保证，就是在等数据复活。</li>
+<li><strong>hint 不是保险箱。</strong>过期（默认 3 小时）会丢，存 hint 的协调者挂了也会丢——它降低的是「短暂抖动变成写失败」的概率，不提供任何持久保证。</li>
+<li><strong>「最终一致」的最终，由 repair 节奏定义。</strong>宽限期 10 天、每 7 天跑一轮全集群 repair，这不是调优建议而是正确性底线；跑不完，删除就会复活。</li>
+<li><strong>过度流式常常比想象中贵。</strong>叶子覆盖一段 key 范围，差一条记录也要重传整段——很多「repair 把集群打挂了」的事故源头在这里，而不是算法本身。</li>
+<li><strong>别拿 gossip 传需要确定性的事。</strong>它没有交付上界、也不保证顺序。「谁是主」「这次 DDL 生效了吗」必须走共识（Ch14），gossip 只适合<strong>可以晚一点知道、且知道错了还能自我纠正</strong>的信息。</li>
+<li><strong>冗余不是 bug，是 gossip 的保费。</strong>一味调小扇出省带宽，买来的是传播不全的尾部风险；省带宽的正确做法是混合 gossip。</li>
+<li><strong>时代位置与反方。</strong>2019 年成书时，位图版本向量还偏新，混合 gossip 也主要停留在论文与少数系统里。另一派观点越来越响：既然反熵的运营成本这么高，不如一开始就用共识把写做对——CockroachDB、etcd 的流行即此立场。<strong>公允的说法是：反熵买的是分区期间仍可写入的能力，月租就是 repair。</strong></li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 复制只负责<em>尝试</em>送达；<strong>反熵是把没送到的那部分补齐的机制</strong>。发散就在正常路径上——<code>w=2</code> 的成功写本来就可能漏掉第三个副本。</p>
+<p>② 本章按<strong>时机</strong>组织：读时（读修复）、写时（提示移交）、后台（Merkle 树 / 位图版本向量），三者互补、<strong>不可互替</strong>。</p>
+<p>③ 读修复靠摘要读几乎白嫖读请求，但<strong>只修被读到的数据</strong>；阻塞式保住单调 quorum 读，代价是多一次写往返。</p>
+<p>④ 提示移交 + sloppy quorum 把短时故障挡在写失败之外，但 hint <strong>有保质期（默认 3 小时）、无冗余</strong>，本质是「尽力而为」。</p>
+<p>⑤ Merkle 树先比根、再逐层下降，把找分歧的代价压到 <code>O(log n)</code>；代价是<strong>叶子粒度导致过度流式</strong>、建树要读全量、拓扑一变就重建。</p>
+<p>⑥ 位图版本向量只比元数据不读数据，补近期缺口极便宜，但兜不住长期失联。</p>
+<p>⑦ gossip 用<strong>冗余换鲁棒</strong>：每轮随机挑 <code>f</code> 个同伴，轮数随节点数对数增长；调参点是「何时停止转发」，push-pull 收敛最快。</p>
+<p>⑧ 纯随机 gossip 浪费带宽、固定生成树一断就残，<strong>混合 gossip（正文走树 + 通告兜底）</strong>让树能自愈；部分视图让单节点开销不随集群规模增长。</p>
+<p>⑨ 一句话带走：<strong>最终一致性的「最终」是运营支出，不是协议赠品</strong>——宽限期 10 天就意味着 7 天必须跑完一轮 repair，否则删掉的数据会自己回来。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

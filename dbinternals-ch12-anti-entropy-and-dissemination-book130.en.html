@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals Ch 12 · Anti-Entropy and Dissemination — Books Deep-Read 130</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">Book Deep Read · Database Internals · Chapter 12</p>
+<h1>Anti-Entropy and Dissemination</h1>
+<p class="sub">Database Internals · Ch 12 · Alex Petrov · 2019</p>
+<p class="langbar"><a href="dbinternals-ch12-anti-entropy-and-dissemination-book130.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You post a message to a group chat. Most people see it instantly, one person sees it ten minutes later, and someone whose phone was off all day still finds it waiting when they switch back on. Chapter 12 of <em>Database Internals</em> is about <strong>how that last part — "still gets it eventually" — actually works</strong>. The previous chapter promised that the copies "will eventually match." This one asks the obvious follow-up: <strong>eventually by what means?</strong></p>
+<h2>A strange thing first</h2>
+<p>Something you deleted days ago <strong>comes back on its own</strong>. It sounds like a haunting; the mechanics are mundane. When you deleted it, one machine happened to be offline, so its copy still says "present." When it comes back, it notices its neighbours are missing that item and helpfully hands it over — <strong>the deletion gets undone</strong>. Which is why the real design problem is not "how do we deliver the data" but <strong>"what happens to the part that never arrived"</strong>.</p>
+<h2>Why the old world found this hard</h2>
+<p>The obvious answer is "make sure everybody has it before you call the write done." But that means every write waits for the slowest machine, and one machine being off means nobody can write at all — exactly the bill the previous chapter priced out. So real systems <strong>finish the write first and settle the debt later</strong>. The trouble is that the debt does not clear itself: missing one write and missing a million writes look identical from outside — <strong>the copies differ</strong>, and nobody knows where.</p>
+<h2>Three moments to settle the debt</h2>
+<p>The skeleton of the chapter is three complementary channels:</p>
+<ul>
+<li><strong>At write time, hold it for them.</strong> If a machine is unreachable, keep the write it should have received as a <strong>sticky note</strong> and hand it over when it returns. Cheap — but the note has an expiry date, and after that it is thrown away.</li>
+<li><strong>At read time, check as you go.</strong> You are already asking several machines, so compare their answers and <strong>quietly update whoever is behind</strong>. Elegant, because it rides along on traffic you were paying for anyway. The flaw is just as plain: <strong>data nobody reads never gets fixed</strong>.</li>
+<li><strong>When idle, do a real audit.</strong> Comparing record by record is hopeless, so compare fingerprints first: squeeze a whole box of ledgers into one short fingerprint. Same fingerprint, skip the entire box. Different, split it in half and compare each half — a few rounds of questions narrow millions of records down to the exact pages that disagree.</li>
+</ul>
+<h2>How news spreads: like a rumour</h2>
+<p>Some information — who is alive, who just joined — has to reach <strong>every</strong> machine. Telling them one by one is slow, and appointing one announcer means everything stops when the announcer dies. The chapter's answer is <strong>rumour</strong>: every machine, every second, picks a peer at random and tells it everything it knows. No centre, no single link that matters, and the spread is explosive — the number of machines in the know multiplies each round, so doubling the cluster costs only a round or two more. <strong>The price: nobody can promise exactly how many seconds it takes.</strong> You get "fast," not a guarantee.</p>
+<h2>Remember this one line</h2>
+<div class="tl">
+<p><strong>"Eventually consistent" is not something you wait for; it is something you pay for.</strong> A system has to run three repair channels — hold at write time, check at read time, audit when idle — plus a rumour-style way of spreading news. Skip them and the copies stay different forever, and the things you deleted climb back out.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the notation and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">The previous chapter's eventual consistency promised convergence once writes stop. This chapter calls in the debt: <strong>that "eventually" is not a gift of time, it is a standing operational expense</strong>. A replication protocol only <em>attempts</em> delivery; whatever fails to land has to be reconciled separately by <strong>anti-entropy</strong>. Petrov organizes the mechanisms by <em>when</em> they run — read path, write path, background — and then answers the second half of the problem, how to spread information across a whole cluster, with <strong>gossip</strong>. The mental model to install: <strong>convergence is work you schedule, not a byproduct of the protocol</strong>. In a cluster where nobody runs repair, "eventually" means "never."</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Divergence / entropy</strong> — how far the replicas of one piece of data have drifted apart; the longer they go unsynchronized, the worse it gets.</li>
+<li><strong>Anti-entropy</strong> — the background process that actively compares replicas and reconciles the differences.</li>
+<li><strong>Read repair</strong> — noticing during a read that a replica is behind, and writing the newer value back to it.</li>
+<li><strong>Digest read</strong> — ask one replica for the full data and the rest only for a hash; if the hashes agree, nothing else has to cross the network.</li>
+<li><strong>Hinted handoff</strong> — when the target replica is down, the coordinator stores the write as a <em>hint</em> and replays it once the replica returns.</li>
+<li><strong>Merkle tree (hash tree)</strong> — leaves are hashes of the data, parents are hashes of their children; comparing two roots answers "are these identical?" in one message.</li>
+<li><strong>Gossip (epidemic protocol)</strong> — each node periodically picks a few random peers and exchanges state, so information spreads like an infection.</li>
+<li><strong>Fanout</strong> — how many peers a node contacts per gossip round, written <code>f</code>.</li>
+<li><strong>Overlay network</strong> — a logical "who talks to whom" topology imposed on top of the physical network.</li>
+<li><strong>Tombstone and <code>gc_grace</code></strong> — a delete is written as a "deleted here" marker, kept for a grace period before it is finally purged.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Part II, "Distributed Systems," directly after Ch11 (Replication and Consistency). That chapter laid consistency out as a spectrum and defined the cheapest tier as "converges once writes stop"; <strong>this chapter is where that promise gets paid</strong>, and it also covers how cluster metadata (membership, failure suspicion, schema versions) spreads. Ch13–14 (distributed transactions and consensus) take the opposite route: <strong>coordinate up front instead of reconciling afterwards</strong>. In the field this maps onto Cassandra's four-piece kit — hints, read repair, <code>nodetool repair</code>, gossip — plus background active anti-entropy in DynamoDB and Riak, and membership dissemination in Consul and Serf.</p>
+<h2>The problem it solves</h2>
+<p>Start with a scenario that is not a failure at all: three replicas, <code>QUORUM</code> write (<code>w=2</code>). The coordinator returns success as soon as two acknowledge — <strong>at that instant the third replica simply does not have the data, and the system considers everything normal</strong>. Divergence is not the exception path; <strong>it is on the happy path</strong>.</p>
+<p>Now scale it up: a node goes offline for 20 minutes during a rolling upgrade while the cluster takes 3,000 writes per second, a third of them its own. It comes back roughly <strong>3.6 million writes</strong> behind. And <strong>the system does not know where it is behind</strong>: one missing write and three million missing writes both surface only as "sometimes you read a stale value."</p>
+<p><strong>What if you skip it?</strong> Three consequences, each worse than the last. (1) Stale reads become <strong>permanent</strong> — that old value never expires on its own. (2) <strong>Deletes resurrect</strong>: once the tombstone passes its grace period and is purged, a lagging replica still holding the old row reads the difference as "my peer is missing this" and <strong>helpfully ships the deleted data back</strong>. (3) "Eventual consistency" becomes a slogan — an "eventually" with no upper bound is, in engineering terms, no guarantee at all.</p>
+<h2>The core of it</h2>
+<h3>Three moments: read path, write path, background</h3>
+<p>The chapter is organized by <strong>when reconciliation happens</strong> rather than by algorithm. The three channels differ in coverage and in cost, and they are <strong>complements, not substitutes</strong> — that structure is the first thing to internalize.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 318" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker><marker id="a2" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="18" y="20">One job (pull replicas back together), three different moments</text>
+<rect fill="rgba(155,108,245,0.07)" height="82" rx="8" stroke="rgba(155,108,245,0.3)" width="604" x="18" y="32"></rect>
+<text fill="#9b6cf5" font-size="11.5" font-weight="700" x="32" y="52">WRITE TIME · hinted handoff</text>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="6" stroke="#5b9df9" width="96" x="32" y="66"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="80" y="86">coordinator</text>
+<line marker-end="url(#a2)" stroke="#5b9df9" x1="130" x2="250" y1="74" y2="66"></line>
+<line marker-end="url(#a2)" stroke="#5b9df9" x1="130" x2="250" y1="84" y2="94"></line>
+<text fill="#8fbaff" font-size="10.5" x="256" y="70">R1 ok</text>
+<text fill="#8fbaff" font-size="10.5" x="256" y="99">R2 ok</text>
+<text fill="#e06b6b" font-size="10.5" x="256" y="85">R3 down</text>
+<rect fill="rgba(155,108,245,0.18)" height="30" rx="6" stroke="#9b6cf5" width="118" x="330" y="66"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="389" y="86">store hint</text>
+<line marker-end="url(#a1)" stroke="#9b6cf5" stroke-dasharray="5 4" x1="450" x2="556" y1="81" y2="81"></line>
+<text fill="#b9c0ca" font-size="10.5" x="462" y="74">replay on return</text>
+<text fill="#7c8593" font-size="10" x="462" y="101">expires silently</text>
+<rect fill="rgba(91,157,249,0.07)" height="82" rx="8" stroke="rgba(91,157,249,0.3)" width="604" x="18" y="122"></rect>
+<text fill="#5b9df9" font-size="11.5" font-weight="700" x="32" y="142">READ TIME · read repair</text>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="6" stroke="#5b9df9" width="96" x="32" y="156"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="80" y="176">coordinator</text>
+<line marker-end="url(#a2)" stroke="#5b9df9" x1="130" x2="246" y1="171" y2="164"></line>
+<line marker-end="url(#a2)" stroke="#5b9df9" x1="130" x2="246" y1="176" y2="188"></line>
+<text fill="#8fbaff" font-size="10.5" x="252" y="168">R1 sends v2 in full</text>
+<text fill="#e06b6b" font-size="10.5" x="252" y="193">R2 digest mismatch</text>
+<line marker-end="url(#a1)" stroke="#9b6cf5" stroke-dasharray="5 4" x1="392" x2="556" y1="188" y2="188"></line>
+<text fill="#b9c0ca" font-size="10.5" x="410" y="181">write v2 back</text>
+<text fill="#7c8593" font-size="10" x="410" y="206">only what was read</text>
+<rect fill="rgba(91,157,249,0.07)" height="86" rx="8" stroke="rgba(91,157,249,0.3)" width="604" x="18" y="212"></rect>
+<text fill="#5b9df9" font-size="11.5" font-weight="700" x="32" y="232">BACKGROUND · Merkle tree repair</text>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="6" stroke="#5b9df9" width="96" x="32" y="246"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="80" y="266">R1 full set</text>
+<line marker-end="url(#a2)" stroke="#5b9df9" x1="134" x2="222" y1="261" y2="261"></line>
+<line marker-end="url(#a1)" stroke="#9b6cf5" x1="326" x2="238" y1="275" y2="275"></line>
+<text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="280" y="256">swap roots</text>
+<text fill="#9b6cf5" font-size="10.5" text-anchor="middle" x="280" y="291">descend</text>
+<rect fill="rgba(91,157,249,0.14)" height="30" rx="6" stroke="#5b9df9" width="96" x="330" y="246"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="378" y="266">R3 full set</text>
+<text fill="#b9c0ca" font-size="10.5" x="446" y="261">covers all data</text>
+<text fill="#7c8593" font-size="10" x="446" y="283">cost: disk and network IO</text>
+</svg>
+<figcaption>Fig 1 · Three channels — hold at write time, check at read time, audit in the background. Coverage grows, and so does cost.</figcaption>
+</figure>
+<h3>Read repair and digest reads: riding along on traffic you already pay for</h3>
+<p>A read already contacts several replicas, so compare what they say. The engineering detail that matters is the <strong>digest read</strong>: ask one replica for the full row and the others for a hash only — <strong>when the digests agree, exactly one copy of the data crosses the network</strong>, and only a mismatch triggers a full fetch. That makes the steady-state cost of "checking as you go" close to zero.</p>
+<p>The other switch to understand is <strong>blocking versus non-blocking</strong>. Blocking read repair <em>writes the fix out and waits for the consistency level before returning</em>, adding one write round trip to read latency and buying monotonic quorum reads (no repeat of the "new then old" anomaly from Ch11). Non-blocking repair reconciles internally and returns the right answer, but <strong>leaves the lagging replica untouched</strong>.</p>
+<p><strong>Its fundamental limit is one sentence: it only repairs data that is read.</strong> Cold rows, archived partitions, keys written once and never touched again — <strong>their turn never comes</strong>. Read repair is a fine way to hold down everyday staleness, <strong>and no kind of guarantee at all</strong>.</p>
+<h3>Hinted handoff: signing for the parcel at write time</h3>
+<p>When a target replica is unreachable, the coordinator does not have to fail the write; it stores the mutation <strong>together with who it was meant for</strong> as a hint, and replays it when that replica returns. It pairs with the previous chapter's <strong>sloppy quorum</strong>: the write lands on the first <code>n</code> <em>healthy</em> nodes rather than the <code>n</code> that own the key — so <strong>brief failures stop turning into write failures</strong>.</p>
+<p>Three costs. <strong>(1) Hints expire</strong> — three hours by default in Cassandra; after that the hint is dropped and the replica stays behind until the next repair. <strong>(2) Hints are not replicated</strong> — if the coordinator holding them dies, the debt evaporates. <strong>(3) The replay burst</strong> at recovery time can flatten the node that just came back. Hinted handoff is <strong>best-effort, not a guarantee</strong>.</p>
+<h3>Merkle trees: compare fingerprints, then descend</h3>
+<p>Background repair has to answer: <strong>given two replicas holding hundreds of millions of rows each, how do you find the differences without shipping everything?</strong> With a hash tree — leaves hash segments of data, parents hash their children, up to a single root. <strong>Exchange roots first: identical means the whole tree can be skipped.</strong> Otherwise fetch the two child hashes and descend only on the side that disagrees, until you reach the offending leaf. The comparison traffic drops from "size of the data" to <strong>"height of the tree"</strong>, written <code>O(log n)</code> — double the data and you ask one extra question.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 276" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m2" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs><text fill="#5b9df9" font-size="12.5" font-weight="700" x="18" y="20">Roots differ → descend only on the side that disagrees</text>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="150" y="44">replica A</text>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="490" y="44">replica B</text>
+<circle cx="150" cy="70" fill="rgba(224,107,107,0.2)" r="17" stroke="#e06b6b" stroke-width="2"></circle>
+<text fill="#e7ebf1" font-family="monospace" font-size="10" text-anchor="middle" x="150" y="74">a3f</text>
+<circle cx="490" cy="70" fill="rgba(224,107,107,0.2)" r="17" stroke="#e06b6b" stroke-width="2"></circle>
+<text fill="#e7ebf1" font-family="monospace" font-size="10" text-anchor="middle" x="490" y="74">7c1</text>
+<line stroke="#e06b6b" stroke-dasharray="4 4" x1="170" x2="470" y1="70" y2="70"></line>
+<text fill="#e06b6b" font-size="10.5" text-anchor="middle" x="320" y="64">roots differ</text>
+<line stroke="#7c8593" x1="150" x2="96" y1="87" y2="122"></line>
+<line stroke="#7c8593" x1="150" x2="204" y1="87" y2="122"></line>
+<circle cx="96" cy="138" fill="rgba(91,157,249,0.12)" r="16" stroke="#5b9df9"></circle>
+<text fill="#b9c0ca" font-family="monospace" font-size="10" text-anchor="middle" x="96" y="142">11b</text>
+<circle cx="204" cy="138" fill="rgba(224,107,107,0.2)" r="16" stroke="#e06b6b" stroke-width="2"></circle>
+<text fill="#e7ebf1" font-family="monospace" font-size="10" text-anchor="middle" x="204" y="142">d90</text>
+<line stroke="#7c8593" x1="490" x2="436" y1="87" y2="122"></line>
+<line stroke="#7c8593" x1="490" x2="544" y1="87" y2="122"></line>
+<circle cx="436" cy="138" fill="rgba(91,157,249,0.12)" r="16" stroke="#5b9df9"></circle>
+<text fill="#b9c0ca" font-family="monospace" font-size="10" text-anchor="middle" x="436" y="142">11b</text>
+<circle cx="544" cy="138" fill="rgba(224,107,107,0.2)" r="16" stroke="#e06b6b" stroke-width="2"></circle>
+<text fill="#e7ebf1" font-family="monospace" font-size="10" text-anchor="middle" x="544" y="142">5ee</text>
+<text fill="#5b9df9" font-size="10.5" text-anchor="middle" x="266" y="142">left subtree equal → skipped</text>
+<line stroke="#7c8593" x1="204" x2="176" y1="154" y2="182"></line>
+<line stroke="#7c8593" x1="204" x2="232" y1="154" y2="182"></line>
+<rect fill="rgba(91,157,249,0.1)" height="24" rx="5" stroke="#5b9df9" width="42" x="155" y="184"></rect>
+<text fill="#b9c0ca" font-family="monospace" font-size="9.5" text-anchor="middle" x="176" y="200">k1–k9</text>
+<rect fill="rgba(224,107,107,0.2)" height="24" rx="5" stroke="#e06b6b" stroke-width="2" width="42" x="211" y="184"></rect>
+<text fill="#e7ebf1" font-family="monospace" font-size="9.5" text-anchor="middle" x="232" y="200">k10–18</text>
+<line stroke="#7c8593" x1="544" x2="516" y1="154" y2="182"></line>
+<line stroke="#7c8593" x1="544" x2="572" y1="154" y2="182"></line>
+<rect fill="rgba(91,157,249,0.1)" height="24" rx="5" stroke="#5b9df9" width="42" x="495" y="184"></rect>
+<text fill="#b9c0ca" font-family="monospace" font-size="9.5" text-anchor="middle" x="516" y="200">k1–k9</text>
+<rect fill="rgba(224,107,107,0.2)" height="24" rx="5" stroke="#e06b6b" stroke-width="2" width="42" x="551" y="184"></rect>
+<text fill="#e7ebf1" font-family="monospace" font-size="9.5" text-anchor="middle" x="572" y="200">k10–18</text>
+<line marker-end="url(#m2)" stroke="#9b6cf5" stroke-dasharray="5 4" x1="256" x2="490" y1="222" y2="222"></line>
+<text fill="#9b6cf5" font-size="10.5" x="272" y="216">ship the whole range this leaf covers</text>
+<text fill="#7c8593" font-size="10.5" x="18" y="252">Traffic scales with tree height, not data size; leaf granularity means "fix 1 row, ship the range" — over-streaming.</text>
+</svg>
+<figcaption>Fig 2 · A Merkle tree cuts the cost of <em>locating</em> divergence from data size down to tree height.</figcaption>
+</figure>
+<p>Three costs to remember together. <strong>(1) Granularity</strong> — a leaf is not one row but a key range, so <strong>one mismatched leaf means shipping the entire range</strong> (over-streaming); repairing one row can move hundreds of megabytes. <strong>(2) Construction</strong> — the tree is only useful if it covers everything, so building it means reading all the data: real disk and network IO. <strong>(3) Topology changes invalidate it</strong> — adding or removing nodes re-divides the key ranges, and the trees have to be rebuilt.</p>
+<p>Petrov also offers a remedy for the rebuild problem: <strong>bitmap version vectors</strong>. Instead of comparing data, a node records only <strong>"whose write number I have seen"</strong>, compactly representing the set of received write sequence numbers as a bitmap. Replicas swap that summary, compute exactly which writes the peer is missing, and ship only those — no full scan at all. The catch is that it covers <strong>recent</strong> gaps only; long absences and silent corruption still fall back to Merkle trees.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/dynamo-paper54.en.html" rel="noopener" target="_blank">CS Papers · Dynamo: Amazon's Highly Available Key-value Store</a> — where all three channels come from: sloppy quorum, hinted handoff, and a Merkle tree per key range, assembled into one leaderless store</aside>
+<h3>Gossip: buying robustness with redundancy</h3>
+<p>The other half of the problem is <strong>dissemination</strong>: membership changes, failure suspicion and schema versions have to reach the whole cluster. Direct broadcast makes every node contact everyone (message count grows with the square of cluster size), and a fixed broadcast tree <strong>loses an entire branch</strong> the moment an interior node dies. Gossip answers with <strong>probabilistic spread</strong>: every node, once per interval (one second in Cassandra), picks <code>f</code> random peers and exchanges state.</p>
+<p>Petrov borrows the epidemiological states to describe it: <strong>susceptible</strong> (has not received it), <strong>infective</strong> (has it and is forwarding), <strong>removed</strong> (has it but no longer forwards). When a node stops forwarding is <strong>the one real tuning knob</strong>: stop too early and the message may not reach everyone, stop too late and the network fills with duplicates. The three exchange styles each have a temperament: <strong>push</strong> is fast early and wasteful late; <strong>pull</strong> is good at finishing the job; <strong>push-pull</strong> converges fastest at the cost of larger messages.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 224" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="18" y="20">Fanout f=2: the number in the know roughly triples each round</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="76" y="46">round 0</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="226" y="46">round 1</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="392" y="46">round 2</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="556" y="46">round 3</text>
+<circle cx="76" cy="100" fill="#9b6cf5" r="7"></circle>
+<circle cx="200" cy="80" fill="#9b6cf5" r="7"></circle>
+<circle cx="226" cy="104" fill="#9b6cf5" r="7"></circle>
+<circle cx="252" cy="128" fill="#9b6cf5" r="7"></circle>
+<circle cx="350" cy="68" fill="#9b6cf5" r="6"></circle>
+<circle cx="376" cy="86" fill="#9b6cf5" r="6"></circle>
+<circle cx="402" cy="72" fill="#9b6cf5" r="6"></circle>
+<circle cx="356" cy="104" fill="#9b6cf5" r="6"></circle>
+<circle cx="390" cy="112" fill="#9b6cf5" r="6"></circle>
+<circle cx="420" cy="100" fill="#9b6cf5" r="6"></circle>
+<circle cx="362" cy="136" fill="#9b6cf5" r="6"></circle>
+<circle cx="396" cy="146" fill="#9b6cf5" r="6"></circle>
+<circle cx="428" cy="132" fill="#9b6cf5" r="6"></circle>
+<rect fill="rgba(155,108,245,0.18)" height="96" rx="8" stroke="#9b6cf5" width="112" x="500" y="60"></rect>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="556" y="96">27 nodes</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="556" y="120">…and so on</text>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="556" y="140">1000 nodes ≈ 7 rounds</text>
+<line stroke="rgba(143,186,255,0.45)" stroke-dasharray="3 3" x1="90" x2="186" y1="98" y2="82"></line>
+<line stroke="rgba(143,186,255,0.45)" stroke-dasharray="3 3" x1="90" x2="212" y1="102" y2="104"></line>
+<line stroke="rgba(143,186,255,0.45)" stroke-dasharray="3 3" x1="264" x2="338" y1="126" y2="110"></line>
+<line stroke="rgba(143,186,255,0.45)" stroke-dasharray="3 3" x1="240" x2="338" y1="100" y2="80"></line>
+<text fill="#7c8593" font-size="10.5" x="18" y="184">Rounds grow with log(nodes): double the cluster, add about one round. No centre, and broken links do not stop it.</text>
+<text fill="#7c8593" font-size="10.5" x="18" y="204">The price: the same message arrives many times over, and "a few rounds" is a probability, not a promise.</text>
+</svg>
+<figcaption>Fig 3 · Gossip spreads exponentially; the round count grows logarithmically with cluster size.</figcaption>
+</figure>
+<p>Convergence grows <strong>logarithmically</strong> in the number of nodes — <code>O(log N)</code>, meaning that going from 100 to 1,000 machines adds a few rounds rather than a factor of ten. That is why membership is almost always gossiped: <strong>it is insensitive to scale and insensitive to failure</strong>.</p>
+<h3>From random to structured: overlays, hybrid gossip, partial views</h3>
+<p>Pure random gossip wastes bandwidth: it is perfectly normal for one node to receive the same message seven or eight times. A fixed spanning tree is optimal (N-1 edges carry each message) but <strong>one dead interior node cuts off a whole branch</strong>. The chapter's reconciliation is <strong>hybrid gossip</strong>, exemplified by Plumtree:</p>
+<ul>
+<li><strong>Eager push</strong> — send the full payload along a small set of "tree edges." This carries nearly all the traffic, at close to spanning-tree efficiency.</li>
+<li><strong>Lazy push</strong> — send every other neighbour only a tens-of-bytes <strong>announcement, "I have message #42."</strong> Normally the peer already got the payload over a tree edge and drops the announcement; <strong>when the tree breaks</strong>, a node that keeps getting announcements but no payload pulls it directly and <strong>promotes that edge into a tree edge</strong>. The tree heals itself.</li>
+</ul>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 230" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="18" y="20">Solid = eager push (payload) · dashed = lazy push ("I have #42")</text>
+<circle cx="90" cy="100" fill="rgba(155,108,245,0.25)" r="18" stroke="#9b6cf5" stroke-width="2"></circle>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="90" y="104">src</text>
+<circle cx="246" cy="62" fill="rgba(91,157,249,0.14)" r="16" stroke="#5b9df9"></circle>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="246" y="66">B</text>
+<circle cx="246" cy="150" fill="rgba(91,157,249,0.14)" r="16" stroke="#5b9df9"></circle>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="246" y="154">C</text>
+<circle cx="430" cy="100" fill="rgba(91,157,249,0.14)" r="16" stroke="#5b9df9"></circle>
+<text fill="#b9c0ca" font-size="11" text-anchor="middle" x="430" y="104">D</text>
+<line stroke="#5b9df9" stroke-width="2" x1="108" x2="230" y1="92" y2="68"></line>
+<line stroke="#5b9df9" stroke-width="2" x1="108" x2="230" y1="110" y2="146"></line>
+<line stroke="#e06b6b" stroke-dasharray="6 5" stroke-width="2" x1="262" x2="414" y1="70" y2="94"></line>
+<text fill="#e06b6b" font-size="10.5" text-anchor="middle" x="338" y="72">tree edge broken</text>
+<line stroke="rgba(143,186,255,0.5)" stroke-dasharray="4 4" x1="262" x2="414" y1="146" y2="110"></line>
+<text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="342" y="172">announcement only → pull the payload</text>
+<text fill="#9b6cf5" font-size="10.5" text-anchor="middle" x="342" y="190">→ this edge is promoted to a tree edge</text>
+<text fill="#7c8593" font-size="10.5" x="18" y="212">Cheap announcements act as a safety net, so the efficient broadcast tree can repair itself.</text>
+</svg>
+<figcaption>Fig 4 · Hybrid gossip: pay tree prices in the normal case, keep gossip's self-healing for the bad one.</figcaption>
+</figure>
+<p>The last piece is <strong>partial views</strong>: a node need not know the whole cluster, only a small active set of neighbours (on the order of <code>log N</code>) plus a passive backup list to promote from when one dies — the HyParView family. <strong>Per-node overhead therefore stops growing linearly with the cluster</strong>, which is what makes gossip-based membership feasible at thousands of nodes.</p>
+<h2>Trade-offs and how to choose</h2>
+<p class="tcap">Table 1 · The three anti-entropy channels: what each covers, what each misses</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Channel</th><th>Triggered</th><th>Coverage</th><th>Steady-state cost</th><th>Honest cost / blind spot</th></tr></thead>
+<tbody>
+<tr><th>Read repair</th><td>On every read, as a passenger</td><td><strong>Only data that gets read</strong></td><td>Very low (near zero with digest reads)</td><td>Cold data is never reached; blocking mode adds a write round trip to reads</td></tr>
+<tr><th>Hinted handoff</th><td>Write sees a replica down</td><td>Writes during the outage, <strong>time-limited</strong></td><td>Low, but write amplification while down</td><td>Hints expire (3 h default) or die with the coordinator; the replay burst can flatten the recovering node</td></tr>
+<tr><th>Merkle repair</th><td>Scheduled background job</td><td><strong>All data — the only guarantee</strong></td><td>High: full read, tree build, cross-node streaming</td><td>Leaf granularity causes over-streaming; topology changes force rebuilds; run it too rarely and deletes come back</td></tr>
+<tr><th>Bitmap version vectors</th><td>Background, recent gaps</td><td>Writes missed recently</td><td><strong>Very low: metadata only, no data scan</strong></td><td>Recent gaps only; long outages and silent corruption still need Merkle</td></tr>
+</tbody>
+</table>
+</div>
+<p class="tcap">Table 2 · Four ways to get a message to the whole cluster</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Approach</th><th>Message redundancy</th><th>Robustness</th><th>Latency</th><th>When to pick it</th></tr></thead>
+<tbody>
+<tr><th>Direct broadcast</th><td>None, but everyone contacts everyone</td><td><strong>Poor</strong>: a miss stays a miss, no self-healing</td><td>Lowest (one hop)</td><td>Small, stable clusters (tens of nodes)</td></tr>
+<tr><th>Fixed spanning tree</th><td><strong>Lowest</strong>: N-1 edges</td><td><strong>Worst</strong>: one interior node takes out a branch</td><td>Low (tree height)</td><td>Stable topology with someone maintaining the tree</td></tr>
+<tr><th>Pure gossip</th><td><strong>High</strong>: the same message arrives repeatedly</td><td><strong>Best</strong>: no centre, paths are redundant by construction</td><td><code>O(log N)</code> rounds, <strong>no upper bound</strong></td><td>Membership, failure suspicion, large churning clusters</td></tr>
+<tr><th>Hybrid gossip</th><td>Low: payload on the tree, announcements elsewhere</td><td>Good: announcements expose gaps and rebuild the tree</td><td>Close to a spanning tree</td><td>Broadcasting larger payloads while staying fault-tolerant</td></tr>
+</tbody>
+</table>
+</div>
+<p>Two rules of thumb. <strong>Take all the repair channels</strong>: they are three layers of defence, not alternatives — you only shift the weighting by data temperature, since hot data stays fresh on read repair alone while cold data depends entirely on the repair cadence. <strong>Pick a dissemination style by payload size and membership churn</strong>: small, volatile metadata goes over pure gossip; only a large payload that also needs fault tolerance justifies the complexity of hybrid gossip.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/replication-day5.en.html" rel="noopener" target="_blank">System Design · Day 5 Replication</a> — replication lag and repair from the architecture side: how to monitor lag, how to set an SLO on it, how to fail over</aside>
+<h2>Why it matters in real systems</h2>
+<p>The practical value of this chapter is turning an operational instinct into something designable: <strong>the health of an eventually consistent system equals its anti-entropy budget</strong>. The common mistake in design review is treating "we use an eventually consistent store" as a conclusion, with nobody answering "how often does repair run, does it finish, and what happens when it does not?" Interviews are the same: being able to explain why read repair cannot replace repair, and what happens after a hint expires, counts for far more than saying the word "gossip."</p>
+<p>Against real systems: <strong>Cassandra and ScyllaDB</strong> ship the full kit (hints, read repair, <code>nodetool repair</code>, gossip) and are the most direct implementation of this chapter; <strong>DynamoDB and Riak</strong> follow the Dynamo lineage, with Riak keeping hash trees resident for active anti-entropy; <strong>Consul and Serf</strong> gossip SWIM-style for membership and failure detection; <strong>Redis Cluster</strong> gossips slot and node state. The counter-example matters just as much: <strong>etcd and CockroachDB take the consensus route</strong>, forcing every write through a majority up front, and <strong>therefore need no anti-entropy at all</strong> — proof that anti-entropy is the running cost specific to settling debts after the fact.</p>
+<div class="ev">
+<div class="evh">EVIDENCE FROM PRODUCTION</div>
+<ul>
+<li><strong>Apache Cassandra: only one of the three channels counts as a guarantee.</strong> The docs divide the labour precisely: "<em>Cassandra has many best-effort techniques to drive convergence of replicas including Replica read repair in the read path and Hinted handoff in the write path</em>," whereas "<em>to guarantee eventual consistency Cassandra implements anti-entropy repair where replicas calculate hierarchical hash trees over their datasets called Merkle trees</em>." The hints page is blunter still: "<em>Hints are best effort, however, and do not guarantee eventual consistency like anti-entropy repair does.</em>" The default retention window is <code>3 h</code>, past which "<em>the destination replica will be permanently out of sync until either read-repair or full/incremental anti-entropy repair propagates the mutation</em>."<span class="src">Apache Cassandra docs · <a href="https://github.com/apache/cassandra/blob/trunk/doc/modules/cassandra/pages/architecture/dynamo.adoc" rel="noopener" target="_blank">Dynamo (architecture)</a> / <a href="https://github.com/apache/cassandra/blob/trunk/doc/modules/cassandra/pages/managing/operating/hints.adoc" rel="noopener" target="_blank">Hints</a></span></li>
+<li><strong>Cassandra writes the repair cadence down as a hard operational requirement.</strong> Not advice, a floor: "<em>At a minimum, repair should be run often enough that the gc grace period never expires on unrepaired data. Otherwise, deleted data could reappear.</em>" With a number attached: "<em>With a default gc grace period of 10 days, repairing every node in your cluster at least once every 7 days will prevent this</em>." The limit of read repair is spelled out too — "<em>only the data covered by a SELECT statement is repaired by a read repair</em>" — and the two old probabilistic knobs, <code>read_repair_chance</code> and <code>dclocal_read_repair_chance</code>, were removed in 4.0.<span class="src">Apache Cassandra docs · <a href="https://github.com/apache/cassandra/blob/trunk/doc/modules/cassandra/pages/managing/operating/repair.adoc" rel="noopener" target="_blank">Repair</a> / <a href="https://github.com/apache/cassandra/blob/trunk/doc/modules/cassandra/pages/managing/operating/read_repair.adoc" rel="noopener" target="_blank">Read repair</a></span></li>
+<li><strong>Amazon Dynamo: the paper states both the gain and the price of Merkle trees.</strong> The gain — "<em>each branch of the tree can be checked independently without requiring nodes to download the entire tree or the entire data set</em>"; the layout — "<em>Each node maintains a separate Merkle tree for each key range</em>"; and the cost, undisguised: "<em>The disadvantage with this scheme is that many key ranges change when a node joins or leaves the system thereby requiring the tree(s) to be recalculated.</em>"<span class="src">DeCandia et al., <a href="https://github.com/papers-we-love/papers-we-love/blob/main/datastores/dynamo-amazons-highly-available-key-value-store.pdf" rel="noopener" target="_blank">Dynamo: Amazon's Highly Available Key-value Store</a>, SOSP 2007, §4.7</span></li>
+<li><strong>HashiCorp: membership goes to gossip, and they admit it is only "fast on average."</strong> The memberlist library under Consul and Nomad says it "<em>is based on SWIM: Scalable Weakly-consistent Infection-style Process Group Membership Protocol</em>," extended "<em>to increase propagation speed and convergence rate</em>," and describes the result carefully: "<em>eventually consistent but converges quickly on average</em>," where "<em>The speed at which it converges can be heavily tuned via various knobs on the protocol</em>" — exactly the book's point that the guarantee is probabilistic and the knobs trade latency for traffic.<span class="src">HashiCorp · <a href="https://github.com/hashicorp/memberlist" rel="noopener" target="_blank">memberlist</a> (README)</span></li>
+</ul>
+</div>
+<h2>Common mistakes and open debates</h2>
+<ul>
+<li><strong>The biggest misconception: that read repair can stand in for repair.</strong> It only fixes what a <code>SELECT</code> touched, so cold partitions never get their turn; treating it as a convergence guarantee is how you end up waiting for data to resurrect.</li>
+<li><strong>A hint is not a safe deposit box.</strong> It expires (three hours by default) and it dies with the coordinator holding it. It lowers the odds that a brief wobble becomes a write failure; it offers no durability guarantee.</li>
+<li><strong>The "eventually" in eventual consistency is defined by your repair cadence.</strong> A 10-day grace period with a full cluster repair every 7 days is not a tuning suggestion, it is a correctness floor. Miss it and deletes come back.</li>
+<li><strong>Over-streaming costs more than people expect.</strong> A leaf covers a key range, so one differing row re-ships the range — the root cause of many "repair took the cluster down" incidents, rather than the algorithm itself.</li>
+<li><strong>Do not gossip anything that has to be definite.</strong> There is no delivery bound and no ordering. "Who is the leader" and "did this DDL take effect" belong to consensus (Ch14); gossip suits information you can <strong>learn late and correct later</strong>.</li>
+<li><strong>Redundancy is not a bug, it is gossip's insurance premium.</strong> Shrinking the fanout to save bandwidth buys tail risk of incomplete propagation; the right way to save bandwidth is hybrid gossip.</li>
+<li><strong>Where the book sits, and the other side.</strong> In 2019 bitmap version vectors were still fairly new and hybrid gossip lived mostly in papers and a few systems. The opposing camp keeps getting louder: if anti-entropy is this expensive to operate, get the write right up front with consensus — the popularity of CockroachDB and etcd is that position. The fair statement: <strong>anti-entropy buys the ability to keep accepting writes during a partition, and repair is the monthly rent.</strong></li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① Replication only <em>attempts</em> delivery; <strong>anti-entropy is the mechanism that settles what never arrived</strong>. Divergence is on the happy path — a successful <code>w=2</code> write can leave the third replica empty.</p>
+<p>② The chapter is organized by <strong>moment</strong>: read time (read repair), write time (hinted handoff), background (Merkle trees, bitmap version vectors). They complement each other and <strong>cannot substitute</strong>.</p>
+<p>③ Read repair rides along on reads almost for free thanks to digest reads, but <strong>only fixes what is read</strong>; blocking mode preserves monotonic quorum reads at the cost of one write round trip.</p>
+<p>④ Hinted handoff plus sloppy quorum keeps brief failures from becoming write failures, but hints <strong>expire (3 h default) and are not replicated</strong> — best-effort by design.</p>
+<p>⑤ Merkle trees compare roots then descend, cutting the cost of locating divergence to <code>O(log n)</code>; the price is <strong>over-streaming from leaf granularity</strong>, full reads to build the tree, and rebuilds whenever topology changes.</p>
+<p>⑥ Bitmap version vectors compare metadata instead of data, making recent gaps very cheap to close — but they do not cover long outages.</p>
+<p>⑦ Gossip <strong>trades redundancy for robustness</strong>: <code>f</code> random peers per round, rounds growing logarithmically with cluster size; the knob is when to stop forwarding, and push-pull converges fastest.</p>
+<p>⑧ Pure gossip wastes bandwidth and a fixed tree breaks; <strong>hybrid gossip (payload on the tree, announcements as a net)</strong> lets the tree heal, and partial views keep per-node overhead flat as the cluster grows.</p>
+<p>⑨ The line to take away: <strong>the "eventually" is an operating expense, not a gift from the protocol</strong> — a 10-day grace period means a full repair round every 7 days, or the data you deleted comes back on its own.</p>
+</div>
+</div>
+<footer>Book Deep Read · Reading this page &#8776; getting the heart of the chapter; for the full cases and detours, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
