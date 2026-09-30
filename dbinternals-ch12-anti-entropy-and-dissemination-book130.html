@@ -54,7 +54,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </style></head><body>
 <div class="container">
 <p class="top">专业书籍精读 · Database Internals · 第 12 章</p>
-<h1>反熵与传播</h1>
+<h1 data-tts="628cd132832f1df1">反熵与传播</h1>
 <p class="sub">Database Internals · Ch 12 · Alex Petrov · 2019</p>
 <p class="langbar"><a href="dbinternals-ch12-anti-entropy-and-dissemination-book130.en.html">EN →</a></p>
 <div class="modebar">
@@ -62,31 +62,31 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <button data-mode="deep">精读版</button>
 </div>
 <div class="mode mode-pop">
-<h2>这一章讲什么？</h2>
+<h2 data-tts="8f5c81e7aebbbef6">这一章讲什么？</h2>
 <p>你在群里发了条消息：多数人秒收，有人过了十分钟才刷出来，还有个人手机关机一整天——开机后消息照样补上了。《Database Internals》（《数据库系统内幕》）第 12 章讲的就是<strong>「照样补上」这件事是怎么做到的</strong>。上一章说「几份数据终究会一样」，这一章问：<strong>究竟靠什么让它一样？</strong></p>
-<h2>先说个怪事</h2>
+<h2 data-tts="48ea8f46bef2d395">先说个怪事</h2>
 <p>你删掉的一条数据，过几天<strong>自己回来了</strong>。听着像灵异事件，原理却很朴素：你删的时候有台机器正好离线，它手上那份还是「有」。等它回来，它发现同伴手上没有这条，就热心地把「自己有的」补给了同伴——<strong>删除被撤销了</strong>。所以真正要设计的不是「怎么把数据送到」，而是<strong>「没送到的那部分，事后怎么把账补对」</strong>。</p>
-<h2>旧世界为什么难</h2>
+<h2 data-tts="edc46e2ce8bc0b96">旧世界为什么难</h2>
 <p>最直觉的办法是「发的时候确保每个人都收到」。可那意味着每次写入都要等最慢的那台机器，有一台关机就谁也别想写——这正是上一章算过的账：太贵。于是真实系统选择<strong>先写完再说，欠的账另立机制还</strong>。麻烦在于，这笔账不会自己消失：漏掉一条写和漏掉一百万条写，对系统来说是同一种状态——<strong>不一样</strong>，而且没人知道差在哪。</p>
-<h2>三个还账的时机</h2>
+<h2 data-tts="c3e7b74953a98358">三个还账的时机</h2>
 <p>这一章的骨架，就是三条互补的还账通道：</p>
 <ul>
 <li><strong>写的时候，先替他收着。</strong>发现某台机器离线，就把该给它的那条写<strong>记成一张便条</strong>暂存下来，等它回来再递过去。便宜，但便条有保质期，过期就作废。</li>
 <li><strong>读的时候，顺手校对。</strong>反正要问好几台机器，那就比一下谁的答案更新，把旧的那台<strong>顺手更新掉</strong>。妙处是完全搭读请求的便车；短处也明显——<strong>没人读的数据，永远轮不到修</strong>。</li>
 <li><strong>闲下来的时候，认真对账。</strong>两台机器逐条比对太慢，于是先比「总账指纹」：把一整箱账本压成一个短指纹，指纹相同就整箱跳过；不同再拆成两半各比一次，一路缩小到具体是哪几页对不上。几百万条记录，几次问答就定位到分歧。</li>
 </ul>
-<h2>消息怎么扩散：像传闲话</h2>
+<h2 data-tts="0a2f9304b44fef97">消息怎么扩散：像传闲话</h2>
 <p>还有一类信息（谁活着、谁加入了集群）要让<strong>所有机器都知道</strong>。挨个通知太慢，指定一个「广播员」又会因它一挂全断。这一章用的办法是<strong>传闲话</strong>：每台机器每秒随便挑一个同伴，把自己知道的都说一遍。没有中心、断几条线也无所谓，而且扩散极快——知道的人数每轮翻几倍，机器数翻倍也只多一两轮。<strong>代价是：谁都说不准到底几秒钟传完</strong>，它只给「很快」，不给承诺。</p>
-<h2>一句话记住</h2>
+<h2 data-tts="1fcd47f1a250a48e">一句话记住</h2>
 <div class="tl">
 <p><strong>「终究会一样」不是等来的，是花钱买来的。</strong>系统要专门养三条补账通道——写时代收、读时顺手校、闲时对账，再加一种像传闲话一样的扩散方式。谁都不跑，那几份数据就会永远不一样，而且删掉的东西还会自己爬回来。</p>
 </div>
 <p class="switch-hint">想进到具体机制、记号和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
 </div>
 <div class="mode mode-deep" hidden="">
-<h2>一句话</h2>
+<h2 data-tts="735dd889ac18e167">一句话</h2>
 <p class="lead">上一章的最终一致性承诺了「停写后终将收敛」，本章揭穿它：<strong>那个「终将」不是时间的恩赐，是一笔持续的运营支出</strong>。复制协议只负责<em>尝试</em>送达，送不到的部分必须由<strong>反熵（anti-entropy）</strong>另行补齐——书里把补齐的时机拆成三条互补通道（读时修复、写时暂存、后台比对），再用 <strong>gossip（流行病式传播）</strong>解决「怎么把信息扩散到全集群」。要建立的认知是：<strong>收敛是你雇人去做的事，不是协议的副产品</strong>；没人跑 repair 的最终一致集群，「最终」等于「永不」。</p>
-<h2>Glossary · 术语表</h2>
+<h2 data-tts="5a586c9916bec188">Glossary · 术语表</h2>
 <div class="glossary">
 <ul>
 <li><strong>发散 / 熵（divergence / entropy）</strong>：同一份数据的多个副本互不一致的程度；越久不同步，发散越大。</li>
@@ -101,14 +101,14 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>墓碑与 <code>gc_grace</code></strong>：删除写成一条「此处已删」的标记（墓碑），保留一段宽限期后才真正清掉。</li>
 </ul>
 </div>
-<h2>坐标</h2>
+<h2 data-tts="07769a7aa0e24627">坐标</h2>
 <p>本章属 Part II「分布式系统」，接在 Ch11（复制与一致性）之后：上一章把一致性排成一条谱系，并把最便宜那档定义为「停写后终将收敛」；<strong>本章负责把那个「终将」兑现</strong>，也顺带给出集群元信息（成员、故障、schema 版本）的扩散办法。下接 Ch13–14（分布式事务与共识）——那是另一条路：<strong>不事后补账，而是事前协调</strong>。对应现实里 Cassandra 的 hints / read repair / <code>nodetool repair</code> / gossip 四件套、DynamoDB 与 Riak 的后台 AAE、Consul 与 Serf 的成员传播。</p>
-<h2>这章要解决什么</h2>
+<h2 data-tts="55db30a8b2b334a0">这章要解决什么</h2>
 <p>先看一个不算故障的场景：三副本、<code>QUORUM</code> 写（<code>w=2</code>）。协调者拿到两个确认就向客户端返回成功——<strong>此刻第三个副本上根本没有这条数据，而系统认为一切正常</strong>。发散不是异常路径，<strong>它就在正常路径上</strong>。</p>
 <p>再放大：一台节点滚动升级离线 20 分钟，期间集群承接 3000 QPS 写入、其中 1/3 归它负责——回来时它缺了约 <strong>360 万条</strong>写。而<strong>系统并不知道自己差在哪</strong>：漏一条和漏三百万条，对外都只表现为「有时读到旧值」。</p>
 <p><strong>不解决会怎样？</strong>三件事，一件比一件严重：① 陈旧读<strong>永久化</strong>——那条旧值不会自己消失，会一直被读到；② <strong>删除复活</strong>——墓碑过了宽限期被清理，而落后副本手上还留着老数据，下次比对时它会把「自己有、同伴没有」当成对方缺失，<strong>热心地把删掉的数据传回来</strong>；③ 「最终一致」沦为口号——没有上界的「终将」，工程上等于没有保证。</p>
-<h2>核心内容，讲透</h2>
-<h3>三个时机：读路径、写路径、后台</h3>
+<h2 data-tts="0cfa727733263d92">核心内容，讲透</h2>
+<h3 data-tts="63e08828ade09a80">三个时机：读路径、写路径、后台</h3>
 <p>本章按<strong>「什么时候补账」</strong>组织而不是按算法。三条通道覆盖面与成本各异，<strong>互为补充而非互相替代</strong>——这是整章最该先装进脑子的结构。</p>
 <figure>
 <svg font-family="-apple-system,sans-serif" viewbox="0 0 640 318" xmlns="http://www.w3.org/2000/svg">
@@ -154,14 +154,14 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </svg>
 <figcaption>图 1 · 三条通道：写时代收、读时顺手、后台兜底——覆盖面递增，成本也递增。</figcaption>
 </figure>
-<h3>读修复与摘要读：搭读请求的便车</h3>
+<h3 data-tts="c1d3570c63800c13">读修复与摘要读：搭读请求的便车</h3>
 <p>读一次本来就要联系多个副本，那就顺便比一比。工程上的关键细节是<strong>摘要读</strong>：只让一个副本返回完整数据，其余只返回哈希摘要——<strong>摘要一致时网络上只走一份数据</strong>，对不上才补取全量。「顺手校对」的常态成本因此接近于零。</p>
 <p>另一个必须分清的开关是<strong>阻塞式还是非阻塞式</strong>：阻塞式<em>先把修复写下去、等够一致性级别再返回</em>，读延迟里多一次写往返，换来「单调 quorum 读」（不会出现上一章那种两次读先新后旧）；非阻塞式只在协调者内部合并出正确答案返回，<strong>不去修那个落后的副本</strong>。</p>
 <p><strong>它的根本局限只有一句：只修被读到的数据。</strong>冷数据、归档分区、写完再没人碰的 key，<strong>永远轮不到</strong>。所以读修复是压低常见陈旧度的好工具，<strong>但绝不是收敛的保证</strong>。</p>
-<h3>提示移交：写路径上的「代收快递」</h3>
+<h3 data-tts="8678d8ea15bd8e0f">提示移交：写路径上的「代收快递」</h3>
 <p>目标副本联系不上时，协调者不必让整次写失败，而是把这条变更<strong>连同「本该给谁」存成一条提示（hint）</strong>，等对方复活再重放。它和 <strong>sloppy quorum（松散 quorum）</strong>是一对：写落在「前 <code>n</code> 个<em>健康</em>节点」上，而不必是本该负责的那 <code>n</code> 个——<strong>短时故障于是不再转化为写失败</strong>。</p>
 <p>代价在三处：<strong>① hint 有保质期</strong>（Cassandra 默认 3 小时），超时即丢弃，那个副本就一直落后到下次 repair；<strong>② hint 本身没有冗余</strong>——存它的协调者也挂了，这笔账直接蒸发；<strong>③ 恢复瞬间的重放流量</strong>容易把刚起来的节点再压垮。所以它的定位是<strong>「尽力而为」，不是保证</strong>。</p>
-<h3>Merkle 树：先比指纹，再逐层下降</h3>
+<h3 data-tts="b433eca6ee399cf1">Merkle 树：先比指纹，再逐层下降</h3>
 <p>后台兜底要回答的是：<strong>两个各存上亿条记录的副本，怎么在不传全量的前提下找出分歧？</strong>答案是哈希树——叶子是每段数据的哈希，父节点是子哈希的哈希，一路收到根。比对时<strong>先换根哈希：相同就整棵树跳过</strong>；不同则取两个子节点哈希，只沿不一致的那侧下降，直到定位到叶子。通信量于是从「数据量」降到<strong>「树高」量级</strong>，记作 <code>O(log n)</code>——数据翻一倍，只多问一层。</p>
 <figure>
 <svg font-family="-apple-system,sans-serif" viewbox="0 0 640 276" xmlns="http://www.w3.org/2000/svg">
@@ -208,7 +208,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <p>三个必须一起记住的代价：<strong>① 粒度</strong>——叶子不是单条记录，而是一段 key 范围，<strong>一个叶子对不上就得传整段</strong>（过度流式），修 1 行可能搬几百兆；<strong>② 重算</strong>——树要覆盖全部数据才有意义，所以构建它要读全量数据，磁盘与网络 IO 都不便宜；<strong>③ 拓扑变化即失效</strong>——加减节点会让 key 范围重新划分，对应的树得重建。</p>
 <p>书里也给了针对「重算」的改进：<strong>位图版本向量（bitmap version vectors）</strong>——不比数据，<strong>只记「我见过谁的第几号写」</strong>，用一个位图紧凑表示已收到的写序号集合。副本交换这份摘要就能直接算出对方缺哪几条，只补这几条，完全不扫全量。代价是它只对<strong>近期</strong>缺失有效；长期失联或静默损坏仍要 Merkle 兜底。</p>
 <aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/dynamo-paper54.html" rel="noopener" target="_blank">CS Papers · Dynamo：亚马逊的高可用键值存储</a> — 本章三条通道的原始出处：sloppy quorum、hinted handoff 与按 key 范围建 Merkle 树，在论文里怎么拼成一个无主存储</aside>
-<h3>Gossip：用冗余换鲁棒</h3>
+<h3 data-tts="560e3e2e3a63b9f5">Gossip：用冗余换鲁棒</h3>
 <p>另一半问题是<strong>传播</strong>：成员变更、故障怀疑、schema 版本这类元信息要让全集群都知道。直接广播要每个节点联系所有人（消息量随节点数平方增长），固定广播树又<strong>一断就整条支路失联</strong>。gossip 的答案是<strong>概率性扩散</strong>：每个节点每隔一个周期（Cassandra 是 1 秒）随机挑 <code>f</code> 个同伴交换状态。</p>
 <p>书里借流行病学的三态刻画它：<strong>易感</strong>（还没收到）、<strong>感染</strong>（收到且正在转发）、<strong>移除</strong>（收到但不再转发）。从「感染」转为「移除」的时机，就是<strong>这个协议真正的调参点</strong>：转得太早可能传不全网，转得太晚则满网重复消息。三种交换方式各有脾气：<strong>push</strong> 早期快、后期浪费；<strong>pull</strong> 收尾快；<strong>push-pull</strong> 收敛最快，代价是每轮消息更大。</p>
 <figure>
@@ -245,7 +245,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <figcaption>图 3 · gossip 的扩散是指数式的，轮数随节点数对数增长。</figcaption>
 </figure>
 <p>收敛轮数随节点数<strong>对数增长</strong>——记作 <code>O(log N)</code>，意思是集群从 100 台涨到 1000 台，传遍全网只多几轮而不是多十倍。这就是为什么成员管理几乎都用 gossip：<strong>它对规模不敏感，对故障也不敏感</strong>。</p>
-<h3>从随机到有结构：覆盖网络、混合 gossip、部分视图</h3>
+<h3 data-tts="5138530de6f08af2">从随机到有结构：覆盖网络、混合 gossip、部分视图</h3>
 <p>纯随机 gossip 的痛处是<strong>消息冗余</strong>：同一条消息被同一个节点收到七八次很常见，带宽白烧。而一棵固定的生成树（每条消息只走 N-1 条边）效率最优，却<strong>一个内部节点挂掉，整条支路失联</strong>。本章给出的调和方案是<strong>混合 gossip（hybrid gossip）</strong>，代表是 Plumtree：</p>
 <ul>
 <li><strong>急切推送（eager push）</strong>：沿着一小撮「树边」直接把完整消息推过去——这部分承担绝大多数流量，效率接近生成树。</li>
@@ -274,7 +274,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <figcaption>图 4 · 混合 gossip：用廉价的通告当安全网，让高效的广播树能自我修复。</figcaption>
 </figure>
 <p>最后一块拼图是<strong>部分视图（partial views）</strong>：节点不必认识全集群，只维护一小撮活跃邻居（<code>log N</code> 量级）加一份备用名单，挂了就补位（HyParView 一系）。<strong>单节点开销于是不随集群规模线性增长</strong>——上千节点才可能只靠 gossip 维持成员关系。</p>
-<h2>关键权衡与选型</h2>
+<h2 data-tts="55f60284b4446a55">关键权衡与选型</h2>
 <p class="tcap">表 1 · 三条反熵通道：各补什么、漏什么</p>
 <div class="tblwrap">
 <table class="cmp">
@@ -301,7 +301,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 </div>
 <p>判据压成两句。<strong>补账通道要全选</strong>：它们是三层防线不是备选项，只按数据热度调配比重——热数据靠读修复就能把陈旧度压到很低，冷数据只能指望 repair 的节奏。<strong>传播方式看「消息多大、成员多稳」</strong>：小而多变的元信息用纯 gossip；负载大又要容错，才值得上混合 gossip 那套复杂度。</p>
 <aside class="xref"><a href="https://hub.cissychen.com/system-design/replication-day5.html" rel="noopener" target="_blank">System Design · Day 5 复制</a> — 从系统设计视角看复制滞后与修复：滞后怎么监控、怎么定 SLO、故障时怎么切</aside>
-<h2>为什么重要 / 落到真实系统</h2>
+<h2 data-tts="feb0b1e3dbcb282c">为什么重要 / 落到真实系统</h2>
 <p>这一章的实用价值是把一句运维直觉变成可设计的东西：<strong>最终一致系统的健康度，等于你的反熵预算</strong>。架构评审里最常见的错，是把「我们用了最终一致的存储」当结论，却没人回答「repair 多久跑一轮、跑得完吗、跑不完会怎样」。面试同理：能说清「读修复为什么替代不了 repair」「hint 过期后会发生什么」，比背出 gossip 三个字有分量得多。</p>
 <p>对照真实系统：<strong>Cassandra / ScyllaDB</strong> 把四件套（hints、read repair、<code>nodetool repair</code>、gossip）全套摆出来，是本章最直接的实现；<strong>DynamoDB 与 Riak</strong> 走 Dynamo 原路，Riak 的主动反熵（AAE）常驻哈希树；<strong>Consul / Serf</strong> 用 SWIM 式 gossip 管成员与故障；<strong>Redis Cluster</strong> 用 gossip 传播槽位与节点状态。反例同样重要：<strong>etcd 与 CockroachDB 走共识路线</strong>，写入时就必须过多数派，<strong>因此根本不需要反熵</strong>——这正说明反熵是「事后补账」这条路线特有的运营成本。</p>
 <div class="ev">
@@ -313,7 +313,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>HashiCorp：成员管理就交给 gossip，并且承认它只是「平均很快」。</strong>Consul / Nomad 底下的 memberlist 库直说自己「<em>is based on SWIM: Scalable Weakly-consistent Infection-style Process Group Membership Protocol</em>」，做了扩展「<em>to increase propagation speed and convergence rate</em>」，而对结果的措辞很克制：「<em>eventually consistent but converges quickly on average</em>」，且「<em>The speed at which it converges can be heavily tuned via various knobs on the protocol</em>」——这正是书里说的「概率保证、靠调参换延迟」。<span class="src">HashiCorp · <a href="https://github.com/hashicorp/memberlist" rel="noopener" target="_blank">memberlist</a>（README）</span></li>
 </ul>
 </div>
-<h2>易错点与争议</h2>
+<h2 data-tts="0ad7f9760920c6ff">易错点与争议</h2>
 <ul>
 <li><strong>最大的误解：以为读修复能代替 repair。</strong>它只修被 <code>SELECT</code> 覆盖到的数据，冷分区一辈子轮不到；把它当收敛保证，就是在等数据复活。</li>
 <li><strong>hint 不是保险箱。</strong>过期（默认 3 小时）会丢，存 hint 的协调者挂了也会丢——它降低的是「短暂抖动变成写失败」的概率，不提供任何持久保证。</li>
@@ -323,7 +323,7 @@ footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.1
 <li><strong>冗余不是 bug，是 gossip 的保费。</strong>一味调小扇出省带宽，买来的是传播不全的尾部风险；省带宽的正确做法是混合 gossip。</li>
 <li><strong>时代位置与反方。</strong>2019 年成书时，位图版本向量还偏新，混合 gossip 也主要停留在论文与少数系统里。另一派观点越来越响：既然反熵的运营成本这么高，不如一开始就用共识把写做对——CockroachDB、etcd 的流行即此立场。<strong>公允的说法是：反熵买的是分区期间仍可写入的能力，月租就是 repair。</strong></li>
 </ul>
-<h2>要点</h2>
+<h2 data-tts="d7e7c0ca52548cad">要点</h2>
 <div class="tl">
 <p>① 复制只负责<em>尝试</em>送达；<strong>反熵是把没送到的那部分补齐的机制</strong>。发散就在正常路径上——<code>w=2</code> 的成功写本来就可能漏掉第三个副本。</p>
 <p>② 本章按<strong>时机</strong>组织：读时（读修复）、写时（提示移交）、后台（Merkle 树 / 位图版本向量），三者互补、<strong>不可互替</strong>。</p>
