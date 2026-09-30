@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals Ch 10 · Leader Election — Book Deep Read Book 128</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOK DEEP READ · Database Internals · Chapter 10</p>
+<h1>Leader Election</h1>
+<p class="sub">Database Internals · Ch 10 · Alex Petrov · 2019</p>
+<p class="langbar"><a href="dbinternals-ch10-leader-election-book128.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>If a team had to hold a full vote on every small decision, nothing would ever get done. So the group picks one person to call the shots — you bring things to them, and their word is final. Every time you transfer money, send a message or upload a photo, the few dozen machines behind it are doing exactly that: <strong>picking one machine to be in charge</strong>. Chapter 10 of <em>Database Internals</em> is about how that pick is made, and why it is far harder than it sounds.</p>
+<h2>A strange thing first: the boss gets replaced while alive</h2>
+<p>The most common reason for replacing the boss is not that the machine actually broke. It is that <strong>its disk got busy and it answered half a second late</strong>. Nobody hears it speak up, everyone assumes it is gone, and a new election starts — while the machine itself, blissfully unaware, is still working normally. <strong>Replacing the boss is usually triggered by a misunderstanding, not by a failure.</strong></p>
+<h2>Why the old world was hard: two bosses beat no boss</h2>
+<p>With no boss, work stalls — but it fails loudly, and someone comes to fix it. The real disaster is <strong>two bosses at once</strong>: the old one never actually died, it just went unheard, and the new one has already taken office. Two people writing in the same ledger at the same time can bill your payment twice, and afterwards <strong>nobody can tell which ledger to believe</strong> — both are internally consistent. This is the accident the whole chapter is built to prevent.</p>
+<h2>The core ideas: a few ways to pick, and one more important seal</h2>
+<p>The chapter lays out several classic approaches, each a step past the last:</p>
+<ul>
+<li><strong>Seniority</strong>: number every machine; among those alive, the highest number is boss. Simplest possible rule, and rather dumb: the highest-numbered machine may be the flakiest one, and every time it wobbles the whole group must re-elect.</li>
+<li><strong>Name a successor in advance</strong>: the boss adds a line to its routine check-in — "if I go down, number three takes over." When it does go down, number three simply steps up, skipping the whole group re-election.</li>
+<li><strong>Only a few may stand</strong>: if everyone can run, the shouting alone drowns the room. Nominate three to five candidates and let everyone else just pledge allegiance; the cost of arguing drops immediately.</li>
+<li><strong>Pass a note around the circle</strong>: everyone sits in a ring and passes a note; whoever is present adds their name and hands it on, and the dead are skipped. When the note returns to the start, the roster is complete.</li>
+<li><strong>Just allow two camps</strong>: a cut road inevitably splits the group in two, so accept it — each side picks its own boss and keeps working, and the two merge once the road reopens.</li>
+</ul>
+<p>But the thing most worth remembering is none of the above. It is <strong>the seal</strong>: give each boss an official stamp engraved with their term number, and rule that documents count only if they bear the newest term. Now it no longer matters if the old boss wakes up still issuing orders — the stamp in their hand is last term's, so <strong>everything they stamp is void</strong>.</p>
+<h2>How to choose</h2>
+<p>The real trade-off is not "which picking method is cleverest." It is two things: <strong>do not keep swapping</strong> (every swap stops everyone while the handover happens), and <strong>once you swap, the old boss must truly lose power</strong>. The first comes from "don't move unless something actually broke"; the second comes from that term-numbered seal.</p>
+<p>The honest cost: <strong>no picking method can guarantee there is only ever one boss</strong> — the best any of them promises is "eventually only one is left, after a messy stretch." The safety net was never in the picking. It is in the stamping.</p>
+<h2>One sentence to remember</h2>
+<div class="tl">
+<p>Picking a boss is easy; <strong>voiding the previous one</strong> is the hard part. So stop expecting the election itself to be both fast and correct — stamp every term with a number and make everyone honour only the newest one. Then even when you get it wrong and briefly have two bosses, the ledger stays intact.</p>
+</div>
+<p class="switch-hint">Want the actual algorithms, message costs and diagrams? <a data-mode="deep">&rarr; Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think leader election is about "picking the fittest machine." What this chapter is really about is that <strong>election itself cannot guarantee a single leader at any instant</strong>. Electing a leader is an instance of consensus, and every algorithm engineers actually use is weaker and cheaper than consensus — it only promises to <em>converge</em> on one leader. Which pushes the real safety boundary somewhere else entirely: into <strong>stability</strong> (don't re-elect unless something truly broke) and <strong>epoch numbers</strong> (make the previous leader's writes fail).</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Leader / coordinator</strong>: the node the group picks to order operations, and whose word everyone else follows.</li>
+<li><strong>Network partition</strong>: the network splits in two; each side talks to itself but not the other. Both sides are alive, each believing the other is dead.</li>
+<li><strong>Split brain</strong>: two nodes in one cluster each believe they are the leader and each accept writes, so the data diverges with no way to decide automatically which history is correct.</li>
+<li><strong>Epoch / term</strong>: a monotonically increasing integer, bumped on every leader change, which turns "who is the current leader" into a comparable fact.</li>
+<li><strong>Lease</strong>: a time-limited grant. The leader must keep renewing it; if it stops, the lease simply expires — nobody has to declare it dead.</li>
+<li><strong>Quorum</strong>: the minimum votes needed to decide, usually a majority. <code>2f+1</code> nodes tolerate <code>f</code> failures, and a majority can only ever exist in one partition — that is the root defence against two leaders.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Third chapter of Part II, "Distributed Systems." It follows Chapter 9 on failure detection — <strong>the trigger for an election is "we've decided the old leader is dead," so the detector's false-positive rate <em>is</em> your re-election rate</strong> — and sets up Chapter 11 on replication (a leader is what makes single-point ordering possible) and Chapter 14 on consensus, where Raft and Multi-Paxos fold election into the algorithm itself. Real-world counterparts: the ZooKeeper leader, etcd's Raft leader, Kafka's controller and per-partition leaders, Kubernetes controllers racing for a Lease, and automated MySQL failover.</p>
+<h2>What the chapter is trying to solve</h2>
+<p>First, why insist on a leader at all? Because <strong>"have n nodes negotiate every operation" and "have one node assign the order" differ by an order of magnitude in cost</strong>: in a leaderless design every write runs a round of voting and waits for a majority — two or three round trips even inside one datacenter — whereas with a leader the client gets an ordered result in a single round trip. Ordering, uniqueness and conflict resolution all degrade from "things to negotiate" into "look it up in the leader's log."</p>
+<p>What happens if you don't solve it? The two directions fail very asymmetrically.</p>
+<p><strong>No leader</strong>: it fails loudly. A three-node strongly consistent cluster whose leader dies and cannot be replaced is simply not writable — not slow, fully stalled. That election gap is the most visible line on your availability bill: etcd's default election timeout is 1 second, so from "the leader is gone" to "the new leader can work" takes at least a few hundred milliseconds to a couple of seconds, during which every write queues or errors out.</p>
+<p><strong>Two leaders</strong>: it fails silently. The old leader was merely misjudged — one long GC pause, one bout of cross-rack jitter — and has no idea it was deposed, so it keeps accepting writes while the new leader does too. <strong>Two internally consistent histories, with no automatic way to decide which is right</strong>: that is not slow recovery, it is permanent data corruption, usually ending in a human reconciling ledgers by hand.</p>
+<p>So the real question in this chapter is not "which algorithm elects fastest." It is: <strong>given that the signal triggering an election is itself unreliable (Chapter 9 proved "slow" and "dead" are indistinguishable), how can an election mechanism that <em>will</em> misfire avoid corrupting data?</strong></p>
+<h2>The core content, properly</h2>
+<h3>1. Electing a leader is consensus — and nobody actually does it that way</h3>
+<p>Strictly speaking, "everyone agrees X is the leader" <em>is</em> a consensus decision: a set of nodes agreeing on a value in a way that cannot later be overturned. Consensus costs something: at least two rounds of messages, a majority, and durable state. Almost every classic algorithm in this chapter <strong>deliberately dodges that cost</strong> — no majority, just local rules like "whoever has the biggest id" — which means they <strong>only promise eventual convergence on one leader, never that two never coexist along the way</strong>. Hold onto that and the rest becomes easy to judge: these algorithms are not competing on correctness, but on <strong>how many messages, how fast the handover, and how bad the mess can get</strong>.</p>
+<h3>2. Bully: the minimal id-only solution, and its three blind spots</h3>
+<p>Bully is where every variant starts: each node has a globally comparable unique id (its rank), and <strong>the highest-ranked live node is leader</strong>. Whoever notices the leader is gone sends <code>ELECTION</code> to every node ranked above it; any reply means someone bigger is alive, so it drops out; silence means it broadcasts "I am the leader."</p>
+<figure>
+<svg viewBox="0 0 640 340" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="le1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="le1b" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text x="20" y="22" fill="#5b9df9" font-size="12.5" font-weight="700">1. Leader P5 crashes (it announces nothing, it just stops talking)</text>
+<circle cx="110" cy="62" r="17" fill="#171b21" stroke="#5b9df9" stroke-width="1.5"></circle><text x="110" y="66" fill="#cdd3db" font-size="11" text-anchor="middle">P1</text>
+<circle cx="220" cy="62" r="17" fill="#171b21" stroke="#5b9df9" stroke-width="1.5"></circle><text x="220" y="66" fill="#cdd3db" font-size="11" text-anchor="middle">P2</text>
+<circle cx="330" cy="62" r="17" fill="#171b21" stroke="#5b9df9" stroke-width="1.5"></circle><text x="330" y="66" fill="#cdd3db" font-size="11" text-anchor="middle">P3</text>
+<circle cx="440" cy="62" r="17" fill="#171b21" stroke="#5b9df9" stroke-width="1.5"></circle><text x="440" y="66" fill="#cdd3db" font-size="11" text-anchor="middle">P4</text>
+<circle cx="550" cy="62" r="17" fill="#171b21" stroke="#5a6069" stroke-width="1.5" stroke-dasharray="3 3"></circle><text x="550" y="66" fill="#5a6069" font-size="11" text-anchor="middle">P5</text>
+<path d="M541,53 L559,71 M559,53 L541,71" stroke="#8a6060" stroke-width="1.6"></path>
+<text x="20" y="116" fill="#5b9df9" font-size="12.5" font-weight="700">2. P2 notices, and sends ELECTION only to higher ranks</text>
+<circle cx="110" cy="152" r="17" fill="#171b21" stroke="#5b9df9" stroke-width="1.5"></circle><text x="110" y="156" fill="#cdd3db" font-size="11" text-anchor="middle">P1</text>
+<circle cx="220" cy="152" r="17" fill="#171b21" stroke="#8fbaff" stroke-width="2"></circle><text x="220" y="156" fill="#e7ebf1" font-size="11" text-anchor="middle">P2</text>
+<circle cx="330" cy="152" r="17" fill="#171b21" stroke="#5b9df9" stroke-width="1.5"></circle><text x="330" y="156" fill="#cdd3db" font-size="11" text-anchor="middle">P3</text>
+<circle cx="440" cy="152" r="17" fill="#171b21" stroke="#5b9df9" stroke-width="1.5"></circle><text x="440" y="156" fill="#cdd3db" font-size="11" text-anchor="middle">P4</text>
+<circle cx="550" cy="152" r="17" fill="#171b21" stroke="#5a6069" stroke-width="1.5" stroke-dasharray="3 3"></circle><text x="550" y="156" fill="#5a6069" font-size="11" text-anchor="middle">P5</text>
+<path d="M232,163 Q275,190 320,166" stroke="#7c8593" fill="none" marker-end="url(#le1)"></path>
+<path d="M232,166 Q330,205 430,168" stroke="#7c8593" fill="none" marker-end="url(#le1)"></path>
+<path d="M232,169 Q385,222 540,170" stroke="#7c8593" fill="none" marker-end="url(#le1)"></path>
+<text x="20" y="242" fill="#5b9df9" font-size="12.5" font-weight="700">3. P3 and P4 answer and start their own; nobody outranks P4 &#8594; P4 wins</text>
+<circle cx="110" cy="278" r="17" fill="#171b21" stroke="#5b9df9" stroke-width="1.5"></circle><text x="110" y="282" fill="#cdd3db" font-size="11" text-anchor="middle">P1</text>
+<circle cx="220" cy="278" r="17" fill="#171b21" stroke="#5b9df9" stroke-width="1.5"></circle><text x="220" y="282" fill="#cdd3db" font-size="11" text-anchor="middle">P2</text>
+<circle cx="330" cy="278" r="17" fill="#171b21" stroke="#5b9df9" stroke-width="1.5"></circle><text x="330" y="282" fill="#cdd3db" font-size="11" text-anchor="middle">P3</text>
+<circle cx="440" cy="278" r="19" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2.4"></circle><text x="440" y="282" fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle">P4</text>
+<circle cx="550" cy="278" r="17" fill="#171b21" stroke="#5a6069" stroke-width="1.5" stroke-dasharray="3 3"></circle><text x="550" y="282" fill="#5a6069" font-size="11" text-anchor="middle">P5</text>
+<path d="M424,292 Q330,320 234,292" stroke="#9b6cf5" fill="none" marker-end="url(#le1b)"></path>
+<path d="M424,295 Q275,330 124,294" stroke="#9b6cf5" fill="none" marker-end="url(#le1b)"></path>
+<path d="M452,292 Q500,314 344,292" stroke="#9b6cf5" fill="none" marker-end="url(#le1b)"></path>
+</svg>
+<figcaption>Bully: whoever spots the loss messages every higher rank; worst case every node starts an election, so O(n&#178;) messages</figcaption>
+</figure>
+<p>Why design it this way? Because it <strong>needs no shared state and no durability</strong> — ids you can compare and messages that arrive are enough. The price is three blind spots:</p>
+<ul>
+<li><strong>Rank, not fitness</strong>: the highest-ranked node may be the slowest box, the furthest from clients, the one with the stalest data — it wins anyway. <em>The rule contains no notion of "who is better suited."</em></li>
+<li><strong>Instability</strong>: if that highest-ranked machine is intermittently sick, it grabs leadership back on every recovery and then dies again, trapping the cluster in perpetual re-election — effectively long-term downtime, a livelock.</li>
+<li><strong>Noise</strong>: worst case every node starts an election, giving <code>O(n²)</code> messages. Fine at twenty nodes; at two hundred a single false positive can kick off tens of thousands of messages.</li>
+</ul>
+<h3>3. Two ways to save a round: successor lists and candidate sets</h3>
+<p><strong>Next-In-Line Failover</strong>: the leader piggybacks a priority-ordered list of alternates on its heartbeats. When it dies, the first name simply takes over and <strong>the entire election round disappears</strong> — handover time shrinks from "one election" to "one timeout." The cost is blunt: the list was written while the leader was alive and may be stale, so you must be able to walk down it, falling back to a full election only when it runs out.</p>
+<p><strong>Candidate / Ordinary</strong>: only candidates may become leader; ordinary nodes just notice trouble and notify a candidate. Messages drop from <code>O(n²)</code> across everyone to <code>O(k²)</code> among candidates — with 5 candidates in a 200-node cluster, an election costs two orders of magnitude less. The cost is that <strong>the candidate set becomes a new single point</strong>: lose all 5 and the remaining 195 healthy machines cannot elect anyone.</p>
+<h3>4. Ring and Invitation: one pretends partitions don't exist, one admits they do</h3>
+<p><strong>Ring</strong>: nodes form a logical ring where each knows only its successor. The election message travels around it, appending each live node's id as it passes; by the time it returns to the origin the roster is complete, and the highest id on it becomes leader. The appeal is linear message cost and needing only "know your successor" worth of topology.</p>
+<figure>
+<svg viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="le2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker>
+<marker id="le2b" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<circle cx="320" cy="48" r="19" fill="#171b21" stroke="#5b9df9" stroke-width="1.6"></circle><text x="320" y="52" fill="#cdd3db" font-size="11" text-anchor="middle">P1</text>
+<circle cx="407" cy="99" r="19" fill="#171b21" stroke="#5b9df9" stroke-width="1.6"></circle><text x="407" y="103" fill="#cdd3db" font-size="11" text-anchor="middle">P2</text>
+<circle cx="407" cy="201" r="19" fill="#171b21" stroke="#5a6069" stroke-width="1.6" stroke-dasharray="3 3"></circle><text x="407" y="205" fill="#5a6069" font-size="11" text-anchor="middle">P3</text>
+<path d="M398,192 L416,210 M416,192 L398,210" stroke="#8a6060" stroke-width="1.6"></path>
+<circle cx="320" cy="252" r="19" fill="#171b21" stroke="#5b9df9" stroke-width="1.6"></circle><text x="320" y="256" fill="#cdd3db" font-size="11" text-anchor="middle">P4</text>
+<circle cx="233" cy="201" r="19" fill="#171b21" stroke="#5b9df9" stroke-width="1.6"></circle><text x="233" y="205" fill="#cdd3db" font-size="11" text-anchor="middle">P5</text>
+<circle cx="233" cy="99" r="21" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2.4"></circle><text x="233" y="103" fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle">P6</text>
+<path d="M339,56 A100,100 0 0 1 400,81" stroke="#5b9df9" fill="none" marker-end="url(#le2)"></path>
+<path d="M418,117 A100,100 0 0 1 412,178" stroke="#5a6069" fill="none" stroke-dasharray="4 3"></path>
+<path d="M424,113 Q470,180 336,246" stroke="#5b9df9" fill="none" marker-end="url(#le2)"></path>
+<path d="M301,257 A100,100 0 0 1 248,218" stroke="#5b9df9" fill="none" marker-end="url(#le2)"></path>
+<path d="M226,180 A100,100 0 0 1 228,122" stroke="#5b9df9" fill="none" marker-end="url(#le2)"></path>
+<path d="M245,81 A100,100 0 0 1 300,52" stroke="#9b6cf5" fill="none" marker-end="url(#le2b)"></path>
+<text x="452" y="128" fill="#7c8593" font-size="10.5">P3 silent &#8594; skipped,</text>
+<text x="452" y="146" fill="#7c8593" font-size="10.5">hop to its successor</text>
+<text x="18" y="40" fill="#5b9df9" font-size="12" font-weight="700">The message walks the</text>
+<text x="18" y="58" fill="#5b9df9" font-size="12" font-weight="700">ring, appending live ids</text>
+<text x="18" y="86" fill="#7c8593" font-size="10.5">payload grows:</text>
+<text x="18" y="104" fill="#8fbaff" font-size="10.5" font-family="monospace">{1} {1,2} {1,2,4}</text>
+<text x="18" y="122" fill="#8fbaff" font-size="10.5" font-family="monospace">{1,2,4,5} {1,2,4,5,6}</text>
+<text x="18" y="152" fill="#7c8593" font-size="10.5">back at P1 the roster is</text>
+<text x="18" y="170" fill="#7c8593" font-size="10.5">complete &#8594; highest is P6</text>
+<text x="18" y="200" fill="#e7ebf1" font-size="11" font-weight="700">Risk: a partition cuts</text>
+<text x="18" y="218" fill="#7c8593" font-size="10.5">the ring into two rings,</text>
+<text x="18" y="236" fill="#7c8593" font-size="10.5">each electing a leader</text>
+</svg>
+<figcaption>Ring: linear messages and minimal topology knowledge, but the ring must self-repair around dead nodes, and a partition yields two rings with two leaders</figcaption>
+</figure>
+<p><strong>Invitation</strong> is the one genuine change of mind in the chapter. The others all strain to guarantee a single global leader; this one simply <strong>admits that multiple groups may exist</strong>. Each process starts as leader of its own group of one, processes invite each other in, groups merge, and one of the original group leaders carries on. A network partition stops being an anomaly: <strong>both sides form groups, keep working, and merge once connectivity returns</strong>.</p>
+<p>The cost is that the hard part moves from election to merging — two groups each hold an independently written history, so who arbitrates the conflict? Precisely what CRDTs and eventual consistency handle in Chapter 11. <strong>The trade-off in one line: either sacrifice availability to keep a single leader, or sacrifice the single leader to keep availability and settle the bill at merge time.</strong></p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/consensus-coordination-day46.en.html" target="_blank" rel="noopener">System Design · Day 46 Distributed Consensus and Coordination</a> — why a majority is the only hard defence against two leaders, and why a two-node cluster can never safely elect one under any partition</aside>
+<h3>5. Stability is the real thread: re-election is not free</h3>
+<p>When the book judges each algorithm, it keeps returning to one question: <strong>does it cause frequent re-elections?</strong> That is an accounting question. Every re-election means stopping writes, waiting for the new leader to catch its log up, and waiting for clients to reconnect and retry — a few hundred milliseconds to several seconds each time. A detector that misfires once a minute leaves the cluster permanently half-dead. <strong>Hence the first engineering rule: if the incumbent is still working, never re-elect</strong> (a stable leader).</p>
+<p>This is also why Bully's blind spot is lethal: its rule is that the highest rank <em>must</em> lead, so that flaky top-ranked machine <em>forces</em> a re-election on every recovery. Real systems invert it: the incumbent keeps the job as long as it can renew.</p>
+<p>The other damping trick is <strong>randomised timeouts</strong>. If every node times out at the same instant and campaigns at once, the votes split, nobody reaches a majority, and the whole thing repeats — a livelock. Add a little jitter to each node's waiting period and "who goes first" separates naturally.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/raft-paper50.en.html" target="_blank" rel="noopener">CS Papers · Raft: a consensus algorithm built to be understood</a> — folding election into consensus: how randomised timeouts suppress split votes, and why "only a candidate with a sufficiently up-to-date log may win" is mandatory</aside>
+<h3>6. The real safety boundary is not inside the election</h3>
+<p>None of the algorithms above can rule out this scene: the old leader only <em>appeared</em> dead (a five-second full GC is plenty), the new leader has taken office, and the old one wakes up still believing it leads, and writes. If election cannot prevent it, defend elsewhere — <strong>give every leadership term a monotonically increasing epoch, carry it on every write down to the storage layer, and have storage accept only the highest epoch it has seen</strong>.</p>
+<figure>
+<svg viewBox="0 0 640 290" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="le3" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text x="20" y="20" fill="#5b9df9" font-size="12.5" font-weight="700">Elections may be wrong; storage honours only the highest epoch</text>
+<text x="22" y="82" fill="#cdd3db" font-size="11.5" font-weight="700">old leader A</text>
+<text x="22" y="157" fill="#cdd3db" font-size="11.5" font-weight="700">new leader B</text>
+<text x="22" y="240" fill="#cdd3db" font-size="11.5" font-weight="700">storage</text>
+<rect x="250" y="60" width="205" height="34" rx="5" fill="rgba(155,108,245,0.16)"></rect>
+<text x="352" y="50" fill="#b9c0ca" font-size="10.5" text-anchor="middle">5s full GC: A is alive but silent</text>
+<line x1="110" y1="78" x2="620" y2="78" stroke="#7c8593"></line>
+<line x1="110" y1="153" x2="620" y2="153" stroke="#7c8593"></line>
+<rect x="110" y="218" width="510" height="30" rx="5" fill="rgba(91,157,249,0.08)" stroke="rgba(91,157,249,0.3)"></rect>
+<path d="M165,80 L165,215" stroke="#7c8593" fill="none" marker-end="url(#le3)"></path>
+<text x="171" y="118" fill="#8fbaff" font-size="10.5" font-family="monospace">write epoch=5</text>
+<text x="171" y="134" fill="#7ac47a" font-size="10.5">accepted</text>
+<circle cx="470" cy="153" r="5" fill="#9b6cf5"></circle>
+<text x="482" y="143" fill="#e7ebf1" font-size="10.5" font-weight="700">B wins, epoch 6</text>
+<path d="M500,155 L500,215" stroke="#7c8593" fill="none" marker-end="url(#le3)"></path>
+<text x="508" y="186" fill="#8fbaff" font-size="10.5" font-family="monospace">epoch=6 ok</text>
+<path d="M560,80 L560,215" stroke="#7c8593" fill="none" marker-end="url(#le3)"></path>
+<text x="392" y="112" fill="#8fbaff" font-size="10.5" font-family="monospace">A wakes, write epoch=5</text>
+<text x="448" y="130" fill="#d08a8a" font-size="10.5">5 &lt; 6 &#8594; rejected</text>
+<text x="365" y="238" fill="#b9c0ca" font-size="11" text-anchor="middle">epoch 6 already seen, so every write with epoch &lt; 6 is refused</text>
+</svg>
+<figcaption>Fencing: an epoch downgrades "the election got it wrong" from data corruption to one failed write — the old leader cannot write even after waking</figcaption>
+</figure>
+<p>This step swaps an impossible requirement — <strong>guarantee two leaders never coexist</strong> — for an achievable one: <strong>allow two leaders, but let only one change data</strong>. The old leader's write comes back rejected, which is how it learns it was deposed and steps down. <em>Election provides liveness; the epoch provides safety.</em> The book's full treatment of epochs waits for Chapter 14 — Paxos ballot numbers and Raft terms are doing exactly this job.</p>
+<h2>Key trade-offs and choices</h2>
+<p>Compare them across first. What actually separates these is <strong>whether a partition produces two leaders</strong>, not how fast they are.</p>
+<p class="tcap">Table 1 · What each election approach costs</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Mechanism</th><th>Messages</th><th>Handover speed</th><th>Two leaders under partition?</th><th>Cost / who it suits</th></tr></thead>
+<tbody>
+<tr><th>Bully</th><td><code>O(n²)</code> worst case</td><td>one full election round</td><td><strong>Yes</strong>: each side elects its own maximum</td><td>Simplest, no shared state; but ignores fitness, and a flapping top rank causes livelock. Small clusters only</td></tr>
+<tr><th>Next-In-Line</th><td>~0 (list rides heartbeats)</td><td><strong>Fastest</strong>: one timeout</td><td>Yes</td><td>The list goes stale; must be walkable downwards. Suits clear primary/standby pairs chasing low RTO</td></tr>
+<tr><th>Candidate / Ordinary</th><td><code>O(k²)</code> for k candidates</td><td>one round, candidates only</td><td>Yes</td><td>The candidate set becomes a new single point. Suits hundreds of nodes</td></tr>
+<tr><th>Ring</th><td><code>O(n)</code> per lap</td><td>one lap, linear in n</td><td><strong>Yes</strong>: two rings, two leaders</td><td>The ring must self-repair; topology upkeep is extra work. Suits stable membership</td></tr>
+<tr><th>Invitation</th><td>higher at merge time</td><td>no global convergence needed; the group works at once</td><td><strong>Allowed on purpose</strong></td><td>Moves the problem to merge conflicts. Suits availability-first, eventually consistent systems</td></tr>
+<tr><th>Built into consensus (Raft / Zab)</th><td>one round of majority voting</td><td>election-timeout scale; etcd defaults to 1s</td><td><strong>No</strong>: a majority exists in only one partition</td><td>The minority partition cannot write at all; needs <code>2f+1</code> machines and durable state. What almost every strongly consistent system actually uses</td></tr>
+</tbody>
+</table>
+</div>
+<p>In an actual architecture decision the question is usually not "which algorithm" but <strong>"which layer owns the leader"</strong> — most teams should not implement election at all.</p>
+<p class="tcap">Table 2 · Three engineering routes to "who elects"</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Route</th><th>How</th><th>What you get</th><th>What you pay</th></tr></thead>
+<tbody>
+<tr><th>Roll your own</th><td>Bully / Ring style, on heartbeats plus ids</td><td>No external dependency, little code</td><td><strong>Safety is entirely yours</strong>: you must build epochs and fencing, or one partition means corruption</td></tr>
+<tr><th>External lease</th><td>Race for a TTL key in ZooKeeper / etcd / a Kubernetes Lease; the winner leads and keeps renewing</td><td>Tens of lines of code; uniqueness backed by the external cluster's consensus, and expiry is automatic — nobody declares anyone dead</td><td>One more dependency that must stay up; handover time is pinned to the lease length (typically 10–15s); <strong>you still need fencing</strong></td></tr>
+<tr><th>Consensus with built-in election</th><td>Use a Raft / Multi-Paxos / Zab library or product</td><td>Election and replication share one term number, so safety is provable; you can add constraints like "log must be current to win"</td><td>Highest implementation and operational complexity; writes must cross a majority, so cross-region latency shows</td></tr>
+</tbody>
+</table>
+</div>
+<p>One rule you can take away directly: <strong>every irreversible action must carry the epoch to its executor</strong> — shifting traffic, deleting data, charging a card. An election only tells you "I am probably the leader"; the epoch is what says "I am demonstrably the current one."</p>
+<h2>Why it matters / real systems</h2>
+<p>In any architecture review or interview question about high availability, the second cut lands here (the first is failure detection). Upgrade "if the leader dies we elect a new one" into "incumbent renewal first, randomised timeouts to avoid split votes, candidates must have current logs, and the executor fences on epoch" and the answer is in a different class.</p>
+<p>Naming real systems: <strong>ZooKeeper</strong> uses Zab, relying on transaction ids so the new leader's history is no older than anyone's; <strong>etcd</strong> uses Raft with a 100ms default heartbeat and a 1000ms election timeout; <strong>Kafka</strong>'s controller was once elected via ZooKeeper and since KRaft uses its own Raft implementation, with partition leadership additionally requiring the new leader to be in the ISR (in-sync replica set); <strong>Kubernetes</strong> runs multiple controller replicas that race for a Lease object.</p>
+<div class="ev">
+<div class="evh">EVIDENCE FROM PRODUCTION</div>
+<ul>
+<li><strong>Kubernetes' own client library</strong> writes this chapter's most important warning straight into the source comments: <em>"This implementation does not guarantee that only one client is acting as a leader (a.k.a. fencing)."</em> Even an implementation born at Google and running in production worldwide <strong>explicitly declines to promise a single leader</strong>. It also states <em>"The implemention is tolerant to arbitrary clock skew, but is not tolerant to arbitrary clock skew rate,"</em> so safety depends on nodes' clocks running at similar <em>rates</em>. Whoever uses it owes their own fencing.<span class="src">kubernetes/client-go · <a href="https://github.com/kubernetes/client-go/blob/master/tools/leaderelection/leaderelection.go" target="_blank" rel="noopener">tools/leaderelection/leaderelection.go</a></span></li>
+<li><strong>etcd's documentation</strong> supplies the real magnitudes for "how long counts as dead": <em>"By default, etcd uses a <code>100ms</code> heartbeat interval."</em> and <em>"By default, etcd uses a <code>1000ms</code> election timeout,"</em> with the heartbeat anchored to the network — <em>"normally around 0.5-1.5x the round-trip time"</em> — while for intercontinental deployments <em>"The upper limit of election timeout is 50000ms (50s)."</em> <strong>The election timeout is not a free knob: it is simultaneously your RTO floor and your false-positive ceiling.</strong><span class="src">etcd Documentation · Tuning · <a href="https://github.com/etcd-io/website/blob/main/content/en/docs/v3.2/tuning.md" target="_blank" rel="noopener">tuning.md</a></span></li>
+<li><strong>etcd's FAQ</strong> confirms that re-elections are mostly triggered by misunderstandings: a leader that <em>"skips two heartbeat intervals"</em> raises a warning, and the usual culprits are <strong>a slow disk and CPU starvation</strong> — the docs want <code>wal_fsync_duration_seconds</code> at a <code>p99</code> under 10ms and note that <em>"If monitoring of the machine's CPU usage shows heavy utilization, there may not be enough compute capacity for etcd."</em> <strong>What really causes a leader change is often a shared SSD, not a crash.</strong><span class="src">etcd Documentation · FAQ · <a href="https://github.com/etcd-io/website/blob/main/content/en/docs/v3.2/faq.md" target="_blank" rel="noopener">faq.md</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/chubby-paper20.en.html" target="_blank" rel="noopener">CS Papers · The Chubby Lock Service</a> — how Google turned "elect a leader" into one lease service shared by every team, and why its locks carry sequencers to fence off stale holders</aside>
+<h2>Pitfalls and disputes</h2>
+<ul>
+<li><strong>Thinking "we elected a leader" means "there is one leader."</strong> The single most important line in the chapter: election only promises eventual convergence, so <strong>uniqueness does not come from the election, it comes from the epoch</strong>.</li>
+<li><strong>Shrinking the election timeout to go faster.</strong> What you buy is "one disk hiccup triggers a re-election," and re-elections stop writes, so you end up less available. etcd's guidance runs the other way: anchor the timeout to round-trip time, stretching to tens of seconds across regions.</li>
+<li><strong>Electing on id alone, ignoring data freshness.</strong> This is the widest gap between the chapter's classics and modern practice: Bully and Ring compare only static ranks, so they can crown a node whose log is behind — and the moment it accepts writes, that missing stretch of history is gone for good. Raft explicitly forbids candidates whose logs are not current; Zab does the same with transaction ids.</li>
+<li><strong>Two nodes for high availability.</strong> With 2 nodes a majority is 2, so losing either leaves no majority; allow "1 vote counts" instead and a partition gives each side a leader. <strong>Majority-based defence against two leaders needs at least 3.</strong></li>
+<li><strong>Period limits.</strong> These algorithms mostly date from the 1980s, and the 2019 book presents them as a lineage of ideas — but industry has narrowed to two camps: <strong>election built into consensus</strong> (Raft / Zab) and <strong>external leases</strong> (ZooKeeper / etcd / Kubernetes Lease). Bully and Ring are worth knowing mainly to see why they are not enough; the book also leaves election under Byzantine faults untouched.</li>
+<li><strong>The dispute: do you even want a leader?</strong> Dynamo-style leaderless designs have none of this chapter's problems — no leader to elect, hence no two leaders. The price is moving conflict resolution onto the read and write paths (vector clocks, read repair, CRDTs): the complexity does not vanish, it just gets paid elsewhere.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. The core claim: electing a leader is consensus (swapping "n nodes negotiate every operation" for "one node orders them"), yet every algorithm engineers use is <strong>weaker and cheaper</strong> — promising only eventual convergence on one leader, never that two never coexist.</p>
+<p>2. The two failure modes are wildly asymmetric: no leader is a <strong>loud stall</strong> (recoverable); two leaders are a <strong>silent fork</strong> (usually not automatically recoverable).</p>
+<p>3. Bully: highest live rank leads, no shared state needed; three blind spots — ignores fitness, a flapping top rank livelocks, and <code>O(n²)</code> messages.</p>
+<p>4. Two cheap optimisations: <strong>successor lists</strong> (handover costs one timeout) and <strong>candidate sets</strong> (messages drop to <code>O(k²)</code>, at the price of a new single point).</p>
+<p>5. <strong>Ring</strong> collects the roster around a lap — linear messages, but the ring needs upkeep; <strong>Invitation</strong> simply allows coexisting groups and merges later, trading the single leader for availability and settling up at merge time.</p>
+<p>6. Stability is the through-line: re-election costs stopped writes, log catch-up and reconnects, hundreds of milliseconds to seconds each. The rule is <strong>never re-elect while the incumbent can renew</strong>, plus <strong>randomised timeouts</strong> to avoid split votes.</p>
+<p>7. The safety boundary is outside the election: give each term a monotonic <strong>epoch</strong> and fence at the storage layer, converting "there must never be two leaders" into "there may be two, but only one can write."</p>
+<p>8. Real systems: etcd and Kafka KRaft use Raft (100ms heartbeat, 1s election timeout), ZooKeeper uses Zab, Kubernetes races for a Lease and <strong>says outright that it does not fence</strong>; in practice re-elections are triggered by slow disks and CPU contention far more often than by crashes.</p>
+</div>
+</div>
+<footer>Book Deep Read · Reading this page &#8776; getting the heart of the chapter; for the full cases and detours, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
