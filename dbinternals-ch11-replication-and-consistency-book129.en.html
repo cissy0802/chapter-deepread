@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals Ch 11 · Replication and Consistency — Books Deep-Read 129</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOKS DEEP-READ · Database Internals · CH 11</p>
+<h1>Replication and Consistency</h1>
+<p class="sub">Database Internals · Ch 11 · Alex Petrov · 2019</p>
+<p class="langbar"><a href="dbinternals-ch11-replication-and-consistency-book129.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You change your profile picture, hit refresh, and the old one is still there; two seconds later the new one shows up. Chapter 11 of <em>Database Internals</em> is about what happens in those two seconds — <strong>your data is actually stored in several copies at once, and they are not always the same</strong>. What the chapter delivers is a language for saying precisely <em>which</em> copy a read is allowed to return.</p>
+<h2>A strange thing first</h2>
+<p>Think of your data as an important document, <strong>copied three times and handed to three people</strong> — that way no single person going on holiday loses it. But trouble follows: you update the copy held by the first person, and the other two still hold the old text. Ask the second person and you get the old answer. Stranger still: ask the first and get the new answer, then ask the second and get the old one — <strong>from the asker's point of view, the data went backwards</strong>.</p>
+<h2>Why the old world found this hard</h2>
+<p>The obvious fix is "when you change it, make all three change at once, nobody jumps ahead." But that means every change waits for the slowest person to nod. A round trip between data centers in the same city is about 1 millisecond; across an ocean it is tens of milliseconds — <strong>pushing "always read the latest" to its limit means every read and write pays for several extra rounds of asking</strong>, and if even one person is unreachable, nobody can change anything. Go the other way for speed, and you accept the occasional stale read. This is an <strong>unavoidable trade</strong>, not laziness.</p>
+<h2>Consistency is not a switch, it is a row of tiers</h2>
+<p>The most important idea in the chapter: "consistent or not" is not a yes/no question but <strong>a row of priced promises</strong>, from expensive to cheap —</p>
+<ul>
+<li>The most expensive tier: whoever you ask, whenever you ask, it looks as if only one copy exists.</li>
+<li>The middle tiers are the practical ones: at least <strong>let you read what you just wrote</strong> (you always see your new picture; others can lag); at least <strong>never let your reads go backwards</strong>; at least <strong>never invert cause and effect</strong> (nobody should see the reply before the original post).</li>
+<li>The cheapest tier: it only promises "if you stop changing things, the copies will eventually match" — without saying whether that means milliseconds or minutes.</li>
+</ul>
+<p>Which tier you buy depends on <strong>what happens if you read a stale value</strong>: an account balance and a like counter clearly should not buy the same one.</p>
+<h2>And some data needs no negotiation at all</h2>
+<p>The end of the chapter has a lovely idea: some data can be <strong>designed so that any two versions always merge cleanly</strong>. To count likes, let each machine track only the share it saw, and when merging, take the larger number per machine and add those up — duplicates, reordering and resends cannot change the result. This kind of data <strong>never needs the machines to negotiate who is right</strong>; it converges on its own. The cost: only some data types can be designed this way, and "it merged" is not the same as "the merge is what a human wanted".</p>
+<h2>Remember this one line</h2>
+<div class="tl">
+<p><strong>Extra copies exist so you don't lose the data, but copies always differ for a while.</strong> So don't ask "is the data consistent?" — ask "which tier of promise am I willing to pay how much latency for?" Between "always the latest" and "eventually the same" there are several very good bargains.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the notation and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">Replication buys availability; the <strong>consistency model is the bill</strong> replication runs up. Once there are several replicas, "the database returned a value" stops being self-evident — you must first agree on <em>which return values are legal</em>. This chapter turns that agreement into a <strong>precisely definable spectrum</strong>: from register semantics (safe / regular / atomic) up through linearizable, sequential, causal, session and eventual consistency, and on to CRDTs that converge with no coordination at all. The takeaway: <strong>consistency is a contract, not a performance dial</strong> — what you get by tuning a quorum is usually not the tier you think it is.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Replica</strong>: a full copy of the same data on a different machine; the <strong>replication factor (RF)</strong> is the number of copies, written <code>n</code> here.</li>
+<li><strong>Quorum</strong>: how many replicas must acknowledge an operation before it counts as done; a "majority quorum" is <code>n/2 + 1</code>.</li>
+<li><strong>Network partition</strong>: a network failure splits the cluster in two; both halves are alive but cannot reach each other.</li>
+<li><strong>Version vector / logical clock</strong>: counters, not wall-clock time, that record "who came before whom" so you can tell whether two writes are causally related or concurrent.</li>
+<li><strong>Read repair</strong>: on a read, noticing that a replica is behind and writing the newer value back to it.</li>
+<li><strong>Tombstone</strong>: a delete is not a real delete but a "deleted here" marker — otherwise a lagging replica would resurrect the old data.</li>
+<li><strong>Last-write-wins (LWW)</strong>: on conflict, compare timestamps and the larger wins; simple, but it silently drops the losing write.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This chapter belongs to Part II ("Distributed Systems") and is the fourth stop after Ch8 (introduction), Ch9 (failure detection) and Ch10 (leader election). Those three settle "who is still alive and who gets to speak"; this one asks <strong>"given several replicas, what should a read actually return?"</strong> It leads into Ch12 (anti-entropy and dissemination: gossip, Merkle trees and read repair to pull replicas back together when only eventual consistency is promised) and Ch13–14 (distributed transactions and consensus: actually implementing the strongest tier). In the real world it maps to Cassandra/DynamoDB consistency levels, linearizable reads in ZooKeeper/etcd, and Spanner's external consistency.</p>
+<h2>What this chapter is solving</h2>
+<p>Availability comes from <strong>redundancy</strong>, redundancy means several replicas, and several replicas will differ for a while — so a question that looks like it needs no definition becomes a contract that must be defined: <strong>which copy should a read return?</strong></p>
+<p>Concretely: a three-replica key-value store spread over three availability zones returns as soon as the write lands on replica A, and the very next read is routed to replica B. Cross-AZ replication takes about 1–2 ms round trip, and during those 1–2 ms B is holding the old value. <strong>What happens if you don't solve it?</strong> Not something as gentle as "occasionally a bit stale" — the system loses its reasonability: retry the same request twice and get two answers, with no way to tell which one is the bug. So what the chapter does is <strong>break the adjective "consistent" into a set of decidable, priced contracts</strong>.</p>
+<h2>The core, properly explained</h2>
+<h3>First, put CAP back in its box: it covers far less than you think</h3>
+<p>Almost every misunderstanding about consistency starts with "CAP: pick two". Petrov is careful to point out that CAP holds only under a <strong>very narrow model</strong>: an asynchronous network, no clocks, messages that may be lost arbitrarily. Its C means <strong>linearizability specifically</strong>, and its A means "every request reaching a non-failing node must return in finite time" — not "highly available" in the everyday sense. The real conclusion is: <strong>only when a partition actually happens are you forced to choose between C and A</strong>; for the vast majority of the time, with no partition, you can have both.</p>
+<p>A more engineering-friendly framing is Fox and Brewer's 1999 <strong>harvest and yield</strong>: <em>yield</em> is the fraction of requests that complete, <em>harvest</em> is how complete the answer is. Allowing "results from only 90% of the index shards" is much closer to how real systems degrade than all-or-nothing — you are <strong>trading harvest for yield</strong>, which turns availability from 0/1 into a continuous quantity.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/harvest-yield-paper56.en.html" target="_blank" rel="noopener">CS Papers · Harvest, Yield, and Scalable Tolerant Systems</a> — the Fox &amp; Brewer original, on why "partial results" is a more honest definition of availability than all-or-nothing</aside>
+<h3>Think of storage as a single cell: three kinds of register</h3>
+<p>To discuss "what counts as a legal read" precisely, you need a minimal model. The chapter borrows the <strong>shared-memory</strong> view: treat the whole distributed store as one readable, writable cell (a register), then ask — <strong>when a read and a write overlap in time, what may the read return?</strong> Three tiers:</p>
+<ul>
+<li><strong>Safe register</strong>: a read during the overlap may return <strong>any value</strong>, even one never written. That sounds absurd, but it captures the "no guarantees whatsoever" tier exactly.</li>
+<li><strong>Regular register</strong>: a read returns <strong>either the old or the new value</strong>, never garbage — but two successive reads may see new, then old.</li>
+<li><strong>Atomic register</strong>: there is a <strong>flip point</strong>; once one read sees the new value, every later read must see it too — which is exactly what <strong>linearizability</strong> looks like on a single object.</li>
+</ul>
+<p>The value of this ladder: it turns "consistency" from an adjective into a <strong>decidable set of execution histories</strong> — given a history of reads and writes, you can answer "is this legal?"</p>
+<figure>
+<svg viewBox="0 0 640 262" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<text x="20" y="22" fill="#5b9df9" font-size="12.5" font-weight="700">A write changes v1 to v2; a read falls inside the write's span</text>
+<line x1="40" y1="47" x2="196" y2="47" stroke="#7c8593"></line>
+<text x="118" y="41" fill="#7c8593" font-size="10.5" text-anchor="middle">value = v1</text>
+<rect x="196" y="34" width="210" height="26" rx="6" fill="rgba(155,108,245,0.22)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="301" y="51" fill="#e7ebf1" font-size="11.5" text-anchor="middle">write v2 · in flight</text>
+<line x1="406" y1="47" x2="600" y2="47" stroke="#7c8593"></line>
+<text x="503" y="41" fill="#7c8593" font-size="10.5" text-anchor="middle">value = v2</text>
+<line x1="196" y1="60" x2="196" y2="228" stroke="rgba(155,108,245,0.35)" stroke-dasharray="4 4"></line>
+<line x1="406" y1="60" x2="406" y2="228" stroke="rgba(155,108,245,0.35)" stroke-dasharray="4 4"></line>
+<rect x="24" y="80" width="132" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="90" y="99" fill="#b9c0ca" font-size="11" text-anchor="middle">safe</text>
+<rect x="250" y="84" width="100" height="20" rx="4" fill="none" stroke="#5b9df9" stroke-dasharray="4 3"></rect>
+<text x="300" y="99" fill="#8fbaff" font-size="10.5" text-anchor="middle">read</text>
+<text x="368" y="99" fill="#b9c0ca" font-size="11">may return any value</text>
+<rect x="24" y="128" width="132" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="90" y="147" fill="#b9c0ca" font-size="11" text-anchor="middle">regular</text>
+<rect x="250" y="132" width="100" height="20" rx="4" fill="none" stroke="#5b9df9" stroke-dasharray="4 3"></rect>
+<text x="300" y="147" fill="#8fbaff" font-size="10.5" text-anchor="middle">read</text>
+<text x="368" y="147" fill="#b9c0ca" font-size="11">only v1 or v2</text>
+<rect x="24" y="176" width="132" height="28" rx="6" fill="rgba(91,157,249,0.18)" stroke="#5b9df9" stroke-width="2"></rect>
+<text x="90" y="195" fill="#e7ebf1" font-size="11" text-anchor="middle">atomic</text>
+<rect x="250" y="180" width="100" height="20" rx="4" fill="none" stroke="#5b9df9" stroke-dasharray="4 3"></rect>
+<text x="300" y="195" fill="#8fbaff" font-size="10.5" text-anchor="middle">read</text>
+<text x="368" y="195" fill="#e7ebf1" font-size="11">flips once, then always v2</text>
+<text x="20" y="246" fill="#7c8593" font-size="10.5">An atomic register is linearizability on one object: "new then old" is not allowed.</text>
+</svg>
+<figcaption>Fig 1 · Three register semantics: what each tier may return when a read overlaps a write.</figcaption>
+</figure>
+<h3>The spectrum: linearizable → sequential → causal → eventual</h3>
+<p>With register semantics in hand, the familiar models line up on a spectrum — <strong>the higher up, the more coordination, the higher the latency, and the more fragile under partition</strong>.</p>
+<ul>
+<li><strong>Linearizability</strong>: every operation sits in <strong>one total order that agrees with real time</strong>, each taking effect at some point between its invocation and its return. Intuition: <strong>the whole cluster pretends to be a single machine</strong>. It is also <strong>composable</strong> — if each object is linearizable, so is the collection. Cost: every operation makes a round of majority coordination, roughly 1–2 ms across AZs and tens of milliseconds across continents.</li>
+<li><strong>Sequential consistency</strong>: a total order exists and agrees with <strong>each process's own program order</strong>, but need not agree with real time. Intuition: <strong>the same film, possibly screened late</strong> — others may still read the old value, but everyone sees the same <em>order</em>. ZooKeeper reads are this tier: answered locally, possibly behind; for linearizability you must call <code>sync</code> first.</li>
+<li><strong>Causal consistency</strong>: only <strong>causally related operations</strong> must be ordered identically everywhere; concurrent ones may be seen in different orders by different nodes, using version vectors to carry "which earlier writes I depend on". Intuition: <strong>nobody may see the reply before the original post</strong>. Its weight: while insisting on availability plus partition tolerance, <strong>this is the strongest reachable model</strong> (the COPS/Eiger line of results).</li>
+<li><strong>Eventual consistency</strong>: promises only that "replicas converge once writes stop", with <strong>no time bound at all</strong> — the weakest useful guarantee, and the most abused word in the field.</li>
+</ul>
+<figure>
+<svg viewBox="0 0 640 284" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><linearGradient id="gr1e" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b9df9"></stop><stop offset="1" stop-color="#9b6cf5"></stop></linearGradient></defs>
+<text x="20" y="22" fill="#5b9df9" font-size="12.5" font-weight="700">The spectrum: cheaper as you go down, and fewer guarantees</text>
+<rect x="20" y="36" width="5" height="220" rx="2" fill="url(#gr1e)"></rect>
+<rect x="36" y="36" width="418" height="38" rx="7" fill="rgba(91,157,249,0.18)" stroke="#5b9df9" stroke-width="2"></rect>
+<text x="50" y="53" fill="#e7ebf1" font-size="11.5" font-weight="700">Linearizable</text>
+<text x="50" y="68" fill="#b9c0ca" font-size="10">total order agreeing with real time; reads always see the latest</text>
+<text x="464" y="60" fill="#8fbaff" font-size="10.5" font-family="monospace">etcd / Spanner</text>
+<rect x="36" y="82" width="418" height="38" rx="7" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"></rect>
+<text x="50" y="99" fill="#e7ebf1" font-size="11.5" font-weight="700">Sequential</text>
+<text x="50" y="114" fill="#b9c0ca" font-size="10">a total order, but the whole thing may lag real time</text>
+<text x="464" y="106" fill="#8fbaff" font-size="10.5" font-family="monospace">ZooKeeper reads</text>
+<rect x="36" y="128" width="418" height="38" rx="7" fill="rgba(127,132,245,0.1)" stroke="#7f84f5"></rect>
+<text x="50" y="145" fill="#e7ebf1" font-size="11.5" font-weight="700">Causal</text>
+<text x="50" y="160" fill="#b9c0ca" font-size="10">only causally related operations may not be reordered</text>
+<text x="464" y="152" fill="#8fbaff" font-size="10.5" font-family="monospace">COPS / MongoDB</text>
+<rect x="36" y="174" width="418" height="38" rx="7" fill="rgba(155,108,245,0.1)" stroke="#9b6cf5"></rect>
+<text x="50" y="191" fill="#e7ebf1" font-size="11.5" font-weight="700">Session guarantees</text>
+<text x="50" y="206" fill="#b9c0ca" font-size="10">read-your-writes, monotonic reads — for your session only</text>
+<text x="464" y="198" fill="#8fbaff" font-size="10.5" font-family="monospace">sticky routing</text>
+<rect x="36" y="220" width="418" height="38" rx="7" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="50" y="237" fill="#e7ebf1" font-size="11.5" font-weight="700">Eventual</text>
+<text x="50" y="252" fill="#b9c0ca" font-size="10">promises convergence, says nothing about when</text>
+<text x="464" y="244" fill="#8fbaff" font-size="10.5" font-family="monospace">Cassandra ONE</text>
+<text x="20" y="276" fill="#7c8593" font-size="10.5">Up: more coordination, higher latency, worse availability under partition · Down: faster, more anomalies</text>
+</svg>
+<figcaption>Fig 2 · Every tier is a precise contract, not a fuzzy "stronger / weaker" dial.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/consistency-day6.en.html" target="_blank" rel="noopener">System Design · Day 6 Consistency</a> — the same spectrum from the system-design angle: how each tier lands in a real architecture and how to set an SLO for it</aside>
+<h3>Session guarantees: move the promise from the system to your session</h3>
+<p>Every tier on the spectrum is a <strong>system-wide</strong> property, which is why they are expensive. The common engineering compromise is to shrink the promise to <strong>a single client session</strong>: these <strong>session guarantees</strong> hold only for "your session", and are therefore far cheaper:</p>
+<ul>
+<li><strong>Read your own writes</strong>: after you change your picture, <strong>you</strong> definitely see the new one; others may lag.</li>
+<li><strong>Monotonic reads</strong>: the values you read may never <strong>go backwards</strong>.</li>
+<li><strong>Monotonic writes</strong>: two writes you issue in order land on every replica in that order.</li>
+<li><strong>Writes follow reads</strong>: when you write based on a value you read, that causal chain is not reordered elsewhere either.</li>
+</ul>
+<p>The cheapest implementation is <strong>stickiness</strong>: pin a client to one replica and the first two come almost free. The cost is that the guarantee dies with that replica — serious cases need a version token ("no earlier than the version I last saw") rather than a routing trick.</p>
+<h3>Tunable consistency: <code>w + r &gt; n</code> does not give you linearizability</h3>
+<p>The Dynamo lineage (Cassandra, Riak, DynamoDB) hands the choice to <strong>each individual operation</strong>: a write waits for <code>w</code> replicas to acknowledge, a read waits for <code>r</code> replicas to answer, out of <code>n</code> total. When <code>w + r &gt; n</code>, the read and write sets <strong>must overlap</strong>, so at least one responder has seen the latest write. The Dynamo paper (SOSP 2007) gives <code>n=3, w=2, r=2</code> as the common configuration.</p>
+<p><strong>Here is the trap most worth remembering</strong>: <code>w + r &gt; n</code> only guarantees that <em>someone has seen</em> the latest write — it does <strong>not</strong> guarantee linearizability. The write may have failed part-way (only one of <code>w</code> succeeded, so it returned an error while that replica still holds the new value) or may still be in flight — and then two successive reads can see new, then old, <strong>breaking monotonic reads</strong>.</p>
+<figure>
+<svg viewBox="0 0 640 258" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<text x="20" y="22" fill="#5b9df9" font-size="12.5" font-weight="700">n=3, w=2, r=2: the value went backwards between two reads</text>
+<text x="50" y="64" fill="#b9c0ca" font-size="11" text-anchor="middle">R1</text>
+<line x1="80" y1="60" x2="600" y2="60" stroke="#7c8593"></line>
+<text x="50" y="114" fill="#b9c0ca" font-size="11" text-anchor="middle">R2</text>
+<line x1="80" y1="110" x2="600" y2="110" stroke="#7c8593"></line>
+<text x="50" y="164" fill="#b9c0ca" font-size="11" text-anchor="middle">R3</text>
+<line x1="80" y1="160" x2="600" y2="160" stroke="#7c8593"></line>
+<circle cx="200" cy="60" r="5.5" fill="#9b6cf5"></circle>
+<text x="200" y="48" fill="#9b6cf5" font-size="10.5" text-anchor="middle">v2 lands</text>
+<circle cx="470" cy="110" r="5.5" fill="#9b6cf5"></circle>
+<text x="470" y="99" fill="#9b6cf5" font-size="10.5" text-anchor="middle">v2 lands (late)</text>
+<rect x="246" y="50" width="58" height="20" rx="4" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-dasharray="4 3"></rect>
+<rect x="246" y="150" width="58" height="20" rx="4" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-dasharray="4 3"></rect>
+<line x1="275" y1="70" x2="275" y2="150" stroke="#5b9df9" stroke-dasharray="4 4"></line>
+<text x="275" y="196" fill="#8fbaff" font-size="11" text-anchor="middle">read A → v2</text>
+<rect x="366" y="100" width="58" height="20" rx="4" fill="rgba(224,107,107,0.14)" stroke="#e06b6b" stroke-dasharray="4 3"></rect>
+<rect x="366" y="150" width="58" height="20" rx="4" fill="rgba(224,107,107,0.14)" stroke="#e06b6b" stroke-dasharray="4 3"></rect>
+<line x1="395" y1="120" x2="395" y2="150" stroke="#e06b6b" stroke-dasharray="4 4"></line>
+<text x="443" y="196" fill="#e06b6b" font-size="11" text-anchor="middle">read B → v1 (went backwards)</text>
+<text x="20" y="226" fill="#7c8593" font-size="10.5">Both reads used r=2 and both satisfy w+r&gt;n, yet the later read saw an older value.</text>
+<text x="20" y="243" fill="#7c8593" font-size="10.5">Quorum overlap guarantees "someone has seen it", not that reads are ordered.</text>
+</svg>
+<figcaption>Fig 3 · Why w+r&gt;n is not linearizability: overlap guarantees "seen", not "ordered".</figcaption>
+</figure>
+<p>To close the gap, a read must <strong>write the highest value it saw back</strong> to the lagging replicas (an ABD-style two-phase read, which in practice is <strong>read repair</strong>), turning the read path from one round into two. In other words: <strong>what you tune with a quorum is the trade between availability and staleness, not which contract you are on.</strong></p>
+<h3>Witness replicas: vote without storing data</h3>
+<p>Majority fault tolerance needs enough replicas, but most of the cost of "enough" is <strong>storage</strong>, not voting. The chapter offers a neat saving: a <strong>witness replica</strong> normally keeps only metadata, not the data itself, yet still votes; only when full replicas become unreachable does it temporarily accept data and hand it back afterwards. So <strong>2 full + 1 witness</strong> preserves three-replica majority tolerance at roughly two thirds of the storage. Cassandra's <em>transient replication</em> and Spanner's witness replicas are exactly this idea.</p>
+<h3>Strong eventual consistency and CRDTs: converging without coordination</h3>
+<p>The pain of eventual consistency is that <strong>conflicts need an arbiter</strong>. The usual arbiter is LWW — compare timestamps, larger wins. But one clock going backwards and the winner may be the older value, while <strong>the losing write is silently discarded</strong>, without even an error.</p>
+<p>A CRDT (conflict-free replicated data type) takes another route: <strong>design the data type so that merging needs no arbitration at all</strong>. Require the merge to be <strong>commutative, associative and idempotent</strong> — then reordering, duplication and resends cannot change the result, and replicas that <strong>receive the same set of updates (in any order) must reach the same state</strong>. That property is <strong>strong eventual consistency</strong>: it turns convergence from an operational promise into a <strong>mathematical property of the data type</strong>, with no consensus required.</p>
+<p>Take the <strong>grow-only counter (G-Counter)</strong>: each replica increments only its own slot, merging takes the <strong>per-slot maximum</strong>, and the value is the sum of the slots.</p>
+<figure>
+<svg viewBox="0 0 640 232" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="am4e" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text x="20" y="22" fill="#5b9df9" font-size="12.5" font-weight="700">G-Counter: increment only your own slot, merge by per-slot maximum</text>
+<rect x="30" y="40" width="150" height="58" rx="8" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="105" y="61" fill="#b9c0ca" font-size="11" text-anchor="middle">Replica A (+2)</text>
+<text x="105" y="84" fill="#8fbaff" font-size="13" text-anchor="middle" font-family="monospace">[2, 0, 0]</text>
+<rect x="245" y="40" width="150" height="58" rx="8" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="320" y="61" fill="#b9c0ca" font-size="11" text-anchor="middle">Replica B (+3)</text>
+<text x="320" y="84" fill="#8fbaff" font-size="13" text-anchor="middle" font-family="monospace">[0, 3, 0]</text>
+<rect x="460" y="40" width="150" height="58" rx="8" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="535" y="61" fill="#b9c0ca" font-size="11" text-anchor="middle">Replica C (+1)</text>
+<text x="535" y="84" fill="#8fbaff" font-size="13" text-anchor="middle" font-family="monospace">[0, 0, 1]</text>
+<line x1="105" y1="98" x2="230" y2="138" stroke="#9b6cf5" marker-end="url(#am4e)"></line>
+<line x1="320" y1="98" x2="320" y2="138" stroke="#9b6cf5" marker-end="url(#am4e)"></line>
+<line x1="535" y1="98" x2="410" y2="138" stroke="#9b6cf5" marker-end="url(#am4e)"></line>
+<rect x="170" y="142" width="300" height="56" rx="8" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="320" y="162" fill="#e7ebf1" font-size="11" text-anchor="middle">any exchange, then per-slot max</text>
+<text x="320" y="186" fill="#e7ebf1" font-size="13" text-anchor="middle" font-family="monospace">[2, 3, 1] → total 6</text>
+<text x="20" y="222" fill="#7c8593" font-size="10.5">Merge is commutative / associative / idempotent — duplicates, reordering and resends cannot change it.</text>
+</svg>
+<figcaption>Fig 4 · The point of a CRDT is not "resolving conflicts" but "having no conflicts".</figcaption>
+</figure>
+<p>Add a second slot for decrements and you get the PN-Counter; sets bring G-Set, the observed-remove set (OR-Set) and other variants. Implementations split two ways: <strong>state-based (CvRDT)</strong> ships whole states, <strong>operation-based (CmRDT)</strong> ships only operations — cheaper on bandwidth but requiring delivery guarantees.</p>
+<p>The costs are real: <strong>only some data types can be made into CRDTs</strong>; handling deletes correctly needs <strong>tombstones</strong>, so metadata grows over time; and above all <strong>convergence is not semantic correctness</strong> — replicas can perfectly agree on a result nobody wanted.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/collaborative-editing-day45.en.html" target="_blank" rel="noopener">System Design · Day 45 Collaborative Editing</a> — CRDTs versus OT in real document collaboration: tombstone growth, intention preservation, and what convergence really costs</aside>
+<h2>Key trade-offs and how to choose</h2>
+<p class="tcap">Table 1 · Picking among six contracts</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Tier</th><th>Anomalies it blocks</th><th>Coordination cost</th><th>When to choose it</th></tr></thead>
+<tbody>
+<tr><th>Linearizable</th><td>all single-object anomalies: stale reads, reads going backwards, misordered writes</td><td><strong>Priciest</strong>: a majority round per read/write; 1–2ms cross-AZ, tens of ms cross-continent</td><td>config and metadata, distributed locks, stock/balance decrements, leadership state</td></tr>
+<tr><th>Sequential</th><td>backwards reads, misordered writes; does <strong>not</strong> block stale reads</td><td>Medium: writes coordinate, reads answer locally</td><td>read-heavy coordination services that tolerate lagging as a whole</td></tr>
+<tr><th>Causal</th><td>causal inversion (reply before post); does <strong>not</strong> block concurrent-write divergence</td><td>Lower: version vectors only, no consensus</td><td>social timelines, comment threads, multi-site collaborative writes</td></tr>
+<tr><th>Session</th><td>stale reads / backwards reads, within your session only</td><td><strong>Very low</strong>: sticky routing or a version token</td><td>user-facing read-after-write: see your own edit immediately</td></tr>
+<tr><th>Eventual</th><td>almost nothing; only promises convergence</td><td>Lowest: return once the local write is done</td><td>counters, logs, caches, statistics that can be backfilled</td></tr>
+<tr><th>CRDT (strong eventual)</th><td>not stale reads, but <strong>converges with no arbiter</strong> and loses no writes</td><td>Zero coordination; cost moves into <strong>metadata size</strong></td><td>offline-first, writable everywhere: collaborative docs, carts, likes</td></tr>
+</tbody>
+</table>
+</div>
+<p class="tcap">Table 2 · Same three replicas, very different configurations (n=3)</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Configuration</th><th>Read path</th><th>Write path / availability</th><th>The honest cost</th></tr></thead>
+<tbody>
+<tr><th>Two extremes<br/><code>w=3,r=1</code> / <code>w=1,r=3</code></th><td>the former reads fastest, the latter waits for the slowest replica</td><td>the former cannot write if one node is down; the latter writes fastest</td><td>both load the whole cost on one side — <strong>one node down is half-crippled</strong></td></tr>
+<tr><th><code>w=2, r=2</code></th><td>two rounds (with read repair)</td><td>tolerates one node failure</td><td>the default choice, but <strong>still not linearizable</strong></td></tr>
+<tr><th><code>LOCAL_QUORUM</code></th><td>local-region majority, about 1–2ms</td><td>unavailable only if the whole region fails</td><td>may read stale values across regions</td></tr>
+<tr><th><code>EACH_QUORUM</code></th><td>a majority in every region</td><td>any region partition fails the write</td><td>pushes cross-continent <code>p99</code> to 80–150ms</td></tr>
+<tr><th>2 full + 1 witness</th><td>same as <code>w=2, r=2</code></td><td>tolerance equal to three replicas</td><td>saves about a third of storage; degradation is complex when full replicas are lost</td></tr>
+</tbody>
+</table>
+</div>
+<p>The decision rule is plain: <strong>first ask "what happens if we read a stale value?"</strong> If the answer is "the user sees an old avatar", session guarantees are enough. If it is "we oversell 1,000 units" or "two nodes both believe they are the leader", you can only pay for linearizability — and you must implement it with consensus, not by turning <code>r</code> up.</p>
+<h2>Why it matters / how it lands in real systems</h2>
+<p>The practical value of this chapter is that it <strong>translates a vague requirement into an implementable contract</strong>. The most common mistake in architecture review is treating consistency as a performance dial: "feels a bit inconsistent, let's set <code>r</code> to 3" — latency rises, the anomaly stays, because <code>r</code> cannot cure backwards reads. Interviews are the same: being able to explain <em>why</em> <code>w + r &gt; n</code> is not linearizability carries far more weight than reciting "CAP, pick two".</p>
+<p>Against real systems: <strong>etcd</strong> (the single source of truth for Kubernetes) defaults to linearizable reads while keeping faster serializable reads as an escape hatch; <strong>ZooKeeper</strong> reads are sequential, and linearizability needs an explicit <code>sync</code>; <strong>Cassandra / DynamoDB</strong> hand the tier to each call; <strong>Spanner</strong> reaches external consistency with TrueTime and commit-wait; <strong>MongoDB</strong> has offered causally consistent sessions since 3.6; <strong>Riak</strong> and collaborative editing engines take the CRDT route.</p>
+<div class="ev">
+<div class="evh">FROM THE FIELD</div>
+<ul>
+<li><strong>Google / Eric Brewer: Spanner did not beat CAP, it pushed the probability of partition down to negligible.</strong> Brewer (VP of Infrastructure at Google) gives the honest answer: "<em>The purist answer is 'no' because partitions can happen and in fact have happened at Google, and during some partitions, Spanner chooses C and forfeits A. It is technically a CP system.</em>" The measured figure is "<em>more than five 9s of availability</em>", and he credits "<em>Spanner runs on Google's private network</em>" — controlled hardware and path redundancy.<span class="src">Eric Brewer, <a href="https://cloud.google.com/blog/products/gcp/inside-cloud-spanner-and-the-cap-theorem" target="_blank" rel="noopener">Inside Cloud Spanner and the CAP Theorem</a>, Google Cloud Blog, 2017</span></li>
+<li><strong>Apache Cassandra: consistency is a <em>per-operation</em> dial, and witness replicas shipped.</strong> The official docs are blunt: "<em>Cassandra supports a per-operation tradeoff between consistency and availability through Consistency Levels.</em>" The strong-consistency condition is written as "<em>W + R &gt; RF</em>"; transient replication (witness replicas) is described as decoupling "<em>data redundancy from availability</em>" — and it is still marked experimental, which is exactly the point that this storage saving is not free.<span class="src">Apache Cassandra docs · <a href="https://github.com/apache/cassandra/blob/trunk/doc/modules/cassandra/pages/architecture/dynamo.adoc" target="_blank" rel="noopener">Dynamo (architecture)</a></span></li>
+<li><strong>MongoDB: causal consistency works by carrying a timestamp around — with an explicit boundary.</strong> The official specification splits the implementation into three things: save the server's <code>operationTime</code> into the session, pass it in the <code>afterClusterTime</code> field of later operations, and gossip cluster time between nodes. The same spec states the limit: "<em>Causally consistent operations are not causally consistent with unacknowledged writes.</em>" — an unacknowledged write never enters the causal chain.<span class="src">MongoDB driver specifications · <a href="https://github.com/mongodb/specifications/blob/master/source/causal-consistency/causal-consistency.md" target="_blank" rel="noopener">Causal Consistency Specification</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and open arguments</h2>
+<ul>
+<li><strong>"CAP: pick two" is a bad summary.</strong> With no partition you can have both C and A; the forced choice only arises during a partition — Brewer himself published a correction in 2012.</li>
+<li><strong>The biggest trap: <code>w + r &gt; n</code> is not linearizability.</strong> It guarantees overlap, not order; for linearizability you need write-back on reads, or simply consensus.</li>
+<li><strong>"Eventually consistent" does not mean "consistent in a moment".</strong> There is no time bound — production must measure <em>actual</em> replication lag rather than trusting the word.</li>
+<li><strong>Linearizability composes; weaker models may not.</strong> Bolt two individually causally consistent subsystems together and the cross-system causal chain can break.</li>
+<li><strong>LWW silently drops writes.</strong> Ordering by physical clocks means one clock stepping backwards lets an old value overwrite a new one, with no error at all.</li>
+<li><strong>CRDTs are not a cure-all.</strong> They cover only certain data types, tombstones and version metadata grow, and most importantly <strong>convergence ≠ semantic correctness</strong> — the Dynamo paper's own shopping-cart example: after a merge, a deleted item can come back.</li>
+<li><strong>Where the book sits, and the other side.</strong> In 2019 the CRDT section was still on the theoretical side; the local-first wave since (Automerge, Yjs) engineered it and exposed metadata size as a genuine problem. The counter-argument persists too: many hold that application developers actually want linearizability, and that patching over a weak model is more error-prone than paying for a strong one.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① Replication buys availability, and <strong>the consistency model is the bill</strong>; once there are several replicas, "what a read returns" must be written down as a contract.</p>
+<p>② CAP's model is narrow: C means linearizability specifically, A means "a request must return in finite time", and <strong>only a real partition forces the choice</strong>; harvest/yield is the better framing.</p>
+<p>③ The three registers (safe / regular / atomic) turn consistency into a <strong>decidable set of execution histories</strong>; atomic = linearizability on one object.</p>
+<p>④ The spectrum from pricey to cheap: linearizable → sequential → causal → session → eventual. <strong>Causal is the strongest model reachable under availability plus partition tolerance</strong>; linearizability composes, weaker models may not.</p>
+<p>⑤ Session guarantees are the best value: read-your-writes, monotonic reads, monotonic writes, writes-follow-reads — sticky routing gives the first two almost free, and the guarantee dies with the replica.</p>
+<p>⑥ <strong>The one to remember: <code>w + r &gt; n</code> guarantees overlap, not order, so it is not linearizability</strong>; closing the gap needs write-back / read repair, turning one round into two.</p>
+<p>⑦ Levels have a price: <code>LOCAL_QUORUM</code> about 1–2ms, <code>EACH_QUORUM</code> 80–150ms across continents — the same line of code, two orders of magnitude of <code>p99</code>.</p>
+<p>⑧ Witness replicas vote without storing data: 2 full + 1 witness = three-replica tolerance at about two thirds of the storage; LWW, by contrast, silently drops writes when a clock steps back.</p>
+<p>⑨ CRDTs make convergence a mathematical property of the data type (commutative / associative / idempotent), with zero coordination and no lost writes; the costs are limited types and growing metadata, and <strong>convergence is not semantic correctness</strong>. The rule stays one line: <strong>first ask what happens if you read a stale value</strong>.</p>
+</div>
+</div>
+<footer>Book Deep Read · Reading this page &#8776; getting the heart of the chapter; for the full cases and detours, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

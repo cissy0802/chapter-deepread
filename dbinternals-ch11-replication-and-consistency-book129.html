@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals 第 11 章 · 复制与一致性 — 专业书籍精读 Book 129</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · Database Internals · 第 11 章</p>
+<h1>复制与一致性</h1>
+<p class="sub">Database Internals · Ch 11 · Alex Petrov · 2019</p>
+<p class="langbar"><a href="dbinternals-ch11-replication-and-consistency-book129.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你在微信里换了头像，刷新一下还是旧的那张；过两秒再刷，新的出来了。《Database Internals》（《数据库系统内幕》）第 11 章讲的就是这两秒里发生了什么——<strong>你的数据其实同时存了好几份，而它们并不总是一样</strong>。这一章要给出的，是一套说清「读到的到底是哪一份」的语言。</p>
+<h2>先说个怪事</h2>
+<p>把数据想成一份要紧的文件，<strong>抄成三份交给三个人保管</strong>——这样任何一个人请假，文件都不会丢。但麻烦跟着来了：你改了甲手里那份，乙和丙手里还是旧的。此时有人去问乙，拿到的就是旧答案。更怪的是：先问甲得到新答案，再问乙得到旧答案——<strong>在提问者看来，数据「往回退了」</strong>。</p>
+<h2>旧世界为什么难</h2>
+<p>最直觉的解法是「改的时候让三个人同时改完，谁都别抢跑」。可这意味着每次改动都要等最慢那个人点头。同城机房打个来回约 1 毫秒，跨国要几十毫秒——<strong>把「保证读到最新」做到极致，代价就是每次读写都多等好几趟问询</strong>，而且只要有一个人联系不上，谁都别想改了。反过来图快，就得接受偶尔读到旧数据：这是<strong>绕不过去的取舍</strong>。</p>
+<h2>一致性不是开关，是一排档位</h2>
+<p>这一章最重要的观念：「一致不一致」不是是非题，而是<strong>一排明码标价的承诺档位</strong>，从贵到便宜——</p>
+<ul>
+<li>最贵那档：不管问谁、什么时候问，都像世上只有一份数据。</li>
+<li>中间几档很实用：至少<strong>让你读到自己刚写的</strong>（改完头像你一定看到新的，别人晚点没关系）；至少<strong>别让你越读越旧</strong>；至少<strong>别让因果颠倒</strong>（不能先看到回复、后看到原帖）。</li>
+<li>最便宜那档：只承诺「你停手不改了，几份数据终究会一样」——但不说几毫秒还是几分钟。</li>
+</ul>
+<p>挑哪一档，取决于<strong>读到旧值会怎样</strong>：转账余额和点赞数，显然不该买同一档。</p>
+<h2>还有一类数据根本不用商量</h2>
+<p>这一章末尾有个漂亮的点子：有些数据可以<strong>被设计成「怎么合都合得上」</strong>。比如统计点赞，让每台机器只记自己收到的那部分，合并时按机器逐项取各自的最大值再相加——重复、乱序、重发都不影响结果。这类数据<strong>压根不用商量谁说了算</strong>，自己就会收敛。代价是：只有一部分数据类型能这么设计，而且「合上了」不等于「合出来的是人想要的」。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p><strong>存多份是为了不丢，但多份之间一定有先后差。</strong>所以别问「数据一致吗」，要问「我愿意为哪一档承诺付多少延迟」——从「永远读到最新」到「终究会一样」，中间还有好几档很划算的选择。</p>
+</div>
+<p class="switch-hint">想进到具体机制、记号和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">复制（replication）是为了可用，而一致性模型（consistency model）是为复制开出的<strong>账单</strong>。副本一多，「数据库返回了一个值」就不再自明——你必须先约定「哪些返回值算合法」。本章把这个约定做成一条<strong>可精确定义的谱系</strong>：从寄存器语义（safe / regular / atomic）到线性一致、顺序一致、因果一致、会话保证、最终一致，再到无需协调就能收敛的 CRDT。要建立的认知是：<strong>一致性不是性能旋钮，是合约</strong>——你调 quorum 调出来的，往往不是你以为的那一档。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>副本（replica）</strong>：同一份数据在不同机器上的完整拷贝；<strong>复制因子（replication factor, RF）</strong>即拷贝份数，本文记作 <code>n</code>。</li>
+<li><strong>quorum（法定人数）</strong>：一次操作必须得到多少个副本确认才算完成；「多数派 quorum」= <code>n/2 + 1</code> 个。</li>
+<li><strong>网络分区（network partition）</strong>：网络故障把集群切成两片，各自都活着，但彼此收不到消息。</li>
+<li><strong>版本向量 / 逻辑时钟（version vector / logical clock）</strong>：不看物理时间，只用计数器记录「谁先于谁」，据此判断两次写是有因果关系还是并发。</li>
+<li><strong>读修复（read repair）</strong>：读的时候发现某个副本落后了，顺手把新值写回去。</li>
+<li><strong>墓碑（tombstone）</strong>：删除不是真删，而是写一条「此处已删」的标记——否则落后的副本会把旧数据复活。</li>
+<li><strong>最后写入胜（last-write-wins, LWW）</strong>：冲突时比时间戳，大的赢；简单，但会静默丢掉输的那条写。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>本章属 Part II「分布式系统」，是 Ch8（分布式引论）→ Ch9（故障检测）→ Ch10（领导者选举）之后的第四站：前三章解决「谁还活着、谁说话算数」，本章追问<strong>「多副本之下，一次读该返回什么」</strong>。下接 Ch12（反熵与传播：只保证最终一致时，用 gossip / Merkle 树 / 读修复把副本拉回来）与 Ch13–14（分布式事务与共识：把最强那档真正实现出来）。对应现实里 Cassandra / DynamoDB 的一致性级别、ZooKeeper / etcd 的线性一致读、Spanner 的外部一致性。</p>
+<h2>这章要解决什么</h2>
+<p>可用性靠<strong>冗余</strong>，冗余意味着多份副本，而多份副本会短暂地不一样——于是一个看似无需定义的问题变成了必须定义的合约：<strong>读，该返回哪一份？</strong></p>
+<p>具体化：一个三副本、跨三可用区的键值存储，写入落到副本 A 成功即返回，紧接着一次读被路由到副本 B。跨 AZ 复制往返约 1–2 毫秒，而这 1–2 毫秒里 B 手上就是旧值。<strong>不解决会怎样？</strong>不是「偶尔有点旧」这么温和——是系统失去可推理性：同一请求重试两遍得到两个答案，你却无法判断哪个是 bug。所以本章做的事是：<strong>把「一致」这个形容词，拆成一组可判定、明码标价的合约</strong>。</p>
+<h2>核心内容，讲透</h2>
+<h3>先把 CAP 摆正：它管的范围比你以为的窄</h3>
+<p>几乎所有关于一致性的误解都从「CAP 三选二」开始。Petrov 特意提醒：CAP 成立的前提是一个<strong>很窄的模型</strong>——异步网络、没有时钟、消息可任意丢失；它说的 C <strong>专指线性一致性</strong>，A 专指「每个到达非故障节点的请求必须在有限时间内返回」，而非日常说的「高可用」。真正的结论是：<strong>只有分区真的发生时，你才被迫在 C 和 A 之间选一个</strong>；不发生分区的绝大多数时间，两者都能有。</p>
+<p>更贴工程的替代提法是 Fox 与 Brewer 1999 年的<strong>收成与产出（harvest and yield）</strong>：<em>产出</em>是成功完成的请求比例，<em>收成</em>是答案的完整度。允许「只搜到 90% 索引分片的结果」，比「全或无」更接近真实系统的降级方式——你是在<strong>牺牲收成换产出</strong>，可用性由此从 0/1 变成连续量。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/harvest-yield-paper56.html" target="_blank" rel="noopener">CS Papers · Harvest、Yield 与可扩展容错系统</a> — Fox &amp; Brewer 原文精读：为什么「部分结果」是比「全或无」更诚实的可用性定义</aside>
+<h3>把存储想成一个格子：三种寄存器</h3>
+<p>要精确讨论「读到什么算合法」，得先有个最小模型。本章借用<strong>共享内存</strong>的视角：把整个分布式存储当成一个能读能写的格子（寄存器），然后问——<strong>一次读和一次写在时间上重叠时，读可以返回什么？</strong>三档：</p>
+<ul>
+<li><strong>安全寄存器（safe）</strong>：重叠期间的读可以返回<strong>任意值</strong>，哪怕从没写过。听着离谱，但它精确刻画了「毫无保证」这一档。</li>
+<li><strong>常规寄存器（regular）</strong>：读只会返回<strong>旧值或新值</strong>之一，不会返回垃圾——但两次连续的读可以先新后旧。</li>
+<li><strong>原子寄存器（atomic）</strong>：存在一个<strong>翻转点</strong>，一旦某次读看到新值，之后所有读都必须看到新值——这正是<strong>线性一致性</strong>落在单个对象上的样子。</li>
+</ul>
+<p>这个阶梯的价值在于：它把「一致性」从形容词变成<strong>可判定的执行历史集合</strong>——给定一段读写历史，你能回答「合法吗」。</p>
+<figure>
+<svg viewBox="0 0 640 262" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<text x="20" y="22" fill="#5b9df9" font-size="12.5" font-weight="700">一次写把 v1 改成 v2；读恰好落在写的进行期间</text>
+<line x1="40" y1="47" x2="196" y2="47" stroke="#7c8593"></line>
+<text x="118" y="41" fill="#7c8593" font-size="10.5" text-anchor="middle">值 = v1</text>
+<rect x="196" y="34" width="210" height="26" rx="6" fill="rgba(155,108,245,0.22)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="301" y="51" fill="#e7ebf1" font-size="11.5" text-anchor="middle">写 v2 · 进行中</text>
+<line x1="406" y1="47" x2="600" y2="47" stroke="#7c8593"></line>
+<text x="503" y="41" fill="#7c8593" font-size="10.5" text-anchor="middle">值 = v2</text>
+<line x1="196" y1="60" x2="196" y2="228" stroke="rgba(155,108,245,0.35)" stroke-dasharray="4 4"></line>
+<line x1="406" y1="60" x2="406" y2="228" stroke="rgba(155,108,245,0.35)" stroke-dasharray="4 4"></line>
+<rect x="24" y="80" width="132" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="90" y="99" fill="#b9c0ca" font-size="11" text-anchor="middle">安全 safe</text>
+<rect x="250" y="84" width="100" height="20" rx="4" fill="none" stroke="#5b9df9" stroke-dasharray="4 3"></rect>
+<text x="300" y="99" fill="#8fbaff" font-size="10.5" text-anchor="middle">读</text>
+<text x="368" y="99" fill="#b9c0ca" font-size="11">可能返回任意值</text>
+<rect x="24" y="128" width="132" height="28" rx="6" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="90" y="147" fill="#b9c0ca" font-size="11" text-anchor="middle">常规 regular</text>
+<rect x="250" y="132" width="100" height="20" rx="4" fill="none" stroke="#5b9df9" stroke-dasharray="4 3"></rect>
+<text x="300" y="147" fill="#8fbaff" font-size="10.5" text-anchor="middle">读</text>
+<text x="368" y="147" fill="#b9c0ca" font-size="11">只会是 v1 或 v2</text>
+<rect x="24" y="176" width="132" height="28" rx="6" fill="rgba(91,157,249,0.18)" stroke="#5b9df9" stroke-width="2"></rect>
+<text x="90" y="195" fill="#e7ebf1" font-size="11" text-anchor="middle">原子 atomic</text>
+<rect x="250" y="180" width="100" height="20" rx="4" fill="none" stroke="#5b9df9" stroke-dasharray="4 3"></rect>
+<text x="300" y="195" fill="#8fbaff" font-size="10.5" text-anchor="middle">读</text>
+<text x="368" y="195" fill="#e7ebf1" font-size="11">有翻转点，翻转后恒为 v2</text>
+<text x="20" y="246" fill="#7c8593" font-size="10.5">原子寄存器 = 单对象上的线性一致：不允许「先新后旧」这种倒退。</text>
+</svg>
+<figcaption>图 1 · 三种寄存器语义：读写重叠时，各档允许返回什么。</figcaption>
+</figure>
+<h3>一致性谱系：线性 → 顺序 → 因果 → 最终</h3>
+<p>有了寄存器语义，常见模型就能排成一条谱系——<strong>越靠上，协调越多、延迟越高、分区时越脆</strong>。</p>
+<ul>
+<li><strong>线性一致性（linearizability）</strong>：所有操作落在<strong>一个与真实时间一致的全序</strong>上，每个操作在发起与返回之间某一点「生效」。直觉：<strong>整个集群装得像一台单机</strong>。它还<strong>可组合</strong>——各对象线性一致，放一起仍线性一致。代价：每次操作走一轮多数派协调，跨 AZ 约 1–2 毫秒，跨洲几十毫秒起。</li>
+<li><strong>顺序一致性（sequential consistency）</strong>：有全序，且与<strong>每个进程自己的程序序</strong>一致，但不必与真实时间一致。直觉：<strong>同一部电影，整场可能延后放映</strong>——别人仍可能读到旧值，但所有人看到的<em>顺序</em>一样。ZooKeeper 的读即此档：本地应答、可能落后，要线性一致得先调 <code>sync</code>。</li>
+<li><strong>因果一致性（causal consistency）</strong>：只要求<strong>有因果关系的操作</strong>在所有节点同序，并发操作可被不同节点以不同顺序看到，靠版本向量携带「我依赖哪些前序写」。直觉：<strong>不能让人先看到回复、后看到原帖</strong>。分量在于：坚持可用 + 分区容忍时，<strong>它是可达的最强模型</strong>（COPS、Eiger 一系的结论）。</li>
+<li><strong>最终一致性（eventual consistency）</strong>：只承诺「停写后终将收敛」，<strong>不给任何时间上界</strong>——最弱的有用保证，也是被滥用得最狠的词。</li>
+</ul>
+<figure>
+<svg viewBox="0 0 640 284" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><linearGradient id="gr1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b9df9"></stop><stop offset="1" stop-color="#9b6cf5"></stop></linearGradient></defs>
+<text x="20" y="22" fill="#5b9df9" font-size="12.5" font-weight="700">一致性谱系：越往下越便宜，也越少保证</text>
+<rect x="20" y="36" width="5" height="220" rx="2" fill="url(#gr1)"></rect>
+<rect x="36" y="36" width="418" height="38" rx="7" fill="rgba(91,157,249,0.18)" stroke="#5b9df9" stroke-width="2"></rect>
+<text x="50" y="53" fill="#e7ebf1" font-size="11.5" font-weight="700">线性一致 linearizability</text>
+<text x="50" y="68" fill="#b9c0ca" font-size="10">全序且与真实时间一致；读永远看到最新</text>
+<text x="464" y="60" fill="#8fbaff" font-size="10.5" font-family="monospace">etcd / Spanner</text>
+<rect x="36" y="82" width="418" height="38" rx="7" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"></rect>
+<text x="50" y="99" fill="#e7ebf1" font-size="11.5" font-weight="700">顺序一致 sequential</text>
+<text x="50" y="114" fill="#b9c0ca" font-size="10">有全序，但整体可以落后真实时间</text>
+<text x="464" y="106" fill="#8fbaff" font-size="10.5" font-family="monospace">ZooKeeper 读</text>
+<rect x="36" y="128" width="418" height="38" rx="7" fill="rgba(127,132,245,0.1)" stroke="#7f84f5"></rect>
+<text x="50" y="145" fill="#e7ebf1" font-size="11.5" font-weight="700">因果一致 causal</text>
+<text x="50" y="160" fill="#b9c0ca" font-size="10">只保证有因果关系的操作不倒序</text>
+<text x="464" y="152" fill="#8fbaff" font-size="10.5" font-family="monospace">COPS / MongoDB</text>
+<rect x="36" y="174" width="418" height="38" rx="7" fill="rgba(155,108,245,0.1)" stroke="#9b6cf5"></rect>
+<text x="50" y="191" fill="#e7ebf1" font-size="11.5" font-weight="700">会话保证 session</text>
+<text x="50" y="206" fill="#b9c0ca" font-size="10">读己之写、单调读——只对你这条会话成立</text>
+<text x="464" y="198" fill="#8fbaff" font-size="10.5" font-family="monospace">粘性路由</text>
+<rect x="36" y="220" width="418" height="38" rx="7" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="50" y="237" fill="#e7ebf1" font-size="11.5" font-weight="700">最终一致 eventual</text>
+<text x="50" y="252" fill="#b9c0ca" font-size="10">只承诺终将收敛，不说何时</text>
+<text x="464" y="244" fill="#8fbaff" font-size="10.5" font-family="monospace">Cassandra ONE</text>
+<text x="20" y="276" fill="#7c8593" font-size="10.5">向上：协调多、延迟高、分区时可用性差 · 向下：延迟低、可用性好、异常更多</text>
+</svg>
+<figcaption>图 2 · 谱系的每一档都是一份精确合约，不是「强一点 / 弱一点」的模糊刻度。</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/consistency-day6.html" target="_blank" rel="noopener">System Design · Day 6 一致性</a> — 同一条谱系从系统设计视角展开：每档在真实架构里怎么落地、怎么定 SLO</aside>
+<h3>会话保证：把承诺从系统挪到「你这条会话」</h3>
+<p>谱系那几档都是<strong>系统级</strong>的全局性质，因此昂贵。工程上常见的折中是把承诺范围缩到<strong>单个客户端会话</strong>：这类<strong>会话模型（session guarantees）</strong>只对「你这条会话」成立，于是便宜得多：</p>
+<ul>
+<li><strong>读己之写（read your own writes）</strong>：你改完头像，<strong>你自己</strong>一定看到新的；别人晚一点无妨。</li>
+<li><strong>单调读（monotonic reads）</strong>：你读到的值不许<strong>往回退</strong>。</li>
+<li><strong>单调写（monotonic writes）</strong>：你先后发出的两次写，在所有副本上按你发出的顺序落地。</li>
+<li><strong>写跟随读（writes follow reads）</strong>：你基于读到的值写下去，这条因果链在别处也不倒序。</li>
+</ul>
+<p>最便宜的实现是<strong>粘性会话（stickiness）</strong>：同一客户端固定路由到同一副本，前两条几乎白送。代价是副本一挂保证就断——严肃场景要靠版本号（「不早于我上次看到的版本」）而非路由技巧。</p>
+<h3>可调一致性：<code>w + r &gt; n</code> 并不给你线性一致</h3>
+<p>Dynamo 一系（Cassandra、Riak、DynamoDB）把选择权交给<strong>每一次操作</strong>：写等 <code>w</code> 个副本确认、读等 <code>r</code> 个副本回答，副本总数 <code>n</code>。当 <code>w + r &gt; n</code> 时读写集合<strong>必有重叠</strong>，至少一个应答者见过最新写。Dynamo 论文（SOSP 2007）给出的常用配置是 <code>n=3, w=2, r=2</code>。</p>
+<p><strong>这是本章最值得记住的坑</strong>：<code>w + r &gt; n</code> 只保证「有人见过最新写」，<strong>并不保证线性一致</strong>。因为写可能中途失败（<code>w</code> 个里只成功一个便返回失败，而那个副本上的新值还在）或仍在进行中——两次连续的读就可能先新后旧，<strong>单调读被破坏</strong>。</p>
+<figure>
+<svg viewBox="0 0 640 258" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<text x="20" y="22" fill="#5b9df9" font-size="12.5" font-weight="700">n=3, w=2, r=2：两次读之间，值「退回去」了</text>
+<text x="50" y="64" fill="#b9c0ca" font-size="11" text-anchor="middle">R1</text>
+<line x1="80" y1="60" x2="600" y2="60" stroke="#7c8593"></line>
+<text x="50" y="114" fill="#b9c0ca" font-size="11" text-anchor="middle">R2</text>
+<line x1="80" y1="110" x2="600" y2="110" stroke="#7c8593"></line>
+<text x="50" y="164" fill="#b9c0ca" font-size="11" text-anchor="middle">R3</text>
+<line x1="80" y1="160" x2="600" y2="160" stroke="#7c8593"></line>
+<circle cx="200" cy="60" r="5.5" fill="#9b6cf5"></circle>
+<text x="200" y="48" fill="#9b6cf5" font-size="10.5" text-anchor="middle">落地 v2</text>
+<circle cx="470" cy="110" r="5.5" fill="#9b6cf5"></circle>
+<text x="470" y="99" fill="#9b6cf5" font-size="10.5" text-anchor="middle">落地 v2（迟到）</text>
+<rect x="246" y="50" width="58" height="20" rx="4" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-dasharray="4 3"></rect>
+<rect x="246" y="150" width="58" height="20" rx="4" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-dasharray="4 3"></rect>
+<line x1="275" y1="70" x2="275" y2="150" stroke="#5b9df9" stroke-dasharray="4 4"></line>
+<text x="275" y="196" fill="#8fbaff" font-size="11" text-anchor="middle">读 A → v2</text>
+<rect x="366" y="100" width="58" height="20" rx="4" fill="rgba(224,107,107,0.14)" stroke="#e06b6b" stroke-dasharray="4 3"></rect>
+<rect x="366" y="150" width="58" height="20" rx="4" fill="rgba(224,107,107,0.14)" stroke="#e06b6b" stroke-dasharray="4 3"></rect>
+<line x1="395" y1="120" x2="395" y2="150" stroke="#e06b6b" stroke-dasharray="4 4"></line>
+<text x="440" y="196" fill="#e06b6b" font-size="11" text-anchor="middle">读 B → v1（退回旧值）</text>
+<text x="20" y="226" fill="#7c8593" font-size="10.5">两次读都满足 r=2、都满足 w+r&gt;n，但后一次读到了更旧的值。</text>
+<text x="20" y="243" fill="#7c8593" font-size="10.5">quorum 重叠只保证「有人见过最新写」，不保证读之间不倒序。</text>
+</svg>
+<figcaption>图 3 · 为什么 w+r&gt;n 不等于线性一致：重叠保证的是「见过」，不是「有序」。</figcaption>
+</figure>
+<p>要补上缺口，得让读<strong>把读到的最大值写回</strong>落后的副本（ABD 式两阶段读，工程上即<strong>读修复</strong>），读路径从一趟变两趟。换句话说：<strong>「调 quorum」调出来的是可用性与陈旧度的折中，不是谱系上那一档合约。</strong></p>
+<h3>见证副本：只投票、不存数据</h3>
+<p>多数派容错要求副本数够多，但「够多」的成本大头是<strong>存储</strong>，不是投票。本章给了个精巧的省法：<strong>见证副本（witness replica）</strong>平时只存元数据、不存数据本体，却照样投票；只有全量副本失联时才临时接收数据、事后交还。于是 <strong>2 全量 + 1 见证</strong>保住了三副本的多数派容错，存储只花约 2/3。Cassandra 的 <em>transient replication</em> 与 Spanner 的 witness 副本就是这个思路。</p>
+<h3>强最终一致与 CRDT：不协调也能收敛</h3>
+<p>最终一致性的痛处是<strong>冲突要有人裁决</strong>。最常见的裁法是 LWW——比时间戳，大的赢。但时钟一回拨，赢的可能是旧值，而且<strong>输掉那条写被静默丢弃</strong>，连报错都没有。</p>
+<p>CRDT（conflict-free replicated data type，无冲突复制数据类型）换了个思路：<strong>把数据类型设计成「合并本身不需要裁决」</strong>。要求合并满足<strong>交换律、结合律、幂等</strong>——于是乱序、重复、重发都不改变结果，副本只要<strong>收到同一组更新（不论顺序）就必然到达同一状态</strong>。这个性质叫<strong>强最终一致性（strong eventual consistency）</strong>：它把「收敛」从运维承诺变成<strong>数据类型的数学性质</strong>，完全不需要共识。</p>
+<p>以<strong>增长计数器（G-Counter）</strong>为例：每个副本只增自己那一格，合并时<strong>逐格取最大值</strong>，总值是各格之和。</p>
+<figure>
+<svg viewBox="0 0 640 232" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="am4" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text x="20" y="22" fill="#5b9df9" font-size="12.5" font-weight="700">G-Counter：只加自己那一格，合并时逐格取最大值</text>
+<rect x="30" y="40" width="150" height="58" rx="8" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="105" y="61" fill="#b9c0ca" font-size="11" text-anchor="middle">副本 A（自增 2）</text>
+<text x="105" y="84" fill="#8fbaff" font-size="13" text-anchor="middle" font-family="monospace">[2, 0, 0]</text>
+<rect x="245" y="40" width="150" height="58" rx="8" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="320" y="61" fill="#b9c0ca" font-size="11" text-anchor="middle">副本 B（自增 3）</text>
+<text x="320" y="84" fill="#8fbaff" font-size="13" text-anchor="middle" font-family="monospace">[0, 3, 0]</text>
+<rect x="460" y="40" width="150" height="58" rx="8" fill="rgba(91,157,249,0.08)" stroke="#7c8593"></rect>
+<text x="535" y="61" fill="#b9c0ca" font-size="11" text-anchor="middle">副本 C（自增 1）</text>
+<text x="535" y="84" fill="#8fbaff" font-size="13" text-anchor="middle" font-family="monospace">[0, 0, 1]</text>
+<line x1="105" y1="98" x2="230" y2="138" stroke="#9b6cf5" marker-end="url(#am4)"></line>
+<line x1="320" y1="98" x2="320" y2="138" stroke="#9b6cf5" marker-end="url(#am4)"></line>
+<line x1="535" y1="98" x2="410" y2="138" stroke="#9b6cf5" marker-end="url(#am4)"></line>
+<rect x="170" y="142" width="300" height="56" rx="8" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="320" y="162" fill="#e7ebf1" font-size="11" text-anchor="middle">任意两副本互换后逐格取 max</text>
+<text x="320" y="186" fill="#e7ebf1" font-size="13" text-anchor="middle" font-family="monospace">[2, 3, 1] → 总计 6</text>
+<text x="20" y="222" fill="#7c8593" font-size="10.5">合并满足交换律 / 结合律 / 幂等 —— 重复、乱序、重发都不影响最终值。</text>
+</svg>
+<figcaption>图 4 · CRDT 的核心不是「解决冲突」，而是「让冲突不存在」。</figcaption>
+</figure>
+<p>再加一格「减量」就是可增可减的 PN-Counter；集合类有 G-Set、观察-移除集（OR-Set）等变体。实现分两派：<strong>状态型（CvRDT）</strong>互传整个状态，<strong>操作型（CmRDT）</strong>只传操作、更省带宽但要求投递保证。</p>
+<p>代价很实在：<strong>只有部分数据类型做得出 CRDT</strong>；为正确处理删除要留<strong>墓碑</strong>，元数据随时间膨胀；而且<strong>「收敛」不等于「语义正确」</strong>——副本完全可以一致地得出一个谁都没想要的结果。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/collaborative-editing-day45.html" target="_blank" rel="noopener">System Design · Day 45 协作编辑系统</a> — CRDT 与 OT 在真实文档协作里的正面交锋：墓碑膨胀、意图保持与收敛的工程代价</aside>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 1 · 六档合约怎么挑</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>档位</th><th>挡住哪些异常</th><th>协调代价</th><th>什么时候选它</th></tr></thead>
+<tbody>
+<tr><th>线性一致</th><td>全部单对象异常：陈旧读、读倒退、写乱序</td><td><strong>最贵</strong>：每次读写一轮多数派；跨 AZ 1–2ms、跨洲几十 ms</td><td>配置元数据、分布式锁、库存 / 余额扣减、选主状态</td></tr>
+<tr><th>顺序一致</th><td>读倒退、写乱序；<strong>不挡</strong>陈旧读</td><td>中：写要协调，读可本地应答</td><td>读远多于写、能容忍整体延后的协调服务</td></tr>
+<tr><th>因果一致</th><td>因果倒序（先见回复后见原帖）；<strong>不挡</strong>并发写分歧</td><td>较低：只需版本向量，无需共识</td><td>社交时间线、评论区、多地写入的协作场景</td></tr>
+<tr><th>会话保证</th><td>仅在你这条会话内挡陈旧读 / 读倒退</td><td><strong>很低</strong>：粘性路由或带版本号即可</td><td>面向用户的读写：改完资料要立刻看到</td></tr>
+<tr><th>最终一致</th><td>几乎什么都不挡，只保证终将收敛</td><td>最低：本地写完即返</td><td>计数、日志、缓存、可后补的统计</td></tr>
+<tr><th>CRDT（强最终一致）</th><td>不挡陈旧读，但<strong>无需裁决即收敛</strong>、不丢写</td><td>零协调，成本转到<strong>元数据体积</strong></td><td>离线优先、多地同时可写：协作文档、购物车、点赞</td></tr>
+</tbody>
+</table>
+</div>
+<p class="tcap">表 2 · 同一套三副本，配置不同差别有多大（n=3）</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>配置</th><th>读路径</th><th>写路径 / 可用性</th><th>诚实代价</th></tr></thead>
+<tbody>
+<tr><th>两种极端<br/><code>w=3,r=1</code> / <code>w=1,r=3</code></th><td>前者读最快，后者要等最慢副本</td><td>前者挂一台就写不了，后者写最快</td><td>都把全部代价压在一侧，<strong>挂一台即半瘫</strong></td></tr>
+<tr><th><code>w=2, r=2</code></th><td>两趟（含读修复）</td><td>可容一台故障</td><td>默认选择，但<strong>仍不是线性一致</strong></td></tr>
+<tr><th><code>LOCAL_QUORUM</code></th><td>本区域多数派，约 1–2ms</td><td>整区域挂掉才不可用</td><td>跨区域可能读到旧值</td></tr>
+<tr><th><code>EACH_QUORUM</code></th><td>每区域都要多数派</td><td>任一区域分区即写失败</td><td>跨洲 <code>p99</code> 抬到 80–150ms</td></tr>
+<tr><th>2 全量 + 1 见证</th><td>同 <code>w=2, r=2</code></td><td>容错等同三副本</td><td>省约 1/3 存储，全量副本失联时降级复杂</td></tr>
+</tbody>
+</table>
+</div>
+<p>判据很朴素：<strong>先问「读到旧值会怎样」</strong>。答案是「用户看到旧头像」，会话保证就够；答案是「超卖 1000 件」或「两个节点同时以为自己是主」，就只能付线性一致的钱——而且得用共识实现，不是把 <code>r</code> 调大。</p>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>本章的实用价值在于<strong>把含糊的需求翻译成可实现的合约</strong>。架构评审里最常见的错就是把一致性当性能旋钮：「感觉有点不一致，把 <code>r</code> 调到 3」——延迟涨了、异常还在，因为 <code>r</code> 治不了读倒退。面试同理：能说清「<code>w + r &gt; n</code> 为什么不等于线性一致」，比背 CAP 三选二有分量得多。</p>
+<p>对照真实系统：<strong>etcd</strong>（Kubernetes 的唯一真相源）默认线性一致读，也留了更快的可串行化读作逃生门；<strong>ZooKeeper</strong> 读是顺序一致，要线性一致得显式 <code>sync</code>；<strong>Cassandra / DynamoDB</strong> 把档位交给每次调用；<strong>Spanner</strong> 用 TrueTime 与提交等待做到外部一致性；<strong>MongoDB</strong> 3.6 起提供因果一致会话；<strong>Riak</strong> 与协作编辑引擎走 CRDT。</p>
+<div class="ev">
+<div class="evh">大厂实证</div>
+<ul>
+<li><strong>Google / Eric Brewer：Spanner 没绕过 CAP，只把分区概率压到可忽略。</strong>Brewer（Google 基础设施 VP）给了诚实答案：「<em>The purist answer is 'no' because partitions can happen and in fact have happened at Google, and during some partitions, Spanner chooses C and forfeits A. It is technically a CP system.</em>」实测量级是「<em>more than five 9s of availability</em>」，功劳归给「<em>Spanner runs on Google's private network</em>」——可控的硬件与路径冗余。<span class="src">Eric Brewer, <a href="https://cloud.google.com/blog/products/gcp/inside-cloud-spanner-and-the-cap-theorem" target="_blank" rel="noopener">Inside Cloud Spanner and the CAP Theorem</a>, Google Cloud Blog, 2017</span></li>
+<li><strong>Apache Cassandra：一致性是<em>每次操作</em>的旋钮，见证副本已入库。</strong>官方文档很直白：「<em>Cassandra supports a per-operation tradeoff between consistency and availability through Consistency Levels.</em>」强一致条件被写成「<em>W + R &gt; RF</em>」；transient replication（见证副本）的目标被描述为把「<em>data redundancy from availability</em>」解耦——它至今标注为实验特性，正说明这条省存储的路并不免费。<span class="src">Apache Cassandra 官方文档 · <a href="https://github.com/apache/cassandra/blob/trunk/doc/modules/cassandra/pages/architecture/dynamo.adoc" target="_blank" rel="noopener">Dynamo（architecture）</a></span></li>
+<li><strong>MongoDB：因果一致靠「带着时间戳走」，且有明确边界。</strong>官方规范把实现拆成三件事：把服务端返回的 <code>operationTime</code> 存进会话、在后续请求的 <code>afterClusterTime</code> 里带上、并在节点间 gossip 集群时间。同一规范也写明限制：「<em>Causally consistent operations are not causally consistent with unacknowledged writes.</em>」——不等确认的写进不了因果链。<span class="src">MongoDB 官方驱动规范 · <a href="https://github.com/mongodb/specifications/blob/master/source/causal-consistency/causal-consistency.md" target="_blank" rel="noopener">Causal Consistency Specification</a></span></li>
+</ul>
+</div>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>「CAP 三选二」是个坏概括。</strong>不发生分区时 C 和 A 都能有，被迫选择只发生在分区期间——Brewer 本人 2012 年就写过修正文章。</li>
+<li><strong>最大的坑：<code>w + r &gt; n</code> 不等于线性一致。</strong>它只保证重叠、不保证顺序；要线性一致得加读回写，或干脆用共识。</li>
+<li><strong>「最终一致」不是「一会儿就一致」。</strong>它没有时间上界——线上必须监测<em>实际</em>复制滞后，而不是相信这个词。</li>
+<li><strong>线性一致可组合，弱模型不一定。</strong>两个各自因果一致的子系统拼起来，跨系统的因果链可能断掉。</li>
+<li><strong>LWW 会静默丢写。</strong>靠物理时钟定序，一次时钟回拨就能让旧值覆盖新值，且没有任何报错。</li>
+<li><strong>CRDT 不是万能药。</strong>只覆盖特定数据类型，墓碑与版本元数据会膨胀；最关键的是<strong>收敛 ≠ 语义正确</strong>——Dynamo 论文举过购物车的例子：合并之后被删掉的商品可能又回来了。</li>
+<li><strong>本书的时代位置与反方。</strong>2019 年出版时 CRDT 一节偏理论，之后 local-first 那一波（Automerge、Yjs）把它工程化，也暴露出元数据体积这个真问题。反方观点一直在：不少人认为业务开发者其实想要线性一致，被迫在弱模型上打补丁反而更容易错。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 复制买的是可用性，<strong>一致性模型是这笔买卖的账单</strong>；副本一多，「读该返回什么」就必须写成合约。</p>
+<p>② CAP 模型很窄：C 专指线性一致、A 专指「请求必须有限时间内返回」，<strong>只有分区真的发生时才被迫二选一</strong>；替代提法是收成 / 产出。</p>
+<p>③ 寄存器三档（safe / regular / atomic）把一致性变成<strong>可判定的执行历史</strong>；atomic = 单对象线性一致。</p>
+<p>④ 谱系从贵到便宜：线性一致 → 顺序一致 → 因果一致 → 会话保证 → 最终一致。<strong>因果一致是「可用 + 分区容忍」下可达的最强模型</strong>；线性一致可组合，弱模型不一定。</p>
+<p>⑤ 会话保证是性价比之王：读己之写、单调读、单调写、写跟随读——粘性路由几乎白送，代价是副本一挂保证就断。</p>
+<p>⑥ <strong>最该记住的：<code>w + r &gt; n</code> 只保证重叠、不保证顺序，因此不是线性一致</strong>；补齐靠读回写 / 读修复，读路径从一趟变两趟。</p>
+<p>⑦ 级别是有价的：<code>LOCAL_QUORUM</code> 约 1–2ms，<code>EACH_QUORUM</code> 跨洲 80–150ms，换个级别 <code>p99</code> 差两个数量级。</p>
+<p>⑧ 见证副本只投票不存数据：2 全量 + 1 见证 = 三副本的容错、约 2/3 存储；LWW 则会因时钟回拨静默丢写。</p>
+<p>⑨ CRDT 把收敛变成数据类型的数学性质（交换 / 结合 / 幂等），零协调、不丢写；代价是类型受限、元数据膨胀，且<strong>收敛不等于语义正确</strong>。判据只有一句：<strong>先问「读到旧值会怎样」</strong>。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
