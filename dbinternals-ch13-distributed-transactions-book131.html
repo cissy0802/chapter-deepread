@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals 第 13 章 · 分布式事务 — 专业书籍精读 Book 131</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+</head><body>
+<div class="container">
+<p class="top">专业书籍精读 · Database Internals · 第 13 章</p>
+<h1>分布式事务</h1>
+<p class="sub">Database Internals · Ch 13 · Alex Petrov · 2019</p>
+<p class="langbar"><a href="dbinternals-ch13-distributed-transactions-book131.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你点一下「转账」，钱从你的账户扣掉、加到对方账户上；要是这两笔只成了一笔，就是灾难。单台数据库里这事早就解决了——这一章问的是更难的版本：<strong>当两个账户根本不在同一台机器上，怎么保证「要么都成、要么都不成」？</strong>这就是分布式事务（distributed transaction）。</p>
+<h2>先说个怪事</h2>
+<p>想象三个人在三个城市要签同一份合同，<strong>必须全签或一个都不签</strong>，而他们只能打电话。常规办法是找个牵头人跑两轮：<strong>第一轮</strong>挨个问「你能签吗」——谁回了「能」，就等于把笔攥在手里、位子占住了，<strong>不许再反悔</strong>；<strong>第二轮</strong>收齐「能」之后，挨个说「签」。</p>
+<p>怪事就在这两轮之间。牵头人收齐「能」、还没通知任何人之前，手机掉进了水里。剩下两人<strong>签也不敢</strong>（万一他其实决定撤销？）、<strong>撤也不敢</strong>（万一有人已经签了？），只能攥着笔、占着会议室干等。</p>
+<h2>旧世界为什么难</h2>
+<p>这不是办法笨，而是<strong>绕不开</strong>。在剩下两人看来，「牵头人没做决定」和「做了决定但我没收到」长得一模一样，只要第二种可能还在，谁也不敢自己拍板。于是这套办法有个硬伤：<strong>保证绝不出错，但不保证一直能动</strong>。在数据库里，「攥着笔干等」就是那几行数据被锁着、别人读不了也写不了，而牵头人重启可能要几分钟。</p>
+<h2>三条不同的出路</h2>
+<p>多打一个电话有用吗？有一点：牵头人先通知「我要让你们签了」，之后谁等不到下文就<strong>默认签</strong>。但电话线要是从中间被掐成两半，两边各按默认行事，就可能一半签了一半撤了——比卡住更糟。真正管用的三招都不是改进那两轮，而是<strong>换地基</strong>：</p>
+<p>① <strong>先排号，再办事</strong>。不问「能不能」，先把所有人要办的事排成一个公认的号码顺序，各自照号办。顺序一样、办法一样，结果必然一样——<strong>不用商量</strong>。</p>
+<p>② <strong>牵头人不止一个</strong>。让这个角色由一小组人共同担任，决定一做出来组里好几个人都记着；掉一个手机不影响大局。</p>
+<p>③ <strong>把「谁签了」写在合同本身上</strong>。约定以某一页的签名为准，那页签了整份就生效；后来翻到的人顺手把其他页补齐或划掉——<strong>不需要全程在场的牵头人</strong>。</p>
+<h2>该怎么选</h2>
+<p>三招都要付学费：排号法要求你<strong>事先把要干的事全交代清楚</strong>，不能边做边想；多牵头人法要靠极准的时钟和更贵的机房。所以工程上常有个更好的第四答案：<strong>先看看这事需不需要凑成一个事务</strong>。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>跨机器的「要么全成要么全不成」，难点在于<strong>必须先让大家承诺不反悔，才能做决定</strong>——而承诺之后、决定到达之前那一小段，牵头人一倒，所有人只能攥着锁干等。后来的办法全在换地基：<strong>先排号</strong>、<strong>让牵头人变成一群人</strong>、<strong>把状态写进数据本身</strong>，或者<strong>别开这个事务</strong>。</p>
+</div>
+<p class="switch-hint">想进到 2PC / 3PC 的具体协议、Calvin 与 Spanner 的地基差别和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">这一章讲<strong>原子提交（atomic commitment）</strong>：怎么让横跨多个节点的事务「要么全生效、要么全不生效」。核心洞察是——<strong>它和共识（consensus）是近亲，但要求更苛刻</strong>：共识只要<em>多数</em>同意就能推进，原子提交要求<em>全体</em>一致，于是任一参与者失联就推不动。两阶段提交（2PC）用<strong>阻塞</strong>买下「绝不出错」；三阶段提交（3PC）想赎回活性，却在网络分区下破功。真正的出路是换地基：<strong>Calvin</strong> 先对顺序达成共识、执行时不再协商；<strong>Spanner</strong> 保留 2PC 但让每个角色都是一个 Paxos 组；<strong>Percolator</strong> 把事务状态写进数据表自己；<strong>协调避免</strong>则论证哪些事务压根不需要协调。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>事务（transaction）</strong>：一组读写，对外像一个不可分割的动作——要么全做，要么全不做。</li>
+<li><strong>分区 / 分片（partition / shard）</strong>：把一张大表按某个键切成若干份放在不同节点上；事务一旦跨分片就成了分布式事务。</li>
+<li><strong>协调者与参与者（coordinator / cohort）</strong>：提交协议的两个角色——一个收票拍板，其余投票执行。</li>
+<li><strong>共识（consensus）</strong>：一组节点就某个值达成一致、且<strong>多数存活就能推进</strong>的算法，如 Paxos、Raft（下一章的主题）。</li>
+<li><strong>WAL（预写日志）</strong>：改数据前先把「我要改什么」追加到一个只增的日志里，崩溃后靠它恢复；协议里的「落盘」都指这个。</li>
+<li><strong>锁（lock）</strong>：为防别人同时改同一行而打的标记。<strong>锁被持有多久，就是别人被堵多久</strong>。</li>
+<li><strong>快照隔离（snapshot isolation）</strong>：事务读到的是某个时间点的一致快照，读不堵写、写不堵读。</li>
+<li><strong>RTT（往返时延）</strong>：一个来回的网络耗时，同机房约 <code>0.5ms</code>、跨大洲常 <code>70–150ms</code>；协议多一轮就多付一个 RTT。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>本章在 Part II「分布式系统」的尾部。第 11、12 章解决的是<strong>单个键</strong>的复制与一致性（quorum、读修复、反熵），但那些机制对「两个键一起改」无话可说；本章补上这一块，而它用到的「多数同意」原语，由紧接着的第 14 章「共识」给出。现实对应物：MySQL/PostgreSQL 的 XA、Google 的 Percolator 与 Spanner、FaunaDB（Calvin 的商业实现）、CockroachDB、TiDB。</p>
+<h2>这章要解决什么</h2>
+<p>单机事务的原子性靠一份 WAL 就够：日志在一个磁盘上，写成功就是成功。<strong>事务一旦跨分片，「写成功」就不再有单一的真相</strong>——A 落盘了、B 没有，而网络不会告诉你 B 是挂了还是只是慢（第 9 章的结论）。不解决的下场只有两种：出现「钱扣了没到账」的半完成状态，或者退回「禁止跨分片写」、把一致性全推给业务代码事后对账。所以本章要立一个精确问题：<strong>在一组可能宕机、消息可能延迟的节点上，怎么让它们对「提交还是回滚」得出同一个、不可撤销的答案？</strong></p>
+<h2>核心内容，讲透</h2>
+<h3>原子提交 ≠ 共识：差在「全体」那两个字</h3>
+<p>这是全章最该先装进脑子的区分。共识允许<strong>多数</strong>决定结果，少数派事后跟着走；原子提交规定<strong>只有全体投 Yes 才能提交，任何一个 No 都必须全局回滚</strong>。两个后果：结果不是「选出来的」，而是被任一参与者的否决权唯一确定；<strong>多数存活不够用</strong>，少一张票就推不下去。所以 2PC 不是「比 Paxos 差的共识算法」，它解的是另一个问题，而那个问题在异步网络下拿不到安全与活性的两全。</p>
+<h3>2PC：真正的提交点是协调者自己的日志</h3>
+<p>两阶段提交分<strong>投票</strong>与<strong>提交</strong>两轮。协调者先发 <code>Propose</code>，参与者把「我已 prepared」落盘后回 Yes 或 No；<strong>回了 Yes 就交出反悔权</strong>，此后必须有能力提交，锁得一直持到第二轮到达。第二轮协调者统票，<strong>先把决定写进自己的日志</strong>——这一刻起决定不可撤销，哪怕随即宕机，重启后也只能照原决定继续——再发 <code>Commit</code>/<code>Abort</code> 收 ack。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 318" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="a1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="a2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker>
+</defs>
+<rect fill="rgba(155,108,245,0.14)" height="26" rx="6" stroke="#9b6cf5" width="112" x="34" y="18"></rect><text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="90" y="35">协调者</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="6" stroke="#5b9df9" width="112" x="244" y="18"></rect><text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="300" y="35">参与者 A</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="6" stroke="#5b9df9" width="112" x="464" y="18"></rect><text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="520" y="35">参与者 B</text>
+<line stroke="rgba(120,128,140,0.5)" stroke-dasharray="4 4" x1="90" x2="90" y1="46" y2="310"></line>
+<line stroke="rgba(120,128,140,0.5)" stroke-dasharray="4 4" x1="300" x2="300" y1="46" y2="310"></line>
+<line stroke="rgba(120,128,140,0.5)" stroke-dasharray="4 4" x1="520" x2="520" y1="46" y2="310"></line>
+<text fill="#8fbaff" font-size="11.5" font-weight="700" x="96" y="66">① Propose：能提交吗</text>
+<line marker-end="url(#a2)" stroke="#5b9df9" x1="94" x2="292" y1="76" y2="76"></line>
+<line marker-end="url(#a2)" stroke="#5b9df9" x1="94" x2="512" y1="92" y2="92"></line>
+<text fill="#b9c0ca" font-size="11" x="96" y="116">② Vote Yes：prepared 落盘 + 开始持锁，不许反悔</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="296" x2="98" y1="126" y2="126"></line>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="516" x2="98" y1="142" y2="142"></line>
+<rect fill="rgba(155,108,245,0.3)" height="26" rx="6" stroke="#9b6cf5" stroke-width="2" width="86" x="47" y="160"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="90" y="177">写下决定</text>
+<text fill="#e7ebf1" font-size="11" x="142" y="177">← 真正的提交点：此后决定不可撤销</text>
+<rect fill="rgba(232,121,75,0.1)" height="62" rx="8" stroke="#e8794b" stroke-dasharray="5 4" width="420" x="196" y="196"></rect>
+<text fill="#e8794b" font-size="11.5" font-weight="700" x="210" y="216">不确定窗口 — 2PC 阻塞的根源</text>
+<text fill="#b9c0ca" font-size="11" x="210" y="233">协调者在「写下决定」之后、通知出去之前宕机：</text>
+<text fill="#b9c0ca" font-size="11" x="210" y="249">A / B 已投 Yes、持锁干等，谁也不敢单方面决定</text>
+<text fill="#8fbaff" font-size="11.5" font-weight="700" x="96" y="282">③ Commit / Abort（只能等协调者恢复后发出）</text>
+<line marker-end="url(#a2)" stroke="#5b9df9" x1="94" x2="292" y1="292" y2="292"></line>
+<line marker-end="url(#a2)" stroke="#5b9df9" x1="94" x2="512" y1="306" y2="306"></line>
+</svg>
+<figcaption>2PC：两轮消息，提交点在协调者的日志里。它在写下决定与通知出去之间宕机，就是那个让所有参与者持锁干等的不确定窗口。</figcaption>
+</figure>
+<p><strong>两种故障，严重程度完全不同。</strong>参与者投票前挂掉很好办：协调者收不到票就全局回滚，代价只是白跑一次。<strong>协调者挂掉才是真问题</strong>——已投 Yes 的参与者处于「不能自己提交、也不能自己回滚」的不确定态，只能持锁等它恢复。参与者互相打听（协作终止）只救得了「有人已收到决定」的场景；若活着的都只投过 Yes，整组只能干等。<strong>所以 2PC 的代价不是那 2 个 RTT（跨大洲约 <code>150–300ms</code>），而是最坏情况下持锁时长等于协调者的恢复时间——分钟量级。</strong></p>
+<h3>3PC：多一轮换来非阻塞，但分区下破功</h3>
+<p>三阶段提交在中间插入一轮 <code>PreCommit</code>（「我准备让你们提交了」），并给双方装上超时：参与者<strong>收到 PreCommit 后</strong>等不到下文就自行提交，<strong>收到之前</strong>等不到就自行回滚。协调者宕机不再使人卡死，活性回来了。代价有两层：显性的是多一个 RTT；致命的是<strong>它只在「节点会停但网络不分区、延迟有上界」的模型里成立</strong>。网络一从中间断开，收到过 PreCommit 的那半提交、没收到的那半回滚，<strong>原子性直接被撕开</strong>——比卡住更糟。这就是 3PC 几乎不被工业界采用的原因。</p>
+<h3>Calvin：先对顺序达成共识，执行时不再协商</h3>
+<p>Calvin 换了提问方式：既然难点是「对结果达成一致」，那就<strong>只对输入的顺序达成一致</strong>。定序层（sequencer）把事务收成固定时长的批次（论文用 <code>10ms</code> 一个 epoch），用 Paxos 把这份顺序复制到各副本；之后每个副本按同一顺序、同一套确定性加锁规则执行。<strong>输入和顺序都一样，结果必然一样——于是不需要提交协商，也不需要把执行结果再复制一遍</strong>。Calvin 论文（Thomson 等，SIGMOD 2012）报告在 100 台普通机器上达到约每秒 50 万笔 TPC-C 事务。代价很实在：事务必须<strong>一次性提交全部逻辑</strong>（存储过程式，不支持「读一下再想下一步」的交互式事务），读写集还要提前知道；不知道时得先跑一次探路查询（OLLP），数据变了就重跑。</p>
+<h3>Spanner：2PC 没被取消，只是每个角色都被复制了</h3>
+<p>Spanner 让 <strong>2PC 跑在 Paxos 之上</strong>：每个分片是一个 Paxos 组，协调者与参与者<strong>各由一个组承担</strong>。于是「协调者宕机」退化成「组内换个主」，不确定窗口从分钟级压回秒级——<strong>阻塞没有消失，而是被降级成一个可恢复的故障</strong>。另一半功劳归 TrueTime：它把时钟读数返回成<strong>带不确定区间的值</strong>（区间宽度 ε 呈锯齿波、量级个位数毫秒），提交时等够 ε 再放行（commit wait），让时间戳顺序对齐真实先后。读写事务走两阶段锁 + 2PC；只读事务拿一个时间戳读快照，<strong>不加锁、不走 2PC</strong>。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/spanner-paper24.html" target="_blank" rel="noopener">CS Papers · Spanner：Google 的全球分布式数据库</a> — TrueTime 的 ε 怎么来、commit wait 为什么是 2ε，以及「外部一致性」到底承诺了什么</aside>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 248" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="22" y="26">Calvin — 先定顺序，再确定性执行</text>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="96" x="22" y="40"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="70" y="61">客户端事务</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="120" x2="136" y1="57" y2="57"></line>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="168" x="138" y="40"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="222" y="61">Sequencer 按 10ms 批次定序</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="308" x2="324" y1="57" y2="57"></line>
+<rect fill="rgba(91,157,249,0.18)" height="34" rx="6" stroke="#5b9df9" stroke-width="2" width="136" x="326" y="40"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="394" y="61">Paxos 复制这份顺序</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="464" x2="480" y1="57" y2="57"></line>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="138" x="482" y="40"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="551" y="61">各副本确定性执行</text>
+<text fill="#7c8593" font-size="10.5" x="22" y="96">共识用在「输入顺序」上 → 执行阶段不再协商提交</text>
+<line stroke="rgba(120,128,140,0.3)" x1="22" x2="618" y1="114" y2="114"></line>
+<text fill="#9b6cf5" font-size="12.5" font-weight="700" x="22" y="142">Spanner — 保留 2PC，但让每个角色都是一个 Paxos 组</text>
+<rect fill="rgba(155,108,245,0.08)" height="34" rx="6" stroke="#7c8593" width="88" x="22" y="156"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="66" y="177">2PL 加锁执行</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="112" x2="128" y1="173" y2="173"></line>
+<rect fill="rgba(155,108,245,0.22)" height="34" rx="6" stroke="#9b6cf5" stroke-width="2" width="98" x="130" y="156"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="179" y="177">跨分片 2PC</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="230" x2="246" y1="173" y2="173"></line>
+<rect fill="rgba(155,108,245,0.08)" height="34" rx="6" stroke="#7c8593" width="194" x="248" y="156"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="345" y="177">协调者 / 参与者各是 Paxos 组</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="444" x2="460" y1="173" y2="173"></line>
+<rect fill="rgba(155,108,245,0.08)" height="34" rx="6" stroke="#7c8593" width="158" x="462" y="156"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="541" y="177">TrueTime commit wait</text>
+<text fill="#7c8593" font-size="10.5" x="22" y="212">阻塞被降级：协调者宕机 = 组内换主（秒级），不再是等人重启（分钟级）</text>
+<text fill="#7c8593" font-size="10.5" x="22" y="232">只读事务例外：读快照，不加锁、不走 2PC</text>
+</svg>
+<figcaption>两条不同的地基：Calvin 把共识用在输入顺序上，执行时无需协商；Spanner 保留 2PC，却把它的每个角色都换成一个可容错的 Paxos 组。</figcaption>
+</figure>
+<h3>Percolator：把锁和事务状态写进数据表自己</h3>
+<p>Percolator 是 Google 建在 Bigtable 上的事务层，思路很反常：<strong>不要常驻协调者，把协调状态存进数据库本身</strong>。每个逻辑列拆成三列——<code>data</code>（各版本的值）、<code>lock</code>（锁）、<code>write</code>（已提交版本的指针）。事务拿到 <code>start_ts</code> 后，<strong>prewrite</strong> 给各行写入 data 与 lock，指定其中一行为<strong>主锁（primary lock）</strong>、其余锁指向它；<strong>commit</strong> 只要把主锁那行的 <code>write</code> 写成功，<strong>整个事务就算提交</strong>——那一个写就是提交点，其余锁留给后来的读者清理（主锁已提交就补齐，不在就回滚）。它拿快照隔离换掉了协调者这个单点，代价是<strong>读者替写者打扫</strong>，而且锁一撞就只能回滚重试，高冲突下很吃亏。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 218" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="22" y="24">Percolator：三列结构，主锁那一行写成 write 即提交</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" width="88" x="22" y="36"></rect><text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="66" y="53">行</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" width="148" x="110" y="36"></rect><text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="184" y="53">data</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" width="180" x="258" y="36"></rect><text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="348" y="53">lock</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" width="180" x="438" y="36"></rect><text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="528" y="53">write</text>
+<rect fill="rgba(255,255,255,0.02)" height="34" stroke="rgba(91,157,249,0.2)" width="88" x="22" y="62"></rect><text fill="#cdd3db" font-size="10.5" text-anchor="middle" x="66" y="83">Bob</text>
+<rect fill="rgba(255,255,255,0.02)" height="34" stroke="rgba(91,157,249,0.2)" width="148" x="110" y="62"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="184" y="83">ts=7 : 3 元</text>
+<rect fill="rgba(255,255,255,0.02)" height="34" stroke="rgba(91,157,249,0.2)" width="180" x="258" y="62"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="348" y="83">ts=7 : primary（主锁）</text>
+<rect fill="rgba(155,108,245,0.22)" height="34" stroke="#9b6cf5" stroke-width="2" width="180" x="438" y="62"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="528" y="83">ts=8 → 7　← 提交点</text>
+<rect fill="rgba(255,255,255,0.02)" height="34" stroke="rgba(91,157,249,0.2)" width="88" x="22" y="96"></rect><text fill="#cdd3db" font-size="10.5" text-anchor="middle" x="66" y="117">Joe</text>
+<rect fill="rgba(255,255,255,0.02)" height="34" stroke="rgba(91,157,249,0.2)" width="148" x="110" y="96"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="184" y="117">ts=7 : 7 元</text>
+<rect fill="rgba(255,255,255,0.02)" height="34" stroke="rgba(91,157,249,0.2)" width="180" x="258" y="96"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="348" y="117">ts=7 : 指向 Bob 的主锁</text>
+<rect fill="rgba(255,255,255,0.02)" height="34" stroke="rgba(91,157,249,0.2)" width="180" x="438" y="96"></rect><text fill="#7c8593" font-size="10.5" text-anchor="middle" x="528" y="117">（留给后来的读者补）</text>
+<text fill="#b9c0ca" font-size="10.5" x="22" y="154">① prewrite：各行写 data + lock，其中一行当主锁，其余锁指向它</text>
+<text fill="#b9c0ca" font-size="10.5" x="22" y="172">② commit：主锁那一行的 write 写成功 → 整个事务提交，不可撤销</text>
+<text fill="#7c8593" font-size="10.5" x="22" y="190">③ 剩下的锁由后来的读者清理：主锁已提交就补齐，否则回滚</text>
+<text fill="#7c8593" font-size="10.5" x="22" y="208">没有常驻协调者，也就没有「协调者宕机」这个单点</text>
+</svg>
+<figcaption>Percolator 把 2PC 的协调状态挪进了数据表：主锁那一行的 write 记录写成功即提交点，其余锁交给后续读者懒清理。</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/percolator-paper21.html" target="_blank" rel="noopener">CS Papers · Percolator：大规模增量处理</a> — 三列结构、时间戳发号服务、通知机制，以及它为 Google 增量索引换回了什么</aside>
+<h3>协调避免：先问这事需不需要协调</h3>
+<p>最后一节的立场最锋利：<strong>协调之所以贵，是因为很多时候它压根没必要</strong>。判据叫<strong>不变量合流性（invariant confluence, I-confluence）</strong>：若两个各自满足不变量的状态合并后仍满足该不变量，这类事务就能<strong>完全不协调地并发执行</strong>。往集合里加元素是 I-confluent 的；唯一性约束、「余额不得为负」则不是——两边各自合法、合起来违规，这类必须协调。<strong>RAMP 事务</strong>给一个更弱但够用的保证：<em>读原子性</em>——要么看到一个事务的全部写入，要么一个都看不到；它靠多版本加少量元数据，发现「读到一半」就多补一轮读来修，无锁、无 2PC。</p>
+<h2>关键权衡与选型</h2>
+<p>这一章的灵魂就在这张表上：这些方案换的不是「谁更快」，而是<strong>把不确定性放在哪里、由谁付代价</strong>。</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>方案</th><th>提交点在哪</th><th>协调者 / 主失效时</th><th>代价</th><th>什么场景选它</th></tr></thead>
+<tbody>
+<tr><th>2PC（XA）</th><td>协调者的日志</td><td><strong>阻塞</strong>：已投 Yes 者持锁等恢复，分钟级</td><td>2 个 RTT；协调者单点；长时间持锁</td><td>同机房、参与者少、协调者能快恢复；跨服务慎用</td></tr>
+<tr><th>3PC</th><td>PreCommit 已送达多数之后</td><td>不阻塞（靠双边超时自行决定）</td><td>多 1 个 RTT；<strong>分区下撕裂原子性</strong></td><td>基本不选，理论价值大于工程价值</td></tr>
+<tr><th>Calvin 式<br/>（确定性定序）</th><td>顺序被 Paxos 复制的那一刻</td><td>换主即可，执行阶段无需协商</td><td>只支持一次性提交的事务；读写集要预知</td><td>高争用、可写成存储过程的 OLTP</td></tr>
+<tr><th>Spanner 式<br/>（2PC over Paxos）</th><td>协调者<strong>组</strong>的 Paxos 日志</td><td>降级为组内换主，秒级</td><td>要 TrueTime 式时钟设施；写要等 commit wait</td><td>通用交互式 SQL + 跨地域强一致，且付得起硬件</td></tr>
+<tr><th>Percolator 式<br/>（状态入表）</th><td>主锁那一行的 write 记录</td><td>无常驻协调者；残锁由读者清理</td><td>读者替写者打扫；高冲突下回滚重试多</td><td>建在现成 KV 之上、快照隔离够用（TiDB 即此路）</td></tr>
+<tr><th>协调避免<br/>（I-confluence / RAMP）</th><td>各自本地提交</td><td>无此概念</td><td>只适用于可合流的不变量；保证更弱</td><td>不变量可合流时——最便宜的分布式事务是不做它</td></tr>
+</tbody>
+</table>
+</div>
+<p>选型先问两句：<strong>①这事务非跨分片不可吗？</strong>（能按用户 ID 把相关数据放进同一分片，整章的麻烦就消失）<strong>②业务能接受的最弱保证是什么？</strong>（只要读原子性就别上 2PC）</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/distributed-transactions-day7.html" target="_blank" rel="noopener">System Design · Day 7 分布式事务</a> — Saga、TCC、本地消息表这些「业务层替代品」怎么选，以及为什么工程上的第一答案常是「别做」</aside>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>这一章给的是一把尺子：<strong>看一个数据库的分布式事务，先问提交点在哪、那个点失效时谁在持锁等</strong>。拿它去量：XA 是教科书 2PC，协调者挂掉留下持锁的「孤儿事务」；TiDB 走 Percolator 路线，提交点是主键那一行；CockroachDB 把状态写成一条事务记录，第二阶段只改那一条；Spanner 与 FaunaDB 则是 Spanner 式与 Calvin 式的商业实现。面试被问「跨库事务怎么做」，能讲清这几个提交点比背两轮消息有用得多。</p>
+<div class="ev">
+<div class="evh">大厂实证</div>
+<ul>
+<li><strong>Google（Cloud Spanner, 2018）</strong>主张强一致不必靠多阶段协商：「Thanks to the unique power of TrueTime, Spanner provides strong reads for arbitrary queries <strong>without complex multi-phase consensus protocols and without locks of any kind</strong>.」同文把 Spanner 的保证定义为外部一致性（external consistency）＝强一致 + 可串行化 + 线性一致。注意这说的是<strong>只读</strong>路径——读写事务仍走 2PL + 2PC。<span class="src">Mike Curtiss（Cloud Spanner 工程师），Google Cloud Blog，2018-01-12 · <a href="https://cloud.google.com/blog/products/databases/why-you-should-pick-strong-consistency-whenever-possible" target="_blank" rel="noopener">cloud.google.com/blog</a></span></li>
+<li><strong>Cockroach Labs</strong>在自家设计文档里明确不走经典 2PC，理由正是本章点出的第二轮开销：事务先写一条状态为 <code>PENDING</code> 的事务记录，提交时只改这一条——「Lower latency than traditional 2PC commit protocol (w/o contention) because second phase requires <strong>only a single write to the transaction record</strong> instead of a synchronous round to all transaction participants.」<span class="src">CockroachDB 设计文档（docs/design.md）· <a href="https://github.com/cockroachdb/cockroach/blob/master/docs/design.md" target="_blank" rel="noopener">github.com/cockroachdb</a></span></li>
+<li><strong>PingCAP（TiDB）</strong>的官方文档确认这套结构在生产里跑着：「To support distributed transactions, TiDB adopts two-phase commit (2PC) in optimistic transactions.」以及「TiDB selects a Primary Key from the data to be written」、prewrite 由 TiKV 层做冲突检测——正是「主锁即提交点」的形状。<span class="src">TiDB 官方文档 optimistic-transaction.md · <a href="https://github.com/pingcap/docs/blob/master/optimistic-transaction.md" target="_blank" rel="noopener">github.com/pingcap/docs</a></span></li>
+</ul>
+</div>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>把 2PC 当共识算法用</strong>：2PC 要<strong>全体</strong>投票、少一个就推不动，Paxos/Raft 只要多数。所以「用 Raft 替掉 2PC」是错位的——Spanner 是让 2PC <em>跑在</em> Paxos 上，不是替换。</li>
+<li><strong>以为 3PC 解决了阻塞</strong>：它只在「无分区、延迟有上界」的模型里非阻塞。真实网络里它把「卡住」换成「一半提交一半回滚」——更坏的失败模式。</li>
+<li><strong>以为 Calvin 的确定性免费</strong>：它要求事务一次性提交全部逻辑、读写集可预知，交互式事务（「读完再决定写什么」）天然不适配；探路查询还会在数据变动下重跑。</li>
+<li><strong>把 Spanner 当「不需要时钟假设」</strong>：TrueTime 的正确性依赖 ε 真有上界。不确定度超预期时 Spanner 选择<strong>等待</strong>而非冒险——于是时钟设施故障会表现成延迟上升。</li>
+<li><strong>时代局限</strong>：本书成于 2019 年，此后不依赖原子钟的方案（如 CockroachDB 的混合逻辑时钟）更成熟；但「提交点在哪、谁在持锁等」这个框架没过时。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 本章的问题是<strong>原子提交</strong>：跨节点的事务要得出同一个、不可撤销的「提交或回滚」。</p>
+<p>② 它<strong>不是共识</strong>：共识靠多数，原子提交要全体同意，任一参与者的否决权唯一决定结果——多数存活不够用。</p>
+<p>③ <strong>2PC</strong>：投票轮 + 提交轮；投了 Yes 就不许反悔并持锁；<strong>真正的提交点是协调者自己的日志</strong>。它的病不在 2 个 RTT，而在协调者宕机留下的<strong>不确定窗口</strong>——参与者持锁干等到它恢复。</p>
+<p>④ <strong>3PC</strong> 加一轮 PreCommit + 双边超时换来非阻塞，但<strong>分区下会撕裂原子性</strong>，工业界基本不用。</p>
+<p>⑤ <strong>Calvin</strong>：对输入顺序达成共识（10ms 批次 + Paxos），各副本确定性执行、不再协商；代价是事务须一次性提交、读写集需预知。</p>
+<p>⑥ <strong>Spanner</strong>：2PC 跑在 Paxos 之上，协调者变成一个组、阻塞降级为换主；TrueTime 的 ε 与 commit wait 对齐时间戳与真实先后。</p>
+<p>⑦ <strong>Percolator</strong>：data / lock / write 三列，主锁那行的 write 写成功即提交点，残锁由后来的读者清理，无需常驻协调者。</p>
+<p>⑧ <strong>协调避免</strong>：不变量可合流（I-confluence）时就不必协调；RAMP 用多版本 + 元数据提供读原子性。工程第一问永远是<strong>这事务能不能不跨分片</strong>。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

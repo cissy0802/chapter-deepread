@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals Ch 13 · Distributed Transactions — Books Deep-Read 131</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+</head><body>
+<div class="container">
+<p class="top">Book Deep Read · Database Internals · Chapter 13</p>
+<h1>Distributed Transactions</h1>
+<p class="sub">Database Internals · Ch 13 · Alex Petrov · 2019</p>
+<p class="langbar"><a href="dbinternals-ch13-distributed-transactions-book131.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep read</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You tap "transfer." Money leaves your account and lands in someone else's. If only one of those two halves happens, that is a disaster. A single database solved this problem decades ago — this chapter asks the harder version: <strong>when the two accounts do not even live on the same machine, how do you guarantee "either both or neither"?</strong> That is a distributed transaction.</p>
+<h2>Start with something odd</h2>
+<p>Picture three people in three cities who must sign the same contract, and it has to be <strong>all three or none</strong>, and they can only use the phone. The usual trick is to appoint a convener who makes two rounds. <strong>Round one:</strong> ask each person "can you sign?" — and note that answering "yes" means picking up the pen and holding your slot, with <strong>no backing out</strong>. <strong>Round two:</strong> once every answer is in, tell each of them "sign."</p>
+<p>The odd part sits between the rounds. After collecting every "yes" but before telling anyone anything, the convener drops their phone in a lake. The other two <strong>dare not sign</strong> (what if the convener actually decided to call it off?) and <strong>dare not walk away</strong> (what if someone already signed?). All they can do is hold the pen, occupy the room, and wait.</p>
+<h2>Why the old world found this hard</h2>
+<p>This is not clumsiness; it is <strong>unavoidable</strong>. From where the other two stand, "the convener never decided" looks exactly like "the convener decided and I never heard." While the second possibility is live, nobody dares call it themselves. So the two-round scheme has a hard flaw: <strong>it guarantees you never get it wrong, but not that you keep moving</strong>. In a database, "holding the pen" means those rows are locked — nobody can read or write them — and a convener's restart can take minutes.</p>
+<h2>Three different ways out</h2>
+<p>Does one more phone call help? A little: the convener first announces "I am about to have you sign," and after that, anyone who hears nothing further <strong>signs by default</strong>. But if the phone line is cut in half, each side acts on its default and you can end up half-signed, half-cancelled — worse than being stuck. The three moves that actually work do not improve those two rounds; they <strong>change the foundation</strong>:</p>
+<p>① <strong>Take a number first, act second.</strong> Stop asking "can you?" Instead, put everything everyone wants to do into one agreed numbered order, and let each person work the list. Same order, same rules, same result — <strong>no negotiation needed</strong>.</p>
+<p>② <strong>More than one convener.</strong> Let a small group hold that role jointly, so a decision is remembered by several people at once; one phone in the lake changes nothing.</p>
+<p>③ <strong>Write "who signed" onto the contract itself.</strong> Agree that one particular page is decisive: once it is signed, the whole thing is in force. Anyone who later opens the binder tidies the other pages up or crosses them out — <strong>no convener has to stay in the room</strong>.</p>
+<h2>How to choose</h2>
+<p>All three charge tuition: the take-a-number approach demands that you <strong>declare everything you intend to do up front</strong>, with no improvising mid-way; the many-conveners approach needs very accurate clocks and more expensive machine rooms. Which is why engineering often has a better fourth answer: <strong>first check whether this really has to be one transaction at all</strong>.</p>
+<h2>One sentence to remember</h2>
+<div class="tl">
+<p>Getting "all or nothing" across machines is hard because <strong>everyone must promise not to back out before any decision can be made</strong> — and in the sliver between that promise and the decision arriving, one fallen convener leaves everybody holding locks. Every later answer changes the foundation instead: <strong>take a number</strong>, <strong>make the convener a group</strong>, <strong>write the state into the data itself</strong> — or just <strong>do not open the transaction</strong>.</p>
+</div>
+<p class="switch-hint">Want the actual 2PC / 3PC protocols, the Calvin-versus-Spanner split, and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">This chapter is about <strong>atomic commitment</strong>: making a transaction that spans several nodes either take effect everywhere or nowhere. The central insight is that <strong>it is a close relative of consensus, but a stricter one</strong> — consensus makes progress with a <em>majority</em>, atomic commitment requires <em>unanimity</em>, so a single unreachable participant stalls it. Two-phase commit (2PC) buys "never wrong" with <strong>blocking</strong>; three-phase commit (3PC) tries to buy liveness back and breaks under network partitions. The real ways out change the foundation: <strong>Calvin</strong> reaches consensus on the order and then never negotiates; <strong>Spanner</strong> keeps 2PC but makes every role a Paxos group; <strong>Percolator</strong> writes the transaction state into the data tables themselves; and <strong>coordination avoidance</strong> argues which transactions never needed coordination at all.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Transaction</strong>: a group of reads and writes that behaves externally as one indivisible action — all of it or none of it.</li>
+<li><strong>Partition / shard</strong>: one large table cut by some key into pieces that live on different nodes; once a transaction crosses shards it is a distributed transaction.</li>
+<li><strong>Coordinator / cohort</strong>: the two roles in a commit protocol — one collects votes and decides, the rest vote and execute.</li>
+<li><strong>Consensus</strong>: an algorithm by which a set of nodes agrees on a value and <strong>makes progress as long as a majority survives</strong>, e.g. Paxos or Raft (the next chapter).</li>
+<li><strong>WAL (write-ahead log)</strong>: before changing data, append "what I am about to change" to an append-only log and recover from it after a crash; "durable" in these protocols always means this.</li>
+<li><strong>Lock</strong>: a marker that stops others from changing the same row. <strong>However long a lock is held is however long others are blocked.</strong></li>
+<li><strong>Snapshot isolation</strong>: a transaction reads a consistent snapshot as of some point in time, so reads do not block writes and writes do not block reads.</li>
+<li><strong>RTT (round-trip time)</strong>: one network round trip — about <code>0.5ms</code> inside a datacenter, often <code>70–150ms</code> across continents; an extra protocol round costs an extra RTT.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Late in Part II, "Distributed Systems." Chapters 11 and 12 handled replication and consistency for a <strong>single key</strong> (quorums, read repair, anti-entropy), but those mechanisms have nothing to say about changing two keys together; this chapter fills that gap, and the "majority agrees" primitive it leans on arrives in Chapter 14 on consensus. Real-world counterparts: XA in MySQL and PostgreSQL, Google's Percolator and Spanner, FaunaDB (the commercial Calvin), CockroachDB, TiDB.</p>
+<h2>What the chapter is solving</h2>
+<p>On one machine, atomicity needs nothing but a WAL: the log lives on one disk, and written means written. <strong>The moment a transaction crosses shards, "written" no longer has a single source of truth</strong> — A made it durable, B did not, and the network will not tell you whether B is dead or merely slow (Chapter 9's conclusion). The only two outcomes of not solving this are half-completed states ("debited but never credited") or retreating to "no cross-shard writes" and pushing consistency onto application code and nightly reconciliation. So the chapter poses a precise question: <strong>on a set of nodes that may crash and whose messages may be delayed, how do you make them arrive at one and the same irrevocable answer to "commit or roll back"?</strong></p>
+<h2>The core, properly explained</h2>
+<h3>Atomic commitment ≠ consensus: the difference is the word "every"</h3>
+<p>This is the distinction to load into your head first. Consensus lets a <strong>majority</strong> decide and the minority follow; atomic commitment rules that <strong>only a unanimous Yes commits, and any single No forces a global rollback</strong>. Two consequences: the outcome is not "elected" but uniquely fixed by any participant's veto; and <strong>a surviving majority is not enough</strong> — one missing vote and nothing moves. So 2PC is not "a worse consensus algorithm than Paxos." It solves a different problem, and that problem cannot have both safety and liveness on an asynchronous network.</p>
+<h3>2PC: the real commit point is the coordinator's own log</h3>
+<p>Two-phase commit splits into a <strong>voting</strong> round and a <strong>commit</strong> round. The coordinator sends <code>Propose</code>; each participant makes "I am prepared" durable and answers Yes or No. <strong>Answering Yes surrenders the right to change your mind</strong>: from then on it must be able to commit, so locks stay held until round two arrives. In round two the coordinator tallies the votes and <strong>first writes the decision to its own log</strong> — from that instant the decision is irrevocable, and even if it crashes immediately after, it can only resume with that same decision on restart — then sends <code>Commit</code>/<code>Abort</code> and collects acks.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 318" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="a1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker>
+<marker id="a2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker>
+</defs>
+<rect fill="rgba(155,108,245,0.14)" height="26" rx="6" stroke="#9b6cf5" width="112" x="34" y="18"></rect><text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="90" y="35">Coordinator</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="6" stroke="#5b9df9" width="112" x="244" y="18"></rect><text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="300" y="35">Cohort A</text>
+<rect fill="rgba(91,157,249,0.1)" height="26" rx="6" stroke="#5b9df9" width="112" x="464" y="18"></rect><text fill="#e7ebf1" font-size="11.5" text-anchor="middle" x="520" y="35">Cohort B</text>
+<line stroke="rgba(120,128,140,0.5)" stroke-dasharray="4 4" x1="90" x2="90" y1="46" y2="310"></line>
+<line stroke="rgba(120,128,140,0.5)" stroke-dasharray="4 4" x1="300" x2="300" y1="46" y2="310"></line>
+<line stroke="rgba(120,128,140,0.5)" stroke-dasharray="4 4" x1="520" x2="520" y1="46" y2="310"></line>
+<text fill="#8fbaff" font-size="11.5" font-weight="700" x="96" y="66">① Propose — can you commit?</text>
+<line marker-end="url(#a2)" stroke="#5b9df9" x1="94" x2="292" y1="76" y2="76"></line>
+<line marker-end="url(#a2)" stroke="#5b9df9" x1="94" x2="512" y1="92" y2="92"></line>
+<text fill="#b9c0ca" font-size="11" x="96" y="116">② Vote Yes — "prepared" made durable, locks taken, no backing out</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="296" x2="98" y1="126" y2="126"></line>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="516" x2="98" y1="142" y2="142"></line>
+<rect fill="rgba(155,108,245,0.3)" height="26" rx="6" stroke="#9b6cf5" stroke-width="2" width="96" x="42" y="160"></rect><text fill="#e7ebf1" font-size="11" text-anchor="middle" x="90" y="177">log decision</text>
+<text fill="#e7ebf1" font-size="11" x="148" y="177">← the real commit point: now irrevocable</text>
+<rect fill="rgba(232,121,75,0.1)" height="62" rx="8" stroke="#e8794b" stroke-dasharray="5 4" width="430" x="186" y="196"></rect>
+<text fill="#e8794b" font-size="11.5" font-weight="700" x="200" y="216">Uncertainty window — the root of 2PC blocking</text>
+<text fill="#b9c0ca" font-size="11" x="200" y="233">Coordinator crashes after logging the decision,</text>
+<text fill="#b9c0ca" font-size="11" x="200" y="249">before announcing it: A and B voted Yes, hold locks, cannot decide</text>
+<text fill="#8fbaff" font-size="11.5" font-weight="700" x="96" y="282">③ Commit / Abort — only once the coordinator is back</text>
+<line marker-end="url(#a2)" stroke="#5b9df9" x1="94" x2="292" y1="292" y2="292"></line>
+<line marker-end="url(#a2)" stroke="#5b9df9" x1="94" x2="512" y1="306" y2="306"></line>
+</svg>
+<figcaption>2PC: two rounds of messages, with the commit point inside the coordinator's log. Crashing between writing the decision and announcing it is the window that leaves every participant holding locks.</figcaption>
+</figure>
+<p><strong>The two failure modes are nothing alike.</strong> A cohort dying before it votes is easy: the coordinator never gets the vote, aborts globally, and all you lose is a wasted attempt. <strong>A dying coordinator is the real problem</strong> — participants that voted Yes sit in an uncertain state where they can neither commit nor abort on their own, holding locks until it recovers. Participants asking each other (cooperative termination) only rescues the case where someone already received the decision; if everyone alive has merely voted Yes, the whole group waits. <strong>So the price of 2PC is not those 2 RTTs (roughly <code>150–300ms</code> across continents) but that, in the worst case, locks are held for as long as the coordinator takes to recover — minutes.</strong></p>
+<h3>3PC: one more round buys non-blocking, and partitions take it back</h3>
+<p>Three-phase commit inserts a <code>PreCommit</code> round ("I am about to have you commit") and arms both sides with timeouts: a participant that times out <strong>after</strong> PreCommit commits on its own; one that times out <strong>before</strong> it aborts on its own. A dead coordinator no longer freezes anybody, so liveness returns. The cost has two layers. The visible one is an extra RTT. The fatal one is that <strong>it only holds in a model where nodes stop but the network never partitions and delays are bounded</strong>. Split the network down the middle and the half that saw PreCommit commits while the half that did not aborts — <strong>atomicity is torn open</strong>, which is worse than being stuck. That is why industry essentially never ships 3PC.</p>
+<h3>Calvin: agree on the order, then never negotiate</h3>
+<p>Calvin changes the question. If agreeing on the <em>outcome</em> is the hard part, then <strong>agree only on the order of the inputs</strong>. A sequencing layer collects transactions into fixed-length batches (the paper uses <code>10ms</code> epochs) and replicates that order with Paxos; each replica then executes in the same order under the same deterministic locking rules. <strong>Same inputs and same order means the same result — so there is no commit negotiation, and no need to replicate execution results either.</strong> The Calvin paper (Thomson et al., SIGMOD 2012) reports roughly 500,000 TPC-C transactions per second on 100 commodity machines. The cost is concrete: a transaction must <strong>submit all of its logic at once</strong> (stored-procedure style, so no interactive "read something, then decide what to do next"), and its read/write set must be known in advance; when it is not, a reconnaissance query (OLLP) runs first and is redone if the data moved.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/spanner-paper24.en.html" target="_blank" rel="noopener">CS Papers · Spanner: Google's Globally-Distributed Database</a> — where TrueTime's ε comes from, why commit wait is 2ε, and what "external consistency" actually promises</aside>
+<h3>Spanner: 2PC was not removed, every role was replicated</h3>
+<p>Spanner runs <strong>2PC on top of Paxos</strong>: each shard is a Paxos group, and the coordinator and participant roles are <strong>each held by a group</strong>. "The coordinator crashed" degenerates into "the group elected a new leader," and the uncertainty window shrinks from minutes to seconds — <strong>the blocking did not disappear, it was demoted to a recoverable failure</strong>. The other half of the trick is TrueTime, which returns the clock as <strong>a value with an uncertainty interval</strong> (the width ε sawtooths at single-digit milliseconds); a transaction waits out ε before releasing (commit wait), so timestamp order matches real order. Read-write transactions use two-phase locking plus 2PC; read-only transactions just take a timestamp and read a snapshot, <strong>with no locks and no 2PC</strong>.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 248" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="22" y="26">Calvin — order first, then deterministic execution</text>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="92" x="22" y="40"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="68" y="61">client txns</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="116" x2="132" y1="57" y2="57"></line>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="172" x="134" y="40"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="220" y="61">sequencer, 10ms batches</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="308" x2="324" y1="57" y2="57"></line>
+<rect fill="rgba(91,157,249,0.18)" height="34" rx="6" stroke="#5b9df9" stroke-width="2" width="140" x="326" y="40"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="396" y="61">Paxos replicates order</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="468" x2="484" y1="57" y2="57"></line>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#7c8593" width="134" x="486" y="40"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="553" y="61">replicas execute</text>
+<text fill="#7c8593" font-size="10.5" x="22" y="96">consensus is spent on the input order → execution negotiates nothing</text>
+<line stroke="rgba(120,128,140,0.3)" x1="22" x2="618" y1="114" y2="114"></line>
+<text fill="#9b6cf5" font-size="12.5" font-weight="700" x="22" y="142">Spanner — keep 2PC, make every role a Paxos group</text>
+<rect fill="rgba(155,108,245,0.08)" height="34" rx="6" stroke="#7c8593" width="92" x="22" y="156"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="68" y="177">2PL execution</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="116" x2="132" y1="173" y2="173"></line>
+<rect fill="rgba(155,108,245,0.22)" height="34" rx="6" stroke="#9b6cf5" stroke-width="2" width="106" x="134" y="156"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="187" y="177">2PC across shards</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="242" x2="258" y1="173" y2="173"></line>
+<rect fill="rgba(155,108,245,0.08)" height="34" rx="6" stroke="#7c8593" width="186" x="260" y="156"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="353" y="177">each role is a Paxos group</text>
+<line marker-end="url(#b1)" stroke="#7c8593" x1="448" x2="464" y1="173" y2="173"></line>
+<rect fill="rgba(155,108,245,0.08)" height="34" rx="6" stroke="#7c8593" width="156" x="464" y="156"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="542" y="177">TrueTime commit wait</text>
+<text fill="#7c8593" font-size="10.5" x="22" y="212">blocking is demoted: a dead coordinator = a leader change (seconds), not a restart (minutes)</text>
+<text fill="#7c8593" font-size="10.5" x="22" y="232">read-only transactions are exempt: snapshot reads, no locks, no 2PC</text>
+</svg>
+<figcaption>Two different foundations: Calvin spends consensus on the input order so execution never negotiates; Spanner keeps 2PC but swaps each of its roles for a fault-tolerant Paxos group.</figcaption>
+</figure>
+<h3>Percolator: put the locks and the transaction state in the data tables</h3>
+<p>Percolator is Google's transaction layer on top of Bigtable, and its idea is contrarian: <strong>have no standing coordinator; store the coordination state in the database itself</strong>. Each logical column becomes three — <code>data</code> (versioned values), <code>lock</code>, and <code>write</code> (a pointer to the committed version). After taking a <code>start_ts</code>, <strong>prewrite</strong> writes data and lock on every row involved, designating one of them the <strong>primary lock</strong> with the others pointing at it; at <strong>commit</strong>, writing the <code>write</code> record on the primary row successfully <strong>commits the whole transaction</strong> — that single write is the commit point, and the remaining locks are left for later readers to clean up (roll forward if the primary committed, roll back if it is gone). It trades snapshot isolation for the removal of the coordinator as a single point; the price is that <strong>readers tidy up after writers</strong>, and a lock collision means rollback and retry, which hurts under high contention.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 640 218" xmlns="http://www.w3.org/2000/svg">
+<text fill="#5b9df9" font-size="12.5" font-weight="700" x="22" y="24">Percolator: three columns; writing the primary row's "write" commits</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" width="88" x="22" y="36"></rect><text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="66" y="53">row</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" width="148" x="110" y="36"></rect><text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="184" y="53">data</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" width="180" x="258" y="36"></rect><text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="348" y="53">lock</text>
+<rect fill="rgba(91,157,249,0.12)" height="26" width="180" x="438" y="36"></rect><text fill="#8fbaff" font-size="10.5" text-anchor="middle" x="528" y="53">write</text>
+<rect fill="rgba(255,255,255,0.02)" height="34" stroke="rgba(91,157,249,0.2)" width="88" x="22" y="62"></rect><text fill="#cdd3db" font-size="10.5" text-anchor="middle" x="66" y="83">Bob</text>
+<rect fill="rgba(255,255,255,0.02)" height="34" stroke="rgba(91,157,249,0.2)" width="148" x="110" y="62"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="184" y="83">ts=7 : $3</text>
+<rect fill="rgba(255,255,255,0.02)" height="34" stroke="rgba(91,157,249,0.2)" width="180" x="258" y="62"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="348" y="83">ts=7 : primary lock</text>
+<rect fill="rgba(155,108,245,0.22)" height="34" stroke="#9b6cf5" stroke-width="2" width="180" x="438" y="62"></rect><text fill="#e7ebf1" font-size="10.5" text-anchor="middle" x="528" y="83">ts=8 → 7　← commit point</text>
+<rect fill="rgba(255,255,255,0.02)" height="34" stroke="rgba(91,157,249,0.2)" width="88" x="22" y="96"></rect><text fill="#cdd3db" font-size="10.5" text-anchor="middle" x="66" y="117">Joe</text>
+<rect fill="rgba(255,255,255,0.02)" height="34" stroke="rgba(91,157,249,0.2)" width="148" x="110" y="96"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="184" y="117">ts=7 : $7</text>
+<rect fill="rgba(255,255,255,0.02)" height="34" stroke="rgba(91,157,249,0.2)" width="180" x="258" y="96"></rect><text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="348" y="117">ts=7 : points at Bob</text>
+<rect fill="rgba(255,255,255,0.02)" height="34" stroke="rgba(91,157,249,0.2)" width="180" x="438" y="96"></rect><text fill="#7c8593" font-size="10.5" text-anchor="middle" x="528" y="117">(left for a later reader)</text>
+<text fill="#b9c0ca" font-size="10.5" x="22" y="154">① prewrite: data + lock on each row; one row is primary, the rest point at it</text>
+<text fill="#b9c0ca" font-size="10.5" x="22" y="172">② commit: the primary row's write record lands → the whole transaction is committed</text>
+<text fill="#7c8593" font-size="10.5" x="22" y="190">③ leftover locks are cleaned by later readers: roll forward if primary committed, else roll back</text>
+<text fill="#7c8593" font-size="10.5" x="22" y="208">no standing coordinator, hence no "coordinator crashed" single point</text>
+</svg>
+<figcaption>Percolator moves 2PC's coordination state into the data tables: the primary row's write record is the commit point, and the other locks are cleaned up lazily by later readers.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/percolator-paper21.en.html" target="_blank" rel="noopener">CS Papers · Percolator: Large-Scale Incremental Processing</a> — the three-column layout, the timestamp oracle, the notification machinery, and what it bought Google's incremental index</aside>
+<h3>Coordination avoidance: ask whether this needs coordinating at all</h3>
+<p>The closing section takes the sharpest position: <strong>coordination is expensive largely because much of it was never necessary</strong>. The test is <strong>invariant confluence (I-confluence)</strong>: if merging two states that each satisfy an invariant yields a state that still satisfies it, that class of transactions can run concurrently <strong>with no coordination at all</strong>. Adding elements to a set is I-confluent; a uniqueness constraint or "the balance must not go negative" is not — each side is legal alone and illegal merged, so those must coordinate. <strong>RAMP transactions</strong> offer a weaker but often sufficient guarantee, <em>read atomicity</em>: you see either all of a transaction's writes or none of them. They use multi-versioning plus a little metadata, detect a partial read, and fix it with one extra round of reads — no locks, no 2PC.</p>
+<h2>Key trade-offs and how to choose</h2>
+<p>The soul of the chapter is this table: these options are not trading "which is faster" but <strong>where the uncertainty is parked and who pays for it</strong>.</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Approach</th><th>Where the commit point is</th><th>When the coordinator/leader fails</th><th>Cost</th><th>When to pick it</th></tr></thead>
+<tbody>
+<tr><th>2PC (XA)</th><td>the coordinator's log</td><td><strong>blocks</strong>: Yes-voters hold locks until recovery — minutes</td><td>2 RTTs; coordinator is a single point; long-held locks</td><td>one datacenter, few participants, fast coordinator recovery; be wary across services</td></tr>
+<tr><th>3PC</th><td>after PreCommit reaches the cohorts</td><td>non-blocking, via timeouts on both sides</td><td>one more RTT; <strong>tears atomicity under partition</strong></td><td>essentially never; more theoretical than practical value</td></tr>
+<tr><th>Calvin-style<br/>(deterministic ordering)</th><td>the moment Paxos replicates the order</td><td>just elect a new leader; execution negotiates nothing</td><td>one-shot transactions only; read/write sets must be known</td><td>high-contention OLTP that can be written as stored procedures</td></tr>
+<tr><th>Spanner-style<br/>(2PC over Paxos)</th><td>the coordinator <strong>group</strong>'s Paxos log</td><td>demoted to a leader change — seconds</td><td>needs TrueTime-grade clocks; writes pay commit wait</td><td>general interactive SQL plus cross-region strong consistency, if you can afford the hardware</td></tr>
+<tr><th>Percolator-style<br/>(state in the table)</th><td>the primary row's write record</td><td>no standing coordinator; stale locks cleaned by readers</td><td>readers tidy up after writers; rollback-and-retry under contention</td><td>built on an existing KV store where snapshot isolation suffices (TiDB took this road)</td></tr>
+<tr><th>Coordination avoidance<br/>(I-confluence / RAMP)</th><td>each node commits locally</td><td>not a concept here</td><td>only for confluent invariants; a weaker guarantee</td><td>when the invariant is provably confluent — the cheapest distributed transaction is none</td></tr>
+</tbody>
+</table>
+</div>
+<p>Two questions come first when choosing: <strong>① does this transaction really have to cross shards?</strong> (co-locate the related rows under a user ID and the whole chapter's trouble evaporates) <strong>② what is the weakest guarantee the business accepts?</strong> (if read atomicity is enough, do not reach for 2PC)</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/distributed-transactions-day7.en.html" target="_blank" rel="noopener">System Design · Day 7 Distributed Transactions</a> — how to choose among Saga, TCC and the local-message-table pattern, and why the first engineering answer is so often "don't"</aside>
+<h2>Why it matters / in real systems</h2>
+<p>The chapter hands you a yardstick: <strong>to size up any database's distributed transactions, ask where its commit point is and who holds locks when that point fails</strong>. Apply it: XA is textbook 2PC, and a dead coordinator leaves lock-holding orphaned transactions behind; TiDB took the Percolator road, with the commit point on the primary key's row; CockroachDB writes the state as a single transaction record and the second phase touches only that record; Spanner and FaunaDB are the commercial Spanner-style and Calvin-style systems. Asked "how do you do a transaction across databases" in an interview, naming these commit points beats reciting two rounds of messages.</p>
+<div class="ev">
+<div class="evh">Evidence from industry</div>
+<ul>
+<li><strong>Google (Cloud Spanner, 2018)</strong> argues strong consistency need not rest on multi-phase negotiation: "Thanks to the unique power of TrueTime, Spanner provides strong reads for arbitrary queries <strong>without complex multi-phase consensus protocols and without locks of any kind</strong>." The same post defines Spanner's guarantee as external consistency — strong consistency plus serializability and linearizability. Note this is the <strong>read-only</strong> path; read-write transactions still use 2PL plus 2PC.<span class="src">Mike Curtiss (Software Engineer, Cloud Spanner), Google Cloud Blog, 2018-01-12 · <a href="https://cloud.google.com/blog/products/databases/why-you-should-pick-strong-consistency-whenever-possible" target="_blank" rel="noopener">cloud.google.com/blog</a></span></li>
+<li><strong>Cockroach Labs</strong> states in its own design doc that it declines classic 2PC, for exactly the second-round cost this chapter identifies: a transaction first writes a transaction record in state <code>PENDING</code>, and committing updates only that one record — "Lower latency than traditional 2PC commit protocol (w/o contention) because second phase requires <strong>only a single write to the transaction record</strong> instead of a synchronous round to all transaction participants."<span class="src">CockroachDB design doc (docs/design.md) · <a href="https://github.com/cockroachdb/cockroach/blob/master/docs/design.md" target="_blank" rel="noopener">github.com/cockroachdb</a></span></li>
+<li><strong>PingCAP (TiDB)</strong> confirms in its official docs that this shape runs in production: "To support distributed transactions, TiDB adopts two-phase commit (2PC) in optimistic transactions," and "TiDB selects a Primary Key from the data to be written," with prewrite conflict detection done in the TiKV layer — precisely the "primary lock is the commit point" pattern.<span class="src">TiDB official docs, optimistic-transaction.md · <a href="https://github.com/pingcap/docs/blob/master/optimistic-transaction.md" target="_blank" rel="noopener">github.com/pingcap/docs</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and open arguments</h2>
+<ul>
+<li><strong>Using 2PC as if it were consensus.</strong> 2PC needs <strong>every</strong> vote and stalls on one missing participant; Paxos and Raft need a majority. So "replace 2PC with Raft" is a category error — Spanner runs 2PC <em>on top of</em> Paxos, it does not replace it.</li>
+<li><strong>Believing 3PC solved blocking.</strong> It is non-blocking only in a model with no partitions and bounded delays. On a real network it swaps "stuck" for "half committed, half aborted" — a worse failure mode.</li>
+<li><strong>Assuming Calvin's determinism is free.</strong> It requires one-shot transactions with predictable read/write sets; interactive transactions ("read, then decide what to write") simply do not fit, and the reconnaissance query is redone whenever the data moves.</li>
+<li><strong>Treating Spanner as free of clock assumptions.</strong> TrueTime's correctness depends on ε genuinely being bounded. When uncertainty exceeds expectations, Spanner <strong>waits</strong> rather than gambles — so a clock-infrastructure fault surfaces as rising latency.</li>
+<li><strong>Period limits.</strong> The book is from 2019; approaches that need no atomic clocks (CockroachDB's hybrid logical clocks, for instance) have matured since. But "where is the commit point, and who holds locks when it fails" has not aged.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① The chapter's problem is <strong>atomic commitment</strong>: nodes must reach one irrevocable "commit or roll back" for a transaction that spans them.</p>
+<p>② It is <strong>not consensus</strong>: consensus runs on a majority, atomic commitment needs unanimity, and any participant's veto uniquely fixes the outcome — a surviving majority is not enough.</p>
+<p>③ <strong>2PC</strong>: a voting round and a commit round; a Yes forfeits the right to back out and takes locks; <strong>the real commit point is the coordinator's own log</strong>. Its disease is not the 2 RTTs but the <strong>uncertainty window</strong> a crashed coordinator leaves, with participants holding locks until recovery.</p>
+<p>④ <strong>3PC</strong> adds PreCommit and two-sided timeouts to regain liveness, but <strong>tears atomicity under partition</strong>, so industry does not use it.</p>
+<p>⑤ <strong>Calvin</strong>: agree on the input order (10ms batches plus Paxos), execute deterministically on every replica, negotiate nothing; the price is one-shot transactions with known read/write sets.</p>
+<p>⑥ <strong>Spanner</strong>: 2PC over Paxos, so the coordinator is a group and blocking is demoted to a leader change; TrueTime's ε and commit wait align timestamp order with real order.</p>
+<p>⑦ <strong>Percolator</strong>: data / lock / write columns; landing the primary row's write record is the commit point, leftover locks are cleaned by later readers, and no coordinator stands by.</p>
+<p>⑧ <strong>Coordination avoidance</strong>: confluent invariants (I-confluence) need no coordination, and RAMP delivers read atomicity with versions plus metadata. The first engineering question is always whether the transaction can avoid crossing shards.</p>
+</div>
+</div>
+<footer>Book Deep Read · Read this page ≈ get the core of the chapter; for full case studies and depth, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
