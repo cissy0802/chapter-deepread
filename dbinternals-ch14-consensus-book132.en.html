@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals Ch 14 · Consensus — Book Deep Read 132</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+</head><body>
+<div class="container">
+<p class="top">Book Deep Read · Database Internals · Chapter 14</p>
+<h1>Consensus</h1>
+<p class="sub">Database Internals · Ch 14 · Alex Petrov · 2019</p>
+<p class="langbar"><a href="dbinternals-ch14-consensus-book132.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>When you tap "transfer sent," it isn't one machine keeping the books. It's three or five machines, each keeping its own copy. This chapter answers a blunt question: <strong>how do you guarantee those ledgers stay the same ledger?</strong> Not "roughly in sync" — but "nobody can ever produce two contradictory versions." Computing has a name for that job: <strong>consensus</strong>.</p>
+<h2>An analogy first</h2>
+<p>Picture five people in five cities with nothing but patchy walkie-talkies, trying to settle on a dinner time. Signals drop, people step away, and worst of all: <strong>you can never tell whether someone left or is just frozen for three seconds and about to come back</strong>. You have to settle on a time, and once settled, everyone who asks later must get the same answer — even the two who never heard it.</p>
+<h2>Why the old world struggles</h2>
+<p>The obvious fix is "pick a chief; the chief decides." The trouble starts when the chief goes quiet: the rest promote themselves at the same time, and now there are <strong>two chiefs and two contradictory ledgers</strong> — the condition engineers call split brain. Worse, the old chief may only have been stalled; he still believes he's in charge and keeps writing. This isn't hypothetical: one garbage-collection pause or one flaky cable is enough to manufacture two very confident chiefs.</p>
+<h2>The mechanism: two almost comically simple ideas</h2>
+<p>The first idea is <strong>"more than half."</strong> No decision counts unless more than half the group nods. The beauty is this: <strong>any two groups that each hold more than half must share at least one member</strong> — among five people, any two trios overlap. That overlapping person is a living archive. The moment a new round opens, they speak up: "hold on, we already settled on nine o'clock." So a new decision can never <strong>overturn</strong> an old one; it can only repeat it.</p>
+<p>The second idea is <strong>"seniority check at every changeover."</strong> Each new chief gets a numbered term that only ever goes up. To become chief you need votes from more than half, and people only vote for someone <strong>whose records are no shorter than their own</strong>. So the incoming chief already holds everything that was ever settled and can't erase it on arrival. Add one rule — "the moment you see a higher term number, step down" — and the stale chief is told he's last season's news the instant he speaks.</p>
+<h2>How to think about it</h2>
+<p>In practice the world runs on two tellings of one story: Paxos, correct and famously hard to follow, and Raft, which deliberately retells the same thing as a manual you can implement from — the one behind etcd, Kubernetes, CockroachDB and modern Kafka. <strong>The honest cost:</strong> every write waits for more than half the group to nod, and if three of five machines die, the system would rather stop writing altogether than produce two versions.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p>Consensus isn't "majority rule by vote." It's a set of <strong>no-take-backs rules</strong>: everything needs more than half to agree, and any two such groups must overlap in at least one member who remembers the last decision — so history can only be continued, never rewritten.</p>
+</div>
+<p class="switch-hint">Want the two phases of Paxos, Raft's terms and logs, and what Byzantine tolerance actually costs? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">Consensus is not "voting by majority." It is how a set of machines that can <strong>crash at any moment and whose messages arrive late or out of order</strong> agree, <strong>irrevocably</strong>, on <strong>the order of a sequence of operations</strong>. This chapter puts Paxos, Raft and Zab side by side, and they all converge on the same shape: <strong>elect one leader to impose an order, then pin his log down with a majority</strong>. What makes consensus hard was never choosing a value — it is proving that <strong>a value already chosen can never be rewritten by whoever comes next</strong>.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Replica</strong>: one of several copies of the same data on different machines, so losing one machine doesn't lose the data.</li>
+<li><strong>Log</strong>: an append-only, ordered record of operations. A database writes "how to change" into the log; replicas that replay the same log in the same order end up with the same data — the <strong>replicated state machine</strong>.</li>
+<li><strong>Quorum</strong>: the smallest set of nodes allowed to decide for the whole cluster, usually "more than half," i.e. <code>⌊N/2⌋+1</code> out of <code>N</code>.</li>
+<li><strong>Ballot / term / epoch</strong>: a monotonically increasing integer that orders attempts or leadership periods; a higher one always beats a lower one.</li>
+<li><strong>Leader</strong>: the node elected to accept writes and assign them an order; everyone else follows.</li>
+<li><strong>Lease</strong>: time-limited leadership that expires unless renewed — it rests on the assumption that clock drift is bounded.</li>
+<li><strong>Failure model</strong>: <em>crash-stop</em> means a node is either correct or silent; <em>Byzantine</em> means a node may send arbitrary, contradictory or forged messages.</li>
+<li><strong>RTT (round-trip time)</strong>: roughly <code>0.5–2ms</code> inside a datacenter, <code>1–3ms</code> across availability zones in one region, and <code>70–150ms</code> between continents.</li>
+<li><strong>Split brain</strong>: two nodes simultaneously believe they are the legitimate leader, each accepting writes, and the data forks.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>This is the closing chapter of Part II ("Distributed Systems") and of the book. It follows Ch 9 on failure detection (a timeout can always mistake slow for dead), Ch 10 on leader election (electing a leader does not by itself make him unique), Ch 11 on replication and consistency, and Ch 13 on distributed transactions (2PC needs unanimity, so one dead coordinator leaves everyone holding locks). This chapter <strong>assembles those incomplete parts into one protocol that can argue for its own correctness</strong> — the thing real systems call the cluster brain: ZooKeeper, etcd, Consul, CockroachDB, TiKV.</p>
+<h2>What the chapter is solving</h2>
+<p>Every earlier chapter left a hole: failure detection mistakes slow for dead; an election can produce one leader on each side of a partition; replicated logs can fork; atomic commitment needs <strong>everyone</strong>, so one unreachable node blocks the lot. Consensus has to close those holes with a protocol that delivers three properties at once — <strong>agreement</strong> (no two nodes decide different values), <strong>validity</strong> (the decided value was actually proposed by someone, not invented), and <strong>termination</strong> (a decision is eventually reached).</p>
+<p>The premise is harsh. By the FLP impossibility result, in a <strong>purely asynchronous</strong> network where even one node may crash, no deterministic algorithm can guarantee both safety and liveness. So every practical protocol makes the same bargain: <strong>safety is held unconditionally; liveness is bought with timeouts and randomization</strong> — which is why every consensus implementation hides a pile of timeout knobs.</p>
+<p>What happens if you skip it? Take Kubernetes: the entire truth of the cluster — which Pod runs where, who backs a Service, who holds a lock — lives in a 3- or 5-node etcd. If a partition let both sides accept writes and answer "ok," the scheduler would act on <strong>two contradictory truths</strong> and start containers accordingly: the same cloud disk mounted and written by two processes at once. <strong>Consensus is where the system's single source of truth comes from; if it is wrong once, every correctness property above it collapses.</strong></p>
+<h2>The core, explained properly</h2>
+<h3>1. Another name for it: consensus is total order broadcast</h3>
+<p>The chapter opens with <strong>broadcast</strong> rather than dropping Paxos on you. Best-effort broadcast only promises "I sent it" — if the sender dies mid-way, some receive and some don't. Reliable broadcast promises every correct node eventually receives it, but in whatever order. <strong>Atomic broadcast (total order broadcast)</strong> adds the decisive clause: <strong>every node receives the messages in exactly the same order</strong>.</p>
+<p>The key insight is that <strong>total order broadcast and consensus are equivalent problems</strong>. Given total order broadcast, treat "the first value broadcast" as the chosen one and you have consensus; conversely, run one instance of consensus per log position and you have total order broadcast. What a database actually wants was never "pick a value" — it is <strong>every replica replaying the same writes in the same order</strong>. That is why consensus always shows up in engineering wearing the costume of "replicate an identical log." ZooKeeper's Zab is designed straight from this view: leadership is divided by epoch, with a <strong>discovery</strong> phase (the new leader finds the most up-to-date log), a <strong>synchronization</strong> phase (that log is pushed onto a quorum) and a <strong>broadcast</strong> phase (steady-state appends, one at a time).</p>
+<h3>2. Paxos: what each of the two phases is actually doing</h3>
+<p>Paxos splits nodes into three roles (one machine can play all of them): the <em>proposer</em> proposes, the <em>acceptor</em> votes and remembers, the <em>learner</em> finds out the result. One round of Basic Paxos takes two phases:</p>
+<ul>
+<li><strong>Phase 1, Prepare / Promise</strong>: the proposer picks a globally unique, monotonically increasing number <code>n</code> and asks a quorum "will you take <code>n</code>?" An acceptor that has seen nothing higher <strong>promises</strong> to reject anything numbered below <code>n</code> from now on — and <strong>returns the highest-numbered value it has already accepted</strong>.</li>
+<li><strong>Phase 2, Accept / Accepted</strong>: only after collecting a quorum of promises does the proposer send a real value. <strong>But if any promise came back carrying an old value, the proposer must abandon its own and propose that highest-numbered old value instead.</strong> Once a quorum accepts, the value is <em>chosen</em>.</li>
+</ul>
+<figure>
+<svg viewBox="0 0 640 290" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="pa" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker>
+<marker id="pb" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text x="95" y="30" fill="#e7ebf1" font-size="12.5" font-weight="700" text-anchor="middle">Proposer</text>
+<text x="310" y="30" fill="#b9c0ca" font-size="12.5" text-anchor="middle">Acceptor 1</text>
+<text x="440" y="30" fill="#b9c0ca" font-size="12.5" text-anchor="middle">Acceptor 2</text>
+<text x="570" y="30" fill="#7c8593" font-size="12.5" text-anchor="middle">Acceptor 3</text>
+<line x1="95" y1="40" x2="95" y2="276" stroke="rgba(143,186,255,0.35)" stroke-dasharray="4 4"></line>
+<line x1="310" y1="40" x2="310" y2="276" stroke="rgba(143,186,255,0.35)" stroke-dasharray="4 4"></line>
+<line x1="440" y1="40" x2="440" y2="276" stroke="rgba(143,186,255,0.35)" stroke-dasharray="4 4"></line>
+<line x1="570" y1="40" x2="570" y2="276" stroke="rgba(143,186,255,0.2)" stroke-dasharray="4 4"></line>
+<text x="10" y="98" fill="#5b9df9" font-size="12" font-weight="700">Phase 1</text>
+<text x="10" y="206" fill="#9b6cf5" font-size="12" font-weight="700">Phase 2</text>
+<text x="270" y="62" fill="#5b9df9" font-size="11.5" font-family="monospace" text-anchor="middle">Prepare(n)</text>
+<line x1="99" y1="72" x2="304" y2="72" stroke="#5b9df9" marker-end="url(#pa)"></line>
+<line x1="99" y1="84" x2="434" y2="84" stroke="#5b9df9" marker-end="url(#pa)"></line>
+<line x1="99" y1="96" x2="564" y2="96" stroke="rgba(91,157,249,0.3)" stroke-dasharray="3 3" marker-end="url(#pa)"></line>
+<text x="300" y="122" fill="#5b9df9" font-size="11.5" font-family="monospace" text-anchor="middle">Promise(n, highest accepted value)</text>
+<line x1="306" y1="134" x2="101" y2="134" stroke="#5b9df9" marker-end="url(#pa)"></line>
+<line x1="436" y1="146" x2="101" y2="146" stroke="#5b9df9" marker-end="url(#pa)"></line>
+<text x="330" y="172" fill="#7c8593" font-size="11" text-anchor="middle">quorum reached → if an old value came back, propose that one</text>
+<text x="270" y="196" fill="#9b6cf5" font-size="11.5" font-family="monospace" text-anchor="middle">Accept(n, v)</text>
+<line x1="99" y1="206" x2="304" y2="206" stroke="#9b6cf5" marker-end="url(#pb)"></line>
+<line x1="99" y1="218" x2="434" y2="218" stroke="#9b6cf5" marker-end="url(#pb)"></line>
+<text x="280" y="242" fill="#9b6cf5" font-size="11.5" font-family="monospace" text-anchor="middle">Accepted</text>
+<line x1="306" y1="252" x2="101" y2="252" stroke="#9b6cf5" marker-end="url(#pb)"></line>
+<line x1="436" y1="264" x2="101" y2="264" stroke="#9b6cf5" marker-end="url(#pb)"></line>
+<text x="330" y="284" fill="#8fbaff" font-size="12" font-weight="700" text-anchor="middle">quorum accepted → v is chosen, and cannot be taken back</text>
+</svg>
+<figcaption>The two phases of Basic Paxos: phase 1 claims a ballot number and asks about history; only phase 2 writes a value. Acceptor 3 being down changes nothing, as long as the rest still form a majority.</figcaption>
+</figure>
+<p>So phase 1 is not a vote at all — it is <strong>preemption plus interrogation</strong>. Preemption invalidates every older proposal still in flight; interrogation drags back any history that may already have been decided. <strong>Quorum intersection</strong> is what makes the interrogation airtight: any two majorities share at least one node, and that node remembers what it last accepted. All of Paxos reduces to one sentence — <strong>latecomers may not rewrite history, only keep repeating it</strong>.</p>
+<figure>
+<svg viewBox="0 0 640 195" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<rect x="30" y="62" width="300" height="86" rx="12" fill="rgba(91,157,249,0.10)" stroke="#5b9df9" stroke-dasharray="6 4"></rect>
+<rect x="250" y="62" width="300" height="86" rx="12" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5" stroke-dasharray="6 4"></rect>
+<text x="95" y="50" fill="#5b9df9" font-size="12.5" font-weight="700">Quorum Q1 = 3/5</text>
+<text x="400" y="50" fill="#9b6cf5" font-size="12.5" font-weight="700">Quorum Q2 = 3/5</text>
+<circle cx="80" cy="105" r="26" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></circle><text x="80" y="110" fill="#b9c0ca" font-size="13" text-anchor="middle">A</text>
+<circle cx="185" cy="105" r="26" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></circle><text x="185" y="110" fill="#b9c0ca" font-size="13" text-anchor="middle">B</text>
+<circle cx="290" cy="105" r="30" fill="rgba(143,186,255,0.30)" stroke="#8fbaff" stroke-width="2.5"></circle><text x="290" y="110" fill="#e7ebf1" font-size="14" font-weight="700" text-anchor="middle">C</text>
+<circle cx="395" cy="105" r="26" fill="rgba(155,108,245,0.12)" stroke="#7c8593"></circle><text x="395" y="110" fill="#b9c0ca" font-size="13" text-anchor="middle">D</text>
+<circle cx="500" cy="105" r="26" fill="rgba(155,108,245,0.12)" stroke="#7c8593"></circle><text x="500" y="110" fill="#b9c0ca" font-size="13" text-anchor="middle">E</text>
+<text x="290" y="178" fill="#8fbaff" font-size="12.5" font-weight="700" text-anchor="middle">C belongs to both quorums → what it remembers cannot be lost</text>
+</svg>
+<figcaption>Quorum intersection: among 5 nodes, any two majorities share at least 1 node, and that node is the living archive that stops history being rewritten.</figcaption>
+</figure>
+<p>The cost is concrete too: <strong>2 RTTs and 2 disk fsyncs per decided value</strong>, and worse, two proposers can preempt each other's ballot numbers forever (livelock). Those two costs motivate every variant below.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/paxos-made-simple-paper44.en.html" target="_blank" rel="noopener">CS Papers · Paxos Made Simple</a> — Lamport's own "simplified" telling: why the P2c invariant is the heart of the algorithm, and why it is still hard to follow</aside>
+<h3>3. Multi-Paxos and the variants: cutting two rounds down to one</h3>
+<p><strong>Multi-Paxos</strong> makes a plain but decisive change: since re-running phase 1 for every log entry is too expensive, elect a <strong>distinguished proposer</strong> (a leader) who runs <strong>phase 1 once for the whole log</strong>, leaving each subsequent command just one phase-2 round trip. The leader holds the role via a <strong>lease</strong> — one of the rare places where a consensus protocol leans on physical clocks: nobody may start an election while the lease holds, so clock drift must be bounded, or safety rests on operations rather than on the algorithm.</p>
+<p>Three variants worth remembering, each selling one thing to buy another:</p>
+<ul>
+<li><strong>Fast Paxos</strong>: let clients send values <strong>straight to the acceptors</strong>, saving the hop through the leader. The price is a larger fast quorum (around <code>⌈3N/4⌉</code> rather than a simple majority) and a fallback to the classic path whenever two clients collide — so it only pays off when conflicts are rare.</li>
+<li><strong>EPaxos (Egalitarian Paxos)</strong>: drop the fixed leader; every command carries the set of commands it <strong>depends on</strong>. Commands touching different keys don't conflict and may execute in any order; only genuine conflicts need ordering. No single bottleneck, and clients can commit to a nearby replica — at the cost of a genuinely complex dependency graph and recovery path, which gets slower as conflicts rise.</li>
+<li><strong>Flexible Paxos (FPaxos)</strong>: Howard et al.'s 2016 observation that Paxos never actually required every quorum to be a majority — only that <strong>the phase-1 quorum intersects the phase-2 quorum</strong>, i.e. <code>|Q1| + |Q2| &gt; N</code>. With <code>N=4</code> you can run <code>Q1=3</code>, <code>Q2=2</code>: steady-state writes wait on only 2 nodes, pushing the cost onto the rare election.</li>
+</ul>
+<h3>4. Raft: consensus written as a manual you can implement from</h3>
+<p>Raft's goal was never speed — it was <strong>understandability</strong>. Its authors say plainly that the distance between the published description of Paxos and a working system is so large that every team ends up inventing its own details. Raft nails those details down with three things:</p>
+<ul>
+<li><strong>The term is a logical clock</strong>: monotonically increasing, with at most one leader per term. Every message carries a term, and any node that sees a higher one steps down to follower immediately — <strong>a stale leader is told he is out of office the moment he opens his mouth</strong>.</li>
+<li><strong>Three states and one direction of flow</strong>: follower / candidate / leader, with <strong>randomized</strong> election timeouts (the paper suggests picking randomly within <code>150–300ms</code>) to break ties, so a typical failover completes in <strong>a few hundred milliseconds</strong>. Logs flow <strong>only from leader to follower</strong>; a follower's conflicting tail is truncated and overwritten — there is no such thing as merging.</li>
+<li><strong>The election restriction</strong>: a voter refuses a candidate whose log is behind its own. Only a node whose log is at least as current as a majority's can win, so <strong>committed entries are necessarily already in the new leader's hands</strong>. The hardest part of Paxos — dragging back values that may already have been chosen — is moved into the single moment of election.</li>
+</ul>
+<figure>
+<svg viewBox="0 0 640 235" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<rect x="30" y="38" width="230" height="30" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="145" y="58" fill="#cdd3db" font-size="12" text-anchor="middle">Term 1 · leader = A</text>
+<rect x="264" y="38" width="110" height="30" rx="6" fill="rgba(120,120,130,0.16)" stroke="#7c8593" stroke-dasharray="4 3"></rect>
+<text x="319" y="58" fill="#9aa3b0" font-size="12" text-anchor="middle">Term 2 · split vote</text>
+<rect x="378" y="38" width="232" height="30" rx="6" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"></rect>
+<text x="494" y="58" fill="#e7ebf1" font-size="12" text-anchor="middle">Term 3 · leader = C</text>
+<text x="30" y="28" fill="#7c8593" font-size="11" font-family="monospace">term →</text>
+<text x="34" y="118" fill="#b9c0ca" font-size="12">A</text>
+<rect x="60" y="102" width="40" height="24" rx="4" fill="rgba(91,157,249,0.14)" stroke="#7c8593"></rect><text x="80" y="119" fill="#b9c0ca" font-size="11.5" text-anchor="middle">1</text>
+<rect x="104" y="102" width="40" height="24" rx="4" fill="rgba(91,157,249,0.14)" stroke="#7c8593"></rect><text x="124" y="119" fill="#b9c0ca" font-size="11.5" text-anchor="middle">1</text>
+<rect x="148" y="102" width="40" height="24" rx="4" fill="rgba(120,120,130,0.18)" stroke="#7c8593" stroke-dasharray="3 3"></rect><text x="168" y="119" fill="#9aa3b0" font-size="11.5" text-anchor="middle">2</text>
+<text x="34" y="158" fill="#b9c0ca" font-size="12">B</text>
+<rect x="60" y="142" width="40" height="24" rx="4" fill="rgba(91,157,249,0.14)" stroke="#7c8593"></rect><text x="80" y="159" fill="#b9c0ca" font-size="11.5" text-anchor="middle">1</text>
+<rect x="104" y="142" width="40" height="24" rx="4" fill="rgba(91,157,249,0.14)" stroke="#7c8593"></rect><text x="124" y="159" fill="#b9c0ca" font-size="11.5" text-anchor="middle">1</text>
+<text x="24" y="198" fill="#8fbaff" font-size="12" font-weight="700">C</text>
+<rect x="60" y="182" width="40" height="24" rx="4" fill="rgba(143,186,255,0.26)" stroke="#8fbaff" stroke-width="2"></rect><text x="80" y="199" fill="#e7ebf1" font-size="11.5" text-anchor="middle">1</text>
+<rect x="104" y="182" width="40" height="24" rx="4" fill="rgba(143,186,255,0.26)" stroke="#8fbaff" stroke-width="2"></rect><text x="124" y="199" fill="#e7ebf1" font-size="11.5" text-anchor="middle">1</text>
+<rect x="148" y="182" width="40" height="24" rx="4" fill="rgba(143,186,255,0.26)" stroke="#8fbaff" stroke-width="2"></rect><text x="168" y="199" fill="#e7ebf1" font-size="11.5" text-anchor="middle">2</text>
+<rect x="192" y="182" width="40" height="24" rx="4" fill="rgba(155,108,245,0.3)" stroke="#9b6cf5" stroke-width="2"></rect><text x="212" y="199" fill="#e7ebf1" font-size="11.5" text-anchor="middle">3</text>
+<text x="252" y="199" fill="#8fbaff" font-size="12" font-weight="700">most current log → wins the election</text>
+<text x="252" y="120" fill="#7c8593" font-size="11.5">a lagging follower's conflicting tail is overwritten</text>
+<text x="60" y="225" fill="#7c8593" font-size="11" font-family="monospace">log index 1   2   3   4</text>
+</svg>
+<figcaption>Terms are a logical clock; term 2 died in a split vote. At each changeover only a candidate whose log is not behind a majority can win, so logs flow one way, from leader to follower.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/raft-paper50.en.html" target="_blank" rel="noopener">CS Papers · Raft, a consensus algorithm built to be understood</a> — the full argument for the election restriction and the log matching property, plus the membership change (joint consensus) that is easiest to get wrong</aside>
+<h3>5. Byzantine consensus: when nodes start lying</h3>
+<p>Every protocol above assumes <strong>crash-stop</strong>: a node is either correct or silent. Byzantine faults allow a node to emit arbitrary, mutually contradictory messages — compromised, firmware-buggy, or simply hostile. PBFT's price is visible at a glance: tolerating <code>f</code> traitors needs <code>3f+1</code> nodes (crash-stop needs only <code>2f+1</code>), a three-phase exchange of pre-prepare / prepare / commit, and message volume growing as <code>O(N²)</code>. The conclusion is equally clear: <strong>inside your own datacenter, run by one organization, the Byzantine assumption rarely pays for itself</strong>; its real stage is mutually distrusting parties, of which blockchains are the industrialized version.</p>
+<h2>Trade-offs and how to choose</h2>
+<p>Safety is the same across all of them (no two contradictory committed values). The differences are all in <strong>who imposes the order, how many rounds steady state costs, and how hard it is to implement correctly</strong>.</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Protocol</th><th>Steady-state write</th><th>Leader</th><th>Used by</th><th>Cost / fit</th></tr></thead>
+<tbody>
+<tr><th>Basic Paxos</th><td>2 RTTs + 2 fsyncs</td><td>none</td><td>almost never used directly</td><td>competing proposers can livelock; a teaching tool and a foundation</td></tr>
+<tr><th>Multi-Paxos</th><td>1 RTT</td><td>yes (lease)</td><td>Chubby, Spanner's per-shard groups</td><td>the papers leave gaps each team fills differently; hard to align implementations</td></tr>
+<tr><th>Raft</th><td>1 RTT</td><td>yes (strong leader)</td><td>etcd, Consul, TiKV, CockroachDB, Kafka KRaft</td><td>the log must flow one way; no parallel writes from several nodes</td></tr>
+<tr><th>Zab</th><td>1 RTT</td><td>yes (epoch)</td><td>ZooKeeper</td><td>tightly bound to ZooKeeper's session and ordering semantics; hard to reuse alone</td></tr>
+<tr><th>EPaxos</th><td>1 round when conflict-free</td><td>none</td><td>research and a few experimental builds</td><td>complex dependency graph and recovery; slower as conflicts rise</td></tr>
+<tr><th>Flexible Paxos</th><td>can wait on just 2 nodes</td><td>yes</td><td>a tuning option in some Paxos implementations</td><td>moves cost to election: recovery must reach more nodes</td></tr>
+<tr><th>PBFT family</th><td>several rounds, O(N²) messages</td><td>yes (view)</td><td>consortium chains, cross-organization ledgers</td><td>needs 3f+1 nodes; markedly worse throughput and scale</td></tr>
+</tbody>
+</table>
+</div>
+<p class="tcap">How many nodes should a cluster have? Twice the nodes is not twice as good — write latency is set by "the k-th fastest node."</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Size</th><th>Tolerates</th><th>Each write waits for</th><th>When to pick it</th></tr></thead>
+<tbody>
+<tr><th>N = 3</th><td>1 node</td><td>the 2nd fastest node</td><td>single datacenter, latency-sensitive; during a rolling upgrade you effectively have no redundancy</td></tr>
+<tr><th>N = 5</th><td>2 nodes</td><td>the 3rd fastest node</td><td>the production default; still tolerates 1 failure mid-upgrade</td></tr>
+<tr><th>N = 7+</th><td>3 nodes</td><td>the 4th fastest node</td><td>rarely worth it: bigger quorums, worse tail latency, more to operate</td></tr>
+</tbody>
+</table>
+</div>
+<p>Geography makes this table painful. Across three availability zones the RTT is roughly <code>1–3ms</code> and consensus writes are tolerable; spread the replicas across continents (<code>70–150ms</code> RTT) and every write waits on a transoceanic round trip — which is exactly why Spanner needs TrueTime and why EPaxos bothers with commit-to-the-nearest-replica.</p>
+<h2>Why it matters / in real systems</h2>
+<p>The correct engineering use of consensus compresses into one rule: <strong>let it govern the small and precious, never the large and numerous.</strong> Small and precious means metadata and leadership — who owns a shard, what the configuration is, who holds a lock. Kubernetes puts the whole truth of a cluster into etcd, but that is usually tens of megabytes to a few gigabytes; the business data travels another replication path. The moment every business write is funnelled into one consensus group, throughput is pinned by <strong>one leader's fsync plus one quorum round trip</strong>.</p>
+<p>The industry's standard answer is <strong>partitioning</strong>: CockroachDB and TiKV cut data into many ranges (CockroachDB's default range is about <code>64MB</code>) and <strong>run an independent Raft group per range</strong>, so thousands of groups advance in parallel while each group remains textbook Raft. The other common optimization is the <strong>lease read</strong>: the lease-holding replica answers reads locally instead of running a consensus round per read.</p>
+<div class="ev">
+<div class="evh">Evidence from industry</div>
+<ul>
+<li><strong>etcd</strong> describes itself as using "the Raft consensus algorithm to manage a highly-available replicated log," with a published benchmark of <code>10,000 writes/sec</code>; Kubernetes and others take it as cluster truth — <strong>evidence that one Raft group is sized for metadata, not for bulk business writes</strong>. <span class="src"><a href="https://github.com/etcd-io/etcd" rel="noopener" target="_blank">etcd official README ↗</a></span></li>
+<li><strong>CockroachDB</strong>'s design doc states that each range (default around <code>64MB</code>, three replicas) <strong>maintains its own instance of a distributed consensus algorithm</strong>, with range leases separate from Raft leadership so the lease holder can serve reads locally — <strong>a public specimen of the "slice consensus small, then parallelize" route</strong>. <span class="src"><a href="https://github.com/cockroachdb/cockroach/blob/master/docs/design.md" rel="noopener" target="_blank">CockroachDB design.md ↗</a></span></li>
+<li><strong>Apache Kafka</strong> replaced its ZooKeeper-based metadata layer with KRaft, which the project describes as "a protocol based on the Raft Consensus Protocol tailored for Apache Kafka" — <strong>a sign that new infrastructure prefers to carry its own consensus rather than bolt on a coordination service</strong>. <span class="src"><a href="https://github.com/apache/kafka/blob/trunk/raft/README.md" rel="noopener" target="_blank">Apache Kafka raft/README ↗</a></span></li>
+<li><strong>Google</strong> (Eric Brewer, 2017) concedes Spanner is <strong>CP</strong> under CAP — during a partition it declines service — yet measures availability better than <strong>five nines</strong>, so "users are correct to not worry about it" — <strong>precisely the cost of majority consensus and its defence: the probability of stalling can be engineered down to negligible, but the cost itself never disappears</strong>. <span class="src"><a href="https://cloud.google.com/blog/products/gcp/inside-cloud-spanner-and-the-cap-theorem" rel="noopener" target="_blank">Google Cloud Blog, "Spanner, TrueTime and the CAP Theorem," 2017 ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/consensus-coordination-day46.en.html" target="_blank" rel="noopener">System Design · Day 46 Consensus and Coordination</a> — using ZooKeeper / etcd for leader election, distributed locks and config distribution, and how fencing tokens are actually written in practice</aside>
+<h2>Pitfalls and disputes</h2>
+<ul>
+<li><strong>"Consensus is majority rule"</strong> — the most common misreading. The majority is there for <strong>set intersection</strong>, not for popular will; a Paxos proposer is regularly forced to drop its own value and propose someone else's, and that is exactly where correctness comes from.</li>
+<li><strong>"Raft is faster than Paxos"</strong> — they offer the same safety guarantees and essentially the same steady-state message rounds. Raft's selling point is <strong>understandability and implementability</strong>, not speed; citing it to win a performance argument is a category error.</li>
+<li><strong>"Once a leader is elected there's no split brain"</strong> — consensus guarantees the new leader is legitimate; it does <strong>not</strong> guarantee the old one learns promptly that he is finished. One long GC pause or partition is enough for a stale leader to keep writing on an expired lease. The storage layer must therefore honour a <strong>fencing token</strong> (a monotonic credential carrying the term) and reject writes from a lower term — a pattern that keeps reappearing in production incident reports.</li>
+<li><strong>Underestimating membership change</strong> — Google's "Paxos Made Live — An Engineering Perspective" (Chandra et al., PODC 2007) says outright that between an algorithm paper and a working system lies a pile of engineering the paper never covers: disk corruption, log compaction, membership change, and how to test any of it. Raft's single-node changes and joint consensus have been a prime source of early implementation bugs too.</li>
+<li><strong>Dating</strong> — the chapter was written in 2019. Multi-raft, vote-only witness replicas and the productization of Flexible Paxos have all advanced since, but the skeleton laid out here has not changed.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① <strong>Consensus = total order broadcast</strong>: a database doesn't want "a chosen value," it wants every replica replaying one log in one order (the replicated state machine).</p>
+<p>② <strong>The point of a majority is intersection</strong>: any two majorities share a node, that node remembers history, so a chosen value can never be rewritten by a latecomer.</p>
+<p>③ <strong>Paxos's two phases</strong>: phase 1 claims a ballot number and interrogates history; phase 2 writes the value — and any old value that comes back must be re-proposed instead of your own.</p>
+<p>④ <strong>Multi-Paxos's core optimization</strong>: elect a leader, run phase 1 once, leave 1 RTT per command in steady state; leadership rests on a lease, hence on bounded clock drift.</p>
+<p>⑤ <strong>Each variant sells something</strong>: Fast Paxos trades a bigger fast quorum for one hop; EPaxos trades a dependency graph for having no leader; Flexible Paxos needs only <code>|Q1|+|Q2| &gt; N</code>, pushing cost onto elections.</p>
+<p>⑥ <strong>Raft's three pillars</strong>: terms as a logical clock, randomized election timeouts (<code>150–300ms</code>), and an election restriction guaranteeing the new leader's log is current — logs flow one way only.</p>
+<p>⑦ <strong>Byzantine tolerance is expensive</strong>: <code>3f+1</code> nodes, three phases, <code>O(N²)</code> messages — worth it only when the participants distrust each other.</p>
+<p>⑧ <strong>FLP in practice</strong>: safety is held unconditionally, liveness is bought with timeouts and randomization.</p>
+<p>⑨ <strong>Where it lands</strong>: consensus governs metadata and leadership; data scales by partitioning into many groups (multi-raft, one group per range), never by funnelling every write through one.</p>
+</div>
+</div>
+<footer>Book Deep Read · Read this page ≈ get the core of the chapter; for full case studies and depth, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

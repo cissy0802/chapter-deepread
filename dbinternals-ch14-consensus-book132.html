@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Database Internals 第 14 章 · 共识 — 专业书籍精读 Book 132</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+</head><body>
+<div class="container">
+<p class="top">专业书籍精读 · Database Internals · 第 14 章</p>
+<h1>共识</h1>
+<p class="sub">Database Internals · Ch 14 · Alex Petrov · 2019</p>
+<p class="langbar"><a href="dbinternals-ch14-consensus-book132.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你点下「转账成功」，背后不是一台机器在记账，而是三台、五台机器各记一本。这一章回答的问题很直白：<strong>这几本账，怎么保证永远是同一本？</strong>——不是「大致同步」，而是「谁也别想说出两个互相矛盾的版本」。这件事在计算机里有个专门的名字，叫<strong>共识</strong>。</p>
+<h2>先打个比方</h2>
+<p>想象五个人分散在不同城市，只能靠时好时坏的对讲机商量「周六几点聚餐」。信号会断、人会临时离席，更要命的是：<strong>你永远分不清对方是走了，还是只是信号卡住、三秒后又活过来</strong>。你们要定下一个时间，而且一旦定下，谁后来问都是同一个答案——哪怕当时有两个人根本没听见。</p>
+<h2>旧世界为什么难</h2>
+<p>最自然的办法是「选个组长，他说了算」。问题是组长失联的时候，剩下的人会同时自封组长——于是出现<strong>两个组长、两份互相矛盾的账</strong>（行话叫「脑裂」）。更尴尬的是，老组长的信号可能只是卡了一下，他自己还以为自己在位，继续往账本上写。这不是假想：真实系统里，一次垃圾回收停顿或一次网线抽风，就足够制造出两个自信满满的组长。</p>
+<h2>核心机制：两个朴素到好笑的点子</h2>
+<p>第一个点子是<strong>「过半数」</strong>。任何决定，必须有<strong>超过一半</strong>的人点头才算数。妙处在于：<strong>任何两个「过半数的小团体」，一定至少有一个共同的人</strong>——五个人里，任意两组三人必有重叠。那个重叠的人就是活档案：新的一轮一开口，他就会说「等等，上次已经定过九点了」。于是新决定永远<strong>推不翻</strong>旧决定，只能接着重复它。</p>
+<p>第二个点子是<strong>「换届要查资历」</strong>。每次换组长都编一个届号，届号只增不减；想当新组长，必须先拿到过半数的票，而大家只投给<strong>记录不比自己少的人</strong>。这样新组长手上一定有全部已经定过的事，不会上任就把前任记下的东西抹掉。再加上「看到更大的届号就立刻退位」，老组长一发声就会被告知「你已经是上一届了」。</p>
+<h2>该怎么看它</h2>
+<p>世界上流行的做法其实只有两套讲法：一套叫 Paxos，正确但出了名难懂；一套叫 Raft，故意把同一件事讲成一本能照着做的说明书，今天的 etcd、Kubernetes、CockroachDB、新版 Kafka 都用它。<strong>诚实的代价是</strong>：每一次写都要等过半数的人点头，五台机器里一旦坏掉三台，整个系统宁可停下来不写，也不愿意写出两个版本。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>共识不是「少数服从多数的投票」，而是一套<strong>防反悔的规矩</strong>：凡事要过半数点头，而任何两个过半数的小团体必定有人重叠，这个人记得上次的结论——所以历史只能被接着写，不能被改写。</p>
+</div>
+<p class="switch-hint">想看 Paxos 的两个阶段、Raft 的任期与日志、拜占庭容错到底贵在哪？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">共识（consensus）不是「多数投票表决」，而是让一群<strong>随时可能崩溃、消息随时可能延迟乱序</strong>的机器，对<strong>一串操作的顺序</strong>达成<strong>不可反悔</strong>的一致。本章把 Paxos、Raft、Zab 摆在一起讲，而它们最终都收敛成同一个形状：<strong>选一个领导者定序，再用多数派把他的日志钉死</strong>——所谓「难懂的共识算法」，难的不是选出一个值，是证明<strong>已经定下的值永远不会被后来者改写</strong>。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>副本（replica）</strong>：同一份数据的多个拷贝，分别放在不同机器上，坏一台还有别的顶上。</li>
+<li><strong>日志（log）</strong>：只在尾部追加的有序操作流水账；数据库把「怎么改」按顺序记进日志，副本按同一顺序回放就能得到同一份数据——这叫<strong>复制状态机（replicated state machine）</strong>。</li>
+<li><strong>多数派 / 法定人数（quorum）</strong>：能代表整个集群做决定的最小节点集合，通常取「超过一半」，即 <code>N</code> 个节点里的 <code>⌊N/2⌋+1</code> 个。</li>
+<li><strong>提案编号 / 轮次号（ballot、term、epoch）</strong>：单调递增的整数，用来给「第几次尝试、第几届领导者」排序，大的永远压过小的。</li>
+<li><strong>领导者（leader）</strong>：被选出来、负责接收写入并给它们定顺序的那个节点；其余节点只跟随。</li>
+<li><strong>租约（lease）</strong>：带时限的领导权，到期不续就自动失效，靠的是「各机器时钟漂移有界」这个假设。</li>
+<li><strong>故障模型</strong>：<em>崩溃-停止（crash-stop）</em>指节点要么正确要么沉默；<em>拜占庭（Byzantine）</em>指节点可能发出任意、互相矛盾甚至伪造的消息。</li>
+<li><strong>RTT（往返时延）</strong>：一来一回的网络耗时。同机房约 <code>0.5–2ms</code>，同城跨可用区约 <code>1–3ms</code>，跨大洲常在 <code>70–150ms</code>。</li>
+<li><strong>脑裂（split brain）</strong>：集群里同时出现两个自认为合法的领导者，各写各的，数据分叉。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>本章是 Part II「分布式系统」的收官，也是全书终章。上承 Ch9 故障检测（超时判死永远可能误判）、Ch10 领导者选举（选举本身并不保证唯一）、Ch11 复制与一致性、Ch13 分布式事务（2PC 要求全体同意，协调者一倒就全体持锁干等）。这一章把那些<strong>各自不完整的零件拼成一个能自证正确的协议</strong>，对应现实里 ZooKeeper、etcd、Consul、CockroachDB、TiKV 这类「集群大脑」。</p>
+<h2>这章要解决什么</h2>
+<p>前面每一章都留了个缺口：故障检测会把「慢」误判成「死」；选举可能在分区两侧各产生一个领导者；复制日志可能分叉；原子提交要求<strong>全体</strong>同意，于是一个节点失联就全线阻塞。共识要在这些缺口上给出一个同时满足三条的协议——<strong>一致性</strong>（不会有两个节点认定不同的值）、<strong>有效性</strong>（定下的值必须是某个节点真的提过的，不能凭空捏造）、<strong>可终止性</strong>（最终能定下来）。</p>
+<p>前提很残酷：按 FLP 不可能性结论，<strong>纯异步</strong>网络里只要有一个节点可能崩溃，确定性算法就<strong>不可能同时</strong>保证安全性与活性。所以实用协议的做法都一样：<strong>安全性（不出错）无条件死守，活性（能推进）靠超时和随机化去「大概率」拿到</strong>——这就是为什么每个共识实现里都藏着一堆超时参数。</p>
+<p>不解决会怎样？拿 Kubernetes 举例：整个集群的真相——哪个 Pod 该跑在哪台机器、Service 的后端有谁、谁持有某把锁——全部存在 3 到 5 个节点的 etcd 里。假如网络分区时两侧各自接受写入并都回「成功」，调度器就会按<strong>两份互相矛盾的真相</strong>去拉起容器：同一块云盘被两个进程同时挂载写入。<strong>共识是整个系统唯一真相的发源地，它错一次，上层所有正确性都跟着失效。</strong></p>
+<h2>核心内容，讲透</h2>
+<h3>一、换个说法：共识其实是「全序广播」</h3>
+<p>本章从<strong>广播</strong>切入，而不是直接扔出 Paxos。尽力广播（best-effort broadcast）只保证「我发出去了」，发送者中途崩溃就有人收得到、有人收不到；可靠广播（reliable broadcast）保证所有正确节点最终都收到，但顺序各不相同；<strong>原子广播 / 全序广播（atomic broadcast、total order broadcast）</strong>再加一条——<strong>所有节点收到的消息顺序完全相同</strong>。</p>
+<p>关键洞见是：<strong>全序广播与共识是等价问题</strong>。有了全序广播，把「第一条被广播出来的值」当作被选定的值，就得到共识；反过来，对日志的每一个位置各跑一次共识，就得到全序广播。数据库真正要的从来不是「选一个值」，而是<strong>所有副本按同一顺序回放同一串写</strong>——所以共识在工程里永远以「复制一份完全一样的日志」的面目出现。ZooKeeper 的 Zab 协议就是照这个思路设计的：以 epoch（纪元号）划分领导权，分<strong>发现</strong>（新领导者找出最高的那份日志）、<strong>同步</strong>（推平给多数派）、<strong>广播</strong>（稳态逐条追加）三阶段。</p>
+<h3>二、Paxos：两个阶段，分别在干什么</h3>
+<p>Paxos 把节点分成三种角色（同一台机器可以同时扮演）：<em>提案者（proposer）</em>发起提议，<em>接受者（acceptor）</em>投票并记住状态，<em>学习者（learner）</em>知悉结果。一轮完整的 Basic Paxos 要两个阶段：</p>
+<ul>
+<li><strong>阶段一 Prepare / Promise</strong>：提案者挑一个全局唯一、单调递增的编号 <code>n</code>，问多数派「能接受 <code>n</code> 吗」。接受者若没见过更大的编号就<strong>承诺</strong>：此后拒绝一切编号小于 <code>n</code> 的消息，并<strong>把自己已经接受过的、编号最高的那个值一并回传</strong>。</li>
+<li><strong>阶段二 Accept / Accepted</strong>：提案者收齐多数派的承诺后才发出真正的值。<strong>但如果任何一条承诺里带回了旧值，提案者必须放弃自己的值，改提那个编号最高的旧值。</strong>多数派接受之后，这个值就被「选定（chosen）」。</li>
+</ul>
+<figure>
+<svg viewBox="0 0 640 290" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="pa" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker>
+<marker id="pb" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker></defs>
+<text x="100" y="30" fill="#e7ebf1" font-size="12.5" font-weight="700" text-anchor="middle">Proposer</text>
+<text x="310" y="30" fill="#b9c0ca" font-size="12.5" text-anchor="middle">Acceptor 1</text>
+<text x="440" y="30" fill="#b9c0ca" font-size="12.5" text-anchor="middle">Acceptor 2</text>
+<text x="570" y="30" fill="#7c8593" font-size="12.5" text-anchor="middle">Acceptor 3</text>
+<line x1="100" y1="40" x2="100" y2="276" stroke="rgba(143,186,255,0.35)" stroke-dasharray="4 4"></line>
+<line x1="310" y1="40" x2="310" y2="276" stroke="rgba(143,186,255,0.35)" stroke-dasharray="4 4"></line>
+<line x1="440" y1="40" x2="440" y2="276" stroke="rgba(143,186,255,0.35)" stroke-dasharray="4 4"></line>
+<line x1="570" y1="40" x2="570" y2="276" stroke="rgba(143,186,255,0.2)" stroke-dasharray="4 4"></line>
+<text x="14" y="98" fill="#5b9df9" font-size="12" font-weight="700">阶段 ①</text>
+<text x="14" y="206" fill="#9b6cf5" font-size="12" font-weight="700">阶段 ②</text>
+<text x="270" y="62" fill="#5b9df9" font-size="11.5" font-family="monospace" text-anchor="middle">Prepare(n)</text>
+<line x1="104" y1="72" x2="304" y2="72" stroke="#5b9df9" marker-end="url(#pa)"></line>
+<line x1="104" y1="84" x2="434" y2="84" stroke="#5b9df9" marker-end="url(#pa)"></line>
+<line x1="104" y1="96" x2="564" y2="96" stroke="rgba(91,157,249,0.3)" stroke-dasharray="3 3" marker-end="url(#pa)"></line>
+<text x="300" y="122" fill="#5b9df9" font-size="11.5" font-family="monospace" text-anchor="middle">Promise(n, 已接受的最高值)</text>
+<line x1="306" y1="134" x2="106" y2="134" stroke="#5b9df9" marker-end="url(#pa)"></line>
+<line x1="436" y1="146" x2="106" y2="146" stroke="#5b9df9" marker-end="url(#pa)"></line>
+<text x="330" y="172" fill="#7c8593" font-size="11" text-anchor="middle">收齐多数派 → 若带回旧值，必须改提旧值</text>
+<text x="270" y="196" fill="#9b6cf5" font-size="11.5" font-family="monospace" text-anchor="middle">Accept(n, v)</text>
+<line x1="104" y1="206" x2="304" y2="206" stroke="#9b6cf5" marker-end="url(#pb)"></line>
+<line x1="104" y1="218" x2="434" y2="218" stroke="#9b6cf5" marker-end="url(#pb)"></line>
+<text x="280" y="242" fill="#9b6cf5" font-size="11.5" font-family="monospace" text-anchor="middle">Accepted</text>
+<line x1="306" y1="252" x2="106" y2="252" stroke="#9b6cf5" marker-end="url(#pb)"></line>
+<line x1="436" y1="264" x2="106" y2="264" stroke="#9b6cf5" marker-end="url(#pb)"></line>
+<text x="320" y="284" fill="#8fbaff" font-size="12" font-weight="700" text-anchor="middle">多数派接受 → v 被选定（chosen），不可反悔</text>
+</svg>
+<figcaption>Basic Paxos 的两阶段：阶段 ① 抢占编号并打听历史，阶段 ② 才真正写值；Acceptor 3 掉线不影响结果，只要剩下的仍过半。</figcaption>
+</figure>
+<p>所以阶段一根本不是投票，而是<strong>抢占 + 打听</strong>：抢占是给所有在飞的旧提案发一张作废通知，打听是把可能已经定下的历史捞回来。<strong>多数派交集</strong>保证了这次打听不会漏：任何两个过半数集合必有共同节点，而那个节点记得上一次接受了什么。Paxos 的全部魔法就一句话——<strong>后来者不许改写历史，只能接着喊同一句话。</strong></p>
+<figure>
+<svg viewBox="0 0 640 195" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<rect x="30" y="62" width="300" height="86" rx="12" fill="rgba(91,157,249,0.10)" stroke="#5b9df9" stroke-dasharray="6 4"></rect>
+<rect x="250" y="62" width="300" height="86" rx="12" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5" stroke-dasharray="6 4"></rect>
+<text x="90" y="50" fill="#5b9df9" font-size="12.5" font-weight="700">多数派 Q1 = 3/5</text>
+<text x="400" y="50" fill="#9b6cf5" font-size="12.5" font-weight="700">多数派 Q2 = 3/5</text>
+<circle cx="80" cy="105" r="26" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></circle><text x="80" y="110" fill="#b9c0ca" font-size="13" text-anchor="middle">A</text>
+<circle cx="185" cy="105" r="26" fill="rgba(91,157,249,0.12)" stroke="#7c8593"></circle><text x="185" y="110" fill="#b9c0ca" font-size="13" text-anchor="middle">B</text>
+<circle cx="290" cy="105" r="30" fill="rgba(143,186,255,0.30)" stroke="#8fbaff" stroke-width="2.5"></circle><text x="290" y="110" fill="#e7ebf1" font-size="14" font-weight="700" text-anchor="middle">C</text>
+<circle cx="395" cy="105" r="26" fill="rgba(155,108,245,0.12)" stroke="#7c8593"></circle><text x="395" y="110" fill="#b9c0ca" font-size="13" text-anchor="middle">D</text>
+<circle cx="500" cy="105" r="26" fill="rgba(155,108,245,0.12)" stroke="#7c8593"></circle><text x="500" y="110" fill="#b9c0ca" font-size="13" text-anchor="middle">E</text>
+<text x="290" y="178" fill="#8fbaff" font-size="12.5" font-weight="700" text-anchor="middle">C 同属两个多数派 → 它记得的值不会被遗忘</text>
+</svg>
+<figcaption>多数派交集：5 个节点里任意两个「过半数」集合至少共享 1 个节点，这个节点就是防止历史被改写的活档案。</figcaption>
+</figure>
+<p>代价也很具体：每定下一个值要 <strong>2 轮 RTT + 2 次磁盘持久化</strong>；更麻烦的是两个提案者会互相抢占编号，理论上可以无限循环下去（活锁，livelock）。这两条正是下面所有变体的改进动机。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/paxos-made-simple-paper44.html" target="_blank" rel="noopener">CS Papers · Paxos Made Simple</a> — Lamport 自己的「简化版」讲法：为什么 P2c 不变式是整个算法的心脏，以及它为何仍然难懂</aside>
+<h3>三、Multi-Paxos 与变体家族：把两轮砍成一轮</h3>
+<p><strong>Multi-Paxos</strong> 的改法朴素而有效：既然每条日志都重跑阶段一太贵，就选出一个<strong>特定提案者（distinguished proposer，即领导者）</strong>，让他对<strong>整段日志只做一次阶段一</strong>，此后每条命令只剩阶段二的一轮 RTT。领导者靠<strong>租约</strong>维持身份——这是共识协议里罕见的、依赖物理时钟的地方：租约期内别人不得发起选举，所以时钟漂移必须有界，否则安全性靠的就不再是算法而是运维。</p>
+<p>三个值得记住的变体，各自卖掉一样东西换另一样：</p>
+<ul>
+<li><strong>Fast Paxos</strong>：让客户端<strong>直接把值发给接受者</strong>，省掉「先经领导者」那一跳。代价是快速路径的法定人数更大（约 <code>⌈3N/4⌉</code> 而非过半），且两个客户端撞车时要回退经典路径重跑一轮——净收益只在冲突率低时成立。</li>
+<li><strong>EPaxos（Egalitarian Paxos）</strong>：干脆不要固定领导者，每条命令携带它<strong>依赖</strong>的命令集合；改不同键的命令互不冲突，可以乱序执行，只有真冲突的才需要排序。好处是没有单点瓶颈、跨地域可就近提交；代价是依赖图与恢复路径相当复杂，冲突一多反而更慢。</li>
+<li><strong>Flexible Paxos（FPaxos）</strong>：Howard 等人 2016 年的观察——Paxos 真正需要的并不是「每个法定人数都过半」，而只是<strong>阶段一的集合与阶段二的集合必须相交</strong>，即 <code>|Q1| + |Q2| &gt; N</code>。于是 <code>N=4</code> 时可取 <code>Q1=3</code>、<code>Q2=2</code>：稳态写只等 2 个节点确认，把成本挪到了「很少发生」的选举那一次上。</li>
+</ul>
+<h3>四、Raft：把共识写成能照着实现的说明书</h3>
+<p>Raft 的设计目标不是更快，而是<strong>可理解</strong>——作者明说，Paxos 的描述与一个真正能跑的系统之间差距太大，以至于每个团队都在各自发明细节。Raft 用三件事把这些细节钉死：</p>
+<ul>
+<li><strong>任期（term）是逻辑时钟</strong>：单调递增，每个任期至多一个领导者。所有消息都带任期号，任何节点一看到更大的任期号就立刻退位成跟随者——<strong>老领导者只要一开口，就会被告知自己已经下台。</strong></li>
+<li><strong>只有三种状态与一条数据流向</strong>：跟随者 / 候选人 / 领导者；选举超时<strong>随机化</strong>（论文建议在 <code>150–300ms</code> 区间内随机取值）以打破平票，典型故障切换在<strong>几百毫秒级</strong>完成。日志<strong>只从领导者单向流向跟随者</strong>，跟随者冲突的尾巴直接截断重写——没有「互相合并」这回事。</li>
+<li><strong>选举限制</strong>：候选人的日志若比投票者旧，投票者就拒绝投票。于是只有「日志至少和多数派一样新」的节点才能当选，<strong>已提交的条目必然在新领导者手里</strong>。Paxos 里最烧脑的「把可能已选定的旧值打听回来」，被 Raft 挪到选举这一刻一次性解决了。</li>
+</ul>
+<figure>
+<svg viewBox="0 0 640 235" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<rect x="30" y="38" width="230" height="30" rx="6" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"></rect>
+<text x="145" y="58" fill="#cdd3db" font-size="12" text-anchor="middle">任期 1 · leader = A</text>
+<rect x="264" y="38" width="100" height="30" rx="6" fill="rgba(120,120,130,0.16)" stroke="#7c8593" stroke-dasharray="4 3"></rect>
+<text x="314" y="58" fill="#9aa3b0" font-size="12" text-anchor="middle">任期 2 · 分票</text>
+<rect x="368" y="38" width="242" height="30" rx="6" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5"></rect>
+<text x="489" y="58" fill="#e7ebf1" font-size="12" text-anchor="middle">任期 3 · leader = C</text>
+<text x="30" y="28" fill="#7c8593" font-size="11" font-family="monospace">term →</text>
+<text x="34" y="118" fill="#b9c0ca" font-size="12">A</text>
+<rect x="60" y="102" width="40" height="24" rx="4" fill="rgba(91,157,249,0.14)" stroke="#7c8593"></rect><text x="80" y="119" fill="#b9c0ca" font-size="11.5" text-anchor="middle">1</text>
+<rect x="104" y="102" width="40" height="24" rx="4" fill="rgba(91,157,249,0.14)" stroke="#7c8593"></rect><text x="124" y="119" fill="#b9c0ca" font-size="11.5" text-anchor="middle">1</text>
+<rect x="148" y="102" width="40" height="24" rx="4" fill="rgba(120,120,130,0.18)" stroke="#7c8593" stroke-dasharray="3 3"></rect><text x="168" y="119" fill="#9aa3b0" font-size="11.5" text-anchor="middle">2</text>
+<text x="34" y="158" fill="#b9c0ca" font-size="12">B</text>
+<rect x="60" y="142" width="40" height="24" rx="4" fill="rgba(91,157,249,0.14)" stroke="#7c8593"></rect><text x="80" y="159" fill="#b9c0ca" font-size="11.5" text-anchor="middle">1</text>
+<rect x="104" y="142" width="40" height="24" rx="4" fill="rgba(91,157,249,0.14)" stroke="#7c8593"></rect><text x="124" y="159" fill="#b9c0ca" font-size="11.5" text-anchor="middle">1</text>
+<text x="24" y="198" fill="#8fbaff" font-size="12" font-weight="700">C</text>
+<rect x="60" y="182" width="40" height="24" rx="4" fill="rgba(143,186,255,0.26)" stroke="#8fbaff" stroke-width="2"></rect><text x="80" y="199" fill="#e7ebf1" font-size="11.5" text-anchor="middle">1</text>
+<rect x="104" y="182" width="40" height="24" rx="4" fill="rgba(143,186,255,0.26)" stroke="#8fbaff" stroke-width="2"></rect><text x="124" y="199" fill="#e7ebf1" font-size="11.5" text-anchor="middle">1</text>
+<rect x="148" y="182" width="40" height="24" rx="4" fill="rgba(143,186,255,0.26)" stroke="#8fbaff" stroke-width="2"></rect><text x="168" y="199" fill="#e7ebf1" font-size="11.5" text-anchor="middle">2</text>
+<rect x="192" y="182" width="40" height="24" rx="4" fill="rgba(155,108,245,0.3)" stroke="#9b6cf5" stroke-width="2"></rect><text x="212" y="199" fill="#e7ebf1" font-size="11.5" text-anchor="middle">3</text>
+<text x="300" y="199" fill="#8fbaff" font-size="12" font-weight="700">日志最新 → 当选新 leader</text>
+<text x="300" y="120" fill="#7c8593" font-size="11.5">落后者的冲突尾巴会被截断重写</text>
+<text x="60" y="225" fill="#7c8593" font-size="11" font-family="monospace">log index 1   2   3   4</text>
+</svg>
+<figcaption>任期是逻辑时钟，第 2 任期因分票流产；换届时只有日志不落后于多数派的候选人才能当选，所以日志只从领导者单向流向跟随者。</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/raft-paper50.html" target="_blank" rel="noopener">CS Papers · Raft：为「读得懂」而生的共识算法</a> — 选举限制与日志匹配性质的完整论证，以及最容易写错的成员变更（joint consensus）</aside>
+<h3>五、拜占庭共识：当节点开始说谎</h3>
+<p>前面所有协议都假设<strong>崩溃-停止</strong>：节点要么正确，要么沉默。拜占庭故障则允许节点发出任意、互相矛盾的消息——被入侵、固件错误，或根本就是敌对参与方。PBFT 的代价直观可见：要容忍 <code>f</code> 个叛徒需要 <code>3f+1</code> 个节点（崩溃模型只要 <code>2f+1</code>），三阶段消息 pre-prepare / prepare / commit，消息量随节点数呈 <code>O(N²)</code> 增长。结论也很清楚：<strong>在自家机房、同一组织内运维的集群里，拜占庭假设通常不划算</strong>；它真正的舞台是互不信任的参与方，区块链即是其工业化版本。</p>
+<h2>关键权衡与选型</h2>
+<p>所有方案的安全性保证是一样的（不会出现两个互相矛盾的已提交值），差别全在<strong>谁定序、稳态要几轮、以及实现有多难写对</strong>。</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>方案</th><th>稳态写代价</th><th>领导者</th><th>代表系统</th><th>代价 / 适用</th></tr></thead>
+<tbody>
+<tr><th>Basic Paxos</th><td>2 轮 RTT + 2 次落盘</td><td>无</td><td>几乎不直接用</td><td>并发提案互相抢占会活锁；只作教学与基石</td></tr>
+<tr><th>Multi-Paxos</th><td>1 轮 RTT</td><td>有（租约）</td><td>Chubby、Spanner 的每个分片组</td><td>论文留白多，细节各家自己补，难对齐实现</td></tr>
+<tr><th>Raft</th><td>1 轮 RTT</td><td>有（强领导者）</td><td>etcd、Consul、TiKV、CockroachDB、Kafka KRaft</td><td>日志必须单向流动，不能从多个节点并行写入</td></tr>
+<tr><th>Zab</th><td>1 轮 RTT</td><td>有（epoch）</td><td>ZooKeeper</td><td>与 ZooKeeper 的会话 / 顺序语义深度绑定，较难剥离复用</td></tr>
+<tr><th>EPaxos</th><td>冲突少时 1 轮</td><td>无</td><td>学术与少量实验实现</td><td>依赖图与恢复路径复杂；冲突率一高反而更慢</td></tr>
+<tr><th>Flexible Paxos</th><td>可低至等 2 个节点</td><td>有</td><td>部分 Paxos 实现的调优选项</td><td>把成本挪给选举：恢复时要联系更多节点</td></tr>
+<tr><th>PBFT 类</th><td>多轮 + O(N²) 消息</td><td>有（视图）</td><td>联盟链 / 跨组织账本</td><td>需 3f+1 节点，吞吐与规模都显著更差</td></tr>
+</tbody>
+</table>
+</div>
+<p class="tcap">集群要几个节点？多一倍节点并不等于多一倍好——写延迟取决于「第几快的那个节点」。</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>规模</th><th>容忍故障</th><th>每次写要等</th><th>典型取法</th></tr></thead>
+<tbody>
+<tr><th>N = 3</th><td>1 台</td><td>第 2 快的节点确认</td><td>单机房、延迟敏感；滚动升级期间等于没有冗余</td></tr>
+<tr><th>N = 5</th><td>2 台</td><td>第 3 快的节点确认</td><td>生产默认；可在升级期间仍容忍 1 台故障</td></tr>
+<tr><th>N = 7+</th><td>3 台</td><td>第 4 快的节点确认</td><td>很少值得：多数派更大、尾延迟更差，运维成本上升</td></tr>
+</tbody>
+</table>
+</div>
+<p>跨地域部署时这张表会变得很刺眼：三个可用区之间 RTT 约 <code>1–3ms</code>，共识写还能接受；一旦把副本摊到跨大洲（RTT <code>70–150ms</code>），每次写都要等一个跨洋往返——这正是 Spanner 要用 TrueTime、EPaxos 要做「就近提交」的原因。</p>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>共识在工程里的正确用法，可以浓缩成一句：<strong>让它管「小而贵」的东西，别让它管「大而多」的东西。</strong>小而贵指的是元数据与领导权——谁是分片的主、配置是什么、锁被谁持有。Kubernetes 把整个集群的真相放进 etcd，但那通常只有几十 MB 到几 GB，业务数据走的是另一条复制路径。一旦把每个业务写都塞进一个共识组，吞吐就被<strong>领导者的落盘速度加一次多数派 RTT</strong> 死死卡住。</p>
+<p>工业界的标准解法是<strong>分组</strong>：CockroachDB 与 TiKV 把数据切成大量范围（CockroachDB 默认每个范围约 <code>64MB</code>），<strong>每个范围跑一个独立的 Raft 组</strong>，成千上万个组并行推进，于是集群吞吐随节点数增长，而每个组内部仍是教科书式的 Raft。另一个常见优化是<strong>租约读</strong>：持租副本本地应答读请求，不必为每次读再跑一轮共识。</p>
+<div class="ev">
+<div class="evh">大厂实证</div>
+<ul>
+<li><strong>etcd</strong> 自述「用 Raft 管理一份高可用的复制日志」，并给出 <code>10,000 writes/sec</code> 的基准，Kubernetes 等系统直接把它当集群真相——<strong>证明单组 Raft 的量级足以承载元数据，但不是为海量业务写准备的</strong>。<span class="src"><a href="https://github.com/etcd-io/etcd" rel="noopener" target="_blank">etcd 官方 README ↗</a></span></li>
+<li><strong>CockroachDB</strong> 的设计文档写明：每个范围（默认约 <code>64MB</code>、默认三副本）<strong>各自维护一份分布式共识实例</strong>，并用与 Raft 领导权分离的「范围租约」让持租副本本地服务读——<strong>这是「把共识切小、再并行」这条路线的公开样本</strong>。<span class="src"><a href="https://github.com/cockroachdb/cockroach/blob/master/docs/design.md" rel="noopener" target="_blank">CockroachDB design.md ↗</a></span></li>
+<li><strong>Apache Kafka</strong> 把元数据层从 ZooKeeper 换成自研的 KRaft，官方描述为「一个为 Kafka 定制的、基于 Raft 共识协议的协议」——<strong>说明新一代基础设施更愿意自带共识，而不是外挂一个协调服务</strong>。<span class="src"><a href="https://github.com/apache/kafka/blob/trunk/raft/README.md" rel="noopener" target="_blank">Apache Kafka raft/README ↗</a></span></li>
+<li><strong>Google</strong>（Eric Brewer, 2017）承认 Spanner 在 CAP 里是 <strong>CP</strong>——分区时宁可拒绝服务；但实测可用性优于 <strong>5 个 9</strong>，所以「用户不必为此担心」——<strong>这正是多数派共识的代价与辩护：停写的概率可以用网络工程压到可忽略，但代价本身无法消除</strong>。<span class="src"><a href="https://cloud.google.com/blog/products/gcp/inside-cloud-spanner-and-the-cap-theorem" rel="noopener" target="_blank">Google Cloud Blog「Spanner, TrueTime and the CAP Theorem」, 2017 ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/consensus-coordination-day46.html" target="_blank" rel="noopener">System Design · Day 46 分布式共识与协调</a> — 怎么用 ZooKeeper / etcd 做选主、分布式锁与配置分发，以及 fencing token 在落地时的具体写法</aside>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>「共识就是多数投票的民主」</strong>——最常见的误解。多数派在这里的作用是<strong>集合交集</strong>而不是民意；Paxos 的提案者经常被迫放弃自己的值、改提别人的值，这恰恰是算法正确的来源。</li>
+<li><strong>「Raft 比 Paxos 快」</strong>——两者的安全性保证和稳态消息轮数基本相同，Raft 的卖点是<strong>可理解性与可实现性</strong>，不是性能。拿它去赢性能辩论属于张冠李戴。</li>
+<li><strong>「选出了领导者就不会脑裂」</strong>——共识只保证新领导者合法，<strong>不保证旧领导者立刻知道自己已下台</strong>。一次长 GC 停顿或网络分区，就足以让老领导者带着过期租约继续写。所以存储层必须认<strong>fencing token</strong>（带任期号的单调递增凭证），拒绝任期更小的写——这一条在生产事故里反复出现。</li>
+<li><strong>低估成员变更</strong>——Google 在《Paxos Made Live — An Engineering Perspective》（Chandra 等，PODC 2007）里直言，从算法论文到可用系统之间还隔着大量论文没写的工程问题：磁盘损坏、日志压缩、成员变更、以及如何测试。Raft 的单节点变更与 joint consensus 也是早期实现踩坑最多的地方。</li>
+<li><strong>时代局限</strong>——本章成书于 2019 年；此后 multi-raft、只投票不存数据的 witness 副本、Flexible Paxos 的生产化都有推进，但本章的骨架至今没变。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① <strong>共识 = 全序广播</strong>：数据库要的不是「选一个值」，而是所有副本按同一顺序回放同一串日志（复制状态机）。</p>
+<p>② <strong>多数派的意义是交集</strong>：任意两个过半数集合必有共同节点，它记得历史，所以已选定的值不可能被后来者改写。</p>
+<p>③ <strong>Paxos 两阶段</strong>：阶段一是抢占编号 + 打听历史，阶段二才写值；一旦打听到旧值，提案者必须改提旧值。</p>
+<p>④ <strong>Multi-Paxos 的核心优化</strong>：选一个领导者，阶段一只做一次，稳态每条命令只剩 1 轮 RTT；领导权靠租约维持，因此依赖「时钟漂移有界」。</p>
+<p>⑤ <strong>变体各卖一样东西</strong>：Fast Paxos 省一跳换更大的快速法定人数；EPaxos 去掉领导者换依赖图复杂度；Flexible Paxos 只要 <code>|Q1|+|Q2| &gt; N</code>，把成本挪给选举。</p>
+<p>⑥ <strong>Raft 的三根支柱</strong>：任期号作逻辑时钟、随机化选举超时（<code>150–300ms</code>）、选举限制保证新领导者日志最新——日志只能单向流动。</p>
+<p>⑦ <strong>拜占庭容错很贵</strong>：<code>3f+1</code> 节点、三阶段、<code>O(N²)</code> 消息，只有在参与方互不信任时才值得。</p>
+<p>⑧ <strong>FLP 的现实翻译</strong>：安全性无条件死守，活性靠超时与随机化争取。</p>
+<p>⑨ <strong>工程落点</strong>：共识管元数据与领导权，数据走分组（multi-raft、每范围一组）；别让每个业务写都过同一个共识组。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
