@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Chaos Engineering Ch 4 · Slack's Disasterpiece Theater — Book Deep-Read 136</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOK DEEP-READ · CHAOS ENGINEERING · CH 4</p>
+<h1>Slack's Disasterpiece Theater</h1>
+<p class="sub">Chaos Engineering: System Resiliency in Practice · Ch 4 · Richard Crowley (Slack) · 2020</p>
+<p class="langbar"><a href="chaoseng-ch04-slack-disasterpiece-theater-book136.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The previous chapter settled the rules: stop relying on inspection, go cause real failures. Which raises the obvious next question — so what tool do I install?</p>
+<p>This chapter's answer is a surprise: <strong>the first step isn't a tool. It's writing a script, booking a rehearsal, and getting people into one room.</strong> The author is an engineer at Slack, and the things he needed to shake were not shiny cloud-native services. They were the old, critical parts nobody had designed to break in the first place.</p>
+<h2>An analogy: a stage show with a stunt</h2>
+<p>Suppose a play calls for flying an actor on a wire. No company does this: opening night, full house, let's hoist someone up and see what happens.</p>
+<p>The normal way: first a <strong>script</strong> — who does what at which minute, and what counts as going wrong. Then a walk-through in an <strong>empty house</strong>, where you get the embarrassing mistakes out of the way: wrong rope length, bad lighting cue, someone standing in the wrong spot. And on the night itself: <strong>the safety line stays clipped, someone stands at the switch, and the whole cast agrees in advance on the word that stops everything</strong>.</p>
+<p>That rehearsal discipline is this chapter. The author calls it Disasterpiece Theater.</p>
+<h2>Why the old world was hard</h2>
+<p>The previous chapter mentioned the monkey that kills machines at random, on the assumption that traffic routes around them. It works well, but it carries a hidden precondition: <strong>those machines were built to die</strong>. Something takes over automatically; nobody has to go prop anything up.</p>
+<p>Run a company for a few years, though, and the parts that matter most rarely look like that. They are more like an old house: pull one wall and the whole thing leans, and straightening it requires a person on a ladder. <strong>Throwing a monkey at an old house isn't a drill. It's a collapse.</strong> So teams get stuck. Don't touch it, and that layer stays an unverified black box forever. Touch it carelessly, and your first drill becomes a real outage — and the reputation of the whole practice dies on the spot.</p>
+<h2>The core intuition: four things</h2>
+<ul>
+<li><strong>Write it down first.</strong> What you'll shake, which machines, which commands, what you expect to happen (whose alert fires? will users feel it?), and most importantly — <strong>how you stop</strong>. Writing and circulating the thing already catches problems: people think of half the surprises right there, with nothing injected.</li>
+<li><strong>Walk it through in the empty house.</strong> Run it once in an environment with no real users. Not for the conclusion — only to get the embarrassing errors out of the way: wrong command, missing permission, the injection tool itself broken. Otherwise on the real night you die somewhere completely unrelated to what you set out to learn.</li>
+<li><strong>On the night, have people in the room.</strong> Book a window and gather the people who know these systems to watch together. The reason is neat: <strong>one of the things under test is whether the alerts fire at all</strong> — so you can't count on alerts to summon anyone.</li>
+<li><strong>Anyone can call a stop, and "how long stopping takes" must be measured in advance.</strong> People assume stopping is instant. The undo path takes time too, sometimes minutes — so your smallest possible impact is "how long it was broken <em>plus</em> how long stopping takes".</li>
+</ul>
+<h2>What it buys you</h2>
+<p>The concrete win: you can finally touch the oldest, most critical parts, and the first touch doesn't turn into an incident. There's also a counterintuitive finding — <strong>the thing you hit most often isn't "it didn't hold up", it's "it held up and not one person knew"</strong>: everything fine, not a single alert. One honest cost: this way of rehearsing is expensive in people. You get a handful per quarter, never one a day.</p>
+<h2>Remember this</h2>
+<div class="tl">
+<p>For systems nobody designed to break, the first step in chaos engineering isn't installing a tool — it's writing the script, rehearsing in an empty house, and showing up with both the people and the stop switch in place. That's how you demote a potential outage into a rehearsal with a safety line.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the numbers and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You'd think step one of adopting chaos engineering is picking a fault-injection tool. Slack's answer: <strong>step one is a document, a review, a dry run in a non-production environment, and an abort plan whose latency you have actually measured.</strong> Because the Chaos Monkey route carries a hidden precondition — the thing being shaken was designed to die — and in any company more than a few years old, the systems that matter most are precisely the ones that weren't. This chapter doesn't hand you a tool. It hands you a <strong>process</strong> that lets a <strong>legacy system</strong> be shaken for the first time and produce knowledge instead of an incident.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Legacy system</strong>: something written years ago that still carries critical traffic. Here specifically: designed on the assumption that infrastructure is reliable, so failure is an exception rather than the norm.</li>
+<li><strong>Stateless</strong>: an instance holds no data of its own, so another one can serve just as well and it can be killed at any time. The extreme form is crash-only: the only way to stop is to crash.</li>
+<li><strong>Failover</strong>: moving traffic and roles from a dead primary to a standby. The variety that needs a human is where this chapter's difficulty lives.</li>
+<li><strong>Service discovery</strong>: the mechanism that tells callers which machines to connect to right now (Consul, DNS, a registry). It decides whether traffic routes around a vanished machine on its own.</li>
+<li><strong>Dev / staging</strong>: an environment shaped like production but carrying no real users; scale, data distribution and configuration all differ.</li>
+<li><strong>Game day</strong>: a failure exercise at a pre-agreed time with people present; this chapter's process is a disciplined version of one.</li>
+<li><strong>Blast radius</strong>: the worst-case reach of one experiment. This chapter adds a dimension to it: <strong>duration</strong>.</li>
+<li><strong>Steady state</strong>: the measurable, user-facing output of a healthy system, used to judge an experiment's outcome (principle one of the previous chapter).</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Chapter 4 of 21, and the opening of Part II, "Principles in Action" — Ch4 through Ch8 are five companies bending the previous chapter's five principles to their own constraints, and this is the first and most accessible bend: <strong>principle three (run in production) is kept; principle four (automate, run continuously) temporarily yields to a human in the loop.</strong> Downstream, Ch5 is Google's DiRT (the same posture at company scale), Ch7 is LinkedIn's ethical limits on blast radius, Ch8 is Capital One's gradual path under compliance, and Ch16 returns to full automation. In the real world it speaks to teams with <strong>a pile of services written years ago, no unified platform, and a mandate to start verifying resilience</strong> — which is to say, most teams.</p>
+<h2>What problem the chapter solves</h2>
+<p>The previous chapter's five principles carry an unstated assumption: the system under experiment <strong>was designed for failure</strong>. Chaos Monkey can terminate instances at random only because those instances are stateless, orchestrated by one platform, and routed around automatically once dead.</p>
+<p>But real infrastructure is <strong>sedimentary</strong>. The dividing line this chapter draws inside Slack is blunt: <strong>newer systems</strong> are built on "failure is normal" — no local state, restartable at will, traffic routes around them. <strong>Older systems</strong> are built on "infrastructure is reliable" — local state, failover that needs a human, sometimes a dependency on the identity of one specific machine. Unhelpfully, the older systems tend to be exactly the critical layer: databases, service discovery, message routing, identity. For scale: Slack at the time had daily actives in the millions, and every connected client holds a long-lived WebSocket connection, so a wobble in the connection layer means <strong>every online user reconnecting at once</strong>.</p>
+<p>So the question becomes: <strong>how do you experiment on a system that was never designed for failure, without the experiment itself becoming the outage?</strong></p>
+<p>What happens if you don't answer it? <strong>Either you don't dare</strong> — the most critical layer stays an unverified black box and your confidence rests entirely on "it hasn't failed yet", which the previous chapter just disqualified as evidence. <strong>Or you barge in</strong> — the first exercise becomes a real incident. The technical damage is bounded; the political damage is fatal, and the credibility of chaos engineering at that company goes to zero on the spot. <strong>Half of this chapter's process is engineering design; the other half is protecting the practice's political life.</strong></p>
+<h2>The core content, properly</h2>
+<h3>The dividing line: when a machine vanishes, does traffic route around it, or does a human have to act?</h3>
+<p>This is the most actionable sentence in the chapter; go ask it of every system you own. <strong>"Routes around"</strong> means the consequences are <em>bounded and known</em>: instance dies, health check pulls it out, the rest absorb the load. You can compute the worst case, so you can hand the judgment to a machine and let it shake things at random. <strong>"A human has to act"</strong> means the consequences are <em>not bounded in advance</em>: after injection the system enters a state nobody has seen, and recovery time depends on who's around, how well they know it, and whether the runbook is current. Random automated injection there isn't an experiment. It's a lottery ticket.</p>
+<p>This also explains why Chaos Monkey isn't a general answer — it <strong>hard-requires a platform that already manages your applications</strong> (see the evidence in §6): a system without that platform isn't "not onboarded yet", it fails the precondition architecturally.</p>
+<figure>
+<svg viewBox="0 0 700 262" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs>
+<marker id="d1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker>
+<marker id="d2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text x="350" y="20" fill="#8fbaff" font-size="12" font-weight="700" text-anchor="middle">One question splits every system in two</text>
+<rect x="208" y="36" width="284" height="42" rx="7" fill="rgba(91,157,249,0.16)" stroke="#5b9df9"></rect>
+<text x="350" y="62" fill="#e7ebf1" font-size="12.5" font-weight="700" text-anchor="middle">Take any one machine away — then what?</text>
+<line x1="300" y1="80" x2="190" y2="110" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#d1)"></line>
+<line x1="400" y1="80" x2="510" y2="110" stroke="#9b6cf5" stroke-width="1.8" marker-end="url(#d2)"></line>
+<text x="214" y="100" fill="#8fbaff" font-size="10.5" font-family="monospace" text-anchor="middle">routes around</text>
+<text x="488" y="100" fill="#c9a8ff" font-size="10.5" font-family="monospace" text-anchor="middle">human must act</text>
+<rect x="18" y="114" width="316" height="100" rx="8" fill="rgba(91,157,249,0.08)" stroke="rgba(91,157,249,0.45)"></rect>
+<text x="176" y="136" fill="#e7ebf1" font-size="12" font-weight="700" text-anchor="middle">Designed for failure</text>
+<text x="34" y="158" fill="#b9c0ca" font-size="11">stateless · crash-only · platform-orchestrated</text>
+<text x="34" y="178" fill="#b9c0ca" font-size="11">consequences bounded and known</text>
+<text x="34" y="200" fill="#8fbaff" font-size="10.5" font-family="monospace">→ automated random injection, run continuously</text>
+<rect x="356" y="114" width="326" height="100" rx="8" fill="rgba(155,108,245,0.1)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="519" y="136" fill="#e7ebf1" font-size="12" font-weight="700" text-anchor="middle">Legacy</text>
+<text x="372" y="158" fill="#b9c0ca" font-size="11">local state · manual failover · machine identity</text>
+<text x="372" y="178" fill="#b9c0ca" font-size="11">consequences not boundable in advance</text>
+<text x="372" y="200" fill="#c9a8ff" font-size="10.5" font-family="monospace">→ Disasterpiece Theater: doc, dry run, humans</text>
+<text x="350" y="242" fill="#7c8593" font-size="10.5" font-family="monospace" text-anchor="middle">The critical layer — database, discovery, identity, billing — usually lands on the right</text>
+</svg>
+<figcaption>The question isn't judging system quality. It's deciding whether the judgment can be handed to a machine — and when it can't, it goes to a process and to people.</figcaption>
+</figure>
+<h3>The pipeline: document, review, dry run, production exercise, follow-up</h3>
+<p>This pipeline is the body of the chapter: it looks heavy, but every stage eliminates one specific class of failure.</p>
+<p><strong>1. The document (the most important step).</strong> The exercise's host writes a short document up front that has to answer: which system, which fault, <strong>which commands, which instances</strong>; which dashboards, alerts and logs to watch; and the <strong>hypothesis</strong> — what you expect to happen, including which alerts will fire and <strong>whether customers will feel it</strong>.</p>
+<p>One question in that document is beautifully designed: <strong>"how confident are you that fault tolerance in the dev environment predicts fault tolerance in production?"</strong> It converts the abstract argument behind principle three into something the host must answer <em>in writing</em>, and the answer changes the design: "very confident" lets the production run be brisk; "not confident at all" demands a smaller radius, a shorter window, and more people watching.</p>
+<p><strong>2. Review.</strong> The document circulates among the relevant teams. This step is routinely undervalued: <strong>many problems get thought of during circulation, with nothing injected</strong> — the cheapest experiment on the whole pipeline.</p>
+<p><strong>3. Dry run outside production.</strong> Run it once in dev. It does not substitute for production (that would be quietly abandoning principle three); its only job is to get the <strong>embarrassing errors unrelated to your hypothesis</strong> out of the way: wrong command, missing permission, broken tooling, a dependency that won't start. Left in, those kill you somewhere irrelevant and burn a production window.</p>
+<p><strong>4. The production exercise.</strong> Book a window and gather the experts in one place to watch together. Why not let alerts summon them? Because <strong>the alerting is itself under test</strong> — you can't guarantee the verification process with the thing being verified. Scheduling it in business hours has a second benefit: the people who know the system best are awake, rather than the on-call being dragged out of bed at 3 a.m.</p>
+<p><strong>5. Record and follow up.</strong> Write down what actually happened, where it diverged from the hypothesis, and file the fixes. Skip this and the output of the first four steps decays into "everyone knew at the time" and is gone in three months.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/chaos-engineering-day44.en.html" target="_blank" rel="noopener">System Design · Day 44 Chaos Engineering</a> — the full template for one experiment: choosing an injection layer, wiring up traffic splitting and controls, setting automated abort thresholds</aside>
+<figure>
+<svg viewBox="0 0 700 304" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs>
+<marker id="e1" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker>
+<marker id="e2" markerWidth="9" markerHeight="9" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text x="350" y="19" fill="#8fbaff" font-size="12" font-weight="700" text-anchor="middle">Each stage eliminates one specific class of failure</text>
+<rect x="14" y="34" width="124" height="58" rx="7" fill="rgba(91,157,249,0.12)" stroke="rgba(91,157,249,0.5)"></rect>
+<text x="76" y="58" fill="#e7ebf1" font-size="12" font-weight="700" text-anchor="middle">1 · Document</text>
+<text x="76" y="77" fill="#8fbaff" font-size="9" font-family="monospace" text-anchor="middle">hypothesis + abort</text>
+<rect x="152" y="34" width="110" height="58" rx="7" fill="rgba(91,157,249,0.12)" stroke="rgba(91,157,249,0.5)"></rect>
+<text x="207" y="58" fill="#e7ebf1" font-size="12" font-weight="700" text-anchor="middle">2 · Review</text>
+<text x="207" y="77" fill="#8fbaff" font-size="9" font-family="monospace" text-anchor="middle">free bug-finding</text>
+<rect x="276" y="34" width="116" height="58" rx="7" fill="rgba(91,157,249,0.12)" stroke="rgba(91,157,249,0.5)"></rect>
+<text x="334" y="58" fill="#e7ebf1" font-size="12" font-weight="700" text-anchor="middle">3 · Dry run</text>
+<text x="334" y="77" fill="#8fbaff" font-size="9" font-family="monospace" text-anchor="middle">drop the dumb errors</text>
+<rect x="406" y="34" width="134" height="58" rx="7" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2"></rect>
+<text x="473" y="58" fill="#e7ebf1" font-size="12" font-weight="700" text-anchor="middle">4 · Production</text>
+<text x="473" y="77" fill="#c9a8ff" font-size="9" font-family="monospace" text-anchor="middle">humans present · window</text>
+<rect x="554" y="34" width="132" height="58" rx="7" fill="rgba(91,157,249,0.12)" stroke="rgba(91,157,249,0.5)"></rect>
+<text x="620" y="58" fill="#e7ebf1" font-size="12" font-weight="700" text-anchor="middle">5 · Follow up</text>
+<text x="620" y="77" fill="#8fbaff" font-size="9" font-family="monospace" text-anchor="middle">file the fixes</text>
+<line x1="140" y1="63" x2="148" y2="63" stroke="#5b9df9" stroke-width="1.8" marker-end="url(#e1)"></line>
+<line x1="264" y1="63" x2="272" y2="63" stroke="#5b9df9" stroke-width="1.8" marker-end="url(#e1)"></line>
+<line x1="394" y1="63" x2="402" y2="63" stroke="#5b9df9" stroke-width="1.8" marker-end="url(#e1)"></line>
+<line x1="542" y1="63" x2="550" y2="63" stroke="#9b6cf5" stroke-width="1.8" marker-end="url(#e2)"></line>
+<path d="M334,96 L334,112 L76,112 L76,96" fill="none" stroke="#5b9df9" stroke-width="1.5" stroke-dasharray="5 3" marker-end="url(#e1)"></path>
+<text x="205" y="128" fill="#7c8593" font-size="10" font-family="monospace" text-anchor="middle">a finding in review or dry run sends you back to the document</text>
+<rect x="14" y="148" width="672" height="78" rx="8" fill="rgba(155,108,245,0.07)" stroke="rgba(155,108,245,0.35)"></rect>
+<text x="32" y="170" fill="#c9a8ff" font-size="11.5" font-weight="700">Four things the production run needs</text>
+<text x="32" y="192" fill="#b9c0ca" font-size="11">experts in one place — because "will the alert fire?" is itself under test</text>
+<text x="32" y="213" fill="#b9c0ca" font-size="11">a booked window · anyone may call a stop · abort latency measured beforehand</text>
+<rect x="14" y="242" width="672" height="50" rx="8" fill="rgba(255,255,255,0.025)" stroke="rgba(91,157,249,0.22)"></rect>
+<text x="32" y="263" fill="#e7ebf1" font-size="11">real blast radius = reach of the fault × (time injected + <tspan fill="#8fbaff" font-weight="700">time for the abort to take effect</tspan>)</text>
+<text x="32" y="282" fill="#7c8593" font-size="10.5" font-family="monospace">the second term is the one people forget: some undo paths take minutes</text>
+</svg>
+<figcaption>The document and the dry run both push failure earlier — and the earliest failure is also the cheapest, happening before anyone types a command.</figcaption>
+</figure>
+<h3>The abort plan is a first-class citizen, not an appendix</h3>
+<p>Most teams' abort plan is one line: "roll back if there's a problem." That is not a plan. The chapter wants three specifics:</p>
+<ul>
+<li><strong>The exact undo action</strong>: which command, which flag, who has the permission to run it.</li>
+<li><strong>How long the undo takes to take effect.</strong> The most-forgotten and most surprising item: the undo path is usually the less-tested one and can take minutes — service discovery has propagation delay, connection pools rebuild slowly, caches need re-warming. So your real blast radius is <code>reach × (time injected + abort latency)</code>, and if you never measure the second term, squeezing the first to 1% means nothing.</li>
+<li><strong>Who may call a stop, against what criteria.</strong> The answer is "anyone in the room", and the criteria are written down in advance (principle one). Nobody should be arguing on the spot about whether this counts as abnormal.</li>
+</ul>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/deployment-release-day22.en.html" target="_blank" rel="noopener">System Design · Day 22 Deployment &amp; Release</a> — why the rollback path is always less trustworthy than the forward path, and how to make "automatic rollback in 5 minutes" actually work</aside>
+<h3>The three findings this process keeps hitting</h3>
+<p>Ordered by value, and the most valuable one is the least expected:</p>
+<ol>
+<li><strong>The system held up, and nobody knew it held up.</strong> Tolerance worked, users felt nothing — and <strong>not a single alert fired</strong>, or a few irrelevant ones did. It tells you that next time, for real, you'll find out tens of minutes late. In other words: <strong>the first thing an exercise verifies isn't whether the system survives, it's whether you'd know.</strong></li>
+<li><strong>It survived the fault and died on recovery.</strong> The moment you undo: mass reconnection, cold caches, a retry storm. The recovery path gets tested far less than the failure path — during a real incident everyone is firefighting, and few people circle back to verify that the recovery action itself is safe.</li>
+<li><strong>The fault won't go in at all.</strong> You run the commands from the document and nothing happens, because the real configuration isn't what you believed: that "redundancy" was quietly turned into a single point by some change, or the traffic never took the path you assumed. This one says <strong>your mental model is wrong</strong> — Ch1's claim cashing out in front of you.</li>
+</ol>
+<h3>Why a human in the loop is the right starting point, not a backward compromise</h3>
+<p>Automated injection has a precondition: <strong>you already know the consequences of this fault are bounded.</strong> The first time you shake an old system you specifically don't — so having people present isn't timidity, it's supplying the missing precondition.</p>
+<p>That also gives the direction of travel: <strong>the marginal value of humans in the room is highest the first time and lowest the Nth.</strong> Once the same experiment has run a few rounds, the consequences are understood and the criteria can be written as code, hand it to a machine to run daily (Ch16). The process is the entrance, not the destination.</p>
+<p>And one by-product automation can never produce: <strong>education</strong>. An exercise puts five to ten engineers in one place, looking at one set of graphs, correcting their own guesses in the same minute — forcibly stitching together the partial mental models of Ch1. A pipeline produces a green light; an exercise produces five updated understandings.</p>
+<h2>Key trade-offs</h2>
+<p>The first table applies the dividing line: which approach each of your systems deserves.</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>System shape</th><th>Take one machine away</th><th>Automated injection?</th><th>The right approach</th><th>Cost / failure mode</th></tr></thead>
+<tbody>
+<tr><th>Stateless +<br/>platform-orchestrated</th><td>health check pulls it; the rest absorb</td><td><strong>Yes</strong></td><td>random automated injection, continuously</td><td>presupposes the orchestration platform</td></tr>
+<tr><th>Stateful + automatic failover<br/>(consensus cluster, auto-promote)</th><td>it fails over, with seconds of wobble and a data cost</td><td>Semi</td><td>a few human-in-the-loop rounds first, confirming failover <strong>actually happens</strong> and takes an acceptable time</td><td>failover itself may lose the last sliver of writes</td></tr>
+<tr><th>Stateful + manual failover</th><td>enters a state nobody has seen</td><td><strong>No</strong></td><td><strong>Disasterpiece Theater</strong>: document, review, dry run, humans present</td><td>expensive in people; frequency stays low</td></tr>
+<tr><th>A genuine single point</th><td>straight to unavailable</td><td>No</td><td>don't experiment — go build redundancy</td><td>shaking it only confirms what you already know</td></tr>
+</tbody>
+</table>
+</div>
+<p class="tcap">One criterion: when this machine vanishes, does traffic route around it or does a human act? That decides whether the judgment can go to a machine.</p>
+<p>The second table is the "where to run it" trade-off, and the point is to be clear about what each tier <strong>cannot</strong> catch.</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Where</th><th>Catches</th><th>Cannot catch</th><th>When to use it</th></tr></thead>
+<tbody>
+<tr><th>Dry run outside production</th><td>wrong commands, missing permissions, broken tooling, absent dependencies</td><td>anything that depends on <strong>scale</strong>: pool exhaustion, retry storms, cache collapse</td><td>before every production exercise, always</td></tr>
+<tr><th>Production, human in the loop<br/>(this chapter)</th><td>behaviour at real scale, <strong>whether alerts fire</strong>, whether recovery is safe</td><td>rare fault combinations — frequency stays at a handful per quarter</td><td>the first time you shake a legacy system</td></tr>
+<tr><th>Production, automated<br/>(Ch16)</th><td>frequency and coverage, plus regression: does last month's conclusion still hold?</td><td>anything needing live human judgment; it only checks criteria already encoded</td><td>once the same experiment has run a few rounds</td></tr>
+</tbody>
+</table>
+</div>
+<p>Concretely:</p>
+<ul>
+<li><strong>First time shaking a critical legacy system</strong>: run the whole pipeline — one variable, one window, business hours, people present. Don't skip the dry run; the step you skip is the one that kills you with a typo inside a production window.</li>
+<li><strong>A platform team rolling this out</strong>: invest in the abort switch, per-group metrics and an exercise document template before piling up injection mechanisms. The previous chapter said injection was never the bottleneck; this one adds: <strong>the host's confidence is the bottleneck</strong>, and templates and dry runs are how you manufacture it.</li>
+</ul>
+<h2>Why it matters / in real systems</h2>
+<p>Three sentences from this chapter can change a design review outright. <strong>One</strong>: before asking "which system do we shake first", ask "when it vanishes, does traffic route around it or does a human act" — the answer picks the method, rather than the tool picking it for you. <strong>Two</strong>: an exercise first verifies not whether the system survives, but <strong>whether you'd know</strong>. <strong>Three</strong>: an abort plan has to report a number — how many seconds until the undo takes effect.</p>
+<p>Asked in an interview how you verify failure behaviour in production, "we use tool X" is the tool layer. "Our critical systems weren't designed for failure, so we run document, review, dry run, humans in the loop, and the abort latency has to be measured" is a different level — it shows you know what automation's preconditions are.</p>
+<div class="ev">
+<p class="evh">Evidence from industry</p>
+<ul>
+<li><strong>Netflix put the precondition in the README.</strong> Chaos Monkey's project description states what it does in one line: it "randomly terminates virtual machine instances and containers that run inside of your production environment." But the hard prerequisite follows immediately: "This version of Chaos Monkey is fully integrated with Spinnaker, the continuous delivery platform that we use at Netflix. <strong>You must be managing your apps with Spinnaker</strong> to use Chaos Monkey to terminate instances." That is this chapter's dividing line, stated by the tool's own authors: the monkey route isn't "not onboarded yet", it fails the precondition architecturally. <span class="src">Netflix · Chaos Monkey project description (<a href="https://github.com/Netflix/chaosmonkey" target="_blank" rel="noopener">github.com/Netflix/chaosmonkey</a>, text verified during this run)</span></li>
+<li><strong>Google's DiRT is the same posture at company scale.</strong> Exercises are planned in writing, reviewed in advance, and required to have a way to be stopped — and what gets shaken includes processes and people, not only technical components. It shows that "humans in the loop plus a written plan" is not a small-company stepping stone but the only honest way to shake what cannot be automated. It is also the subject of the next chapter. <span class="src">Kripa Krishnan · "Weathering the Unexpected" · ACM Queue, 2012 (that domain was blocked by the egress proxy during this run; text-only citation)</span></li>
+</ul>
+</div>
+<h2>Pitfalls and open questions</h2>
+<ul>
+<li><strong>Verifying "it held up" and not "the alert fired".</strong> A silent pass with every alert quiet gets recorded as a success; it is in fact a red light.</li>
+<li><strong>A dry run that passes, so you skip the production run.</strong> That is quietly abandoning principle three: a dry run catches commands and permissions, and nothing that depends on scale.</li>
+<li><strong>Treating the process as a placeholder for "we're not advanced yet" and rushing to automation.</strong> Automation's precondition is bounded consequences; jumping before you have it outsources the lottery ticket to a machine.</li>
+<li><strong>Conversely, treating the process as the destination.</strong> Low frequency is its genuine defect: a handful per quarter, and coverage that doesn't compare. <strong>Several boring rounds in a row is a signal to automate, not a reason to celebrate.</strong></li>
+<li><strong>Using exercises to evaluate engineers.</strong> The moment someone is blamed for what an exercise exposed, nobody will host the next one and nobody will put a pessimistic hypothesis in writing — the process degrades into theatre immediately. That's Ch18's subject, and the unstated precondition for this chapter's process working at all.</li>
+<li><strong>The open question: is this even chaos engineering?</strong> Read principle four strictly and a human-in-the-loop exercise is closer to a game day. The honest cost is frequency and coverage; the defence is that for these systems <strong>automation's precondition does not yet exist</strong>, and not doing it is worse than doing it slowly.</li>
+<li><strong>Period limits.</strong> This is Slack, 2018–2020. Unified orchestration and mature injection frameworks have made the right-hand column shorter, not empty: every company still has its own sediment — databases, identity, billing, settlement. This process keeps its shelf life for exactly as long as that layer does.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1 · The claim: step one of adopting chaos engineering is a <strong>process</strong>, not a tool — because the systems that matter most were never designed to break, and automated injection against them isn't an experiment, it's an outage.</p>
+<p>2 · The dividing line: <strong>when a machine vanishes, does traffic route around it or must a human act?</strong> Human → consequences unbounded → human in the loop. It also explains why Chaos Monkey isn't general: it hard-requires an orchestration platform.</p>
+<p>3 · Five stages: <strong>document → review → non-production dry run → human-in-the-loop production exercise → record and follow up</strong>; each eliminates a class of failure, and earlier failures are cheaper.</p>
+<p>4 · The best question in the document: <strong>"how confident are you that dev fault tolerance predicts prod fault tolerance?"</strong> It turns "staging isn't production" from an abstract argument into something answered in writing and acted on.</p>
+<p>5 · Gather the experts in one place for the production run, <strong>because "will the alert fire?" is itself under test</strong> — you can't guarantee the verification with the thing being verified. Business hours mean the people who know it best are awake.</p>
+<p>6 · The abort plan needs three specifics: the undo action, <strong>how long the undo takes</strong>, and who may call a stop. Real blast radius = reach × (time injected + abort latency).</p>
+<p>7 · Three typical findings, the first most counterintuitive: <strong>it held up and nobody knew</strong> (alerts silent); survived the fault and died on recovery; the fault wouldn't go in at all (your mental model was wrong).</p>
+<p>8 · A human in the loop isn't backwardness — it supplies automation's missing precondition, and produces what automation can't: five to ten mental models updated at once. But frequency stays low, so the destination is still Ch16's continuous verification.</p>
+<p>9 · The moment exercises are used to assign blame they degrade into theatre: nobody hosts, nobody writes down a pessimistic hypothesis.</p>
+</div>
+</div>
+<footer>Book Deep-Read · One page ≈ the core of one chapter; for the full cases and extensions, go to the book.</footer>
+</div>
+
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
