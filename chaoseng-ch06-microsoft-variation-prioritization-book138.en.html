@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Chaos Engineering Ch 6 · Microsoft: Variation and Prioritization of Experiments — Book Deep-Read 138</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOK DEEP-READ · CHAOS ENGINEERING · CH 6</p>
+<h1>Microsoft: Variation and Prioritization of Experiments</h1>
+<p class="sub">Chaos Engineering: System Resiliency in Practice · Ch 6 · Microsoft · 2020</p>
+<p class="langbar"><a href="chaoseng-ch06-microsoft-variation-prioritization-book138.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The last two chapters were about <em>how to stage a drill</em> — Slack scripting one for a legacy system, Google scaling one up to the whole company. This chapter steps back and asks something more basic: <strong>which failure should you break first?</strong></p>
+<p>Any moderately complex production system has more ways to break than you can count, and you only get a few dozen good experiments a year. Where should those few dozen go?</p>
+<h2>An analogy: which test does a check-up start with?</h2>
+<p>A hospital can run a thousand different tests. You have one morning.</p>
+<p>The smart move is not to pick at random, and not to use the most expensive machine on every organ. It is to ask two things: <strong>how likely is this problem at your age and lifestyle</strong>, and <strong>how bad is it if you have it</strong>. Heart and blood pressure go first; tropical parasites go last — not because parasites are harmless, but because the odds on you are tiny. Chaos experiments get ranked by the same ruler.</p>
+<h2>Why the old way is hard</h2>
+<p>Many teams start chaos work by installing a tool, then let the tool's feature list become the experiment list: <strong>it can kill machines at random, so they keep killing machines.</strong></p>
+<p>Two hundred kills, nothing broke. That is reassuring — but it may only mean you already knew nothing would break. The handful of things that could actually take the system down were never touched.</p>
+<p>The other half is more awkward: <strong>a complete list is impossible to write.</strong> There are twenty or thirty dependencies, each can go wrong in several distinct ways, and multiplying gives thousands.</p>
+<h2>The core intuition: three things</h2>
+<ul>
+<li><strong>Start from dependencies, not from what the tool can do.</strong> Write down everything a single request touches — database, downstream services, cache, plus the easy-to-forget ones: name resolution, certificates, config rollout, time. The test is simple: <strong>if it breaks and your request gets slower or fails, it belongs on the list</strong> — whether or not anyone drew it on the architecture diagram.</li>
+<li><strong>"Slow" matters more than "dead."</strong> When a service dies outright, your code usually copes, because it gets an error immediately. The nasty case is a service that is still alive but went from 0.05 seconds to 3 seconds — every waiting slot in the caller fills up, and requests that have nothing to do with it jam too. There is a worse rung still: it answers normally, with wrong data, and no alarm fires at all.</li>
+<li><strong>Rank by "how likely × how much it hurts," not by "how interesting."</strong> For a failure that has already happened to you, the probability is measured, not guessed. And one counter-intuitive rule: <strong>the thing most worth breaking first is often the dependency everyone calls unimportant</strong> — "unimportant" is a claim nobody ever verified, and if it is wrong the whole chain goes down with it.</li>
+</ul>
+<h2>What it buys you / how to choose</h2>
+<p>You spend a limited number of shots where they can actually teach you something. One more rule saves a lot of effort: <strong>do not run an experiment whose answer you already know.</strong> If you are sure it will break, do not break it — go fix it; breaking it is just scheduling your own incident. One honest cost: the ranking rests on estimates of probability and impact, and estimates are wrong, so the failures you ranked last will still come for you.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p>There are infinitely many ways to break and only a few dozen experiments — so the real craft of chaos engineering is not injection but ordering: start from the dependency list, favour the "slow" and "wrong data" modes, rank by likelihood × pain, and skip the ones whose answer you already know.</p>
+</div>
+<p class="switch-hint">Want the mechanism, the numbers and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">You think the barrier to chaos engineering is injection capability — can you kill a process, cut a network link, add latency. This chapter moves the barrier: <strong>injection was never the bottleneck; selection is.</strong> The fault space explodes combinatorially with dependencies times failure modes, while the experiment budget is bounded on three sides at once — people, risk and time windows. So the real engineering problem is <strong>variation and prioritization</strong>: start from a complete dependency inventory, spread variation along the failure-mode gradient (dead → slow → wrong data), rank by <code>probability × impact ÷ cost</code>, and <strong>never run an experiment whose answer you already know</strong> — the product of an experiment is removed uncertainty, not a staged incident.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Chaos experiment</strong>: injecting a failure that could realistically occur, around a falsifiable hypothesis, to see whether the hypothesis holds.</li>
+<li><strong>Steady-state hypothesis</strong>: "the system is fine right now" expressed as a business metric (say, checkout success ≥ 99.9%), compared before and after.</li>
+<li><strong>Dependency</strong>: anything on the request path where "if it breaks, you get slower or fail" — services, middleware, DNS, certificates, config rollout all count.</li>
+<li><strong>Implicit dependency</strong>: a dependency that is genuinely on the path but was never drawn on the diagram. The biggest source of gaps in this chapter.</li>
+<li><strong>Failure mode</strong>: the distinct ways one dependency can go wrong: connection refused, timeout, degradation, wrong data.</li>
+<li><strong>Degradation</strong>: not dead, just slower or only serving part of the traffic. This chapter argues it is harder to handle than an outright outage.</li>
+<li><strong>Variation</strong>: spreading one injection point along mode, load, region and failure ratio, so you get a family of experiments instead of one.</li>
+<li><strong>Blast radius</strong>: the worst-case span of users and systems an experiment can touch (Ch3, principle five).</li>
+<li><strong>Pool saturation</strong>: the caller's connection or thread slots for waiting on a downstream all fill up, so unrelated requests start failing too.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Chapter 6, the third piece in Part II on principles in practice, written from Microsoft's vantage point. <strong>It divides labour with the previous two as "how to run one" versus "which one to run"</strong>: Ch4 has Slack script a drill for a legacy system, Ch5 has Google scale drills to company size, and this one steps back to ask where the budget should go. Ahead, Ch7 (LinkedIn) governs the ethical ceiling on experiments, and Ch12 uses lineage-driven fault injection (LDFI) to promote this chapter's human judgement into an algorithm. In the real world it is aimed at <strong>teams whose tooling is already in place but whose experiment list contains exactly one item: kill a random instance</strong>.</p>
+<h2>What this chapter is solving</h2>
+<p>Start with the scale. For a mid-sized production service, the dependencies on a single request path run to a dozen explicit ones (database, cache, auth, a few downstream RPCs, a queue, object storage) plus a dozen implicit ones (DNS, TLS certificates, service discovery, config and feature-flag rollout, clocks, the metrics backend, the image registry). Call it twenty-five, each with at least 4 failure modes, and <strong>single-dependency single-mode candidates already number in the hundreds</strong>; allow two dependencies to fail together and it is tens of thousands; layer on load level, region and failure ratio and it keeps climbing.</p>
+<p>The budget, meanwhile, is bounded on three sides: <strong>people</strong> (a decent experiment needs a hypothesis, metrics and an abort plan — Ch4 showed how heavy that is), <strong>risk</strong> (every production injection can turn into a real incident) and <strong>time windows</strong> (off-peak, humans in the loop). A team doing this seriously runs experiments well in the <strong>dozens</strong> per year, not the thousands.</p>
+<p>What happens if you skip the problem? Three typical degenerations:</p>
+<ul>
+<li><strong>A tool-driven list.</strong> The tool kills instances, so the list is kill-instances. Two hundred green runs, while "downstream got slow" — the thing that will actually take you down — was never tried.</li>
+<li><strong>An interest-driven list.</strong> You pick the technically exciting ones (clock skew, split brain). They are real, but two orders of magnitude less likely on your system, and they consume the same budget.</li>
+<li><strong>Running a known answer.</strong> You know that call has no timeout, and you inject latency anyway to "prove" it breaks. That is not an experiment; it is a self-scheduled incident.</li>
+</ul>
+<p>So the question is: <strong>in a fault space you cannot enumerate, what explainable rule picks the next ten experiments?</strong></p>
+<h2>The core content, properly</h2>
+<h3>The fault space explodes, so the goal is ordering, not coverage</h3>
+<p>One relation is enough: <strong>candidate experiments ≈ dependencies × failure modes × other variation axes</strong>. Each factor is merely in the tens; multiplied, you land in the thousands. That settles it — chaos engineering cannot chase coverage the way unit tests do. <strong>It is sampling by nature</strong>, and all of its quality lives in the sampling rule.</p>
+<p>It also explains why injection capability is not the bottleneck: your tooling can already generate far more experiments than you can run. Judgement is the scarce resource.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 700 246" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="c1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text fill="#8fbaff" font-size="12" font-weight="700" text-anchor="middle" x="350" y="18">Fault space vs experiment budget — you can only sample, so the rule is everything</text>
+<rect fill="rgba(91,157,249,0.12)" height="54" rx="7" stroke="rgba(91,157,249,0.5)" width="140" x="18" y="40"></rect>
+<text fill="#e7ebf1" font-size="11.5" font-weight="700" text-anchor="middle" x="88" y="60">Dependencies</text>
+<text fill="#b9c0ca" font-size="10" text-anchor="middle" x="88" y="77">~12 explicit + ~12 implicit</text>
+<text fill="#8fbaff" font-family="monospace" font-size="11" font-weight="700" text-anchor="middle" x="88" y="90">≈ 25</text>
+<text fill="#9b6cf5" font-size="15" font-weight="700" text-anchor="middle" x="172" y="72">×</text>
+<rect fill="rgba(124,120,250,0.12)" height="54" rx="7" stroke="rgba(124,120,250,0.55)" width="140" x="186" y="40"></rect>
+<text fill="#e7ebf1" font-size="11.5" font-weight="700" text-anchor="middle" x="256" y="60">Failure modes</text>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="256" y="77">refused · timeout · slow · bad data</text>
+<text fill="#c9a8ff" font-family="monospace" font-size="11" font-weight="700" text-anchor="middle" x="256" y="90">≈ 4</text>
+<text fill="#9b6cf5" font-size="15" font-weight="700" text-anchor="middle" x="340" y="72">×</text>
+<rect fill="rgba(155,108,245,0.14)" height="54" rx="7" stroke="rgba(155,108,245,0.6)" width="150" x="354" y="40"></rect>
+<text fill="#e7ebf1" font-size="11.5" font-weight="700" text-anchor="middle" x="429" y="60">Other axes</text>
+<text fill="#b9c0ca" font-size="9.5" text-anchor="middle" x="429" y="77">load · region · failure ratio</text>
+<text fill="#c9a8ff" font-family="monospace" font-size="11" font-weight="700" text-anchor="middle" x="429" y="90">≈ 10+</text>
+<text fill="#9b6cf5" font-size="15" font-weight="700" text-anchor="middle" x="518" y="72">=</text>
+<rect fill="rgba(155,108,245,0.2)" height="54" rx="7" stroke="#9b6cf5" stroke-width="2" width="150" x="532" y="40"></rect>
+<text fill="#e7ebf1" font-size="11.5" font-weight="700" text-anchor="middle" x="607" y="60">Candidates</text>
+<text fill="#c9a8ff" font-family="monospace" font-size="13" font-weight="700" text-anchor="middle" x="607" y="80">10³ – 10⁴</text>
+<text fill="#7c8593" font-family="monospace" font-size="9.5" text-anchor="middle" x="607" y="91">before any pairings</text>
+<text fill="#8fbaff" font-size="11.5" font-weight="700" x="18" y="128">Experiments run well per year:</text>
+<rect fill="rgba(255,255,255,0.03)" height="20" rx="4" stroke="rgba(91,157,249,0.35)" width="488" x="194" y="114"></rect>
+<rect fill="#5b9df9" height="20" rx="4" width="7" x="194" y="114"></rect>
+<text fill="#8fbaff" font-family="monospace" font-size="10.5" x="208" y="129">a few dozen — that sliver is the entire budget</text>
+<line marker-end="url(#c1)" stroke="#9b6cf5" stroke-width="1.6" x1="350" x2="350" y1="142" y2="160"></line>
+<rect fill="rgba(91,157,249,0.07)" height="54" rx="8" stroke="rgba(91,157,249,0.45)" width="664" x="18" y="162"></rect>
+<text fill="#e7ebf1" font-size="11.5" font-weight="700" x="34" y="182">Sampling rule = probability × impact ÷ cost, minus the known answers</text>
+<text fill="#b9c0ca" font-size="10.5" x="34" y="200">Hardest input for probability is incident history; impact from the path's QPS and money; cost includes coordination</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle" x="350" y="236">Coverage is hopeless; the quality of chaos engineering = the quality of the sampling rule</text>
+</svg>
+<figcaption>Three factors in the tens push candidates into the thousands, while the budget is that narrow sliver — so "how to inject" stopped being the question long ago; "in what order to sample" is the question.</figcaption>
+</figure>
+<h3>Start from the dependency inventory: implicit ones are the biggest gap</h3>
+<p>Where the list comes from sets your ceiling: <strong>start from what the tool can do</strong> and the list looks like a feature list; <strong>start from dependencies</strong> and it finally looks like your system.</p>
+<p>The test is one sentence: <strong>if it breaks and your request gets slower or fails, it is a dependency.</strong> Run that filter and you usually dredge up a batch of never-tested things: DNS, TLS certificate expiry and revocation checks, service discovery, config and feature-flag rollout, NTP, the metrics backend (does a thread block when writes fail?), the image registry (used only when scaling out, so it fails precisely when you most need to scale out).</p>
+<p>The most valuable finding hides right here: <strong>the dependency labelled "non-critical."</strong> "Analytics failing doesn't affect checkout" is a hypothesis; inject once and you often discover the call is synchronous, has no timeout, and shares a thread pool with the main path. <strong>Criticality is an experimental result, not a claim in a design doc</strong> — so "everyone says it doesn't matter" is a high-priority signal.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/chaos-engineering-day44.en.html" rel="noopener" target="_blank">System Design · Day 44 Chaos Engineering</a> — how to write a steady-state hypothesis, orchestrate experiments, and implement blast-radius limits and automatic abort</aside>
+<h3>Failure modes form a gradient: "slow" and "wrong data" are the real killers</h3>
+<p>This is the thing to take away. For one dependency, ordered by how hard it is for fault-tolerant code to absorb, there are four rungs:</p>
+<ul>
+<li><strong>① Fail fast</strong>: connection refused, immediate error. Easiest to absorb — circuit breakers, retries and fallbacks were all designed for it.</li>
+<li><strong>② Unavailable without an error</strong>: the request hangs until it times out. Assumes you actually set a timeout, and that the value was computed rather than left at a default 60s.</li>
+<li><strong>③ Degradation</strong>: still alive, p99 just went from 50ms to 3s. The sneakiest rung: no error code, and the dashboard still reads 100% availability.</li>
+<li><strong>④ Wrong or partial data</strong>: a clean 200 with content that is incorrect or truncated. Zero signal, silently poisoning downstream systems and caches.</li>
+</ul>
+<p>Why rung ③ is the most dangerous can be computed: at 200 QPS upstream with a downstream p99 of <code>50ms</code>, and <code>concurrency ≈ QPS × latency</code>, steady state needs about 10 slots; degrade to <code>3s</code> and you need 600 slots while the connection pool holds 50 — within seconds the pool is full and <strong>requests that never touch that downstream start failing too</strong>. A "non-critical" dependency is thereby promoted to a site-wide outage, having never returned a single error.</p>
+<p>So the first cut of variation should follow this gradient: <strong>every dependency you have already killed still owes you two experiments — inject latency, inject wrong data.</strong> Far cheaper than finding another dependency to kill, and far more productive.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="d1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text fill="#8fbaff" font-size="12" font-weight="700" text-anchor="middle" x="350" y="18">The failure-mode gradient — code is tested on rung ①, outages happen on ③ and ④</text>
+<rect fill="rgba(91,157,249,0.13)" height="38" rx="6" stroke="rgba(91,157,249,0.5)" width="380" x="18" y="34"></rect>
+<text fill="#e7ebf1" font-size="11.5" font-weight="700" x="30" y="50">① Fail fast · connection refused</text>
+<text fill="#b9c0ca" font-size="10.5" x="30" y="65">Breakers, retries, fallbacks were built for this — easiest to absorb</text>
+<rect fill="rgba(124,120,250,0.13)" height="38" rx="6" stroke="rgba(124,120,250,0.55)" width="380" x="18" y="78"></rect>
+<text fill="#e7ebf1" font-size="11.5" font-weight="700" x="30" y="94">② Unavailable, no error · hangs to timeout</text>
+<text fill="#b9c0ca" font-size="10.5" x="30" y="109">Only if a timeout exists and its value was computed, not defaulted to 60s</text>
+<rect fill="rgba(155,108,245,0.17)" height="38" rx="6" stroke="#9b6cf5" stroke-width="1.8" width="380" x="18" y="122"></rect>
+<text fill="#e7ebf1" font-size="11.5" font-weight="700" x="30" y="138">③ Degradation · p99 50ms becomes 3s</text>
+<text fill="#b9c0ca" font-size="10.5" x="30" y="153">No error code; availability still reads 100% — the sneakiest rung</text>
+<rect fill="rgba(155,108,245,0.22)" height="38" rx="6" stroke="#9b6cf5" stroke-width="1.8" width="380" x="18" y="166"></rect>
+<text fill="#e7ebf1" font-size="11.5" font-weight="700" x="30" y="182">④ Wrong / partial data · a clean 200</text>
+<text fill="#b9c0ca" font-size="10.5" x="30" y="197">Zero signal, silently poisons downstream and caches — hardest to detect</text>
+<line marker-end="url(#d1)" stroke="#9b6cf5" stroke-width="1.6" x1="408" x2="408" y1="40" y2="196"></line>
+<text fill="#c9a8ff" font-family="monospace" font-size="9.5" text-anchor="middle" transform="rotate(-90 423 118)" x="423" y="118">harder to absorb, less often tested</text>
+<rect fill="rgba(91,157,249,0.08)" height="162" rx="8" stroke="rgba(91,157,249,0.45)" width="238" x="444" y="34"></rect>
+<text fill="#8fbaff" font-size="11.5" font-weight="700" x="458" y="54">How rung ③ goes site-wide</text>
+<text fill="#b9c0ca" font-size="10.5" x="458" y="76">Steady: 200 QPS × 50ms</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10.5" x="458" y="92">→ ~10 slots; a pool of 50 is fine</text>
+<text fill="#b9c0ca" font-size="10.5" x="458" y="114">Degraded: 200 QPS × 3s</text>
+<text fill="#c9a8ff" font-family="monospace" font-size="10.5" x="458" y="130">→ 600 slots needed, pool holds 50</text>
+<text fill="#e7ebf1" font-size="10.5" font-weight="700" x="458" y="154">Pool fills within seconds</text>
+<text fill="#c9a8ff" font-size="10.5" x="458" y="172">Requests not using it fail as well</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="350" y="226">First cut of variation: every killed dependency still owes you latency injection and bad-data injection</text>
+<rect fill="rgba(255,255,255,0.02)" height="34" rx="6" stroke="rgba(155,108,245,0.35)" width="664" x="18" y="240"></rect>
+<text fill="#c9a8ff" font-size="11" x="34" y="262">It never returned a single error — so a 100%-availability dashboard cannot be used as proof of health</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" text-anchor="middle" x="350" y="292">One injection point spread along the modes is a family of experiments: that is what this chapter calls variation</text>
+</svg>
+<figcaption>Those three lines of arithmetic on the right are the chapter's most useful artefact: a dependency that never errors turns its own degradation into someone else's outage by occupying the caller's waiting slots.</figcaption>
+</figure>
+<h3>The ranking rule: expected loss over cost, minus the known answers</h3>
+<p>Priority = <code>probability × impact ÷ cost</code>. All three need inputs you can state out loud:</p>
+<ul>
+<li><strong>Probability</strong>: the hardest input is <strong>incident history</strong> — a class of failure that has happened twice has a measured probability, not an estimated one. Next come the dependency's own SLA and availability record, then change frequency: recently modified things break more.</li>
+<li><strong>Impact</strong>: computed from traffic and money, not from how important the component feels — how much QPS this path carries, whether payments are involved, whether a failed user retries or churns.</li>
+<li><strong>Cost</strong>: design time, cross-team coordination and blast-radius management. At equal payoff, take the cheap one: run it on a single instance or a small traffic slice first, widen once it passes.</li>
+</ul>
+<p>Two filters after the ranking save more budget than the ranking itself:</p>
+<p><strong>One: skip the known answers.</strong> If you are convinced it will fail (no timeout, no fallback) → file a bug and fix it, do not inject. If you are convinced it will pass <strong>and you have verified that</strong> → it does not deserve another window either. The product of an experiment is <strong>removed uncertainty</strong>, so what deserves running is exactly the batch you are confident about but have never verified — every surprise lives there.</p>
+<p><strong>Two: one injection collects three things.</strong> The same run can verify system behaviour, <strong>whether the alert fires</strong>, and whether people and runbooks keep up. Attaching monitoring verification costs almost nothing at the margin and is the thing most often forgotten. That also raises the priority of some "I'm confident" experiments — you run them not to watch the system but to watch the pager.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/fat-tailed-risk-day53.en.html" rel="noopener" target="_blank">System Design · Day 53 Fat-Tailed Risk</a> — why ranking by the mean systematically underweights the rare-but-fatal class, and how to manage the tail instead</aside>
+<h2>Key trade-offs and choices</h2>
+<p>The first table lands the gradient: for one dependency, what each of the four injections verifies and why it gets skipped.</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Failure mode</th><th>What it verifies</th><th>Usual defence</th><th>Why it goes untested</th><th>Priority</th></tr></thead>
+<tbody>
+<tr><th>① Refused / fail fast</th><td>Whether breaker and fallback paths actually work</td><td>Circuit breaker, retry, default value</td><td>It isn't skipped — nearly everyone starts here</td><td>Low (likely already verified)</td></tr>
+<tr><th>② Timeout</th><td>Whether a timeout exists and was computed</td><td>Explicit timeouts + budget propagation</td><td>The default hides inside a client library nobody read</td><td>Medium-high</td></tr>
+<tr><th>③ Degradation (latency)</th><td><strong>Whether pool saturation spreads failure to unrelated requests</strong></td><td>Bulkheads, load shedding, adaptive concurrency</td><td>No error code; the availability dashboard is all green</td><td><strong>Highest</strong></td></tr>
+<tr><th>④ Wrong / partial data</th><td>Validation, reconciliation and cache-poisoning defences</td><td>Schema validation, checksums, reconciliation jobs</td><td>Costly to inject, and needs a correctness oracle</td><td>High (valuable but hard)</td></tr>
+</tbody>
+</table>
+</div>
+<p class="tcap">The trap is spending the whole budget on rung ①. That is precisely the one rung you have probably already absorbed.</p>
+<p>The second table runs the chapter's ruler over a candidate list, to show what "which few first" looks like.</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Candidate experiment</th><th>Probability from</th><th>Impact</th><th>Cost</th><th>Verdict</th></tr></thead>
+<tbody>
+<tr><th>3s latency into a "non-critical" dependency</th><td>Criticality is a claim, never verified</td><td>Possible pool saturation → site-wide</td><td>Low, one instance will do</td><td><strong>First</strong></td></tr>
+<tr><th>Reproduce the last incident's failure class</th><td>Measured — it already happened</td><td>Known and quantified</td><td>Medium, but the clearest hypothesis</td><td><strong>Near the top</strong>, doubles as regression</td></tr>
+<tr><th>Fail a recently changed dependency</th><td>Change frequency is the best prior</td><td>Scales with the path's traffic</td><td>Low</td><td>Make it routine, put it in the pipeline</td></tr>
+<tr><th>Kill a random instance</th><td>High, but the outcome is verified many times over</td><td>Usually unnoticed</td><td>Very low</td><td>Keep as continuous background noise</td></tr>
+<tr><th>Clock skew / split brain</th><td>Two orders of magnitude lower on most systems</td><td>Can be severe</td><td>High, hard to orchestrate</td><td>Worth it for stateful stores</td></tr>
+<tr><th>Inject into a call you are sure will break</th><td>—</td><td>—</td><td>—</td><td><strong>Don't</strong>: file a bug and fix it</td></tr>
+</tbody>
+</table>
+</div>
+<p>Concretely:</p>
+<ul>
+<li><strong>Just starting, with only an instance killer</strong>: do not rush to extend the tooling. Spend an afternoon completing the dependency inventory (implicit ones included), then add one <strong>latency injection</strong> for each of the top three — latency is usually the cheapest and most productive cut.</li>
+<li><strong>Hundreds of experiments, all green</strong>: all-green is not an achievement, it is evidence of sampling bias. Vary on a new axis — move the same dependencies to rungs ③ and ④, or drop the failure ratio from 100% to 30% (partial failure is often harder to handle than total).</li>
+<li><strong>Budget so tight you run a few per year</strong>: put everything on "reproduce the last incident's class" — measured probability, known impact, clearest hypothesis, and a regression test as a bonus.</li>
+</ul>
+<h2>Why it matters / in real systems</h2>
+<p>Three lines that change review conclusions. <strong>One</strong>: the quality of chaos engineering is not injection capability, it is the quality of the sampling rule. <strong>Two</strong>: "everyone says it's non-critical" is a high-priority signal. <strong>Three</strong>: every dependency you have killed still owes you latency injection and bad-data injection.</p>
+<p>Asked in an interview how you do chaos engineering, "we kill random instances weekly" is the tooling layer; "we complete the dependency inventory including DNS, certificates and config rollout, rank by probability × impact, inject latency into the dependencies believed non-critical first, and use the same injection to verify the alert" is another level — it shows you know the bottleneck is selection, not injection.</p>
+<div class="ev">
+<p class="evh">Evidence from industry</p>
+<ul>
+<li><strong>Netflix turned prioritization into an algorithm.</strong> The ranking this chapter does by hand is automated in Netflix's ChAP (Chaos Automation Platform) and Monocle: candidate experiments are enumerated automatically from service-dependency and injection-point data, scored and ordered by criticality and safety, filtered to drop the unsafe, the already-running and the recently-run, then executed in priority order — structurally identical to this chapter's claim that there are too many candidates not to rank them. <span class="src">Ali Basiri, Lorin Hochstein, Nora Jones, Haley Tucker, "Automating Chaos Experiments in Production," ICSE-SEIP 2019 (the host domain was blocked by this run's egress proxy; citation given in text only, no quotation)</span></li>
+<li><strong>Meanwhile chaos engineering's most famous tool is the lowest-variation rung.</strong> Chaos Monkey's own description: "Chaos Monkey randomly terminates virtual machine instances and containers that run inside of your production environment," and "Exposing engineers to failures more frequently incentivizes them to build resilient services." Note that it defines exactly one mode — termination. The chapter's point is not that this is useless but that <strong>it is the start, not the end</strong>: the same injection point still owes you latency and wrong data. <span class="src">Netflix · Chaos Monkey official repository README (<a href="https://github.com/Netflix/chaosmonkey" rel="noopener" target="_blank">github.com/Netflix/chaosmonkey</a>, wording verified during this run)</span></li>
+<li><strong>The cautionary case: long outages usually come from "slow," not "dead."</strong> In Roblox's roughly 73-hour outage of 28–31 October 2021, per its own public review, the trigger was not a dead node but a newly enabled streaming feature on the service-discovery cluster causing contention under load and severely degrading the cluster's performance — exactly rung ③. <span class="src">Roblox, "Roblox Return to Service 10/28–10/31 2021," January 2022 (domain blocked by this run's egress proxy; citation in text only, no quotation)</span></li>
+</ul>
+</div>
+<h2>Pitfalls and disputes</h2>
+<ul>
+<li><strong>Treating injection capability as maturity.</strong> However many modes you can inject, the wrong list still only verifies what you already knew.</li>
+<li><strong>Celebrating all-green.</strong> Hundreds of passes more likely mean the sampling leaned toward the side you were already confident about, not that the system is hard.</li>
+<li><strong>Treating "non-critical" as low priority.</strong> The opposite: it is an unverified hypothesis, and the cost of being wrong is the whole chain.</li>
+<li><strong>Estimating probability by feel.</strong> Incident history is a free, measured prior, yet in many teams postmortems never flow back into the experiment list.</li>
+<li><strong>Only injecting 100% failure.</strong> Partial failure (30% of requests erroring, one slow shard) is often harder to handle, because no breaker reaches its threshold.</li>
+<li><strong>Dispute: ranking itself prunes the tail.</strong> Ordering by expected loss inherently neglects the low-probability high-loss class; guarding against it needs a second list that says "verify regardless of probability" (Ch17's cyber-physical systems are exactly that).</li>
+<li><strong>Period limits and what came after.</strong> This chapter still has humans ranking. The later direction is to compute where to inject from the system's own data — Ch12's lineage-driven fault injection (LDFI) and Ch16's continuous verification both replace that human step. Separately, many dependencies now sit in SaaS you can neither change nor inject into, which makes ranking matter more than it did at writing time: what you can shake was only ever a subset.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① Core claim: <strong>injection is not the bottleneck, selection is.</strong> <strong>Candidates ≈ dependencies × failure modes × other variation axes</strong>; three factors in the tens multiply to 10³–10⁴ while the budget is a few dozen per year — chaos engineering is sampling by nature, and all its quality is in the sampling rule.</p>
+<p>② Build the list <strong>from dependencies, not from the tool</strong>. The test: if it breaks and your request gets slower or fails, it is a dependency — DNS, certificates, service discovery and config rollout all count.</p>
+<p>③ Failure modes form four rungs: <strong>refused → timeout → degradation → wrong data</strong>. Fault-tolerant code is essentially only tested on rung ①; outages happen on ③ and ④.</p>
+<p>④ Why rung ③ is lethal, in one calculation: 200 QPS × <code>50ms</code> needs about 10 slots; degraded to <code>3s</code> it needs 600 while the pool holds 50 — saturation turns a dependency that never errored into a site-wide outage.</p>
+<p>⑤ The first cut of variation: <strong>every dependency you have killed still owes you latency injection and bad-data injection</strong> — much cheaper than finding a new one to kill.</p>
+<p>⑥ Rank by <code>probability × impact ÷ cost</code>: the hardest input for probability is <strong>incident history</strong>, impact comes from QPS and money. <strong>A dependency called "non-critical" is a high-priority signal.</strong></p>
+<p>⑦ Two filters: <strong>never run a known answer</strong> (if you're sure it breaks, go fix it), and <strong>let one injection also verify the alert</strong> — near-zero marginal cost, most often forgotten.</p>
+<p>⑧ All-green is evidence of sampling bias, not of resilience; and a ranking by expected loss needs a separate list for the low-probability, high-loss tail.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Reading this page ≈ getting the chapter's core; for the full cases and extensions, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
