@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Chaos Engineering 第 5 章 · Google 灾难恢复演练 DiRT — 专业书籍精读 Book 137</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · Chaos Engineering · 第 5 章</p>
+<h1>Google 灾难恢复演练 DiRT</h1>
+<p class="sub">Chaos Engineering: System Resiliency in Practice · Ch 5 · Jason Cahoon（Google）· 2020</p>
+<p class="langbar"><a href="chaoseng-ch05-google-dirt-book137.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>上一章，Slack 为一个老系统写剧本、排一场戏。这一章把舞台换成<strong>整个公司</strong>——讲 Google 内部那场年度大演练，名字叫 DiRT。</p>
+<p>它最出人意料的地方是：被摇的不只有机器。<strong>文件、权限、沟通渠道，还有人，都在被摇的清单上。</strong></p>
+<h2>打个比方：消防演习要演的不是灭火器</h2>
+<p>大楼做消防演习，大家以为重点是灭火器有没有水——这些每年有人检修，基本没问题。</p>
+<p>真出事那天把人困住的是另外几样：<strong>那扇安全门被谁堆满了杂物</strong>；<strong>负责吹哨子的人正好请假，没人知道该听谁的</strong>；<strong>疏散图贴在着火的那一层</strong>。</p>
+<p>这些东西没人检修，因为它们不像设备，不在任何一张检查表上。DiRT 要演的就是它们。</p>
+<h2>旧世界为什么难</h2>
+<p>大公司在机器层面的备份通常做得很足：机房有两三个、数据有副本、流量能切。于是心里有个很舒服的结论：我们扛得住。</p>
+<p>可这结论从来没被完整验过。真出事时卡住的常常是：<strong>唯一真会操作切换的人在休假，他的做法从没写下来</strong>；<strong>应急预案存在内网，而内网跟着一起挂了</strong>；<strong>大家都在等「谁来下这个决定」</strong>。</p>
+<p>没一样是技术缺陷，全是没人测过的环节。<strong>机器的备份有人管，人和流程的备份没人管。</strong></p>
+<h2>核心机制直觉：三件事</h2>
+<ul>
+<li><strong>把人和流程也当零件来摇。</strong>演练时直接「请走」最懂的那个人——不许他回答问题，看剩下的人能不能把事办成。也可以临时拿掉一份文档、关掉一个常用的群，看有没有第二条路。Google 自己的说法就是：也会通过「停用」那些掌握着没写下来的经验的人，来检验服务的韧性。</li>
+<li><strong>先约好交战规则，再开始摇。</strong>几条最实在的：<strong>真出事了所有演练立刻停</strong>，真事故永远优先；<strong>每个演练自带一条收手的路</strong>，写清怎么撤；<strong>方案要别的团队看过点头</strong>，可能影响线上的还得更高层批。规则就是让「摇公司」不变成「毁公司」的那条安全绳。</li>
+<li><strong>不接受「我会去查那个文档」。</strong>纸上推演最大的坑是大家说出「应该怎么做」，而不是真做。主持人的本事就在于<strong>当场堵回去：现在就去查，找出来给我看</strong>。十次里总有几次发现：文档没了、链接坏了、里面的命令早就改了。</li>
+</ul>
+<h2>带来了什么 / 该怎么选</h2>
+<p>收获是一张诚实的清单：你终于知道恢复能力断在哪几处，而且断的地方多半不在机器上。最便宜那一档几乎零成本——<strong>一张桌子、一个主持人、一句「现在去把预案找出来」</strong>，小团队当天能做。诚实说一句代价：全公司级大演练协调成本极高，一年只办得了几次，覆盖不了多少种故障。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>你的机器大概扛得住，你的流程、文档和「只有一个人会」的那些操作大概扛不住——所以演练要连人和纸一起摇，并且事先约好一条「真出事就立刻停手」的规矩。</p>
+</div>
+<p class="switch-hint">想进到具体机制、量级和示意图？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">你以为灾难演练是在验证技术冗余够不够。Google 跑了十余年 DiRT 得到的结论恰恰相反：<strong>技术冗余大多是好的，真正的单点落在流程、权限、文档和人身上</strong>——而这四样从来不在任何自动化测试、任何 SLO 里。所以 DiRT 把「被测系统」的边界从服务扩到<strong>整个公司的恢复能力</strong>，连「关键工程师联系不上」都当成一种可注入的故障；同时用一套<strong>交战规则（rules of engagement）</strong>保证摇公司不会变成毁公司。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>DiRT（Disaster Recovery Testing，灾难恢复演练）</strong>：Google 内部跨团队协同的演练项目：在约定窗口里设计并执行真实与虚构的故障，检验相关团队的响应是否真的有效。</li>
+<li><strong>预案（runbook）</strong>：把「出这种事怎么处置」写成的分步操作文档。演练里它既是工具，也是被测对象。</li>
+<li><strong>交战规则（rules of engagement）</strong>：协调团队事先发布、所有参与团队必须遵守的硬约束（优先级、沟通协议、影响预期、必带回滚方案）。</li>
+<li><strong>纸上推演（tabletop / role-play）</strong>：不真注入故障，由主持人口述情景、参与者说出并尽量真执行处置动作。</li>
+<li><strong>单点故障（SPOF）</strong>：一个东西坏掉就整体不可用的环节。本章的关键扩展：<strong>它可以是一个人</strong>。</li>
+<li><strong>关键人风险（bus factor）</strong>：多少人同时联系不上，这件事就办不成了。答案是 1 的地方就是一个人形单点。</li>
+<li><strong>带外通道（out-of-band）</strong>：不依赖被测系统本身的第二条访问 / 沟通 / 授权路径。</li>
+<li><strong>故障域（failure domain）</strong>：一次故障的波及范围（一台机、一个机架、一个机房、一个区域）。两个东西「同域」，就会一起坏。</li>
+<li><strong>业务连续性（business continuity）</strong>：灾难中维持关键业务运转的能力，含非技术环节：办公、支付、客服。</li>
+<li><strong>爆炸半径（blast radius）</strong>：一次实验最坏情况波及的范围（Ch3 原则五）。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>全书 21 章的第 5 章，Part II「原则落地」的第二篇。<strong>和上一章同一种姿势、不同量级</strong>：Ch4 的 Slack 把一个存量系统推到人在回路的演练，Ch5 把这套做法放大到<strong>公司规模</strong>，并把非技术对象正式纳入被测范围；往下 Ch7 是 LinkedIn 对爆炸半径的伦理约束，Ch8 是 Capital One 在金融合规下的渐进路线。现实里它对着的，是<strong>已有多机房冗余、也有一份写好的 DR / BCP 文档、却从没真验过的组织</strong>。</p>
+<h2>这章要解决什么</h2>
+<p>一个典型的大型服务，技术冗余看起来是满的：三个以上区域、数据多副本、流量能按区域切、RPO 接近零、RTO 写着 15 分钟。但这些数字是<strong>部件级</strong>承诺，拼起来不等于「公司能从一场灾难里恢复」。</p>
+<p>缺的是中间那层。真实的区域级事故里，恢复动作长这样：有人判定这是事故 → 定级 → 找到有权限的人批准切换 → 翻出预案 → 执行一串从没在生产跑过的命令 → 通知客服与上下游。<strong>这条链上只有一步是技术，其余全是流程、权限、文档和人</strong>——而它们一个都没被测过。</p>
+<p>不解决会怎样？三种很典型的失败：</p>
+<ul>
+<li><strong>人形单点。</strong>真会操作切换的只有一个人，隐性知识没进文档。Google 早期的 DiRT 测试就直接问：「这位工程师在把服务拉起来这件事上，是不是一个单点？」</li>
+<li><strong>恢复路径的循环依赖。</strong>预案存在内网 wiki，而 wiki 跑在挂掉的那个区域。</li>
+<li><strong>决策悬空。</strong>所有人都在等一个够级别的人点头切换，而值班表也在挂掉的系统里。这类延迟常比技术恢复本身长一个数量级：切换 5 分钟，找人与决策 90 分钟。</li>
+</ul>
+<p>所以这章的问题是：<strong>怎么在不制造真事故的前提下，验证「整个公司」的恢复能力，而不只是「每个组件」的冗余？</strong></p>
+<h2>核心内容，讲透</h2>
+<h3>被测对象有四层，冗余都做在最里面那层</h3>
+<p>这是本章最该带走的一张图。把一次恢复拆开，依次是：<strong>技术组件 → 流程与权限 → 文档与工具链 → 人</strong>。工程投入和自动化测试几乎只覆盖第一层，而真出事时断掉的概率从第一层往下递增。</p>
+<p>原因不神秘：第一层有拥有者、有监控、有 CI；后三层<strong>没有拥有者</strong>——没人给「审批链」写单元测试，也没人每周验一次预案里的命令还能不能跑。DiRT 的价值几乎全在后三层：它是目前唯一能给这三层打分的手段。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 700 282" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="a1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text fill="#8fbaff" font-size="12" font-weight="700" text-anchor="middle" x="350" y="18">一次恢复要走的四层 —— 投入在最里层，断点在最外层</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" x="92" y="40">被摇的对象</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" x="326" y="40">典型的单点 / 这一层为什么没人管</text>
+<rect fill="rgba(91,157,249,0.14)" height="42" rx="7" stroke="rgba(91,157,249,0.5)" width="604" x="82" y="48"></rect>
+<text fill="#e7ebf1" font-size="12" font-weight="700" x="96" y="66">① 技术组件</text>
+<text fill="#b9c0ca" font-size="10.5" x="96" y="83">机器 · 机房 · 数据副本 · 流量调度</text>
+<line stroke="rgba(91,157,249,0.3)" x1="316" x2="316" y1="48" y2="90"></line>
+<text fill="#b9c0ca" font-size="11" x="328" y="66">有拥有者、有监控、有 CI —— 冗余通常真的是好的</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" x="328" y="83">可自动注入、可持续跑</text>
+<rect fill="rgba(124,120,250,0.14)" height="42" rx="7" stroke="rgba(124,120,250,0.55)" width="604" x="82" y="98"></rect>
+<text fill="#e7ebf1" font-size="12" font-weight="700" x="96" y="116">② 流程与权限</text>
+<text fill="#b9c0ca" font-size="10.5" x="96" y="133">谁定级 · 谁批准 · 谁有执行权限</text>
+<line stroke="rgba(124,120,250,0.3)" x1="316" x2="316" y1="98" y2="140"></line>
+<text fill="#b9c0ca" font-size="11" x="328" y="116">审批链没人写测试；值班表可能和故障同域</text>
+<text fill="#c9a8ff" font-family="monospace" font-size="10" x="328" y="133">只能靠演练：决策悬空常比技术恢复长一个数量级</text>
+<rect fill="rgba(155,108,245,0.16)" height="42" rx="7" stroke="rgba(155,108,245,0.7)" width="604" x="82" y="148"></rect>
+<text fill="#e7ebf1" font-size="12" font-weight="700" x="96" y="166">③ 文档与工具链</text>
+<text fill="#b9c0ca" font-size="10.5" x="96" y="183">预案 · 看板 · 沟通渠道 · 凭据</text>
+<line stroke="rgba(155,108,245,0.35)" x1="316" x2="316" y1="148" y2="190"></line>
+<text fill="#b9c0ca" font-size="11" x="328" y="166">链接会坏、命令会过期，且常与被摇对象同域</text>
+<text fill="#c9a8ff" font-family="monospace" font-size="10" x="328" y="183">测法：当场打开它，而不是说「我会去查」</text>
+<rect fill="rgba(155,108,245,0.22)" height="42" rx="7" stroke="#9b6cf5" stroke-width="2" width="604" x="82" y="198"></rect>
+<text fill="#e7ebf1" font-size="12" font-weight="700" x="96" y="216">④ 人</text>
+<text fill="#b9c0ca" font-size="10.5" x="96" y="233">只在某个人脑子里的操作知识</text>
+<line stroke="rgba(155,108,245,0.4)" x1="316" x2="316" y1="198" y2="240"></line>
+<text fill="#b9c0ca" font-size="11" x="328" y="216">bus factor = 1 的地方就是一个人形单点</text>
+<text fill="#c9a8ff" font-family="monospace" font-size="10" x="328" y="233">测法：演练中「停用」这个人，不许他回答</text>
+<line marker-end="url(#a1)" stroke="#9b6cf5" stroke-width="1.6" x1="58" x2="58" y1="52" y2="236"></line>
+<text fill="#c9a8ff" font-family="monospace" font-size="10" text-anchor="middle" transform="rotate(-90 34 144)" x="34" y="144">测试覆盖递减 · 断点递增</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle" x="350" y="268">组件级的 RPO / RTO 只承诺第①层；公司级的恢复能力是四层串联的结果</text>
+</svg>
+<figcaption>四层串联，整体可靠性由最弱的一层决定。工程直觉习惯往第①层加投入，而这张图说明边际收益早就移到了下面三层。</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/reliability-day23.html" rel="noopener" target="_blank">System Design · Day 23 可靠性</a> — 串联依赖怎么吃掉可用性、超时与重试怎么配、一个下游抖动为什么会拖垮整条链路</aside>
+<h3>恢复路径的循环依赖：几乎只能靠演练发现的一类 bug</h3>
+<p>这是第③层最锋利的失效，而且<strong>静态审查几乎看不出来</strong>：架构图上恢复工具和被恢复的系统是两个框，没人注意到它们最终落在同一个故障域里。</p>
+<p>典型形态：区域 A 失联 → 按预案处置 → 预案在内网 wiki → wiki 只跑在区域 A。四步成环，卡死。变体很多：事故频道依赖的 SaaS、登录要过的 SSO、下发配置的控制面，甚至机房门禁。</p>
+<p>判据只有一句，拿它去问每一份预案：<strong>恢复 X 所依赖的一切（文档、工具、凭据、沟通、人），是否都不在 X 的故障域里？</strong>答不上来就说明你需要一次演练，而不是一次评审。解法是每一环都备<strong>带外通道</strong>：离线的预案副本（导出 PDF 也算）、不依赖主站的第二条沟通渠道、独立的应急凭据。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 700 268" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="b1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+<marker id="b2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker>
+</defs>
+<text fill="#8fbaff" font-size="12" font-weight="700" text-anchor="middle" x="350" y="18">恢复路径的循环依赖 —— 架构图上看不见，演练第一次就撞到</text>
+<rect fill="rgba(155,108,245,0.14)" height="48" rx="7" stroke="#9b6cf5" stroke-width="1.8" width="162" x="26" y="40"></rect>
+<text fill="#e7ebf1" font-size="11.5" font-weight="700" text-anchor="middle" x="107" y="60">① 区域 A 失联</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="107" y="78">技术冗余本身是好的</text>
+<rect fill="rgba(155,108,245,0.1)" height="48" rx="7" stroke="rgba(155,108,245,0.6)" width="162" x="236" y="40"></rect>
+<text fill="#e7ebf1" font-size="11.5" font-weight="700" text-anchor="middle" x="317" y="60">② 按预案处置</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="317" y="78">先得把 runbook 打开</text>
+<rect fill="rgba(155,108,245,0.1)" height="48" rx="7" stroke="rgba(155,108,245,0.6)" width="162" x="236" y="146"></rect>
+<text fill="#e7ebf1" font-size="11.5" font-weight="700" text-anchor="middle" x="317" y="166">③ 预案在内网 wiki</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="317" y="184">凭据 / 看板 / 事故频道同理</text>
+<rect fill="rgba(155,108,245,0.14)" height="48" rx="7" stroke="#9b6cf5" stroke-width="1.8" width="162" x="26" y="146"></rect>
+<text fill="#e7ebf1" font-size="11.5" font-weight="700" text-anchor="middle" x="107" y="166">④ wiki 只跑在区域 A</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="107" y="184">同一个故障域</text>
+<line marker-end="url(#b1)" stroke="#9b6cf5" stroke-width="1.8" x1="190" x2="232" y1="64" y2="64"></line>
+<line marker-end="url(#b1)" stroke="#9b6cf5" stroke-width="1.8" x1="317" x2="317" y1="90" y2="142"></line>
+<line marker-end="url(#b1)" stroke="#9b6cf5" stroke-width="1.8" x1="234" x2="192" y1="170" y2="170"></line>
+<line marker-end="url(#b1)" stroke="#9b6cf5" stroke-width="1.8" x1="107" x2="107" y1="144" y2="92"></line>
+<text fill="#c9a8ff" font-family="monospace" font-size="11" font-weight="700" text-anchor="middle" x="212" y="112">成环 → 卡死</text>
+<rect fill="rgba(91,157,249,0.08)" height="154" rx="8" stroke="rgba(91,157,249,0.45)" width="246" x="440" y="40"></rect>
+<text fill="#8fbaff" font-size="11.5" font-weight="700" x="456" y="62">打破闭环：带外通道</text>
+<text fill="#b9c0ca" font-size="10.5" x="456" y="84">· 异地 / 离线的预案副本（导出 PDF 也算）</text>
+<text fill="#b9c0ca" font-size="10.5" x="456" y="104">· 第二条沟通渠道，不依赖主站</text>
+<text fill="#b9c0ca" font-size="10.5" x="456" y="124">· 独立的应急凭据与审批路径</text>
+<text fill="#b9c0ca" font-size="10.5" x="456" y="144">· 免登录就能拿到的联系树</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" x="456" y="170">每一环都要问：它和被恢复的东西同域吗</text>
+<line marker-end="url(#b2)" stroke="#5b9df9" stroke-dasharray="5 3" stroke-width="1.6" x1="436" x2="404" y1="117" y2="117"></line>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle" x="350" y="232">判据：恢复 X 所依赖的一切 —— 文档、工具、凭据、沟通、人 —— 是否都不在 X 的故障域里？</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle" x="350" y="252">答不上来，说明你需要的是一次演练，不是一次评审</text>
+</svg>
+<figcaption>这类 bug 的特征是：每个部件单独看都有冗余，环却闭合在依赖关系上——所以只有真把 A 摘掉才暴露。</figcaption>
+</figure>
+<h3>交战规则：让「摇公司」不变成「毁公司」</h3>
+<p>演练放大到公司规模，风险也跟着放大。本章的护栏是一套事先公布、所有团队必须遵守的规则，核心四条：</p>
+<ul>
+<li><strong>真事故永远压过演练。</strong>线上一出真问题，所有演练立即中止。不写进规则就会出现「两边都在救」的最坏情况。</li>
+<li><strong>每个测试自带回滚方案。</strong>同上一章的要求：撤回的确切操作、生效耗时、谁能喊停。</li>
+<li><strong>影响预期写明。</strong>是否预计影响线上，要写成可判断的句子，不是「应该没事」。</li>
+<li><strong>评审与分级审批。</strong>跨职能技术团队评审通过；<strong>有较高概率影响线上的升到 VP 级批准</strong>。这条最易被低估：它把「这实验值不值得做」从工程判断变成一次有人署名的业务决策。</li>
+</ul>
+<p>还有一条隐含规则：<strong>沟通协议</strong>——何时发公告、发给谁、用什么前缀标明「这是演练」。没有它，演练会在别的团队那里被当成真事故，触发一串真的升级。</p>
+<h3>真实性阶梯与那条「我会去…」判据</h3>
+<p>不是所有故障都能真注入：「总部所在城市发生强震」只能纸上演。于是有一道由虚到实的阶梯：<strong>纸上推演 → 角色扮演（Google 内部叫 Wheel of Misfortune，由一位资深工程师当主持人出题）→ 受控真实注入 → 全公司多日演练</strong>。</p>
+<p>越往上越真，但纸上那几档有个致命陷阱：<strong>参与者说的是「应该怎么做」，不是真做</strong>。「我会去查那份预案」「我会找 X 批准」——听起来完美，掩盖的恰恰是第③④层的全部问题。</p>
+<p>所以本章最可操作的判据是：<strong>凡回答里出现「我会去…」，当场要求他真做一次。</strong>现在打开那份预案、现在打那个电话、现在跑那条命令。主持人还能反向加压——被叫来救场的资深工程师，判定「正卡在没信号的地铁车厢里」。这是把演练从「我们知道该怎么做」逼成「我们刚才真做到了」。</p>
+<h3>结果收集：失败的测试才是产出</h3>
+<p>最后一环最容易被省掉。要求是：每个发现变成有<strong>明确负责人</strong>的待修项，修完<strong>重跑同一个测试</strong>——没有重跑，你只有一份结论，没有回归。</p>
+<p>还有一条文化要求：<strong>「演练通过」不是目标，学到东西才是。</strong>全部通过其实是设计失败，说明只摇了已有信心的部分。政治前提也在这里：一旦暴露的问题被用来追责，下次就没人敢把悲观假设写进方案（Ch18 的主题）。</p>
+<h2>关键权衡与选型</h2>
+<p>第一张表是真实性阶梯的落地：手上这个故障场景该用哪一档。关键在认清每一档各自<strong>抓不到</strong>什么。</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>形态</th><th>抓得到</th><th>抓不到</th><th>成本 / 频率</th><th>什么时候用</th></tr></thead>
+<tbody>
+<tr><th>纸上推演</th><td>决策链断点、预案存不存在、谁该拍板</td><td>一切真实行为——给的是「应该的」答案</td><td>一小时，随时可做</td><td>无法真注入的场景（地震、整城断电）</td></tr>
+<tr><th>角色扮演<br/>（Wheel of Misfortune）</th><td>排障思路、指挥流程、<strong>文档和工具真能不能打开</strong></td><td>真实量级下的系统行为、重试风暴、缓存塌陷</td><td>每周一次也撑得住</td><td>常态训练；验第③④层最划算的一档</td></tr>
+<tr><th>受控真实注入</th><td>真实量级的行为、告警响不响、恢复路径安不安全</td><td>跨团队协同与升级链——范围太小，触发不到</td><td>一个时间窗 + 一屋子人</td><td>单个系统第一次被验证（Ch4 的做法）</td></tr>
+<tr><th>全公司多日演练</th><td><strong>四层串联的真实结果</strong>：技术 + 流程 + 文档 + 人</td><td>罕见故障组合——频率低，覆盖面窄</td><td>协调成本极高，一年几次</td><td>验证公司级 DR / BCP 承诺是否为真</td></tr>
+</tbody>
+</table>
+</div>
+<p class="tcap">越往下越真也越贵。误区是只做两头：要么只填表，要么只砸年度大演练——中间两档性价比最高。</p>
+<p>第二张表按被测的四层给出测法与代价。</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>这一层</th><th>典型单点</th><th>怎么测</th><th>代价 / 难点</th></tr></thead>
+<tbody>
+<tr><th>① 技术组件</th><td>号称冗余、实际早被改成单点的依赖</td><td>自动注入、持续跑（Ch3 原则四）</td><td>需要编排平台与可观测性做前提</td></tr>
+<tr><th>② 流程与权限</th><td>审批人唯一；值班表与故障同域</td><td>不告知审批人，看升级链多久走通</td><td>暴露组织问题，政治阻力最大</td></tr>
+<tr><th>③ 文档与工具链</th><td>预案链接失效、命令过期、沟通渠道同域</td><td><strong>当场打开</strong>，不接受「我会去查」</td><td>几乎零成本，却最常被跳过</td></tr>
+<tr><th>④ 人</th><td>bus factor = 1 的隐性知识</td><td>演练中「停用」此人，禁止回答</td><td>易被当成针对个人，须讲清测的是系统</td></tr>
+</tbody>
+</table>
+</div>
+<p>落到具体选择：</p>
+<ul>
+<li><strong>十几人的小团队</strong>：别模仿年度大演练，做第二档——一小时角色扮演、强制「当场打开」。第一次大概就能捞到两三份失效预案和一个人形单点。</li>
+<li><strong>有合规 DR 要求的组织</strong>：危险不是不做，是做成填表。一条判据就能救回来：<strong>这次演练有没有任何一件事是事先不确定结果的？</strong>答「没有」，那就只是表演。</li>
+<li><strong>平台 / SRE 团队想铺开</strong>：先投三样——方案模板（含回滚与影响预期）、主持人培训、结果跟踪到复测的闭环。注入手段不是瓶颈。</li>
+</ul>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/globalization-multiregion-day42.html" rel="noopener" target="_blank">System Design · Day 42 全球化与多区域</a> — 区域级故障切换的真实代价：数据怎么跟、流量怎么引、RTO / RPO 那两个数字背后要付什么</aside>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>这一章给的是三句能直接改变灾备评审结论的话。<strong>一</strong>：RPO / RTO 只承诺第①层，公司级恢复能力是四层串联的结果。<strong>二</strong>：恢复 X 所依赖的一切，都不许在 X 的故障域里。<strong>三</strong>：凡回答里出现「我会去…」，当场要求他真做一次。</p>
+<p>面试被问「你们怎么做灾备演练」，答「每季度做一次故障切换」是组件层；答「流程、预案和关键人也是被测对象，事先约定真事故优先与回滚方案，结果跟踪到复测」是另一个层级——它显示你知道要测的是四层。</p>
+<div class="ev">
+<p class="evh">大厂实证</p>
+<ul>
+<li><strong>Google 自己把「摇人」写进了方法。</strong>Google Cloud 工程博客这样描述 DiRT：「我们在 Google 内部进行的灾难恢复演练，是一组跨公司协同的活动：一群工程师在约定的时段内规划并执行真实与虚构的故障，以检验相关团队的响应是否有效。」手段里明确包含人与文档：「服务的韧性也通过『停用』那些掌握着未被记录下来的知识或经验的人来检验，或者移除文档、流程环节、沟通渠道。」<span class="src">Jesus Climent · Google Cloud 博客《Shrinking the time to mitigate production incidents》· 2019-12-06（<a href="https://cloud.google.com/blog/products/management-tools/shrinking-the-time-to-mitigate-production-incidents" rel="noopener" target="_blank">cloud.google.com/blog</a>，英文原文经本次运行核实）</span></li>
+<li><strong>交战规则也是公开写明的。</strong>同一篇列出协调团队公布的规则：真紧急事件优先于 DiRT；沟通协议；是否预期影响线上要写明；<strong>所有测试必须包含回滚方案</strong>；方案由跨职能技术团队评审批准，<strong>高风险影响线上的需 VP 级代表批准</strong>。配套做法 Wheel of Misfortune 则由资深工程师当主持人出题，参与者要真去调看板、跑命令，主持人保留否决权（例如判定那位被叫来救场的专家「正卡在没有信号的地铁里」）。<span class="src">同上，链接见上条</span></li>
+<li><strong>反面教材：循环依赖的真实兑现。</strong>DiRT 最早的公开记述是 Google 的 Kripa Krishnan《Weathering the Unexpected》（ACM Queue, 2012），她 2015 年在 SREcon 的讲题叫《10 Years of Crashing Google》——它不是一次性活动，是跑了十余年的项目。而 Facebook 2021 年 10 月 4 日那次全球中断是现成的反面教材：按其官方复盘，故障同时打掉了平时用来排查与恢复的内部工具与访问路径。<span class="src">Kripa Krishnan · ACM Queue, 2012；Facebook Engineering《More details about the October 4 outage》, 2021（本次运行这两个域出口受限，仅留文字出处、未引原话）</span></li>
+</ul>
+</div>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>做成填表。</strong>最常见的退化：年度 DR 演练按剧本走完、全部通过、报告归档。判据见上。</li>
+<li><strong>全部通过就庆祝。</strong>全通过说明只摇了已有信心的部分，是设计失败——失败的测试才是产出。</li>
+<li><strong>把纸上推演当验证。</strong>它只验决策链。不逼「当场打开」，第③④层一个问题都抓不到。</li>
+<li><strong>「摇人」被当成针对个人。</strong>最需要配套沟通的一条：测的是「这件事只有一个人会」这个系统缺陷，不是那个人不行。讲不清就变成得罪人的游戏。</li>
+<li><strong>只有大公司玩得起。</strong>误解：最便宜那一档几乎零成本，而循环依赖和人形单点在小公司更严重——它的 bus factor 本来就低。</li>
+<li><strong>争议：频率太低、自动化太少。</strong>按 Ch3 原则四，年度大演练不合格。诚实的辩护是第②③④层<strong>目前没有自动化手段</strong>；但把第①层也锁在年度演练里，就是真落后了。</li>
+<li><strong>时代局限。</strong>这是工具链高度自建的 Google 的经验。今天典型公司的恢复路径横跨多个 SaaS：事故频道、告警、SSO、CI 分属不同厂商，你对它们的故障域几乎没有可见性——循环依赖的面<strong>更大而不是更小</strong>，这条判据因此比写作时更值钱。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 核心命题：技术冗余大多是好的，<strong>真正的单点在流程、权限、文档和人身上</strong>——被测对象必须从组件扩到整个公司的恢复能力。</p>
+<p>② 四层模型：<strong>技术组件 → 流程与权限 → 文档与工具链 → 人</strong>。投入与测试覆盖集中在第①层，断点概率往下递增；RPO / RTO 只承诺第①层。</p>
+<p>③ 最锋利的一类发现是<strong>恢复路径的循环依赖</strong>：预案在内网 wiki、wiki 跑在挂掉的区域，静态评审看不出来，真摘掉才暴露。判据一句话：<strong>恢复 X 所依赖的一切（文档、工具、凭据、沟通、人），是否都不在 X 的故障域里？</strong>解法是每一环都备一条带外通道。</p>
+<p>④ 人形单点要直接测：演练中「停用」那个最懂的人、不许他回答——Google 的原话就是这么写的。</p>
+<p>⑤ 交战规则四条：<strong>真事故优先于演练</strong>、必带回滚方案、影响预期写明、跨职能评审且高风险升到 VP 级批准；外加沟通协议，否则演练会被当成真事故。</p>
+<p>⑥ 真实性阶梯：纸上推演 → 角色扮演（Wheel of Misfortune）→ 受控真实注入 → 全公司多日演练。别只做两头，中间两档最划算。</p>
+<p>⑦ 最可操作的一句话：<strong>凡回答里出现「我会去…」，当场要求他真做一次</strong>——纸上推演的全部价值取决于这一下。</p>
+<p>⑧ 结果要有负责人并<strong>重跑同一测试</strong>验证；「全部通过」是设计失败；一旦用于追责，演练立刻退化成表演。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>

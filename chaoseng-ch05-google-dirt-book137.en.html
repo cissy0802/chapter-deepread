@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Chaos Engineering Ch 5 · Google DiRT: Disaster Recovery Testing — Book Deep-Read 137</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style></head><body>
+<div class="container">
+<p class="top">BOOK DEEP-READ · CHAOS ENGINEERING · CH 5</p>
+<h1>Google DiRT: Disaster Recovery Testing</h1>
+<p class="sub">Chaos Engineering: System Resiliency in Practice · Ch 5 · Jason Cahoon (Google) · 2020</p>
+<p class="langbar"><a href="chaoseng-ch05-google-dirt-book137.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>In the previous chapter, Slack wrote a script and rehearsed one old system. This chapter swaps the stage for <strong>an entire company</strong> — it is about the company-wide drill Google runs internally, called DiRT.</p>
+<p>The surprising part: machines are not the only thing being broken. <strong>Documents, permissions, communication channels and people are all on the list too.</strong></p>
+<h2>An analogy: a fire drill isn't about the extinguisher</h2>
+<p>A building runs a fire drill. Everyone assumes the point is whether the extinguishers are charged — but somebody inspects those every year, and they're usually fine.</p>
+<p>What actually traps people on the real day is different: <strong>someone piled boxes against the fire door</strong>; <strong>the person who blows the whistle is on holiday and nobody knows who to follow</strong>; <strong>the evacuation map is posted on the floor that's burning</strong>.</p>
+<p>Nobody inspects any of that, because none of it looks like equipment and none of it is on a checklist. That's exactly what DiRT rehearses.</p>
+<h2>Why the old world was hard</h2>
+<p>Large companies usually do redundancy well at the machine level: two or three data centres, replicated data, traffic that can be shifted. So a comfortable conclusion settles in: we'd survive.</p>
+<p>That conclusion has never been tested end to end. What actually stalls a real recovery is: <strong>the only person who really knows how to do the failover is on holiday, and his method was never written down</strong>; <strong>the emergency runbook lives on the intranet, and the intranet went down with everything else</strong>; <strong>everyone is waiting for someone with the authority to say go</strong>.</p>
+<p>None of these is a technical defect. They're all steps nobody ever tested. <strong>Machine backups have an owner; backups for people and processes have none.</strong></p>
+<h2>The core intuition: three things</h2>
+<ul>
+<li><strong>Treat people and process as parts you can break too.</strong> During a drill, simply "remove" the one person who knows the most — he isn't allowed to answer questions — and see whether everyone else can still get it done. You can also take away a document, or shut off a channel everyone leans on, and see whether a second path exists. Google's own words: resilience is also tested by "disabling" the people who hold knowledge that was never written down.</li>
+<li><strong>Agree on the rules of engagement before you break anything.</strong> The practical ones: <strong>a real incident stops every drill instantly</strong> — real outages always win; <strong>every drill ships with a way to back out</strong>, written down; <strong>the plan is reviewed and signed off by other teams</strong>, and anything that might touch production needs sign-off higher up. These rules are the safety line that keeps "shake the company" from becoming "break the company".</li>
+<li><strong>Never accept "I'd go look that up."</strong> The deadly trap of a paper exercise is that people describe what they <em>would</em> do instead of doing it. So the facilitator's real skill is to push back on the spot: <strong>go look it up now, and show me what you found</strong>. A good fraction of the time you discover the doc is gone, the link is dead, or the commands in it changed months ago.</li>
+</ul>
+<h2>What it buys you / how to choose</h2>
+<p>The payoff is an honest list: you finally know where your recovery breaks, and most of the breaks aren't in the machines. The cheapest tier costs almost nothing — <strong>a table, a facilitator, and one sentence: "go find that runbook right now"</strong> — a small team can run it today. One honest cost: a company-wide exercise is enormously expensive to coordinate, happens a few times a year at most, and covers only a handful of failure modes.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p>Your machines will probably hold; your processes, your documents and the operations only one person knows how to do probably won't — so a drill has to break people and paper along with the servers, under one rule agreed in advance: a real incident stops everything.</p>
+</div>
+<p class="switch-hint">Want the mechanisms, the numbers and the diagrams? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">You assume a disaster drill exists to verify that your technical redundancy is sufficient. A decade-plus of DiRT at Google points the other way: <strong>the redundancy is mostly fine — the real single points of failure sit in process, permissions, documentation and people</strong>, and none of those four appear in any automated test or any SLO. So DiRT widens the boundary of "the system under test" from services to <strong>the whole company's ability to recover</strong>, treating even "the key engineer is unreachable" as an injectable failure — while a set of <strong>rules of engagement</strong> keeps shaking the company from breaking it.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>DiRT (Disaster Recovery Testing)</strong>: Google's internal, cross-team exercise programme: within an agreed window, engineers plan and execute real and fictitious outages to test whether the involved teams actually respond effectively.</li>
+<li><strong>Runbook</strong>: a step-by-step document for "when this happens, do this". In a drill it is both a tool and an object under test.</li>
+<li><strong>Rules of engagement</strong>: hard constraints published by the coordinating team before a drill that every participating team must follow (priorities, comms protocol, impact expectations, a mandatory revert plan).</li>
+<li><strong>Tabletop / role-play</strong>: no real injection; a facilitator narrates the scenario and participants state — and where possible actually perform — the response.</li>
+<li><strong>Single point of failure (SPOF)</strong>: one thing whose loss takes the whole thing down. This chapter's key extension: <strong>it can be a person</strong>.</li>
+<li><strong>Bus factor</strong>: how many people have to be unreachable before the job can't be done. Wherever the answer is 1, you have a human-shaped SPOF.</li>
+<li><strong>Out-of-band</strong>: a second path for access, comms or authorisation that does not depend on the system under test.</li>
+<li><strong>Failure domain</strong>: the blast area of one failure (a machine, a rack, a data centre, a region). Two things in the same domain fail together.</li>
+<li><strong>Business continuity</strong>: the ability to keep critical business running through a disaster, including non-technical links: offices, payments, support.</li>
+<li><strong>Blast radius</strong>: the worst-case reach of one experiment (Ch3, principle five).</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Chapter 5 of 21, the second entry in Part II ("the principles in practice"). <strong>Same posture as the previous chapter, a different order of magnitude</strong>: Slack pushed one legacy system into a human-in-the-loop drill; Ch5 scales that method to <strong>company size</strong> and formally pulls non-technical targets into scope. Further on, Ch7 is LinkedIn's ethical constraints on blast radius and Ch8 is Capital One's incremental path under financial regulation. In the real world this chapter addresses <strong>organisations that already have multi-site redundancy and a written DR / BCP document, and have never actually tested either</strong>.</p>
+<h2>The problem this chapter attacks</h2>
+<p>On a typical large service the technical redundancy looks complete: three or more regions, replicated data, traffic shiftable per region, RPO near zero, RTO stated as 15 minutes. But those numbers are <strong>component-level</strong> promises, and stacking them up does not add up to "the company can recover from a disaster".</p>
+<p>What's missing is the layer in between. In a genuine regional incident the recovery sequence looks like this: someone decides this is an incident → it gets a severity → someone with authority approves the failover → the runbook is located → a string of commands that has never run in production gets executed → support and downstream partners are notified. <strong>Exactly one step on that chain is technical; the rest is process, permissions, documents and people</strong> — and not one of them has ever been tested.</p>
+<p>What happens if you don't fix this? Three very typical failures:</p>
+<ul>
+<li><strong>A human-shaped SPOF.</strong> Only one person really knows how to run the failover, and the tacit knowledge never made it into a document. Google's early DiRT tests asked exactly this: "Is this engineer a single point of failure when trying to bring this service up?"</li>
+<li><strong>A circular dependency in the recovery path.</strong> The runbook lives on the intranet wiki, and the wiki runs in the region that just went dark.</li>
+<li><strong>Decision limbo.</strong> Everyone is waiting for someone senior enough to approve the switch, and the on-call rota is also inside the system that's down. This delay is routinely an order of magnitude longer than the technical recovery: five minutes to fail over, ninety minutes to find a human and decide.</li>
+</ul>
+<p>So the question is: <strong>how do you verify the recovery capability of the whole company, not just the redundancy of each component — without manufacturing a real incident in the process?</strong></p>
+<h2>The core content, in depth</h2>
+<h3>Recovery has four layers, and all the redundancy sits in the innermost one</h3>
+<p>This is the diagram to take away. Decompose one recovery and you get, in order: <strong>technical components → process and permissions → documents and tooling → people</strong>. Engineering investment and automated testing cover essentially only the first layer, while the probability of breaking on the real day increases as you go down.</p>
+<p>The reason is no mystery: layer one has owners, monitoring and CI; the other three <strong>have no owner</strong> — nobody unit-tests an approval chain, and nobody checks weekly whether the commands in a runbook still work. Almost all of DiRT's value lives in those three layers: it is currently the only way to score them at all.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 760 286" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="a1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+</defs>
+<text fill="#8fbaff" font-size="12.5" font-weight="700" text-anchor="middle" x="380" y="18">The four layers one recovery walks — investment innermost, breakage outermost</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" x="82" y="40">WHAT GETS TESTED</text>
+<text fill="#7c8593" font-family="monospace" font-size="10" x="318" y="40">TYPICAL SINGLE POINT / WHY NOBODY OWNS IT</text>
+<rect fill="rgba(91,157,249,0.14)" height="42" rx="7" stroke="rgba(91,157,249,0.5)" width="666" x="72" y="48"></rect>
+<text fill="#e7ebf1" font-size="12" font-weight="700" x="84" y="66">1 · Technical components</text>
+<text fill="#b9c0ca" font-size="10.5" x="84" y="83">hosts · sites · replicas · traffic</text>
+<line stroke="rgba(91,157,249,0.3)" x1="306" x2="306" y1="48" y2="90"></line>
+<text fill="#b9c0ca" font-size="11" x="318" y="66">Has owners, monitoring and CI — the redundancy is usually real</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" x="318" y="83">can be injected automatically, run continuously</text>
+<rect fill="rgba(124,120,250,0.14)" height="42" rx="7" stroke="rgba(124,120,250,0.55)" width="666" x="72" y="98"></rect>
+<text fill="#e7ebf1" font-size="12" font-weight="700" x="84" y="116">2 · Process &amp; permissions</text>
+<text fill="#b9c0ca" font-size="10.5" x="84" y="133">who declares · who approves · who may act</text>
+<line stroke="rgba(124,120,250,0.3)" x1="306" x2="306" y1="98" y2="140"></line>
+<text fill="#b9c0ca" font-size="11" x="318" y="116">Nobody tests an approval chain; the rota may share the outage domain</text>
+<text fill="#c9a8ff" font-family="monospace" font-size="10" x="318" y="133">drills only: decision limbo often dwarfs technical recovery</text>
+<rect fill="rgba(155,108,245,0.16)" height="42" rx="7" stroke="rgba(155,108,245,0.7)" width="666" x="72" y="148"></rect>
+<text fill="#e7ebf1" font-size="12" font-weight="700" x="84" y="166">3 · Documents &amp; tooling</text>
+<text fill="#b9c0ca" font-size="10.5" x="84" y="183">runbooks · dashboards · channels · credentials</text>
+<line stroke="rgba(155,108,245,0.35)" x1="306" x2="306" y1="148" y2="190"></line>
+<text fill="#b9c0ca" font-size="11" x="318" y="166">Links rot, commands go stale, and they often share the failure domain</text>
+<text fill="#c9a8ff" font-family="monospace" font-size="10" x="318" y="183">how to test: open it now — never accept "I'd go look it up"</text>
+<rect fill="rgba(155,108,245,0.22)" height="42" rx="7" stroke="#9b6cf5" stroke-width="2" width="666" x="72" y="198"></rect>
+<text fill="#e7ebf1" font-size="12" font-weight="700" x="84" y="216">4 · People</text>
+<text fill="#b9c0ca" font-size="10.5" x="84" y="233">operational knowledge in one head only</text>
+<line stroke="rgba(155,108,245,0.4)" x1="306" x2="306" y1="198" y2="240"></line>
+<text fill="#b9c0ca" font-size="11" x="318" y="216">Wherever the bus factor is 1, you have a human-shaped SPOF</text>
+<text fill="#c9a8ff" font-family="monospace" font-size="10" x="318" y="233">how to test: "disable" that person in the drill — no answers allowed</text>
+<line marker-end="url(#a1)" stroke="#9b6cf5" stroke-width="1.6" x1="48" x2="48" y1="52" y2="236"></line>
+<text fill="#c9a8ff" font-family="monospace" font-size="10" text-anchor="middle" transform="rotate(-90 32 144)" x="32" y="144">test coverage falls · real breakage rises</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle" x="380" y="272">Component RPO / RTO only promises layer 1; company recovery is all four in series</text>
+</svg>
+<figcaption>Four layers in series: overall reliability is set by the weakest one. Engineering instinct keeps investing in layer 1, but the marginal return moved down long ago.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/reliability-day23.en.html" rel="noopener" target="_blank">System Design · Day 23 Reliability</a> — how serial dependencies eat availability, how to set timeouts and retries, and why one flapping downstream drags a whole chain down</aside>
+<h3>Circular dependencies in the recovery path: a bug only a drill finds</h3>
+<p>This is the sharpest failure in layer three, and <strong>static review almost never catches it</strong>: on the architecture diagram the recovery tool and the system being recovered are two separate boxes, and nobody notices they ultimately land in the same failure domain.</p>
+<p>The canonical shape: region A goes dark → follow the runbook → the runbook is on the intranet wiki → the wiki runs only in region A. Four steps, loop closed, stuck. There are many variants: the SaaS your incident channel depends on, the SSO you must pass to log in, the control plane that pushes config — even data centre badge readers.</p>
+<p>The test is a single question, and you can ask it of every runbook you own: <strong>is everything that recovering X depends on — documents, tools, credentials, comms, people — outside X's failure domain?</strong> If you can't answer, you need a drill, not a review. The fix is an <strong>out-of-band</strong> path at every link: an offline copy of the runbook (an exported PDF counts), a second comms channel that doesn't ride the main stack, independent emergency credentials.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 760 272" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<marker id="b1" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"></path></marker>
+<marker id="b2" markerheight="9" markerwidth="9" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker>
+</defs>
+<text fill="#8fbaff" font-size="12.5" font-weight="700" text-anchor="middle" x="380" y="18">A circular dependency in recovery — invisible on the diagram, hit on drill one</text>
+<rect fill="rgba(155,108,245,0.14)" height="50" rx="7" stroke="#9b6cf5" stroke-width="1.8" width="196" x="22" y="40"></rect>
+<text fill="#e7ebf1" font-size="11.5" font-weight="700" text-anchor="middle" x="120" y="61">1 · Region A goes dark</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="120" y="79">the redundancy itself is fine</text>
+<rect fill="rgba(155,108,245,0.1)" height="50" rx="7" stroke="rgba(155,108,245,0.6)" width="196" x="258" y="40"></rect>
+<text fill="#e7ebf1" font-size="11.5" font-weight="700" text-anchor="middle" x="356" y="61">2 · Follow the runbook</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="356" y="79">you have to open it first</text>
+<rect fill="rgba(155,108,245,0.1)" height="50" rx="7" stroke="rgba(155,108,245,0.6)" width="196" x="258" y="150"></rect>
+<text fill="#e7ebf1" font-size="11.5" font-weight="700" text-anchor="middle" x="356" y="171">3 · Runbook is on the wiki</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="356" y="189">credentials, dashboards, channels too</text>
+<rect fill="rgba(155,108,245,0.14)" height="50" rx="7" stroke="#9b6cf5" stroke-width="1.8" width="196" x="22" y="150"></rect>
+<text fill="#e7ebf1" font-size="11.5" font-weight="700" text-anchor="middle" x="120" y="171">4 · Wiki runs only in A</text>
+<text fill="#b9c0ca" font-size="10.5" text-anchor="middle" x="120" y="189">same failure domain</text>
+<line marker-end="url(#b1)" stroke="#9b6cf5" stroke-width="1.8" x1="220" x2="254" y1="65" y2="65"></line>
+<line marker-end="url(#b1)" stroke="#9b6cf5" stroke-width="1.8" x1="356" x2="356" y1="92" y2="146"></line>
+<line marker-end="url(#b1)" stroke="#9b6cf5" stroke-width="1.8" x1="256" x2="222" y1="175" y2="175"></line>
+<line marker-end="url(#b1)" stroke="#9b6cf5" stroke-width="1.8" x1="120" x2="120" y1="148" y2="94"></line>
+<text fill="#c9a8ff" font-family="monospace" font-size="11" font-weight="700" text-anchor="middle" x="238" y="120">loop closed</text>
+<text fill="#c9a8ff" font-family="monospace" font-size="11" font-weight="700" text-anchor="middle" x="238" y="136">→ deadlock</text>
+<rect fill="rgba(91,157,249,0.08)" height="160" rx="8" stroke="rgba(91,157,249,0.45)" width="266" x="476" y="40"></rect>
+<text fill="#8fbaff" font-size="11.5" font-weight="700" x="492" y="62">Break the loop: out-of-band paths</text>
+<text fill="#b9c0ca" font-size="10.5" x="492" y="86">· offline / off-site runbook copy (PDF counts)</text>
+<text fill="#b9c0ca" font-size="10.5" x="492" y="108">· a second comms channel off the main stack</text>
+<text fill="#b9c0ca" font-size="10.5" x="492" y="130">· independent emergency credentials and approval</text>
+<text fill="#b9c0ca" font-size="10.5" x="492" y="152">· a contact tree reachable without logging in</text>
+<text fill="#8fbaff" font-family="monospace" font-size="10" x="492" y="178">ask of each link: same domain as what it recovers?</text>
+<line marker-end="url(#b2)" stroke="#5b9df9" stroke-dasharray="5 3" stroke-width="1.6" x1="472" x2="440" y1="120" y2="120"></line>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle" x="380" y="236">The test: is everything recovering X depends on — docs, tools, credentials, comms, people — outside X's failure domain?</text>
+<text fill="#7c8593" font-family="monospace" font-size="10.5" text-anchor="middle" x="380" y="256">If you can't answer, what you need is a drill, not a review</text>
+</svg>
+<figcaption>The signature of this bug: every part looks redundant on its own, but the loop closes through the dependency graph — so only actually removing A exposes it.</figcaption>
+</figure>
+<h3>Rules of engagement: shaking the company without breaking it</h3>
+<p>Scale a drill to company size and you scale the risk with it. The guardrail is a set of rules published in advance that every team must follow; four matter most:</p>
+<ul>
+<li><strong>Real emergencies always outrank the drill.</strong> The moment something real breaks in production, every exercise stops and people go to the real incident. Leave it unwritten and you get the worst case: two fires, one set of responders.</li>
+<li><strong>Every test ships with a revert plan.</strong> Same demand as the previous chapter: the exact back-out action, how long it takes to take effect, who may call stop.</li>
+<li><strong>State the expected impact.</strong> Whether production services are expected to be affected must be written as a checkable sentence, not "should be fine".</li>
+<li><strong>Review and tiered approval.</strong> Plans are reviewed and approved by a cross-functional technical team, and <strong>anything with a high risk of affecting production goes up to a VP-level sign-off</strong>. This is the most underrated design in the chapter: it turns "is this experiment worth running" from an engineering judgement into a business decision with a name attached.</li>
+</ul>
+<p>There's an implicit fifth rule: <strong>a comms protocol</strong> — when to announce, to whom, and what prefix marks "this is a drill". Without it, your exercise is read as a real incident by another team and triggers a chain of real escalations.</p>
+<h3>The realism ladder, and the "I'd go…" test</h3>
+<p>Not every disaster can be injected for real: "a major earthquake hits the city with headquarters" can only be played on paper. So there's a ladder from fictional to real: <strong>tabletop → role-play (internally, Wheel of Misfortune, with a senior engineer as Dungeon Master) → controlled real injection → company-wide multi-day exercise</strong>.</p>
+<p>Higher is more real, but the paper tiers carry a fatal trap: <strong>participants say what they <em>would</em> do rather than doing it</strong>. "I'd go look up that runbook." "I'd get X to approve." Those answers sound perfect and hide the entirety of layers three and four.</p>
+<p>Hence the most actionable test in the chapter: <strong>whenever an answer starts with "I'd go…", make them do it now.</strong> Open that runbook. Make that call. Run that command. The facilitator can also push the other way — the senior engineer summoned to save the day is ruled to be "stuck on a subway train with no signal". That turns the drill from "we know what to do" into "we just did it".</p>
+<h3>Collecting results: the failed test is the product</h3>
+<p>The last link is the one most often skipped. The requirement: every finding becomes an action item with a <strong>named owner</strong>, and once fixed, <strong>the same test is re-run</strong>. Without the re-run you have a conclusion, not a regression check.</p>
+<p>And a cultural requirement: <strong>"the drill passed" is not the goal; learning something is.</strong> An exercise where everything passes is a design failure — it means you only shook the parts you were already confident about. The political precondition lives here too: the moment findings are used to assign blame, nobody will write pessimistic assumptions into the next plan (the subject of Ch18).</p>
+<h2>Key trade-offs and choices</h2>
+<p>The first table turns the realism ladder into a choice: which tier fits the failure scenario in front of you. What matters is being clear about what each tier <strong>cannot</strong> catch.</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Form</th><th>Catches</th><th>Misses</th><th>Cost / cadence</th><th>When to use</th></tr></thead>
+<tbody>
+<tr><th>Tabletop</th><td>breaks in the decision chain, whether a runbook exists at all, who decides</td><td>all real behaviour — you get the "should" answer</td><td>an hour, any time</td><td>scenarios you can't inject (quake, city-wide power loss)</td></tr>
+<tr><th>Role-play<br/>(Wheel of Misfortune)</th><td>debugging approach, incident command, <strong>whether docs and tools actually open</strong></td><td>system behaviour at real scale: retry storms, cache collapse</td><td>sustainable weekly</td><td>routine training; the best value per hour for layers 3 and 4</td></tr>
+<tr><th>Controlled real injection</th><td>behaviour at real scale, whether alerts fire, whether recovery is safe</td><td>cross-team coordination and escalation — scope too small to trigger it</td><td>one window plus a room of people</td><td>the first verification of a single system (Ch4's method)</td></tr>
+<tr><th>Company-wide exercise</th><td><strong>the real result of all four layers in series</strong>: tech, process, docs, people</td><td>rare failure combinations — low cadence, narrow coverage</td><td>very costly to coordinate; a few times a year</td><td>testing whether a company-level DR / BCP promise is real</td></tr>
+</tbody>
+</table>
+</div>
+<p class="tcap">Realism rises with cost. The common mistake is running only the two ends — a box-ticking tabletop, or one annual mega-exercise. The two middle tiers pay best.</p>
+<p>The second table gives the method and the cost per layer under test.</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Layer</th><th>Typical single point</th><th>How to test it</th><th>Cost / difficulty</th></tr></thead>
+<tbody>
+<tr><th>1 · Technical components</th><td>a dependency called redundant that quietly became a single point</td><td>automatic injection, run continuously (Ch3, principle four)</td><td>needs an orchestration platform and observability first</td></tr>
+<tr><th>2 · Process &amp; permissions</th><td>a single approver; a rota inside the outage domain</td><td>don't tell the approver — time how long escalation takes</td><td>exposes organisational problems; most political resistance</td></tr>
+<tr><th>3 · Documents &amp; tooling</th><td>dead runbook links, stale commands, channels in the same domain</td><td><strong>open it on the spot</strong>; never accept "I'd go look"</td><td>near-zero cost, yet skipped most often</td></tr>
+<tr><th>4 · People</th><td>tacit knowledge with a bus factor of 1</td><td>"disable" that person in the drill; no answers allowed</td><td>easily read as personal; be explicit that the system is the target</td></tr>
+</tbody>
+</table>
+</div>
+<p>Concretely:</p>
+<ul>
+<li><strong>A team of a dozen people</strong>: don't imitate the annual exercise. Run tier two — an hour of role-play with "open it now" enforced. The first session will typically surface two or three dead runbooks and one human-shaped SPOF.</li>
+<li><strong>An organisation with DR obligations from regulators</strong>: the danger isn't skipping the drill, it's turning it into paperwork. One test rescues it: <strong>was there anything in this exercise whose outcome we didn't know in advance?</strong> If the answer is no, it was theatre.</li>
+<li><strong>A platform or SRE team rolling this out</strong>: invest in three things first — a plan template (with revert plan and expected impact), facilitator training, and a results-to-re-test loop. Injection capability is never the bottleneck.</li>
+</ul>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/globalization-multiregion-day42.en.html" rel="noopener" target="_blank">System Design · Day 42 Going global, multi-region</a> — what a regional failover really costs: how data follows, how traffic is steered, and what you pay for those RTO / RPO numbers</aside>
+<h2>Why it matters / in real systems</h2>
+<p>This chapter gives you three sentences that can change the outcome of a DR review. <strong>One</strong>: RPO / RTO only promise layer one; company recovery is all four layers in series. <strong>Two</strong>: nothing that recovering X depends on may live inside X's failure domain. <strong>Three</strong>: whenever an answer starts with "I'd go…", make them do it now.</p>
+<p>Asked in an interview how you do disaster testing, "we run a quarterly failover drill" is the component layer. "Process, runbooks and key people are also under test; we agree in advance that real incidents win and that every test has a revert plan; findings are tracked to a re-run" is another level — it shows you know there are four layers.</p>
+<div class="ev">
+<p class="evh">Evidence from industry</p>
+<ul>
+<li><strong>Google wrote "shake the people" into the method.</strong> Google Cloud's engineering blog describes DiRT this way: "The disaster recovery testing we perform internally at Google is a coordinated set of events organized across the company, in which a group of engineers plan and execute real and fictitious outages for a defined period of time to test the effective response of the involved teams." People and documents are explicitly in scope: "The resilience of the services is also tested by 'disabling' people who might have knowledge or experience that isn't documented, or removing documentation, process elements, or communication channels." <span class="src">Jesus Climent · Google Cloud blog, "Shrinking the time to mitigate production incidents" · 2019-12-06 (<a href="https://cloud.google.com/blog/products/management-tools/shrinking-the-time-to-mitigate-production-incidents" rel="noopener" target="_blank">cloud.google.com/blog</a>, verified during this run)</span></li>
+<li><strong>The rules of engagement are published too.</strong> The same post lists what the coordinating team publishes: real emergencies take precedence over DiRT exercises; communication protocols; whether production services are expected to be affected; <strong>all tests must include a revert plan</strong>; plans are reviewed and approved by a cross-functional technical team, and <strong>high risk to production requires VP-level approval</strong>. The companion practice, Wheel of Misfortune, puts a senior engineer in the Dungeon Master seat while players actually pull up dashboards and run commands — and the DM keeps veto power (ruling, for instance, that the expert called in to save the day is "trapped inside a subway car without cell phone reception"). <span class="src">Same source; link above</span></li>
+<li><strong>The earliest public account, and a live counter-example.</strong> DiRT's first systematic public description is Kripa Krishnan's "Weathering the Unexpected" (ACM Queue, 2012); her 2015 SREcon talk was titled "10 Years of Crashing Google" — this was never a one-off event but a programme that has run for over a decade. Facebook's global outage of 4 October 2021 is the ready-made counter-example: per its official write-up, the failure simultaneously took out the internal tools and access paths normally used to diagnose and recover. <span class="src">Kripa Krishnan · ACM Queue, 2012; Facebook Engineering, "More details about the October 4 outage", 2021 (both domains were egress-blocked during this run; cited by reference only, not quoted)</span></li>
+</ul>
+</div>
+<h2>Pitfalls and open arguments</h2>
+<ul>
+<li><strong>Turning it into paperwork.</strong> The most common degradation: the annual DR drill follows the script, everything passes, the report is filed. Use the test above.</li>
+<li><strong>Celebrating a clean sweep.</strong> Everything passing means you only shook what you were already confident about — a design failure. The failed test is the product.</li>
+<li><strong>Treating a tabletop as verification.</strong> It only tests the decision chain. Without forcing "open it now" it catches nothing in layers three and four.</li>
+<li><strong>"Shaking people" read as targeting a person.</strong> This is the one that needs explicit framing: the defect under test is "only one person can do this", not that the person is inadequate. Get it wrong and the drill becomes a way to offend colleagues.</li>
+<li><strong>"Only big companies can afford it."</strong> A misreading: the cheapest tier costs almost nothing, and circular dependencies and human-shaped SPOFs are worse at small companies, whose bus factor is lower to begin with.</li>
+<li><strong>The open argument: cadence too low, automation too little.</strong> Judged against Ch3's fourth principle, an annual exercise fails. The honest defence is that layers two to four <strong>have no automation available</strong>; but locking layer one into the annual exercise too is genuinely behind the times.</li>
+<li><strong>A product of its time.</strong> This is the experience of a Google whose tooling was overwhelmingly built in-house. A typical recovery path today crosses several SaaS vendors — incident channel, alerting, SSO, CI — whose failure domains you have almost no visibility into, so the surface for circular dependencies is <strong>larger, not smaller</strong>. That makes this chapter's test worth more now than when it was written.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1 · The core claim: technical redundancy is mostly fine, and <strong>the real single points sit in process, permissions, documents and people</strong> — so the thing under test must widen from components to the whole company's ability to recover.</p>
+<p>2 · The four-layer model: <strong>technical components → process and permissions → documents and tooling → people</strong>. Investment and test coverage cluster in layer one; the chance of breaking rises as you go down. RPO / RTO only promise layer one.</p>
+<p>3 · The sharpest class of finding is a <strong>circular dependency in the recovery path</strong>: the runbook on the intranet wiki, the wiki in the dead region. Static review misses it; only removing the region exposes it. The test: <strong>is everything recovering X depends on outside X's failure domain?</strong> The fix is an out-of-band path at every link.</p>
+<p>4 · Test human-shaped SPOFs directly: "disable" the person who knows most and forbid them to answer — Google's own wording says exactly this.</p>
+<p>5 · Four rules of engagement: <strong>real incidents outrank drills</strong>, a mandatory revert plan, a stated impact expectation, cross-functional review with VP-level sign-off for high risk — plus a comms protocol, or your drill gets read as a real incident.</p>
+<p>6 · The realism ladder: tabletop → role-play (Wheel of Misfortune) → controlled real injection → company-wide exercise. Don't run only the two ends; the middle two pay best.</p>
+<p>7 · The most actionable line: <strong>whenever an answer starts with "I'd go…", make them do it now</strong> — the entire value of a paper exercise hangs on that move.</p>
+<p>8 · Findings need owners and a <strong>re-run of the same test</strong>; "everything passed" is a design failure; and the moment drills feed blame, they degrade into theatre.</p>
+</div>
+</div>
+<footer>Book Deep-Read · One page ≈ the core of one chapter; for the full cases and extensions, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
