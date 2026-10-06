@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Chaos Engineering Ch 16 · Continuous Verification — Book Deep Read 148</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+<body>
+<div class="container">
+<p class="top">Book Deep Read · Chaos Engineering · Chapter 16</p>
+<h1>Continuous Verification</h1>
+<p class="sub">Chaos Engineering: System Resiliency in Practice · Ch 16 · Continuous Verification · 2020</p>
+<p class="langbar"><a href="chaoseng-ch16-continuous-verification-book148.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Simple</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The company behind your favorite streaming app may change its code hundreds of times a day. Every change already passes through an automatic process that checks "does it fit together, can we ship it?" This chapter asks the next question: <strong>once it's live, can the system still take a hit — and can a machine check that every day too?</strong> The author gives this a name: continuous verification.</p>
+<h2>An analogy</h2>
+<p>Think of fire drills in an office tower. The old way is once a year: announce it, march everyone downstairs, write a report. But the building is renovated every week — walls move, elevators get replaced — so last year's conclusion quietly goes stale. Continuous verification is like hiring an <strong>automatic drill officer</strong>: every day it picks one floor and a handful of people, quietly blocks one corridor to see whether they can still get out the other way, stops the moment anyone gets stuck, and files a report on its own.</p>
+<h2>Why the old way was hard</h2>
+<ul>
+<li><strong>Drills are rare.</strong> Hand-organized failure drills happen every few months, but the system changes daily, so "it was fine last time" expires fast.</li>
+<li><strong>Drills are expensive.</strong> Someone has to design each one, watch the screens and judge the result. Nobody has the energy to do many.</li>
+<li><strong>Nobody knows which drill to run.</strong> A big system has hundreds or thousands of "who depends on whom" links. Humans only pick the few they happen to think of.</li>
+</ul>
+<h2>The core intuition</h2>
+<ul>
+<li><strong>The machine picks the questions.</strong> It reads each service's settings — how long to wait before giving up, how many times to retry, whether there's a backup answer — then lists the failures worth trying, most important first. If something obviously will break (say, there's no backup answer at all), it just reports it without testing.</li>
+<li><strong>Experiment on a tiny slice of real users, with a comparison group.</strong> Like a drug trial: carve two small, equal groups out of real traffic. One is left alone; in the other, one dependency is made to fail. Everyone else is untouched.</li>
+<li><strong>Watch what users get, not how busy the machines are.</strong> Compare how many people in each group successfully started a video. If the test group clearly does worse, stop automatically and tell the team where the weak spot is.</li>
+<li><strong>Every day, on its own.</strong> It becomes a fixed step on the assembly line, not a special event.</li>
+</ul>
+<h2>What it buys you / how to choose</h2>
+<p>Drills turn from "a big event a few times a year" into "small checks that happen automatically every day," so if a change weakens the system's ability to absorb a blow, you find out the next day. A new team can start with scheduled runs in a test environment and only move to the real one once automatic stopping works. One honest cost: building and maintaining this automation is a lot of work, and it can only check the things you thought to check.</p>
+<h2>Remember it in one line</h2>
+<div class="tl">
+<p><strong>Code gets checked automatically every day; a system's ability to survive failure should be too</strong> — picking, splitting, judging and stopping all handed to the machine.</p>
+</div>
+<p class="switch-hint">Want the CI/CD/CV split, exactly how Netflix's ChAP and Monocle route traffic and choose experiments, and when to make it a release gate? <a data-mode="deep">→ Switch to Deep</a></p>
+</div>
+<div class="mode mode-deep" hidden>
+<h2>In one sentence</h2>
+<p class="lead">You think chaos engineering means "run a drill every so often," but its end state is <strong>Continuous Verification (CV)</strong>: just as CI keeps checking code, tooling <strong>continuously and automatically, in production</strong> verifies system behavior — choosing experiments, splitting traffic, comparing metrics, reaching verdicts and aborting, with no human watching the dashboard.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Continuous integration (CI)</strong>: every commit is automatically built and tested, so "it doesn't fit together" surfaces early.</li>
+<li><strong>Continuous delivery (CD)</strong>: code that passes tests automatically moves through a deployment pipeline and can ship safely at any time.</li>
+<li><strong>Pipeline</strong>: the chain of automated steps from commit to production; any step can be a gate that must pass before the next.</li>
+<li><strong>Canary</strong>: send a small share of traffic to a new version, compare its metrics with the old one, and roll out fully only if it looks fine.</li>
+<li><strong>Dependency call (RPC / IPC)</strong>: one microservice calling another; chaos experiments often inject failure or latency here.</li>
+<li><strong>Timeout / retry / fallback</strong>: how long to wait, how many times to try again, and what substitute answer to return when all else fails — the main defenses against a failing dependency.</li>
+<li><strong>Steady-state metric</strong>: a business number that is stable when things are healthy; Netflix uses stream starts per second (SPS).</li>
+<li><strong>Blast radius</strong>: the most users or requests one experiment can affect.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Chapter 16, opening Part V on where the practice is heading, written by Casey Rosenthal. It follows Ch15's maturity model — CV is the top of the "sophistication" axis (automated, in the pipeline, control-vs-experiment on business metrics) — and is the engineering realization of Ch3's principle "automate experiments to run continuously." Chapters 17–20 then push chaos into new territory.</p>
+<h2>What problem this chapter solves</h2>
+<p>Picture a mid-sized microservice system: 200 services, 100+ deploys a day, over a thousand dependency edges. A manual Game Day runs once a quarter and covers 5–10 scenarios. The problems are obvious:</p>
+<ul>
+<li><strong>Conclusions go stale.</strong> Last quarter you verified "if recommendations die, the home page degrades gracefully." This quarter someone changed a timeout, the conclusion no longer holds, and nobody knows.</li>
+<li><strong>Coverage is tiny.</strong> A thousand edges × two fault types (failure, latency) against a dozen hand-run scenarios a quarter would take decades.</li>
+<li><strong>People are the bottleneck.</strong> Design, execution, monitoring and judgment all rest on a few chaos engineers; as teams multiply, the queue never clears.</li>
+</ul>
+<p>Software has solved exactly this before: manual integration and manual deploys were once "big events every few months," until CI/CD made them small things that happen on every commit. The chapter's claim: <strong>verifying system properties — availability, resilience, performance — has to take the same road</strong>, or verification will never keep pace with change.</p>
+<h2>Core ideas, explained</h2>
+<h3>1. From CI/CD to CV: what gets verified changes</h3>
+<p>The book defines CV as a discipline of proactive experimentation in software, implemented as tooling that verifies system behaviors. The key difference is the object of verification:</p>
+<ul>
+<li><strong>CI verifies code</strong>: is this code correct, do the unit and integration tests pass. The answer is a deterministic pass/fail.</li>
+<li><strong>CD verifies delivery</strong>: can it be shipped automatically and rolled back.</li>
+<li><strong>CV verifies system behavior</strong>: does the whole system hold steady state under real traffic and real faults. This is an <strong>emergent property</strong> — no single line of code "owns" availability, so unit tests can't see it; only system-level experiments can.</li>
+</ul>
+<p>So a CV result is not an assertion-style pass/fail but a <strong>statistical comparison</strong>: how far apart the experiment and control groups' business metrics are, and whether that gap exceeds the noise.</p>
+<figure>
+<svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"/></marker><marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"/></marker></defs>
+<g font-size="12">
+<rect x="20" y="40" width="190" height="110" rx="8" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/>
+<text x="115" y="66" text-anchor="middle" fill="#e7ebf1" font-weight="700" font-size="14">CI · integration</text>
+<text x="115" y="92" text-anchor="middle" fill="#b9c0ca">verifies code</text>
+<text x="115" y="114" text-anchor="middle" fill="#7c8593">deterministic pass / fail</text>
+<text x="115" y="134" text-anchor="middle" fill="#7c8593">every commit</text>
+<rect x="255" y="40" width="190" height="110" rx="8" fill="rgba(91,157,249,0.06)" stroke="#5b9df9"/>
+<text x="350" y="66" text-anchor="middle" fill="#e7ebf1" font-weight="700" font-size="14">CD · delivery</text>
+<text x="350" y="92" text-anchor="middle" fill="#b9c0ca">verifies safe shipping</text>
+<text x="350" y="114" text-anchor="middle" fill="#7c8593">canary, rollback</text>
+<text x="350" y="134" text-anchor="middle" fill="#7c8593">every deploy</text>
+<rect x="490" y="40" width="190" height="110" rx="8" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="585" y="66" text-anchor="middle" fill="#e7ebf1" font-weight="700" font-size="14">CV · verification</text>
+<text x="585" y="92" text-anchor="middle" fill="#b9c0ca">verifies behavior:</text>
+<text x="585" y="110" text-anchor="middle" fill="#b9c0ca">steady state under faults</text>
+<text x="585" y="134" text-anchor="middle" fill="#c9a8ff">statistics, not asserts</text>
+<line x1="212" y1="95" x2="250" y2="95" stroke="#5b9df9" stroke-width="1.8" marker-end="url(#a1)"/>
+<line x1="447" y1="95" x2="485" y2="95" stroke="#5b9df9" stroke-width="1.8" marker-end="url(#a1)"/>
+<path d="M585,152 C585,215 115,215 115,155" fill="none" stroke="#9b6cf5" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#a2)"/>
+<text x="350" y="232" text-anchor="middle" fill="#c9a8ff">weaknesses found become fixes and regression experiments</text>
+</g>
+</svg>
+<figcaption>CI covers code, CD covers delivery, CV covers system behavior; CV doesn't run once before release but continuously in production, feeding weaknesses back into development.</figcaption>
+</figure>
+<h3>2. ChAP: turning one experiment into an automated procedure</h3>
+<p>The chapter's main case is Netflix's <strong>ChAP (Chaos Automation Platform)</strong>. It turns Ch3's recipe — hypothesize a steady state, inject real-world faults, run in production, limit the blast radius — into a button:</p>
+<ul>
+<li><strong>Spin up two identical clusters.</strong> From the current production build, launch a small <strong>control cluster</strong> and an <strong>experiment cluster</strong> with identical configuration.</li>
+<li><strong>Carve off a small slice of real traffic.</strong> Route a very small share of production requests, split evenly between the two; everyone else hits the normal production cluster and notices nothing.</li>
+<li><strong>Inject only into the experiment group.</strong> Using Netflix's fault-injection framework FIT, requests to the experiment cluster are tagged so that calls to a chosen dependency fail or slow down.</li>
+<li><strong>Compare business metrics, abort automatically.</strong> SPS is compared between the two groups continuously; once the experiment group drifts past a threshold, the platform <strong>aborts</strong> and pulls the traffic back.</li>
+</ul>
+<p>Why insist on a control group? Because production traffic moves on its own — SPS climbs at evening peak, a region's network wobbles. Watching only the experiment group for "did it drop?" can't separate the fault from the background. A <strong>same-time, same-build, same-traffic-shape control</strong> cancels that noise; whatever gap remains is the effect of the fault. It's the same shape as canary analysis — except a canary compares old vs new code, and ChAP compares with vs without a fault.</p>
+<figure>
+<svg viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="b1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"/></marker><marker id="b2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"/></marker></defs>
+<g font-size="12">
+<rect x="20" y="120" width="100" height="56" rx="8" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/>
+<text x="70" y="145" text-anchor="middle" fill="#e7ebf1" font-weight="700">Real users</text>
+<text x="70" y="163" text-anchor="middle" fill="#7c8593">prod requests</text>
+<rect x="160" y="120" width="110" height="56" rx="8" fill="rgba(91,157,249,0.06)" stroke="#5b9df9"/>
+<text x="215" y="145" text-anchor="middle" fill="#e7ebf1" font-weight="700">Router</text>
+<text x="215" y="163" text-anchor="middle" fill="#7c8593">split by tag</text>
+<line x1="122" y1="148" x2="155" y2="148" stroke="#5b9df9" stroke-width="1.8" marker-end="url(#b1)"/>
+<rect x="320" y="20" width="200" height="56" rx="8" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/>
+<text x="420" y="45" text-anchor="middle" fill="#e7ebf1" font-weight="700">Normal production</text>
+<text x="420" y="63" text-anchor="middle" fill="#7c8593">almost all traffic, untouched</text>
+<rect x="320" y="120" width="200" height="56" rx="8" fill="rgba(91,157,249,0.08)" stroke="#5b9df9"/>
+<text x="420" y="145" text-anchor="middle" fill="#e7ebf1" font-weight="700">Control cluster</text>
+<text x="420" y="163" text-anchor="middle" fill="#7c8593">small slice, no fault</text>
+<rect x="320" y="220" width="200" height="56" rx="8" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="420" y="245" text-anchor="middle" fill="#e7ebf1" font-weight="700">Experiment cluster</text>
+<text x="420" y="263" text-anchor="middle" fill="#c9a8ff">equal slice, fault injected</text>
+<line x1="272" y1="140" x2="315" y2="55" stroke="#5b9df9" stroke-width="2.4" marker-end="url(#b1)"/>
+<line x1="272" y1="148" x2="315" y2="148" stroke="#5b9df9" stroke-width="1.2" marker-end="url(#b1)"/>
+<line x1="272" y1="156" x2="315" y2="242" stroke="#9b6cf5" stroke-width="1.2" marker-end="url(#b2)"/>
+<rect x="565" y="160" width="120" height="76" rx="8" fill="rgba(91,157,249,0.06)" stroke="#5b9df9"/>
+<text x="625" y="185" text-anchor="middle" fill="#e7ebf1" font-weight="700">Compare SPS</text>
+<text x="625" y="204" text-anchor="middle" fill="#b9c0ca">gap over limit</text>
+<text x="625" y="222" text-anchor="middle" fill="#c9a8ff">→ auto-abort</text>
+<line x1="522" y1="148" x2="560" y2="185" stroke="#5b9df9" stroke-width="1.2" marker-end="url(#b1)"/>
+<line x1="522" y1="248" x2="560" y2="215" stroke="#9b6cf5" stroke-width="1.2" marker-end="url(#b2)"/>
+</g>
+</svg>
+<figcaption>ChAP's split: control and experiment each take a small, equal slice of real traffic, only the experiment gets the fault, and the run aborts automatically once their business metrics diverge past a threshold.</figcaption>
+</figure>
+<h3>3. Monocle: letting the machine decide which experiment comes first</h3>
+<p>ChAP solved "how to run," but each experiment still had to be configured by hand: which service, which dependency, failure or latency. With enough services, people became the bottleneck again. So Netflix built <strong>Monocle</strong> on top of ChAP to generate and rank experiments automatically:</p>
+<ul>
+<li><strong>Read the configuration.</strong> Collect each dependency's timeout, retry count, whether it has a fallback, and its call volume from the RPC framework and monitoring.</li>
+<li><strong>Generate candidates.</strong> Every dependency × {failure, latency} becomes a candidate experiment.</li>
+<li><strong>Rank by impact.</strong> Higher call volume, more retries, more potential to drag down callers — higher in the queue.</li>
+<li><strong>Skip experiments known to fail.</strong> If a dependency has no fallback, injecting failure is guaranteed to produce errors — there's no need to try it on users; <strong>report it as a weakness directly</strong>. Contradictions between settings can also be spotted statically: if a client's timeout × retries adds up to more than the outer overall timeout, the retries can never actually happen.</li>
+</ul>
+<p>The point is to replace <strong>experiment selection</strong> by human intuition with a systematic scan of the system's structure — echoing Ch12's experiment selection problem: the fault space is huge, so automation pays off first in <em>choosing</em> and only second in <em>running</em>.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/tail-at-scale-paper27.en.html" target="_blank" rel="noopener">CS Papers · The Tail at Scale</a> — why injected latency is sneakier than injected failure: fan-out amplifies tail latency, and misconfigured timeouts and retries turn slowness into a cascade</aside>
+<figure>
+<svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="c1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<rect x="10" y="40" width="120" height="64" rx="8" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/>
+<text x="70" y="66" text-anchor="middle" fill="#e7ebf1" font-weight="700">Read config</text>
+<text x="70" y="86" text-anchor="middle" fill="#7c8593" font-size="11">timeout·retry·fallback</text>
+<rect x="150" y="40" width="120" height="64" rx="8" fill="rgba(91,157,249,0.06)" stroke="#5b9df9"/>
+<text x="210" y="66" text-anchor="middle" fill="#e7ebf1" font-weight="700">Generate</text>
+<text x="210" y="86" text-anchor="middle" fill="#7c8593" font-size="11">dep × fail/latency</text>
+<rect x="290" y="40" width="120" height="64" rx="8" fill="rgba(91,157,249,0.06)" stroke="#5b9df9"/>
+<text x="350" y="66" text-anchor="middle" fill="#e7ebf1" font-weight="700">Rank by impact</text>
+<text x="350" y="86" text-anchor="middle" fill="#7c8593" font-size="11">volume·retries</text>
+<rect x="430" y="40" width="120" height="64" rx="8" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="490" y="66" text-anchor="middle" fill="#e7ebf1" font-weight="700">ChAP runs</text>
+<text x="490" y="86" text-anchor="middle" fill="#c9a8ff" font-size="11">split·compare·abort</text>
+<rect x="570" y="40" width="120" height="64" rx="8" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/>
+<text x="630" y="66" text-anchor="middle" fill="#e7ebf1" font-weight="700">Report</text>
+<text x="630" y="86" text-anchor="middle" fill="#7c8593" font-size="11">to service team</text>
+<line x1="132" y1="72" x2="146" y2="72" stroke="#5b9df9" stroke-width="1.8" marker-end="url(#c1)"/>
+<line x1="272" y1="72" x2="286" y2="72" stroke="#5b9df9" stroke-width="1.8" marker-end="url(#c1)"/>
+<line x1="412" y1="72" x2="426" y2="72" stroke="#5b9df9" stroke-width="1.8" marker-end="url(#c1)"/>
+<line x1="552" y1="72" x2="566" y2="72" stroke="#5b9df9" stroke-width="1.8" marker-end="url(#c1)"/>
+<path d="M350,106 C350,165 630,165 630,110" fill="none" stroke="#9b6cf5" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#c1)"/>
+<text x="490" y="178" text-anchor="middle" fill="#c9a8ff">known to fail (e.g. no fallback): skip the run, report directly</text>
+</g>
+</svg>
+<figcaption>Monocle's automatic selection: generate candidate experiments from configuration, rank them, hand them to ChAP; anything statically known to fail skips injection and is reported as a weakness.</figcaption>
+</figure>
+<h3>4. What makes it "continuous verification"</h3>
+<p>ChAP + Monocle satisfies Ch3's advanced principles all at once: <strong>a business steady-state hypothesis</strong> (SPS), <strong>real-world events</strong> (dependency failure and latency), <strong>running in production</strong>, <strong>continuous automation</strong>, and <strong>a minimized blast radius</strong> (a small traffic slice plus auto-abort). Drop any one and you are back to "an automated drill": off production, the conclusions aren't real; without auto-abort, nobody dares run it often; without continuity, conclusions expire. The chapter closes by predicting that CV thinking will spread to verifying other system properties such as performance, data artifacts and correctness.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/chaos-correctness-oracle-day52.en.html" target="_blank" rel="noopener">System Design · Day 52 A correctness oracle for chaos engineering</a> — a steady-state metric only proves "still alive"; proving "still right" needs a correctness check</aside>
+<h2>Key trade-offs and choices</h2>
+<p>CV's central trade-off: <strong>where verification runs, how often, and who judges</strong>. The closer to production and the more automated, the more trustworthy the result — and the higher the upfront investment and the risk of getting it wrong.</p>
+<p class="tcap">Three ways to verify (magnitudes are illustrative)</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Approach</th><th>Frequency</th><th>Coverage</th><th>Trustworthiness</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>Manual Game Day</th><td>Monthly / quarterly</td><td>A few scenarios each time</td><td>High, but stales fast</td><td>Labor-heavy; trains people as a bonus</td></tr>
+<tr><th>Scheduled runs off production</th><td>Daily / every build</td><td>Many dependencies</td><td>Medium: traffic and config aren't production</td><td>Maintain environments and traffic replay; zero production risk</td></tr>
+<tr><th>Production CV (ChAP-style)</th><td>Continuous</td><td>Auto-selected by priority</td><td>High, and stays current</td><td>Needs routing, control groups, auto-abort; a few real users still affected</td></tr>
+</tbody>
+</table>
+</div>
+<p class="tcap">Should CV results gate releases?</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Approach</th><th>Fits</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>Hard gate: no pass, no ship</th><td>Critical-path services, mature experiments</td><td>Experiment noise blocks innocent releases; false-positive rate must be controlled</td></tr>
+<tr><th>Soft signal: report to the team</th><td>New experiments, noisy-metric services</td><td>Easily becomes an alert nobody reads; weaknesses linger</td></tr>
+<tr><th>Scheduled sweep, decoupled from releases</th><td>Catching config drift and dependency changes</td><td>The problem may already have been live for a while</td></tr>
+</tbody>
+</table>
+</div>
+<p>Rule of thumb: <strong>auto-abort before production; soft signal (to measure the false-positive rate) before hard gate.</strong> A gate with a 5% false-positive rate, at 100 deploys a day, wrongly blocks about 5 deploys every day — teams will quickly learn to route around it.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/deployment-release-day22.en.html" target="_blank" rel="noopener">System Design · Day 22 Deployment and release</a> — how canaries, progressive rollout and automatic rollback are designed; a CV gate plugs into exactly that pipeline</aside>
+<h2>Why it matters / in real systems</h2>
+<p>When an architecture review asks "how do you know the fallback actually works?", CV's answer is: <strong>not "it worked at the last drill," but "it was verified automatically yesterday."</strong> The idea now lives across common tooling: automated canary analysis in Spinnaker, scheduled experiments and steady-state probes in LitmusChaos / Chaos Mesh, and cloud providers' managed fault-injection services.</p>
+<div class="ev">
+<p class="evh">Industry evidence</p>
+<ul>
+<li><strong>Netflix: automatically generating and running chaos experiments in production.</strong> Netflix's Basiri, Hochstein, Jones and Tucker describe ChAP and Monocle as "a platform for automatically generating and executing chaos experiments, which check how well the production system can handle component failures and slowdowns." <span class="src">Netflix · Automating Chaos Experiments in Production · ICSE-SEIP 2019</span></li>
+<li><strong>Google + Netflix: control-vs-experiment statistical judgment as an open-source service.</strong> Kayenta "fetches user-configured metrics from their sources, runs statistical tests, and provides an aggregate score," and can automatically promote or fail on that basis; Netflix expected it to be "making thousands of canary judgments per day." The same class of capability as ChAP's control comparison. <span class="src">Google Cloud blog · 2018 (<a href="https://cloud.google.com/blog/products/gcp/introducing-kayenta-an-open-automated-canary-analysis-tool-from-google-and-netflix" target="_blank" rel="noopener">Introducing Kayenta</a>)</span></li>
+<li><strong>Netflix: fault injection wired into the delivery platform.</strong> The Chaos Monkey repository states: "This version of Chaos Monkey is fully integrated with Spinnaker, the continuous delivery platform that we use at Netflix." <span class="src">Netflix · Chaos Monkey README (<a href="https://github.com/Netflix/chaosmonkey" target="_blank" rel="noopener">github.com/Netflix/chaosmonkey</a>)</span></li>
+</ul>
+</div>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"CV just means putting chaos tests in CI."</strong> Running a few fault tests at build time is a start; the essence of CV is <strong>continuous, in production, control-compared, auto-aborting</strong>. Without production and a control, you are still verifying a test environment.</li>
+<li><strong>"Once it's automated, people aren't needed."</strong> Machines can pick and judge, but fixing weaknesses, designing hypotheses and interpreting results still take people; the human factors of Ch10–11 haven't gone away.</li>
+<li><strong>"Metric unchanged = system fine."</strong> SPS is coarse, and with a small traffic slice statistical power is limited, so a small regression can drown in noise; a steady-state metric also proves "alive," not "data correct."</li>
+<li><strong>It only verifies what you thought of.</strong> Monocle scans dependency configuration and covers single-dependency failure / latency; combined faults and shifting traffic patterns still need separate design.</li>
+<li><strong>Barrier to entry and the era it was written in.</strong> ChAP sits on Netflix's in-house routing, FIT and deployment platform, which small teams can't easily copy; today's open-source and managed tools lower the bar, but "control group + auto-abort" is still the piece most teams lack.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① CV is chaos engineering's end state: verify system behavior continuously and automatically, the way CI verifies code.</p>
+<p>② CI verifies code, CD verifies delivery, CV verifies emergent properties; CV results are statistical comparisons, not assertions.</p>
+<p>③ ChAP: same-build control and experiment groups each get a small slice of real traffic; only the experiment gets the fault.</p>
+<p>④ The control cancels production's own fluctuation; the remaining gap is the fault's effect.</p>
+<p>⑤ Watch a business metric (SPS) and auto-abort past a threshold — the precondition for running often in production.</p>
+<p>⑥ Monocle generates and ranks experiments from timeout / retry / fallback config; sure failures are reported, not run.</p>
+<p>⑦ Choosing: auto-abort before production, soft signal before hard gate, and watch the false-positive rate.</p>
+<p>⑧ Limits: it verifies only what you thought of, steady state proves only "alive," and the platform bar is high.</p>
+</div>
+</div>
+<footer>Book Deep Read · Reading this page ≈ getting the core of the chapter; for the full argument and extensions, go to the original book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body></html>
