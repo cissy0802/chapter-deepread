@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Chaos Engineering Ch 19 · Chaos Engineering on a Database — Book Deep Read 151</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep Read · Chaos Engineering · Chapter 19</p>
+<h1>Chaos Engineering on a Database</h1>
+<p class="sub">Chaos Engineering: System Resiliency in Practice · Ch 19 · Chaos Engineering on a Database · 2020</p>
+<p class="langbar"><a href="chaoseng-ch19-chaos-engineering-on-a-database-book151.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Simple</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>When you move money in a banking app, it leaves one account and shows up in another. The database behind it must never "take the money and forget to deliver it." Big modern databases are rarely one machine; they are dozens or hundreds of machines working together. This chapter is a first-hand report from a company that builds one (PingCAP, maker of TiDB): <strong>how they deliberately torture their own database to make sure it still never loses data or miscounts, even when things break.</strong></p>
+<h2>A strange fact first</h2>
+<p>You'd think: once all the tests are written and passing, the database is safe to ship. But the nastiest bugs in a distributed database live on paths no test ever walks, like one machine losing power halfway through a write at the exact moment the cable between two others flickers. <strong>Each failure alone is handled fine; together they break things.</strong> With hundreds of machines running every day, that kind of coincidence eventually happens.</p>
+<h2>Why the old world struggled</h2>
+<ul>
+<li><strong>Database mistakes are quiet.</strong> When a website goes down, everyone notices at once. When a database silently drops one transfer, nobody may notice until the books are reconciled months later.</li>
+<li><strong>There are too many kinds of failure.</strong> Crashed machines, slow disks, a network split in two, one machine's clock running fast. The combinations are endless.</li>
+<li><strong>People can't imagine them all.</strong> Engineers test what they can think of; the failures that hurt are usually the ones nobody thought of.</li>
+</ul>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>Like pilots in a flight simulator.</strong> In a dedicated test environment, they stage "accidents" over and over: pull a machine, cut the network in half, make a disk pretend to fail, set one machine's clock a few minutes ahead.</li>
+<li><strong>Break things and audit at the same time.</strong> The classic check is the "bank test": open many accounts and have programs move money between them nonstop. However the money moves, the grand total must stay exactly the same. If the total ever changes, the database made a mistake during the chaos.</li>
+<li><strong>Let machines run it every day.</strong> They built an automatic "accident simulator": each day it builds the database from the latest code, throws random mixes of failures at it, and reports any problem. Humans just read the results and fix the bugs.</li>
+<li><strong>Share the tool.</strong> The simulator was later turned into an open-source tool, so other teams can shake their own systems too.</li>
+</ul>
+<h2>What it buys you / how to choose</h2>
+<p>The payoff: coincidences that might happen "once in a blue moon" in real life get hit several times a day in testing, so bugs are caught before users meet them. One honest cost: this kind of shaking can only prove "we found a bug," never "there are no bugs left," and building and running a simulator around the clock takes real people and machines.</p>
+<h2>Remember it in one line</h2>
+<div class="tl">
+<p><strong>Database bugs are quiet, so keep causing accidents on purpose while auditing against rules like "the total can never change."</strong></p>
+</div>
+<p class="switch-hint">Want to see where faults land in TiDB's architecture, how the four injection layers work, why the bank test catches consistency bugs, and where the Schrodinger platform and Chaos Mesh came from? <a data-mode="deep">→ Switch to Deep</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">You'd think test cases keep a database correct; in fact the deadliest bugs in a distributed database hide on paths where <strong>several faults happen to overlap</strong>, and they are quiet: no crash, just a wrong answer. This chapter is the PingCAP team's field report on TiDB: <strong>inject faults systematically at four layers (application, CPU/memory, network, filesystem), judge correctness against invariants such as "the sum of all balances is conserved," and hand the whole loop to an automated platform that runs day and night</strong>. That platform's know-how later became the open-source Chaos Mesh.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Distributed database</strong>: data spread over many machines that still behaves like a single database to clients.</li>
+<li><strong>Replica</strong>: a copy of the same data on another machine, so one failure doesn't lose it.</li>
+<li><strong>Raft</strong>: a consensus algorithm that lets a group of machines agree on the order of writes; it keeps working as long as a majority is alive.</li>
+<li><strong>Leader</strong>: the member of a Raft group that accepts writes and replicates them to the others (the followers).</li>
+<li><strong>Network partition</strong>: machines are all alive, but the network between them is cut, splitting them into groups that can't talk.</li>
+<li><strong>Clock skew</strong>: machines disagree about the current time, or one machine's clock suddenly jumps.</li>
+<li><strong>Transaction</strong>: a group of reads and writes that either all take effect or none do, like "debit plus credit" in a transfer.</li>
+<li><strong>Invariant</strong>: a property that must hold no matter what the system does, such as "the sum of all balances never changes."</li>
+<li><strong>Kubernetes</strong>: a platform that deploys containerized programs across a fleet of machines and keeps them running.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Chapter 19, in Part V ("Evolution"), written by Liu Tang and Hao Weng of PingCAP. It follows Ch18 on the human side of systems and precedes Ch20 on security chaos engineering. It is one of the book's few complete practice reports from a database vendor, and maps onto any team building or running distributed storage (NewSQL, distributed key-value stores, message queues).</p>
+<h2>What problem this chapter solves</h2>
+<p>TiDB is a MySQL-compatible distributed database; production clusters often run tens to hundreds of nodes and carry heavy transactional load. For such a system, <strong>"never lose data, never miscount" is non-negotiable</strong>. A web service down for five minutes can apologize; a database that drops one transfer may force a business to halt and reconcile.</p>
+<p>Three things make it hard. First, <strong>failure is normal</strong>: slow disks, crashed processes, broken links and jumping clocks happen daily at scale. Second, <strong>failures overlap</strong>: each single failure's handling path usually has a unit test, but combinations like "a network partition in the middle of a leader change" are hard to write down in advance. Third, <strong>database bugs are quiet</strong>: no alarm, just a wrong result that may spread before anyone notices. The chapter asks how to turn "correct under failure" from a promise into a fact verified every day.</p>
+<h2>The core ideas, in depth</h2>
+<h3>1. Know your target: TiDB's three layers</h3>
+<p>To shake a system you first need its skeleton. TiDB splits into three parts:</p>
+<ul>
+<li><strong>TiDB server</strong>: the stateless SQL layer. It parses SQL and plans queries but stores nothing, so you can add or remove instances freely.</li>
+<li><strong>TiKV</strong>: a distributed transactional key-value store. Data is cut by key range into <strong>Regions</strong>; each Region has three replicas by default, forming one Raft group.</li>
+<li><strong>PD (Placement Driver)</strong>: the cluster's "brain." It tracks where every Region lives, schedules and balances load, and hands out globally increasing transaction timestamps (TSO, the timestamp oracle).</li>
+</ul>
+<p>This picture defines the experiment checklist: kill one TiKV replica, and can Raft elect a new leader without losing committed writes? If the PD leader dies, do timestamps stay monotonic? If the link between the SQL layer and storage breaks, do transactions roll back or hang?</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="c1" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<rect x="230" y="14" width="240" height="34" rx="7" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/>
+<text x="350" y="36" fill="#b9c0ca" text-anchor="middle">App / client (MySQL protocol)</text>
+<line x1="350" y1="48" x2="350" y2="70" stroke="#5b9df9" stroke-width="1.5" marker-end="url(#c1)"/>
+<rect x="150" y="74" width="400" height="40" rx="7" fill="rgba(91,157,249,0.08)" stroke="#5b9df9"/>
+<text x="350" y="99" fill="#e7ebf1" text-anchor="middle">TiDB server × N (stateless SQL layer)</text>
+<rect x="580" y="74" width="105" height="100" rx="7" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="632" y="104" fill="#e7ebf1" text-anchor="middle" font-weight="700">PD</text>
+<text x="632" y="124" fill="#b9c0ca" text-anchor="middle">scheduling</text>
+<text x="632" y="142" fill="#b9c0ca" text-anchor="middle">TSO clock</text>
+<line x1="350" y1="114" x2="350" y2="140" stroke="#5b9df9" stroke-width="1.5" marker-end="url(#c1)"/>
+<line x1="552" y1="94" x2="576" y2="94" stroke="#9b6cf5" stroke-width="1.3"/>
+<rect x="40" y="144" width="520" height="92" rx="9" fill="rgba(91,157,249,0.04)" stroke="#5b9df9" stroke-dasharray="5 4"/>
+<text x="56" y="162" fill="#8fbaff" font-weight="700">TiKV (one Raft group per Region)</text>
+<rect x="60" y="174" width="150" height="48" rx="7" fill="rgba(91,157,249,0.12)" stroke="#5b9df9" stroke-width="2"/>
+<text x="135" y="195" fill="#e7ebf1" text-anchor="middle">Node A</text><text x="135" y="212" fill="#8fbaff" text-anchor="middle">Region 1 leader</text>
+<rect x="225" y="174" width="150" height="48" rx="7" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/>
+<text x="300" y="195" fill="#e7ebf1" text-anchor="middle">Node B</text><text x="300" y="212" fill="#b9c0ca" text-anchor="middle">Region 1 follower</text>
+<rect x="390" y="174" width="150" height="48" rx="7" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/>
+<text x="465" y="195" fill="#e7ebf1" text-anchor="middle">Node C</text><text x="465" y="212" fill="#b9c0ca" text-anchor="middle">Region 1 follower</text>
+<text x="40" y="262" fill="#9b6cf5" font-weight="700">⚡ Inject:</text>
+<text x="118" y="262" fill="#b9c0ca">kill process · partition / delay / loss · disk I/O errors &amp; latency</text>
+<text x="118" y="284" fill="#b9c0ca">clock skew · CPU / memory stress · in-code failpoints</text>
+</g>
+</svg>
+<figcaption>TiDB's three layers: a stateless SQL tier, TiKV replicated per Region with Raft, and PD for scheduling and timestamps. Every node and every link between them is a target for chaos experiments.</figcaption>
+</figure>
+<h3>2. Injecting faults at four layers</h3>
+<p>The chapter groups injection by the layer it hits, from most precise to most realistic:</p>
+<p><strong>① Application: failpoints.</strong> "Fault switches" planted in code. Normally they do nothing; switched on in a test, they make a given line return an error, sleep, or panic. PingCAP wrote <code>pingcap/failpoint</code> for Go and <code>fail-rs</code> for Rust, modeled on FreeBSD's failpoints. Their value is <strong>precision</strong>: a razor-thin window like "a Raft snapshot fails halfway through sending" can be reproduced reliably.</p>
+<p><strong>② CPU and memory.</strong> Stress tools hog CPU and eat memory to simulate a noisy neighbor saturating the machine. Under resource starvation a database shows chain reactions such as heartbeat timeouts and frequent leader changes, which you never see on an idle box.</p>
+<p><strong>③ Network.</strong> Linux traffic control (<code>tc</code>) injects delay, loss and reordering; firewall rules (<code>iptables</code>) cut links between specific nodes to create partitions. This is the layer most worth shaking, because everything subtle about consensus lives in "what if a message is lost or late?"</p>
+<p><strong>④ Filesystem.</strong> Intercept I/O calls to slow them down or return errors (disk full, corrupt reads), checking whether the storage engine ever treats a half-finished write as success, or keeps running in a damaged state after an error.</p>
+<p>Two more run throughout: <strong>killing processes / restarting nodes</strong>, and <strong>clock skew</strong>, setting a node's time forward or back. TiDB's transaction timestamps come from PD, so local clocks don't directly order transactions, but logic built on timeouts and leases can still be disturbed by a jumping clock, so it gets shaken too.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/time-clocks-ordering-paper31.en.html" target="_blank" rel="noopener">CS Papers · Time, Clocks, and the Ordering of Events</a> — why distributed systems can't trust wall clocks, and how logical clocks order events causally</aside>
+<h3>3. How Raft should behave under a partition</h3>
+<p>Take the canonical experiment: a three-replica Region, with leader node A cut off from B and C. The steady-state hypothesis: <strong>the minority side (A) can no longer commit writes; the majority side (B, C) elects a new leader after the election timeout and keeps serving; no committed data is lost; when the network heals, the old leader steps down and catches up.</strong> Any violation is a bug: A still believing it is leader and serving stale data (breaking linearizable reads), or both sides accepting writes (split brain).</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="d1" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<text x="30" y="24" fill="#7c8593">time →</text>
+<text x="130" y="24" fill="#8fbaff" text-anchor="middle">t0 normal</text>
+<text x="350" y="24" fill="#8fbaff" text-anchor="middle">t1 partition injected</text>
+<text x="580" y="24" fill="#8fbaff" text-anchor="middle">t2 healed</text>
+<line x1="240" y1="34" x2="240" y2="240" stroke="rgba(91,157,249,0.18)"/>
+<line x1="470" y1="34" x2="470" y2="240" stroke="rgba(91,157,249,0.18)"/>
+<rect x="60" y="50" width="140" height="34" rx="7" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="2"/><text x="130" y="72" fill="#e7ebf1" text-anchor="middle">A · leader</text>
+<rect x="60" y="110" width="140" height="34" rx="7" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/><text x="130" y="132" fill="#b9c0ca" text-anchor="middle">B · follower</text>
+<rect x="60" y="170" width="140" height="34" rx="7" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/><text x="130" y="192" fill="#b9c0ca" text-anchor="middle">C · follower</text>
+<rect x="262" y="50" width="176" height="34" rx="7" fill="rgba(255,255,255,0.03)" stroke="#5a6069" stroke-dasharray="4 3"/><text x="350" y="72" fill="#7c8593" text-anchor="middle">A · minority, no writes</text>
+<line x1="262" y1="97" x2="438" y2="97" stroke="#9b6cf5" stroke-width="2.5" stroke-dasharray="7 4"/>
+<text x="350" y="94" fill="#9b6cf5" text-anchor="middle" font-size="11">⚡ partition</text>
+<rect x="280" y="110" width="140" height="34" rx="7" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="2"/><text x="350" y="132" fill="#e7ebf1" text-anchor="middle">B · new leader</text>
+<rect x="280" y="170" width="140" height="34" rx="7" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/><text x="350" y="192" fill="#b9c0ca" text-anchor="middle">C · follower</text>
+<line x1="350" y1="146" x2="350" y2="166" stroke="#5b9df9" stroke-width="1.4" marker-end="url(#d1)"/>
+<rect x="492" y="50" width="176" height="34" rx="7" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/><text x="580" y="72" fill="#b9c0ca" text-anchor="middle">A · steps down, catches up</text>
+<rect x="510" y="110" width="140" height="34" rx="7" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="2"/><text x="580" y="132" fill="#e7ebf1" text-anchor="middle">B · leader</text>
+<rect x="510" y="170" width="140" height="34" rx="7" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/><text x="580" y="192" fill="#b9c0ca" text-anchor="middle">C · follower</text>
+<text x="350" y="232" fill="#7c8593" text-anchor="middle">Check: no split brain · no committed data lost · minority serves no stale reads</text>
+</g>
+</svg>
+<figcaption>Expected timeline of a partition experiment: the majority elects a new leader and keeps serving, the minority stops writing, and after healing the old leader steps down and catches up. Any deviation points to a bug in the consensus implementation.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/raft-paper50.en.html" target="_blank" rel="noopener">CS Papers · Raft</a> — election timeouts, log replication and the majority rule: exactly the machinery these partition experiments verify</aside>
+<h3>4. How to tell something went wrong: metrics plus invariants</h3>
+<p>Injecting faults is half the job; the other half is <strong>detection</strong>. The chapter uses two kinds of signal:</p>
+<ul>
+<li><strong>System metrics</strong>: watch QPS, latency, leader-change counts and error rates through monitoring such as Prometheus. A QPS dip right after injection is expected; a dip that never recovers, or latency that stays high, is an availability problem.</li>
+<li><strong>Correctness invariants</strong>: the layer unique to databases, and the more important one. The classic is the <strong>bank test</strong>: create accounts, have many clients transfer random amounts between them concurrently, and keep reading all balances and summing them. Transfers are transactions, so <strong>the total must stay constant</strong>; if any read sees a different sum, there is a lost update, a read of an intermediate state, or another isolation/consistency bug. Similar checks include "an append-only log must never lose or reorder entries."</li>
+</ul>
+<p>The beauty of invariants: you <strong>don't need to know what the bug looks like</strong>, only what must never happen. This is the same spirit as Jepsen, which records the operation history and checks it against the consistency model the system claims.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/chaos-correctness-oracle-day52.en.html" target="_blank" rel="noopener">System Design · Day 52 A Correctness Oracle for Chaos Engineering</a> — "still alive" under failure is not "still right": how to build checkers that can judge correctness</aside>
+<h3>5. Automation: from manual drills to Schrodinger</h3>
+<p>Running one partition experiment by hand is easy. Running thousands, <strong>every day, against every new build, in every combination</strong>, is not. PingCAP built an internal platform called <strong>Schrodinger</strong> (after Schrödinger's cat: until you open the box, you don't know whether the system is alive or dead), running on Kubernetes. Roughly:</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 170" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="e1" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<rect x="10" y="40" width="115" height="50" rx="8" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/><text x="67" y="62" fill="#e7ebf1" text-anchor="middle">Pull latest</text><text x="67" y="79" fill="#7c8593" text-anchor="middle">build images</text>
+<rect x="148" y="40" width="115" height="50" rx="8" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/><text x="205" y="62" fill="#e7ebf1" text-anchor="middle">Deploy test</text><text x="205" y="79" fill="#7c8593" text-anchor="middle">cluster on K8s</text>
+<rect x="286" y="40" width="125" height="50" rx="8" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"/><text x="348" y="62" fill="#e7ebf1" text-anchor="middle">Run workload</text><text x="348" y="79" fill="#8fbaff" text-anchor="middle">bank test etc.</text>
+<rect x="434" y="40" width="115" height="50" rx="8" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="2"/><text x="491" y="62" fill="#e7ebf1" text-anchor="middle">Inject random</text><text x="491" y="79" fill="#b9c0ca" text-anchor="middle">fault mixes</text>
+<rect x="572" y="40" width="118" height="50" rx="8" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"/><text x="631" y="62" fill="#e7ebf1" text-anchor="middle">Check invariants</text><text x="631" y="79" fill="#8fbaff" text-anchor="middle">metrics &amp; logs</text>
+<line x1="125" y1="65" x2="144" y2="65" stroke="#5b9df9" stroke-width="1.5" marker-end="url(#e1)"/>
+<line x1="263" y1="65" x2="282" y2="65" stroke="#5b9df9" stroke-width="1.5" marker-end="url(#e1)"/>
+<line x1="411" y1="65" x2="430" y2="65" stroke="#5b9df9" stroke-width="1.5" marker-end="url(#e1)"/>
+<line x1="549" y1="65" x2="568" y2="65" stroke="#5b9df9" stroke-width="1.5" marker-end="url(#e1)"/>
+<path d="M631,92 L631,132 L67,132 L67,94" fill="none" stroke="#5a6069" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#e1)"/>
+<text x="350" y="152" fill="#7c8593" text-anchor="middle">Fail → auto-file a bug, keep the evidence · Pass → new fault mix, loop day and night</text>
+</g>
+</svg>
+<figcaption>A Schrodinger-style automated chaos pipeline: build, deploy, load, inject, verify, repeat. Failure combinations that are "once in a blue moon" in production get hit several times a day.</figcaption>
+</figure>
+<p>The fault-injection capabilities built into Schrodinger were later extracted and open-sourced as <strong>Chaos Mesh</strong>: you declare, as Kubernetes custom resources (CRDs), "which pods, what fault, for how long," and any system on Kubernetes can use it. That is the chapter's landing point: <strong>for a database, chaos engineering is not a one-off drill but a continuous verification pipeline running alongside CI.</strong></p>
+<h2>Key trade-offs and choices</h2>
+<p>The core tension: <strong>the more precise the injection, the easier it is to reproduce and pinpoint, but the further it is from real failures; the more realistic, the more it uncovers the unexpected, but the harder it is to reproduce.</strong></p>
+<p class="tcap">Fault-injection methods by layer</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Method</th><th>Good at finding</th><th>Reproducibility</th><th>Cost / limits</th></tr></thead>
+<tbody>
+<tr><th>In-code failpoints</th><td>Races in tiny windows, error-handling branches</td><td><strong>High</strong>, down to a line</td><td>Must be planted in code; only tests points you thought of</td></tr>
+<tr><th>Kill / restart</th><td>Crash recovery, leader election, log replay</td><td>Medium</td><td>Coarse; misses "slow but not dead"</td></tr>
+<tr><th>Network (tc / iptables)</th><td>Partitions, split brain, timeout and retry logic</td><td>Medium</td><td>Needs root / network namespaces; combinatorial blow-up</td></tr>
+<tr><th>Filesystem I/O</th><td>Torn writes, full disks, silent corruption</td><td>Medium</td><td>Needs an interception layer; adds overhead</td></tr>
+<tr><th>Clock skew</th><td>Leases, timeouts, logic tied to local time</td><td>Medium-low</td><td>Blast radius hard to predict; can break the test tooling itself</td></tr>
+<tr><th>CPU / memory stress</th><td>Heartbeat timeouts, jitter-driven cascades of failover</td><td>Low</td><td>Results vary a lot by hardware</td></tr>
+</tbody>
+</table>
+</div>
+<p class="tcap">Routes to verifying "still correct under failure"</p>
+<div class="tblwrap">
+<table class="cmp">
+<thead><tr><th>Route</th><th>Example</th><th>Strength</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>Unit / integration tests + failpoints</th><td>Everyday development</td><td>Fast, easy to pinpoint</td><td>Covers only anticipated paths</td></tr>
+<tr><th>Black-box history checking</th><td>Jepsen</td><td>Checks against a consistency model; finds isolation holes</td><td>Heavy per analysis; not continuous</td></tr>
+<tr><th>Continuous chaos platform</th><td>Schrodinger / Chaos Mesh</td><td>Real binaries, real environment, runs day and night</td><td>Cluster and staff cost; hard to reproduce</td></tr>
+<tr><th>Deterministic simulation</th><td>FoundationDB</td><td>Any failure fully replayable from a seed</td><td>System must be designed for simulation from day one</td></tr>
+</tbody>
+</table>
+</div>
+<p>Rule of thumb: <strong>a distributed database needs at least "invariant checking plus continuous injection" together.</strong> Injection without auditing tests availability, not correctness.</p>
+<h2>Why it matters / in real systems</h2>
+<p>In an interview or design review, when asked "how do you prove this store doesn't lose data under failure," saying "we use Raft" is not enough: the algorithm is correct, the implementation may not be. A credible answer lists the invariants to verify (no committed write lost, conserved totals, monotonic reads), names which faults are injected at which layers, and says whether these experiments run automatically before every release. This chapter is a complete template you can copy.</p>
+<div class="ev">
+<p class="evh">Industry evidence</p>
+<ul>
+<li><strong>PingCAP: open-sourcing its internal chaos platform as Chaos Mesh.</strong> The project describes itself as "an open source, cloud-native Chaos Engineering platform for Kubernetes" that uses Kubernetes custom resources to define, orchestrate and observe controlled fault injection, covering pod, network, I/O, time, stress, kernel and other faults; it is now a CNCF incubating project. <span class="src">Source: <a href="https://github.com/chaos-mesh/chaos-mesh" target="_blank" rel="noopener">chaos-mesh/chaos-mesh README, GitHub</a></span></li>
+<li><strong>PingCAP: failpoints as code-level injection.</strong> Its Go implementation says "Fail points are used to add code points where errors may be injected in a user controlled fashion," stresses there is no extra cost when disabled, and follows FreeBSD's failpoint design. <span class="src">Source: <a href="https://github.com/pingcap/failpoint" target="_blank" rel="noopener">pingcap/failpoint README, GitHub</a></span></li>
+<li><strong>Jepsen's independent test of TiDB (2019).</strong> Kyle Kingsbury's analysis of TiDB 2.1.7 found that automatic transaction retries, enabled by default, could cause anomalies such as lost updates under conflict; PingCAP then turned automatic retries off by default in 3.0. It shows that a vendor's own chaos testing and outside black-box checking complement each other. <span class="src">Text source: Jepsen, "TiDB 2.1.7" analysis, 2019</span></li>
+<li><strong>FoundationDB: deterministic simulation as the alternative route.</strong> Its docs say determinism "allows perfect repeatability of a simulated run, facilitating controlled experiments to home in on issues," that it runs "tens of thousands of simulations every night, each one simulating large numbers of component failures," and estimate roughly one trillion CPU-hours of simulation to date. <span class="src">Source: <a href="https://github.com/apple/foundationdb/blob/main/documentation/sphinx/source/testing.rst" target="_blank" rel="noopener">FoundationDB docs, "Simulation and Testing", GitHub</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"We use Raft / Paxos, so we're consistent."</strong> The algorithm's proof covers the protocol, not your code. Snapshots, membership changes and leader leases are the corners where implementations break, and exactly where chaos experiments should aim.</li>
+<li><strong>"The service stayed up, so the experiment passed."</strong> A database must be checked for correctness. Chaos without invariant checks finds crashes, not quiet errors.</li>
+<li><strong>"Random injection is enough."</strong> Pure randomness is inefficient in a huge combination space; use knowledge of the architecture to target windows like leader changes, Region splits and snapshot transfers (echoing Ch12's experiment selection problem).</li>
+<li><strong>"Found a bug, can't reproduce it."</strong> The biggest pain of realistic injection. Preserving evidence (logs, operation history, injection timeline) and narrowing the bug into a reproducible failpoint case matter just as much.</li>
+<li><strong>A test cluster is not production.</strong> The chapter's practice mainly runs on dedicated test clusters, unlike Netflix-style experiments in production. For a database, gambling with real user data costs too much: a reasonable trade-off, but one to acknowledge.</li>
+<li><strong>Era limits and what came after.</strong> The book dates from 2020, when Chaos Mesh had only just been open-sourced; it has since grown to cover HTTP, JVM, cloud-provider and more faults. The industry also increasingly pairs chaos testing with deterministic simulation and formal methods (such as TLA+), each covering a different blind spot.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① The most dangerous bugs in a distributed database hide where several faults overlap, and they are quiet: no crash, just wrong answers.</p>
+<p>② Know the architecture: TiDB = stateless SQL tier + Raft-replicated TiKV + PD for scheduling and timestamps; every node and link is an injection point.</p>
+<p>③ Four layers of injection: application (failpoints), CPU/memory, network (tc / iptables), filesystem; plus process kills and clock skew.</p>
+<p>④ Steady state for a partition: the majority elects a new leader, the minority stops writing, no committed data is lost, no split brain.</p>
+<p>⑤ Detection stands on two legs: metrics for availability, invariants (the bank test's conserved total) for correctness.</p>
+<p>⑥ Invariants don't require knowing what the bug looks like, only what must never happen.</p>
+<p>⑦ Automation is the key: Schrodinger builds, deploys, injects and verifies every day; its know-how became the open-source Chaos Mesh.</p>
+<p>⑧ Trade-off: precision aids reproduction, realism finds surprises; continuous chaos, Jepsen and deterministic simulation complement each other.</p>
+<p>⑨ Pitfalls: "we use Raft so we're consistent" and "it stayed up so it passed" are both wrong; whether you can reproduce a found bug decides success too.</p>
+</div>
+</div>
+<footer>Book Deep Read · Reading this page ≈ getting the core of the chapter; for the full argument and extensions, go to the original book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
