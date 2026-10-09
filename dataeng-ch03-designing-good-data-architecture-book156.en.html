@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Fundamentals of Data Engineering Ch 3 · Designing Good Data Architecture — Book Deep-Read 156</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · Fundamentals of Data Engineering · Chapter 3</p>
+<h1>Designing Good Data Architecture</h1>
+<p class="sub">Fundamentals of Data Engineering · Ch 3 · Reis &amp; Housley · 2022</p>
+<p class="langbar"><a href="dataeng-ch03-designing-good-data-architecture-book156.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>A company's sales, inventory, ads and support data live in dozens of separate systems. When the boss asks "which channel makes us the most money?", the answer has to be pulled together from all of them. <strong>Planning in advance how that data flows, where it lives and who looks after it is data architecture. This chapter is about what makes such a plan "good".</strong></p>
+<h2>An analogy</h2>
+<p>Data architecture is like <strong>planning a city that never stops growing</strong>. A good planner doesn't fix every building on day one. They lay the roads, water and power that everyone needs, then let each neighborhood build what it needs. A good plan lets the city grow without bulldozing the old town every time it expands.</p>
+<h2>Why the old world was hard</h2>
+<ul>
+<li><strong>Set in stone, impossible to change.</strong> Many companies spent years building one giant system; when the business shifted, the whole thing was out of date.</li>
+<li><strong>Pull one thread, the sweater unravels.</strong> Parts were so tangled that changing one broke others.</li>
+<li><strong>Everything dumped into one big pool.</strong> The pile kept growing, nobody knew what was in it or what was still usable, and it turned into a swamp no one dared touch.</li>
+</ul>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>Tell apart doors you can walk back through from doors that lock behind you.</strong> Make easy-to-undo decisions quickly; think slowly only about the ones you can't undo. Good architecture makes most decisions the first kind.</li>
+<li><strong>Assume things will break.</strong> Like a city keeping fire crews and backup power, decide ahead of time how fast you must recover and how much data you can afford to lose.</li>
+<li><strong>Each neighborhood runs itself and meets the others at agreed crossings.</strong> Departments trade data only through fixed "interfaces", so what happens inside one doesn't break the others.</li>
+<li><strong>Three generations of storeroom.</strong> First a "tidy archive": everything is sorted before it comes in, so lookups are fast, but it only accepts neat things. Then a "junk room": throw anything in first, cheap, but it gets messy. Today's favorite is a "junk room with a librarian": things still sit in the cheap room, but a catalog and rules make it as dependable as the archive.</li>
+<li><strong>Central kitchen, or every household cooks?</strong> As a company grows, one central team handling all the data becomes a bottleneck. The other idea: each department treats its own data as a "product" and serves it up properly, while the center only supplies the kitchen equipment and shared hygiene rules.</li>
+</ul>
+<h2>What it buys you / how to choose</h2>
+<p>With these principles a team can grow alongside the business without starting over. The right choice depends on size: a small team is fine with one off-the-shelf cloud setup; only when there are so many departments that the central team can't keep up is it worth handing data back to each department. One honest cost: the more spread out it is, the more flexible it gets, but the harder it becomes to agree on shared definitions and rules.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p><strong>Good data architecture isn't a blueprint drawn once; it's a plan that keeps most decisions undoable, keeps the parts loosely joined, and keeps adjusting as the business changes.</strong></p>
+</div>
+<p class="switch-hint">Want the book's nine architecture principles, one-way vs two-way doors, the path from warehouse to lake to lakehouse, how to weigh Lambda against Kappa, and the four principles of data mesh? <a data-mode="deep">→ Switch to Deep</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>The one-liner</h2>
+<p class="lead">You might think good data architecture is an end-state blueprint with the right tools picked. The chapter defines it instead as <strong>the design of systems to support the evolving data needs of an enterprise, achieved by flexible and reversible decisions reached through a careful evaluation of trade-offs</strong>. The key word is "reversible": warehouse, lake, lakehouse, Lambda and data mesh are all trade-offs for particular situations, and none of them is the finish line.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Data warehouse</strong>: a central database built for analytics; data is cleaned and shaped into a fixed structure before it goes in.</li>
+<li><strong>Data lake</strong>: raw data of every kind (tables, logs, images) stored as-is in cheap object storage and interpreted when it's used.</li>
+<li><strong>Object storage</strong>: massive, cheap file-style storage such as S3, billed by capacity.</li>
+<li><strong>ETL / ELT</strong>: Extract, Transform, Load. ETL transforms before loading into the warehouse; ELT loads raw data first and transforms inside the warehouse.</li>
+<li><strong>Coupling</strong>: how much two components depend on each other. With tight coupling, changing one forces a change in the other.</li>
+<li><strong>ACID</strong>: four guarantees of database transactions; in plain terms, a write either fully happens or doesn't happen at all, never half.</li>
+<li><strong>Multitenancy</strong>: many customers or teams sharing one system, with their data kept strictly apart.</li>
+<li><strong>RTO / RPO</strong>: recovery time objective (how fast you must be back after a failure) and recovery point objective (how much recent data you can afford to lose).</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Chapter 3 of Part I, "Foundation and Building Blocks". Chapter 2 listed data architecture as one of the lifecycle's six undercurrents; this chapter gives it room of its own, and Chapter 4 moves on to choosing concrete technologies under these principles. In practice it maps to the architecture review behind "how should we build our data platform, and can we still change it in a few years?"</p>
+<h2>What problem this chapter tackles</h2>
+<p>A data team's most expensive mistake is rarely one broken pipeline; it's <strong>architecture that locks itself in</strong>. An on-premises warehouse that took three years to build can't follow the business when strategy changes. All raw data poured into one lake leaves nobody, three years on, able to say what's usable or which files hold personal data that must be deleted. A single central team queues requests from dozens of departments, and a new report waits a quarter.</p>
+<p>The chapter first defines data architecture, then gives <strong>nine principles for judging whether it's good</strong>, and finally puts the mainstream patterns (data warehouse, data lake, lakehouse, Lambda, Kappa, the unified Dataflow model and data mesh) against the same yardstick. The authors stress that a data engineer need not be an architect but must be <strong>architecture-aware</strong>, able to tell whether a decision is reversible.</p>
+<h2>Core ideas, explained</h2>
+<h3>1. What data architecture is: operational, technical, and two kinds of door</h3>
+<p>Starting from several enterprise architecture definitions (TOGAF, Gartner and others), the authors distill their own: <strong>enterprise architecture is the design of systems to support change in the enterprise, achieved by flexible and reversible decisions reached through careful evaluation of trade-offs</strong>; data architecture is its data-side subset. It has two layers. <strong>Operational architecture</strong> answers "what": which business processes to support, how good the data must be, how much latency from creation to query is acceptable. <strong>Technical architecture</strong> answers "how": how data is ingested, stored, transformed and served. "Move 10 TB per hour from source databases into the lake" is a technical-architecture statement.</p>
+<p>"Reversible" borrows Jeff Bezos's framing. A <strong>one-way door</strong> is a decision that's almost impossible to undo, such as selling the company or hard-wiring your core systems into one proprietary platform. A <strong>two-way door</strong> can be walked back at any time, such as moving a batch of objects to a cheaper storage class and moving them back if it doesn't work out. Two-way doors deserve speed and volume; only one-way doors deserve slowness and review meetings. Good architecture <strong>turns as many decisions as possible into two-way doors</strong>.</p>
+<h3>2. Nine principles, distilled from cloud vendors' frameworks</h3>
+<p>Drawing on the AWS Well-Architected Framework and Google Cloud's principles for cloud-native architecture, the authors list nine:</p>
+<ul>
+<li><strong>Choose common components wisely</strong>: share object storage, version control, orchestration and observability across teams instead of reinventing them, but don't force a one-size-fits-all solution that hurts particular teams.</li>
+<li><strong>Plan for failure</strong>: set availability, reliability, RTO and RPO targets first. A daily executive report may be fine with a 4-hour RTO and a 24-hour RPO; a pipeline feeding online fraud checks may need minutes. Different targets can differ in cost by an order of magnitude.</li>
+<li><strong>Architect for scalability</strong>: not only scaling up, but scaling down, even to zero when idle, trading elasticity for cost.</li>
+<li><strong>Architecture is leadership</strong>: architects work mainly by mentoring teams and explaining trade-offs, not by issuing orders.</li>
+<li><strong>Always be architecting</strong>: architecture is ongoing work; know the current baseline, the target architecture, and the sequencing plan between them.</li>
+<li><strong>Build loosely coupled systems</strong>: expanded in section 3 below.</li>
+<li><strong>Make reversible decisions</strong>: technology moves so fast that today's best choice may be obsolete in a few years.</li>
+<li><strong>Prioritize security</strong>: move from "guard the perimeter, trust the inside" to zero-trust, verifying every access; in the cloud, understand the shared responsibility model, where the provider secures the underlying infrastructure and you secure your configuration and data.</li>
+<li><strong>Embrace FinOps</strong>: in the cloud, cost shifts from one-off hardware purchases (capital expense) to ongoing pay-per-use spending (operating expense). One bad query or a forgotten cluster can burn a month's budget overnight, so cost must be monitored as closely as performance.</li>
+</ul>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/cost-capacity-engineering-day27.en.html" target="_blank" rel="noopener">System Design · Day 27 Cost and Capacity Engineering</a> — FinOps one level down: unit cost, reservations versus elasticity, and cutting the bill without breaking SLOs</aside>
+<h3>3. Loose coupling: tiers, monoliths, microservices and the strangler</h3>
+<p>The book cites Amazon's famous internal API mandate: every team must expose its data and functionality through service interfaces, with no direct reads of another team's database. It's the best-known example of loose coupling: each team answers only for its interface and can change its internals without breaking anyone.</p>
+<p>In data systems, a <strong>single-tier architecture</strong> puts database and application on one machine, the simplest and the most fragile; a <strong>multitier architecture</strong> separates data, application logic and presentation. A <strong>monolith</strong> keeps everything together, easy to start but hard to change; <strong>microservices</strong> split it into independent services, easy to change but harder to operate. Factors to weigh: <strong>single-tenant or multitenant</strong> (multitenancy must guard against noisy neighbors hogging resources, and above all against one customer's data leaking to another); and <strong>event-driven</strong> design (services talk asynchronously through events, so producers and consumers never wait on each other).</p>
+<p>For modernizing old systems the authors recommend the <strong>strangler pattern</strong>: instead of a big-bang rewrite, the new system takes over the old one's functions piece by piece until the old one can be retired. In effect it splits one huge one-way door into many two-way doors.</p>
+<h3>4. Warehouse, lake, lakehouse: three generations of analytics architecture</h3>
+<p>The classic <strong>data warehouse</strong> definition comes from Bill Inmon: a subject-oriented, integrated, nonvolatile and time-variant collection of data in support of management's decisions. The traditional approach is ETL, cleaning before loading. Cloud warehouses (Amazon Redshift led the way, followed by Google BigQuery and Snowflake) <strong>separate compute from storage</strong> and scale on demand, which made ELT popular: load raw data first, then transform it with the warehouse's own compute. A slimmed-down subset for one department is a <strong>data mart</strong>.</p>
+<p>The <strong>data lake</strong> rose in the Hadoop era: pour all raw data into cheap storage first and decide its structure when you use it. The problems came quickly. Without catalogs and governance the lake became a <strong>data swamp</strong>; data was written and never read; updating or deleting individual records was painful, especially when GDPR required erasing one user's data.</p>
+<p>The <strong>data lakehouse</strong>, coined by Databricks, keeps data in open-format files on object storage but adds a table-format layer on top that provides ACID transactions, schema management, updates and deletes, giving the lake the warehouse's reliability. The authors observe that warehouses and lakes are <strong>converging</strong>: cloud warehouses can now query files in the lake directly, lakes look more and more like warehouses, and the two are merging into a "data platform".</p>
+<figure>
+<svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<g font-size="12">
+<rect x="20" y="20" width="200" height="170" rx="10" fill="rgba(91,157,249,0.06)" stroke="#5b9df9"/>
+<text x="120" y="44" text-anchor="middle" fill="#e7ebf1">Data warehouse</text>
+<rect x="40" y="58" width="160" height="34" rx="6" fill="rgba(91,157,249,0.1)" stroke="#5a6069"/><text x="120" y="80" text-anchor="middle" fill="#b9c0ca">Clean first (ETL)</text>
+<rect x="40" y="104" width="160" height="34" rx="6" fill="rgba(91,157,249,0.1)" stroke="#5a6069"/><text x="120" y="126" text-anchor="middle" fill="#b9c0ca">Tidy tables · fast SQL</text>
+<text x="120" y="160" text-anchor="middle" fill="#7c8593">Structured data only</text>
+<text x="120" y="178" text-anchor="middle" fill="#7c8593">Costly storage + compute</text>
+<rect x="250" y="20" width="200" height="170" rx="10" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/>
+<text x="350" y="44" text-anchor="middle" fill="#e7ebf1">Data lake</text>
+<rect x="270" y="58" width="160" height="34" rx="6" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/><text x="350" y="80" text-anchor="middle" fill="#b9c0ca">Dump raw into objects</text>
+<rect x="270" y="104" width="160" height="34" rx="6" fill="rgba(255,255,255,0.03)" stroke="#5a6069" stroke-dasharray="4 3"/><text x="350" y="126" text-anchor="middle" fill="#b9c0ca">No catalog · hard deletes</text>
+<text x="350" y="160" text-anchor="middle" fill="#7c8593">Stores anything, cheap</text>
+<text x="350" y="178" text-anchor="middle" fill="#7c8593">Drifts into a swamp</text>
+<rect x="480" y="20" width="200" height="170" rx="10" fill="rgba(155,108,245,0.08)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="580" y="44" text-anchor="middle" fill="#e7ebf1">Lakehouse</text>
+<rect x="500" y="58" width="160" height="34" rx="6" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"/><text x="580" y="80" text-anchor="middle" fill="#e7ebf1">Table format: ACID</text>
+<rect x="500" y="104" width="160" height="34" rx="6" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/><text x="580" y="126" text-anchor="middle" fill="#b9c0ca">Open files · objects</text>
+<text x="580" y="160" text-anchor="middle" fill="#7c8593">Lake cost + warehouse trust</text>
+<text x="580" y="178" text-anchor="middle" fill="#7c8593">Many engines, one copy</text>
+<line x1="222" y1="105" x2="246" y2="105" stroke="#7c8593" marker-end="url(#a1)"/>
+<line x1="452" y1="105" x2="476" y2="105" stroke="#7c8593" marker-end="url(#a1)"/>
+<text x="350" y="222" text-anchor="middle" fill="#7c8593">The lakehouse trick: add "catalog + transactions" on cheap files instead of moving data back into a warehouse</text>
+</g>
+</svg>
+<figcaption>Three generations: the warehouse tidies before entry, the lake admits first and asks later, the lakehouse puts warehouse transactions and governance back on the lake.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/data-lakehouse-day38.en.html" target="_blank" rel="noopener">System Design · Day 38 Data Lake and Lakehouse</a> — how a table format actually delivers transactions on object storage: snapshots, metadata files and concurrent commits</aside>
+<p>The authors also name the <strong>modern data stack</strong>: assembling off-the-shelf cloud services as modular, plug-and-play, cost-effective parts. Its value is a lower barrier to entry; its risk is that the number of modules, the bill and the integration work all keep growing.</p>
+<h3>5. Lambda, Kappa and the unified Dataflow model</h3>
+<p>What if you need batch and streaming at once? The <strong>Lambda architecture</strong> (proposed by Nathan Marz) runs two systems in parallel: a batch layer periodically recomputes accurate results, a speed layer uses stream processing for low-latency approximate ones, and a serving layer merges both for queries. Its fatal flaw is that <strong>the same business logic must be written twice, once in each system</strong>, and when the two disagree it's hard to debug.</p>
+<p>The <strong>Kappa architecture</strong> (proposed by Jay Kreps in 2014) responds by using one stream-processing platform only: all data is an event stream, and recomputing means replaying the log from the start. The authors' verdict is that it hasn't been widely adopted in practice, because storing and replaying huge logs for a long time is complicated and expensive.</p>
+<p>Google's <strong>Dataflow model</strong> (open-sourced as Apache Beam) takes a third path: treat all data as events and aggregate over various kinds of <strong>windows</strong>. Batch is just a bounded stream, so one codebase runs both. Flink and Spark have adopted similar ideas.</p>
+<figure>
+<svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="l1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"/></marker>
+<marker id="l2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"/></marker></defs>
+<g font-size="12">
+<text x="20" y="22" fill="#8fbaff">Lambda: two systems, two codebases</text>
+<rect x="20" y="40" width="100" height="70" rx="8" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/><text x="70" y="80" text-anchor="middle" fill="#e7ebf1">Sources</text>
+<rect x="180" y="34" width="170" height="34" rx="6" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"/><text x="265" y="56" text-anchor="middle" fill="#e7ebf1">Batch · accurate, slow</text>
+<rect x="180" y="82" width="170" height="34" rx="6" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"/><text x="265" y="104" text-anchor="middle" fill="#e7ebf1">Speed · fast, approximate</text>
+<rect x="420" y="40" width="130" height="70" rx="8" fill="rgba(91,157,249,0.06)" stroke="#5b9df9"/><text x="485" y="72" text-anchor="middle" fill="#e7ebf1">Serving</text><text x="485" y="92" text-anchor="middle" fill="#7c8593">merges both</text>
+<line x1="120" y1="62" x2="176" y2="52" stroke="#5b9df9" marker-end="url(#l1)"/>
+<line x1="120" y1="88" x2="176" y2="98" stroke="#5b9df9" marker-end="url(#l1)"/>
+<line x1="350" y1="52" x2="416" y2="64" stroke="#5b9df9" marker-end="url(#l1)"/>
+<line x1="350" y1="98" x2="416" y2="88" stroke="#5b9df9" marker-end="url(#l1)"/>
+<text x="620" y="70" text-anchor="middle" fill="#7c8593">Logic written twice</text><text x="620" y="88" text-anchor="middle" fill="#7c8593">Results reconciled</text>
+<text x="20" y="152" fill="#c9b3f7">Kappa / Dataflow: one stream, one codebase</text>
+<rect x="20" y="168" width="100" height="56" rx="8" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/><text x="70" y="201" text-anchor="middle" fill="#e7ebf1">Sources</text>
+<rect x="180" y="168" width="170" height="56" rx="8" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5" stroke-width="2"/><text x="265" y="192" text-anchor="middle" fill="#e7ebf1">Event log + streaming</text><text x="265" y="212" text-anchor="middle" fill="#7c8593">windowed · replayable</text>
+<rect x="420" y="168" width="130" height="56" rx="8" fill="rgba(155,108,245,0.08)" stroke="#9b6cf5"/><text x="485" y="201" text-anchor="middle" fill="#e7ebf1">Serving</text>
+<line x1="120" y1="196" x2="176" y2="196" stroke="#9b6cf5" marker-end="url(#l2)"/>
+<line x1="350" y1="196" x2="416" y2="196" stroke="#9b6cf5" marker-end="url(#l2)"/>
+<text x="620" y="192" text-anchor="middle" fill="#7c8593">Batch = bounded</text><text x="620" y="210" text-anchor="middle" fill="#7c8593">Recompute = replay</text>
+</g>
+</svg>
+<figcaption>Lambda uses two systems for "accurate" and "fast" at the price of writing logic twice; Kappa and Dataflow treat batch as a bounded stream and keep one codebase.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/data-processing-day20.en.html" target="_blank" rel="noopener">System Design · Day 20 Data Processing Systems</a> — the unification war after Lambda and Kappa: windows, watermarks and how "batch is a special case of streaming" plays out</aside>
+<h3>6. Data mesh: handing data back to the business domains</h3>
+<p>Most of the patterns above assume one central team owns all the data. <strong>Data mesh</strong>, proposed by Zhamak Dehghani, rejects exactly that centralization: as a company grows, the central data team becomes a bottleneck and sits too far from the business to understand what the data means. It rests on four principles:</p>
+<ul>
+<li><strong>Domain-oriented decentralized data ownership</strong>: the orders team owns order data, rather than handing it to a central team.</li>
+<li><strong>Data as a product</strong>: each domain builds its data as a product for others, with documentation, quality commitments and an owner.</li>
+<li><strong>Self-serve data infrastructure as a platform</strong>: the central team stops doing data work for others and instead provides infrastructure every domain can use on its own.</li>
+<li><strong>Federated computational governance</strong>: rules on security, definitions and interoperability are set jointly by domain representatives and enforced automatically in code wherever possible.</li>
+</ul>
+<p>It's the same idea as the API mandate in section 3: <strong>loose coupling along organizational boundaries</strong>. The book also mentions labels such as data fabric and data hub, a reminder that such names keep multiplying; when judging them, go back to the nine principles.</p>
+<h2>Key trade-offs and choices</h2>
+<p class="tcap">Table 1 · Warehouse, lake, lakehouse: what to use when</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Architecture</th><th>Fits</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>Cloud data warehouse</th><td>Mostly structured business data, analysts working in SQL; fastest to get going</td><td>Awkward for semi-structured and unstructured data; data sits in the vendor's format, so <strong>switching platforms is close to a one-way door</strong></td></tr>
+<tr><th>Data lake</th><td>Huge volumes of logs, images, ML training material; exploratory analysis</td><td>Turns into a swamp without governance; <strong>updates and deletes are hard</strong>, raising compliance risk</td></tr>
+<tr><th>Lakehouse</th><td>Analytics and ML sharing one copy of data; several engines reading the same table</td><td>You operate table formats, metadata and small-file compaction yourself; still evolving fast</td></tr>
+</tbody>
+</table></div>
+<p>Rule of thumb: if your data is mostly tidy business tables and your team works in SQL, start with a cloud warehouse; if ML and unstructured data dominate, or you want to avoid lock-in to one vendor, consider a lakehouse.</p>
+<p class="tcap">Table 2 · Three ways to run batch and streaming together</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Approach</th><th>Idea</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>Lambda</th><td>Batch layer for accuracy, speed layer for latency, serving layer merges</td><td><strong>Two codebases, two systems to operate</strong>; reconciling results is hard</td></tr>
+<tr><th>Kappa</th><td>Streams only; recompute by replaying the log</td><td>Long-term storage and replay of huge logs is costly and complex; not widely adopted</td></tr>
+<tr><th>Dataflow / Beam</th><td>Batch is a bounded stream; one codebase, two modes</td><td>Steep concepts (windows, late data); depends on how well the execution engine supports them</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 3 · Centralized platform vs data mesh</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Organization</th><th>Fits</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>Central team</th><td>A data team of a few to a few dozen people, not many business domains</td><td>Becomes a queueing bottleneck at scale; far from the business</td></tr>
+<tr><th>Data mesh</th><td>Large organizations with many domains able to do their own data work</td><td>Every domain needs data engineering skills; <strong>definitions and governance are harder to align</strong>; heavy platform investment</td></tr>
+</tbody>
+</table></div>
+<h2>Why it matters / in real systems</h2>
+<p>This chapter's vocabulary is the common language of data platform architecture reviews. Asked "why a lakehouse rather than a warehouse?", a good answer doesn't recite tool names; it explains how the data splits between structured and unstructured, whether there are ML use cases, which decisions are one-way doors, what the RTO and RPO are, who watches cost, and whether the organization is big enough to need decentralization. On the warehouse side that means Redshift, BigQuery and Snowflake; on the lakehouse side, open table formats such as Delta Lake and Apache Iceberg; for unified batch and streaming, Apache Beam, Flink and Spark.</p>
+<div class="ev">
+<p class="evh">Open-source evidence</p>
+<ul>
+<li><strong>Delta Lake: an open-source lakehouse.</strong> The project describes itself as "an open-source storage framework that enables building a Lakehouse architecture with compute engines including Spark, PrestoDB, Flink, Trino, and Hive", and notes that its ACID guarantees rest on the atomicity and durability of the underlying storage system. That's Table 1's "add transactions on the lake" in practice. <span class="src">Source: <a href="https://github.com/delta-io/delta" target="_blank" rel="noopener">delta-io/delta README, GitHub</a></span></li>
+<li><strong>Apache Iceberg: many engines safely sharing one table.</strong> It calls itself "a high-performance format for huge analytic tables" that "brings the reliability and simplicity of SQL tables to big data, while making it possible for engines like Spark, Trino, Flink, Presto, Hive and Impala to safely work with the same tables, at the same time". That's what decoupling compute from storage, and avoiding lock-in to one engine, looks like. <span class="src">Source: <a href="https://github.com/apache/iceberg" target="_blank" rel="noopener">apache/iceberg README, GitHub</a></span></li>
+<li><strong>Apache Beam: the Dataflow model, open-sourced.</strong> It describes itself as "a unified model for defining both batch and streaming data-parallel processing pipelines", with the same pipeline runnable on backends such as Flink, Spark and Google Cloud Dataflow. That's Table 2's "one codebase, two modes" in practice. <span class="src">Source: <a href="https://github.com/apache/beam" target="_blank" rel="noopener">apache/beam README, GitHub</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"Architecture is a one-time blueprint."</strong> The chapter's definition says the opposite: architecture is ongoing work, and baseline, target and transition plan all move with the business.</li>
+<li><strong>"Every decision deserves caution."</strong> Reviewing two-way doors as if they were one-way doors slows a team until it can't compete; only the few one-way doors deserve slowness.</li>
+<li><strong>"The lakehouse killed the warehouse."</strong> The two are converging; the choice depends on data shape and team skills, not on which is newer.</li>
+<li><strong>"Build the lake now, govern it later."</strong> A lake without catalogs, owners and the ability to delete becomes a swamp within a few years, and GDPR erasure requests turn it into a compliance risk.</li>
+<li><strong>"Lambda is the standard answer for batch plus streaming."</strong> Its two codebases are a long-term burden; most teams today look at a unified model first.</li>
+<li><strong>"Data mesh is a technology."</strong> It's first an organizational change; without data skills in each domain and agreement on governance, no amount of tooling makes it work, and for small teams it's often over-engineering.</li>
+<li><strong>Limits of its time, and debates.</strong> The book came out in 2022, while the lakehouse and table-format contest was still under way; since then the formats have moved steadily toward interoperability. How well data mesh works in practice is also disputed, and many companies adopted only its "data as a product" part.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① Data architecture = supporting evolving data needs through flexible, reversible decisions reached by careful trade-offs; it splits into operational (what) and technical (how) architecture.</p>
+<p>② Go slow on one-way doors, fast on two-way doors; good architecture makes as many decisions as possible two-way.</p>
+<p>③ Nine principles: choose common components wisely, plan for failure (RTO / RPO), scale up and down, architecture is leadership, always be architecting, loose coupling, reversibility, security first (zero-trust), embrace FinOps.</p>
+<p>④ Loose coupling runs from Amazon's API mandate to data mesh; modernize old systems with the strangler pattern, breaking a big one-way door into small two-way ones.</p>
+<p>⑤ Warehouses tidy before entry, lakes admit first, lakehouses put ACID and governance back on the lake; warehouses and lakes are converging.</p>
+<p>⑥ Lambda's two codebases are hard to reconcile, Kappa relies on replay but saw little adoption, Dataflow / Beam treats batch as a bounded stream.</p>
+<p>⑦ Data mesh's four principles: domain ownership, data as a product, self-serve platform, federated governance; it's an organizational problem before a technical one.</p>
+<p>⑧ A good architecture-review answer reports data shape, one-way doors, recovery targets, cost and organization size, not tool names.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Read this page ≈ get the core of the chapter; for the full argument and extensions, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
