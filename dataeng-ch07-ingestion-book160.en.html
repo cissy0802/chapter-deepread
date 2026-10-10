@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Fundamentals of Data Engineering Ch 7 · Ingestion — Book Deep-Read 160</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · Fundamentals of Data Engineering · Chapter 7</p>
+<h1>Ingestion</h1>
+<p class="sub">Fundamentals of Data Engineering · Ch 7 · Ingestion · Reis &amp; Housley · 2022</p>
+<p class="langbar"><a href="dataeng-ch07-ingestion-book160.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The sales dashboard your company opens every morning draws its numbers from the order system, the payment system, app click tracking, and spreadsheets sent over by partners — dozens of places. <strong>This chapter is about moving data out of all those "other people's houses" and safely into your own data platform.</strong> That step is called ingestion. It looks like simple hauling, yet it is where the whole pipeline breaks most often.</p>
+<h2>A strange thing first</h2>
+<p>We talk about "batch" and "real-time streaming" as if they were two different things. But think about it: orders keep happening one after another and never stop. A "daily batch" is just us <strong>dropping a gate across a river that never stops flowing, once every 24 hours</strong>. Batch and stream are not two kinds of data; they are how often you choose to open the gate.</p>
+<h2>Why the old way is hard</h2>
+<ul>
+<li><strong>You don't own the source.</strong> A colleague renames one field in their app, and your pipeline breaks at midnight with no warning.</li>
+<li><strong>Copying everything is heavy.</strong> Re-copying the whole order database every day is slow, and it slows down the system that is busy taking orders.</li>
+<li><strong>Delivery is never clean.</strong> Networks hiccup; data can arrive late, out of order, or even twice.</li>
+</ul>
+<h2>The core intuition</h2>
+<ul>
+<li><strong>Copy only the pages that changed.</strong> Don't reprint the whole ledger daily; copy just the pages edited since yesterday. Better still, read the bookkeeper's running log of every edit, so nothing slips through.</li>
+<li><strong>Warehouse first, unpack later.</strong> The old way sorted and repackaged goods on the truck before they reached the warehouse. Warehouses are now big and cheap, so you bring everything in as-is and tidy it up inside when needed. One step slower, but the original is always there.</li>
+<li><strong>Couriers don't promise order.</strong> A parcel sent first may arrive last, and the same parcel may be delivered twice. The mailroom must recognize "I already got this one", and have a place to log the late ones.</li>
+<li><strong>A shelf for problem parcels.</strong> Parcels with bad addresses or that can't be opened go to a side shelf, so they don't jam the conveyor belt.</li>
+</ul>
+<h2>What it gives you / how to choose</h2>
+<p>Most teams default to moving data in scheduled batches, and only build real-time streams when the business truly needs to see things within seconds; and if a ready-made tool can do the hauling, they buy rather than build. One honest cost: streaming makes data fresher, but someone has to watch it around the clock and handle the late and duplicate arrivals, so cost and complexity rise sharply.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p><strong>Ingestion moves data from other people's houses into yours: batch and stream differ only in how often the gate opens; moving only what changed, landing it as-is, and planning for late and duplicate arrivals matter more than chasing "real time".</strong></p>
+</div>
+<p class="switch-hint">Want bounded vs unbounded data, push, pull and poll, snapshot vs incremental extraction, the ETL vs ELT debate, late, out-of-order and duplicate events and dead-letter queues in streaming ingestion, plus evidence from Debezium and Airbyte? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">You think ingestion is just "copy data from A to B". In fact it is <strong>the most fragile link</strong> in the data lifecycle: the source is not yours, and it changes, stutters and resends. The idea this chapter builds is that <strong>all data is unbounded by nature, and a batch is just a boundary we draw on it</strong>. Designing ingestion is not about picking a tool; it is about first answering a string of questions — how big, how often, push or pull, can it be replayed, what happens to late and duplicate records — and then trading off batch against streaming and ETL against ELT based on real needs.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Source system</strong>: the upstream system that produces data, such as a production database, a SaaS app or app event tracking — usually owned by another team.</li>
+<li><strong>Data pipeline</strong>: the whole chain of steps that carries data from a source to a destination.</li>
+<li><strong>Batch / streaming</strong>: process data collected over a period all at once / process data record by record or in tiny groups as it arrives.</li>
+<li><strong>Data warehouse</strong>: a central, strictly structured database optimized for analytical queries, such as Snowflake or BigQuery.</li>
+<li><strong>Schema</strong>: the description of the data's structure — which fields exist and their types.</li>
+<li><strong>Message queue / event-streaming platform</strong>: a waystation where producers write messages and consumers read them at their own pace, such as Kafka, Kinesis or Pub/Sub.</li>
+<li><strong>Offset</strong>: a consumer's bookmark in the stream ("I have read up to message N"); you can move it back to re-read.</li>
+<li><strong>Idempotent</strong>: doing an operation once or many times gives the same result — "set balance to 100", not "add 100 to balance".</li>
+<li><strong>API</strong>: a programmatic interface a system exposes, commonly HTTP requests returning JSON.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The third chapter of Part II, "The Lifecycle in Depth". It follows Chapter 5 (where data comes from) and Chapter 6 (where it is kept) and leads into Chapter 8 on queries and transformation. Chapter 5 covers source systems themselves; this chapter covers <strong>the road from the source into storage</strong>. In practice: CDC replication, Kafka ingestion, managed connectors like Fivetran or Airbyte, and the nightly export job.</p>
+<h2>What problem this chapter solves</h2>
+<p>Picture an e-commerce company: an order database of 500 million rows with about 2 million inserts or updates a day; app events peaking at 50,000 per second; and a dozen SaaS systems (CRM, ad platforms) reachable only by API. Analysts want "yesterday's numbers before 9 a.m."; the fraud team wants "suspicious orders within seconds". Typical outcomes when ingestion is done naively:</p>
+<ul>
+<li><strong>Crushing the source.</strong> A nightly full-table scan of 500 million rows makes the live order database's latency spike.</li>
+<li><strong>Silent loss or duplication.</strong> Upstream changes a field, or a network retry resends a batch, and the report quietly drifts — found weeks later.</li>
+<li><strong>Paying for real time nobody needs.</strong> A daily-report use case built as a 24/7 streaming pipeline doubles the operating cost and earns nothing more.</li>
+</ul>
+<p>The authors define ingestion as <strong>moving data from one place to another</strong>, and separate it from integration: ingestion is the haul from source to storage, while integration combines data from several sources into a new dataset.</p>
+<h2>The core ideas, in depth</h2>
+<h3>1. Ask questions first: bounded vs unbounded, and frequency as a continuum</h3>
+<p>The authors list questions to answer before designing: who will use the ingested data, and can it be reused? What are the source and destination, how much data and how often? What format is it in, and can downstream use it as-is? If it is a stream, does it need transforming in flight? The most fundamental pair of ideas is <strong>bounded</strong> versus <strong>unbounded</strong> data: bounded data has a clear start and end ("orders on September 1"), unbounded data keeps coming. The book's stance is blunt — <strong>data is unbounded until someone draws a boundary on it</strong>. Business events are a stream by nature; a "daily batch" is a slice we cut for convenience.</p>
+<p>So <strong>ingestion frequency</strong> is not a batch-or-stream switch but a continuum: yearly, daily, hourly, every few minutes (micro-batch), and near real time. The authors note that even when data is ingested as a stream, downstream often processes it in batches (say, retraining a model hourly) — judge the frequency of each stage separately.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+<defs><lineargradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#5b9df9"></stop><stop offset="1" stop-color="#9b6cf5"></stop></lineargradient>
+<marker id="a1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#8fbaff"></path></marker></defs>
+<g font-size="12">
+<text fill="#cdd3db" x="30" y="24">An unbounded event stream (orders, clicks — it never stops)</text>
+<line stroke="url(#g1)" stroke-width="3" x1="30" x2="660" y1="50" y2="50" marker-end="url(#a1)"></line>
+<g fill="#9b6cf5"><circle cx="60" cy="50" r="4"></circle><circle cx="95" cy="50" r="4"></circle><circle cx="150" cy="50" r="4"></circle><circle cx="190" cy="50" r="4"></circle><circle cx="260" cy="50" r="4"></circle><circle cx="300" cy="50" r="4"></circle><circle cx="355" cy="50" r="4"></circle><circle cx="420" cy="50" r="4"></circle><circle cx="470" cy="50" r="4"></circle><circle cx="530" cy="50" r="4"></circle><circle cx="580" cy="50" r="4"></circle><circle cx="630" cy="50" r="4"></circle></g>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#5b9df9" width="300" x="30" y="78"></rect><text fill="#e7ebf1" text-anchor="middle" x="180" y="100">Daily batch: one cut per day</text>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#5b9df9" width="300" x="340" y="78"></rect><text fill="#e7ebf1" text-anchor="middle" x="490" y="100">The next day</text>
+<g fill="rgba(155,108,245,0.10)" stroke="#9b6cf5"><rect height="28" rx="5" width="70" x="30" y="122"></rect><rect height="28" rx="5" width="70" x="106" y="122"></rect><rect height="28" rx="5" width="70" x="182" y="122"></rect><rect height="28" rx="5" width="70" x="258" y="122"></rect></g>
+<text fill="#cdd3db" x="345" y="141">Micro-batch: every few minutes → stream: per event</text>
+<text fill="#8fbaff" text-anchor="middle" x="350" y="184">A batch is a boundary drawn on the same stream; frequency is a continuum</text>
+</g>
+</svg>
+<figcaption>Figure 1 · Bounded vs unbounded: cut the same event stream by the day, the minute or the event, and you get batch, micro-batch and streaming.</figcaption>
+</figure>
+<h3>2. Six engineering considerations: sync vs async, throughput, reliability, payload, push and pull</h3>
+<p><strong>Synchronous vs asynchronous ingestion.</strong> In a synchronous pipeline the source, ingestion and destination are tightly coupled; if a late step fails, hours of earlier work may have to be rerun. An asynchronous pipeline moves individual events through a buffer (such as Kafka), so each stage fails and retries on its own.</p>
+<p><strong>Serialization and deserialization.</strong> The source encodes data into bytes and the destination decodes them; both sides must agree on format and version, or the data "arrives but can't be read".</p>
+<p><strong>Throughput and scalability.</strong> The pipeline must absorb peaks and backlogs: when a downstream system comes back after a few hours down, the backlog arrives like a flood. The authors favor managed services, most of which scale elastically.</p>
+<p><strong>Reliability and durability.</strong> Reliability means the pipeline runs as expected and recovers from failure; durability means data is not lost. The key insight: <strong>a lot of source data is gone forever if you fail to capture it</strong> (events that only live in memory, for instance), so weigh spending on redundancy and self-healing against "what happens if we lose this" rather than chasing zero risk.</p>
+<p><strong>Payload.</strong> Know the data's kind (tabular, image, text), shape, size, schema and types — above all <strong>schema evolution</strong>: upstream adding fields, changing types and renaming columns is normal. Counter it by detecting schema changes automatically, or by using a <strong>schema registry</strong> that versions each schema so readers and writers parse by version; more fundamentally, open a line of communication with the upstream team.</p>
+<p><strong>Push, pull, poll.</strong> In <strong>push</strong>, the source sends data out; in <strong>pull</strong>, the ingestion system fetches it; in <strong>poll</strong>, it checks periodically whether anything changed and pulls only if so. CDC and event streams tend to push; scheduled exports tend to pull.</p>
+<h3>3. Batch ingestion: snapshot or incremental, ETL or ELT</h3>
+<p><strong>Snapshot vs incremental extraction.</strong> Copying everything each time (a snapshot) is simplest but expensive; extracting only what changed since last time (differential, or incremental) saves resources but requires the source to reliably say "what changed". For the 500-million-row order table above, with 2 million changes a day, incremental extraction moves only about 0.4% of a full copy.</p>
+<p><strong>File-based export.</strong> The source system exports files itself and pushes them to object storage or SFTP. The source keeps control of security and access, with no direct database connection opened up.</p>
+<p><strong>ETL vs ELT.</strong> ETL extracts, transforms in flight, then loads into the warehouse; ELT loads raw data as-is into a warehouse or lake and transforms it there with SQL. Once cloud warehouses made storage cheap and compute elastic, ELT became mainstream: the raw data is kept, and transformation logic can be rewritten and rerun. The authors add two warnings. First, if ELT does only the "EL" and nobody does the "T", the lake turns into a swamp. Second, ETL is not dead — when data must be masked first, shrunk first, or the destination is poor at transformation, transforming in flight still makes sense.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 700 210" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<g font-size="12">
+<text fill="#cdd3db" x="30" y="24">ETL (traditional)</text>
+<rect fill="rgba(255,255,255,0.03)" height="40" rx="7" stroke="#5a6069" width="120" x="30" y="36"></rect><text fill="#b9c0ca" text-anchor="middle" x="90" y="61">Source</text>
+<rect fill="rgba(91,157,249,0.10)" height="40" rx="7" stroke="#5b9df9" width="170" x="200" y="36"></rect><text fill="#e7ebf1" text-anchor="middle" x="285" y="61">Transform server</text>
+<rect fill="rgba(255,255,255,0.03)" height="40" rx="7" stroke="#5a6069" width="200" x="420" y="36"></rect><text fill="#b9c0ca" text-anchor="middle" x="520" y="61">Warehouse (processed only)</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="150" x2="196" y1="56" y2="56"></line>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="370" x2="416" y1="56" y2="56"></line>
+<text fill="#cdd3db" x="30" y="114">ELT (cloud-warehouse era)</text>
+<rect fill="rgba(255,255,255,0.03)" height="40" rx="7" stroke="#5a6069" width="120" x="30" y="126"></rect><text fill="#b9c0ca" text-anchor="middle" x="90" y="151">Source</text>
+<rect fill="rgba(155,108,245,0.10)" height="56" rx="9" stroke="#9b6cf5" stroke-width="1.6" width="420" x="200" y="118"></rect>
+<rect fill="rgba(255,255,255,0.03)" height="32" rx="6" stroke="#5a6069" width="150" x="215" y="130"></rect><text fill="#b9c0ca" text-anchor="middle" x="290" y="151">Raw layer (as-is)</text>
+<rect fill="rgba(91,157,249,0.14)" height="32" rx="6" stroke="#5b9df9" width="200" x="405" y="130"></rect><text fill="#e7ebf1" text-anchor="middle" x="505" y="151">Models built by SQL</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="150" x2="196" y1="146" y2="146"></line>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="365" x2="401" y1="146" y2="146"></line>
+<text fill="#8fbaff" text-anchor="middle" x="350" y="198">ELT moves the T inside: originals kept, logic rerunnable; skip the T and it's a swamp</text>
+</g>
+</svg>
+<figcaption>Figure 2 · ETL transforms in flight; ELT lands raw data first and transforms inside the warehouse.</figcaption>
+</figure>
+<p><strong>Inserts, updates and batch size.</strong> Columnar warehouses love large bulk writes and hate row-by-row inserts and frequent small updates — each one may rewrite a file. So ingestion should batch, sizing batches to the destination. For <strong>data migration</strong> (say, moving a whole database to the cloud), the advice is to trial a small sample and reconcile schema differences first; the hard part is usually not moving the data but repointing every upstream and downstream pipeline at the new system.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/data-processing-day20.en.html" rel="noopener" target="_blank">System Design · Day 20 Data Processing</a> — how batch and stream processing unify in one engine, with time windows and watermarks</aside>
+<h3>4. Streaming ingestion: late, out of order, duplicated, replayed, dead-lettered</h3>
+<p>Streaming swaps the question "how much to move" for "when, in what order, and how many times". The book walks through what to plan for:</p>
+<ul>
+<li><strong>Schema evolution</strong>: messages can change shape at any time; manage versions with a schema registry.</li>
+<li><strong>Late-arriving data</strong>: event time (when it happened) and ingestion time (when it was captured) can be far apart — a phone that was offline for an hour uploads its events late. Set a cutoff rule: how late is still accepted, and which time window it counts toward.</li>
+<li><strong>Ordering and multiple delivery</strong>: distributed messaging systems usually guarantee only <strong>at-least-once</strong> delivery, so messages may repeat and arrive out of order. Downstream must be idempotent and deduplicate by a unique ID.</li>
+<li><strong>Replay</strong>: platforms like Kafka, Kinesis and Pub/Sub keep messages for a retention period, and consumers can move their offset back to re-read history — fix a bug, then backfill.</li>
+<li><strong>Time to live</strong>: how long messages are kept. Too short, and data has expired by the time a failed consumer recovers; too long, and a backlog of stale messages clogs the pipeline.</li>
+<li><strong>Message size</strong>: streaming platforms cap single messages — Kafka defaults to about 1 MB, and Kinesis is also on the order of 1 MB. Put large files in object storage and send only a reference.</li>
+<li><strong>Error handling and dead-letter queues</strong>: messages that fail to parse or repeatedly fail processing go to a separate "dead-letter" topic so the main flow keeps moving; inspect and replay them later.</li>
+<li><strong>Location</strong>: ingest close to where data is produced; moving it across regions or clouds costs bandwidth and egress fees.</li>
+</ul>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a3" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<g font-size="12">
+<rect fill="rgba(255,255,255,0.03)" height="40" rx="7" stroke="#5a6069" width="120" x="20" y="40"></rect><text fill="#b9c0ca" text-anchor="middle" x="80" y="58">App / service</text><text fill="#7c8593" font-size="10" text-anchor="middle" x="80" y="72">event time</text>
+<rect fill="rgba(155,108,245,0.10)" height="40" rx="7" stroke="#9b6cf5" stroke-width="1.6" width="190" x="190" y="40"></rect><text fill="#e7ebf1" text-anchor="middle" x="285" y="58">Event stream (Kafka etc.)</text><text fill="#7c8593" font-size="10" text-anchor="middle" x="285" y="72">replayable within retention</text>
+<rect fill="rgba(91,157,249,0.10)" height="40" rx="7" stroke="#5b9df9" width="200" x="440" y="40"></rect><text fill="#e7ebf1" text-anchor="middle" x="540" y="58">Idempotent consumer → store</text><text fill="#7c8593" font-size="10" text-anchor="middle" x="540" y="72">dedupe by event ID</text>
+<line marker-end="url(#a3)" stroke="#7c8593" x1="140" x2="186" y1="60" y2="60"></line>
+<line marker-end="url(#a3)" stroke="#7c8593" x1="380" x2="436" y1="60" y2="60"></line>
+<text fill="#cdd3db" x="20" y="116">Late: a phone offline for an hour uploads events long after they happened</text>
+<text fill="#cdd3db" x="20" y="140">Duplicate / out of order: at-least-once delivery; the same event twice, sent first, arriving last</text>
+<rect fill="rgba(255,255,255,0.02)" height="40" rx="7" stroke="#9b6cf5" stroke-dasharray="4 3" width="200" x="440" y="160"></rect><text fill="#b9c0ca" text-anchor="middle" x="540" y="185">Dead-letter queue</text>
+<line marker-end="url(#a3)" stroke="#7c8593" stroke-dasharray="3 3" x1="540" x2="540" y1="82" y2="156"></line>
+<text fill="#8fbaff" x="20" y="185">After a fix, replay from the DLQ or an offset</text>
+</g>
+</svg>
+<figcaption>Figure 3 · Four things to plan for in streaming ingestion: late data, duplicates and disorder, replay, and isolating bad messages.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/message-queue-day8.en.html" rel="noopener" target="_blank">System Design · Day 8 Message Queues</a> — how at-least-once plus idempotency yields "effectively exactly once", and how dead-letter queues retry and replay</aside>
+<h3>5. A dozen ways to ingest: from a database connection to a truck</h3>
+<p>The second half of the chapter is a toolbox. The most important items:</p>
+<ul>
+<li><strong>Direct database connection</strong> (JDBC / ODBC): universal, but it serializes row by row and a single-threaded export of a big table is slow; you often pull partitions in parallel.</li>
+<li><strong>Change data capture (CDC)</strong>: <em>batch-oriented CDC</em> queries an <code>updated_at</code> column for "rows changed since last time" — simple, but it sees only each row's latest state, missing intermediate changes and deletes. <em>Continuous CDC</em> reads the database's change log (MySQL binlog, PostgreSQL WAL) and turns every insert, update and delete into an event on a streaming platform — no lost intermediate states, and much less query load on the source. The cost: you need log access, and must manage how long the source retains its log.</li>
+<li><strong>APIs</strong>: the most common and most fragmented source; every SaaS vendor differs in paging, rate limits and auth. Use existing client libraries and managed connectors rather than hand-writing.</li>
+<li><strong>Managed data connectors</strong> (Fivetran, Airbyte, Stitch and others): hundreds of source integrations packaged as a service — in the book's recurring phrase, outsourcing "undifferentiated heavy lifting" so engineers spend time where it counts.</li>
+<li><strong>Message queues and event-streaming platforms</strong>: the backbone of asynchronous ingestion.</li>
+<li><strong>Object storage as an exchange point</strong>: one of the safest, most scalable ways to swap files across teams and companies; SFTP / SCP and EDI are older but still common channels.</li>
+<li><strong>Webhooks</strong>: often called "reverse APIs" — the data provider calls your endpoint when events happen, and the receiver must absorb bursts without losing anything.</li>
+<li><strong>File exports and formats</strong>: CSV is still everywhere, but delimiters, newlines, encodings and the lack of a schema all cause errors; prefer schema-carrying formats (Parquet, Avro, ORC).</li>
+<li><strong>Web scraping</strong>: a last resort, mindful of the target's load and the legal line.</li>
+<li><strong>Transfer appliances</strong>: at hundreds of terabytes and beyond, moving over the network can take months, hence shipped devices like AWS Snowball, up to Snowmobile, a container truck holding 100 PB.</li>
+<li><strong>Data sharing</strong>: cloud warehouses grant read access directly — no copying, no moving.</li>
+</ul>
+<p>Finally, the authors stress that ingestion is <strong>a people problem</strong>: upstream software engineers decide what data looks like and when it changes; bringing them in and agreeing on change notices beats any tool. On the DataOps side, monitor pipeline uptime, latency and <strong>data volume</strong> — a sudden 50% drop often means something upstream quietly broke — and run data-quality tests.</p>
+<h2>Key trade-offs and choices</h2>
+<p class="tcap">Table 1 · Batch vs streaming ingestion</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Mode</th><th>Good for</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>Daily / hourly batch</th><td>Daily reports, financial reconciliation, offline training; most analytics</td><td>Freshness measured in hours; full snapshots load the source</td></tr>
+<tr><th>Micro-batch (minutes)</th><td>Operations dashboards, near-real-time rollups</td><td>More frequent scheduling, more small files to compact</td></tr>
+<tr><th>Streaming (seconds)</th><td>Fraud, real-time recommendations, monitoring and alerting</td><td><strong>Must handle late, out-of-order and duplicate events</strong>; 24/7 on-call; highest cost and complexity</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 2 · Extraction methods</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Method</th><th>Upside</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>Full snapshot</th><td>Simplest, self-consistent</td><td>Slow and costly at volume; rescans the source repeatedly</td></tr>
+<tr><th>Batch CDC (by update time)</th><td>Only changes, easy to build</td><td><strong>Misses intermediate states and hard deletes</strong>; relies on the source maintaining timestamps</td></tr>
+<tr><th>Log-based CDC</th><td>Captures every change, low latency, little query load on the source</td><td>Needs log access and extra components (e.g. Debezium + Kafka); heavier operations</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 3 · ETL vs ELT</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Pattern</th><th>When to pick it</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>ETL</th><td>Data must be masked or filtered before landing; limited destination compute; large size reduction</td><td>Raw data isn't kept, so changed logic is hard to recompute</td></tr>
+<tr><th>ELT</th><td>Cloud warehouse or lakehouse; transformation logic changes often; recomputation needed</td><td>The raw layer keeps growing — <strong>ungoverned, it becomes a swamp</strong>; warehouse compute bills rise</td></tr>
+</tbody>
+</table></div>
+<p>The test: first ask how fresh downstream really needs the data — the authors' position is to adopt true streaming only when its business value clearly outweighs its cost. Then ask whether the source can reliably tell you what changed. Finally ask whether you need the raw data kept for recomputation — if so, lean toward ELT.</p>
+<h2>Why it matters / in real systems</h2>
+<p>For the interview question "sync a production database into the warehouse", a strong answer lands like this: log-based CDC writes MySQL changes into Kafka, partitioned by primary key so each row stays in order; consumers do idempotent upserts by key and bulk-load the warehouse; raw change events also land in object storage, replayable; SaaS data goes through managed connectors; per-table latency and daily volume are monitored with alerts on anomalies; schema changes go through a registry with notice to downstream. Each step maps to one consideration in this chapter.</p>
+<div class="ev">
+<p class="evh">Evidence from open source</p>
+<ul>
+<li><strong>Debezium: the reference implementation of log-based CDC.</strong> The project describes itself as "an open source project that provides a low latency data streaming platform for change data capture (CDC)". It reuses Kafka and Kafka Connect; each connector monitors one upstream database and records all its changes in Kafka topics, and each table's changes "are delivered in the same order they occurred in the upstream database"; clients can stop at any time and "when they restart they resume exactly where they left off" — the ordered, replayable, low-impact ingestion this chapter describes.<span class="src"> Source: <a href="https://github.com/debezium/debezium" rel="noopener" target="_blank">debezium/debezium README, GitHub</a></span></li>
+<li><strong>Airbyte: managed connectors package the drudgery.</strong> The project calls itself "Open-source data movement for ELT pipelines and AI agents" and offers "a catalog of 600+ connectors" across APIs, databases, warehouses and lakes — the book's "don't reinvent the wheel" advice in product form, and a sign that ELT is now the industry's default story.<span class="src"> Source: <a href="https://github.com/airbytehq/airbyte" rel="noopener" target="_blank">airbytehq/airbyte README, GitHub</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/kafka-paper58.en.html" rel="noopener" target="_blank">CS Papers · Kafka deep read</a> — LinkedIn's distributed messaging system built for log ingestion: offset-based pull, sequential disk writes and replay</aside>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"Real time is always better."</strong> Most analytics are fine hourly or daily; first ask who would decide differently with second-level data.</li>
+<li><strong>"The messaging system guarantees exactly once."</strong> The usual default is at-least-once; duplicates and disorder must be absorbed by idempotent, deduplicating consumers.</li>
+<li><strong>"Incremental by updated_at is enough."</strong> It cannot see hard deletes or intermediate states, and depends on upstream updating the timestamp every time.</li>
+<li><strong>"ELT means dump it in and sort it out later."</strong> Load without governance and the lake becomes a swamp; responsibility for transformation only moved.</li>
+<li><strong>"The upstream schema is stable."</strong> It will change; detect it automatically or manage it with a registry and agreements.</li>
+<li><strong>"CSV is a universal format."</strong> Delimiters, quoting, newlines and encodings cause endless trouble, and without a schema it is harder to debug.</li>
+<li><strong>"Ingestion is purely technical."</strong> The biggest risk is poor communication with upstream; the book treats working with upstream engineers as part of ingestion.</li>
+<li><strong>Limits of its time.</strong> The book came out in 2022; managed connectors and log-based CDC have spread further since, but "a batch is a boundary on a stream" and "at-least-once plus idempotency" still hold.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① Ingestion moves data from source systems into storage; it is the most fragile link in the lifecycle because you don't own the source.</p>
+<p>② Data is unbounded by nature; a batch is a boundary we draw. Frequency is a continuum from yearly to per event, and each stage can differ.</p>
+<p>③ Before designing, answer: volume, frequency, sync or async, push, pull or poll, reliability needs, and how the schema will change.</p>
+<p>④ Prefer incremental over full; timestamp-based batch CDC misses deletes and intermediate states, log-based CDC misses nothing.</p>
+<p>⑤ ELT is the cloud-warehouse default — raw kept, recomputable — but without transformation and governance it becomes a swamp; ETL still fits masking and similar cases.</p>
+<p>⑥ Streaming ingestion must plan for late data, disorder, duplicates, replay, retention, message size and dead-letter queues; "exactly once" comes from at-least-once plus idempotency.</p>
+<p>⑦ Columnar warehouses hate small row-by-row writes, so batch your loads; buy managed connectors instead of hand-writing integrations.</p>
+<p>⑧ Monitor latency and data volume, and agree on change notices with upstream engineers — the people problem matters more than the tool.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Finish this page ≈ grasp the core of this chapter; for the full argument, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>

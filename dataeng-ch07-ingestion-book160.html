@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Fundamentals of Data Engineering 第 7 章 · 采集 — 专业书籍精读 Book 160</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">专业书籍精读 · Fundamentals of Data Engineering · 第 7 章</p>
+<h1>采集</h1>
+<p class="sub">Fundamentals of Data Engineering · Ch 7 · Ingestion · Reis &amp; Housley · 2022</p>
+<p class="langbar"><a href="dataeng-ch07-ingestion-book160.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>公司每天早上的销售报表，数字来自订单系统、支付系统、App 埋点、合作方发来的表格——它们散在几十个地方。<strong>这一章讲的是：怎么把数据从这些「别人家」稳稳地搬进自己的数据平台。</strong>这一步叫采集。它看起来只是搬运，却是整条数据流水线最容易出事的地方。</p>
+<h2>先说个怪事</h2>
+<p>我们总说「批处理」和「实时流」是两种东西。可仔细想想：订单一笔一笔在发生，从来没有停过。所谓「每天一批」，只是我们<strong>在一条永不停歇的河上，每隔 24 小时拦了一道闸</strong>。批和流不是两类数据，而是你决定多久开一次闸。</p>
+<h2>旧世界为什么难</h2>
+<ul>
+<li><strong>上游不归你管。</strong>业务系统的同事改了一个字段名，你的流水线半夜就断了，而没人通知你。</li>
+<li><strong>一次全搬太重。</strong>每天把整个订单库从头抄一遍，抄的时候还会拖慢正在接单的系统。</li>
+<li><strong>送达不是一次成功。</strong>网络会抖，东西可能迟到、乱序，甚至同一份被送了两遍。</li>
+</ul>
+<h2>核心机制直觉</h2>
+<ul>
+<li><strong>只抄新增的那几页。</strong>不必每天重印整本账本，只抄昨天之后改过的那几页；更好的办法是直接看账房的「流水记录」，谁改了什么一条不漏。</li>
+<li><strong>先进仓库，再拆箱。</strong>老做法是在路上就把货拆好、分拣好再入库；如今仓库够大够便宜，干脆原样先搬进去，要用时再在仓库里整理——慢一步，但原件永远在。</li>
+<li><strong>快递不保证顺序。</strong>先寄的包裹可能后到，同一件还可能被重复派送。所以收件处要能认出「这件我收过了」，迟到的也要有地方补登。</li>
+<li><strong>拒收的件放「问题件柜」。</strong>地址写错、拆不开的包裹单独放一边，别让它堵住整条传送带。</li>
+</ul>
+<h2>带来了什么 / 该怎么选</h2>
+<p>多数团队的默认做法是：能定时批量搬就批量搬，只有业务真的需要「秒级看到」时才上实时流；能买现成的搬运工具就别自己写。一句诚实的代价：实时流让数据更新鲜，但它要求一直有人盯着、处理迟到和重复，成本和复杂度都明显更高。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p><strong>采集是把数据从别人家搬进自己家：批和流只是开闸的频率不同；只搬变化、原样先入库、准备好迟到和重复，比追求「实时」更要紧。</strong></p>
+</div>
+<p class="switch-hint">想看有界 / 无界数据、推 · 拉 · 轮询三种模式、快照与增量抽取、ETL 与 ELT 之争、流式采集的迟到 · 乱序 · 重复 · 死信队列，以及 Debezium、Airbyte 的实证？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">你以为采集只是「把数据从 A 拷到 B」，其实它是数据生命周期里<strong>最脆弱的一环</strong>：源头不归你管、会变、会抖、会重发。本章要建立的认知是：<strong>所有数据天生是无界的，批处理只是人为划的边界</strong>；采集设计的核心不是选一个工具，而是先回答一串问题——数据多大、多频繁、推还是拉、能否重放、迟到和重复怎么办——再在批与流、ETL 与 ELT 之间按真实需求取舍。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>源系统（source system）</strong>：产生数据的上游系统，如业务数据库、SaaS 应用、App 埋点，通常归别的团队管。</li>
+<li><strong>数据管道（data pipeline）</strong>：把数据从源头经过若干步骤送到目的地的一整套流程。</li>
+<li><strong>批处理（batch）/ 流处理（streaming）</strong>：攒一段时间的数据一起处理 / 数据一到就逐条或小批处理。</li>
+<li><strong>数据仓库（data warehouse）</strong>：为分析查询优化、结构严格的中心化数据库，如 Snowflake、BigQuery。</li>
+<li><strong>schema</strong>：数据的结构说明——有哪些字段、各是什么类型。</li>
+<li><strong>消息队列 / 事件流平台</strong>：生产者把消息写进去、消费者按自己节奏读走的中转站，如 Kafka、Kinesis、Pub/Sub。</li>
+<li><strong>偏移量（offset）</strong>：消费者在消息流里「读到第几条」的书签，可以往回拨来重读。</li>
+<li><strong>幂等（idempotent）</strong>：同一操作执行一次和执行多次结果相同，比如「把余额设为 100」而非「余额加 100」。</li>
+<li><strong>API</strong>：系统对外提供的程序调用接口，常见的是按 HTTP 请求、返回 JSON。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>Part II「生命周期详解」第三章。上接第 5 章「数据从哪来」与第 6 章「存在哪」，下启第 8 章查询与转换。第 5 章讲源系统本身，本章讲<strong>把数据从源系统挪进存储的那段路</strong>。现实里对应 CDC 同步、Kafka 接入、Fivetran / Airbyte 这类托管连接器、每晚跑的导数任务。</p>
+<h2>这章要解决什么</h2>
+<p>设想一家电商：订单库 5 亿行，每天约 200 万行新增或修改；App 埋点高峰每秒 5 万条事件；另有十几个 SaaS 系统（CRM、广告平台）只提供 API。分析师要求「早上 9 点前看到昨天的数」，风控则想「几秒内看到异常下单」。不懂采集的典型后果：</p>
+<ul>
+<li><strong>拖垮源库。</strong>每晚对 5 亿行全表扫描导出，正在接单的主库延迟飙升。</li>
+<li><strong>静默丢数或重复。</strong>上游改了字段、网络重试多送一遍，报表数字悄悄偏了，几周后才被发现。</li>
+<li><strong>为不需要的实时付费。</strong>把只需日报的场景做成 7×24 的流式管道，运维成本翻倍，没人因此多赚钱。</li>
+</ul>
+<p>作者把采集定义为<strong>把数据从一处移到另一处</strong>，并区分了「采集」与「集成」：采集是从源到存储的那一段搬运，集成则是把多个来源的数据拼成一个新数据集。</p>
+<h2>核心内容，讲透</h2>
+<h3>一、先问问题：有界 vs 无界，以及频率是一条连续谱</h3>
+<p>作者给了一串设计前必须回答的问题：采集的数据会被谁用、能否复用？源与目的地是什么、数据量多大、多频繁？格式是什么、下游能否直接用？如果是流，是否需要先在途中转换？其中最根本的一对概念是<strong>有界数据（bounded）</strong>与<strong>无界数据（unbounded）</strong>：有界数据有明确的起止（如「9 月 1 日的订单」），无界数据则持续不断地产生。书里的立场很鲜明——<strong>数据在被人为划出边界之前，都是无界的</strong>。业务事件本来就是一条流，「每日一批」只是我们为了方便处理切出来的。</p>
+<p>由此，<strong>采集频率</strong>不是「批 / 流」二选一，而是一条从「每年一次」到「每天」「每小时」「每分钟微批（micro-batch）」再到「近实时」的连续谱。作者提醒，即便数据以流的方式采集进来，下游也常常以批的方式处理（比如每小时训练一次模型）——频率要分别看每一段。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+<defs><lineargradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#5b9df9"></stop><stop offset="1" stop-color="#9b6cf5"></stop></lineargradient>
+<marker id="a1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#8fbaff"></path></marker></defs>
+<g font-size="12">
+<text fill="#cdd3db" x="30" y="24">无界的事件流（订单、点击，从不停止）</text>
+<line stroke="url(#g1)" stroke-width="3" x1="30" x2="660" y1="50" y2="50" marker-end="url(#a1)"></line>
+<g fill="#9b6cf5"><circle cx="60" cy="50" r="4"></circle><circle cx="95" cy="50" r="4"></circle><circle cx="150" cy="50" r="4"></circle><circle cx="190" cy="50" r="4"></circle><circle cx="260" cy="50" r="4"></circle><circle cx="300" cy="50" r="4"></circle><circle cx="355" cy="50" r="4"></circle><circle cx="420" cy="50" r="4"></circle><circle cx="470" cy="50" r="4"></circle><circle cx="530" cy="50" r="4"></circle><circle cx="580" cy="50" r="4"></circle><circle cx="630" cy="50" r="4"></circle></g>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#5b9df9" width="300" x="30" y="78"></rect><text fill="#e7ebf1" text-anchor="middle" x="180" y="100">每日批：一天切一刀</text>
+<rect fill="rgba(91,157,249,0.08)" height="34" rx="6" stroke="#5b9df9" width="300" x="340" y="78"></rect><text fill="#e7ebf1" text-anchor="middle" x="490" y="100">另一天</text>
+<g fill="rgba(155,108,245,0.10)" stroke="#9b6cf5"><rect height="28" rx="5" width="70" x="30" y="122"></rect><rect height="28" rx="5" width="70" x="106" y="122"></rect><rect height="28" rx="5" width="70" x="182" y="122"></rect><rect height="28" rx="5" width="70" x="258" y="122"></rect></g>
+<text fill="#cdd3db" x="345" y="141">微批：几分钟切一刀　→　近实时：逐条</text>
+<text fill="#8fbaff" text-anchor="middle" x="350" y="184">批不是另一种数据，只是在同一条流上划的边界；频率是一条连续谱</text>
+</g>
+</svg>
+<figcaption>图 1 · 有界与无界：同一条事件流，按天、按分钟或逐条切，就得到批、微批与流。</figcaption>
+</figure>
+<h3>二、六个工程考量：同步异步、吞吐、可靠性、负载、推拉</h3>
+<p><strong>同步 vs 异步采集。</strong>同步管道里，源、采集、目的地环环相扣，后段一步失败，前面几小时的工作可能都得从头重跑。异步管道则以事件为单位、经过缓冲（如 Kafka）流动，各段独立失败、独立重试。</p>
+<p><strong>序列化与反序列化。</strong>源把数据编码成字节、目的地再解开，两端必须对格式和版本达成一致，否则数据「到了也读不了」。</p>
+<p><strong>吞吐与可扩展。</strong>管道要扛住峰值和积压：下游停机几小时恢复后，积压的数据会像洪水一样涌来。作者建议优先用托管服务，它们大多内置弹性伸缩。</p>
+<p><strong>可靠性与持久性。</strong>可靠指管道按预期运行、失败能恢复；持久指数据不丢。关键洞察是：<strong>很多源数据一旦没采到就永远没了</strong>（比如只在内存里停留的事件），所以冗余与自愈的投入要按「丢了会怎样」来衡量，而不是追求零风险。</p>
+<p><strong>负载（payload）。</strong>要看清数据的种类（表格、图片、文本）、形状、大小、schema 与数据类型，尤其是<strong>schema 演化</strong>：上游加字段、改类型、改名是常态。对策是自动检测 schema 变化，或用 <strong>schema 注册表（schema registry）</strong>给每个版本编号、让读写两端按版本解析；更根本的是和上游团队建立沟通。</p>
+<p><strong>推 · 拉 · 轮询。</strong><strong>推（push）</strong>是源主动发出；<strong>拉（pull）</strong>是采集系统主动去取；<strong>轮询（poll）</strong>是定期去问「有没有变化」，有才拉。CDC、消息流多是推，定时导数多是拉。</p>
+<h3>三、批采集：快照还是增量，ETL 还是 ELT</h3>
+<p><strong>快照 vs 增量抽取。</strong>每次全量抄一份（快照）最简单，但贵；只抽取上次以来变化的部分（差量 / 增量）省资源，却要求源能可靠地标出「什么变了」。以开头那张 5 亿行的订单表为例，每天 200 万行变化，增量抽取的数据量只有全量的约 0.4%。</p>
+<p><strong>基于文件的导出。</strong>源系统自己把数据导成文件，推到对象存储或 SFTP。好处是源方掌控安全与访问，不必开放数据库直连。</p>
+<p><strong>ETL vs ELT。</strong>ETL 是先抽取（Extract）、在途中转换（Transform）、再加载（Load）进数仓；ELT 是先把原始数据原样加载进数仓或数据湖，再在里面用 SQL 转换。云数仓把存储做便宜、算力做弹性之后，ELT 成为主流：原始数据留底，转换逻辑可以反复改写重跑。作者同时警告两点：一是 ELT 若只做了「EL」而没人做「T」，数据湖会变成沼泽；二是 ETL 并没有死——数据需要先脱敏、先压缩，或目的地不擅长转换时，在途转换仍然合理。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 700 210" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<g font-size="12">
+<text fill="#cdd3db" x="30" y="24">ETL（传统）</text>
+<rect fill="rgba(255,255,255,0.03)" height="40" rx="7" stroke="#5a6069" width="120" x="30" y="36"></rect><text fill="#b9c0ca" text-anchor="middle" x="90" y="61">源系统</text>
+<rect fill="rgba(91,157,249,0.10)" height="40" rx="7" stroke="#5b9df9" width="170" x="200" y="36"></rect><text fill="#e7ebf1" text-anchor="middle" x="285" y="61">转换服务器（途中）</text>
+<rect fill="rgba(255,255,255,0.03)" height="40" rx="7" stroke="#5a6069" width="200" x="420" y="36"></rect><text fill="#b9c0ca" text-anchor="middle" x="520" y="61">数仓（只有加工后的数据）</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="150" x2="196" y1="56" y2="56"></line>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="370" x2="416" y1="56" y2="56"></line>
+<text fill="#cdd3db" x="30" y="114">ELT（云数仓时代）</text>
+<rect fill="rgba(255,255,255,0.03)" height="40" rx="7" stroke="#5a6069" width="120" x="30" y="126"></rect><text fill="#b9c0ca" text-anchor="middle" x="90" y="151">源系统</text>
+<rect fill="rgba(155,108,245,0.10)" height="56" rx="9" stroke="#9b6cf5" stroke-width="1.6" width="420" x="200" y="118"></rect>
+<rect fill="rgba(255,255,255,0.03)" height="32" rx="6" stroke="#5a6069" width="150" x="215" y="130"></rect><text fill="#b9c0ca" text-anchor="middle" x="290" y="151">原始层（原样留底）</text>
+<rect fill="rgba(91,157,249,0.14)" height="32" rx="6" stroke="#5b9df9" width="200" x="405" y="130"></rect><text fill="#e7ebf1" text-anchor="middle" x="505" y="151">SQL 转换后的模型层</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="150" x2="196" y1="146" y2="146"></line>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="365" x2="401" y1="146" y2="146"></line>
+<text fill="#8fbaff" text-anchor="middle" x="350" y="198">ELT 把转换挪进数仓：原件永在、逻辑可重跑；代价是没人做「T」就成沼泽</text>
+</g>
+</svg>
+<figcaption>图 2 · ETL 在途中加工，ELT 先原样入库再在数仓里加工。</figcaption>
+</figure>
+<p><strong>插入、更新与批大小。</strong>列式数仓擅长一次写入一大批，最怕逐行插入和频繁小更新——每一条都可能触发重写一个文件。所以采集时要攒批，按目的地的特性决定批大小。<strong>数据迁移</strong>（如整库从本地搬上云）则建议先用小样本试跑、核对 schema 差异，最难的往往不是搬数据，而是把上下游所有管道接到新系统上。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/data-processing-day20.html" rel="noopener" target="_blank">System Design · Day 20 计算作业系统</a> — 批处理与流处理怎么在一套引擎里统一，以及时间窗口与水位线</aside>
+<h3>四、流采集：迟到、乱序、重复、重放与死信</h3>
+<p>流采集把问题从「搬多少」换成了「什么时候、以什么顺序、送几次」。书里逐条列了要考虑的事：</p>
+<ul>
+<li><strong>schema 演化</strong>：流里的消息随时可能变形，用 schema 注册表管版本。</li>
+<li><strong>迟到数据</strong>：事件发生时间（event time）与被采集时间（ingestion time）可能差很远——比如手机离线一小时后才把埋点补传上来。要定一个截止规则：多晚的数据还接受、算进哪个时间窗口。</li>
+<li><strong>顺序与多次投递</strong>：分布式的消息系统通常只保证<strong>至少一次</strong>投递，可能重复、可能乱序。下游必须设计成幂等，按唯一 ID 去重。</li>
+<li><strong>重放（replay）</strong>：Kafka、Kinesis、Pub/Sub 这类平台会在保留期内留着消息，消费者可以把偏移量拨回去重读历史——修了 bug 能补算。</li>
+<li><strong>保留期（TTL）</strong>：消息存多久。太短，下游故障恢复时数据已过期；太长，积压的旧消息会堵住管道。</li>
+<li><strong>消息大小</strong>：流平台对单条消息有上限，Kafka 默认约 1 MB，Kinesis 也是 1 MB 量级；大文件应放对象存储、消息里只放引用。</li>
+<li><strong>错误处理与死信队列（dead-letter queue）</strong>：解析失败、反复处理不了的消息转进单独的「死信」主题，主流继续前进，之后再排查重放。</li>
+<li><strong>位置</strong>：采集点尽量靠近数据产生的地方，跨区域、跨云搬运要付带宽和出口流量费。</li>
+</ul>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a3" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"></path></marker></defs>
+<g font-size="12">
+<rect fill="rgba(255,255,255,0.03)" height="40" rx="7" stroke="#5a6069" width="120" x="20" y="40"></rect><text fill="#b9c0ca" text-anchor="middle" x="80" y="58">App / 服务</text><text fill="#7c8593" font-size="10" text-anchor="middle" x="80" y="72">事件发生时间</text>
+<rect fill="rgba(155,108,245,0.10)" height="40" rx="7" stroke="#9b6cf5" stroke-width="1.6" width="190" x="190" y="40"></rect><text fill="#e7ebf1" text-anchor="middle" x="285" y="58">事件流（Kafka 等）</text><text fill="#7c8593" font-size="10" text-anchor="middle" x="285" y="72">保留期内可重放</text>
+<rect fill="rgba(91,157,249,0.10)" height="40" rx="7" stroke="#5b9df9" width="200" x="440" y="40"></rect><text fill="#e7ebf1" text-anchor="middle" x="540" y="58">幂等消费者 → 存储</text><text fill="#7c8593" font-size="10" text-anchor="middle" x="540" y="72">按事件 ID 去重</text>
+<line marker-end="url(#a3)" stroke="#7c8593" x1="140" x2="186" y1="60" y2="60"></line>
+<line marker-end="url(#a3)" stroke="#7c8593" x1="380" x2="436" y1="60" y2="60"></line>
+<text fill="#cdd3db" x="20" y="116">迟到：离线一小时的手机补传，事件时间远早于采集时间</text>
+<text fill="#cdd3db" x="20" y="140">重复 / 乱序：至少一次投递，同一事件可能到两次、先发后到</text>
+<rect fill="rgba(255,255,255,0.02)" height="40" rx="7" stroke="#9b6cf5" stroke-dasharray="4 3" width="200" x="440" y="160"></rect><text fill="#b9c0ca" text-anchor="middle" x="540" y="185">死信队列（坏消息隔离）</text>
+<line marker-end="url(#a3)" stroke="#7c8593" stroke-dasharray="3 3" x1="540" x2="540" y1="82" y2="156"></line>
+<text fill="#8fbaff" x="20" y="185">修好后可从死信或偏移量重放</text>
+</g>
+</svg>
+<figcaption>图 3 · 流采集要提前准备的四件事：迟到、重复与乱序、可重放、坏消息隔离。</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/message-queue-day8.html" rel="noopener" target="_blank">System Design · Day 8 消息队列</a> — 至少一次 + 幂等如何拼出「效果上的恰好一次」，以及死信队列的重试与重放设计</aside>
+<h3>五、采集的十几种途径：从数据库直连到卡车</h3>
+<p>本章后半是一份「工具箱」。最重要的几样：</p>
+<ul>
+<li><strong>数据库直连</strong>（JDBC / ODBC）：通用但按行序列化、单线程导出大表很慢，常要按分区并行拉取。</li>
+<li><strong>变更数据捕获（CDC）</strong>：<em>批式 CDC</em> 按 <code>updated_at</code> 字段查「上次以来改过的行」——简单，但只能拿到每行的最新状态，中间的多次修改和删除会被漏掉；<em>持续 CDC</em> 读数据库的变更日志（如 MySQL binlog、PostgreSQL WAL），把每一次增删改变成事件写进流平台，不丢中间态、对源库查询压力也小得多。代价是要有日志读取权限，并管住源库日志的保留。</li>
+<li><strong>API</strong>：最常见也最碎片化，每家 SaaS 的分页、限流、鉴权都不同。作者的建议是能用现成客户端库和托管连接器就别手写。</li>
+<li><strong>托管数据连接器</strong>（Fivetran、Airbyte、Stitch 等）：把数百个源的对接打包成服务，用书里常说的话，是把「无差异化的苦活」外包出去，让工程师把时间花在有价值的地方。</li>
+<li><strong>消息队列与事件流平台</strong>：异步采集的主干。</li>
+<li><strong>对象存储做交换站</strong>：跨团队、跨公司交换文件最安全可扩展的方式之一；SFTP / SCP、EDI 则是老派但仍常见的通道。</li>
+<li><strong>Webhook</strong>：常被称为「反向 API」——由数据提供方在事件发生时回调你的接口，接收端要扛得住突发并保证不丢。</li>
+<li><strong>文件导出与格式</strong>：CSV 依然泛滥，但分隔符、换行、编码、无 schema 都会出错；尽量用带 schema 的格式（Parquet、Avro、ORC）。</li>
+<li><strong>网页抓取</strong>：最后手段，要顾及对方负载与法律边界。</li>
+<li><strong>物理搬运设备</strong>：数据量到百 TB 以上时，网络搬运可能要几个月，于是有 AWS Snowball 这类寄送硬盘，乃至能装 100 PB 的集装箱卡车 Snowmobile。</li>
+<li><strong>数据共享</strong>：云数仓之间直接授权读取，不复制、不搬运。</li>
+</ul>
+<p>最后，作者强调采集是<strong>人的问题</strong>：上游软件工程师决定数据长什么样、何时变；把他们拉进来、约定好变更通知，比任何工具都管用。DataOps 方面，要监控管道的运行、延迟与<strong>数据量</strong>——量突然掉一半往往是上游悄悄坏了——并对数据做质量测试。</p>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 1 · 批采集 vs 流采集</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>方式</th><th>适合</th><th>代价</th></tr></thead>
+<tbody>
+<tr><th>每日 / 每小时批</th><td>日报、财务对账、离线训练；绝大多数分析场景</td><td>新鲜度以小时计；全量快照会给源库压力</td></tr>
+<tr><th>微批（分钟级）</th><td>运营看板、近实时汇总</td><td>调度更频繁，小文件变多，需定期合并</td></tr>
+<tr><th>流（秒级）</th><td>风控、实时推荐、监控告警</td><td><strong>要处理迟到、乱序、重复</strong>；7×24 值守，成本与复杂度最高</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">表 2 · 抽取方式</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>方式</th><th>好处</th><th>代价</th></tr></thead>
+<tbody>
+<tr><th>全量快照</th><td>最简单，结果自洽</td><td>数据量大时慢且贵；反复扫源库</td></tr>
+<tr><th>批式 CDC（按更新时间）</th><td>只取变化，实现简单</td><td><strong>漏掉中间态与硬删除</strong>；依赖源表维护好时间戳</td></tr>
+<tr><th>日志式 CDC</th><td>每次变更都捕获，低延迟，对源库查询压力小</td><td>需日志权限与额外组件（如 Debezium + Kafka）；运维更重</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">表 3 · ETL vs ELT</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>模式</th><th>何时选</th><th>代价</th></tr></thead>
+<tbody>
+<tr><th>ETL</th><td>需在入库前脱敏 / 过滤；目的地算力有限；大幅压缩数据量</td><td>原始数据不留底，转换逻辑改了难以回溯重算</td></tr>
+<tr><th>ELT</th><td>云数仓 / 湖仓；转换逻辑常变；需要可重算</td><td>原始层越堆越多，<strong>没人治理就成数据沼泽</strong>；数仓算力账单上涨</td></tr>
+</tbody>
+</table></div>
+<p>判据：先问下游真正需要多新的数据——作者的态度是，只有当业务价值确实超过成本时才上真正的流式；再问源能否可靠地告诉你「什么变了」；最后问是否要保留原始数据以便重算——要，就倾向 ELT。</p>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>面试里「把业务库同步到数仓」这道题，好的答案会这样落地：用日志式 CDC 把 MySQL 的变更写进 Kafka，按主键分区以保证单行有序；消费端按主键做幂等 upsert，批量写入数仓；原始变更事件同时落到对象存储留底，可重放；SaaS 数据交给托管连接器；监控每张表的延迟与日数据量，量异常即告警；schema 变更走注册表并通知下游。每一步都对应本章一个考量。</p>
+<div class="ev">
+<p class="evh">开源实证</p>
+<ul>
+<li><strong>Debezium：日志式 CDC 的代表实现。</strong>项目自述是「为变更数据捕获（CDC）提供低延迟数据流的开源平台」；架构上复用 Kafka 与 Kafka Connect，每个连接器监视一个上游数据库、把所有变更记进 Kafka 主题，每张表的变更「按它们在上游数据库发生的顺序」投递；客户端可随时停下，重启后「恰好从中断处继续」——这正是本章所说的有序、可重放、对源库影响小。<span class="src">出处：<a href="https://github.com/debezium/debezium" rel="noopener" target="_blank">debezium/debezium README，GitHub</a></span></li>
+<li><strong>Airbyte：托管连接器把苦活打包。</strong>项目自述为「面向 ELT 管道与 AI 智能体的开源数据搬运」，提供「600 多个连接器」覆盖 API、数据库、数仓、数据湖——对应书里「别重造轮子、把无差异化的对接外包」的建议，也说明 ELT 已是行业默认叙事。<span class="src">出处：<a href="https://github.com/airbytehq/airbyte" rel="noopener" target="_blank">airbytehq/airbyte README，GitHub</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/kafka-paper58.html" rel="noopener" target="_blank">CS Papers · Kafka 论文精读</a> — LinkedIn 为日志采集设计的分布式消息系统：按偏移量拉取、顺序写盘与可回放</aside>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>「实时一定更好」。</strong>多数分析需求按小时、按天就够；先问谁会因为秒级数据做出不同决定。</li>
+<li><strong>「消息系统保证恰好一次」。</strong>常见默认是至少一次，重复与乱序要靠下游幂等与去重兜底。</li>
+<li><strong>「按 updated_at 增量就够了」。</strong>它看不到硬删除和中间态，且依赖上游每次都正确更新时间戳。</li>
+<li><strong>「ELT 就是先倒进去再说」。</strong>只装不管，湖会变沼泽；转换和治理的责任只是挪了位置。</li>
+<li><strong>「上游 schema 是稳定的」。</strong>它一定会变，要么自动检测、要么用注册表和约定来管。</li>
+<li><strong>「CSV 是通用格式」。</strong>分隔符、引号、换行、编码问题层出不穷，无 schema 更难排错。</li>
+<li><strong>「采集只是技术活」。</strong>最大的风险来自和上游缺乏沟通；书里把与上游工程师的协作当成采集的一部分。</li>
+<li><strong>时代局限。</strong>书出版于 2022 年，托管连接器与日志式 CDC 此后更为普及；但「批是流的边界」「至少一次 + 幂等」这些基本判断并未改变。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 采集 = 把数据从源系统搬进存储；它是生命周期里最脆弱的一环，因为源头不归你管。</p>
+<p>② 数据天生无界，批只是人为划的边界；频率是从按年到逐条的连续谱，每一段可以不同。</p>
+<p>③ 设计前先回答：数据量、频率、同步还是异步、推拉还是轮询、可靠性要求、schema 会怎么变。</p>
+<p>④ 能增量就别全量；按时间戳的批式 CDC 漏删除和中间态，日志式 CDC 每次变更都不漏。</p>
+<p>⑤ ELT 是云数仓时代的默认，原始数据留底、可重算；但没人做转换和治理就成沼泽，ETL 在脱敏等场景仍合理。</p>
+<p>⑥ 流采集要提前准备迟到、乱序、重复、重放、保留期、消息大小与死信队列；「恰好一次」靠至少一次 + 幂等。</p>
+<p>⑦ 列式数仓怕逐行小写，采集要攒批；能买托管连接器就别手写对接。</p>
+<p>⑧ 监控延迟与数据量，和上游工程师约定变更通知——人的问题比工具更关键。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整论证与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
