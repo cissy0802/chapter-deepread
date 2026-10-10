@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Fundamentals of Data Engineering Ch 6 · Storage — Book Deep-Read 159</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · Fundamentals of Data Engineering · Chapter 6</p>
+<h1>Storage</h1>
+<p class="sub">Fundamentals of Data Engineering · Ch 6 · Storage · Reis &amp; Housley · 2022</p>
+<p class="langbar"><a href="dataeng-ch06-storage-book159.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>When you scroll back through orders you placed three years ago, or your company opens its sales dashboard every morning, the data behind it has to be <em>kept</em> somewhere first. <strong>This chapter is about where data lives and how it is laid out, so that it fits, comes back quickly, and does not cost a fortune.</strong> It is the foundation of the whole pipeline: collecting, cleaning and reporting all read from storage and write back to it.</p>
+<h2>A strange thing first</h2>
+<p>The most popular big-data storage today <strong>will not let you change a single word inside a file</strong>. Want to fix one row? You rewrite the whole file. It sounds clumsy, yet this "put the whole thing in, take the whole thing out" rule is exactly what makes it cheap and almost impossible to lose, which is why it became the standard floor of the data lake.</p>
+<h2>Why the old way is hard</h2>
+<ul>
+<li><strong>Fast is expensive, cheap is slow.</strong> Memory is the desk in front of you, a hard drive is the bookshelf behind you, remote storage is a warehouse out of town. The cheaper the spot, the longer each trip takes.</li>
+<li><strong>Computing and storing were welded together.</strong> One machine both held the data and did the work, so more data meant buying more machines, even if you had plenty of computing power.</li>
+<li><strong>Data stored by row is awkward to ask about by column.</strong> The boss only wants last month's total sales, yet every field of every order gets read.</li>
+</ul>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>Station lockers.</strong> Today's dominant "object storage" works like left-luggage lockers: one item per locker, one key, put it in whole and take it out whole, no rearranging inside. In return there are practically endless lockers, they are cheap, and each item is quietly kept in several copies.</li>
+<li><strong>Bind the ledger by column.</strong> Bind all the numbers from one column together: to total the amounts, open only the "amount" volume. Numbers in one column look alike, so they also squeeze down small.</li>
+<li><strong>Separate the library from the reading rooms.</strong> All the books sit in one big stack; reading rooms open only when readers arrive, more rooms for a crowd, lights off when they leave. Storage and computing are split and each is paid for as needed.</li>
+<li><strong>Fridge, pantry, basement.</strong> What you use daily goes in the fridge, the occasional stuff in the pantry, what you touch once every few years in the basement. Data is tiered by temperature too: the colder, the cheaper, and the slower to fetch.</li>
+</ul>
+<h2>What it buys you / how to choose</h2>
+<p>Most teams now default to keeping everything in cheap object storage, in a column-oriented file format, and borrowing computing power only when they query; the most-used slice gets cached somewhere faster. One honest cost: this combination is cheap and grows without limit, but every remote read is slower than a local one, and the closer you push toward real time, the more you pay extra for speed.</p>
+<h2>Remember it in one line</h2>
+<div class="tl">
+<p><strong>Storage is not a hard drive; it is a whole set of fast-and-pricey versus slow-and-cheap choices: keep data in cheap, safe lockers, lay it out by column, borrow computing when you need it, and keep the hot stuff close at hand.</strong></p>
+</div>
+<p class="switch-hint">Want the three layers of storage (ingredients, systems, abstractions), how to choose between file, block and object storage, row versus columnar, warehouse versus lake versus lakehouse, why "separating compute from storage" is really a hybrid, plus evidence from BigQuery, Parquet and Iceberg? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think storage means "pick a database". It is actually a <strong>three-layer stack</strong>: physical raw ingredients at the bottom (disks, memory, network), storage systems in the middle (file, block, object), and only then the abstractions on top (warehouse, lake, lakehouse). The chapter's lesson: <strong>every layer trades latency against cost, scalability and durability</strong>. The cloud-era default is "object storage + columnar files + on-demand compute", but "fully separated compute and storage" is only half true; real systems blend separation with local caching.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Latency / throughput</strong>: how long one read takes / how much data moves per unit of time.</li>
+<li><strong>HDD / SSD</strong>: a spinning disk moves a head to find data, cheap but slow at random reads; a solid-state drive has no moving parts, far faster at random reads, pricier per gigabyte.</li>
+<li><strong>IOPS</strong>: input/output operations per second, a measure of random-access capability.</li>
+<li><strong>Serialization</strong>: encoding in-memory data into bytes for disk or network, such as CSV, JSON, Avro or Parquet.</li>
+<li><strong>Replica</strong>: a copy of the same data on another machine or site, so losing one copy loses nothing.</li>
+<li><strong>Partition</strong>: splitting a big table by a field (often the date) so a query reads only the relevant chunks.</li>
+<li><strong>Data warehouse</strong>: a central, strictly structured database optimized for analytical queries, such as Snowflake, BigQuery or Redshift.</li>
+<li><strong>Data lake</strong>: raw data of any format dumped as files into cheap storage, with structure decided at read time.</li>
+<li><strong>Metadata</strong>: data about data, such as a table's columns, where its files are, who owns it.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The second chapter of Part II, "The Data Engineering Lifecycle in Depth". It follows Chapter 5 (where data comes from) and precedes Chapter 7 (ingestion) and Chapter 8 (queries and transformation). The authors put it before ingestion on purpose: storage is the floor under the whole lifecycle, read and written at every stage. In practice it maps to choices like a data lake on S3 or GCS, a Snowflake or BigQuery warehouse, and message retention in Kafka.</p>
+<h2>What problem this chapter solves</h2>
+<p>Data engineers rarely build storage from scratch, but they <strong>choose</strong> it all the time, and a bad choice often shows its cost years later. Picture a shop that adds 1 TB of clickstream logs a day and keeps three years: about 1 PB. On a local SSD cluster the bill and the operations are unbearable; parked entirely in an archive tier, every analyst query waits hours. Typical consequences of not understanding storage:</p>
+<ul>
+<li><strong>Paying for performance you do not need.</strong> Data nobody has touched in three years sits on the most expensive hot tier.</li>
+<li><strong>Using the wrong access pattern.</strong> Treating object storage as a database and updating single records constantly; each change rewrites a file, slow and costly.</li>
+<li><strong>Getting locked in by the architecture.</strong> With compute and storage welded together, more data means buying more compute too.</li>
+</ul>
+<h2>The core ideas, explained</h2>
+<h3>1. See the three layers: ingredients → systems → abstractions</h3>
+<p>The chapter is built on a layered picture. At the bottom are the <strong>raw ingredients</strong>: disks, SSDs, memory, network, CPU, plus techniques like serialization, compression and caching. In the middle are <strong>storage systems</strong> built from them: file, block and object storage, HDFS, caches, streaming storage. On top are the <strong>storage abstractions</strong> data engineers touch directly: warehouse, lake, lakehouse. The authors' warning: do not shop only at the top layer; <strong>its performance and cost come entirely from the layers below</strong>.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+<defs><linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#5b9df9"/><stop offset="1" stop-color="#9b6cf5"/></linearGradient>
+<marker id="a1" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<g font-size="12">
+<rect x="30" y="20" width="640" height="56" rx="9" fill="rgba(155,108,245,0.10)" stroke="url(#g1)" stroke-width="2"/>
+<text x="50" y="44" fill="#8fbaff" font-size="11">Storage abstractions (what you use)</text>
+<text x="50" y="64" fill="#e7ebf1">Data warehouse · Data lake · Lakehouse · Stream-to-batch storage</text>
+<rect x="30" y="96" width="640" height="56" rx="9" fill="rgba(91,157,249,0.08)" stroke="#5b9df9"/>
+<text x="50" y="120" fill="#8fbaff" font-size="11">Storage systems</text>
+<text x="50" y="140" fill="#e7ebf1">File · Block · Object storage · HDFS · Cache · Streaming storage (Kafka)</text>
+<rect x="30" y="172" width="640" height="56" rx="9" fill="rgba(255,255,255,0.02)" stroke="#5a6069"/>
+<text x="50" y="196" fill="#8fbaff" font-size="11">Raw ingredients</text>
+<text x="50" y="216" fill="#e7ebf1">HDD · SSD · RAM · Network · CPU | Serialization · Compression · Caching</text>
+<line x1="640" y1="170" x2="640" y2="156" stroke="#7c8593" marker-end="url(#a1)"/>
+<line x1="640" y1="94" x2="640" y2="80" stroke="#7c8593" marker-end="url(#a1)"/>
+</g>
+</svg>
+<figcaption>Figure 1 · The three layers of storage: what the top layer can do is set by the ingredients and systems underneath.</figcaption>
+</figure>
+<h3>2. Ingredients: latencies differ by orders of magnitude, and caching answers that gap</h3>
+<p>The gaps between ingredients are not percentages but <strong>orders of magnitude</strong>: a memory access is around 100 nanoseconds, an SSD read about 0.1 ms, a hard-disk seek a few milliseconds, the first byte from object storage typically tens of milliseconds, and an archive-tier retrieval is measured in hours. Prices run roughly in reverse. Hence the book's <strong>cache hierarchy</strong>: the hottest data on the fastest, priciest tier, colder data further down.</p>
+<p>Two often-overlooked ingredients are <strong>serialization</strong> and <strong>compression</strong>. The same data stored as CSV or as columnar Parquet can differ by an order of magnitude in bytes read; compression trades CPU for disk and network, which in the cloud, where the network is often the bottleneck, usually pays off.</p>
+<h3>3. Row versus columnar: one table, two layouts</h3>
+<p><strong>Row-oriented</strong> storage keeps all fields of a record together, good for transactional access like "fetch everything about one order". <strong>Columnar</strong> storage keeps the values of one column together, good for analytical access like "sum or filter one column". Analytical queries usually touch a few of dozens of columns, so columnar reads only those; values in one column share a type and repeat a lot, so they compress far better. The cost: changing one row touches many column files, so single-row writes and updates are slow. Columnar formats are made for "write in bulk, read a lot".</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+<g font-size="12">
+<text x="30" y="24" fill="#cdd3db">Row-oriented (CSV / Avro / OLTP DB)</text>
+<rect x="30" y="34" width="300" height="30" rx="5" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/><text x="44" y="54" fill="#b9c0ca">order1 · userA · Boston · $120</text>
+<rect x="30" y="70" width="300" height="30" rx="5" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/><text x="44" y="90" fill="#b9c0ca">order2 · userB · Denver · $80</text>
+<rect x="30" y="106" width="300" height="30" rx="5" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/><text x="44" y="126" fill="#b9c0ca">order3 · userA · Boston · $45</text>
+<text x="30" y="166" fill="#7c8593">Total amount: read all three rows</text>
+<text x="380" y="24" fill="#cdd3db">Columnar (Parquet / ORC / warehouse)</text>
+<rect x="380" y="34" width="290" height="30" rx="5" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/><text x="394" y="54" fill="#b9c0ca">order: 1 · 2 · 3</text>
+<rect x="380" y="70" width="290" height="30" rx="5" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/><text x="394" y="90" fill="#b9c0ca">city: Boston · Denver · Boston</text>
+<rect x="380" y="106" width="290" height="30" rx="5" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="1.6"/><text x="394" y="126" fill="#e7ebf1">amount: 120 · 80 · 45</text>
+<text x="380" y="166" fill="#8fbaff">Total amount: read only the highlighted column</text>
+<text x="350" y="204" fill="#7c8593" text-anchor="middle">Cost: updating one row touches many column files; built for bulk writes and big scans</text>
+</g>
+</svg>
+<figcaption>Figure 2 · Two layouts of the same orders table: when a query touches few columns, columnar reads less and compresses better.</figcaption>
+</figure>
+<h3>4. Three storage systems: file, block, object, with the weight on object</h3>
+<p><strong>File storage</strong> is the familiar directory tree, with random reads and writes and in-place edits; clouds offer managed network file systems. <strong>Block storage</strong> is the raw disk an operating system sees; databases and VM boot disks sit on it. Cloud virtualized block storage can be snapshotted and attached to instances, while an instance's local disk is fastest but <strong>its data disappears when the instance stops</strong>.</p>
+<p><strong>Object storage</strong> (S3, GCS, Azure Blob) gets the most attention in the chapter. Data is stored as objects under keys in flat buckets, and <strong>objects are immutable</strong>: you cannot change part of one, only overwrite or delete it whole. That restriction buys practically unlimited capacity, enormous parallel throughput (hundreds or thousands of tasks reading different objects at once), high durability from replication (S3 advertises a design durability of eleven nines), and pay-per-use pricing. Its weaknesses: <strong>high per-request latency</strong> and a poor fit for frequent small updates. S3 switched to strong read-after-write consistency at the end of 2020; before that, reading right after a write could return a stale version, a historical trap the book calls out. Object stores also offer <strong>storage classes</strong> such as standard, infrequent access and archive: the colder, the cheaper, but slower to retrieve and with retrieval fees.</p>
+<p>The other systems each have their niche. <strong>HDFS</strong> splits large files into blocks replicated across cluster nodes and runs computation next to the data (it descends from Google's GFS). <strong>Caches</strong> (Memcached, Redis) keep hot data in memory. <strong>Streaming storage</strong> (Kafka) keeps events for a retention period and allows replay. And warehouses no longer lean on traditional indexes but on <strong>partitioning and clustering</strong>: splitting by date and placing similar values together so queries skip most irrelevant blocks (for example Snowflake's micro-partitions).</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/object-storage-day29.en.html" target="_blank" rel="noopener">System Design · Day 29 Object Storage</a> — how object stores use erasure coding to buy eleven nines of durability for about 1.5x space</aside>
+<h3>5. Storage abstractions: warehouse, lake, lakehouse</h3>
+<p>A <strong>data warehouse</strong> is a strictly structured central store optimized for analytics; cloud warehouses already put their storage on object storage and scale compute on demand. A <strong>data lake</strong> dumps raw files into object storage and decides structure later; the lesson of first-generation lakes is that they easily become "data swamps", with no transactions, no schema management, and whole partitions rewritten to change one record. The <strong>lakehouse</strong> merges the two: data remains open columnar files on object storage, but a <strong>table format</strong> (Delta Lake, Apache Iceberg, Apache Hudi) adds a metadata layer recording which files make up which version of a table, enabling transactions, updates and deletes, schema evolution and time travel. The book also describes a <strong>stream-to-batch storage architecture</strong>: data written to streaming storage is also landed in batch storage for long-term querying.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/data-lakehouse-day38.en.html" target="_blank" rel="noopener">System Design · Day 38 Data Lake and Lakehouse</a> — how table formats use metadata to deliver transactions and time travel on object storage</aside>
+<h3>6. The big trends: separation, temperature, when to apply schema</h3>
+<p><strong>Separating compute from storage.</strong> The Hadoop era preached colocation: compute where the data lives. The cloud reversed it: data sits in object storage, compute clusters spin up for a job and are torn down afterwards (ephemeral clusters), and storage and compute scale and bill independently. But the authors stress that <strong>real systems are hybrids</strong>: cloud warehouses cache hot data on compute nodes' local SSDs, and engines like Spark spill intermediate results to local disk. Separation buys elasticity; local caching wins back speed.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a3" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<g font-size="12">
+<text x="150" y="22" fill="#cdd3db" text-anchor="middle">Colocation (HDFS era)</text>
+<rect x="30" y="36" width="240" height="40" rx="7" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/><text x="150" y="61" fill="#b9c0ca" text-anchor="middle">Node 1: data blocks + compute</text>
+<rect x="30" y="84" width="240" height="40" rx="7" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/><text x="150" y="109" fill="#b9c0ca" text-anchor="middle">Node 2: data blocks + compute</text>
+<text x="150" y="150" fill="#7c8593" text-anchor="middle">More data means buying compute too</text>
+<text x="520" y="22" fill="#cdd3db" text-anchor="middle">Separation + local cache (cloud)</text>
+<rect x="370" y="36" width="90" height="40" rx="7" fill="rgba(91,157,249,0.10)" stroke="#5b9df9"/><text x="415" y="54" fill="#e7ebf1" text-anchor="middle">Cluster A</text><text x="415" y="69" fill="#7c8593" text-anchor="middle" font-size="10">local SSD cache</text>
+<rect x="470" y="36" width="90" height="40" rx="7" fill="rgba(91,157,249,0.10)" stroke="#5b9df9"/><text x="515" y="54" fill="#e7ebf1" text-anchor="middle">Cluster B</text><text x="515" y="69" fill="#7c8593" text-anchor="middle" font-size="10">on demand</text>
+<rect x="570" y="36" width="100" height="40" rx="7" fill="rgba(255,255,255,0.02)" stroke="#5a6069" stroke-dasharray="4 3"/><text x="620" y="61" fill="#7c8593" text-anchor="middle">torn down</text>
+<line x1="415" y1="80" x2="470" y2="120" stroke="#7c8593" marker-end="url(#a3)"/>
+<line x1="515" y1="80" x2="510" y2="120" stroke="#7c8593" marker-end="url(#a3)"/>
+<rect x="370" y="124" width="300" height="44" rx="9" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5" stroke-width="1.6"/><text x="520" y="151" fill="#e7ebf1" text-anchor="middle">Object storage (source of truth)</text>
+<text x="350" y="210" fill="#8fbaff" text-anchor="middle">Separation buys elasticity and independent billing; local caching wins back speed for hot data</text>
+</g>
+</svg>
+<figcaption>Figure 3 · From colocation to the "separation + local cache" hybrid: object storage is the source of truth; many compute clusters can coexist and start or stop on demand.</figcaption>
+</figure>
+<p><strong>Data lifecycle and retention.</strong> Classify data as hot, warm or cold by access frequency and let object-storage lifecycle rules demote it automatically. Set retention by compliance needs too: what must be deleted has to be deleted, not merely moved somewhere cheaper.</p>
+<p><strong>When to apply schema.</strong> Schema on write (the warehouse way) guarantees quality but is rigid; schema on read (the lake way) is flexible but pushes the parsing burden onto every reader. The book also touches on <strong>data catalogs</strong> (so people can find and understand data), <strong>data sharing</strong> (granting another cloud warehouse direct read access with no copy), <strong>zero-copy cloning</strong> (copying a table copies only metadata), and the isolation-versus-cost trade-off of <strong>single-tenant versus multitenant</strong> storage.</p>
+<h2>Key trade-offs and choices</h2>
+<p class="tcap">Table 1 · Three storage systems</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>System</th><th>Good for</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>Block (cloud volume / local disk)</th><td>Databases and single-machine loads needing low-latency random I/O</td><td>Capacity tied to one instance; <strong>local disks vanish with the instance</strong></td></tr>
+<tr><th>File (NFS-style)</th><td>Directories shared by many machines, in-place file edits</td><td>Scale and throughput have ceilings; pricier than object storage</td></tr>
+<tr><th>Object (S3 / GCS)</th><td>Data lakes, lakehouse floors, backups, massively parallel scans</td><td><strong>No in-place edits</strong>; high per-request latency; frequent small writes are costly</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 2 · Storage abstractions</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Abstraction</th><th>Benefit</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>Data warehouse</th><td>Strict structure, great SQL, mature governance</td><td>Mostly structured data; formats are often closed, hard to switch engines</td></tr>
+<tr><th>Data lake</th><td>Holds anything, cheapest, open formats</td><td>No transactions or schema management; <strong>easily becomes a swamp</strong></td></tr>
+<tr><th>Lakehouse (table format)</th><td>Open files plus transactions, updates and deletes, time travel, shared by many engines</td><td>Metadata and small-file compaction to maintain; heavier ops than a managed warehouse</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 3 · Temperature tiers</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Tier</th><th>Typical contents</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>Hot (RAM / SSD / warehouse cache)</th><td>The last few days, hit repeatedly by dashboards</td><td>Most expensive per gigabyte</td></tr>
+<tr><th>Warm (object standard / infrequent)</th><td>The last few months, occasional analysis</td><td>Tens of ms to first byte; infrequent tier has retrieval fees</td></tr>
+<tr><th>Cold (archive)</th><td>Compliance retention, history almost never queried</td><td><strong>Retrieval takes hours</strong>, plus retrieval fees and minimum storage durations</td></tr>
+</tbody>
+</table></div>
+<p>Rule of thumb: first ask about the access pattern (small random updates or big bulk scans), then how hot the data is and how long it must be kept, and finally whether several engines must share the same data. If they must, lean toward a lakehouse on an open table format.</p>
+<h2>Why it matters / in real systems</h2>
+<p>For an interview prompt like "1 TB of logs a day, kept three years, analysts must be able to query it", a strong answer lands like this: raw data written as Parquet to object storage, partitioned by date; a table format managing transactions and schema; the last 30 days accelerated by a warehouse or query-engine cache; anything older than a year demoted to archive by lifecycle rules; compute clusters scaling with query load. Each step maps to one trade-off in this chapter.</p>
+<div class="ev">
+<p class="evh">Evidence from industry and open source</p>
+<ul>
+<li><strong>Google BigQuery: separate storage from compute, and let the network restore locality.</strong> The official blog says BigQuery relies on Google's distributed file system Colossus, letting users "scale to dozens of Petabytes in storage seamlessly, without paying the penalty of attaching much more expensive compute resources", and that the Jupiter network delivers 1 Petabit/sec of total bisection bandwidth, so "locality within the cluster is not important". That is the precondition of separation: a fast enough network.<span class="src"> Source: <a href="https://cloud.google.com/blog/products/bigquery/bigquery-under-the-hood" target="_blank" rel="noopener">Google Cloud Blog, "BigQuery under the hood", 2016</a></span></li>
+<li><strong>Apache Parquet: the de facto columnar file format.</strong> The project describes itself as "an open source, column-oriented data file format designed for efficient data storage and retrieval", and says it uses "the record shredding and assembly algorithm described in the Dremel paper" for nested data.<span class="src"> Source: <a href="https://github.com/apache/parquet-format" target="_blank" rel="noopener">apache/parquet-format README, GitHub</a></span></li>
+<li><strong>Apache Iceberg: growing tables on object storage.</strong> It describes itself as "a high-performance format for huge analytic tables" that "brings the reliability and simplicity of SQL tables to big data", letting engines such as Spark, Trino, Flink, Presto, Hive and Impala safely work with the same tables at the same time: the lakehouse promise of one copy of data, many engines.<span class="src"> Source: <a href="https://github.com/apache/iceberg" target="_blank" rel="noopener">apache/iceberg README, GitHub</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/dremel-paper23.en.html" target="_blank" rel="noopener">CS Papers · Dremel deep-read</a> — the original design for columnar storage of nested data, and how it scans trillions of rows in seconds</aside>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"Object storage is just a very big disk."</strong> It cannot edit in place and each request is slow; used as a file system with frequent small writes, it is slow and expensive.</li>
+<li><strong>"Separating compute and storage means no local disks."</strong> Real systems rely on local caches to regain speed; separation is a hybrid, not an absolute.</li>
+<li><strong>"Columnar is always faster."</strong> For single-row lookups and frequent updates, row storage fits better; columnar wins on big scans of few columns.</li>
+<li><strong>"Small files don't matter."</strong> Millions of kilobyte-sized files explode metadata and request counts; lakehouses need regular compaction.</li>
+<li><strong>"Archive is cheap, so dump everything there."</strong> Retrieval fees, minimum storage durations and hour-long waits can make one urgent query cost more than a year of storage.</li>
+<li><strong>"Schema on read means no schema to manage."</strong> The structure problem is only postponed, and handed to every reader.</li>
+<li><strong>Limits of its time.</strong> The book came out in 2022, early in the lakehouse and table-format contest; open table formats have since gained broader support across the major cloud warehouses, but the basic "separation plus caching" trade-off has not changed.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① Storage is a three-layer stack: ingredients (disks, memory, network, serialization, compression) → systems (file / block / object) → abstractions (warehouse / lake / lakehouse). The top inherits from below.</p>
+<p>② Ingredient latencies differ by orders of magnitude: memory ~100 ns, SSD ~0.1 ms, object storage tens of ms, archive hours. The cache hierarchy is the response.</p>
+<p>③ Row storage suits transactions, columnar suits analytical scans: read only the columns you need and compress well, at the cost of slow updates.</p>
+<p>④ Object storage is the floor of the data lake: immutable, near-unlimited, durable, pay-per-use; weak on per-request latency and in-place edits.</p>
+<p>⑤ Lakehouse = open columnar files on object storage + table-format metadata, adding transactions, updates and deletes, and time travel.</p>
+<p>⑥ Separating compute from storage buys elasticity and independent billing, but real systems win back speed with local caching: a hybrid, not a binary choice.</p>
+<p>⑦ Tier by temperature with lifecycle rules; retention is a compliance question as well as a cost one.</p>
+<p>⑧ Small files, archive retrieval fees, and frequent small writes to object storage are the three most common traps.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Finish this page ≈ grasp the core of this chapter; for the full argument, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
