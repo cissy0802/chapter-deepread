@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Fundamentals of Data Engineering Ch 5 · Data Generation in Source Systems — Book Deep-Read 158</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · Fundamentals of Data Engineering · Chapter 5</p>
+<h1>Data Generation in Source Systems</h1>
+<p class="sub">Fundamentals of Data Engineering · Ch 5 · Data Generation in Source Systems · Reis &amp; Housley · 2022</p>
+<p class="langbar"><a href="dataeng-ch05-data-generation-book158.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You place an order online and it lands in the shop's database. You open a page and a server writes a line to a log. Your phone reports its location every few seconds. These are the places where data is born. <strong>This chapter is about where data is born, what shape it is born in, and how the people who want to build reports from it can take it out without causing trouble.</strong></p>
+<h2>A strange thing first</h2>
+<p>An order goes from "placed" to "paid" to "shipped": three changes. But a report that copies the database once a night only ever sees the last one. <strong>Whatever happened in between is simply gone.</strong> Worse, if the order was deleted, the copier never learns it existed.</p>
+<h2>Why the old way is hard</h2>
+<ul>
+<li><strong>It is not your house.</strong> The shop's database exists so customers can buy things, not so analysts can audit them. Rummaging through it at peak hour can stall people who are checking out.</li>
+<li><strong>The landlord renovates without warning.</strong> A developer renames a field, tells no one, and the next morning every report either breaks or quietly gets the numbers wrong.</li>
+<li><strong>One event, several clocks.</strong> A photo taken while your phone was offline may arrive hours later; when it happened and when it arrived are far apart.</li>
+</ul>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>Don't reread the ledger; copy the diary.</strong> Every time a database changes something, it first writes a line in its own running diary so it can recover after a crash. Instead of rereading the whole ledger on a timer, follow that diary line by line: no change is missed and the shop counter is barely disturbed. This is called change data capture.</li>
+<li><strong>Only add, never erase.</strong> Some systems simply never edit an old line; they append a new one. All history is kept, but the book keeps getting thicker, and finding "what is true now" means flipping to the latest page.</li>
+<li><strong>A conveyor belt with several lanes.</strong> A steady flow of events is like a parcel conveyor split into parallel lanes for speed. Parcels from the same customer always ride the same lane, so they never arrive out of order.</li>
+<li><strong>Sign an agreement with the landlord first.</strong> Agreeing in advance on how much notice a field change gets, or how long the system may be down, is far cheaper than firefighting later.</li>
+</ul>
+<h2>What it buys you / how to choose</h2>
+<p>If the data is small and one report a day is enough, a nightly copy is fine. If you need full history or minute-level freshness, follow the diary. One honest cost: following the diary is more accurate and more real-time, but it is one more system to build and keep running.</p>
+<h2>Remember it in one line</h2>
+<div class="tl">
+<p><strong>Data engineering starts upstream, in systems you do not control: understand how the data is born, take it in a way that does not hurt the source, and agree on the rules with whoever owns it.</strong></p>
+</div>
+<p class="switch-hint">Want OLTP and ACID, batch versus log-based CDC, event time versus processing time, partitions and delivery guarantees in queues and streams, plus evidence from Databus, Maxwell and Debezium? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think data engineering starts at "ingestion"; in fact it starts in <strong>an upstream system you do not own and cannot control</strong>. The chapter's point: source systems are built for the business, not for analytics. A data engineer must understand how they produce data (databases, APIs, logs, messages and streams), extract it in a way that <strong>neither hurts the source nor loses history</strong> (log-based CDC first), and agree on change rules with the system's owners up front.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Source system</strong>: where data is first produced, such as an application database, a SaaS API, tracking events or sensors; usually owned by another team.</li>
+<li><strong>Transaction</strong>: a group of reads and writes that either all succeed or all have no effect, such as "decrement stock + create order".</li>
+<li><strong>Primary key</strong>: the field that uniquely identifies a row, such as an order ID.</li>
+<li><strong>Schema</strong>: the definition of the data's structure: which fields exist and what type each one is.</li>
+<li><strong>Read replica</strong>: a read-only copy of the primary database that serves queries to take load off the primary.</li>
+<li><strong>Write-ahead log (WAL)</strong>: the log a database appends each change to before applying it, used for crash recovery; MySQL's equivalent is the binlog.</li>
+<li><strong>API</strong>: an interface a system exposes so others can send requests in an agreed format and get data back.</li>
+<li><strong>Message queue / event-streaming platform</strong>: middleware that passes messages or events between systems, such as RabbitMQ or Apache Kafka.</li>
+<li><strong>Idempotent</strong>: running an operation once or many times has the same effect, so a duplicate delivery does not corrupt results.</li>
+<li><strong>SLA / SLO</strong>: service level agreement / objective; numeric promises on availability, latency and so on, such as "99.9% monthly uptime".</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The first chapter of Part II, "The Data Engineering Lifecycle in Depth", covering the first stage of the Chapter 2 lifecycle: generation. Chapter 6 (storage) and Chapter 7 (ingestion) follow. In practice it is the upstream half of "get the data out of the application database, the SaaS API, the event logs and Kafka".</p>
+<h2>What problem this chapter solves</h2>
+<p>Data engineers <strong>consume</strong> source systems but do not <strong>own</strong> them. The authors keep insisting that you should know a source system as well as your own: how it generates data, how often, at what volume, whether its structure may change without warning. Otherwise everything downstream is built on sand. Not knowing the source typically fails in three ways:</p>
+<ul>
+<li><strong>You knock over production.</strong> OLTP databases are tuned for many concurrent single-row reads and writes. Picture an order database taking a few thousand writes per second at peak, with queries measured in milliseconds; an analytical query scanning hundreds of millions of rows competes with checkout for CPU and disk and drags latency up.</li>
+<li><strong>Silent breakage.</strong> Upstream renames a field or changes its type without telling anyone. The pipeline either fails or, worse, keeps running and computes the wrong answer.</li>
+<li><strong>Lost history.</strong> When a table that stores only current state is copied on a schedule, intermediate states between copies and deleted rows are invisible.</li>
+</ul>
+<h2>The core ideas, explained</h2>
+<h3>1. What source systems look like: five main shapes</h3>
+<p>Data is first split into <strong>analog data</strong> (things happening in the real world, such as speech or handwriting) and <strong>digital data</strong> (converted from analog or native to a system, such as an online order or a sensor reading). Once digital, the source systems a data engineer meets fall into five kinds:</p>
+<ul>
+<li><strong>Files and unstructured data</strong>: Excel, CSV, JSON, text, images; still a huge share of data exchange.</li>
+<li><strong>APIs</strong>: pulling data over a network interface by agreed rules, common with SaaS products.</li>
+<li><strong>Application databases (OLTP)</strong>: they hold application state; the most central kind.</li>
+<li><strong>Logs</strong>: records of events that happened in a system.</li>
+<li><strong>Messages and streams</strong>: events flowing between systems in real time.</li>
+</ul>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 270" xmlns="http://www.w3.org/2000/svg">
+<defs><linearGradient id="g1" x1="0" x2="1"><stop offset="0" stop-color="#5b9df9"/><stop offset="1" stop-color="#9b6cf5"/></linearGradient>
+<marker id="a1" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<g font-size="12">
+<text fill="#cdd3db" text-anchor="middle" x="150" y="22">Source systems (owned by other teams)</text>
+<rect x="30" y="34" width="240" height="36" rx="7" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"/><text fill="#e7ebf1" x="150" y="57" text-anchor="middle">OLTP database · orders, accounts</text>
+<rect x="30" y="78" width="240" height="36" rx="7" fill="rgba(91,157,249,0.07)" stroke="#5a6069"/><text fill="#e7ebf1" x="150" y="101" text-anchor="middle">APIs · SaaS (CRM, payments)</text>
+<rect x="30" y="122" width="240" height="36" rx="7" fill="rgba(91,157,249,0.07)" stroke="#5a6069"/><text fill="#e7ebf1" x="150" y="145" text-anchor="middle">Logs · servers, tracking</text>
+<rect x="30" y="166" width="240" height="36" rx="7" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5"/><text fill="#e7ebf1" x="150" y="189" text-anchor="middle">Messages and streams · Kafka</text>
+<rect x="30" y="210" width="240" height="36" rx="7" fill="rgba(91,157,249,0.07)" stroke="#5a6069"/><text fill="#e7ebf1" x="150" y="233" text-anchor="middle">Files · CSV, Excel, images</text>
+<line x1="276" y1="52" x2="420" y2="130" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a1)"/>
+<line x1="276" y1="96" x2="420" y2="134" stroke="#7c8593" marker-end="url(#a1)"/>
+<line x1="276" y1="140" x2="420" y2="140" stroke="#7c8593" marker-end="url(#a1)"/>
+<line x1="276" y1="184" x2="420" y2="146" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#a1)"/>
+<line x1="276" y1="228" x2="420" y2="150" stroke="#7c8593" marker-end="url(#a1)"/>
+<rect x="428" y="100" width="130" height="80" rx="9" fill="rgba(155,108,245,0.08)" stroke="url(#g1)" stroke-width="2"/>
+<text fill="#e7ebf1" x="493" y="134" text-anchor="middle">Ingestion</text><text fill="#7c8593" x="493" y="154" text-anchor="middle">(Chapter 7)</text>
+<line x1="560" y1="140" x2="600" y2="140" stroke="#7c8593" marker-end="url(#a1)"/>
+<text fill="#b9c0ca" x="645" y="136" text-anchor="middle">Storage,</text><text fill="#b9c0ca" x="645" y="152" text-anchor="middle">transform…</text>
+<text fill="#8fbaff" x="350" y="262" text-anchor="middle">The data engineer's boundary: read only, yet answerable for every quirk</text>
+</g>
+</svg>
+<figcaption>Figure 1 · Five kinds of source system feed ingestion; all are owned by someone else, and the data engineer extracts from outside the boundary.</figcaption>
+</figure>
+<h3>2. Application databases: OLTP, ACID and two write patterns</h3>
+<p><strong>OLTP (online transaction processing)</strong> databases hold the application's current state: balances, inventory, orders. They are built for <strong>high concurrency, low latency, and a few rows per read or write</strong>. Most support <strong>ACID</strong>: atomicity (a transaction happens entirely or not at all), consistency (the book defines it as: any read returns the last written version of the item), isolation (concurrent transactions don't interfere), durability (once committed, it survives a power cut). By contrast, <strong>OLAP (online analytical processing)</strong> systems are built for large scans and aggregations. Running analytics directly on OLTP is slow and hurts the business, which is why you extract the data, or at least go through a read replica.</p>
+<p>How a source table is written decides what you can get:</p>
+<ul>
+<li><strong>CRUD pattern</strong>: create, read, update, delete, overwriting in place. The table only ever holds current state; <strong>keeping history takes extra machinery</strong>.</li>
+<li><strong>Insert-only pattern</strong>: every change inserts a new timestamped record and old rows are never touched. History comes for free; the price is a table that keeps growing, and "what is this customer's address now" means finding the latest record first.</li>
+</ul>
+<h3>3. Change data capture (CDC): the mechanism to take away</h3>
+<p><strong>CDC</strong> means extracting every change (insert, update, delete) from a database. The book describes two kinds.</p>
+<p><strong>Batch-oriented CDC</strong>: add an <code>updated_at</code> column and periodically query "rows changed since last time". Simple to build, but you only see each row's <strong>final state</strong> at query time: a row changed three times between two queries shows up once, as its third version, and physically deleted rows never appear at all.</p>
+<p><strong>Continuous CDC</strong>: read the database's write-ahead log directly (PostgreSQL's WAL, MySQL's binlog) and turn every committed change into an event, usually written to a streaming platform such as Kafka. Every intermediate state and every delete is captured, latency can drop below a second, and reading the log does not scan tables the way a big query does. It shares its roots with replication: replicas have always kept up with the primary by replaying the log.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<g font-size="12">
+<line x1="40" y1="70" x2="660" y2="70" stroke="#7c8593" marker-end="url(#a2)"/>
+<text fill="#7c8593" x="660" y="58" text-anchor="end">time</text>
+<circle cx="170" cy="70" r="7" fill="#5b9df9"/><text fill="#e7ebf1" x="170" y="96" text-anchor="middle">placed</text>
+<circle cx="290" cy="70" r="7" fill="#5b9df9"/><text fill="#e7ebf1" x="290" y="96" text-anchor="middle">paid</text>
+<circle cx="410" cy="70" r="7" fill="#5b9df9"/><text fill="#e7ebf1" x="410" y="96" text-anchor="middle">shipped</text>
+<line x1="80" y1="40" x2="80" y2="100" stroke="#5a6069" stroke-dasharray="4 3"/><text fill="#7c8593" x="80" y="32" text-anchor="middle">last extract</text>
+<line x1="540" y1="40" x2="540" y2="100" stroke="#5a6069" stroke-dasharray="4 3"/><text fill="#7c8593" x="540" y="32" text-anchor="middle">this extract</text>
+<rect x="40" y="128" width="620" height="44" rx="8" fill="rgba(255,255,255,0.02)" stroke="#5a6069"/>
+<text fill="#cdd3db" x="56" y="155">Batch CDC (query updated_at)</text>
+<text fill="#b9c0ca" x="275" y="155">→ only "shipped" arrives; earlier changes and deletes are invisible</text>
+<rect x="40" y="184" width="620" height="44" rx="8" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5"/>
+<text fill="#e7ebf1" x="56" y="211">Continuous CDC (read WAL/binlog)</text>
+<text fill="#b9c0ca" x="275" y="211">→ all three events arrive in commit order; a delete is an event too</text>
+</g>
+</svg>
+<figcaption>Figure 2 · One order changes three times between two extracts: batch CDC sees only the final state, log-based CDC gets the full sequence of changes.</figcaption>
+</figure>
+<p>CDC is not free either: reading the log still uses the source database's CPU, disk and network. In practice two more things need managing. In PostgreSQL, for example, a replication slot that nobody consumes makes the log pile up until the disk fills. And CDC only gives you changes, so a first connection needs a full snapshot that is then stitched onto the log.</p>
+<h3>4. Logs: who did what, and when</h3>
+<p>A log records events in a system: <strong>who</strong> (a user or system account), <strong>what</strong> (the event and its metadata), and <strong>when</strong> (a timestamp). By encoding there are three kinds: <strong>binary</strong> (such as database logs; compact but need special parsing), <strong>semistructured</strong> (such as JSON; machine-readable and the most common), and <strong>plain text</strong> (console output; the hardest to parse). You also care about <strong>resolution</strong> (how much is recorded: just a primary key, or the full row before and after) and <strong>latency</strong> (flushed in batches or pushed in real time). Database logs matter so much precisely because they underlie both CDC and replication.</p>
+<h3>5. Messages, streams, and three kinds of time</h3>
+<p>The book separates the two: a <strong>message</strong> is a piece of data passed between two systems and is usually <strong>removed from the queue once consumed</strong>; a <strong>stream</strong> is an append-only log of event records that are <strong>retained for a period</strong>, so several consumers can each read from different positions and even replay.</p>
+<p>Streaming platforms such as Kafka group events into <strong>topics</strong>, and split topics into <strong>partitions</strong> processed in parallel. Events are routed by a <strong>partition key</strong> (such as user ID): the same key always lands in the same partition, so <strong>ordering is guaranteed only within a partition</strong>. Pick a poor key, say one big customer generating half of all events, and you get <strong>hotspotting</strong>: one partition is crushed while the rest sit idle.</p>
+<p>Know your delivery guarantee too: <strong>at-least-once</strong> can produce duplicates, so downstream must be idempotent; <strong>exactly-once</strong> is achievable but depends on the platform and the consumer cooperating, at a cost in throughput and complexity.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a3" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<g font-size="12">
+<line x1="40" y1="90" x2="660" y2="90" stroke="#7c8593" marker-end="url(#a3)"/>
+<circle cx="100" cy="90" r="8" fill="#5b9df9"/><text fill="#e7ebf1" x="100" y="66" text-anchor="middle">Event time</text><text fill="#7c8593" x="110" y="122" text-anchor="middle">"Like" tapped while offline</text>
+<circle cx="400" cy="90" r="8" fill="#7d84f7"/><text fill="#e7ebf1" x="400" y="66" text-anchor="middle">Ingestion time</text><text fill="#7c8593" x="400" y="122" text-anchor="middle">reaches the stream once online</text>
+<circle cx="580" cy="90" r="8" fill="#9b6cf5"/><text fill="#e7ebf1" x="580" y="66" text-anchor="middle">Processing time</text><text fill="#7c8593" x="580" y="122" text-anchor="middle">counted in a report</text>
+<line x1="108" y1="152" x2="392" y2="152" stroke="#8fbaff" marker-end="url(#a3)"/><text fill="#8fbaff" x="250" y="172" text-anchor="middle">possibly hours</text>
+<line x1="408" y1="152" x2="572" y2="152" stroke="#8fbaff" marker-end="url(#a3)"/><text fill="#8fbaff" x="490" y="172" text-anchor="middle">processing lag</text>
+</g>
+</svg>
+<figcaption>Figure 3 · One event has three times. Which one a report uses can change the answer completely; recording all timestamps lets you trace latency later.</figcaption>
+</figure>
+<p>That leads to the chapter's <strong>three kinds of time</strong>: <strong>event time</strong> (when it happened at the source), <strong>ingestion time</strong> (when it entered the ingestion system), and <strong>processing time</strong> (when the pipeline processed it). The gaps between them are latency. The authors' advice is plain: <strong>timestamp every one of them</strong>, and compute business metrics by event time from the start, or a phone that was offline for hours will land its data on the wrong day.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/kafka-paper58.en.html" target="_blank" rel="noopener">CS Papers · Kafka deep read</a> — where topics, partitions and offset-based reads come from, and why consumers can replay</aside>
+<h3>6. Practical details: database kinds and API styles</h3>
+<p>Beyond relational databases the book names several <strong>NoSQL</strong> families: key-value stores (very fast reads and writes by key, often caches and sessions), document stores (nested JSON-like documents, flexible structure), wide-column stores (such as Cassandra, for massive write volumes), graph databases (nodes and relationships), search engines (full-text retrieval), and time-series databases (time-ordered metrics). For a data engineer the questions never change: <strong>how do I get the data out, will extraction hurt the source, and is there a CDC-like change feed</strong>.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/database-selection-day3.en.html" target="_blank" rel="noopener">System Design · Day 3 Database Selection</a> — which access patterns suit key-value, document, wide-column and graph stores</aside>
+<p>On APIs: <strong>REST</strong> is the most common, fetching by resource and usually requiring you to handle pagination and rate limits; <strong>GraphQL</strong> lets the caller declare exactly which fields it wants in one request; a <strong>webhook</strong> is a "reverse API" where the source pushes events to you as they happen, so your receiver must not drop them; <strong>gRPC</strong> uses efficient binary transport and suits internal service-to-service calls. There is also <strong>data sharing</strong> (cloud warehouses granting direct read access without copying) and <strong>third-party data</strong> (purchased external data whose quality and refresh cadence need extra checking).</p>
+<h3>7. Working upstream: you don't own it, so agree on terms</h3>
+<p>The chapter's most practical part is <strong>working with source-system stakeholders</strong>. Data engineers should agree with system owners on SLAs/SLOs for availability and freshness, how much notice a schema change gets, and whom to call when things go wrong. The cross-cutting undercurrents apply to sources too: <strong>security</strong> (credentials in a secrets manager, VPN or private links, read-only access), <strong>data management</strong> (who is accountable for data quality), <strong>DataOps</strong> (monitor the source's availability and changes, not only your own pipeline), and <strong>orchestration</strong> (align extraction cadence with when the source actually produces data).</p>
+<h2>Key trade-offs and choices</h2>
+<p class="tcap">Table 1 · Extracting from a database: four approaches</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Approach</th><th>Good for</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>Full snapshot</th><td>Small tables and dimensions, once a day</td><td>Slow and heavy on the source as tables grow; <strong>no view of changes</strong></td></tr>
+<tr><th>Batch CDC (updated_at)</th><td>Medium tables, hourly freshness, final state is enough</td><td>Misses intermediate states and <strong>physical deletes</strong>; relies on upstream always maintaining the column</td></tr>
+<tr><th>Continuous CDC (log)</th><td>Full history, sub-minute freshness, many downstream subscribers</td><td>One more streaming platform and connector; snapshot stitching, log buildup and schema evolution to manage</td></tr>
+<tr><th>Query a read replica</th><td>Complex queries without touching the primary</td><td>Replication lag; <strong>still only final state</strong></td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 2 · How source tables are written</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Pattern</th><th>Benefit</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>CRUD (update in place)</th><td>Small tables, fast current-state reads, natural for apps</td><td>History is lost by default; analytics must recover it via CDC</td></tr>
+<tr><th>Insert-only</th><td>History kept naturally; auditable and replayable</td><td>Tables keep growing; current state means finding the latest row</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 3 · Message queue vs event-streaming platform</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Type</th><th>Good for</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>Message queue (RabbitMQ, SQS)</th><td>Decoupling systems, distributing tasks; deleted once consumed</td><td>No replay; a message usually serves one kind of consumer</td></tr>
+<tr><th>Event streaming (Kafka, Kinesis)</th><td>CDC pipelines, many subscribers, replay</td><td>Partitions, retention and consumer offsets to operate; <strong>ordering only within a partition</strong></td></tr>
+</tbody>
+</table></div>
+<p>Rule of thumb: first ask whether downstream needs intermediate states and deletes; if so, use log-based CDC. Then ask how fresh it must be; daily freshness is fine with snapshots or batch increments. Finally ask whether it will hurt the source; whatever the approach, never full-scan the primary at peak.</p>
+<h2>Why it matters / in real systems</h2>
+<p>A common interview and design-review question: "How do you sync the order database into the warehouse and the search index?" A passing answer is a scheduled <code>SELECT ... WHERE updated_at &gt; last_run</code>. A good answer names its flaws (missed deletes, missed intermediate states, load on the primary), moves to CDC from the binlog or WAL into Kafka, then explains how the initial snapshot is stitched on, how the partition key keeps each order's events in sequence, and how consumers stay idempotent. Another frequent trap is the <strong>dual write</strong>: the application writes to the database and to a message queue, and if either fails the two disagree. Log-based CDC exists precisely to remove the dual write.</p>
+<div class="ev">
+<p class="evh">Evidence from industry and open source</p>
+<ul>
+<li><strong>LinkedIn Databus: reading the log to kill the dual write.</strong> The project describes itself as "a source-agnostic distributed change data capture system" and an integral part of LinkedIn's data processing pipeline. Its README notes that when an app writes to the database and a messaging system in parallel, it is "hard to ensure" both stay in lock step during failures, so it chose log mining, putting consistency and a single source of truth first. Its transport layer reports latencies "in the low milliseconds", and LinkedIn's social graph index and people search index are fed through it. <span class="src">Source: <a href="https://github.com/linkedin/databus" target="_blank" rel="noopener">linkedin/databus README, GitHub</a></span></li>
+<li><strong>Zendesk Maxwell: lightweight binlog CDC.</strong> Described as "a change data capture application that reads MySQL binlogs and writes data changes as JSON to Kafka, Kinesis, and other streaming platforms": exactly the bottom row of Figure 2. <span class="src">Source: <a href="https://github.com/zendesk/maxwell" target="_blank" rel="noopener">zendesk/maxwell README, GitHub</a></span></li>
+<li><strong>Debezium: the de facto open-source CDC platform.</strong> Described as "an open source project that provides a low latency data streaming platform for change data capture": once configured to monitor a database, applications receive an event for each row-level change, and only committed changes are exposed. <span class="src">Source: <a href="https://github.com/debezium/debezium" target="_blank" rel="noopener">debezium/debezium README, GitHub</a></span></li>
+<li><strong>Netflix DBLog: the log is not enough without full state.</strong> Netflix has publicly described its CDC framework DBLog, which tackles the stitching problem this chapter raises: while continuously reading the transaction log, it extracts full state in chunks and interleaves them with log events, without locking tables or noticeably affecting the source. <span class="src">Source: Netflix Technology Blog, "DBLog: A Generic Change-Data-Capture Framework", 2019</span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/api-design-day9.en.html" target="_blank" rel="noopener">System Design · Day 9 API Design</a> — pagination, versioning and contract breakage, seen from the provider's side of the API you extract from</aside>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"An updated_at column means we have CDC."</strong> Batch increments miss deletes and intermediate states, and depend on upstream updating the column every single time.</li>
+<li><strong>"Querying a read replica has zero impact on the source."</strong> Replicas still have resource limits and replication lag; big queries can still slow them down.</li>
+<li><strong>"Once CDC is wired up, we're done."</strong> Initial snapshots, log buildup and source schema changes need ongoing care.</li>
+<li><strong>"Kafka guarantees global ordering."</strong> Only within a partition; events for one entity must share a partition key.</li>
+<li><strong>"Exactly-once is the default."</strong> The common default is at-least-once; without idempotent consumers you double count.</li>
+<li><strong>"Schemaless means no schema to worry about."</strong> The structure is merely deferred from write time to read time; changes still break downstream.</li>
+<li><strong>"Event time equals arrival time."</strong> Offline devices, retries and time zones can push them hours apart.</li>
+<li><strong>Limits of its time.</strong> The book came out in 2022. Its "agree on rules with upstream" idea has since been formalized in industry discussion as the <strong>data contract</strong>, and managed CDC services are more common, but snapshot stitching and schema evolution remain hard.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① Data engineering starts in source systems you don't own: know their output, cadence, volume and quirks as well as your own.</p>
+<p>② Five kinds of source: files, APIs, application databases, logs, messages and streams. The core is the OLTP database: concurrent, low-latency, ACID, and wrong for direct analytics.</p>
+<p>③ CRUD keeps only current state; insert-only keeps history at the cost of growing tables. The write pattern decides what you can get.</p>
+<p>④ Batch CDC sees only final state and misses deletes; continuous CDC reads the WAL or binlog, captures every change, and is the standard cure for dual writes.</p>
+<p>⑤ CDC has costs: snapshot stitching, log buildup, load on the source, schema evolution.</p>
+<p>⑥ Messages vanish once consumed; streams are append-only and replayable, parallel by partition, ordered only within a partition; a bad key causes hotspots.</p>
+<p>⑦ At-least-once demands idempotent consumers; separate event, ingestion and processing time and timestamp them all.</p>
+<p>⑧ Agree with source owners on SLAs, schema-change notice and contacts; read-only access and credentials in a secrets manager.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Finish this page ≈ grasp the core of this chapter; for the full argument, go to the book.</footer>
+</div>
+
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
