@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Fundamentals of Data Engineering Ch 9 · Serving Data for Analytics, ML, and Reverse ETL — Book Deep-Read 162</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · Fundamentals of Data Engineering · Chapter 9</p>
+<h1>Serving Data for Analytics, ML, and Reverse ETL</h1>
+<p class="sub">Fundamentals of Data Engineering · Ch 9 · Serving Data for Analytics, Machine Learning, and Reverse ETL · Reis &amp; Housley · 2022</p>
+<p class="langbar"><a href="dataeng-ch09-serving-data-book162.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Simple</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The earlier chapters moved data into the company's warehouse, cleaned it and shaped it. But data sitting in a warehouse that nobody uses is wasted work. <strong>This chapter is about the last step: putting the finished data on the table — reports for the boss, training data for algorithms, and results sent back into the everyday tools that sales and support already use.</strong> This is where a data team's work finally gets judged.</p>
+<h2>A strange thing first</h2>
+<p>A team spends six months building a beautiful data platform. A month after launch, nobody opens the reports. The reason is simple: once, the sales number didn't match finance, and from then on people stopped believing it and went back to their own spreadsheets. <strong>A number only has to be wrong once for people to leave; getting them back takes a very long time.</strong></p>
+<h2>Why the old world was hard</h2>
+<ul>
+<li><strong>Asking "what data do you want?" instead of "what will you do with it?"</strong> The resulting report answers a question nobody actually had.</li>
+<li><strong>Same word, different meanings.</strong> To sales a "customer" has signed a contract; to marketing it's anyone who left a phone number.</li>
+<li><strong>Very different diners.</strong> The boss wants the same chart every morning, analysts want to dig freely, algorithms want piles of history, and the customers of your product want answers the instant they click.</li>
+</ul>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>Know who's eating before you serve.</strong> Like a restaurant: the boss orders a fixed set menu, analysts want the buffet, and customers order delivery — it must be fast and must never reach the wrong table, since each one may only see their own data.</li>
+<li><strong>One shared recipe book.</strong> Write down "how sales are counted" once and make every report follow it, and the numbers stop fighting.</li>
+<li><strong>Prepping ingredients for algorithms.</strong> An algorithm learns from lots of past examples, and those examples may only use what was known at the time — no peeking at the answer.</li>
+<li><strong>Delivering results back to the shop floor.</strong> Once you've worked out which customers are most likely to buy, don't bury it in a report; write it straight into the customer system salespeople open every day.</li>
+</ul>
+<h2>What it gives us / how to choose</h2>
+<p>Most teams sort people by purpose first: fixed reports, self-serve digging, customer-facing views and algorithm prep each get their own path; key numbers are defined in one place; and anything sent back into business tools gets brakes first. One honest cost: if automatically delivered data is wrong, the mistake flows straight into business actions — faster and more expensive than a wrong number on a report.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p><strong>Data is worth something the moment it gets used: ask who uses it and for what, protect trust, define each number once, and fit brakes before sending results back into the business.</strong></p>
+</div>
+<p class="switch-hint">Want trust and data SLAs, data products and the limits of self-service, business vs operational vs embedded analytics, point-in-time correctness for ML, the seven ways to serve data, semantic layers, the reverse ETL feedback loop, plus evidence from LinkedIn, Feast and dbt? <a data-mode="deep">→ Switch to Deep</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think the pipeline ends when data lands in the warehouse; it actually ends when <strong>someone makes a decision or takes an action based on it</strong>. This chapter builds three ideas: the first principle of serving is <strong>trust</strong>, and one mistake is hard to undo; before serving, ask <strong>who uses it and for what</strong>, because analytics, machine learning and reverse ETL want completely different things; and definitions should live <strong>in exactly one place</strong> — while writing data back into business systems sends any error straight into business actions, so it needs guardrails.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Data warehouse</strong>: a database built for analysis, holding cleaned and modeled historical data.</li>
+<li><strong>BI (business intelligence)</strong>: tools for reports and dashboards, such as Tableau, Looker or Power BI.</li>
+<li><strong>Dashboard</strong>: one page of charts showing a few key metrics, usually refreshed automatically.</li>
+<li><strong>KPI</strong>: key performance indicator, such as daily active users, GMV or conversion rate.</li>
+<li><strong>OLAP</strong>: online analytical processing — databases built for large aggregate queries, as opposed to OLTP systems that run business transactions.</li>
+<li><strong>CRM</strong>: customer relationship management system, such as Salesforce, where sales and support track customers and leads.</li>
+<li><strong>Feature</strong>: an input variable fed to a model, such as "orders placed by this user in the last 7 days".</li>
+<li><strong>SLA / SLO</strong>: an SLA is the service promise to consumers; an SLO is the concrete target used to measure whether it's met.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The last chapter of Part II, "The Data Engineering Lifecycle in Depth". It follows Chapter 8 (queries, modeling and transformation — the data is now shaped) and leads into Part III on security and privacy. It covers the lifecycle's final stage, <strong>serving</strong> — where, in the authors' framing, data engineers get to shine and the value of the work is truly tested. In practice: BI reporting, external data products, feature delivery and reverse ETL syncs.</p>
+<h2>What problem this chapter solves</h2>
+<p>Picture a company selling SaaS to merchants: a few hundred modeled tables in the warehouse; leadership reads a daily business report at 8 a.m.; twenty-odd analysts query ad hoc; the product embeds a "My Sales" dashboard for 20,000 merchants, with a thousand or more refreshing at peak; a fraud model trains on three years of orders; and sales wants each lead's win probability right inside the CRM. Typical consequences of ignoring this chapter:</p>
+<ul>
+<li><strong>Trust collapses.</strong> The daily report arrives two hours late, or disagrees with finance once, and leadership goes back to Excel; the platform becomes decoration.</li>
+<li><strong>One warehouse carries every workload.</strong> A warehouse tuned for batch reports serves a customer-facing dashboard with a thousand concurrent users, and latency goes from milliseconds to over ten seconds.</li>
+<li><strong>Definitions split.</strong> "Active merchant" is computed separately in BI, notebooks and the external dashboard — three numbers, three answers.</li>
+<li><strong>Models degrade in production.</strong> Training data used fields only known after the fact; offline metrics look great and the model fails once deployed.</li>
+</ul>
+<h2>The core ideas, explained</h2>
+<h3>1. General principles: trust, users, data products</h3>
+<p><strong>Trust comes first.</strong> The authors' judgment: trust in data takes a long time to build and only one incident to lose. Two tools protect it: data validation and observability, so you catch problems before users do; and an agreed <strong>SLA</strong> with consumers — for example, "the daily report is ready by 8 a.m. and key metrics reconcile exactly with finance" — measured continuously with SLOs. When data is late or wrong, tell people proactively instead of waiting to be asked.</p>
+<p><strong>Ask about the use case and the user first.</strong> The good question isn't "what data do you want?" but "what action will you take once you have it?" The same order data becomes a trend chart for the CEO, sliceable detail for an analyst, and labeled historical examples for a model.</p>
+<p><strong>Data products.</strong> The authors borrow the "jobs to be done" lens — users hire a product to get a job done. Treat the datasets you serve as products, with clear users, a problem to solve and a feedback channel, rather than one-off data pulls.</p>
+<p><strong>Self-service is not the default answer.</strong> Letting everyone drag and drop their own reports sounds great, but the book warns that self-service often fails in practice: executives want conclusions, not to build charts themselves. The people who truly need self-service are analytical users who ask new questions, and they need <strong>bounded</strong> freedom — clean models, clear definitions, appropriate permissions.</p>
+<p><strong>Data definitions and data logic.</strong> A data definition is what a word means (what counts as a "customer"); data logic is the formula (does GMV include refunds, is it counted at order time or payment time). This knowledge often lives only in veterans' heads; the authors argue for writing it down explicitly and maintaining it in one place. <strong>Data mesh</strong> pushes serving outward: each business domain treats its data as a product and serves other domains directly.</p>
+<h3>2. Analytics: business, operational, embedded</h3>
+<p><strong>Business analytics</strong> uses historical and current data to support decisions, in three forms: <em>dashboards</em> (a few KPIs at a glance), <em>reports</em> (fixed format, sent regularly) and <em>ad hoc analysis</em> (an analyst digging into one question; useful findings graduate into reports).</p>
+<p><strong>Operational analytics</strong> is about right now, in real time or near real time: application monitoring, inventory alerts, a sudden drop in conversion. It asks "what is happening and what should we do immediately", with data latency measured in seconds.</p>
+<p><strong>Embedded analytics</strong> is customer-facing analytics built into a product: the energy chart in a smart thermostat app, the sales dashboard in a merchant back office. The authors point out how much it raises the bar: data must be fresh, queries fast (users won't wait ten seconds), concurrency high (thousands of customers at once), and each customer may see only their own data — <strong>multitenant</strong> isolation down to the row. This load usually goes to dedicated real-time OLAP engines (such as Druid, Pinot or ClickHouse) rather than a batch warehouse.</p>
+<figure>
+<svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<g font-size="12">
+<line x1="70" y1="210" x2="660" y2="210" stroke="#5a6069" marker-end="url(#a1)"/>
+<line x1="70" y1="210" x2="70" y2="24" stroke="#5a6069" marker-end="url(#a1)"/>
+<text x="660" y="232" fill="#7c8593" text-anchor="end">Concurrent users → (tens → thousands)</text>
+<text x="80" y="22" fill="#7c8593">↑ Stricter latency (hours → seconds → milliseconds)</text>
+<rect x="100" y="150" width="170" height="48" rx="8" fill="rgba(91,157,249,0.08)" stroke="#5b9df9"/>
+<text x="185" y="170" fill="#d9dee5" text-anchor="middle" font-weight="700">Business analytics</text>
+<text x="185" y="188" fill="#9aa3ae" text-anchor="middle" font-size="11">Internal · reports, ad hoc</text>
+<rect x="290" y="90" width="170" height="48" rx="8" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"/>
+<text x="375" y="110" fill="#d9dee5" text-anchor="middle" font-weight="700">Operational analytics</text>
+<text x="375" y="128" fill="#9aa3ae" text-anchor="middle" font-size="11">Internal · monitoring, alerts</text>
+<rect x="470" y="34" width="180" height="48" rx="8" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="1.6"/>
+<text x="560" y="54" fill="#d9dee5" text-anchor="middle" font-weight="700">Embedded analytics</text>
+<text x="560" y="72" fill="#9aa3ae" text-anchor="middle" font-size="11">External · tenant isolation</text>
+</g>
+</svg>
+<figcaption>Figure 1 · Three kinds of analytics: toward the top right, more users and stricter latency; embedded analytics also has to show each customer only their own data.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/multi-tenant-saas-day37.en.html" target="_blank" rel="noopener">System Design · Day 37 Multi-Tenant SaaS Architecture</a> — row-level isolation, noisy neighbors and per-tenant resources, the layer embedded analytics can't avoid</aside>
+<h3>3. Machine learning: how much a data engineer should know</h3>
+<p>The authors admit the line between data engineering and ML engineering varies by organization: some data engineers only deliver clean raw data, others own everything up to computing and serving features. Wherever the line falls, data engineers should know ML basics: supervised vs unsupervised learning, classification vs regression, when to use classical models vs deep learning, feature engineering, batch training vs online learning, and where labeled data comes from. Knowing these tells you what kind of data to deliver.</p>
+<p>The easiest place to go wrong is <strong>point-in-time correctness</strong>: each feature in a training example may only use values known at the moment of prediction. If you predict whether an order will be refunded but train on a field that only exists in the order's final state, the model is peeking at the answer — great offline, useless in production. Another trap is <strong>training–serving skew</strong>: a batch job computes features for training while different code computes them live, and small differences between the two degrade the model. <strong>Feature stores</strong> exist to serve one feature definition to both offline training and online inference.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/feature-platform-day40.en.html" target="_blank" rel="noopener">System Design · Day 40 Feature Platforms and ML Infrastructure</a> — offline and online stores, point-in-time joins, and keeping training and inference consistent</aside>
+<h3>4. Seven ways to serve data</h3>
+<p><strong>File exchange</strong>: export CSV or Excel, or drop files into a shared object-storage bucket for a partner. The most primitive and still the most common, but versions, permissions and freshness are hard to manage. <strong>Databases</strong>: the usual way — users query the warehouse or an OLAP store directly; cloud warehouses can give each team isolated compute so one person's huge query doesn't slow everyone. <strong>Streaming systems</strong>: continuously updated results for operational analytics. <strong>Query federation</strong>: an engine like Trino queries many sources at once without moving data first — good for exploration and one-off needs, but it pushes load onto the sources. <strong>Data sharing</strong>: cloud warehouses grant direct access to the same data, no copies and no pipelines; Snowflake, BigQuery and others support it. <strong>Semantic and metrics layers</strong>: see the next section. <strong>Notebooks</strong>: the main entry point for data scientists; the authors note that pandas loads everything into one machine's memory, so larger data needs Spark, Dask, Ray or a managed cloud environment — and database credentials should never sit in plain text in a notebook.</p>
+<h3>5. The semantic layer: define each metric once</h3>
+<p>A <strong>semantic layer / metrics layer</strong> centralizes business metric definitions as code — for example, "GMV = sum of paid order amounts, minus refunds in the month" — and compiles them into SQL for each database. Every downstream consumer — BI, notebooks, external dashboards — gets numbers through it instead of writing its own version. The authors cite Looker's LookML and dbt's metric definitions. The gain is "write once, consistent everywhere"; the cost is one more abstraction to maintain and learn.</p>
+<figure>
+<svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#8fbaff"/></marker></defs>
+<g font-size="12">
+<rect x="20" y="85" width="120" height="50" rx="8" fill="rgba(91,157,249,0.08)" stroke="#5b9df9"/>
+<text x="80" y="106" fill="#d9dee5" text-anchor="middle" font-weight="700">Warehouse</text>
+<text x="80" y="124" fill="#9aa3ae" text-anchor="middle" font-size="11">Modeled tables</text>
+<rect x="200" y="70" width="210" height="80" rx="10" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="1.6"/>
+<text x="305" y="96" fill="#d9dee5" text-anchor="middle" font-weight="700">Semantic layer · metrics</text>
+<text x="305" y="116" fill="#9aa3ae" text-anchor="middle" font-size="11">GMV = paid amount − refunds</text>
+<text x="305" y="134" fill="#9aa3ae" text-anchor="middle" font-size="11">Compiled to each engine's SQL</text>
+<line x1="140" y1="110" x2="196" y2="110" stroke="#8fbaff" marker-end="url(#a2)"/>
+<rect x="490" y="20" width="180" height="40" rx="8" fill="rgba(91,157,249,0.08)" stroke="#5b9df9"/>
+<text x="580" y="45" fill="#d9dee5" text-anchor="middle">BI dashboard</text>
+<rect x="490" y="90" width="180" height="40" rx="8" fill="rgba(91,157,249,0.08)" stroke="#5b9df9"/>
+<text x="580" y="115" fill="#d9dee5" text-anchor="middle">Notebook</text>
+<rect x="490" y="160" width="180" height="40" rx="8" fill="rgba(91,157,249,0.08)" stroke="#5b9df9"/>
+<text x="580" y="185" fill="#d9dee5" text-anchor="middle">Embedded dashboard</text>
+<g stroke="#8fbaff" marker-end="url(#a2)"><line x1="410" y1="95" x2="486" y2="42"/><line x1="410" y1="110" x2="486" y2="110"/><line x1="410" y1="125" x2="486" y2="178"/></g>
+<text x="448" y="214" fill="#7c8593" text-anchor="middle" font-size="11">All three read the same GMV</text>
+</g>
+</svg>
+<figcaption>Figure 2 · A semantic layer: each metric is defined once and every downstream tool reads through it, so the numbers agree.</figcaption>
+</figure>
+<h3>6. Reverse ETL: sending results back to business systems</h3>
+<p><strong>Reverse ETL</strong> writes results computed in the warehouse back into business systems: lead scores into Salesforce, user segments into the marketing platform, risk flags into the support tool. The authors aren't fond of the name but endorse the value: <strong>salespeople won't open a BI tool to look up a score, so the data has to go where they already work.</strong> Dedicated tools such as Hightouch and Census exist, or you can build your own.</p>
+<p>The most memorable point in the book is the risk: the <strong>feedback loop</strong>. The authors' example is ad bidding — a model computes bids from warehouse data, reverse ETL writes them into the ad platform, the new campaign results flow back into the warehouse, and they drive the next round of bids. If the logic is wrong, the loop amplifies itself: bids climb and ad spend burns away before anyone notices. The remedy is caps, monitoring and human review.</p>
+<figure>
+<svg viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#8fbaff"/></marker><marker id="a3r" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"/></marker></defs>
+<g font-size="12">
+<rect x="30" y="30" width="150" height="50" rx="8" fill="rgba(91,157,249,0.08)" stroke="#5b9df9"/>
+<text x="105" y="52" fill="#d9dee5" text-anchor="middle" font-weight="700">Source systems</text>
+<text x="105" y="70" fill="#9aa3ae" text-anchor="middle" font-size="11">Ad platform · CRM</text>
+<rect x="275" y="30" width="150" height="50" rx="8" fill="rgba(91,157,249,0.08)" stroke="#5b9df9"/>
+<text x="350" y="52" fill="#d9dee5" text-anchor="middle" font-weight="700">Warehouse</text>
+<text x="350" y="70" fill="#9aa3ae" text-anchor="middle" font-size="11">Ingest · model</text>
+<rect x="520" y="30" width="150" height="50" rx="8" fill="rgba(91,157,249,0.08)" stroke="#5b9df9"/>
+<text x="595" y="52" fill="#d9dee5" text-anchor="middle" font-weight="700">Model / rules</text>
+<text x="595" y="70" fill="#9aa3ae" text-anchor="middle" font-size="11">Bids, scores</text>
+<line x1="180" y1="55" x2="271" y2="55" stroke="#8fbaff" marker-end="url(#a3)"/>
+<text x="225" y="47" fill="#7c8593" text-anchor="middle" font-size="11">ETL</text>
+<line x1="425" y1="55" x2="516" y2="55" stroke="#8fbaff" marker-end="url(#a3)"/>
+<path d="M595,80 C595,170 105,170 105,84" fill="none" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#a3r)"/>
+<text x="350" y="160" fill="#c9b5f7" text-anchor="middle">Reverse ETL: write bids back to the ad platform</text>
+<rect x="240" y="180" width="220" height="34" rx="8" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5" stroke-dasharray="4 3"/>
+<text x="350" y="202" fill="#d9dee5" text-anchor="middle" font-size="11">Guardrails: caps · monitoring · review</text>
+</g>
+</svg>
+<figcaption>Figure 3 · Reverse ETL closes a loop: when the logic is wrong, bids amplify themselves round after round, so brakes are mandatory.</figcaption>
+</figure>
+<h3>7. Who you work with, and the undercurrents</h3>
+<p>Serving puts you face to face with data analysts, data scientists, ML engineers and the business. Among the undercurrents the authors single out <strong>security</strong> (least privilege, row- and column-level visibility, views or masked data when sharing externally), <strong>DataOps</strong> (monitoring whether data arrives on time, whether quality is off, whether queries are slowing) and <strong>orchestration</strong> (serving depends on every upstream step finishing in order). Serving is where users notice failures first, so monitoring has to reach this layer.</p>
+<h2>Key trade-offs and choices</h2>
+<p class="tcap">Table 1 · Seven ways to serve data (plus reverse ETL)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Method</th><th>Good for</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>File exchange</th><td>One-off exchange with partners who only take Excel</td><td>Version chaos, permissions hard to revoke, stale</td></tr>
+<tr><th>Warehouse / OLAP DB</th><td>Default for internal BI and ad hoc analysis</td><td>High-concurrency external use needs a real-time OLAP engine</td></tr>
+<tr><th>Streaming systems</th><td>Operational analytics, second-level alerts</td><td>Operationally complex, weak at looking back over history</td></tr>
+<tr><th>Query federation</th><td>Exploration and cross-source one-offs without moving data</td><td><strong>Load lands on the sources</strong>; as slow as the slowest one</td></tr>
+<tr><th>Data sharing</th><td>Sharing across teams or companies in one cloud warehouse ecosystem</td><td>Vendor lock-in; who pays must be agreed</td></tr>
+<tr><th>Semantic / metrics layer</th><td>Many tools and teams needing one set of definitions</td><td>Another abstraction to maintain and learn</td></tr>
+<tr><th>Notebooks</th><td>Data science exploration and modeling</td><td>Single-machine memory, credential leaks, hard to reproduce</td></tr>
+<tr><th>Reverse ETL</th><td>Putting results inside CRM, marketing and other business tools</td><td><strong>Errors become business actions</strong>; feedback-loop risk</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 2 · What the three kinds of analytics demand</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Type</th><th>Users</th><th>Freshness / latency</th><th>Concurrency</th><th>Typical foundation</th></tr></thead>
+<tbody>
+<tr><th>Business</th><td>Leadership, analysts</td><td>Hours to a day; queries of seconds are fine</td><td>Tens to hundreds</td><td>Cloud warehouse + BI</td></tr>
+<tr><th>Operational</th><td>Ops, on-call engineers</td><td>Seconds to minutes</td><td>Moderate</td><td>Stream processing + real-time store</td></tr>
+<tr><th>Embedded</th><td>External customers</td><td>Near real time; sub-second queries</td><td><strong>Thousands</strong>, with tenant isolation</td><td>Druid / Pinot / ClickHouse etc.</td></tr>
+</tbody>
+</table></div>
+<p>Self-service is a trade-off too: open it to analytical users who ask new questions, backed by clean models and a semantic layer; give people who only want conclusions good fixed dashboards. With ML teams, agree up front which layer data engineering delivers — raw data, cleaned tables or ready features — or the feature logic ends up written twice.</p>
+<h2>Why it matters / real systems</h2>
+<p>A strong answer to the interview question "build a real-time sales dashboard for merchants" lands like this: model order facts in the warehouse and define metrics once in a semantic layer; serve the external dashboard from a real-time OLAP engine ingesting from Kafka, with row-level isolation per merchant and a sub-second p99 target; keep the internal daily report on the cloud warehouse with a monitored ready-by-8-a.m. SLA; build fraud training sets with point-in-time correctness; push win probabilities into the CRM through reverse ETL, with caps on how much values may change and alerts on the sync. Every step maps to a concept in this chapter.</p>
+<div class="ev">
+<p class="evh">Industry / open-source evidence</p>
+<ul>
+<li><strong>LinkedIn serves user-facing embedded analytics on Pinot.</strong> The Apache Pinot project description says Pinot was originally built at LinkedIn to power interactive real-time analytics products such as "Who Viewed Profile" and company analytics; at LinkedIn it powers 50+ user-facing products, ingesting millions of events per second and serving 100k+ queries per second at millisecond latency. That is exactly this chapter's embedded analytics: high concurrency, low latency, fresh data. <span class="src">Source: <a href="https://github.com/apache/pinot" target="_blank" rel="noopener">apache/pinot README, GitHub</a></span></li>
+<li><strong>Feast: the same features for training and serving.</strong> The project describes its goal as making features consistently available for training and online inference through an offline store and a low-latency online store, and generating point-in-time correct feature sets so future values don't leak into training. <span class="src">Source: <a href="https://github.com/feast-dev/feast" target="_blank" rel="noopener">feast-dev/feast README, GitHub</a></span></li>
+<li><strong>dbt MetricFlow: a semantic layer that turns definitions into code.</strong> The project describes itself as a semantic layer that compiles metric definitions into clear, reusable SQL, ensuring consistent and accurate results when analyzing data by different dimensions. <span class="src">Source: <a href="https://github.com/dbt-labs/metricflow" target="_blank" rel="noopener">dbt-labs/metricflow README, GitHub</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"Once it's in the warehouse, it's delivered."</strong> Data nobody uses or trusts might as well not exist; serving is the acceptance test.</li>
+<li><strong>"Self-service BI will make data requests disappear."</strong> Most people want conclusions; self-service suits a minority of analytical users, and needs boundaries.</li>
+<li><strong>"One warehouse can carry every workload."</strong> Batch reports and a customer dashboard with a thousand concurrent users are different loads; mixed together, they drag each other down.</li>
+<li><strong>"More complete training data is always better."</strong> Using fields not yet known at prediction time is peeking at the answer: the better it looks offline, the worse it does live.</li>
+<li><strong>"Federation avoids moving data, so it's free."</strong> The load shifts to the source systems, and production databases can slow under analytical queries.</li>
+<li><strong>"Reverse ETL is just another sync job."</strong> It turns analysis into business actions; its errors are the most expensive, so it needs guardrails and alerts.</li>
+<li><strong>Dated by its time.</strong> The book came out in 2022, when semantic layers and reverse ETL were emerging categories; some of it has since been absorbed by warehouse and BI vendors, but "ask about the use, protect trust, define once" still holds.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>1. Serving is the last stop of the lifecycle and where data engineering gets judged: data has value only once it is used.</p>
+<p>2. Trust first: slow to build, lost in one incident; protect it with validation, observability and data SLAs / SLOs.</p>
+<p>3. Ask "what will you do with the data?" and segment users; treat datasets as products; give self-service only to analytical users, with boundaries.</p>
+<p>4. Write data definitions (what a word means) and data logic (the formula) down and keep them in one place; data mesh pushes serving out to business domains.</p>
+<p>5. Three kinds of analytics: business looks back, operational looks at now, embedded faces customers and needs high concurrency, low latency and tenant isolation.</p>
+<p>6. Serving ML means point-in-time correct training data and no second copy of feature logic; feature stores exist for this.</p>
+<p>7. Seven ways to serve: files, databases, streams, federation, sharing, semantic layers and notebooks, each with its own fit and cost.</p>
+<p>8. Reverse ETL sends results back into business systems so data goes where users already are; its risk is the feedback loop, so set caps and monitor.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Finishing this page ≈ getting the core of the chapter; for the full arguments and extensions, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
