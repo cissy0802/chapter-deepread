@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Fundamentals of Data Engineering Ch 10 · Security and Privacy — Book Deep-Read 163</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · Fundamentals of Data Engineering · Chapter 10</p>
+<h1>Security and Privacy</h1>
+<p class="sub">Fundamentals of Data Engineering · Ch 10 · Security and Privacy · Reis &amp; Housley · 2022</p>
+<p class="langbar"><a href="dataeng-ch10-security-and-privacy-book163.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Simple</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>When you shop online you leave a phone number, an address, and a list of what you bought. All of it ends up in the company's data warehouse, where analysts and algorithms use it again and again. <strong>This chapter is about how the people who run that data keep it from being stolen, snooped on, or lost.</strong> The authors are blunt: security is not just the security team's job. Every config line a data engineer writes decides whether the data is safe.</p>
+<h2>A strange fact first</h2>
+<p>Most data leaks don't involve a brilliant hacker. Someone pastes the warehouse key into code, and the code ends up public. Someone sets the "filing cabinet" that holds the data so that anyone can open it. <strong>The most common hole isn't a machine; it's a person taking a shortcut.</strong></p>
+<h2>Why the old way was hard</h2>
+<ul>
+<li><strong>Everyone gets the master key, for convenience.</strong> An intern can see exactly as much as an administrator.</li>
+<li><strong>Ticking a checklist passes for security.</strong> The paperwork is perfect at audit time; nobody cares the rest of the year.</li>
+<li><strong>"We're on the cloud, someone else has this covered."</strong> The cloud provider looks after the building and the machines. Whether your cabinet is locked is up to you.</li>
+</ul>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>Imagine the worst first.</strong> For every new piece of data, ask: what if this leaks? If you don't need a sensitive detail, don't collect it. What you never took in can never be stolen.</li>
+<li><strong>Be a little suspicious.</strong> If someone asks for a password over chat, even if it looks like your boss, check through another channel, like a phone call.</li>
+<li><strong>Hand out only the key that's needed.</strong> Like a hotel key card: it opens your room only, and stops working at checkout. Need to get into the server room for a bit? Sign in, get approval, and hand the key back on time.</li>
+<li><strong>The landlord looks after the building; you lock your door.</strong> The landlord keeps the walls standing, but can't make you lock up when you leave.</li>
+<li><strong>Keep a backup.</strong> If someone locks up your data and demands a ransom, a clean copy means you don't have to pay.</li>
+</ul>
+<h2>What it brings / how to choose</h2>
+<p>Good teams treat security like brushing their teeth, a daily <strong>habit</strong>, not a once-a-year spring clean: hand out fewer permissions by default, put keys in a proper safe, keep software updated, and record who looked at what. One honest cost: the tighter the permissions, the more often people have to ask before they get data, and the team has to live with that friction.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p><strong>Data security isn't one big lock. It's everyone's habits: imagine the worst, don't collect what you don't need, give out only the key that's needed, and lock your own door.</strong></p>
+</div>
+<p class="switch-hint">Want the people–process–technology layers, security theater versus security habit, least privilege and time-boxed access, the cloud's shared responsibility, why encryption isn't a silver bullet, the four signals to monitor, and evidence from Netflix, AWS, and Log4Shell? <a data-mode="deep">→ Switch to Deep</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You'd think data security comes down to stronger technology: better encryption, a pricier firewall. In fact most breaches come from <strong>people and process</strong>: credentials committed to code, admin rights for everyone, a storage bucket set to public. The chapter builds three ideas. Security is an <strong>undercurrent</strong> of data engineering that runs through every stage of the lifecycle. Defenses come in three layers, <strong>people → process → technology</strong>, and the weakest link is usually people. And what works is a daily <strong>habit</strong>, not a compliance <strong>performance</strong>, built on least privilege, collecting less sensitive data, prompt patching, and real backups.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Credentials</strong>: what proves you are you, such as a password, an API key, or an access token.</li>
+<li><strong>Permission</strong>: what an identity is allowed to do, for example "can read this table, cannot delete it."</li>
+<li><strong>IAM</strong>: identity and access management, the cloud system that defines who can do what to which resources.</li>
+<li><strong>Encryption</strong>: turning data into something unreadable without a key. At rest means while it sits on disk; in transit means while it crosses the network.</li>
+<li><strong>PII</strong>: personally identifiable information, data that points to a specific person, such as a phone number, ID number, or home address.</li>
+<li><strong>Bucket</strong>: a container for files in cloud object storage (an S3 bucket, say), with settings for who may access it.</li>
+<li><strong>Patch</strong>: an update a vendor ships to fix a vulnerability.</li>
+<li><strong>Ransomware</strong>: malware that encrypts your data and demands payment to unlock it.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The first chapter of Part III, "Security, Privacy, and the Future." The first nine chapters walked the lifecycle (generation → storage → ingestion → transformation → serving), and Chapter 2 put security first among the six <strong>undercurrents</strong>. This chapter pulls that cross-cutting thread out on its own and leads into Chapter 11, "The Future of Data Engineering." In practice it maps to warehouse permission design, secret management, cloud account governance, and compliance regimes like GDPR.</p>
+<h2>What problem this chapter solves</h2>
+<p>Picture an e-commerce company with tens of billions in annual sales. Its warehouse holds orders, phone numbers, and delivery addresses for 200 million users. All 40 analysts and data scientists are warehouse admins, because it's easier. Airflow jobs and notebooks contain database passwords in plain text. A bucket of export files is publicly readable so partners can download it easily. Backups? "The cloud provider must have some." It all runs fine until one day:</p>
+<ul>
+<li><strong>One phish takes everything.</strong> Fool any single person out of their account and the attacker gets the whole warehouse.</li>
+<li><strong>One code repo is one key.</strong> If the repo is made public or forked, the passwords leak with it.</li>
+<li><strong>One setting is one breach.</strong> Automated scanners find public buckets. No "hacking" required.</li>
+<li><strong>One ransomware hit is one shutdown.</strong> Without independent backups, the only choices are paying up or losing the data.</li>
+</ul>
+<p>On top of the direct damage comes regulation. The EU's GDPR caps fines for serious violations at 4% of global annual turnover or €20 million, whichever is higher. California has the CCPA, and health data falls under HIPAA. The authors' warning: <strong>data engineers handle exactly the data these laws protect</strong>, so you can't assume security is someone else's problem.</p>
+<h2>The core ideas, in depth</h2>
+<p>The authors organize the chapter around <strong>people, processes, and technology</strong>. The order is itself the point: no technical defense stops an employee who tells a stranger their password.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+<g font-size="12">
+<rect x="30" y="20" width="640" height="210" rx="14" fill="rgba(91,157,249,0.05)" stroke="#5b9df9"/>
+<text x="50" y="44" fill="#8fbaff" font-weight="700">People · think negatively, stay paranoid</text>
+<rect x="80" y="60" width="540" height="150" rx="12" fill="rgba(91,157,249,0.07)" stroke="#5b9df9"/>
+<text x="100" y="84" fill="#8fbaff" font-weight="700">Process · least privilege, shared responsibility, backups, policy</text>
+<rect x="140" y="100" width="420" height="90" rx="10" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5" stroke-width="1.6"/>
+<text x="350" y="126" fill="#d9dee5" font-weight="700" text-anchor="middle">Technology · patches, encryption, monitoring, network</text>
+<rect x="290" y="140" width="120" height="36" rx="8" fill="#171b21" stroke="#9b6cf5"/>
+<text x="350" y="163" fill="#d9dee5" text-anchor="middle">Data</text>
+</g>
+</svg>
+<figcaption>Fig 1 · Three layers of defense: an attack gets past people, then process, and only then meets technology. The authors see the outer layer as often the weakest.</figcaption>
+</figure>
+<h3>1. People: the power of negative thinking, always be paranoid</h3>
+<p><strong>The power of negative thinking.</strong> The authors want you to rehearse failure while designing every pipeline: if this data leaked, what would happen, and who could get it? From that comes the chapter's most practical rule: <strong>the best way to protect sensitive data is not to ingest it in the first place.</strong> If a retention analysis doesn't need national ID numbers, block or mask them at ingestion rather than collecting them and figuring out how to hide them later.</p>
+<p><strong>Always be paranoid.</strong> When someone asks for credentials or a data export by email, phone, or chat, verify through a separate trusted channel, even if the request seems to come from an executive. Social engineering (tricking people's trust rather than exploiting system flaws) works precisely because it walks around every technical defense.</p>
+<h3>2. Process: security theater vs. security habit, active security</h3>
+<p><strong>Security theater</strong> is what the authors argue against: polished documents for the compliance audit, a security pledge signed once a year, a ticked checklist, and nothing actually done differently. A <strong>security habit</strong> builds security into the everyday: check permissions in code review, check configs before release, review incidents regularly.</p>
+<p><strong>Active security</strong>: don't copy a static checklist. Keep researching the threats aimed at <em>your</em> organization: which systems you run, where your people tend to get phished, what has recently happened to similar companies. Then adjust.</p>
+<h3>3. Process: the principle of least privilege</h3>
+<p><strong>The principle of least privilege</strong>: every person and every system gets only the permissions needed for the work at hand <strong>right now</strong>, and those are revoked when done. The authors call out two common violations: handing out admin roles because it's easier, and doing everyday work as root. The principle applies to <strong>data</strong> too. An analyst who can query order aggregates doesn't thereby get to see phone numbers. Grant specific columns or rows, or a masked view.</p>
+<p>What if someone really needs sensitive data for a while? The book's answer is a <strong>break-glass process</strong>, like smashing the case to reach the fire axe: request, approval, a time limit, a full audit trail, and automatic revocation when time is up.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="e1" markerWidth="8" markerHeight="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#8fbaff"/></marker></defs>
+<g font-size="12">
+<line x1="40" y1="150" x2="670" y2="150" stroke="#5a6069" marker-end="url(#e1)"/>
+<text x="660" y="172" fill="#7c8593" text-anchor="end">time →</text>
+<rect x="40" y="110" width="620" height="30" rx="6" fill="rgba(91,157,249,0.08)" stroke="#5b9df9"/>
+<text x="60" y="130" fill="#d9dee5">Baseline: aggregates, masked views</text>
+<rect x="300" y="50" width="200" height="50" rx="8" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5" stroke-width="1.6"/>
+<text x="400" y="72" fill="#d9dee5" font-weight="700" text-anchor="middle">Elevated: row-level detail</text>
+<text x="400" y="90" fill="#9aa3ae" font-size="11" text-anchor="middle">4-hour limit · fully audited</text>
+<line x1="300" y1="30" x2="300" y2="150" stroke="#9b6cf5" stroke-dasharray="4 3"/>
+<line x1="500" y1="30" x2="500" y2="150" stroke="#9b6cf5" stroke-dasharray="4 3"/>
+<text x="300" y="24" fill="#c9b5f7" text-anchor="middle">request + approval</text>
+<text x="500" y="24" fill="#c9b5f7" text-anchor="middle">auto-revoked</text>
+</g>
+</svg>
+<figcaption>Fig 2 · Least privilege isn't "never grant." It's grant little by default, grant more for a limited time when needed, and revoke automatically.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/authorization-day30.en.html" target="_blank" rel="noopener">System Design · Day 30 Authorization and Accounts</a> — RBAC / ABAC, the policy evaluation behind a single permission check, and audit trails</aside>
+<h3>4. Process: shared responsibility in the cloud, always back up</h3>
+<p><strong>The shared responsibility model</strong>: the cloud provider secures the cloud <em>itself</em> (data centers, hardware, the virtualization layer). You secure what's <em>in</em> the cloud: account permissions, network rules, whether buckets are public, whether data is encrypted. The authors stress that many cloud data breaches come from customers' own misconfigurations, not from the provider being compromised.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 210" xmlns="http://www.w3.org/2000/svg">
+<g font-size="12">
+<rect x="40" y="20" width="620" height="90" rx="10" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5" stroke-width="1.6"/>
+<text x="60" y="44" fill="#c9b5f7" font-weight="700">You · security IN the cloud</text>
+<text x="60" y="68" fill="#d9dee5">IAM roles and permissions · bucket access policies · network and firewall rules</text>
+<text x="60" y="92" fill="#d9dee5">data encryption and keys · credential storage · backups</text>
+<rect x="40" y="120" width="620" height="70" rx="10" fill="rgba(91,157,249,0.08)" stroke="#5b9df9"/>
+<text x="60" y="144" fill="#8fbaff" font-weight="700">Provider · security OF the cloud</text>
+<text x="60" y="170" fill="#d9dee5">physical data centers · hardware · network backbone · virtualization layer</text>
+</g>
+</svg>
+<figcaption>Fig 3 · Shared responsibility: the building is the landlord's, the door lock is yours. A public bucket belongs to the top half.</figcaption>
+</figure>
+<p><strong>Always back up your data.</strong> Data gets lost to accidental deletes and hardware failure, and it gets encrypted by ransomware. The authors call for regular backups and <strong>regular restore drills</strong>. A backup you've never restored from doesn't count.</p>
+<h3>5. Process: an example security policy</h3>
+<p>The book offers a minimal policy you can adopt as is, in three parts. <strong>Protect credentials</strong>: use single sign-on (SSO) and multi-factor authentication (MFA, which asks for a second factor such as a phone code on top of the password) wherever possible. Use cloud IAM roles instead of long-lived keys. Keep secrets in a secret manager, and <strong>never embed them in code</strong>. <strong>Protect devices</strong>: central device management, remote wipe for lost laptops, automatic screen lock. <strong>Software updates</strong>: keep browsers, operating systems, and dependencies current.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/security-day24.en.html" target="_blank" rel="noopener">System Design · Day 24 Security Fundamentals</a> — how authentication and authorization split the work, short-lived tokens, and the full path for keeping secrets in Vault / KMS</aside>
+<h3>6. Technology: patches, encryption, monitoring, network</h3>
+<p><strong>Patch and update.</strong> Operating systems, databases, and open-source dependencies all ship vulnerabilities. Putting off upgrades leaves a known door open.</p>
+<p><strong>Encryption is not a magic bullet.</strong> Encryption at rest and in transit is now the <strong>baseline</strong>, on by default in most cloud services. But the authors point out that it only covers a stolen disk or a tapped link. It does nothing against someone who logs in with valid credentials. When an employee account is stolen, the data is decrypted for the attacker as a matter of course.</p>
+<p><strong>Logging, monitoring, and alerting.</strong> The authors name four kinds of signal. <em>Access</em>: who logged in when, from where, and what they queried. <em>Resources</em>: abnormal spikes in disk, CPU, or memory, which may mean cryptomining or data exfiltration. <em>Billing</em>: a sudden jump in the cloud bill is often the first sign of an intrusion. <em>Excess permissions</em>: permissions and accounts that go unused for long stretches should be reclaimed.</p>
+<p><strong>Network access.</strong> Don't expose databases directly to the public internet. Shrink the attack surface with IP allowlists, private networks, and firewall rules, and open admin ports like SSH only to specific sources.</p>
+<p><strong>Low-level security and internal research.</strong> Engineers often spot a system's weak points before the security team does. The authors encourage a culture where people report a suspicious config or a vulnerability instead of quietly working around it.</p>
+<h3>7. Privacy: more than not getting robbed</h3>
+<p>Privacy asks whether data <strong>should be used this way at all</strong>. Beyond collecting less, the book's earlier chapters add two requirements. Mask or tokenize PII (tokenization swaps the real value for a meaningless stand-in). And build in the ability to honor regulatory requests such as "delete this user's data." When copies are scattered across raw, cleaned, backup, and downstream layers, deleting everything is much harder than it sounds.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/privacy-compliance-day43.en.html" target="_blank" rel="noopener">System Design · Day 43 Privacy and Compliance Architecture</a> — when "delete" is no longer a DELETE: lineage, crypto-shredding, and propagating erasure across copies</aside>
+<h2>Key trade-offs and choices</h2>
+<p class="tcap">Table 1 · Security theater vs. security habit</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Dimension</th><th>Security theater</th><th>Security habit</th></tr></thead>
+<tbody>
+<tr><th>Cadence</th><td>A scramble before audits, once a year</td><td>Every review, every release</td></tr>
+<tr><th>Output</th><td>Documents, signatures, ticked boxes</td><td>Tightened permissions, fixed configs</td></tr>
+<tr><th>Threat model</th><td>Generic template</td><td><strong>Specific to the org</strong>, kept current</td></tr>
+<tr><th>Cost</th><td>Looks cheap; most expensive when it fails</td><td>More time day to day, more access requests</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 2 · What each control stops, and what it doesn't</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Control</th><th>Stops</th><th>Doesn't stop</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>Don't collect / mask</th><td>The root of sensitive-data leaks</td><td>Cases that truly need plain text</td><td>Some analyses become impossible; justify up front</td></tr>
+<tr><th>Least privilege + break-glass</th><td>Blast radius after one account falls</td><td>Theft of a highly privileged account</td><td>Approvals slow down data access</td></tr>
+<tr><th>SSO + MFA</th><td>Phished or reused passwords</td><td>Stolen session tokens, insiders</td><td>One more login step</td></tr>
+<tr><th>Secret manager</th><td>Credentials in code leaking with the repo</td><td>An attacker holding the runtime identity</td><td>Pipelines must change how they read secrets</td></tr>
+<tr><th>Encryption at rest / in transit</th><td>Stolen disks, tapped links</td><td><strong>Logins with valid credentials</strong></td><td>Baseline; near zero cost in the cloud</td></tr>
+<tr><th>Private network + allowlist</th><td>Internet scans, brute force</td><td>Attackers already inside</td><td>Harder remote and partner access</td></tr>
+<tr><th>Independent backup + drills</th><td>Accidental deletes, ransomware</td><td>Leaks after data is stolen</td><td>Storage cost, drill time</td></tr>
+</tbody>
+</table></div>
+<p>None of these is enough alone. Combined, they make defense in depth. Granularity is a trade-off too. Database-level grants are the easiest and the coarsest. Column-level, row-level, and dynamic masking fit least privilege best, at the price of a growing pile of policies that someone has to maintain. A common practice is to <strong>tier data by sensitivity</strong> (public, internal, confidential, regulated: PII, payments, health) and govern each tier more tightly than the one below.</p>
+<h2>Why it matters / real systems</h2>
+<p>Asked in an interview to "design a data platform that stores user behavior and PII," a strong answer lands like this. Detect and tokenize phone and ID numbers at ingestion. Partition the warehouse by sensitivity tier: analysts get masked views by default, and row-level detail goes through time-boxed elevation. Jobs run as IAM roles rather than with long-lived keys, passwords live in a secret manager, and CI scans commits so keys never land in the repo. Buckets are private by default and databases sit on private networks. Alerts watch for unusual logins, unusually large exports, and billing spikes. Backups live in a separate account and get a restore drill every quarter. Mainstream platforms have the matching features: Snowflake and BigQuery support column-level access control and dynamic masking, and AWS Lake Formation offers table-, column-, and row-level grants.</p>
+<div class="ev">
+<p class="evh">Industry / open-source evidence</p>
+<ul>
+<li><strong>Netflix automates reclaiming unused permissions.</strong> Netflix's open-source Repokid describes itself as using Access Advisor data provided by Aardvark to remove permissions granting access to unused services from the inline policies of IAM roles in an AWS account. That is this chapter's "monitor excess permissions and reclaim them," engineered. <span class="src">Source: <a href="https://github.com/Netflix/repokid" target="_blank" rel="noopener">Netflix/repokid README, GitHub</a></span></li>
+<li><strong>AWS's own tool keeps secrets out of repos.</strong> awslabs' git-secrets says its purpose is to prevent you from committing passwords and other sensitive information to a git repository. It scans commits, commit messages, and merges, and rejects anything that matches a prohibited pattern. This is the chapter's "never embed credentials in code." <span class="src">Source: <a href="https://github.com/awslabs/git-secrets" target="_blank" rel="noopener">awslabs/git-secrets README, GitHub</a></span></li>
+<li><strong>Log4Shell: one logging library made patching an industry-wide emergency.</strong> GitHub's advisory rates the December 2021 Log4j remote code execution flaw (CVE-2021-44228) as critical: an attacker who controls log messages can execute arbitrary code. The first fix, in 2.15.0, was incomplete, so teams had to upgrade again to 2.16.0. Countless Java-based data stack components had to be checked one dependency at a time. <span class="src">Source: <a href="https://github.com/advisories/GHSA-jfh8-c2jp-5v3q" target="_blank" rel="noopener">GitHub Advisory GHSA-jfh8-c2jp-5v3q</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"We're on the cloud, so security is the provider's job."</strong> Under shared responsibility, configs, permissions, and data are yours.</li>
+<li><strong>"Encryption is on, so we're safe."</strong> Encryption doesn't stop someone logging in with valid credentials. It's the baseline, not the finish line.</li>
+<li><strong>"Collect everything now, decide later."</strong> Every extra PII column adds attack surface and compliance duties. Not collecting is the cheapest protection.</li>
+<li><strong>"Least privilege slows the team down."</strong> Fair, which is why it needs break-glass and self-service requests, not a retreat to admin-for-all.</li>
+<li><strong>"We passed the audit, so we're secure."</strong> Compliance is the floor. Perfect checklists without the habits are exactly security theater.</li>
+<li><strong>"We have backups."</strong> A backup never restored can't be trusted, and backups in the same account as production can get ransomed along with it.</li>
+<li><strong>Limitations.</strong> The chapter is deliberately high level, closer to a checklist from a data engineer's point of view than a deep dive into threat modeling or cryptography. The book came out in 2022, and practices like zero-trust networking and data security posture management (DSPM) have spread since. The people → process → technology ordering still holds.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① Security is an undercurrent of data engineering that runs through every lifecycle stage. It is not the security team's job alone.</p>
+<p>② Defenses come in three layers: people, process, technology. The weakest link is usually people, so think negatively, stay paranoid, and verify credential requests through another channel.</p>
+<p>③ The best way to protect sensitive data is not to ingest it. If you must, mask or tokenize it as early as possible.</p>
+<p>④ Build security habits, not security theater. Actively research the threats aimed at your organization instead of copying a static checklist.</p>
+<p>⑤ Least privilege: grant only what's needed now and revoke it afterward. Temporary access to sensitive data goes through a time-boxed, approved, audited break-glass process.</p>
+<p>⑥ Shared responsibility: the provider secures the cloud itself; you own configs, permissions, and data. A public bucket is on you.</p>
+<p>⑦ Credentials go in a secret manager, never in code. Use SSO + MFA, make devices remotely wipeable, and keep software updated.</p>
+<p>⑧ Encryption is a baseline, not a silver bullet. Monitor access, resources, billing, and excess permissions. Keep databases off the public internet.</p>
+<p>⑨ Always back up and rehearse restores. Privacy also means being able to delete one user's data completely.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Finishing this page ≈ getting the core of the chapter; for the full arguments and extensions, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
