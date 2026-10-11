@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Fundamentals of Data Engineering Ch 8 · Queries, Modeling, and Transformation — Book Deep-Read 161</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · Fundamentals of Data Engineering · Chapter 8</p>
+<h1>Queries, Modeling, and Transformation</h1>
+<p class="sub">Fundamentals of Data Engineering · Ch 8 · Queries, Modeling, and Transformation · Reis &amp; Housley · 2022</p>
+<p class="langbar"><a href="dataeng-ch08-queries-modeling-transformation-book161.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Simple</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The previous chapter moved orders, payments and clicks into the company's data warehouse. But what arrives is raw material, like crates just unloaded in a supermarket's back room. <strong>This chapter is about turning raw material into goods on the shelf: how to ask questions (queries), how to agree on the rules (modeling), and how to prepare the data (transformation).</strong> This is where data starts to earn its keep.</p>
+<h2>A strange thing first</h2>
+<p>The boss asks "how much did we sell last month?" Marketing reports one number, finance another, a few percent apart. Nobody made an arithmetic error: marketing counted returned orders, finance counted only money that actually arrived. <strong>When numbers disagree, it is usually not a calculation mistake but different ideas of what "an order" is.</strong> The most important job in this chapter is pinning those words down first.</p>
+<h2>Why the old world was hard</h2>
+<ul>
+<li><strong>Too much data to flip through.</strong> Reading billions of records from the start for every question is slow and expensive.</li>
+<li><strong>Everyone prepares their own.</strong> Each analyst writes their own preparation steps with their own definitions, and nobody can say which is right.</li>
+<li><strong>The data never stops.</strong> New orders arrive every second, so the answer to "how many people are online right now" keeps changing.</li>
+</ul>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>A query is like finding a book in a library.</strong> The smart move is to check the catalogue and walk straight to the right shelf, not pull out every book. Databases do the same: read only the columns you need and only the days that matter.</li>
+<li><strong>Modeling is like bookkeeping.</strong> One ledger records every sale, one line each; beside it sit a few registers of who the customers are and what the products are. The ledger says what happened, the registers say who and what it was, and together they answer almost any question.</li>
+<li><strong>Don't rewrite history.</strong> When a long-time customer moves, last year's orders should still show the old address. So you don't scribble over the register; you add a new line saying "valid from this date".</li>
+<li><strong>Transformation is a central kitchen.</strong> Rather than every branch chopping its own vegetables, one kitchen preps everything from a written recipe. Anyone can follow the recipe and get the same dish, and if a batch goes wrong you can simply cook it again.</li>
+<li><strong>Questions about a stream need time slots.</strong> To know how busy the shop is, count the people coming in every five minutes. Some get counted a little late, so you agree how late still counts toward the previous slot.</li>
+</ul>
+<h2>What it gives us / how to choose</h2>
+<p>Most teams first agree with the business on what the key terms mean, organize data as "ledger plus registers", and keep the preparation steps as code that can be rerun and managed in one place; only where answers are truly needed within seconds do they compute directly on the stream. One honest cost: agreeing definitions and building models up front takes real time and conversation. Skipping it gets the first report out sooner, but you pay it back twice over in every meeting spent arguing about numbers.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p><strong>Data creates value not when it lands but when it is prepared: query by reading less, model by fixing definitions and keeping history, and transform with recipes you can rerun.</strong></p>
+</div>
+<p class="switch-hint">Want the life of a query, column and partition pruning, the three stream windows and watermarks, normalization, the four modeling schools (Inmon, Kimball, Data Vault, wide tables), slowly changing dimensions, the cost of distributed joins and upserts, plus evidence from dbt, Trino and Flink? <a data-mode="deep">→ Switch to Deep</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think the value of data engineering lies in moving and storing data fast; in fact it lies in this chapter: <strong>queries, modeling and transformation turn raw data into something that answers business questions</strong>. Three ideas to take away: read the query plan and scan as little as possible; a data model freezes the business's language into structure, so definitions come before technology; and transformations are rerunnable code, with batch and streaming differing only in cadence.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>SQL</strong>: the standard language for asking a database questions, e.g. <code>SELECT amount FROM orders WHERE day = '2024-09-01'</code>.</li>
+<li><strong>Table / row / column</strong>: a table is like a spreadsheet; each row is a record, each column an attribute.</li>
+<li><strong>Primary key / foreign key</strong>: a primary key uniquely identifies a row; a foreign key is a field pointing at another table's primary key, linking the two.</li>
+<li><strong>Join</strong>: combining rows of two tables on a shared field, e.g. matching orders to customers by customer ID.</li>
+<li><strong>Columnar storage</strong>: storing data column by column rather than row by row, so a query reads only the columns it uses; standard in analytical warehouses.</li>
+<li><strong>Partition</strong>: splitting a big table into chunks by a field (often date) so queries can read only the relevant chunks.</li>
+<li><strong>View</strong>: a saved query that behaves like a table but actually runs each time it is used.</li>
+<li><strong>Spark</strong>: a popular distributed computing framework that splits a big job across many machines.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The fourth chapter of Part II, "The Data Engineering Lifecycle in Depth". It follows Chapter 7 on ingestion (the data has landed in storage) and leads into Chapter 9 on serving data for analytics and ML. It covers the lifecycle's transformation stage, which the authors describe as <strong>where data begins to create value for the business</strong>. In practice: warehouse modeling, dbt projects, Spark batch jobs, Flink streaming jobs.</p>
+<h2>What problem this chapter solves</h2>
+<p>Picture an online retailer: an orders table of 3 billion rows, three years of history, about 2 TB, growing by 5 million rows a day. Analysts run hundreds of queries daily against a cloud warehouse billed by bytes scanned or by compute. Typical consequences of ignoring this chapter:</p>
+<ul>
+<li><strong>Queries burn money.</strong> One <code>SELECT *</code> without a date filter scans all 2 TB, when what was needed was three columns from the last seven days.</li>
+<li><strong>Definitions collide.</strong> "Active user" or "GMV" is computed five ways in five dashboards, and meetings are spent reconciling numbers.</li>
+<li><strong>History gets rewritten.</strong> A customer moves city, the dimension row is overwritten, and last year's "sales by city" changes overnight.</li>
+<li><strong>Transformations are scattered scripts.</strong> Hundreds of unowned scheduled SQL jobs; rename one upstream field and nobody knows what breaks downstream.</li>
+</ul>
+<h2>The core ideas, explained</h2>
+<h3>1. The life of a query: learn to scan less</h3>
+<p>The authors first place the <strong>query</strong> within SQL's family: DDL defines structure (<code>CREATE</code>), DML manipulates data (<code>SELECT</code>, <code>INSERT</code>), DCL controls access, TCL controls transactions. A submitted query goes through four steps: <strong>parsing</strong> (check syntax, convert to an internal form) → <strong>planning and optimization</strong> (the query optimizer decides which table to read first, which join to use, what can be skipped) → <strong>execution</strong> → <strong>returning results</strong>. The same SQL can differ by orders of magnitude in runtime under different plans.</p>
+<p>The book's checklist for faster queries: <strong>optimize joins</strong>: pre-join common combinations into tables, beware many-to-many joins that explode row counts, and use CTEs (common table expressions, named sub-queries written step by step) for readability. <strong>Use the explain plan</strong>: <code>EXPLAIN</code> shows what the optimizer intends and which step is costliest. <strong>Avoid full table scans</strong>: select only the columns you need (<em>column pruning</em>) and let partitions and clustering skip irrelevant blocks (<em>pruning</em>). <strong>Know how your database handles commits</strong>: transaction and consistency models differ, and decide whether you see data someone just wrote. <strong>Vacuum dead records</strong>: updates and deletes leave old row versions behind. <strong>Use cached results</strong>: many cloud warehouses return a cached answer for a repeated query.</p>
+<p>Using the table above: reading 3 of 100 columns cuts the scan to about 3%; querying 7 days out of three years cuts it again to about 0.6%. Together, 2 TB becomes roughly 0.4 GB.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<g font-size="12">
+<rect x="20" y="20" width="130" height="40" rx="7" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/><text x="85" y="45" fill="#b9c0ca" text-anchor="middle">1 Parse</text>
+<rect x="190" y="20" width="150" height="40" rx="7" fill="rgba(91,157,249,0.12)" stroke="#5b9df9" stroke-width="1.6"/><text x="265" y="45" fill="#e7ebf1" text-anchor="middle">2 Plan &amp; optimize</text>
+<rect x="380" y="20" width="130" height="40" rx="7" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/><text x="445" y="45" fill="#b9c0ca" text-anchor="middle">3 Execute</text>
+<rect x="550" y="20" width="130" height="40" rx="7" fill="rgba(255,255,255,0.03)" stroke="#5a6069"/><text x="615" y="45" fill="#b9c0ca" text-anchor="middle">4 Return results</text>
+<line x1="150" y1="40" x2="186" y2="40" stroke="#7c8593" marker-end="url(#a1)"/><line x1="340" y1="40" x2="376" y2="40" stroke="#7c8593" marker-end="url(#a1)"/><line x1="510" y1="40" x2="546" y2="40" stroke="#7c8593" marker-end="url(#a1)"/>
+<text x="20" y="92" fill="#cdd3db">Columnar table: daily partitions × 100 columns (only what is read is lit)</text>
+<rect x="20" y="104" width="560" height="84" fill="rgba(255,255,255,0.03)" stroke="#2c323b"/>
+<g stroke="#2c323b" stroke-width="0.6"><line x1="40" y1="104" x2="40" y2="188"/><line x1="60" y1="104" x2="60" y2="188"/><line x1="80" y1="104" x2="80" y2="188"/><line x1="100" y1="104" x2="100" y2="188"/><line x1="120" y1="104" x2="120" y2="188"/><line x1="140" y1="104" x2="140" y2="188"/><line x1="160" y1="104" x2="160" y2="188"/><line x1="180" y1="104" x2="180" y2="188"/><line x1="200" y1="104" x2="200" y2="188"/><line x1="220" y1="104" x2="220" y2="188"/><line x1="240" y1="104" x2="240" y2="188"/><line x1="260" y1="104" x2="260" y2="188"/><line x1="280" y1="104" x2="280" y2="188"/><line x1="300" y1="104" x2="300" y2="188"/><line x1="320" y1="104" x2="320" y2="188"/><line x1="340" y1="104" x2="340" y2="188"/><line x1="360" y1="104" x2="360" y2="188"/><line x1="380" y1="104" x2="380" y2="188"/><line x1="400" y1="104" x2="400" y2="188"/><line x1="420" y1="104" x2="420" y2="188"/><line x1="440" y1="104" x2="440" y2="188"/><line x1="460" y1="104" x2="460" y2="188"/><line x1="480" y1="104" x2="480" y2="188"/><line x1="500" y1="104" x2="500" y2="188"/><line x1="520" y1="104" x2="520" y2="188"/><line x1="540" y1="104" x2="540" y2="188"/><line x1="560" y1="104" x2="560" y2="188"/></g>
+<g fill="rgba(155,108,245,0.35)" stroke="#9b6cf5"><rect x="80" y="164" width="18" height="24"/><rect x="200" y="164" width="18" height="24"/><rect x="380" y="164" width="18" height="24"/></g>
+<line x1="20" y1="164" x2="580" y2="164" stroke="#5b9df9" stroke-dasharray="4 3"/>
+<text x="588" y="152" fill="#7c8593" font-size="11">old: skipped</text>
+<text x="588" y="182" fill="#8fbaff" font-size="11">last 7 days</text>
+<text x="350" y="218" fill="#8fbaff" text-anchor="middle">Column pruning × partition pruning: read only the three violet blocks</text>
+</g>
+</svg>
+<figcaption>Figure 1 · The four steps of a query, and how the optimizer reads less through column and partition pruning.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/dremel-paper23.en.html" target="_blank" rel="noopener">CS Papers · Dremel deep-read</a> — how columnar storage plus tree-shaped execution answers queries over trillions of rows in seconds</aside>
+<h3>2. Queries on streams: windows, watermarks and stream joins</h3>
+<p>For streaming data the authors describe two architectural approaches. The <strong>fast-follower</strong>: use CDC to replicate the production database in real time into an analytical database, and point queries at the replica rather than production. The <strong>Kappa architecture</strong>: treat the event-streaming platform itself as primary storage, keep enough history, and replay from the start when you need to recompute.</p>
+<p>Aggregating a stream requires <strong>windows</strong>: <em>fixed (tumbling)</em> windows, e.g. non-overlapping 5-minute slots; <em>sliding</em> windows, e.g. computing "the last 5 minutes" every minute, so windows overlap; and <em>session</em> windows, cut by user activity and closed after a period of inactivity. Because data arrives late, the engine uses a <strong>watermark</strong> to judge that data before a given time has mostly arrived, so a window can close and emit; data later than the watermark needs separate handling. Streams also get combined with other data: <strong>enrichment</strong> adds dimension attributes to each event, while joining two streams means buffering recent data from both sides until matches arrive, and how long that buffer is kept trades cost against accuracy.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+<g font-size="12">
+<line x1="130" y1="34" x2="680" y2="34" stroke="#5a6069"/>
+<g fill="#9b6cf5"><circle cx="150" cy="34" r="4"/><circle cx="175" cy="34" r="4"/><circle cx="190" cy="34" r="4"/><circle cx="290" cy="34" r="4"/><circle cx="305" cy="34" r="4"/><circle cx="470" cy="34" r="4"/><circle cx="490" cy="34" r="4"/><circle cx="515" cy="34" r="4"/><circle cx="640" cy="34" r="4"/></g>
+<text x="20" y="38" fill="#cdd3db">Events (time)</text>
+<text x="20" y="80" fill="#cdd3db">Fixed</text>
+<g fill="rgba(91,157,249,0.10)" stroke="#5b9df9"><rect x="130" y="64" width="135" height="26" rx="4"/><rect x="267" y="64" width="135" height="26" rx="4"/><rect x="404" y="64" width="135" height="26" rx="4"/><rect x="541" y="64" width="135" height="26" rx="4"/></g>
+<text x="20" y="128" fill="#cdd3db">Sliding</text>
+<g fill="rgba(91,157,249,0.06)" stroke="#5b9df9" stroke-dasharray="4 3"><rect x="130" y="104" width="200" height="16" rx="4"/><rect x="200" y="122" width="200" height="16" rx="4"/><rect x="270" y="140" width="200" height="16" rx="4"/></g>
+<text x="20" y="188" fill="#cdd3db">Session</text>
+<g fill="rgba(155,108,245,0.12)" stroke="#9b6cf5"><rect x="140" y="174" width="62" height="26" rx="4"/><rect x="280" y="174" width="36" height="26" rx="4"/><rect x="460" y="174" width="66" height="26" rx="4"/><rect x="628" y="174" width="24" height="26" rx="4"/></g>
+<text x="400" y="222" fill="#8fbaff" text-anchor="middle">Fixed: equal, no overlap · Sliding: equal, overlapping · Session: cut by idle gaps</text>
+</g>
+</svg>
+<figcaption>Figure 2 · One series of events aggregated with fixed, sliding and session windows.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/data-processing-day20.en.html" target="_blank" rel="noopener">System Design · Day 20 Data Processing</a> — how event time, watermarks and windows land in unified batch and streaming engines</aside>
+<h3>3. Data models: pin down the business's language</h3>
+<p>The authors define a <strong>data model</strong> plainly: how data relates to the real world. A good model reflects the business's concepts and rules: who a "customer" is, when "an order" counts. The book stresses that many organizations skip modeling and just pile up data, ending with data swamps and contradictory metrics. Modeling has three levels: the <strong>conceptual</strong> model (business entities and relationships, often an ER diagram) → the <strong>logical</strong> model (fields, types, primary and foreign keys) → the <strong>physical</strong> model (which database, how it is partitioned).</p>
+<p>The first modeling decision is the <strong>grain</strong>: what does one row represent, an order or a single item within an order? Model at the finest grain you can, since fine grain rolls up to coarse but never the other way. Then comes <strong>normalization</strong>, Codd's rules for removing redundancy: first normal form makes every field atomic, second removes dependence on part of a composite key, third removes transitive dependencies between non-key fields. Normalization stores each fact once so a change touches one place, at the cost of more joins at query time.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/relational-model-paper32.en.html" target="_blank" rel="noopener">CS Papers · The Relational Model deep-read</a> — Codd's 1970 paper: where relations, normal forms and data independence come from</aside>
+<h3>4. Four schools of batch analytical modeling: Inmon, Kimball, Data Vault, wide tables</h3>
+<p><strong>Inmon</strong>: Bill Inmon, often called the father of the data warehouse, defines it as a "subject-oriented, integrated, nonvolatile, and time-variant" collection of data supporting management's decisions. You first build a highly normalized (third normal form) enterprise warehouse as the single source of truth, then derive department-facing <strong>data marts</strong> from it. Top-down, strongly consistent, heavy up-front investment.</p>
+<p><strong>Kimball</strong>: bottom-up, modeling directly for analysis with a <strong>star schema</strong>. At its center is the <strong>fact table</strong>: one row per business event, holding numbers and keys to dimensions, append-only and immutable, narrow and long. Around it sit <strong>dimension tables</strong> describing who, what, where and when, wide and short; a date dimension is nearly universal. Dimensions shared across several fact tables are <strong>conformed dimensions</strong>, keeping definitions consistent across subjects. Dimensions change, hence <strong>slowly changing dimensions (SCD)</strong>: Type 1 overwrites and keeps no history; Type 2 adds a new row with validity dates, preserving full history; Type 3 adds a column holding the previous value, keeping one level of history.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 290" xmlns="http://www.w3.org/2000/svg">
+<g font-size="12">
+<g stroke="#5a6069"><line x1="250" y1="90" x2="210" y2="50"/><line x1="450" y1="90" x2="490" y2="50"/><line x1="250" y1="122" x2="210" y2="160"/><line x1="450" y1="122" x2="490" y2="160"/></g>
+<rect x="250" y="78" width="200" height="56" rx="8" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="1.8"/><text x="350" y="100" fill="#e7ebf1" text-anchor="middle">Fact: order lines</text><text x="350" y="120" fill="#7c8593" font-size="11" text-anchor="middle">amount · quantity · dimension keys</text>
+<g fill="rgba(155,108,245,0.10)" stroke="#9b6cf5"><rect x="70" y="26" width="140" height="36" rx="7"/><rect x="490" y="26" width="140" height="36" rx="7"/><rect x="70" y="142" width="140" height="36" rx="7"/><rect x="490" y="142" width="140" height="36" rx="7"/></g>
+<text x="140" y="49" fill="#cdd3db" text-anchor="middle">Customer dim</text><text x="560" y="49" fill="#cdd3db" text-anchor="middle">Product dim</text><text x="140" y="165" fill="#cdd3db" text-anchor="middle">Date dim</text><text x="560" y="165" fill="#cdd3db" text-anchor="middle">Store dim</text>
+<text x="20" y="212" fill="#8fbaff">SCD Type 2 on the customer dimension: customer 42 moves from Boston to Denver</text>
+<rect x="20" y="222" width="660" height="26" fill="rgba(255,255,255,0.03)" stroke="#2c323b"/><text x="30" y="240" fill="#b9c0ca">key 101 · cust 42 · Boston · valid 2022-03-01 → 2024-06-30 · current = no</text>
+<rect x="20" y="250" width="660" height="26" fill="rgba(91,157,249,0.08)" stroke="#5b9df9"/><text x="30" y="268" fill="#e7ebf1">key 205 · cust 42 · Denver · valid 2024-07-01 → now · current = yes</text>
+</g>
+</svg>
+<figcaption>Figure 3 · A star schema: fact table in the middle, dimensions around it; SCD Type 2 keeps both rows, and old orders still point at the old one.</figcaption>
+</figure>
+<p><strong>Data Vault</strong>: proposed by Dan Linstedt, it splits data into three kinds of tables: <strong>hubs</strong> (business keys only, such as customer number), <strong>links</strong> (relationships between hubs only), and <strong>satellites</strong> (descriptive attributes and their history). Insert-only, never updated; when sources change you just add tables. It suits enterprises with many changing sources and audit requirements; the cost is many tables, and usually another analysis-friendly layer on top before querying.</p>
+<p><strong>Wide denormalized tables</strong>: flatten facts and dimensions into one table that may have thousands of columns. This used to mean redundant storage and painful updates; with columnar storage, empty columns cost almost nothing and only the used columns are read, so wide tables query fast and are easy for analysts. The authors are pragmatic: wide tables are good for fast iteration, but adding columns ad hoc strips business logic of structure, so they still need governance.</p>
+<h3>5. Transformation: write the preparation as rerunnable code</h3>
+<p>The authors separate queries from <strong>transformations</strong>: a query retrieves data to answer a question, while a transformation persists its result for repeated downstream use, usually orchestrated as a scheduled pipeline.</p>
+<p><strong>Distributed joins.</strong> When one table is small enough to fit in each node's memory, use a <strong>broadcast join</strong>: copy the small table to every node and leave the big one in place. When both are large, use a <strong>shuffle hash join</strong>: redistribute both sides across nodes by join key, at much higher network cost. Hence the common optimization: filter and aggregate first to shrink one side until it can be broadcast.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a4" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#8fbaff"/></marker></defs>
+<g font-size="12">
+<text x="20" y="22" fill="#cdd3db">Broadcast join: copy the small table</text>
+<rect x="20" y="36" width="90" height="34" rx="6" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5"/><text x="65" y="58" fill="#e7ebf1" text-anchor="middle">Small</text>
+<g fill="rgba(91,157,249,0.08)" stroke="#5b9df9"><rect x="170" y="36" width="90" height="34" rx="6"/><rect x="170" y="80" width="90" height="34" rx="6"/><rect x="170" y="124" width="90" height="34" rx="6"/></g>
+<g fill="#b9c0ca" text-anchor="middle"><text x="215" y="58">Node 1</text><text x="215" y="102">Node 2</text><text x="215" y="146">Node 3</text></g>
+<g stroke="#8fbaff" marker-end="url(#a4)"><line x1="110" y1="53" x2="166" y2="53"/><line x1="110" y1="58" x2="166" y2="96"/><line x1="110" y1="63" x2="166" y2="138"/></g>
+<text x="20" y="186" fill="#7c8593">Big table stays put; only the small one moves</text>
+<text x="380" y="22" fill="#cdd3db">Shuffle hash join: both sides by key</text>
+<g fill="rgba(91,157,249,0.08)" stroke="#5b9df9"><rect x="380" y="36" width="80" height="34" rx="6"/><rect x="380" y="80" width="80" height="34" rx="6"/><rect x="380" y="124" width="80" height="34" rx="6"/><rect x="590" y="36" width="80" height="34" rx="6"/><rect x="590" y="80" width="80" height="34" rx="6"/><rect x="590" y="124" width="80" height="34" rx="6"/></g>
+<g fill="#b9c0ca" text-anchor="middle" font-size="11"><text x="420" y="58">A+B shard</text><text x="420" y="102">A+B shard</text><text x="420" y="146">A+B shard</text><text x="630" y="58">keys 0–3</text><text x="630" y="102">keys 4–7</text><text x="630" y="146">keys 8–b</text></g>
+<g stroke="#8fbaff" stroke-width="0.9"><line x1="460" y1="53" x2="586" y2="97"/><line x1="460" y1="53" x2="586" y2="141"/><line x1="460" y1="97" x2="586" y2="53"/><line x1="460" y1="97" x2="586" y2="141"/><line x1="460" y1="141" x2="586" y2="53"/><line x1="460" y1="141" x2="586" y2="97"/></g>
+<text x="380" y="186" fill="#7c8593">Both sides cross the network</text>
+<text x="350" y="212" fill="#8fbaff" text-anchor="middle">Filter and aggregate first so one side becomes broadcastable</text>
+</g>
+</svg>
+<figcaption>Figure 4 · A broadcast join moves only the small table; a shuffle hash join redistributes both tables by key.</figcaption>
+</figure>
+<p><strong>SQL or code.</strong> SQL is declarative and can express far more complex transformations than people assume, so it should be the default; but complex procedural logic or ML feature processing fits code frameworks like Spark better. With Spark the authors advise filtering early, relying on the built-in APIs, and avoiding Python user-defined functions (UDFs), which shuttle data between the JVM and Python.</p>
+<p><strong>Update patterns.</strong> (1) <em>Truncate and reload</em>: wipe and recompute everything; simple but expensive. (2) <em>Insert only</em>: append new versions as new rows and read the latest; avoid single-row inserts into columnar stores. (3) <em>Delete</em>: hard deletes remove data, soft deletes only flag it; compliance may require hard deletes. (4) <em>Upsert / merge</em>: update if the key exists, insert otherwise. In columnar storage an update often means rewriting a whole file block, so frequent small merges are costly and should be batched. Schemas evolve with the business too, so design to allow added columns.</p>
+<p><strong>Views, materialized views, federated queries.</strong> A view stores only the query and computes on each use; a materialized view stores the result and refreshes periodically or incrementally, trading storage for speed. A <strong>federated query</strong> lets one engine query external sources directly; <strong>data virtualization</strong> goes further, fetching across systems at query time without moving data. Flexible, but it pushes query load onto the source systems.</p>
+<p><strong>Streaming transformations.</strong> These process data continuously in flight, often as a directed acyclic graph (DAG) of steps. On the debate between <strong>micro-batch</strong> (e.g. Spark Streaming batching every few seconds to minutes) and <strong>true streaming</strong> (e.g. Flink processing event by event), the authors' answer is: ask how fast the business really needs results. If seconds are fine, micro-batch; if milliseconds are required, true streaming, verified by testing.</p>
+<h2>Key trade-offs and choices</h2>
+<p class="tcap">Table 1 · Four schools of batch analytical modeling</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Approach</th><th>Fits</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>Inmon (3NF warehouse + marts)</th><td>Large enterprises needing one source of truth across departments</td><td>Long up-front modeling, slow to show value</td></tr>
+<tr><th>Kimball (star schema)</th><td>Analytics and BI first, delivered business process by process</td><td>Without well-managed conformed dimensions, marts drift apart</td></tr>
+<tr><th>Data Vault</th><td>Many sources, frequent change, audit and traceability</td><td><strong>Many tables</strong>; needs another analysis layer before querying</td></tr>
+<tr><th>Wide table</th><td>Columnar cloud warehouses, fast iteration, analyst self-service</td><td>Redundant; ad hoc columns erode business logic</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 2 · Slowly changing dimensions and update patterns</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Approach</th><th>Benefit</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>SCD Type 1 (overwrite)</th><td>Simple, smallest dimension</td><td><strong>History is rewritten</strong>; old reports change</td></tr>
+<tr><th>SCD Type 2 (new row)</th><td>Full history, attribution as of the time</td><td>Larger dimension; joins need date conditions</td></tr>
+<tr><th>Truncate and reload</th><td>Simplest logic, self-consistent result</td><td>Slow and costly at volume</td></tr>
+<tr><th>Insert only + latest</th><td>Cheap writes, built-in audit trail</td><td>Dedupe on read; storage grows</td></tr>
+<tr><th>Upsert / merge</th><td>Table holds only current state</td><td><strong>Rewrites file blocks</strong> in columnar storage; small merges are expensive</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 3 · Choices in querying and compute</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Choice</th><th>When</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>View vs materialized view</th><td>View for small data needing freshness; materialize repeated heavy queries</td><td>Views recompute every time; materialized ones need refresh and can go stale</td></tr>
+<tr><th>Federated query vs ingest first</th><td>Occasional cross-source or exploratory analysis</td><td>Load lands on sources; performance unpredictable</td></tr>
+<tr><th>Micro-batch vs true streaming</th><td>Seconds are fine: micro-batch; milliseconds: true streaming</td><td>True streaming has harder state management and operations</td></tr>
+</tbody>
+</table></div>
+<p>Rule of thumb: fix the grain and definitions first, then pick a modeling approach. For analytics on a columnar cloud warehouse, a Kimball star or wide table is the usual starting point; consider Data Vault only with many sources and audit needs. Any dimension used for historical attribution defaults to Type 2.</p>
+<h2>Why it matters / real systems</h2>
+<p>A strong answer to the interview question "design a data warehouse for an online retailer" lands like this: a raw layer keeps ingested data as is; a middle layer cleans, deduplicates and unifies definitions; the serving layer follows Kimball with an order-lines fact table and customer, product and date dimensions, the customer dimension as Type 2; every transformation is a SQL model under version control with data tests, run incrementally each hour in dependency order; tables are partitioned by date and clustered by customer; fraud metrics run separately as Flink sliding windows. Each step maps to a concept in this chapter.</p>
+<div class="ev">
+<p class="evh">Open-source evidence</p>
+<ul>
+<li><strong>dbt: transformation as software engineering.</strong> The project says dbt "enables data analysts and engineers to transform their data using the same practices that software engineers use to build applications": the industrial form of "transformations are rerunnable code", with SQL models, a dependency graph, tests and version control. <span class="src">Source: <a href="https://github.com/dbt-labs/dbt-core" target="_blank" rel="noopener">dbt-labs/dbt-core README, GitHub</a></span></li>
+<li><strong>Trino: a federated query engine.</strong> It describes itself as "a fast distributed SQL query engine for big data analytics", querying many data sources through connectors, matching the book's federated queries and data virtualization. <span class="src">Source: <a href="https://github.com/trinodb/trino" target="_blank" rel="noopener">trinodb/trino README, GitHub</a></span></li>
+<li><strong>Flink: event time and windows.</strong> Its README lists "Support for event time and out-of-order processing in the DataStream API, based on the Dataflow Model" and "Flexible windowing (time, count, sessions, custom triggers) across different time semantics": exactly this chapter's streaming-query toolkit. <span class="src">Source: <a href="https://github.com/apache/flink" target="_blank" rel="noopener">apache/flink README, GitHub</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"Modeling is obsolete; just query the columnar warehouse."</strong> Compute got cheaper; the cost of muddled definitions did not. The authors explicitly argue against skipping modeling.</li>
+<li><strong>"More normalization is always better."</strong> It is designed for write consistency; analytics often denormalizes on purpose for query speed.</li>
+<li><strong>"Just overwrite a changed dimension."</strong> Type 1 silently rewrites historical reports; whether to keep history is a business decision, not a default.</li>
+<li><strong>"A coarser grain saves space."</strong> Coarse grain can't be split later, so the next question can't be answered.</li>
+<li><strong>"Upserts are cheap."</strong> In columnar storage each merge may rewrite files; row-by-row updates kill performance.</li>
+<li><strong>"Streaming means true streaming."</strong> Micro-batch is enough for most cases; ask what latency the business accepts.</li>
+<li><strong>"Kimball versus Inmon is either-or."</strong> In practice they mix: normalized or Data Vault underneath, star or wide tables on top.</li>
+<li><strong>Dated by its time.</strong> The book came out in 2022; lakehouse table formats have since made merges and time travel common, but the judgments about grain, definitions and preserving history still hold.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>1. This chapter is where the lifecycle creates value: queries answer questions, models fix definitions, transformations persist results for reuse.</p>
+<p>2. A query is parsed, optimized, executed and returned; read the EXPLAIN plan; column plus partition pruning can cut scans by orders of magnitude.</p>
+<p>3. Stream queries rely on windows (fixed, sliding, session) and watermarks; stream-to-stream joins buffer data while waiting for matches.</p>
+<p>4. Model by fixing the grain first, as fine as possible; normalization removes redundancy, while analytics often denormalizes on purpose.</p>
+<p>5. Inmon: top-down 3NF plus marts. Kimball: star schema of facts and dimensions. Data Vault: hubs, links, satellites. Wide tables: back in fashion thanks to columnar storage.</p>
+<p>6. Slowly changing dimensions: Type 1 overwrites and loses history, Type 2 adds rows and keeps it, Type 3 adds a column for one level.</p>
+<p>7. Distributed joins: broadcast small tables, shuffle big ones; filter and aggregate first. Every update pattern has a cost, and columnar stores hate frequent small merges.</p>
+<p>8. Views compute on demand, materialized views trade storage for speed, federated queries avoid moving data but load the sources; choose micro-batch or true streaming by the latency the business needs.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Finishing this page ≈ getting the core of the chapter; for the full arguments and extensions, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
