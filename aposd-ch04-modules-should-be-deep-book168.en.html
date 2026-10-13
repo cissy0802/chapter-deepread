@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>A Philosophy of Software Design Ch 4 · Modules Should Be Deep — Book Deep-Read 168</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · A Philosophy of Software Design · Chapter 4</p>
+<h1>Modules Should Be Deep</h1>
+<p class="sub">A Philosophy of Software Design · Ch 4 · Modules Should Be Deep · Ousterhout · 2nd ed 2021</p>
+<p class="langbar"><a href="aposd-ch04-modules-should-be-deep-book168.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Simple</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The first three chapters said software's biggest enemy is complexity. This one hands you the book's first and most important weapon: <strong>build the system out of "deep" parts</strong> — parts that are dead simple to use but do a huge amount of work behind the scenes. When you tap "Save" on your phone, hundreds of thousands of lines of code go find space on the disk, queue the writes and guard against power loss, and you never need to know a single one of them. That is depth.</p>
+<h2>An analogy</h2>
+<p>Driving a car takes one steering wheel and two pedals. However complicated the engine, gearbox and brake lines are, the driver never has to care — <strong>a tiny control surface, a lot of work underneath</strong>. That is a good part. Now picture a car where the accelerator is split into a fuel lever and a spark lever, and changing gear means pulling three separate rods. Each rod is simple on its own, but you have to learn all of them and pull them in the right order, and if you forget one, the car stalls.</p>
+<h2>Why the old way is hard</h2>
+<p>Many programmers are taught that "smaller is better": keep each piece of code short, make each module do one tiny thing. It sounds tidy. The result is a system chopped into lots of little parts, <strong>each with its own instruction manual</strong>. No single part is hard; the hard part is that the user now has to read dozens of manuals and know how to fit the parts together. The complexity didn't go away. It just moved out of the parts and onto the people using them.</p>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>Every part has two faces.</strong> The outside face is the manual: how to use it. The inside face is the machinery that does the work, which nobody else sees.</li>
+<li><strong>The manual is the cost; the work is the payoff.</strong> Every user has to read the manual first. The work the part saves them is the whole reason it exists.</li>
+<li><strong>Deep part = short manual, lots of work.</strong> Like a light switch: flip it and the light comes on, no need to know how the wiring runs.</li>
+<li><strong>Shallow part = the manual is as long as the work.</strong> By the time you've read it, you could have done the job yourself, so it barely helped.</li>
+<li><strong>The most common use should "just work."</strong> A good part lets nine out of ten people get it right without setting anything; the rare special needs get an extra knob.</li>
+</ul>
+<h2>What it buys you / how to choose</h2>
+<p>It gives you a ruler you can use anywhere: judge a module not by how short or small it is, but by <strong>how much hassle it hides from the people who use it</strong>. Whether to split or merge, measure with that ruler. One honest cost: a deep part is thicker and harder to build on the inside. The person who writes it works harder so that everyone who uses it works less.</p>
+<h2>Remember it in one line</h2>
+<div class="tl">
+<p><strong>A good part is like a steering wheel: simple to use, a lot of work behind it. A part whose manual is as long as its work hasn't helped anyone.</strong></p>
+</div>
+<p class="switch-hint">Want the cost/benefit math of interface vs. implementation, the two opposite ways an abstraction goes wrong, why Unix file I/O is the gold standard of depth, why reading a file in Java takes three classes, "classitis," and Ousterhout's public debate with the author of Clean Code? <a data-mode="deep">→ Switch to Deep</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think the mark of a good module is being <em>small</em>; Ousterhout says it is being <strong>deep</strong>: <strong>the simplest possible interface over the most powerful possible functionality</strong>. The interface is the cost users pay; the functionality is the benefit the module delivers. <strong>A shallow module, whose interface is about as complex as its implementation, barely lightens anyone's load</strong> — and a system carved into many shallow modules is one of the main sources of complexity.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Module</strong>: any unit of code with an interface and an implementation — a class, a subsystem, a service, even a single function.</li>
+<li><strong>Interface</strong>: everything a user must know to use the module correctly. <strong>Implementation</strong>: the code that carries out what the interface promises.</li>
+<li><strong>Signature</strong>: a function's name, parameter types and return type — the part of the interface the compiler can check.</li>
+<li><strong>Abstraction</strong>: a simplified view of something that leaves out unimportant details.</li>
+<li><strong>Cognitive load</strong>: from Chapter 2 — how much a developer has to hold in their head to make a change.</li>
+<li><strong>Dependency</strong>: a piece of code that can't be understood or changed in isolation from another piece.</li>
+<li><strong>System call</strong>: the entry point through which a program asks the operating system for a service, such as opening or reading a file.</li>
+<li><strong>Buffering</strong>: collecting data in memory and reading or writing it in batches, to cut down on slow trips to the disk.</li>
+<li><strong>Garbage collection (GC)</strong>: the language runtime automatically reclaims memory that is no longer in use, so the programmer never frees it by hand.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Chapter 4 is where the book turns from mindset (Chapter 3, strategic programming) to concrete craft, and it is the axis of the whole book: information hiding (Ch 5), general-purpose modules (Ch 6), pulling complexity downward (Ch 8) and "together or apart" (Ch 9) are all answers to <strong>how do you make modules deeper?</strong> In practice it maps onto every code review that asks "should this class be split further?"</p>
+<h2>What problem this chapter tackles</h2>
+<p>Chapter 2 traced complexity to <strong>dependencies</strong> and <strong>obscurity</strong>. Dependencies can't be eliminated — modules have to cooperate — so the real question is: <strong>how do you divide a system so that a developer only has to face a small piece of it at any moment?</strong> Modular design is the textbook answer, but divide it wrong and things get worse: more modules mean more interfaces, and more for users to learn.</p>
+<p>The book's anchoring scene: to read serialized objects from a file in Java, you create a <code>FileInputStream</code>, wrap it in a <code>BufferedInputStream</code>, then wrap that in an <code>ObjectInputStream</code> — <strong>three classes, three constructors, for one task</strong>. Forget the middle layer and the program still runs; it just has no buffering and is much slower, with no error to warn you. Every class is "small and single-purpose," yet together they push the whole burden onto the caller. The chapter's job is to give a criterion that tells this kind of split apart from a good one.</p>
+<h2>The core ideas, in depth</h2>
+<h3>1. Module = interface + implementation: a cost/benefit ledger</h3>
+<p>Ideal modularity would make modules completely independent, so a developer could change one without understanding any other. Reality can't get there, but the goal is to <strong>minimize dependencies</strong>. So each module has two parts: the interface describes <strong>what</strong> it does, the implementation handles <strong>how</strong>. A developer working inside a module needs its interface and implementation, plus the <strong>interfaces</strong> of the modules it uses — but not their implementations.</p>
+<p>That yields a way of looking at things: <strong>the interface is the cost a module imposes on the rest of the system</strong> (every user has to learn it), and <strong>its functionality is the benefit</strong>. A good module is one whose benefit far exceeds its cost. It's also why a "good interface" isn't measured by "few methods" per se, but by <strong>how little the user has to know</strong>.</p>
+<h3>2. What's in an interface: what the signature says, and what it can't</h3>
+<p>An interface has two layers. The <strong>formal</strong> part is spelled out in code: method names, parameter types, return values, exceptions — the compiler can check it. The <strong>informal</strong> part is what a signature can't express: the high-level behavior (say, "deletes the file named by its argument"), ordering constraints ("must call A before B"), side effects. The informal part is usually <strong>much larger and more complex than the formal part</strong>, can only be captured in comments, and no compiler checks it for you.</p>
+<p>When you size up an interface's cost, count the informal part: a method with just two parameters that requires "initialize first, never call concurrently, clean up by hand afterwards" actually has a heavy interface.</p>
+<h3>3. Abstraction: two errors in opposite directions</h3>
+<p>An abstraction is a simplified view of an entity that omits unimportant details; a module's interface is its abstraction to the outside. It can go wrong in two directions:</p>
+<ul>
+<li><strong>It includes unimportant details</strong>: the interface bloats and adds to users' cognitive load.</li>
+<li><strong>It omits details that really matter</strong>: users think they can ignore something they can't — what the author calls a <strong>false abstraction</strong>. It breeds obscurity: it looks simple but hides a trap.</li>
+</ul>
+<p>The book's example is the file system. It completely hides which disk blocks hold your data, and rightly so. But for an application like a database, <strong>when data actually reaches durable storage</strong> is an important detail, so the file system has to offer a way to force it (such as <code>fsync</code>). The key to designing an abstraction is separating <strong>what matters from what doesn't</strong> — and keeping the "what matters" list short.</p>
+<h3>4. Deep modules: thin interface, thick implementation</h3>
+<p>The author draws each module as a rectangle: <strong>its area is the functionality, the width of its top edge is the interface</strong>. The best modules are narrow and tall — small interface, lots of functionality. The worst are wide and flat — an interface nearly as big as the functionality.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 290" xmlns="http://www.w3.org/2000/svg">
+<g font-size="12">
+<rect x="70" y="40" width="140" height="200" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9" stroke-width="1.6"/>
+<rect x="70" y="40" width="140" height="10" rx="3" fill="#5b9df9"/>
+<text x="140" y="30" fill="#8fbaff" font-weight="700" text-anchor="middle">Interface: narrow</text>
+<text x="140" y="130" fill="#d9dee5" text-anchor="middle">Implementation</text>
+<text x="140" y="150" fill="#9aa3ae" font-size="11" text-anchor="middle">(lots of hidden work)</text>
+<text x="140" y="268" fill="#8fbaff" font-weight="700" text-anchor="middle">Deep module ✓</text>
+<rect x="290" y="40" width="360" height="40" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593" stroke-width="1.4"/>
+<rect x="290" y="40" width="360" height="10" rx="3" fill="#9b6cf5"/>
+<text x="470" y="30" fill="#c9b5f7" font-weight="700" text-anchor="middle">Interface: wide</text>
+<text x="470" y="70" fill="#9aa3ae" font-size="11" text-anchor="middle">Implementation: thin</text>
+<text x="470" y="108" fill="#c9b5f7" font-weight="700" text-anchor="middle">Shallow module ✗</text>
+<text x="470" y="150" fill="#9aa3ae" font-size="11" text-anchor="middle">Top-edge width = what users must learn (cost)</text>
+<text x="470" y="170" fill="#9aa3ae" font-size="11" text-anchor="middle">Area = what the module does for you (benefit)</text>
+<text x="470" y="200" fill="#8fbaff" font-size="11" text-anchor="middle">Depth ≈ benefit ÷ cost: narrower and taller is better</text>
+</g>
+</svg>
+<figcaption>Fig 1 · After the book's Figure 4.1: each module is a rectangle — top edge is the interface, area is the functionality. Deep modules are narrow and tall; shallow ones wide and flat.</figcaption>
+</figure>
+<p><strong>The gold standard: Unix file I/O.</strong> The basic interface is just five system calls — <code>open</code>, <code>read</code>, <code>write</code>, <code>lseek</code> (move the read/write position) and <code>close</code> — all with simple signatures. Yet, the author notes, modern implementations take <strong>hundreds of thousands of lines of code</strong>, hiding how files are laid out on disk, how directories form a hierarchy, how permissions are checked, how concurrent access is scheduled, how reads and writes are cached, and how different storage devices are driven. The implementation has been rewritten countless times over the decades; those five calls have barely changed. <strong>Another dividend of depth: the implementation can change radically and users never notice.</strong></p>
+<p><strong>Another example: garbage collection.</strong> The garbage collector in languages like Go and Java has <strong>almost no interface at all</strong> — you call nothing, and memory gets reclaimed. It hides an enormous amount of machinery and actually <strong>shrinks</strong> the system's overall interface (no more freeing memory by hand). That is depth taken to its limit.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/unix-time-sharing-paper33.en.html" target="_blank" rel="noopener">Paper Deep-Read · The UNIX Time-Sharing System</a> — the origin of this chapter's gold-standard deep module: "everything is a file," and how one uniform byte-stream interface hides devices and directories behind a handful of system calls</aside>
+<h3>5. Shallow modules and "classitis"</h3>
+<p>A <strong>shallow module</strong> is one whose interface is complicated relative to the functionality it provides. The book's extreme example:</p>
+<p><code>private void addNullValueForAttribute(String attribute) { data.put(attribute, null); }</code></p>
+<p>From the standpoint of managing complexity, this method <strong>makes things worse</strong>: it offers no abstraction — all its functionality is visible in its interface. Understanding its name and parameter is no easier than just reading <code>data.put(attribute, null)</code>, and it adds one more name to learn and one more line of code. The author flags this as a <strong>red flag</strong>: an interface that is complicated relative to the functionality it provides. The book concedes shallow modules are sometimes unavoidable (a linked-list class, for instance) and not useless, but <strong>they don't help much in the battle against complexity</strong>.</p>
+<p>Why are shallow modules so common? The author names a popular belief he calls <strong>classitis</strong>: "classes are good, so more classes are better," along with "classes should be small" and "split any method longer than N lines." Following that advice, developers chop functionality as fine as possible, ending up with many shallow classes — <strong>each simple on its own, the system as a whole more complex</strong>: the total interface surface explodes, and using any one feature means understanding how several classes fit together.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 270" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<g font-size="12">
+<text x="20" y="28" fill="#c9b5f7" font-weight="700">Java: the caller stacks three layers</text>
+<rect x="20" y="44" width="200" height="40" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"/>
+<text x="120" y="69" fill="#d9dee5" text-anchor="middle">ObjectInputStream</text>
+<rect x="20" y="104" width="200" height="40" rx="6" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5" stroke-dasharray="5 3"/>
+<text x="120" y="129" fill="#d9dee5" text-anchor="middle">BufferedInputStream</text>
+<rect x="20" y="164" width="200" height="40" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"/>
+<text x="120" y="189" fill="#d9dee5" text-anchor="middle">FileInputStream</text>
+<line x1="120" y1="84" x2="120" y2="102" stroke="#7c8593" marker-end="url(#b1)"/>
+<line x1="120" y1="144" x2="120" y2="162" stroke="#7c8593" marker-end="url(#b1)"/>
+<text x="235" y="122" fill="#c9b5f7" font-size="11">← forget this: still runs,</text>
+<text x="235" y="138" fill="#c9b5f7" font-size="11">but unbuffered, slow, silent</text>
+<text x="20" y="236" fill="#9aa3ae" font-size="11">Three classes, three constructors; buffering, which</text>
+<text x="20" y="252" fill="#9aa3ae" font-size="11">nearly everyone wants, must be requested explicitly</text>
+<text x="450" y="28" fill="#8fbaff" font-weight="700">Unix: one call, right by default</text>
+<rect x="450" y="44" width="220" height="40" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9" stroke-width="1.6"/>
+<text x="560" y="69" fill="#e7ebf1" text-anchor="middle">open / read / write</text>
+<rect x="450" y="100" width="220" height="104" rx="6" fill="rgba(91,157,249,0.05)" stroke="rgba(91,157,249,0.35)"/>
+<text x="560" y="124" fill="#9aa3ae" font-size="11" text-anchor="middle">caching · scheduling · permissions</text>
+<text x="560" y="144" fill="#9aa3ae" font-size="11" text-anchor="middle">directories · disk layout · drivers</text>
+<text x="560" y="170" fill="#8fbaff" font-size="11" text-anchor="middle">all hidden inside</text>
+<text x="560" y="236" fill="#9aa3ae" font-size="11" text-anchor="middle">Sequential access is the default;</text>
+<text x="560" y="252" fill="#9aa3ae" font-size="11" text-anchor="middle">random access adds one lseek call</text>
+</g>
+</svg>
+<figcaption>Fig 2 · The book's contrast: Java splits file reading into stackable shallow classes, so callers assemble the common case themselves; Unix makes the common case the default and charges extra only for rare needs.</figcaption>
+</figure>
+<h3>6. Make the common case as simple as possible</h3>
+<p>The lesson behind the Java example is an interface design principle: <strong>interfaces should make the most common usage as simple as possible</strong>. Almost everyone reading a file wants buffering, so it should be the default; for the rare caller who doesn't, provide a way to turn it off. Unix does exactly this: most programs read and write sequentially, so sequential access is the default, and the few that need random access make one extra <code>lseek</code> call. <strong>If an interface has many features but most users only need to know a few of them, its effective complexity is just the complexity of the commonly used ones.</strong></p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/api-design-day9.en.html" target="_blank" rel="noopener">System Design · Day 9 API Design</a> — the deep-module idea scaled up to a service boundary: once a public API ships it is hard to take back, so how to design defaults, versioning and backward compatibility</aside>
+<h2>Key trade-offs and choices</h2>
+<p class="tcap">Table 1 · Three shapes a module can take</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Shape</th><th>What it looks like</th><th>Examples</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th><strong>Deep module</strong></th><td>Small interface, lots of functionality, common case needs zero setup</td><td>Unix file I/O, garbage collectors</td><td>Thick, hard-to-write implementation; designers work harder; internal changes must keep the interface stable</td></tr>
+<tr><th>Shallow module</th><td>Interface about as complex as the implementation</td><td><code>addNullValueForAttribute</code>, linked-list class</td><td>One more name to learn, saves almost nothing; occasionally unavoidable</td></tr>
+<tr><th>Classitis (many shallow classes)</th><td>Each class tiny and single-purpose; the caller composes them</td><td>Java's three-layer InputStream</td><td>Total interface surface explodes; the common case means assembling several objects, and missing a step raises no error</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 2 · "Should I split out another class / method?"</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Usual reason</th><th>Ousterhout's view</th><th>The question to ask</th></tr></thead>
+<tbody>
+<tr><th>"This method is over N lines"</th><td>Length itself isn't the problem; splitting off shallow methods adds interface</td><td>Is the split-off piece's interface much simpler than its implementation?</td></tr>
+<tr><th>"A class should do one small thing"</th><td>"Small" isn't the goal; "deep" is</td><td>How many classes must a user understand at once to use this feature?</td></tr>
+<tr><th>"Give callers maximum flexibility"</th><td>Flexibility that complicates the common case is a burden</td><td>Can nine in ten callers get it right with zero configuration?</td></tr>
+<tr><th>"Expose every detail for transparency"</th><td>May mean leaking unimportant details</td><td>Does the user really need to know this?</td></tr>
+</tbody>
+</table></div>
+<p>The rule of thumb: <strong>adding a module should shrink the total interface users must know (because it hides something), not grow it</strong>. If users have to know more after a split, it went the wrong way.</p>
+<h2>Why it matters / in real systems</h2>
+<p>In interviews and design reviews, "deep module" gives you a question that lands harder than "high cohesion, low coupling": <strong>what does this interface hide from its callers?</strong> A good storage engine, a good SDK, a good internal service all turn the common path into one or two calls and hide retries, caching and sharding inside. Conversely, if callers must invoke five methods in a specific order and assemble their own configuration to get it right, that module is shallow no matter how "single-responsibility" it is.</p>
+<div class="ev">
+<p class="evh">Evidence and sources · publicly verifiable</p>
+<ul>
+<li><strong>Unix: five calls, half a century.</strong> Ritchie and Thompson's 1974 paper unified ordinary files, directories and devices behind a single read/write interface; this chapter uses it as the prime example of a deep module. <span class="src">Source: Ritchie &amp; Thompson, The UNIX Time-Sharing System, CACM 1974; Ousterhout, Chapter 4</span></li>
+<li><strong>Java later added "common-case shortcuts."</strong> The <code>java.nio.file.Files</code> class added in Java 7 (2011) offers static methods that read a whole file in one call (such as <code>readAllLines</code>) and a <code>newBufferedReader</code> that returns a buffered reader directly — exactly the direction this chapter argues for: make the common case simple and buffering the default. <span class="src">Source: Java SE 7 API documentation, java.nio.file.Files</span></li>
+<li><strong>A public debate with the author of Clean Code.</strong> Between September 2024 and February 2025, Ousterhout and Robert C. Martin turned a discussion into a public document. Ousterhout's core argument is this chapter: the best methods provide a lot of functionality behind a very simple interface; decomposition can be taken too far, until someone using a method has to understand every aspect of its implementation. Martin holds to short functions, but concedes over-decomposition exists and that his book gave little guidance on when it has gone too far. <span class="src">Source: <a href="https://github.com/johnousterhout/aposd-vs-clean-code" target="_blank" rel="noopener">johnousterhout/aposd-vs-clean-code (GitHub)</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"Deep = lots of code."</strong> No. Depth is <strong>functionality relative to interface</strong>; a module with a long implementation and an equally complex interface is still shallow.</li>
+<li><strong>"Small interface = few methods, few parameters."</strong> Not quite. The informal part (call order, side effects, concurrency constraints) is interface too; a short signature with many constraints is a heavy interface.</li>
+<li><strong>"A deep module hides everything."</strong> Leaving out what matters is a false abstraction. A file system must hand durability control to databases — an example of "important details should be exposed."</li>
+<li><strong>"This chapter is against small functions."</strong> What the author opposes is <strong>small for its own sake</strong>: the test for a split is whether the result is deep enough, not its line count. Say this clearly when you retell it in an interview.</li>
+<li><strong>Debate: deep modules are hard on their implementers.</strong> A hundreds-of-thousands-of-lines implementation must itself be layered into deep modules internally. The author's answer is that complexity belongs where a few people maintain it (Ch 8, "pull complexity downward," develops this), but it does shift the burden onto module authors.</li>
+<li><strong>Debate: composability.</strong> Java's layered streams buy free composition (stack encryption, compression, buffering however you like), and the Unix pipe philosophy also favors composing small tools. The author doesn't deny composition's value; his complaint is that <strong>the common case</strong> is forced to pay the cost of composition — the missing default is the real disease.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① Module = interface + implementation; the interface is the cost users pay, functionality is the benefit delivered.</p>
+<p>② The mark of a good module isn't "small," it's "deep": simple interface, powerful functionality.</p>
+<p>③ Interfaces include an informal part the signature can't express — behavior, call order, side effects — captured only in comments.</p>
+<p>④ Abstractions fail two ways: including unimportant details (bloat) or omitting important ones (false abstraction).</p>
+<p>⑤ Gold standards: five Unix file calls over hundreds of thousands of lines; garbage collection with almost no interface.</p>
+<p>⑥ Shallow-module red flag: an interface complex relative to its functionality, like <code>addNullValueForAttribute</code>.</p>
+<p>⑦ "Classitis": the belief that more, smaller classes are better yields swarms of shallow classes and a more complex system.</p>
+<p>⑧ Make the common case simplest: buffering should be the default — Java's three-layer streams are the counterexample, Unix the model.</p>
+<p>⑨ Test: a new module should reduce what users must know; judge splits by depth, not line count.</p>
+</div>
+</div>
+<footer>Book Deep-Read · read this page ≈ get the core of the chapter; for the full argument and extensions, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
