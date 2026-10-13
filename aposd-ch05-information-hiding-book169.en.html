@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>A Philosophy of Software Design Ch 5 · Information Hiding and Leakage — Book Deep-Read 169</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · A Philosophy of Software Design · Chapter 5</p>
+<h1>Information Hiding and Leakage</h1>
+<p class="sub">A Philosophy of Software Design · Ch 5 · Information Hiding (and Leakage) · Ousterhout · 2nd ed 2021</p>
+<p class="langbar"><a href="aposd-ch05-information-hiding-book169.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Simple</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The previous chapter said good parts should be "deep": easy to use, doing lots of work behind the scenes. This chapter answers the obvious next question: <strong>how do you build a deep part?</strong> The answer is one of the oldest and best ideas in software: <strong>lock each "how it's done" secret in one place, and don't let it scatter</strong>. When you fill in a web form and hit "Submit," the program on the server gets your name with a single line of code. How it dug that name out of a long stream of bytes is something the app developer never has to know.</p>
+<h2>A strange thing first</h2>
+<p>A program has three jobs: read a file, change a few things, write it back. The obvious split follows the steps: a "reader" part, a "changer" part, a "writer" part. Looks tidy. Then one day the file format changes, and you discover the reader and the writer both have to change; miss one and things break. <strong>Splitting by steps quietly split one secret into two copies.</strong></p>
+<h2>Why the old way is hard</h2>
+<p>When people write programs, the first thing that comes to mind is "what happens first, what happens next." So many systems get cut along the lines of a flowchart. The trouble is that several steps often need <strong>the same piece of knowledge</strong>: the same file format, the same shape of a network message. Once that knowledge is copied into several parts, it's like a recipe handed to three cooks: <strong>change the recipe and you must tell all three</strong>, and nobody warns you if you forget one.</p>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>Each part guards one secret.</strong> Like a safe: the secret stays locked inside, with only a slot to put things in and a slot to take things out.</li>
+<li><strong>If only one part knows the secret, only one part changes.</strong> Swap in a better way of doing it and nobody outside notices.</li>
+<li><strong>Leakage = the same secret living in two parts.</strong> The worst kind is a "back door": two parts that seem to have nothing to do with each other, yet both secretly carry the same recipe.</li>
+<li><strong>Split by "what you need to know," not by "what happens first."</strong> If reading and writing both need the file format, let one part do both.</li>
+<li><strong>The best features are the ones you don't know exist.</strong> A good part does the right thing on its own, like answering in the same "dialect" the other side spoke, without being told.</li>
+</ul>
+<h2>What it buys you / how to choose</h2>
+<p>It gives you a new question for carving up a system: not "how many steps is this," but "<strong>which decision here might change later, and who alone should guard it?</strong>" Split that way, each change lands in one place, and newcomers only need to learn the front door. One honest cost: hide too much and it backfires; if something the outside really needs is locked away, users are left stuck.</p>
+<h2>Remember it in one line</h2>
+<div class="tl">
+<p><strong>One secret lives in one part. Split by who needs to know what, not by what happens first.</strong></p>
+</div>
+<p class="switch-hint">Want to see what information hiding actually hides, why a private field is not information hiding, how to fix "back-door leakage," how temporal decomposition wrecks a student HTTP server step by step, why <code>getParameter</code> is a good interface, and where hiding goes too far? <a data-mode="deep">→ Switch to Deep</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You'd think module boundaries should follow "what happens first, what happens next"; Ousterhout says they should follow <strong>knowledge</strong>: <strong>each module encapsulates a few design decisions that others can't see and don't need to know</strong>. That is information hiding, the single most important technique for building deep modules. Its opposite is <strong>information leakage</strong>: the same design decision shows up in several modules, so changing it means changing all of them.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Module / interface / implementation</strong>: from Chapter 4. A module is a unit of code with an interface; the interface is everything a user must know, the implementation is the code that keeps the promise.</li>
+<li><strong>Design decision</strong>: a choice made while implementing something, such as which data structure to use, what a file format looks like, or which algorithm to run.</li>
+<li><strong>Dependency</strong>: when one piece of code changes, another piece must be re-read or changed too.</li>
+<li><strong>Private field</strong>: a variable inside a class that outside code can't touch directly; often paired with getters and setters that read or write it from outside.</li>
+<li><strong>HTTP request</strong>: the text a browser sends to a server: a request line and headers first, then possibly a body.</li>
+<li><strong>Query string</strong>: the part of a URL after the <code>?</code>, like <code>?q=book&amp;page=2</code>, commonly used to pass parameters.</li>
+<li><strong>URL encoding</strong>: URLs can't contain raw spaces and some other characters, so they're written as <code>%20</code> or <code>+</code>; the server must decode them back.</li>
+<li><strong>Content-Length</strong>: an HTTP header stating how many bytes the body has, so the receiver knows where to stop reading.</li>
+<li><strong>Default</strong>: the choice a module makes on its own when the caller doesn't specify one.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Chapter 5, right after Chapter 4's "Modules Should Be Deep": the previous chapter sets the goal, this one gives <strong>the main means</strong>. It inherits directly from David Parnas's classic 1972 paper and is taught through real mistakes Ousterhout saw grading student HTTP-server projects in his Stanford software design course (CS 190). Chapter 6 then asks how general-purpose an interface should be. In practice it maps to every review where someone asks, "should this class be split into a reader and a writer?"</p>
+<h2>What problem this chapter tackles</h2>
+<p>Chapter 2 named <strong>change amplification</strong> as a key symptom of complexity: a seemingly simple change requires edits in many places. The root cause is often not messy code but <strong>the same knowledge held separately by several modules</strong>. Take a file format: the reading module knows it, the writing module knows it too. Add one field to the format and both must change; miss one, and the program may still compile, only to read back wrong data at runtime.</p>
+<p>Worse, such dependencies are often <strong>invisible</strong>: neither class mentions the other in its interface, and nothing in the code structure shows they're tied together. This chapter asks: what exactly should a module hide? What counts as leakage? And why is the most natural split, "by steps," the one most likely to leak?</p>
+<h2>The core ideas, in depth</h2>
+<h3>1. Information hiding: each module guards a few design decisions</h3>
+<p>Ousterhout's typical "secrets": <strong>how to store data in a B-tree and access it efficiently; how to find the physical disk block for each logical block of a file; how to implement the TCP protocol; how to schedule threads on a multicore processor; how to parse JSON.</strong> A secret can be a data structure or algorithm, a lower-level detail (like a page size), or even a higher-level assumption (like "most files are small").</p>
+<p>Information hiding cuts complexity from two directions:</p>
+<ul>
+<li><strong>Simpler interfaces</strong>: the interface reflects an abstract view of the functionality and exposes no details, so users carry less cognitive load. This is where Chapter 4's "depth" comes from.</li>
+<li><strong>Easier evolution</strong>: if a decision lives in one module, changing it touches only that module.</li>
+</ul>
+<p>A common misconception, dismantled on the spot: <strong>declaring a field <code>private</code> is not information hiding.</strong> Add a set of getters and setters that hand out the internal data as-is, and outside code still depends on its shape. The test is <strong>whether users need to know the decision</strong>, not whether the syntax lets them touch it.</p>
+<p>Hiding can also be partial: if a feature is needed by only a few users and reached through separate methods, it is invisible to most users. <strong>Partial hiding still has value.</strong></p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/decomposing-systems-into-modules-paper43.en.html" target="_blank" rel="noopener">Paper Deep-Read · On the Criteria for Decomposing Systems into Modules (Parnas 1972)</a> — the source of this chapter: two ways to split the same KWIC index program, by processing steps vs by design decisions likely to change</aside>
+<h3>2. Information leakage: one decision in two places</h3>
+<p><strong>Leakage is the opposite of hiding: a design decision is reflected in more than one module</strong>, which creates a dependency between them; changing the decision means changing all of them. It comes in two forms:</p>
+<ul>
+<li><strong>Leakage through an interface</strong>: if a piece of information appears in a module's interface, it has by definition leaked. Sometimes unavoidable, but the less the better, and the simpler the interface the better.</li>
+<li><strong>Back-door leakage</strong>: the information appears in no interface, yet two modules each know it. The book's example: two classes both understand the same file format, one to read it, one to write it. Their interfaces are unrelated, yet a format change forces both to change. Ousterhout calls this <strong>more pernicious than interface leakage</strong>, because it isn't visible in the code.</li>
+</ul>
+<p>Two fixes: if the affected classes are small and closely tied to the information, <strong>merge them into one class</strong>; otherwise <strong>pull the information out</strong> into a new class that alone owns it and exposes a simple interface that abstracts the details away. <strong>Replace the back door with a front door.</strong> "Information leakage" is one of the book's red flags: the same knowledge used in multiple classes.</p>
+<h3>3. Temporal decomposition: the most natural trap</h3>
+<p><strong>Temporal decomposition</strong> splits a system by the order in which operations happen. Same example: a program reads a file, modifies it, writes it back, so it gets split into a reader class, a modifier class and a writer class. Reading and writing both need the file format, so that knowledge leaks into two classes.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<g font-size="12">
+<text x="20" y="26" fill="#c9b5f7" font-weight="700">Temporal: split by order ✗</text>
+<rect x="20" y="44" width="90" height="44" rx="6" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5"/>
+<text x="65" y="71" fill="#d9dee5" text-anchor="middle">Reader</text>
+<rect x="135" y="44" width="90" height="44" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"/>
+<text x="180" y="71" fill="#d9dee5" text-anchor="middle">Modifier</text>
+<rect x="250" y="44" width="90" height="44" rx="6" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5"/>
+<text x="295" y="71" fill="#d9dee5" text-anchor="middle">Writer</text>
+<line x1="110" y1="66" x2="132" y2="66" stroke="#7c8593" marker-end="url(#a1)"/>
+<line x1="225" y1="66" x2="247" y2="66" stroke="#7c8593" marker-end="url(#a1)"/>
+<rect x="95" y="150" width="170" height="40" rx="6" fill="rgba(155,108,245,0.06)" stroke="#9b6cf5" stroke-dasharray="5 3"/>
+<text x="180" y="175" fill="#c9b5f7" text-anchor="middle">File-format knowledge</text>
+<line x1="65" y1="88" x2="130" y2="148" stroke="#9b6cf5" stroke-dasharray="4 3"/>
+<line x1="295" y1="88" x2="230" y2="148" stroke="#9b6cf5" stroke-dasharray="4 3"/>
+<text x="20" y="226" fill="#9aa3ae" font-size="11">Reader and Writer each hold a copy (back-door leak)</text>
+<text x="20" y="244" fill="#9aa3ae" font-size="11">Add a field → change both; miss one, no error</text>
+<text x="390" y="26" fill="#8fbaff" font-weight="700">By knowledge: one home per secret ✓</text>
+<rect x="390" y="44" width="290" height="80" rx="6" fill="rgba(91,157,249,0.12)" stroke="#5b9df9" stroke-width="1.6"/>
+<text x="535" y="68" fill="#e7ebf1" text-anchor="middle" font-weight="700">File class: read + write</text>
+<text x="535" y="90" fill="#9aa3ae" font-size="11" text-anchor="middle">The only place that knows the format</text>
+<text x="535" y="108" fill="#9aa3ae" font-size="11" text-anchor="middle">Exposes content, not format</text>
+<rect x="460" y="160" width="150" height="40" rx="6" fill="rgba(255,255,255,0.03)" stroke="#7c8593"/>
+<text x="535" y="185" fill="#d9dee5" text-anchor="middle">Modify logic</text>
+<line x1="535" y1="124" x2="535" y2="157" stroke="#7c8593" marker-end="url(#a1)"/>
+<text x="390" y="226" fill="#9aa3ae" font-size="11">Format changes → only the File class changes</text>
+<text x="390" y="244" fill="#9aa3ae" font-size="11">Modify logic sees only abstract content</text>
+</g>
+</svg>
+<figcaption>Figure 1 · Two ways to split the same read–modify–write program: splitting by order leaks the format into two classes; splitting by knowledge gives it one home.</figcaption>
+</figure>
+<p>Why is it so common? Because the order of execution is the first thing in your head when you write code, and flowcharts are naturally drawn as steps. The "first decomposition" Parnas criticized in 1972 is exactly this. Ousterhout's rule: <strong>when designing modules, focus on the knowledge needed to perform each task, not the order in which tasks occur.</strong> Order matters, and it should show up in some caller's code, but it should not decide module boundaries. Red flag: temporal decomposition.</p>
+<h3>4. Case study: student HTTP servers</h3>
+<p>The CS 190 assignment is a simplified HTTP server: receive requests, hand them to the application, send responses back. Ousterhout groups the students' most common mistakes, and they illustrate the chapter neatly.</p>
+<p><strong>Mistake one: reading and parsing as two classes.</strong> Many teams used one class to read a request off the network into a string and another to parse the string: textbook temporal decomposition. The catch: <strong>you can't know where to stop reading without parsing</strong>. The reader must find the end of the headers and read <code>Content-Length</code> to know how long the body is. So both classes must understand HTTP request structure; <strong>the format leaked</strong>, and callers must invoke two methods in a fixed order. Merged into one class, the code got shorter and the interface simpler. Hence a counterintuitive conclusion: <strong>information hiding can often be improved by making a class slightly larger</strong>, an echo of the previous chapter's attack on "smaller classes are always better."</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<g font-size="12">
+<rect x="20" y="30" width="210" height="190" rx="8" fill="rgba(255,255,255,0.02)" stroke="#7c8593"/>
+<text x="125" y="54" fill="#d9dee5" text-anchor="middle" font-weight="700">HTTP request (raw bytes)</text>
+<rect x="40" y="70" width="170" height="30" rx="4" fill="rgba(91,157,249,0.08)" stroke="rgba(91,157,249,0.4)"/>
+<text x="125" y="90" fill="#9aa3ae" font-size="11" text-anchor="middle">GET /s?q=deep+module</text>
+<rect x="40" y="108" width="170" height="30" rx="4" fill="rgba(91,157,249,0.08)" stroke="rgba(91,157,249,0.4)"/>
+<text x="125" y="128" fill="#9aa3ae" font-size="11" text-anchor="middle">Headers · Content-Length: 19</text>
+<rect x="40" y="146" width="170" height="30" rx="4" fill="rgba(91,157,249,0.08)" stroke="rgba(91,157,249,0.4)"/>
+<text x="125" y="166" fill="#9aa3ae" font-size="11" text-anchor="middle">Body · page=2&amp;lang=en%2Dus</text>
+<text x="125" y="204" fill="#7c8593" font-size="11" text-anchor="middle">Params may be in URL or body</text>
+<line x1="232" y1="125" x2="292" y2="125" stroke="#7c8593" marker-end="url(#a2)"/>
+<rect x="295" y="50" width="170" height="150" rx="8" fill="rgba(91,157,249,0.12)" stroke="#5b9df9" stroke-width="1.6"/>
+<text x="380" y="76" fill="#e7ebf1" text-anchor="middle" font-weight="700">HTTPRequest class</text>
+<text x="380" y="102" fill="#9aa3ae" font-size="11" text-anchor="middle">Where to stop (Content-Length)</text>
+<text x="380" y="122" fill="#9aa3ae" font-size="11" text-anchor="middle">Param in URL or body?</text>
+<text x="380" y="142" fill="#9aa3ae" font-size="11" text-anchor="middle">URL decoding (+ → space)</text>
+<text x="380" y="176" fill="#8fbaff" font-size="11" text-anchor="middle">All hidden in one class</text>
+<line x1="467" y1="125" x2="512" y2="125" stroke="#7c8593" marker-end="url(#a2)"/>
+<rect x="515" y="80" width="165" height="90" rx="8" fill="rgba(155,108,245,0.08)" stroke="#9b6cf5"/>
+<text x="597" y="106" fill="#c9b5f7" text-anchor="middle" font-weight="700">Application code</text>
+<text x="597" y="132" fill="#d9dee5" font-size="11" text-anchor="middle">getParameter("q")</text>
+<text x="597" y="152" fill="#9aa3ae" font-size="11" text-anchor="middle">→ "deep module"</text>
+</g>
+</svg>
+<figcaption>Figure 2 · A good HTTP request class: reading, parsing, parameter source and URL decoding all live inside; the app just asks "what is q?"</figcaption>
+</figure>
+<p><strong>Done well: the parameter interface.</strong> The best designs offered <code>getParameter(name)</code>, returning an already-decoded string. It hides two things: a parameter may come from the query string in the request line or from the body, and its value must be URL-decoded (for example <code>+</code> becomes a space). The application developer needs to know neither. <strong>The counterexample</strong>: some teams returned their internal <code>Map&lt;String, String&gt;</code> directly. That's shallow and exposes the internal representation, so changing how parameters are stored would ripple into every caller. Better still to add <code>getIntParameter(name)</code>, which also hides the integer conversion and its error checking.</p>
+<p><strong>Mistake two: no defaults.</strong> Some teams required callers to specify the HTTP protocol version when building a response. The response version should simply match the request's, and the class can do that by itself. Ousterhout's principle: <strong>defaults are partial information hiding and should make the common case as simple as possible; a class should "do the right thing" without being asked, and the best features are the ones you get without even knowing they exist.</strong> Red flag: <strong>overexposure</strong>, when the API for a commonly used feature forces users to learn about features that are rarely used.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/api-design-day9.en.html" target="_blank" rel="noopener">System Design · Day 9 API Design</a> — the same getParameter-and-defaults thinking at a service boundary: once public, every field in an interface is a promise you maintain for a long time</aside>
+<h3>5. Hiding within a class, and hiding too much</h3>
+<p>Information hiding isn't only between classes. It applies inside a class too: design private methods so that <strong>each encapsulates some piece of information or capability</strong>, and <strong>minimize the number of places where each instance variable is used</strong>. The fewer places touch a variable, the fewer dependencies inside the class.</p>
+<p>But you can hide too much. <strong>Hiding only makes sense when the information isn't needed outside the module.</strong> If a configuration parameter strongly affects performance and users genuinely need to tune it for their situation, it must be exposed. Ousterhout's ideal is a module that computes the best setting itself (better not to expose it at all); when that's impossible, recognize honestly which information the outside needs, and expose as little as possible. This is the same line as Chapter 4's "false abstraction": <strong>hide what's unimportant, expose what's important.</strong></p>
+<h2>Key trade-offs and choices</h2>
+<p class="tcap">Table 1 · Two ways to decompose</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Approach</th><th>Boundaries follow</th><th>Example</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>Temporal</th><td>Execution order: read, then modify, then write</td><td>Reader + parser; reader + writer</td><td>Knowledge held in several copies; one decision change touches many places; callers must remember call order</td></tr>
+<tr><th><strong>By knowledge</strong></th><td>Design decisions: who knows the format, who knows the protocol</td><td>One HTTPRequest class; one file-format class</td><td>Individual classes get bigger; you must first think about which decisions may change, which is harder than following a flowchart</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 2 · Fixing leakage once you find it</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Situation</th><th>Fix</th><th>Cost / caution</th></tr></thead>
+<tbody>
+<tr><th>Two small classes share one piece of knowledge</th><td><strong>Merge</strong> them</td><td>Bigger class; only when both are tightly tied to that knowledge</td></tr>
+<tr><th>Several large classes depend on it</th><td><strong>Extract</strong> a new class that alone owns it, behind an abstract interface</td><td>One more module; the new interface must really be simpler than the details, or the leak just moves</td></tr>
+<tr><th>Internal representation handed out (a Map, getters for everything)</th><td>Replace with query methods (getParameter)</td><td>A few more methods; but callers don't change when the implementation does</td></tr>
+<tr><th>Callers forced to pass an almost-always-same value</th><td>Provide a <strong>default</strong>; the few can override</td><td>A bad default is inherited by everyone; pick the true common case</td></tr>
+<tr><th>Information the outside really needs (e.g. performance knobs)</th><td><strong>Don't hide it</strong>; auto-tuning is better still</td><td>Every exposed item makes the interface heavier; expose only what's needed</td></tr>
+</tbody>
+</table></div>
+<p>One rule of thumb: <strong>before drawing boundaries, list the decisions likely to change, and give each exactly one owner.</strong> If any change request makes you say "this means editing both A and B," there's a leak between A and B.</p>
+<h2>Why it matters / in real systems</h2>
+<p>In interviews and design reviews, "information hiding" beats "encapsulation" because you can test it: <strong>if the format, protocol, or storage changed tomorrow, how many files would you touch?</strong> More than one means a leak. The same question scales up to services (an extension, not from the book): two microservices reading and writing the same database table is back-door leakage across services; neither API mentions the other, and a schema change breaks both.</p>
+<div class="ev">
+<p class="evh">Evidence and sources · publicly verifiable</p>
+<ul>
+<li><strong>Parnas: split by decisions likely to change.</strong> In 1972 Parnas compared two decompositions of the same KWIC index program: by processing steps (a flowchart) and by design decisions. His conclusion was to begin with a list of difficult design decisions, or decisions likely to change, and design each module to hide one such decision from the others. This chapter's "temporal decomposition" is exactly the first decomposition he criticized. <span class="src">Source: D. L. Parnas, On the Criteria To Be Used in Decomposing Systems into Modules, CACM 1972</span></li>
+<li><strong>Go's FormValue: the parameter source behind one call.</strong> The Go docs state that <code>Request.FormValue</code> returns the first value for the named component, merging three sources in a fixed precedence: a URL-encoded form body (POST, PUT, PATCH only), query parameters, and a multipart form body. The caller writes one line. <span class="src">Source: <a href="https://pkg.go.dev/net/http" target="_blank" rel="noopener">pkg.go.dev · net/http (Request.FormValue)</a></span></li>
+<li><strong>Defaults in the same library.</strong> The same docs state that if <code>WriteHeader</code> hasn't been called, <code>Write</code> calls <code>WriteHeader(http.StatusOK)</code> first; if there's no <code>Content-Type</code> header, it infers one from the first 512 bytes; and automatic headers such as <code>Date</code> are added unless you explicitly set them to nil. That's "do the right thing without being asked." <span class="src">Source: <a href="https://pkg.go.dev/net/http" target="_blank" rel="noopener">pkg.go.dev · net/http (ResponseWriter)</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"Private fields mean information hiding."</strong> No. Getters and setters that hand out the internal structure as-is still create dependencies; the question is whether users need to know.</li>
+<li><strong>"Single responsibility means one class per step."</strong> Treating "read" and "parse" as two responsibilities is exactly what creates temporal decomposition. Divide responsibilities by knowledge, not by step.</li>
+<li><strong>"Leakage is only about interfaces."</strong> The most dangerous kind is back-door leakage: spotless interfaces, yet both sides share one format assumption. In review, ask "who else knows this?"</li>
+<li><strong>"Information hiding means hiding everything."</strong> Hiding what the outside truly needs (performance knobs, when data hits disk) is a false abstraction.</li>
+<li><strong>"Merging classes violates the small-class rule."</strong> Ousterhout explicitly argues that information hiding can often be improved by making a class slightly larger; the test is whether knowledge is concentrated, not line count.</li>
+<li><strong>Debate: sometimes order is the knowledge.</strong> Pipelines and compiler phases (lexing, parsing, code generation) look like temporal decomposition yet work well, because the intermediate representation between phases is itself a carefully designed interface and each phase really does know different things. Order itself isn't the sin; <strong>knowledge leaking across stages</strong> is. The book doesn't expand on this, so draw the distinction yourself in reviews.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① Information hiding is the main way to build deep modules: each module encapsulates a few design decisions others can't see.</p>
+<p>② It cuts complexity two ways: simpler interfaces, and easier evolution (a decision change touches one module).</p>
+<p>③ Private fields ≠ information hiding; getters and setters that expose internal structure still leak.</p>
+<p>④ Leakage = one decision reflected in several modules; back-door leakage (invisible in interfaces) is the most pernicious.</p>
+<p>⑤ Fix: merge small classes, or extract the knowledge into a new class with a simple interface, turning the back door into a front door.</p>
+<p>⑥ Temporal decomposition is the most common trap: split by the knowledge each task needs, not the order tasks occur.</p>
+<p>⑦ HTTP case: merge reading and parsing; getParameter hides parameter source and URL decoding; returning the internal Map is the counterexample.</p>
+<p>⑧ Defaults are partial hiding: make the common case zero-config, have classes do the right thing unasked; overexposure is a red flag.</p>
+<p>⑨ Don't over-hide: expose what the outside truly needs, and auto-tune when you can.</p>
+</div>
+</div>
+<footer>Book Deep-Read · read this page ≈ get the core of the chapter; for the full argument and extensions, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
