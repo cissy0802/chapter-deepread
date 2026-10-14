@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>A Philosophy of Software Design Ch 7 · Different Layer, Different Abstraction — Book Deep-Read 171</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · A Philosophy of Software Design · Chapter 7</p>
+<h1>Different Layer, Different Abstraction</h1>
+<p class="sub">A Philosophy of Software Design · Ch 7 · Different Layer, Different Abstraction · Ousterhout · 2nd ed 2021</p>
+<p class="langbar"><a href="aposd-ch07-different-layer-different-abstraction-book171.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Simple</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>Any sizable piece of software is built <strong>in layers, stacked on top of each other</strong>. Save a photo on your phone: you see "a file," but underneath one layer is juggling "chunks of data cached in memory," and below that another layer is talking to the storage chip. Each layer speaks a different language. This chapter's claim is simple: <strong>every layer should offer something different from the layers above and below it; if two neighboring layers speak the same language, the extra one is probably dead weight.</strong></p>
+<h2>A strange thing first</h2>
+<p>Some code, when you open it, is a method with a single line: hand the request, unchanged, to some other part. It's like a job at a company where the boss's instructions get forwarded word for word to a subordinate, and the subordinate's reply gets forwarded word for word back. <strong>One more person, not one bit more work done, one more hop of communication.</strong> Stranger still, code like this is often praised as "nicely layered."</p>
+<h2>Why the old world was hard</h2>
+<p>"Layering" sounds good by default, so people add a layer whenever a problem shows up: another wrapper, another class that just hands things along, a setting passed all the way from the top down to the bottom. Each layer looks tidy on its own, but together they form a long chain of hand-offs. A reader has to walk through several layers to find the code that actually does the work, and one change has to be made in several places.</p>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>Each layer changes the vocabulary.</strong> Good layering is a relay of translators: the top talks about "files," the middle about "chunks of data," the bottom about "spots on a chip." At every hand-off, some messy detail disappears from view.</li>
+<li><strong>Clean up the links that only pass things along.</strong> Either let the upper layer talk directly to the one doing the work, or re-divide the work so every layer has a real job, or simply merge the two layers into one.</li>
+<li><strong>Be careful with "wrap it in another layer."</strong> Putting a shell around a part to add a small feature means the shell must re-forward every button the original part had. Often not worth it. If the feature can go straight into the original part, skip the shell.</li>
+<li><strong>Move the "message relayed all the way down."</strong> A setting travels from the top layer to the bottom one, and every layer in between has to carry it without using it. Better to put it in a shared cupboard everyone can reach, and let whoever needs it take it out.</li>
+</ul>
+<h2>What it buys you / how to choose</h2>
+<p>To decide whether a layer deserves to exist, ask one thing: <strong>does it shield anyone from some trouble?</strong> If yes, it earns its place; if it only passes things along, it's a burden. One honest cost: that shared cupboard has a flaw too. Throw everything in, and soon nobody can see who depends on what.</p>
+<h2>Remember it in one line</h2>
+<div class="tl">
+<p><strong>Every layer should change the vocabulary; layers that only forward, wrappers that only re-wrap, and messages relayed through every hand are all extra weight on the system.</strong></p>
+</div>
+<p class="switch-hint">Want the three fixes for pass-through methods, when duplicated interfaces are fine, why decorators tend to be shallow, "the interface should differ from the implementation," the trade-off between pass-through variables and context objects, and why Go's context does the opposite? <a data-mode="deep">→ switch to Deep</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You'd think more layers means cleaner structure; Ousterhout says <strong>a layer is worth exactly as much as the abstraction it changes</strong>. In a well-designed system, <strong>each layer provides a different abstraction from the layers above and below it</strong>; when adjacent layers have similar abstractions, the decomposition has gone wrong. Pass-through methods, pass-through variables and shallow decorators are all symptoms of that.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Layer</strong>: one level of a system stacked by call relationships; the upper layer calls the lower layer's interface, and the lower layer doesn't know the upper one exists.</li>
+<li><strong>Abstraction</strong>: a simplified view of something that shows what matters and hides the details; a "file" is an abstraction over disk blocks.</li>
+<li><strong>Deep / shallow module</strong>: from Chapter 4. A module with a simple interface and powerful functionality is "deep"; one whose interface is about as complex as what it does is "shallow."</li>
+<li><strong>Method signature</strong>: a method's name plus the types of its parameters and return value.</li>
+<li><strong>Delegation</strong>: one object handing a call to another object it holds, which does the actual work.</li>
+<li><strong>Decorator</strong>: a design pattern where one object wraps another of the same kind, keeps the same interface, and adds a bit of functionality.</li>
+<li><strong>Dispatcher</strong>: code that looks at a request and forwards it to an appropriate handler.</li>
+<li><strong>Global variable</strong>: a variable that any part of the program can read and write directly.</li>
+<li><strong>Thread safety</strong>: data stays correct when several threads access it at once.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Chapter 7. The previous three chapters (deep modules, information hiding, general-purpose interfaces) looked at <strong>a single module</strong>; this one turns to <strong>the boundaries between layers</strong>, and the next, "Pull Complexity Downward," asks which layer the complexity should land in. In practice it maps to every review where someone asks "should we wrap this in one more layer / add one more Service class?"</p>
+<h2>What problem this chapter solves</h2>
+<p>Layering is one of software engineering's oldest tools, and the author opens with the classic examples. A <strong>file system</strong>'s top layer offers "files" (variable-length arrays of bytes); the layer below is "an in-memory cache of fixed-size disk blocks"; the bottom is device drivers that move blocks between storage and memory. <strong>TCP</strong> provides "a reliably delivered stream of bytes," built on a layer that can only send bounded-size packets between machines on a best-effort basis. At each step up, the abstraction changes and some complexity is absorbed.</p>
+<p>The trouble is that layering easily becomes a goal in itself. In many codebases you can count five or six layers (Controller, Service, Manager, Repository, DAO...), yet several of them just rename the same call and pass it down. <strong>Every layer's interface has to be read, remembered and maintained</strong>, and this one shields nobody from anything. The chapter gives the signals for spotting such "fake layering" and how to fix it.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<g font-size="12">
+<text fill="#8fbaff" font-weight="700" x="20" y="22">Good layering: new abstraction each layer ✓</text>
+<rect fill="rgba(91,157,249,0.12)" height="44" rx="6" stroke="#5b9df9" stroke-width="1.6" width="300" x="20" y="36"/>
+<text fill="#e7ebf1" text-anchor="middle" x="170" y="56">Files</text>
+<text fill="#9aa3ae" font-size="11" text-anchor="middle" x="170" y="72">variable-length byte arrays, read by offset</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="170" x2="170" y1="80" y2="104"/>
+<rect fill="rgba(91,157,249,0.08)" height="44" rx="6" stroke="#5b9df9" width="300" x="20" y="106"/>
+<text fill="#e7ebf1" text-anchor="middle" x="170" y="126">Block cache</text>
+<text fill="#9aa3ae" font-size="11" text-anchor="middle" x="170" y="142">fixed-size disk blocks in memory</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="170" x2="170" y1="150" y2="174"/>
+<rect fill="rgba(91,157,249,0.05)" height="44" rx="6" stroke="#5b9df9" width="300" x="20" y="176"/>
+<text fill="#e7ebf1" text-anchor="middle" x="170" y="196">Device drivers</text>
+<text fill="#9aa3ae" font-size="11" text-anchor="middle" x="170" y="212">move blocks between storage and memory</text>
+<text fill="#c9b5f7" font-weight="700" x="380" y="22">Fake layering: same abstraction twice ✗</text>
+<rect fill="rgba(255,255,255,0.03)" height="44" rx="6" stroke="#7c8593" width="300" x="380" y="36"/>
+<text fill="#d9dee5" text-anchor="middle" x="530" y="56">OrderService</text>
+<text fill="#9aa3ae" font-size="11" text-anchor="middle" x="530" y="72">getOrder(id) / saveOrder(o)</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="530" x2="530" y1="80" y2="104"/>
+<rect fill="rgba(155,108,245,0.10)" height="44" rx="6" stroke="#9b6cf5" width="300" x="380" y="106"/>
+<text fill="#d9dee5" text-anchor="middle" x="530" y="126">OrderManager</text>
+<text fill="#c9b5f7" font-size="11" text-anchor="middle" x="530" y="142">getOrder(id) / saveOrder(o) ← just forwards</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="530" x2="530" y1="150" y2="174"/>
+<rect fill="rgba(255,255,255,0.03)" height="44" rx="6" stroke="#7c8593" width="300" x="380" y="176"/>
+<text fill="#d9dee5" text-anchor="middle" x="530" y="196">OrderRepository</text>
+<text fill="#9aa3ae" font-size="11" text-anchor="middle" x="530" y="212">getOrder(id) / saveOrder(o)</text>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="350" y="244">Left: each layer absorbs some complexity. Right: one interface three times; the middle only adds reading cost</text>
+</g>
+</svg>
+<figcaption>Figure 1 · Judge layering by whether the abstraction changes: the file system's three layers each speak their own language; the three layers on the right (a made-up example) say the same sentence.</figcaption>
+</figure>
+<h2>The core ideas, in depth</h2>
+<h3>1. Pass-through methods: forwarding, not working</h3>
+<p>A <strong>pass-through method</strong> does little except invoke another method with the same or a similar signature. The author shows a <code>TextDocument</code> class from a GUI text editor: it holds a <code>TextArea</code>, and several public methods (getting the cursor offset, inserting a string, and so on) have a one-line body that forwards the call unchanged to the <code>TextArea</code>.</p>
+<p>Why is that a bad sign? Pass-through methods make a class <strong>shallower</strong>: the interface grows wider while functionality doesn't grow at all. They also create <strong>dependencies</strong> between the two classes: change the <code>TextArea</code> signature and <code>TextDocument</code> must change too. Most fundamentally, they reveal <strong>confused division of responsibility</strong>: nobody can say clearly which class does what. The author flags it as a red flag: <strong>Pass-Through Method</strong>.</p>
+<p>There are three fixes (the book's figure also shows the original state):</p>
+<ul>
+<li><strong>Expose the lower class</strong>: let callers get the lower object and call it directly, deleting the forwarding.</li>
+<li><strong>Redistribute functionality</strong>: redraw the split between the two classes so each has clear, non-overlapping responsibilities, and the forwarding disappears on its own.</li>
+<li><strong>Merge</strong>: if the two classes can't really be separated, combine them into one.</li>
+</ul>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker><marker id="a3" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<text fill="#c9b5f7" font-weight="700" text-anchor="middle" x="90" y="20">(a) Pass-through ✗</text>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="6" stroke="#7c8593" width="130" x="25" y="34"/><text fill="#d9dee5" text-anchor="middle" x="90" y="56">Caller</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="90" x2="90" y1="68" y2="90"/>
+<rect fill="rgba(155,108,245,0.10)" height="34" rx="6" stroke="#9b6cf5" width="130" x="25" y="92"/><text fill="#c9b5f7" text-anchor="middle" x="90" y="114">A: only forwards</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="90" x2="90" y1="126" y2="148"/>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="6" stroke="#7c8593" width="130" x="25" y="150"/><text fill="#d9dee5" text-anchor="middle" x="90" y="172">B: does the work</text>
+<text fill="#8fbaff" font-weight="700" text-anchor="middle" x="265" y="20">(b) Expose lower</text>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="6" stroke="#7c8593" width="130" x="200" y="34"/><text fill="#d9dee5" text-anchor="middle" x="265" y="56">Caller</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="235" x2="235" y1="68" y2="90"/>
+<path d="M300,68 C330,100 330,130 300,148" fill="none" marker-end="url(#a3)" stroke="#5b9df9" stroke-width="1.6"/>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="6" stroke="#7c8593" width="80" x="200" y="92"/><text fill="#d9dee5" text-anchor="middle" x="240" y="114">A</text>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" stroke-width="1.6" width="130" x="200" y="150"/><text fill="#e7ebf1" text-anchor="middle" x="265" y="172">B</text>
+<text fill="#8fbaff" font-weight="700" text-anchor="middle" x="440" y="20">(c) Redistribute</text>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="6" stroke="#7c8593" width="130" x="375" y="34"/><text fill="#d9dee5" text-anchor="middle" x="440" y="56">Caller</text>
+<line marker-end="url(#a3)" stroke="#5b9df9" x1="410" x2="410" y1="68" y2="90"/>
+<line marker-end="url(#a3)" stroke="#5b9df9" x1="470" x2="470" y1="68" y2="148"/>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" stroke-width="1.6" width="80" x="375" y="92"/><text fill="#e7ebf1" text-anchor="middle" x="415" y="114">A′</text>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" stroke-width="1.6" width="80" x="430" y="150"/><text fill="#e7ebf1" text-anchor="middle" x="470" y="172">B′</text>
+<text fill="#8fbaff" font-weight="700" text-anchor="middle" x="615" y="20">(d) Merge</text>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="6" stroke="#7c8593" width="130" x="550" y="34"/><text fill="#d9dee5" text-anchor="middle" x="615" y="56">Caller</text>
+<line marker-end="url(#a3)" stroke="#5b9df9" x1="615" x2="615" y1="68" y2="90"/>
+<rect fill="rgba(91,157,249,0.12)" height="92" rx="6" stroke="#5b9df9" stroke-width="1.6" width="130" x="550" y="92"/><text fill="#e7ebf1" text-anchor="middle" x="615" y="142">A + B</text>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="350" y="218">Same goal every time: each class owns a slice of responsibility nobody else shares</text>
+</g>
+</svg>
+<figcaption>Figure 2 · Three fixes for pass-through methods (after the book's figure): expose the lower class, redistribute functionality, or merge the classes.</figcaption>
+</figure>
+<h3>2. When duplicated interfaces are fine</h3>
+<p>Identical signatures aren't guilty by themselves. The test is: <strong>does each method with that signature provide useful and distinct functionality?</strong> Two legitimate cases. A <strong>dispatcher</strong>: a web server gets a request and forwards it to a handler chosen by URL; its signature often matches the handlers', but "choosing which one" is real functionality. And <strong>several implementations of one interface</strong>: an operating system's disk drivers all provide the same interface with different implementations, which lowers cognitive load for upper layers: learn one interface and you can use every device.</p>
+<h3>3. Decorators: shallow by nature</h3>
+<p>A decorator wraps another object, keeps exactly the same interface, and adds a little functionality. The book's example is Java I/O: <code>BufferedInputStream</code> wraps <code>FileInputStream</code> to add buffering. The motive is sound (separate special-purpose extensions from a generic core), but the cost is that <strong>to add one small feature, the decorator must pass through every method of the underlying object</strong>, spawning lots of shallow methods. Decorator classes also tend to multiply, and callers have to assemble each combination themselves.</p>
+<p>The author lists questions to ask first. Could you <strong>add the feature directly to the underlying class</strong> (buffering, say, arguably belongs there by default)? If the feature serves one specific use case, could you <strong>merge it into that use case</strong>? Could you <strong>merge it into an existing decorator</strong>? And finally, does it really need to wrap the underlying object at all; could it be a <strong>stand-alone class</strong>? To give a window scroll bars, for instance, the scroll bars can be implemented separately instead of wrapping every method of the window.</p>
+<h3>4. The interface should differ from the implementation</h3>
+<p>The same principle applied inside a single class: <strong>a class's interface should normally be different from its implementation</strong>. If the text is stored internally as lines and the interface copies that as <code>getLine</code> / <code>putLine</code>, then higher layers that want to insert or delete in the middle of a line must split and join lines themselves. The implementation detail has been pushed straight onto callers, and the class is shallow. Switch to a character-oriented interface (insert at any position, delete any range) and the class does more mapping internally, but callers lose a pile of split-and-join code. <strong>The more an interface resembles its implementation, the more likely the class is shallow.</strong></p>
+<h3>5. Pass-through variables and context objects</h3>
+<p>Another form of pass-through is the <strong>pass-through variable</strong>: a value that enters at a top-level method and is handed down through a long chain of methods that don't use it, just so the bottom method can get it. The book's example: a command-line argument names the certificate to use for secure communication; <code>main</code> reads it and passes it through <code>m1</code> and <code>m2</code> down to <code>m3</code>, which actually opens the connection. Every intermediate layer is forced to know it exists, and the day you add another such variable, every signature on the chain changes.</p>
+<p>Three remedies. If the top and bottom already share some object, <strong>store the variable in that object</strong>. Use a <strong>global variable</strong>, though that makes it impossible to run two independent instances of the system in one process (in tests, for example). The author's usual choice is a <strong>context object</strong>: it stores a system instance's global state (configuration options, shared subsystems, performance counters), one per instance; most objects receive a reference at construction and keep it in a field, so adding a new piece of global state means adding a field to the context.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a4" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker><marker id="a5" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<text fill="#c9b5f7" font-weight="700" x="20" y="20">Pass-through variable ✗</text>
+<rect fill="rgba(255,255,255,0.03)" height="30" rx="6" stroke="#7c8593" width="120" x="20" y="32"/><text fill="#d9dee5" text-anchor="middle" x="80" y="52">main(cert)</text>
+<line marker-end="url(#a4)" stroke="#7c8593" x1="80" x2="80" y1="62" y2="80"/>
+<rect fill="rgba(155,108,245,0.10)" height="30" rx="6" stroke="#9b6cf5" width="120" x="20" y="82"/><text fill="#c9b5f7" text-anchor="middle" x="80" y="102">m1(…, cert)</text>
+<line marker-end="url(#a4)" stroke="#7c8593" x1="80" x2="80" y1="112" y2="130"/>
+<rect fill="rgba(155,108,245,0.10)" height="30" rx="6" stroke="#9b6cf5" width="120" x="20" y="132"/><text fill="#c9b5f7" text-anchor="middle" x="80" y="152">m2(…, cert)</text>
+<line marker-end="url(#a4)" stroke="#7c8593" x1="80" x2="80" y1="162" y2="180"/>
+<rect fill="rgba(255,255,255,0.03)" height="30" rx="6" stroke="#7c8593" width="120" x="20" y="182"/><text fill="#d9dee5" text-anchor="middle" x="80" y="202">m3 uses cert</text>
+<text fill="#9aa3ae" font-size="11" x="155" y="112">m1 and m2 never use it,</text>
+<text fill="#9aa3ae" font-size="11" x="155" y="128">yet carry it in their signatures</text>
+<text fill="#8fbaff" font-weight="700" x="380" y="20">Context object ✓</text>
+<rect fill="rgba(255,255,255,0.03)" height="30" rx="6" stroke="#7c8593" width="120" x="380" y="32"/><text fill="#d9dee5" text-anchor="middle" x="440" y="52">main</text>
+<line marker-end="url(#a4)" stroke="#7c8593" x1="440" x2="440" y1="62" y2="80"/>
+<rect fill="rgba(255,255,255,0.03)" height="30" rx="6" stroke="#7c8593" width="120" x="380" y="82"/><text fill="#d9dee5" text-anchor="middle" x="440" y="102">m1(…)</text>
+<line marker-end="url(#a4)" stroke="#7c8593" x1="440" x2="440" y1="112" y2="130"/>
+<rect fill="rgba(255,255,255,0.03)" height="30" rx="6" stroke="#7c8593" width="120" x="380" y="132"/><text fill="#d9dee5" text-anchor="middle" x="440" y="152">m2(…)</text>
+<line marker-end="url(#a4)" stroke="#7c8593" x1="440" x2="440" y1="162" y2="180"/>
+<rect fill="rgba(255,255,255,0.03)" height="30" rx="6" stroke="#7c8593" width="120" x="380" y="182"/><text fill="#d9dee5" text-anchor="middle" x="440" y="202">m3</text>
+<rect fill="rgba(91,157,249,0.12)" height="70" rx="8" stroke="#5b9df9" stroke-width="1.6" width="140" x="545" y="82"/>
+<text fill="#e7ebf1" font-weight="700" text-anchor="middle" x="615" y="104">context</text>
+<text fill="#9aa3ae" font-size="11" text-anchor="middle" x="615" y="122">cert · config · counters</text>
+<text fill="#9aa3ae" font-size="11" text-anchor="middle" x="615" y="140">stored at construction</text>
+<line marker-end="url(#a5)" stroke="#5b9df9" stroke-dasharray="4 3" x1="500" x2="545" y1="47" y2="100"/>
+<line marker-end="url(#a5)" stroke="#5b9df9" stroke-width="1.6" x1="580" x2="502" y1="152" y2="195"/>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="350" y="232">Middle signatures stay free of unrelated parameters; the cost is that dependencies become less visible</text>
+</g>
+</svg>
+<figcaption>Figure 3 · Pass-through variable vs context object: on the left the certificate travels through two methods that ignore it; on the right main writes it into the context and m3 reads it directly.</figcaption>
+</figure>
+<p>The author admits contexts are not ideal: <strong>without discipline, a context turns into a grab-bag of data that creates non-obvious dependencies</strong>, and with multiple threads there are concurrency issues, so he recommends keeping context variables immutable where possible. But he says he hasn't found a better solution.</p>
+<h3>6. The wrap-up: every piece of design infrastructure must earn its cost</h3>
+<p>The chapter's conclusion fits in one sentence: <strong>every design element added to a system (an interface, argument, function, class, definition) adds complexity, because developers must learn about it; to be a net gain, it must eliminate some complexity that would otherwise exist.</strong> What pass-through methods, pass-through variables and shallow decorators have in common is that they add things to learn and remove nothing.</p>
+<h2>Key trade-offs and choices</h2>
+<p class="tcap">Table 1 · Four signals of a layering failure, and their fixes</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Signal</th><th>What it looks like</th><th>Preferred fix</th><th>Cost of the fix</th></tr></thead>
+<tbody>
+<tr><th>Pass-through method</th><td>One-line body forwarding to a same-named method below</td><td>Expose lower / redistribute / merge</td><td>Exposing makes callers know one more class; merging may yield an oversized class</td></tr>
+<tr><th>Shallow decorator</th><td>Dozens of methods forwarded to add one small feature</td><td>Fold the feature into the base class or the use case; or make it stand-alone</td><td>A bit more code and options in the base class</td></tr>
+<tr><th>Interface = implementation</th><td>Stored as lines inside, so the API is <code>getLine</code> / <code>putLine</code></td><td>Redesign the interface around the abstraction callers need</td><td>The class must translate internally; harder to write</td></tr>
+<tr><th>Pass-through variable</th><td>A parameter threaded through layers that ignore it</td><td>Shared object or context</td><td>Implicit dependencies; contexts bloat and need care with concurrency</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 2 · Where a pass-through variable can live</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Home</th><th>Fits when</th><th>Benefit</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>An already-shared object</th><td>Top and bottom happen to hold the same object</td><td>No new structure</td><td>Rarely available</td></tr>
+<tr><th>Global variable</th><td>Scripts, one-off programs</td><td>Least effort</td><td>No two instances in one process; tests pollute each other</td></tr>
+<tr><th><strong>Context object</strong></th><td>Systems with many subsystems that need multiple instances</td><td>New global state changes one place; multiple instances work</td><td>Dependencies less visible; becomes a junk drawer; prefer immutable fields</td></tr>
+</tbody>
+</table></div>
+<p>One test: <strong>if you delete this layer, what more must its callers know?</strong> If the answer is "almost nothing," the layer should go or be merged.</p>
+<h2>Why it matters / in real systems</h2>
+<p>The most common anti-pattern in backend projects is layering by template: every entity gets Controller → Service → Repository, and half the Service methods are <code>return repo.findById(id)</code>. In review you can poke at it with this chapter's questions: does this layer change the abstraction? What does it shield callers from? Don't overcorrect, though: a layer that owns transaction boundaries, permission checks or cross-entity orchestration really does provide a different abstraction, and similar signatures don't make it a pass-through.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/networking-fundamentals-day48.en.html" target="_blank" rel="noopener">System Design · Day 48 Networking Fundamentals</a> — the chapter's TCP example in full: from best-effort packets to a reliable byte stream, what abstraction each layer actually changes</aside>
+<div class="ev">
+<p class="evh">Evidence and sources · publicly verifiable</p>
+<ul>
+<li><strong>Go's bufio: a decorator done right.</strong> The official docs say bufio "wraps an io.Reader or io.Writer object, creating another object (Reader or Writer) that also implements the interface but provides buffering." It isn't shallow because <code>io.Reader</code> has a single method, so decorating it costs almost no pass-through; apply the same move to a class with dozens of methods and you get the shallow decorator this chapter warns about.<span class="src"> Source: <a href="https://pkg.go.dev/bufio" target="_blank" rel="noopener">pkg.go.dev · bufio</a></span></li>
+<li><strong>Go's context: a deliberate opposite choice.</strong> The official docs say "Do not store Contexts inside a struct type; instead, pass a Context explicitly to each function that needs it," as the first parameter, and "Use context Values only for request-scoped data that transits processes and APIs, not for passing optional parameters to functions." That is the reverse of Ousterhout's recommendation (store it in a field at construction): Go accepts a pass-through variable in exchange for visible dependencies and per-request cancellation, and its warning echoes the author's own point that a context used as a junk drawer goes bad.<span class="src"> Source: <a href="https://pkg.go.dev/context" target="_blank" rel="noopener">pkg.go.dev · context</a></span></li>
+<li><strong>Java I/O: the book's decorator counter-example.</strong> To open a file and read objects from it you create a <code>FileInputStream</code>, wrap it in a <code>BufferedInputStream</code>, then wrap that in an <code>ObjectInputStream</code>; buffering, which nearly everyone wants, is a decorator you must remember to add by hand.<span class="src"> Source: Ousterhout, A Philosophy of Software Design, Chapters 4 and 7</span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/end-to-end-arguments-paper39.en.html" target="_blank" rel="noopener">Paper Deep-Read · End-to-End Arguments in System Design</a> — the same question from another angle: which layer a function must live in to be truly valuable, and why the wrong layer just duplicates work</aside>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"Same signature means pass-through."</strong> No. Dispatchers and multiple implementations of one interface share signatures yet each does real work. The question is whether useful, distinct functionality is added.</li>
+<li><strong>"More layers means more decoupling."</strong> A layer with no new abstraction doesn't decouple anything; it makes one change ripple through several layers (change a signature, and every layer on the forwarding chain changes).</li>
+<li><strong>"The decorator pattern is best practice."</strong> It's a tool, not a goal. Before wrapping a big interface to add a small feature, first consider adding it to the base class.</li>
+<li><strong>"Context solves everything."</strong> The author himself says it isn't ideal: implicit dependencies, bloat, concurrency risk. It's the second-best answer when pass-through variables are worse.</li>
+<li><strong>Debate: explicit parameters vs implicit context.</strong> Go chose to pass context explicitly for readability, cancellation and testability; dependency-injection frameworks and "request scopes" go the implicit route. Both camps agree on one thing: <strong>don't let unrelated parameters pile up in signatures forever</strong>; they disagree on whether visibility or convenience is worth more. Beginners should watch the opposite failure too: using "delete the pass-through layer" as an excuse to merge everything into one god class.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① In a good system each layer provides an abstraction different from its neighbors; similar adjacent abstractions signal a broken decomposition.</p>
+<p>② Classic good examples: the file system (files → block cache → drivers) and TCP (a reliable byte stream on top of best-effort packets).</p>
+<p>③ Pass-through methods make classes shallow and create cross-class dependencies; fix by exposing the lower class, redistributing functionality, or merging.</p>
+<p>④ Duplicate signatures aren't always guilty: dispatchers and multiple implementations of one interface each add functionality.</p>
+<p>⑤ Decorators are shallow by nature: first ask whether the feature can go into the base class, the use case, an existing decorator, or a stand-alone class.</p>
+<p>⑥ A class's interface should differ from its implementation; an interface that mirrors the internal representation is shallow.</p>
+<p>⑦ Homes for pass-through variables: a shared object, a global, or a context object; context is the usual choice, but guard against bloat and prefer immutable fields.</p>
+<p>⑧ Go's context does the opposite (explicit parameters), showing this is a real trade-off between visibility and convenience.</p>
+<p>⑨ The master test: every design element must remove more complexity than it adds, or it's a burden.</p>
+</div>
+</div>
+<footer>Book Deep-Read · read this page ≈ get the core of the chapter; for the full argument and extensions, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>

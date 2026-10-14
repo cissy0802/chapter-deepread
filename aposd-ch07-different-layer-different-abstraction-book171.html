@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>A Philosophy of Software Design 第 7 章 · 不同层，不同抽象 — 专业书籍精读 Book 171</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">专业书籍精读 · A Philosophy of Software Design · 第 7 章</p>
+<h1>不同层，不同抽象</h1>
+<p class="sub">A Philosophy of Software Design · Ch 7 · Different Layer, Different Abstraction · Ousterhout · 2nd ed 2021</p>
+<p class="langbar"><a href="aposd-ch07-different-layer-different-abstraction-book171.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>大一点的软件都是<strong>一层叠一层</strong>搭起来的，就像你在手机上存一张照片：你只看到「一个文件」，下面有一层在管「内存里的缓存块」，再下面一层在跟存储芯片打交道。每一层讲的「话」都不一样。这一章的主张很简单：<strong>每一层都该提供一种跟上下邻居不同的东西；如果相邻两层讲的是同一种话，多出来的那层多半是白搭的。</strong></p>
+<h2>先说个怪事</h2>
+<p>有一种代码，打开一看，里面一个方法只有一行：把收到的请求原封不动地转给另一个零件。就像公司里一个职位，老板交代的事他一字不改转给下属，下属的回复他再一字不改转回老板。<strong>多了一个人，事情没多做一点，沟通却多了一层。</strong>更怪的是，这种代码常常被当成「分层清晰」的好设计。</p>
+<h2>旧世界为什么难</h2>
+<p>「分层」听起来天然是好事，于是很多人见到问题就加一层：加一个包装、加一个转手的类、把某个设置一路从最上面传到最下面。每一层单看都很整齐，合起来却是一长串只会转手的环节。读代码的人要穿过好几层才能找到真正干活的地方，改一个东西要同时改好几处。</p>
+<h2>核心机制直觉</h2>
+<ul>
+<li><strong>每一层换一种说法。</strong>好的分层像翻译接力：最上面说「文件」，中间说「一块块的数据」，最下面说「芯片上的位置」。每换一层，复杂的细节就被藏掉一些。</li>
+<li><strong>只会转手的环节要清理。</strong>要么让上层直接找真正干活的那层，要么把活重新分一分，让每层都真有事干，要么干脆把两层合成一层。</li>
+<li><strong>「包一层」要慎重。</strong>给一个零件外面套一个壳子加点小功能，壳子得把原零件的每个按钮都再转一遍，往往得不偿失。能直接把功能加进原零件，就别套壳。</li>
+<li><strong>一路传到底的「口信」换个放法。</strong>一个设置从顶层一路传到底层，中间每一层都不用它却都得经手。更好的办法是放进一个大家都能拿到的「公共柜子」，谁要用谁去取。</li>
+</ul>
+<h2>带来了什么 / 该怎么选</h2>
+<p>判断一层值不值得存在，只问一句：<strong>它有没有替别人挡掉一些麻烦？</strong>挡掉了，就值；只是转手，就是负担。一句诚实的代价：那个「公共柜子」也有毛病，什么都往里放，最后谁依赖了什么就看不清了。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p><strong>每一层都该换一种说法；只会转手的层、只会套壳的包装、一路经手的口信，都是在给系统加负担。</strong></p>
+</div>
+<p class="switch-hint">想看直通方法的四种修法、什么时候接口重复反而没问题、装饰器为什么容易变浅、「接口要和实现长得不一样」、直通变量与上下文对象的取舍，以及 Go 的 context 为什么偏偏反着来？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">你以为层数多 = 结构清晰，Ousterhout 说<strong>层的价值只取决于它换了多少抽象</strong>：设计良好的系统里，<strong>每一层都提供一种不同于上下邻居的抽象</strong>；一旦相邻两层抽象相似，就说明分解出了问题。直通方法、直通变量、浅装饰器，都是这个问题的症状。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>层（layer）</strong>：系统按调用关系叠起来的一级，上层调用下层的接口，下层不知道上层存在。</li>
+<li><strong>抽象（abstraction）</strong>：对某样东西的简化视图，只露出重要的部分、藏掉细节；比如「文件」就是对磁盘块的抽象。</li>
+<li><strong>深模块 / 浅模块</strong>：第 4 章的概念——接口简单而功能强大叫「深」；接口和它提供的功能差不多复杂叫「浅」。</li>
+<li><strong>方法签名（signature）</strong>：方法的名字加上参数和返回值的类型。</li>
+<li><strong>委托（delegation）</strong>：一个对象把调用转交给它持有的另一个对象去完成。</li>
+<li><strong>装饰器（decorator）</strong>：一种设计模式，用一个对象包住另一个同类对象，接口不变，额外加一点功能。</li>
+<li><strong>分发器（dispatcher）</strong>：根据请求的内容，挑一个合适的处理函数把请求转过去的代码。</li>
+<li><strong>全局变量（global variable）</strong>：整个程序任何地方都能直接读写的变量。</li>
+<li><strong>线程安全（thread safety）</strong>：多个线程同时访问同一份数据时不会出错。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>全书第 7 章。前三章（深模块、信息隐藏、通用接口）都在看<strong>单个模块</strong>；这一章把视线转到<strong>层与层之间</strong>，下一章「把复杂度向下沉」接着讨论复杂度该落在哪一层。现实里对应每一次「要不要再包一层 / 再加一个 Service 类」的评审。</p>
+<h2>这章要解决什么</h2>
+<p>分层是软件工程最古老的工具之一，经典例子作者在开篇就摆出来：<strong>文件系统</strong>最上层提供「文件」（一个可变长的字节数组），中间一层是「内存里的定长磁盘块缓存」，最下层是设备驱动，负责在存储和内存之间搬块；<strong>TCP</strong> 提供「可靠送达的字节流」，下面那层只能「尽力而为」地在机器间发长度有限的包。每往上一层，抽象就变一次，复杂度就被吸收一部分。</p>
+<p>问题在于，「分层」太容易被当成目的本身。很多代码库里能数出五六层：Controller、Service、Manager、Repository、DAO……但其中好几层只是把同一个调用换个名字再往下传。<strong>每一层接口都要人去读、去记、去维护</strong>，而它没替任何人挡掉复杂度。本章要给出识别这种「假分层」的信号，以及怎么修。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<g font-size="12">
+<text fill="#8fbaff" font-weight="700" x="20" y="22">好的分层：每层换一种抽象 ✓</text>
+<rect fill="rgba(91,157,249,0.12)" height="44" rx="6" stroke="#5b9df9" stroke-width="1.6" width="300" x="20" y="36"/>
+<text fill="#e7ebf1" text-anchor="middle" x="170" y="56">文件</text>
+<text fill="#9aa3ae" font-size="11" text-anchor="middle" x="170" y="72">可变长字节数组，按偏移读写</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="170" x2="170" y1="80" y2="104"/>
+<rect fill="rgba(91,157,249,0.08)" height="44" rx="6" stroke="#5b9df9" width="300" x="20" y="106"/>
+<text fill="#e7ebf1" text-anchor="middle" x="170" y="126">块缓存</text>
+<text fill="#9aa3ae" font-size="11" text-anchor="middle" x="170" y="142">内存里的定长磁盘块</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="170" x2="170" y1="150" y2="174"/>
+<rect fill="rgba(91,157,249,0.05)" height="44" rx="6" stroke="#5b9df9" width="300" x="20" y="176"/>
+<text fill="#e7ebf1" text-anchor="middle" x="170" y="196">设备驱动</text>
+<text fill="#9aa3ae" font-size="11" text-anchor="middle" x="170" y="212">在存储与内存间搬块</text>
+<text fill="#c9b5f7" font-weight="700" x="380" y="22">假分层：相邻两层抽象相同 ✗</text>
+<rect fill="rgba(255,255,255,0.03)" height="44" rx="6" stroke="#7c8593" width="300" x="380" y="36"/>
+<text fill="#d9dee5" text-anchor="middle" x="530" y="56">OrderService</text>
+<text fill="#9aa3ae" font-size="11" text-anchor="middle" x="530" y="72">getOrder(id) / saveOrder(o)</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="530" x2="530" y1="80" y2="104"/>
+<rect fill="rgba(155,108,245,0.10)" height="44" rx="6" stroke="#9b6cf5" width="300" x="380" y="106"/>
+<text fill="#d9dee5" text-anchor="middle" x="530" y="126">OrderManager</text>
+<text fill="#c9b5f7" font-size="11" text-anchor="middle" x="530" y="142">getOrder(id) / saveOrder(o) ← 原样转手</text>
+<line marker-end="url(#a1)" stroke="#7c8593" x1="530" x2="530" y1="150" y2="174"/>
+<rect fill="rgba(255,255,255,0.03)" height="44" rx="6" stroke="#7c8593" width="300" x="380" y="176"/>
+<text fill="#d9dee5" text-anchor="middle" x="530" y="196">OrderRepository</text>
+<text fill="#9aa3ae" font-size="11" text-anchor="middle" x="530" y="212">getOrder(id) / saveOrder(o)</text>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="350" y="244">左：每层吸收一部分复杂度；右：三层同一套接口，中间那层只增加阅读成本</text>
+</g>
+</svg>
+<figcaption>图 1 · 判断分层好坏看抽象有没有变：左边文件系统三层各说各的话，右边三层（虚构示例）说的是同一句话。</figcaption>
+</figure>
+<h2>核心内容，讲透</h2>
+<h3>一、直通方法：只转手、不干活</h3>
+<p><strong>直通方法（pass-through method）</strong>指一个方法几乎什么都不做，只是用相同或相近的签名去调用另一个方法。作者展示了一个 GUI 文本编辑器里的 <code>TextDocument</code> 类：它持有一个 <code>TextArea</code>，好几个公开方法（如取光标位置、插入字符串）的方法体只有一行——把调用原样转给 <code>TextArea</code>。</p>
+<p>它为什么是坏信号？直通方法让类<strong>变浅</strong>：接口变宽了，功能一点没增加；它还在两个类之间制造<strong>依赖</strong>——<code>TextArea</code> 的签名一改，<code>TextDocument</code> 得跟着改。更根本的是它暴露了<strong>职责划分混乱</strong>：两个类到底谁负责什么说不清。作者把它列为红旗：<strong>Pass-Through Method</strong>。</p>
+<p>修法有三种（书中配图同时画出了原始状态）：</p>
+<ul>
+<li><strong>暴露下层</strong>：让调用方直接拿到下层对象去调用，删掉中间的转发。</li>
+<li><strong>重新分配职责</strong>：把功能在两个类之间重划一遍，让每个类都有清楚、不重叠的职责，转发自然消失。</li>
+<li><strong>合并</strong>：如果两个类本来就分不开，就合成一个类。</li>
+</ul>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker><marker id="a3" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<text fill="#c9b5f7" font-weight="700" text-anchor="middle" x="90" y="20">(a) 直通 ✗</text>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="6" stroke="#7c8593" width="130" x="25" y="34"/><text fill="#d9dee5" text-anchor="middle" x="90" y="56">调用方</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="90" x2="90" y1="68" y2="90"/>
+<rect fill="rgba(155,108,245,0.10)" height="34" rx="6" stroke="#9b6cf5" width="130" x="25" y="92"/><text fill="#c9b5f7" text-anchor="middle" x="90" y="114">A：只转发</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="90" x2="90" y1="126" y2="148"/>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="6" stroke="#7c8593" width="130" x="25" y="150"/><text fill="#d9dee5" text-anchor="middle" x="90" y="172">B：真干活</text>
+<text fill="#8fbaff" font-weight="700" text-anchor="middle" x="265" y="20">(b) 暴露下层</text>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="6" stroke="#7c8593" width="130" x="200" y="34"/><text fill="#d9dee5" text-anchor="middle" x="265" y="56">调用方</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="235" x2="235" y1="68" y2="90"/>
+<path d="M300,68 C330,100 330,130 300,148" fill="none" marker-end="url(#a3)" stroke="#5b9df9" stroke-width="1.6"/>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="6" stroke="#7c8593" width="80" x="200" y="92"/><text fill="#d9dee5" text-anchor="middle" x="240" y="114">A</text>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" stroke-width="1.6" width="130" x="200" y="150"/><text fill="#e7ebf1" text-anchor="middle" x="265" y="172">B</text>
+<text fill="#8fbaff" font-weight="700" text-anchor="middle" x="440" y="20">(c) 重分职责</text>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="6" stroke="#7c8593" width="130" x="375" y="34"/><text fill="#d9dee5" text-anchor="middle" x="440" y="56">调用方</text>
+<line marker-end="url(#a3)" stroke="#5b9df9" x1="410" x2="410" y1="68" y2="90"/>
+<line marker-end="url(#a3)" stroke="#5b9df9" x1="470" x2="470" y1="68" y2="148"/>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" stroke-width="1.6" width="80" x="375" y="92"/><text fill="#e7ebf1" text-anchor="middle" x="415" y="114">A′</text>
+<rect fill="rgba(91,157,249,0.12)" height="34" rx="6" stroke="#5b9df9" stroke-width="1.6" width="80" x="430" y="150"/><text fill="#e7ebf1" text-anchor="middle" x="470" y="172">B′</text>
+<text fill="#8fbaff" font-weight="700" text-anchor="middle" x="615" y="20">(d) 合并</text>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="6" stroke="#7c8593" width="130" x="550" y="34"/><text fill="#d9dee5" text-anchor="middle" x="615" y="56">调用方</text>
+<line marker-end="url(#a3)" stroke="#5b9df9" x1="615" x2="615" y1="68" y2="90"/>
+<rect fill="rgba(91,157,249,0.12)" height="92" rx="6" stroke="#5b9df9" stroke-width="1.6" width="130" x="550" y="92"/><text fill="#e7ebf1" text-anchor="middle" x="615" y="142">A + B</text>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="350" y="218">目标都一样：让每个类都有一份不与别人重叠的职责</text>
+</g>
+</svg>
+<figcaption>图 2 · 直通方法的三种修法（对应书中配图）：暴露下层、重新分配职责、合并两类。</figcaption>
+</figure>
+<h3>二、接口重复什么时候没问题</h3>
+<p>签名一样不等于有罪。判据是：<strong>每个同签名的方法是否提供了有用且不同的功能</strong>。两个合理例子：一是<strong>分发器</strong>——Web 服务器收到请求，按 URL 选一个处理函数转过去，它的签名常和处理函数一样，但「选哪个」本身就是实打实的功能；二是<strong>同一接口的多种实现</strong>——操作系统里各种磁盘驱动提供同一套接口，各自实现不同，这降低了上层的认知负担：学会一套接口就能用所有设备。</p>
+<h3>三、装饰器：天生容易浅</h3>
+<p>装饰器用一个对象包住另一个对象，接口一模一样，再加一点功能。书里的例子是 Java I/O：<code>BufferedInputStream</code> 包住 <code>FileInputStream</code>，给它加上缓冲。动机正当——把特殊扩展和通用核心分开——但代价是：<strong>为了加一个小功能，装饰器要把底层的每个方法都直通一遍</strong>，大量浅方法由此而生；而且装饰器类容易泛滥，每种组合都要调用方自己去拼。</p>
+<p>作者给了四个先问的问题：能不能<strong>直接把功能加进底层类</strong>（比如缓冲本就该是默认行为）？如果功能只服务某个场景，能不能<strong>合进那个使用场景</strong>？能不能<strong>合进已有的某个装饰器</strong>？最后，这个功能真的需要包住底层吗——能不能做成<strong>独立的类</strong>？比如给窗口加滚动条，滚动条可以单独实现，不必把窗口的所有方法都包一遍。</p>
+<h3>四、接口要和实现长得不一样</h3>
+<p>同一个原理落到单个类上：<strong>类的接口通常应当和它的内部实现不同</strong>。若内部按「行」存文字，接口就照搬成 <code>getLine</code> / <code>putLine</code>，那么上层要在行中间插入或删除时，就得自己拆行、拼行——实现细节被原样推给了调用方，类是浅的。换成面向字符的接口（在任意位置插入、删除一段范围），类内部多做了按行映射的活，但上层省掉了大量拆拼代码。<strong>接口和实现越像，这个类越可能是浅的。</strong></p>
+<h3>五、直通变量与上下文对象</h3>
+<p>直通的另一种形态是<strong>直通变量（pass-through variable）</strong>：一个值从顶层方法开始，经过一长串方法一路往下传，中间那些方法都不用它，只是为了让最底下那个方法拿到。书中例子：命令行参数里指定了安全通信要用的证书，<code>main</code> 读到它，经 <code>m1</code>、<code>m2</code> 一路传到真正打开连接的 <code>m3</code>。坏处是中间每一层都被迫知道它的存在；哪天要新增一个这样的变量，整条链上每个签名都要改。</p>
+<p>三种解法：若顶层和底层已经共享某个对象，就<strong>把变量放进那个对象</strong>；用<strong>全局变量</strong>，但这会让同一进程里无法跑两个独立的系统实例（比如测试时）；作者最常用的是<strong>上下文对象（context）</strong>——存放一个系统实例的全局状态（配置项、共享子系统、性能计数器），每个系统实例一份，大多数对象在构造时拿到它的引用、存进自己的成员变量，于是新增一项全局状态只需要往 context 里加个字段。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a4" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker><marker id="a5" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<text fill="#c9b5f7" font-weight="700" x="20" y="20">直通变量 ✗</text>
+<rect fill="rgba(255,255,255,0.03)" height="30" rx="6" stroke="#7c8593" width="120" x="20" y="32"/><text fill="#d9dee5" text-anchor="middle" x="80" y="52">main(cert)</text>
+<line marker-end="url(#a4)" stroke="#7c8593" x1="80" x2="80" y1="62" y2="80"/>
+<rect fill="rgba(155,108,245,0.10)" height="30" rx="6" stroke="#9b6cf5" width="120" x="20" y="82"/><text fill="#c9b5f7" text-anchor="middle" x="80" y="102">m1(…, cert)</text>
+<line marker-end="url(#a4)" stroke="#7c8593" x1="80" x2="80" y1="112" y2="130"/>
+<rect fill="rgba(155,108,245,0.10)" height="30" rx="6" stroke="#9b6cf5" width="120" x="20" y="132"/><text fill="#c9b5f7" text-anchor="middle" x="80" y="152">m2(…, cert)</text>
+<line marker-end="url(#a4)" stroke="#7c8593" x1="80" x2="80" y1="162" y2="180"/>
+<rect fill="rgba(255,255,255,0.03)" height="30" rx="6" stroke="#7c8593" width="120" x="20" y="182"/><text fill="#d9dee5" text-anchor="middle" x="80" y="202">m3 用 cert</text>
+<text fill="#9aa3ae" font-size="11" x="155" y="112">m1、m2 不用它，</text>
+<text fill="#9aa3ae" font-size="11" x="155" y="128">却都得在签名里带着</text>
+<text fill="#8fbaff" font-weight="700" x="380" y="20">上下文对象 ✓</text>
+<rect fill="rgba(255,255,255,0.03)" height="30" rx="6" stroke="#7c8593" width="120" x="380" y="32"/><text fill="#d9dee5" text-anchor="middle" x="440" y="52">main</text>
+<line marker-end="url(#a4)" stroke="#7c8593" x1="440" x2="440" y1="62" y2="80"/>
+<rect fill="rgba(255,255,255,0.03)" height="30" rx="6" stroke="#7c8593" width="120" x="380" y="82"/><text fill="#d9dee5" text-anchor="middle" x="440" y="102">m1(…)</text>
+<line marker-end="url(#a4)" stroke="#7c8593" x1="440" x2="440" y1="112" y2="130"/>
+<rect fill="rgba(255,255,255,0.03)" height="30" rx="6" stroke="#7c8593" width="120" x="380" y="132"/><text fill="#d9dee5" text-anchor="middle" x="440" y="152">m2(…)</text>
+<line marker-end="url(#a4)" stroke="#7c8593" x1="440" x2="440" y1="162" y2="180"/>
+<rect fill="rgba(255,255,255,0.03)" height="30" rx="6" stroke="#7c8593" width="120" x="380" y="182"/><text fill="#d9dee5" text-anchor="middle" x="440" y="202">m3</text>
+<rect fill="rgba(91,157,249,0.12)" height="70" rx="8" stroke="#5b9df9" stroke-width="1.6" width="140" x="545" y="82"/>
+<text fill="#e7ebf1" font-weight="700" text-anchor="middle" x="615" y="104">context</text>
+<text fill="#9aa3ae" font-size="11" text-anchor="middle" x="615" y="122">cert · 配置 · 计数器</text>
+<text fill="#9aa3ae" font-size="11" text-anchor="middle" x="615" y="140">构造时存进对象</text>
+<line marker-end="url(#a5)" stroke="#5b9df9" stroke-dasharray="4 3" x1="500" x2="545" y1="47" y2="100"/>
+<line marker-end="url(#a5)" stroke="#5b9df9" stroke-width="1.6" x1="580" x2="502" y1="152" y2="195"/>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="350" y="232">中间层签名不再被无关参数污染；代价是依赖变得不那么显眼</text>
+</g>
+</svg>
+<figcaption>图 3 · 直通变量 vs 上下文对象：左边证书穿过两层无关方法；右边 main 写入 context，m3 直接取用。</figcaption>
+</figure>
+<p>作者也承认 context 不完美：<strong>没有纪律时，它会变成一个什么都往里扔的大杂烩，制造不明显的依赖</strong>；多线程下还有并发问题，所以他建议 context 里的变量尽量不可变。但他说自己还没找到比它更好的办法。</p>
+<h3>六、收束：每件设计基础设施都要挣回自己的成本</h3>
+<p>本章结论可以压成一句：<strong>系统里每加一个设计元素——接口、参数、函数、类、定义——都在增加复杂度，因为开发者得去学它；它要带来净收益，就必须消掉一些本来会存在的复杂度。</strong>直通方法、直通变量、浅装饰器的共同点，是它们增加了要学的东西，却没消掉任何东西。</p>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 1 · 四种「层次失败」信号与修法</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>信号</th><th>长什么样</th><th>首选修法</th><th>修法的代价</th></tr></thead>
+<tbody>
+<tr><th>直通方法</th><td>方法体一行，原样转给下层同名方法</td><td>暴露下层 / 重分职责 / 合并</td><td>暴露下层会让调用方多知道一个类；合并可能做出过大的类</td></tr>
+<tr><th>浅装饰器</th><td>为加一个小功能把底层几十个方法全转一遍</td><td>功能并入底层类或使用场景；或做成独立类</td><td>底层类多一点代码与选项</td></tr>
+<tr><th>接口 = 实现</th><td>内部按行存，接口就是 <code>getLine</code> / <code>putLine</code></td><td>按调用方需要的抽象重新设计接口</td><td>类内部要做转换，实现更难写</td></tr>
+<tr><th>直通变量</th><td>参数穿过多层无关方法</td><td>放进共享对象或 context</td><td>依赖变隐式；context 易膨胀、需注意并发</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">表 2 · 直通变量的三种去处</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>去处</th><th>适用</th><th>好处</th><th>代价</th></tr></thead>
+<tbody>
+<tr><th>已共享的对象</th><td>顶层和底层恰好都持有同一个对象</td><td>零新增结构</td><td>可遇不可求</td></tr>
+<tr><th>全局变量</th><td>脚本、一次性程序</td><td>最省事</td><td>同进程无法跑两个实例；测试互相污染</td></tr>
+<tr><th><strong>上下文对象</strong></th><td>有多个子系统、需要多实例的系统</td><td>新增全局状态只改一处；可多实例</td><td>依赖不显眼；会变杂物箱；字段宜不可变</td></tr>
+</tbody>
+</table></div>
+<p>一句判据：<strong>删掉这一层，调用方要多知道什么？</strong>答案是「几乎什么都不用多知道」，这一层就该删或合。</p>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>后端项目里最常见的反模式就是按模板分层：每个实体都配一套 Controller → Service → Repository，Service 里一半方法只是 <code>return repo.findById(id)</code>。评审时可以直接用本章的问题去戳：这一层换了抽象吗？它替调用方挡掉了什么？反过来，也别矫枉过正——一层如果承载了事务边界、权限校验、跨实体编排，那它确实提供了不同的抽象，签名相似也不算直通。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/networking-fundamentals-day48.html" target="_blank" rel="noopener">System Design · Day 48 网络基础</a> — 本章开篇的 TCP 例子展开讲：从「尽力而为的包」到「可靠字节流」，每一层到底换了什么抽象</aside>
+<div class="ev">
+<p class="evh">实证与出处 · 公开可查</p>
+<ul>
+<li><strong>Go 的 bufio：装饰器的标准样子。</strong>官方文档写明 bufio「包住一个 io.Reader 或 io.Writer，创建另一个同样实现该接口、但提供缓冲的对象」。它之所以不浅，是因为 <code>io.Reader</code> 只有一个方法——装饰一个单方法接口几乎没有直通成本；同样的手法放到几十个方法的类上，就是本章说的浅装饰器。<span class="src">出处：<a href="https://pkg.go.dev/bufio" target="_blank" rel="noopener">pkg.go.dev · bufio</a></span></li>
+<li><strong>Go 的 context：一个反着来的设计选择。</strong>官方文档要求「不要把 Context 存进结构体，而是显式地传给每个需要它的函数」，并作为第一个参数；同时限定「context 的 Values 只用于跨进程和 API 的请求范围数据，不要用来传可选参数」。这恰好是 Ousterhout 推荐做法（构造时存进成员变量）的反面：Go 宁可接受直通变量，换来依赖显式可见和按请求取消——也印证了作者自己说的，context 一旦当杂物箱用就会出问题。<span class="src">出处：<a href="https://pkg.go.dev/context" target="_blank" rel="noopener">pkg.go.dev · context</a></span></li>
+<li><strong>Java I/O：书中的装饰器反例。</strong>打开文件并按对象读取，需要先建 <code>FileInputStream</code>、再包 <code>BufferedInputStream</code>、再包 <code>ObjectInputStream</code>；缓冲这种几乎人人都要的功能被做成了要手动套上的装饰器。<span class="src">出处：Ousterhout，A Philosophy of Software Design，第 4、7 章</span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/end-to-end-arguments-paper39.html" target="_blank" rel="noopener">论文精读 · End-to-End Arguments in System Design</a> — 同一问题的另一个角度：一项功能放在哪一层才真正有价值，放错层就只是重复劳动</aside>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>「签名相同就是直通」。</strong>不对。分发器、同一接口的多种实现都签名相同但各有功能。看的是有没有增加有用的、不同的功能。</li>
+<li><strong>「层越多越解耦」。</strong>没有新抽象的层不解耦，反而让一处改动传遍多层（改一个签名，转发链上每层都要改）。</li>
+<li><strong>「装饰器模式是最佳实践」。</strong>它是工具不是目标。为加一个小功能去包一个大接口，通常应先考虑直接加进底层类。</li>
+<li><strong>「context 解决了一切」。</strong>作者自己说它不理想：依赖变隐式、容易膨胀、有并发风险。它是「直通变量更糟」时的次优解。</li>
+<li><strong>争议：显式传参 vs 隐式上下文。</strong>Go 官方选择显式传 context，理由是可读、可取消、可测试；依赖注入框架和「请求作用域」则走隐式路线。两派都同意一点：<strong>别让无关参数无限往签名里加</strong>，分歧在于可见性和便利哪个更值钱。新手要警惕的是另一个方向：把「删掉直通层」当成合并一切的借口，做出一个什么都管的巨类。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 好系统里每一层都提供一种不同于邻居的抽象；相邻层抽象相似是分解出错的信号。</p>
+<p>② 经典正例：文件系统（文件 → 块缓存 → 驱动）、TCP（可靠字节流建在尽力而为的包之上）。</p>
+<p>③ 直通方法让类变浅、制造跨类依赖；修法是暴露下层、重分职责或合并。</p>
+<p>④ 签名重复不一定有罪：分发器、同一接口的多种实现都各自提供了功能。</p>
+<p>⑤ 装饰器天生容易浅：先问能否直接加进底层类、并入使用场景、合进已有装饰器或做成独立类。</p>
+<p>⑥ 类的接口应当和实现不同；照搬内部表示的接口是浅的。</p>
+<p>⑦ 直通变量的去处：共享对象、全局变量、上下文对象；context 最常用，但要防膨胀、字段宜不可变。</p>
+<p>⑧ Go 的 context 反其道而行（显式传参），说明这是可见性与便利之间的真实权衡。</p>
+<p>⑨ 总判据：每个设计元素都要消掉比它带来的更多的复杂度，否则就是负担。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整论证与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
