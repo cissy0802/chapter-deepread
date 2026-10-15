@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>A Philosophy of Software Design Ch 10 · Define Errors Out of Existence — Book Deep-Read Book 174</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · A Philosophy of Software Design · Chapter 10</p>
+<h1>Define Errors Out of Existence</h1>
+<p class="sub">A Philosophy of Software Design · Ch 10 · Define Errors Out of Existence · Ousterhout · 2nd ed 2021</p>
+<p class="langbar"><a href="aposd-ch10-define-errors-out-of-existence-book174.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Simple</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You tap "delete" on a photo that is already gone. Should your phone pop up "Error: photo does not exist," or just quietly say "Deleted"? Programs face this choice everywhere. Many people believe <strong>more errors means more rigor</strong>. This chapter says: <strong>every new kind of "error" is a chore that everyone using your code must deal with; the best error handling is making the error impossible in the first place.</strong></p>
+<h2>An analogy</h2>
+<p>You ask someone at home to "turn off the light." It is already off. A sensible person says "done," not "Report: the light is already off, unable to perform switch-off." What you wanted was <strong>the result, a dark room</strong>, not the act of flipping a switch. Phrase the request as a result, and the "error" vanishes.</p>
+<h2>Why the old way is hard</h2>
+<p>Code that handles surprises almost never runs in daily life, so <strong>it is where unnoticed mistakes hide</strong>. Worse, once a part announces "I might fail this way," everyone who uses it must write their own response. Ten users means ten responses, and ten places to get it wrong.</p>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>Reword the job so the error disappears.</strong> Like the light: read "delete it" as "make sure it's gone." If it was never there, that counts as success.</li>
+<li><strong>Quietly catch it down below.</strong> When a parcel is lost, the courier sends another one. You just receive your package and never learn anything went wrong.</li>
+<li><strong>Handle it all in one place.</strong> A mall doesn't run lost-and-found at every shop counter; everything goes to the front desk.</li>
+<li><strong>If it's rare and hopeless, just stop.</strong> When a computer freezes solid, restarting beats writing a rescue plan for every strange case.</li>
+</ul>
+<h2>What it buys you / how to choose</h2>
+<p>Users of your code have fewer things to worry about, so there are fewer chances to slip. The test is simple: <strong>if the user found out about this error, could they do anything useful?</strong> If not, don't put it in front of them. One honest cost: don't overdo it. If the user truly needs to know (say, a message really didn't arrive), hiding it is lying to them.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p><strong>Before you report an error, ask whether a better definition could make it not exist at all.</strong></p>
+</div>
+<p class="switch-hint">Want to see why exceptions are a major source of complexity, the four techniques for reducing exception handling, the Unix file-deletion and Python slicing examples, and where "hiding too much" begins? <a data-mode="deep">→ Switch to Deep</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think throwing more exceptions is rigorous, a way of "surfacing problems." Ousterhout argues <strong>exceptions are one of the worst sources of complexity</strong>, and the best way to fight them is not to handle each one better but to <strong>reduce the number of places where exceptions must be handled</strong>. The first choice: redefine the interface's semantics so the error case simply doesn't exist.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Exception</strong>: an uncommon condition that breaks the normal flow of execution, such as a bad argument, a file that won't open, or a lost network packet. The chapter counts returned error codes too.</li>
+<li><strong>Throw / catch</strong>: code that detects a problem "throws" an exception; a higher layer "catches" it with <code>try/catch</code> and handles it. If nobody catches it, it keeps bubbling up.</li>
+<li><strong>Caller</strong>: the code that uses a given method or module.</li>
+<li><strong>Interface</strong>: everything a caller must know. The exceptions a method can throw are part of its interface.</li>
+<li><strong>Deep module</strong>: from Chapter 4, a module with a simple interface hiding a lot of functionality. More exceptions mean a more complex interface and a shallower module.</li>
+<li><strong>Retransmission</strong>: a network protocol noticing a packet was lost and automatically sending it again.</li>
+<li><strong>NFS</strong>: the Network File System, which lets a machine read and write files on a remote server as if they were on a local disk.</li>
+<li><strong>File descriptor</strong>: the "handle" a process gets when it opens a file; it reads and writes through it until it closes it.</li>
+<li><strong>Substring</strong>: a slice of a string cut out by start and end positions.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Chapter 10. Chapter 8 said "pull complexity downward" and Chapter 9 covered combining versus splitting; this chapter applies the same thinking to <strong>exception handling</strong>, the part of an interface's complexity people most often overlook. The next chapter turns to "design it twice." In practice it maps to every "should I throw here / return an error code?" decision, and to interfaces like <code>rm -f</code>, <code>mkdir -p</code> and <code>DROP TABLE IF EXISTS</code>.</p>
+<h2>The problem this chapter tackles</h2>
+<p>The author first explains why exceptions create <strong>disproportionate</strong> complexity:</p>
+<ul>
+<li><strong>They are inherently hard to handle.</strong> When one occurs you either push on and finish the work (resend the lost packet) or abort and report upward. Aborting is harder, because whatever was half done must be restored to a consistent state.</li>
+<li><strong>Handling code breeds new exceptions.</strong> The book's example: you resend a packet you think was lost, but it was only delayed, so the receiver gets two copies. Handling "lost" created "duplicate."</li>
+<li><strong>Language syntax is verbose.</strong> In a Java sample from the book, the <code>try/catch</code> code is longer than the normal-case logic and buries it.</li>
+<li><strong>It almost never runs.</strong> Exception handlers rarely execute and are hard to test, so bugs lurk for a long time. The author cites an OSDI 2014 study: in distributed data-intensive systems, <strong>more than 90% of catastrophic failures came from incorrect error handling</strong>.</li>
+</ul>
+<p>Add a human factor: <strong>throwing exceptions is easy; handling them is hard.</strong> The author confesses his own mistake. When designing the Tcl language, he made <code>unset</code> (delete a variable) raise an error if the variable didn't exist. But the most common use of <code>unset</code> is cleaning up temporary state, and during cleanup you often don't know whether the variable was ever created. So almost everyone ended up wrapping <code>unset</code> in <code>catch</code> just to swallow the error. <strong>Every exception a class throws is part of its interface</strong>; the more exceptions, the shallower the module. Left alone, the complexity spreads up the call chain to every caller.</p>
+<h2>The core ideas, in depth</h2>
+<p>The author offers four techniques for <strong>reducing the places that handle exceptions</strong>, in order of preference: define them out, mask them, aggregate them, or just crash. Plus a generalization: design special cases out of existence too.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 270" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<text fill="#9aa3ae" font-size="11" x="20" y="22">Preference: higher is better</text>
+<rect fill="rgba(91,157,249,0.14)" height="44" rx="8" stroke="#5b9df9" stroke-width="1.8" width="300" x="20" y="34"/>
+<text fill="#8fbaff" font-weight="700" x="36" y="61">1 Define out: change semantics</text>
+<rect fill="rgba(91,157,249,0.09)" height="44" rx="8" stroke="#5b9df9" width="300" x="20" y="90"/>
+<text fill="#d9dee5" x="36" y="117">2 Mask: handle it at a low level</text>
+<rect fill="rgba(155,108,245,0.09)" height="44" rx="8" stroke="#9b6cf5" width="300" x="20" y="146"/>
+<text fill="#d9dee5" x="36" y="173">3 Aggregate: one handler for many</text>
+<rect fill="rgba(155,108,245,0.06)" height="44" rx="8" stroke="#9b6cf5" stroke-dasharray="4 3" width="300" x="20" y="202"/>
+<text fill="#d9dee5" x="36" y="229">4 Just crash: rare and unrecoverable</text>
+<line marker-end="url(#a1)" stroke="#5b9df9" x1="330" x2="378" y1="56" y2="56"/>
+<line marker-end="url(#a1)" stroke="#5b9df9" x1="330" x2="378" y1="112" y2="112"/>
+<line marker-end="url(#a1)" stroke="#9b6cf5" x1="330" x2="378" y1="168" y2="168"/>
+<line marker-end="url(#a1)" stroke="#9b6cf5" x1="330" x2="378" y1="224" y2="224"/>
+<text fill="#c9d1db" x="388" y="52">Tcl unset · Unix file deletion</text>
+<text fill="#9aa3ae" font-size="11" x="388" y="68">Java substring → return the overlap</text>
+<text fill="#c9d1db" x="388" y="108">TCP retransmits lost packets</text>
+<text fill="#9aa3ae" font-size="11" x="388" y="124">NFS client waits for the server</text>
+<text fill="#c9d1db" x="388" y="164">Web dispatcher: a single catch</text>
+<text fill="#9aa3ae" font-size="11" x="388" y="180">rare errors go to crash recovery</text>
+<text fill="#c9d1db" x="388" y="220">Out of memory: ckalloc panics</text>
+<text fill="#9aa3ae" font-size="11" x="388" y="236">internal state is inconsistent</text>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="350" y="264">Shared goal: as few places as possible that must contain handler code</text>
+</g>
+</svg>
+<figcaption>Figure 1 · Four techniques for reducing exception handling, in order of preference, with the book's examples on the right.</figcaption>
+</figure>
+<h3>1. Define errors out: change semantics, don't add handlers</h3>
+<p>The core move is to <strong>restate an interface from "perform an action" to "guarantee a result."</strong> If Tcl's <code>unset</code> meant "make sure this variable doesn't exist," then a missing variable means the result is already achieved and there is nothing to report. The author gives two weightier examples.</p>
+<p><strong>Deleting an open file.</strong> On Windows, a file that some process has open cannot be deleted; the user must hunt down the process holding it and close it, and sometimes the only way out is a reboot. Unix instead <strong>removes the name from the directory immediately</strong>, lets processes that have it open keep reading and writing, and frees the data only when the last one closes it. The deleter never sees "file busy," and the user never sees "file vanished": <strong>errors on both sides are defined away at once</strong>.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<g font-size="12">
+<text fill="#c9b5f7" font-weight="700" x="20" y="24">Windows style: open files can't be deleted</text>
+<rect fill="rgba(155,108,245,0.08)" height="30" rx="6" stroke="#9b6cf5" width="170" x="20" y="38"/><text fill="#d9dee5" text-anchor="middle" x="105" y="58">Process A opens file</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="192" x2="228" y1="53" y2="53"/>
+<rect fill="rgba(155,108,245,0.08)" height="30" rx="6" stroke="#9b6cf5" width="170" x="230" y="38"/><text fill="#d9dee5" text-anchor="middle" x="315" y="58">User asks to delete</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="402" x2="438" y1="53" y2="53"/>
+<rect fill="rgba(155,108,245,0.14)" height="30" rx="6" stroke="#9b6cf5" stroke-width="1.6" width="240" x="440" y="38"/><text fill="#c9b5f7" text-anchor="middle" x="560" y="58">Error: find process, or reboot</text>
+<text fill="#8fbaff" font-weight="700" x="20" y="116">Unix style: drop the name now, the data later</text>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#5b9df9" width="170" x="20" y="130"/><text fill="#d9dee5" text-anchor="middle" x="105" y="150">Process A opens file</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="192" x2="228" y1="145" y2="145"/>
+<rect fill="rgba(91,157,249,0.12)" height="30" rx="6" stroke="#5b9df9" stroke-width="1.6" width="170" x="230" y="130"/><text fill="#d9dee5" text-anchor="middle" x="315" y="150">Delete: name gone now</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="402" x2="438" y1="145" y2="145"/>
+<rect fill="rgba(91,157,249,0.08)" height="30" rx="6" stroke="#5b9df9" width="240" x="440" y="130"/><text fill="#d9dee5" text-anchor="middle" x="560" y="150">A keeps reading, unaware</text>
+<line marker-end="url(#a2)" stroke="#7c8593" x1="560" x2="560" y1="162" y2="186"/>
+<rect fill="rgba(91,157,249,0.12)" height="30" rx="6" stroke="#5b9df9" width="240" x="440" y="188"/><text fill="#8fbaff" text-anchor="middle" x="560" y="208">Data freed when A closes</text>
+<text fill="#7c8593" font-size="11" x="20" y="200">Deleter never sees "file busy";</text>
+<text fill="#7c8593" font-size="11" x="20" y="216">user never sees "file vanished"</text>
+</g>
+</svg>
+<figcaption>Figure 2 · The same request, deleting a file in use: Windows turns it into an error, Unix defines the error out of its semantics.</figcaption>
+</figure>
+<p><strong>Java's substring.</strong> <code>substring(begin, end)</code> throws <code>IndexOutOfBoundsException</code> whenever an index falls outside the string, so callers must check first and slice second. The author proposes instead: <strong>return the characters whose positions fall in [begin, end) and actually exist</strong>; anything out of range is simply empty. Python slicing already works this way: <code>"Python"[4:42]</code> yields <code>'on'</code> with no error. Some object that this hides bugs. The author's answer, in essence: more error classes mean more code for callers and more places to go wrong; <strong>the best way to reduce bugs is to make software simpler</strong>.</p>
+<h3>2. Mask exceptions: absorb them down low</h3>
+<p>If an exception can be handled at a low level, higher levels shouldn't hear about it. <strong>TCP</strong> is the classic case: the network drops packets, TCP retransmits internally, and applications see a reliable byte stream. Another is <strong>NFS</strong>: when a server crashes or stops responding, the client doesn't return an error to the application; it blocks and keeps retrying until the server comes back, printing "NFS server xxx not responding still trying" on the console. Users do complain when programs hang, but the author argues this beats the alternative: surface the error, and every application must handle "file server gone," where most could only exit and make the user start over. Masking is Chapter 8's <strong>pulling complexity downward</strong>: handle it once, and every layer above benefits.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/end-to-end-arguments-paper39.en.html" target="_blank" rel="noopener">Paper Deep-Read · End-to-End Arguments in System Design</a> — how completely a lower layer can absorb packet loss, and which guarantees only the endpoints can check: exactly where masking hits its limit</aside>
+<h3>3. Exception aggregation: one catch for a whole family</h3>
+<p>Instead of handling each exception where it arises, let them bubble up to one place and <strong>handle a whole family with a single piece of code</strong>. The book's example is a web server: dozens of URL handlers each read request parameters, and students often write separate "missing parameter" logic in every handler. Better: have the parameter-fetching method throw one common "no such parameter" exception, and let the top-level dispatcher catch it and generate the error response. <strong>Handler code goes from dozens of copies to one</strong>, and new URLs need none.</p>
+<p>Another form of aggregation is <strong>promoting a rare error into an existing, more common recovery path</strong>. The author cites the RAMCloud storage system he worked on: some uncommon faults get no dedicated repair logic and are instead funneled into the crash-recovery mechanism, which must exist anyway and runs often. Because that recovery code is exercised all the time, it is far more trustworthy than a special handler that almost never executes.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a3" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"/></marker></defs>
+<g font-size="12">
+<text fill="#9aa3ae" font-size="11" text-anchor="middle" x="350" y="20">Each URL handler just fetches parameters and throws the same exception on a miss</text>
+<rect fill="rgba(155,108,245,0.08)" height="36" rx="6" stroke="#9b6cf5" width="120" x="40" y="34"/><text fill="#d9dee5" text-anchor="middle" x="100" y="57">/login</text>
+<rect fill="rgba(155,108,245,0.08)" height="36" rx="6" stroke="#9b6cf5" width="120" x="200" y="34"/><text fill="#d9dee5" text-anchor="middle" x="260" y="57">/search</text>
+<rect fill="rgba(155,108,245,0.08)" height="36" rx="6" stroke="#9b6cf5" width="120" x="360" y="34"/><text fill="#d9dee5" text-anchor="middle" x="420" y="57">/order</text>
+<rect fill="rgba(155,108,245,0.08)" height="36" rx="6" stroke="#9b6cf5" width="120" x="520" y="34"/><text fill="#d9dee5" text-anchor="middle" x="580" y="57">...dozens</text>
+<line marker-end="url(#a3)" stroke="#9b6cf5" x1="100" x2="290" y1="70" y2="128"/>
+<line marker-end="url(#a3)" stroke="#9b6cf5" x1="260" x2="330" y1="70" y2="128"/>
+<line marker-end="url(#a3)" stroke="#9b6cf5" x1="420" x2="370" y1="70" y2="128"/>
+<line marker-end="url(#a3)" stroke="#9b6cf5" x1="580" x2="410" y1="70" y2="128"/>
+<rect fill="rgba(91,157,249,0.13)" height="50" rx="10" stroke="#5b9df9" stroke-width="1.8" width="300" x="200" y="130"/>
+<text fill="#8fbaff" font-weight="700" text-anchor="middle" x="350" y="152">Top-level dispatcher: the only catch</text>
+<text fill="#9aa3ae" font-size="11" text-anchor="middle" x="350" y="170">builds one "missing parameter" response</text>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="350" y="208">Handler code: one per function → one for the whole system</text>
+</g>
+</svg>
+<figcaption>Figure 3 · Exception aggregation: let the same kind of exception rise to one place, instead of handling it at every source.</figcaption>
+</figure>
+<h3>4. Just crash: don't write code for the unsalvageable</h3>
+<p>Some errors are <strong>both rare and nearly impossible to handle meaningfully</strong>; print diagnostics and abort. The classic is running out of memory: when C's <code>malloc</code> returns a null pointer, the caller can rarely do anything useful. Tcl wraps it as <code>ckalloc</code>, which panics on failure, so thousands of call sites never check a return value. Detecting that internal state has become inconsistent belongs here too. <strong>But it depends on the application</strong>: a replicated storage system cannot simply crash on a disk I/O error, because preserving data when hardware fails is its whole job.</p>
+<h3>5. Design special cases out of existence</h3>
+<p>The same idea applies to special cases in general. If an editor has a special "no selection" state, code everywhere must first check "is there a selection?" Make it <strong>always have a selection, possibly empty</strong> (start equals end), and those checks vanish: "delete selected text" on an empty selection does nothing, which is naturally correct.</p>
+<h3>6. Taking it too far: what callers need must be exposed</h3>
+<p>Defining away or masking an exception is valid <strong>only if nobody outside the module needs the information</strong>. The author's counterexample is networking: a network module that swallowed every error would leave applications unable to learn that a message was lost, and so unable to recover. The test: when a caller gets this error, <strong>can and should it do something different</strong>? If so, keep it in the interface.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/fail-obviously-day54.en.html" target="_blank" rel="noopener">System Design · Day 54 Fail Obviously</a> — the flip side of over-masking: once failures are swallowed the system looks healthy while it quietly goes wrong, and how to design for failure visibility</aside>
+<h2>Key trade-offs and choices</h2>
+<p class="tcap">Table 1 · The four techniques: when to use them and what they cost</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Technique</th><th>Use when</th><th>Book example</th><th>Cost / risk</th></tr></thead>
+<tbody>
+<tr><th>Define out</th><td>A broader semantics turns the "error" into a legal result</td><td>unset, Unix delete, substring returns the overlap</td><td>A caller with a real bug gets no warning; semantics must be documented in the interface</td></tr>
+<tr><th>Mask</th><td>The lower layer can recover itself, and the upper layer could only give up anyway</td><td>TCP retransmit, NFS retry</td><td>May show up as hangs or slowness; over-masking blinds upper layers</td></tr>
+<tr><th>Aggregate</th><td>Many sources are handled the same way, or can join an existing recovery path</td><td>Web dispatcher's single catch, RAMCloud</td><td>Errors must carry enough context, or the shared handler can only give vague messages</td></tr>
+<tr><th>Just crash</th><td>Rare, not worth handling, and can't be handled well</td><td>Out of memory, inconsistent internal state</td><td>Wrong for systems whose job is fault tolerance (e.g. storage)</td></tr>
+<tr><th>Throw as usual</th><td>The caller must act differently based on it</td><td>Telling apps a network message was lost</td><td>A more complex interface, but necessary complexity</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 2 · Two interfaces for the same job</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Action-style (breeds errors)</th><th>Result-style (error defined out)</th><th>Real-world counterpart</th></tr></thead>
+<tbody>
+<tr><td>Delete this variable / file</td><td>Ensure it doesn't exist</td><td><code>rm -f</code>, Go <code>os.RemoveAll</code></td></tr>
+<tr><td>Create this directory</td><td>Ensure it exists</td><td><code>mkdir -p</code></td></tr>
+<tr><td>Drop this table</td><td>Drop it if it exists</td><td>SQL <code>DROP TABLE IF EXISTS</code></td></tr>
+<tr><td>Take characters begin through end</td><td>Take the characters that exist in that range</td><td>Python slicing</td></tr>
+</tbody>
+</table></div>
+<p>One test: <strong>once this exception is thrown, do most callers just catch it and ignore it?</strong> If so, it should be defined out of existence.</p>
+<h2>Why it matters / in real systems</h2>
+<p>This chapter is the most practical yardstick in an API review: for every new exception or error code, ask how many call sites will need another handler. It matters most in distributed systems, where error paths are most numerous and hardest to reproduce. <strong>Result-style, repeatable interfaces</strong> (retry as often as you like, same outcome) eliminate a large class of "what if the last attempt stopped halfway?" branches outright.</p>
+<div class="ev">
+<p class="evh">Evidence and sources · publicly verifiable</p>
+<ul>
+<li><strong>Error handling is a leading cause of failures.</strong> Yuan et al. studied real failure reports from Cassandra, HBase, HDFS, Hadoop MapReduce and Redis and found that 92% of catastrophic failures stemmed from incorrect handling of non-fatal errors explicitly signaled in software; many of those handlers were just an empty catch or a TODO. This is the study the author cites. <span class="src">Source: Yuan et al., "Simple Testing Can Prevent Most Critical Failures", OSDI 2014</span></li>
+<li><strong>Go's standard library defines "doesn't exist" as success.</strong> The doc comment of <code>os.RemoveAll</code> states that if the path does not exist, RemoveAll returns nil (no error). <span class="src">Source: <a href="https://github.com/golang/go/blob/master/src/os/path.go" target="_blank" rel="noopener">golang/go · src/os/path.go</a></span></li>
+<li><strong>PostgreSQL offers an optional IF EXISTS.</strong> The docs describe it as: do not throw an error if the table does not exist; issue a notice instead. A middle ground between defining the error out and letting the caller choose. <span class="src">Source: <a href="https://github.com/postgres/postgres/blob/master/doc/src/sgml/ref/drop_table.sgml" target="_blank" rel="noopener">postgres/postgres · doc/src/sgml/ref/drop_table.sgml</a></span></li>
+<li><strong>Python slicing: the book's substring proposal, already shipped.</strong> The official tutorial says out-of-range slice indexes are "handled gracefully," yet a single out-of-range index still raises <code>IndexError</code>: a range can be empty, but a single character can't be conjured from nothing. <span class="src">Source: <a href="https://github.com/python/cpython/blob/main/Doc/tutorial/introduction.rst" target="_blank" rel="noopener">python/cpython · Doc/tutorial/introduction.rst</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"Defining errors out = swallowing exceptions."</strong> No. Swallowing leaves the error in place with nobody minding it; defining it out changes the semantics so the case is a legal result, documented in the interface.</li>
+<li><strong>"More exceptions are safer."</strong> Each exception demands a handler from every caller, and handlers are the least-executed, most bug-prone code. The 92% figure above is the price.</li>
+<li><strong>"Masking is always good."</strong> NFS hangs and a network module that swallows lost messages both show that masking assumes upper layers don't need to know. Hide too much and the problem erupts further away, in a harder-to-diagnose form.</li>
+<li><strong>"Crashing is lazy."</strong> For rare, unrecoverable errors, a crash is more reliable than recovery code that was never tested; but not for systems whose job is tolerating faults.</li>
+<li><strong>Debate: do lenient semantics hide bugs?</strong> The "fail fast" camp says an out-of-range index should fail immediately so it gets fixed early. Ousterhout looks at the whole system: most callers don't care about the overflow, and making everyone pay for checks to catch a few genuine mistakes is a bad trade. Each view has its domain; the deciding question is whether the caller can do something different with the error.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>1. Exceptions are a major source of complexity: hard to handle, they breed new exceptions, the syntax is verbose, and they almost never run.</p>
+<p>2. Research shows over 90% of catastrophic failures in distributed systems trace to incorrect error handling.</p>
+<p>3. Throwing is easy, handling is hard; every exception a class throws is part of its interface, and more exceptions mean a shallower module.</p>
+<p>4. The goal is not handling exceptions better but reducing the places that must handle them.</p>
+<p>5. First choice, define them out: restate the interface from performing an action to guaranteeing a result (unset, Unix delete, substring returning the overlap).</p>
+<p>6. Next, mask (TCP retransmit, NFS retry) and aggregate (one catch in the top-level dispatcher).</p>
+<p>7. Rare, unrecoverable errors such as out-of-memory can just crash; but storage-like systems must handle I/O errors.</p>
+<p>8. Special cases too: an empty selection instead of "no selection" removes every check.</p>
+<p>9. The limit: if callers must act differently on an error, it stays in the interface.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Reading this page ≈ getting the core of the chapter; for the full argument and extensions, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
