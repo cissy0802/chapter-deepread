@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>A Philosophy of Software Design 第 13 章 · 注释写「不明显」的东西 — 专业书籍精读 Book 177</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">专业书籍精读 · A Philosophy of Software Design · 第 13 章</p>
+<h1>注释写「不明显」的东西</h1>
+<p class="sub">A Philosophy of Software Design · Ch 13 · Comments Should Describe Things that Aren't Obvious from the Code · Ousterhout · 2nd ed 2021</p>
+<p class="langbar"><a href="aposd-ch13-comments-non-obvious-book177.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>上一章说「注释必须写」，这一章回答下一个问题：<strong>写什么？</strong>作者的答案只有一条：<strong>只写光看代码看不出来的东西。</strong>就像你给邻居留钥匙时写的纸条——不用写「这是一把钥匙」，要写的是「门有点卡，往上提一下再转」。</p>
+<h2>先说个怪事</h2>
+<p>很多人写注释，写的是「下一行把计数加一」。读代码的人当然看得出来，这句话等于没写。可是真正重要的事——这个计数从 0 还是从 1 开始、数到哪里为止、为什么要数——反而一个字都没有。<strong>最常见的烂注释，不是写错了，而是写了一遍代码已经说过的话。</strong></p>
+<h2>旧世界为什么难</h2>
+<p>写代码的人对代码太熟了，分不清哪些是「谁都看得懂的」、哪些是「只有我知道的」。于是他把显而易见的写了一遍，把只有自己知道的那部分漏掉了。接手的人只好去翻其他文件、去问人、去猜。</p>
+<h2>核心机制直觉</h2>
+<ul>
+<li><strong>别复述代码。</strong>检验办法：一个从没看过这段代码的人，能不能只看代码就写出你这句注释？能，这句就是废话。</li>
+<li><strong>往细里补：精确。</strong>比如一个「超时」，要说清单位是秒还是毫秒、填 0 是什么意思。像菜谱里写「盐少许」，不如写「一小勺」。</li>
+<li><strong>往粗里补：直觉。</strong>一大段复杂代码前面，用一句话说它「想干什么」——像地图上标「这一片是商场」，而不是把每家店名都列一遍。</li>
+<li><strong>给用的人和给改的人，分开写。</strong>用的人只需要知道「怎么用、会有什么后果」，像家电说明书；改的人才需要知道「里面怎么做、为什么这样做」，像维修手册。两本别混成一本。</li>
+<li><strong>跨文件的约定，写在别人会去找的地方。</strong>「改了这里，记得也改那个文件」，要写在改的人一定会经过的位置。</li>
+</ul>
+<h2>带来了什么 / 该怎么选</h2>
+<p>照这样写，读的人不用把代码翻个底朝天，就能放心地用它、改它。一句诚实的代价：判断「什么不明显」需要换位思考，作者本人往往最难看出来，常常要靠同事看过才知道。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p><strong>注释的价值，等于它说出了多少代码没说的东西——要么更细，要么更高，别站在和代码同一层。</strong></p>
+</div>
+<p class="switch-hint">想看「精确」和「直觉」两类注释各补什么、接口注释该写哪五样、一个 Buffer 拷贝方法的注释怎么写，以及 Google、Linux、Python 的规范如何印证这一章？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">你以为好注释就是「把代码解释一遍」；Ousterhout 说，<strong>和代码处在同一层的注释几乎没有价值</strong>。注释的价值在于它比代码<strong>更低一层</strong>（补精确：单位、边界、空值含义）或<strong>更高一层</strong>（补直觉：这段想干什么、为什么），并且要把<strong>接口注释</strong>（给使用者）和<strong>实现注释</strong>（给维护者）分开。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>接口注释（interface comment）</strong>：写在类或方法声明前、给<strong>使用者</strong>看的说明，告诉人怎么用、会有什么效果。</li>
+<li><strong>实现注释（implementation comment）</strong>：写在方法内部、给<strong>修改这段代码的人</strong>看的说明。</li>
+<li><strong>抽象（abstraction）</strong>：只留下使用者需要的信息、把其余细节藏起来的简化视图。</li>
+<li><strong>副作用（side effect）</strong>：方法除了返回值以外对外界造成的改变，比如改了某个全局状态、写了文件。</li>
+<li><strong>前置条件（precondition）</strong>：调用一个方法之前必须已经成立的条件。</li>
+<li><strong>不变量（invariant）</strong>：某个数据结构在任何时候都保持成立的性质，例如「这个列表至少有一项」。</li>
+<li><strong>红旗（red flag）</strong>：书中贯穿全书的设计警示信号，看到它就该停下来想想。</li>
+<li><strong>Javadoc / Doxygen</strong>：从特定格式的注释自动生成 API 文档的工具。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>全书第 13 章，注释系列（第 12–16 章）的第二章：第 12 章论证「为什么要写」，本章回答「写什么」，第 14 章讲命名，第 15 章讲先写注释，第 16 章讲改代码时如何维护注释。它是第 4 章「深模块」在文字层面的落地：接口注释写得好，模块才真正「深」。现实里对应 API 文档、docstring 规范和代码评审里的注释检查。</p>
+<h2>这章要解决什么</h2>
+<p>写注释的理由是：<strong>写代码用的语言（编程语言）表达力不如写代码的人脑子里的想法</strong>。很多重要信息——为什么这样写、一个变量的单位、一个方法的副作用——在代码里根本没有位置。注释就是要把这些补上。</p>
+<p>可现实中大量注释在做反方向的事：复述代码。这种注释<strong>写的人花了时间、读的人花了时间、维护时还要跟着改</strong>，却没有带来任何新信息；更糟的是它让人以为「这里已经有注释了」，真正缺的信息就再也没人补。本章给出一套判据，让每一行注释都承担代码承担不了的那部分。</p>
+<h2>核心内容，讲透</h2>
+<h3>一、先定约定：写在哪、什么格式</h3>
+<p>作者建议先给团队定好注释约定：每个类和方法的接口注释、每个类成员变量的注释、方法内部的实现注释、跨模块的设计说明，各放在哪、用什么格式（例如 Javadoc、Doxygen、Go 的 godoc 风格）。约定的作用是<strong>让人知道该去哪里找信息，也让写的人知道自己欠着哪几处</strong>。</p>
+<h3>二、别复述代码</h3>
+<p>本章第一条红旗：<strong>注释复述代码（Comment Repeats Code）</strong>。判据很具体：一个<strong>没看过这段代码</strong>的人，能否只凭旁边的代码写出这句注释？能，这句就没价值。一个常见变体是注释里用的词和变量名、方法名一模一样，只是把名字拼成了句子。</p>
+<p>修正办法：<strong>换别的词</strong>。名字已经说过的事别再说一遍，转而写名字说不出的：这个值的含义、它的边界、为什么需要它。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker></defs>
+<g font-size="12">
+<rect fill="rgba(155,108,245,0.10)" height="56" rx="10" stroke="#9b6cf5" width="420" x="140" y="16"></rect>
+<text fill="#c9b5f7" font-weight="700" text-anchor="middle" x="350" y="38">更高一层：补直觉</text>
+<text fill="#9aa3ae" font-size="11" text-anchor="middle" x="350" y="58">这段代码想干什么？为什么这样做？整体怎么想？</text>
+<rect fill="#171b21" height="56" rx="10" stroke="#5a6069" stroke-dasharray="4 3" width="420" x="140" y="96"></rect>
+<text fill="#7c8593" font-weight="700" text-anchor="middle" x="350" y="118">与代码同一层：复述 = 红旗</text>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="350" y="138">「计数加一」「返回名字」——读代码就知道</text>
+<rect fill="rgba(91,157,249,0.12)" height="56" rx="10" stroke="#5b9df9" stroke-width="1.8" width="420" x="140" y="176"></rect>
+<text fill="#8fbaff" font-weight="700" text-anchor="middle" x="350" y="198">更低一层：补精确</text>
+<text fill="#9aa3ae" font-size="11" text-anchor="middle" x="350" y="218">单位？包含边界吗？null 什么意思？谁负责释放？</text>
+<line marker-end="url(#a1)" stroke="#5b9df9" x1="580" x2="580" y1="124" y2="26"></line>
+<line marker-end="url(#a1)" stroke="#5b9df9" x1="580" x2="580" y1="124" y2="222"></line>
+<text fill="#8fbaff" font-size="11" x="590" y="80">有价值</text>
+<text fill="#8fbaff" font-size="11" x="590" y="176">有价值</text>
+<text fill="#7c8593" font-size="11" text-anchor="end" x="128" y="128">代码所在层</text>
+</g>
+</svg>
+<figcaption>图 1 · 注释要么比代码更细（精确），要么比代码更高（直觉）；停在代码同一层的只是复述。</figcaption>
+</figure>
+<h3>三、更低一层的注释：补精确</h3>
+<p>这类注释最常用在<strong>变量声明</strong>上，包括类的成员变量、方法参数和返回值。变量名和类型通常太含糊，作者列出的典型缺口：</p>
+<ul>
+<li><strong>单位</strong>：秒还是毫秒，字节还是字符；</li>
+<li><strong>边界</strong>：区间的两端是否包含在内；</li>
+<li><strong>空值</strong>：允许 null 吗，null 代表什么；</li>
+<li><strong>资源归属</strong>：谁负责释放、关闭这个资源；</li>
+<li><strong>不变量</strong>：例如「这个列表总是至少有一项」。</li>
+</ul>
+<p>写变量注释时作者的建议是<strong>想名词，不想动词</strong>：描述这个变量<strong>代表什么</strong>，而不是代码怎样操作它。示意：<code>// 当前在响应缓冲区里的读取位置</code> 不如 <code>// 响应缓冲区中下一个尚未读取的字节的偏移量；等于长度表示读完</code>——后者说清了指向哪个字节、何时算结束。</p>
+<h3>四、更高一层的注释：补直觉</h3>
+<p>这类注释写在一段代码之前，告诉读者<strong>这段整体在做什么、为什么</strong>，让人不读每一行也能把握结构。书里举了一个来自真实系统代码的块注释：原注释逐条描述条件（如果某个请求处于某状态、且它的最后一个键小于当前键，就把当前键放进去），几乎是代码的另一种写法；改写后只一句——大意是<strong>「尝试把当前这个键并入一个已有的、发往同一服务器但尚未发出的请求」</strong>。读者立刻知道这段代码的目的，细节再去看代码。</p>
+<p>作者给的自问清单：<strong>这段代码想做什么？能解释全部的最简单说法是什么？这段代码里最重要的是什么？</strong>工程师往往擅长写细节，写高层注释更难，因为它要求跳出代码想整体。</p>
+<h3>五、接口注释：给使用者的那本说明书</h3>
+<p>本章最长的一节。核心原则：<strong>把接口注释和实现注释分开</strong>。接口注释提供使用一个类或方法所需的信息，<strong>不应该</strong>描述内部怎么实现。第二条红旗正针对此：<strong>实现细节污染接口文档（Implementation Documentation Contaminates Interface）</strong>。</p>
+<p>类的接口注释给出这个类提供的抽象的高层描述；方法的接口注释通常包括：</p>
+<ul>
+<li>一两句话的<strong>高层行为</strong>描述，以调用者的视角写；</li>
+<li><strong>每个参数和返回值</strong>的精确含义与约束；</li>
+<li><strong>副作用</strong>，即对系统未来行为的影响；</li>
+<li>可能抛出的<strong>异常</strong>；</li>
+<li>调用前必须满足的<strong>前置条件</strong>。</li>
+</ul>
+<p>书中以一个缓冲区类的拷贝方法为例，大意是：说明它把缓冲区中一段字节拷到外部位置；<code>offset</code> 是要拷的第一个字节的下标，<code>length</code> 是字节数，<code>dest</code> 必须至少有 <code>length</code> 字节的空间；返回值是<strong>实际拷贝的字节数</strong>——若请求的范围越过缓冲区末尾会少于 <code>length</code>，完全不重叠时返回 0。最后这句正是使用者最容易踩坑、而签名完全表达不了的信息。</p>
+<p>作者还给了一个判据：<strong>使用者只读外部可见的声明和接口注释，就应该能理解这个模块的抽象</strong>。做不到，要么注释缺了，要么接口本身太复杂。</p>
+<h3>六、实现注释：写「做什么、为什么」，不写「怎么做」</h3>
+<p>实现注释的主要目的是帮读者理解代码<strong>在做什么</strong>，而不是<strong>怎么做</strong>——怎么做看代码就够了。很多短方法根本不需要实现注释；长方法里，在几个主要代码块前各写一句「这块在做什么」很有用；循环前说明每轮做什么也有帮助。</p>
+<p>此外要写<strong>为什么</strong>：一段看起来多余的代码是为了修某个 bug、绕开某个怪问题，就把原因写下（必要时附缺陷编号），否则后人会以为它多余而删掉。</p>
+<h3>七、跨模块的设计决策</h3>
+<p>最难写的是横跨多个模块的约定，例如：<strong>新增一种状态码，需要同时在另一个文件的表格里补上它的文字描述</strong>。这种依赖不在任何单一模块里，开发者很容易漏掉。作者的办法：</p>
+<ul>
+<li>把说明放在<strong>开发者一定会经过的地方</strong>——如状态码枚举的声明旁边，写明「新增时还要改哪里」；</li>
+<li>没有天然位置时，建一个<strong>设计说明文件（designNotes）</strong>，按主题分节，在相关代码处留一句简短引用，如「见 designNotes 里的某某节」。</li>
+</ul>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewbox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"></path></marker></defs>
+<g font-size="12">
+<rect fill="rgba(91,157,249,0.12)" height="60" rx="10" stroke="#5b9df9" stroke-width="1.8" width="300" x="20" y="20"></rect>
+<text fill="#8fbaff" font-weight="700" x="36" y="44">接口注释 · 声明之前</text>
+<text fill="#9aa3ae" font-size="11" x="36" y="66">行为 · 参数/返回值 · 副作用 · 异常 · 前置条件</text>
+<rect fill="#171b21" height="30" rx="6" width="300" x="20" y="92"></rect>
+<text fill="#8fbaff" font-family="SF Mono,Menlo,monospace" font-size="11" x="34" y="112">int copy(offset, length, dest)</text>
+<rect fill="rgba(155,108,245,0.08)" height="80" rx="10" stroke="#9b6cf5" width="300" x="20" y="134"></rect>
+<text fill="#c9b5f7" font-weight="700" x="36" y="158">实现注释 · 方法体内</text>
+<text fill="#9aa3ae" font-size="11" x="36" y="180">每个主要代码块：在做什么</text>
+<text fill="#9aa3ae" font-size="11" x="36" y="200">反常的写法：为什么（附缺陷号）</text>
+<text fill="#d9dee5" font-size="11" x="330" y="54">← 使用者只读到这里为止</text>
+<text fill="#d9dee5" font-size="11" x="330" y="178">← 只有修改者需要</text>
+<rect fill="rgba(91,157,249,0.06)" height="70" rx="10" stroke="#5b9df9" stroke-dasharray="5 3" width="210" x="470" y="100"></rect>
+<text fill="#8fbaff" font-weight="700" text-anchor="middle" x="575" y="126">designNotes</text>
+<text fill="#9aa3ae" font-size="11" text-anchor="middle" x="575" y="148">跨模块约定，按主题分节</text>
+<line marker-end="url(#a2)" stroke="#5b9df9" stroke-dasharray="4 3" x1="322" x2="466" y1="107" y2="128"></line>
+<text fill="#7c8593" font-size="11" x="328" y="96">「见 designNotes 某节」</text>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="350" y="244">两类读者，两层注释；跨模块的知识放在必经之处或集中说明文件里</text>
+</g>
+</svg>
+<figcaption>图 2 · 注释按读者分层：接口注释给使用者，实现注释给修改者，跨模块约定用短引用指向集中说明。</figcaption>
+</figure>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 1 · 四类注释：给谁看、写什么、典型错误</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>类型</th><th>读者</th><th>该写</th><th>典型错误</th></tr></thead>
+<tbody>
+<tr><th>接口注释</th><td>使用者</td><td>行为、参数与返回值含义、副作用、异常、前置条件</td><td>写进实现细节（红旗）；只复述方法名</td></tr>
+<tr><th>成员 / 变量注释</th><td>使用者与修改者</td><td>单位、边界、null 含义、归属、不变量（想名词）</td><td>描述代码怎么操作它（想动词）</td></tr>
+<tr><th>实现注释</th><td>修改者</td><td>每块在做什么；反常写法的原因</td><td>逐行解释「怎么做」</td></tr>
+<tr><th>跨模块注释</th><td>未来的修改者</td><td>「改这里还得改哪里」及原因</td><td>没有位置就干脆不写</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">表 2 · 「更细」还是「更高」：怎么选</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>场景</th><th>更低一层：精确</th><th>更高一层：直觉</th></tr></thead>
+<tbody>
+<tr><th>适用位置</th><td>变量、参数、返回值</td><td>代码块之前、类与方法的总述</td></tr>
+<tr><th>补的缺口</th><td>名字和类型说不清的细节</td><td>读完每一行也拼不出的整体意图</td></tr>
+<tr><th>难点</th><td>要想全所有边界情况</td><td>要跳出代码，找到最简单的说法</td></tr>
+<tr><th>代价</th><td>细节多，需随代码同步</td><td>抽象措辞容易空泛，需同事检验</td></tr>
+</tbody>
+</table></div>
+<p>一句判据：<strong>写完一句注释，问「没看过这段代码的人，凭代码能写出它吗」</strong>——能就删掉或换成更细 / 更高的说法。</p>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>本章的「接口与实现分开」「写为什么、别写怎么做」，在主流规范里几乎被逐字写成了规则：</p>
+<div class="ev">
+<p class="evh">实证与出处 · 公开可查</p>
+<ul>
+<li><strong>Google C++ 风格指南</strong>：函数的<strong>声明注释描述函数的用法，定义处的注释描述它的运作</strong>；声明注释一般不写函数怎样完成任务，那留给定义处。实现注释一节明确：不要陈述显而易见的东西，提供更高层的注释说明代码<strong>为什么</strong>这样做。<span class="src">出处：<a href="https://github.com/google/styleguide/blob/gh-pages/cppguide.html" rel="noopener" target="_blank">google/styleguide · cppguide.html</a></span></li>
+<li><strong>Python PEP 257</strong>：函数或方法的 docstring 应概括其行为，并说明参数、返回值、副作用、抛出的异常以及调用限制——与本章接口注释的清单几乎一一对应。<span class="src">出处：<a href="https://github.com/python/peps/blob/main/peps/pep-0257.rst" rel="noopener" target="_blank">python/peps · pep-0257.rst</a></span></li>
+<li><strong>Linux 内核编码规范</strong>：注释一般应说明代码做<strong>什么</strong>，而不是<strong>怎么</strong>做，并尽量避免在函数体内写注释——与本章「实现注释写做什么」同向，但对函数内注释更保守。<span class="src">出处：<a href="https://github.com/torvalds/linux/blob/master/Documentation/process/coding-style.rst" rel="noopener" target="_blank">torvalds/linux · coding-style.rst</a></span></li>
+</ul>
+</div>
+<p>落到日常：代码评审时看到 <code>i++ // i 加一</code> 式注释，可以直接引本章「复述代码」红旗；看到公开方法没有说明返回值边界，可以要求补接口注释。接口注释本质上就是 API 的契约，对外公开以后改起来代价更高。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/api-design-day9.html" rel="noopener" target="_blank">System Design · Day 9 API 设计</a> — 接口注释写的就是契约：契约一旦公开，破坏它的代价由所有调用方承担</aside>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>「注释越详细越好」。</strong>不对。逐行解释「怎么做」的注释正是复述；该详细的是精确信息（单位、边界），不是步骤。</li>
+<li><strong>「接口注释里说清楚实现，用户更放心」。</strong>恰恰相反，这是红旗：实现细节一进接口文档，使用者就开始依赖它，抽象就漏了。</li>
+<li><strong>「什么是明显的，作者说了算」。</strong>作者对代码最熟，最难判断。评审时同事觉得哪里看不懂，那里就不明显——第 18 章会把这点讲透。</li>
+<li><strong>与 Linux / Clean Code 的分歧。</strong>Linux 规范和《Clean Code》都倾向少写函数体内注释、把复杂逻辑拆成小函数；Ousterhout 更接受长而深的方法加块注释。两种取向在业界并存。</li>
+<li><strong>接口注释很难写，不一定是写作问题。</strong>说不清一个方法做什么，常常说明接口本身有问题，这正是第 15 章「先写注释」的出发点。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 注释的价值 = 代码没说出的信息；和代码同一层的注释几乎无价值。</p>
+<p>② 红旗一「复述代码」：没看过代码的人凭代码能写出它，它就该删；别重复名字里的词。</p>
+<p>③ 更低一层补精确：单位、边界是否包含、null 含义、资源归属、不变量；变量注释想名词。</p>
+<p>④ 更高一层补直觉：这段想做什么、最简单的说法、最重要的是什么。</p>
+<p>⑤ 接口与实现分开；红旗二「实现细节污染接口文档」。</p>
+<p>⑥ 方法接口注释五样：行为、参数与返回值、副作用、异常、前置条件。</p>
+<p>⑦ 只读声明和接口注释就该能理解抽象，否则注释缺了或接口太复杂。</p>
+<p>⑧ 实现注释写做什么和为什么；跨模块约定放在必经之处，或集中到 designNotes。</p>
+<p>⑨ Google C++ 指南、PEP 257、Linux 规范都印证了这套分层；函数内注释多少仍有分歧。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整论证与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
