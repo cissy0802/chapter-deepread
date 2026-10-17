@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>A Philosophy of Software Design Ch 16 · Modifying Existing Code — Book Deep-Read Book 180</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · A Philosophy of Software Design · Chapter 16</p>
+<h1>Modifying Existing Code</h1>
+<p class="sub">A Philosophy of Software Design · Ch 16 · Modifying Existing Code · Ousterhout · 2nd ed 2021</p>
+<p class="langbar"><a href="aposd-ch16-modifying-existing-code-book180.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Simple</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>Every app on your phone shipped a first version, and then spent years <strong>being changed</strong>: new features, bug fixes, a fresh look. Programmers spend far more time changing code than writing it from scratch. When a new request arrives, the easiest move is to find the fewest lines you can touch, squeeze the new thing in, and call it done once it works. This chapter says: <strong>don't change code that way.</strong></p>
+<h2>An analogy</h2>
+<p>Picture an old house that needs one more power outlet. The quickest fix is to run a cable from the neighboring outlet and tape it along the wall. Once or twice is fine. Ten years later the walls are covered in loose cables and nobody dares touch them, because nobody knows which one goes where. The better way starts with a question: <strong>"If we had known about this outlet when the house was built, where would the wire run?"</strong> Then you make the change look like that, even if it means opening up the wall.</p>
+<h2>Why the old way is hard</h2>
+<p>Each taped-on cable makes sense on its own: fast, leaves everything else alone, looks like the lowest risk. The trouble is that they <strong>pile up</strong>. No single change is the culprit, but after a hundred of them every edit feels dangerous. The house's instructions suffer the same fate: if the note sits far from the wiring, the person rewiring never sees it, and the note quietly becomes wrong.</p>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>Ask the question every time.</strong> "Had we known about this from the start, how would we have built it?" Then get the result as close to that answer as you can.</li>
+<li><strong>Short on time? Don't give up.</strong> Ask instead: "Given what I have right now, what is the tidiest option?" There is often one that is almost as tidy and much cheaper.</li>
+<li><strong>Keep notes next to the thing.</strong> Like a label stuck right beside the outlet: whoever changes it sees it and updates it.</li>
+<li><strong>Say each thing once.</strong> Everywhere else, write "see over there," so you never fix one copy and forget another.</li>
+<li><strong>Look over your changes before handing them in.</strong> Check, one by one, that the notes changed too.</li>
+</ul>
+<h2>What it buys you / how to choose</h2>
+<p>Changed this way, a system <strong>gets clearer with every change</strong> instead of messier, and the next person has an easier time. One honest cost: each change takes a bit longer, sometimes a lot longer than a quick patch, especially under a deadline.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p><strong>Don't aim for the fewest lines changed: after the change, the system should look as if it had been designed for this need from the start.</strong></p>
+</div>
+<p class="switch-hint">Want to see why tactical patches snowball, why comments belong in the code instead of the commit log, the habit of checking the diff, and the same principle in Google's code review guide? <a data-mode="deep">→ Switch to Deep</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You might think the top rule for changing existing code is "smallest change, lowest risk." Ousterhout says that is exactly the <strong>tactical programming</strong> Chapter 3 warned about. The real standard: <strong>after each change, the system should have the structure it would have had if it had been designed from the start with that change in mind</strong>. If you're not making the design better, you are probably making it worse.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Tactical programming</strong>: from Chapter 3; getting the feature working as fast as possible without spending a minute on design.</li>
+<li><strong>Strategic programming</strong>: treating good design as the goal and investing a little extra time in structure with each change.</li>
+<li><strong>Refactoring</strong>: changing the internal structure of code without changing its external behavior.</li>
+<li><strong>Version control</strong>: a tool such as git that records the history of every change to the code.</li>
+<li><strong>Commit / commit log</strong>: one change saved into that history, and the message attached to it.</li>
+<li><strong>Diff</strong>: a line-by-line list of differences between two versions, usually read when committing or reviewing.</li>
+<li><strong>Interface vs. implementation comments</strong>: the first sits at a declaration and says how to use it; the second sits inside a function and says what a block is doing.</li>
+<li><strong>Technical debt</strong>: rough design left behind for the sake of speed, which costs more to pay back later.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Chapter 16. Most earlier chapters ask how to design from scratch; this one turns to <strong>maintenance</strong>. The first half returns to Chapter 3's strategic-vs-tactical theme and applies it to each individual change. The second half answers Chapter 12's excuse that "comments get out of date" with concrete practices for keeping them current. Chapter 17, on consistency, continues with how to honor existing conventions while changing code.</p>
+<h2>What problem this chapter tackles</h2>
+<p>Chapter 1 said complexity is <strong>incremental</strong>: no single change ruins a system, but hundreds of small compromises can. Large systems spend most of their lives being modified, so modification is where complexity actually gets in.</p>
+<p>A typical case: an import module handles one file format. A second format arrives, so you add an <code>if</code>. A third arrives, so you add a flag parameter. By the sixth, the function is full of special cases, the flags constrain each other, and nobody can say which flag matters in which combination. Every step was a "minimal change"; together they are a tangle.</p>
+<p>Meanwhile the comments silently decay: whoever changed the code didn't see a comment far away, or wrote the explanation into the commit message, leaving future readers with nothing. The chapter answers two questions: <strong>what standard should guide a change, and how do you keep comments from going stale afterwards?</strong></p>
+<h2>The core ideas, in depth</h2>
+<h3>1. Stay strategic: "had we known from the start" as the yardstick</h3>
+<p>When modifying code there is a strong pull toward the <strong>smallest change</strong> that makes the new feature work, touching as little else as possible because it feels safest. The author calls this mindset tactical programming: each change leaves a small special case or a small dependency, and complexity keeps accumulating.</p>
+<p>His standard is a thought experiment: <strong>if you had known about this requirement when you first designed the system, what would it look like?</strong> Ideally, after each change, the system looks like that. Getting there often requires refactoring along the way: folding special cases into a more general mechanism, replacing an abstraction that no longer fits, pulling scattered logic into one place.</p>
+<p>This is the concrete form of strategic programming's <strong>continual investment</strong>: whenever you modify any code, try to improve the design at least a little. A change is the natural moment to improve design, because right now you actually understand that code.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 270" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerheight="8" markerwidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"/></marker><marker id="a1g" markerheight="8" markerwidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5a6069"/></marker></defs>
+<g font-size="12">
+<text x="20" y="24" fill="#7c8593" font-weight="700">Tactical patches: add the fewest lines each time</text>
+<rect x="20" y="38" width="120" height="70" rx="8" fill="rgba(255,255,255,0.02)" stroke="#5a6069"/><text x="80" y="66" fill="#9aa3ae" text-anchor="middle">Version 1</text><text x="80" y="84" fill="#7c8593" font-size="10" text-anchor="middle">clean structure</text>
+<rect x="190" y="38" width="120" height="70" rx="8" fill="rgba(255,255,255,0.02)" stroke="#5a6069"/><text x="250" y="62" fill="#9aa3ae" text-anchor="middle">+ if special case</text><text x="250" y="80" fill="#7c8593" font-size="10" text-anchor="middle">+ flag parameter</text>
+<rect x="360" y="38" width="120" height="70" rx="8" fill="rgba(255,255,255,0.02)" stroke="#5a6069"/><text x="420" y="58" fill="#9aa3ae" text-anchor="middle">+ more cases</text><text x="420" y="76" fill="#7c8593" font-size="10" text-anchor="middle">flags entangled</text><text x="420" y="92" fill="#7c8593" font-size="10" text-anchor="middle">comments stale</text>
+<rect x="530" y="38" width="150" height="70" rx="8" fill="rgba(155,108,245,0.08)" stroke="#9b6cf5" stroke-dasharray="4 3"/><text x="605" y="66" fill="#c9b5f7" text-anchor="middle">nobody dares touch</text><text x="605" y="84" fill="#7c8593" font-size="10" text-anchor="middle">each change costs more</text>
+<line x1="142" y1="73" x2="186" y2="73" stroke="#5a6069" marker-end="url(#a1g)"/><line x1="312" y1="73" x2="356" y2="73" stroke="#5a6069" marker-end="url(#a1g)"/><line x1="482" y1="73" x2="526" y2="73" stroke="#5a6069" marker-end="url(#a1g)"/>
+<line x1="20" y1="134" x2="680" y2="134" stroke="rgba(91,157,249,0.25)" stroke-dasharray="4 4"/>
+<text x="20" y="162" fill="#8fbaff" font-weight="700">Strategic changes: each result looks designed that way</text>
+<rect x="20" y="178" width="120" height="70" rx="8" fill="rgba(91,157,249,0.1)" stroke="#5b9df9" stroke-width="1.6"/><text x="80" y="206" fill="#8fbaff" text-anchor="middle">Version 1</text><text x="80" y="224" fill="#7c8593" font-size="10" text-anchor="middle">clean structure</text>
+<rect x="190" y="178" width="120" height="70" rx="8" fill="rgba(91,157,249,0.1)" stroke="#5b9df9" stroke-width="1.6"/><text x="250" y="202" fill="#8fbaff" text-anchor="middle">cases folded</text><text x="250" y="220" fill="#7c8593" font-size="10" text-anchor="middle">into a general one</text>
+<rect x="360" y="178" width="120" height="70" rx="8" fill="rgba(91,157,249,0.1)" stroke="#5b9df9" stroke-width="1.6"/><text x="420" y="202" fill="#8fbaff" text-anchor="middle">misfit abstraction</text><text x="420" y="220" fill="#7c8593" font-size="10" text-anchor="middle">replaced</text>
+<rect x="530" y="178" width="150" height="70" rx="8" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="1.6"/><text x="605" y="206" fill="#8fbaff" text-anchor="middle">still clean</text><text x="605" y="224" fill="#7c8593" font-size="10" text-anchor="middle">next change stays cheap</text>
+<line x1="142" y1="213" x2="186" y2="213" stroke="#5b9df9" marker-end="url(#a1)"/><line x1="312" y1="213" x2="356" y2="213" stroke="#5b9df9" marker-end="url(#a1)"/><line x1="482" y1="213" x2="526" y2="213" stroke="#5b9df9" marker-end="url(#a1)"/>
+<text x="350" y="266" fill="#7c8593" font-size="11" text-anchor="middle">Pay a little more at each step so the cost of the next step does not rise</text>
+</g>
+</svg>
+<figcaption>Figure 1 · The same four requests: tactical patches stack special cases and flags until every change gets costlier; strategic changes refactor along the way, so the system keeps the shape it would have had if designed that way from the start.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/super-individual/refactor-eng-day20.en.html" target="_blank" rel="noopener">Super Individual · Day 20 Refactoring with AI</a> — once AI drives down the manual cost of refactoring, what real risk and verification cost remain in "fixing the structure while you're there"</aside>
+<h3>2. Real constraints: ask a different question when time is short</h3>
+<p>The author is not naive. He admits deadlines can be tight and the ideal refactoring can be too large to finish now. His advice is not to give up but to ask: <strong>"Is this the best I can do to create a clean system design, given my current constraints?"</strong> Often there is an option that is <strong>almost as clean but much cheaper</strong>, for example putting the new logic in a well-designed new method instead of wedging it into the middle of an old one.</p>
+<p>If a patch is truly all you can afford, know that you are taking on technical debt: write it down and pay it back when time allows. The real danger is not one compromise; it is "minimal change" becoming the team's default habit.</p>
+<h3>3. Maintaining comments: keep them close to the code</h3>
+<p>Chapter 12 listed a common excuse: comments get out of date. The author agrees this is a real problem but thinks practice can solve it, starting with <strong>placement</strong>. The farther a comment sits from the code it describes, the less likely the person changing that code is to see it, and the faster it goes stale.</p>
+<ul>
+<li>Put a method's documentation <strong>at its declaration</strong>, not piled up at the top of the file;</li>
+<li>Put implementation comments next to the lines they explain;</li>
+<li>Keep each comment's scope as narrow as possible: if it is about one variable, put it beside that variable.</li>
+</ul>
+<p>Then the comment is right in front of you when you change the code, and "update it while you're there" actually happens.</p>
+<h3>4. Comments belong in the code, not the commit log</h3>
+<p>A common habit: you change some subtle logic, write the detailed reasoning into the commit message, and leave nothing in the code. The author calls this a mistake. <strong>Future readers of the code will almost never dig through version history</strong>, and even if they try, finding the one relevant commit among hundreds or thousands is hard.</p>
+<p>His test is simple: <strong>if information will help someone understand this code later, put it in the code</strong>. The commit log is the right place for the history of what changed and why; it can point to a comment but cannot replace one.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerheight="8" markerwidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"/></marker><marker id="a2g" markerheight="8" markerwidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5a6069"/></marker></defs>
+<g font-size="12">
+<rect x="250" y="20" width="200" height="56" rx="10" fill="rgba(91,157,249,0.12)" stroke="#5b9df9" stroke-width="1.6"/><text x="350" y="44" fill="#8fbaff" text-anchor="middle" font-weight="700">A future reader</text><text x="350" y="62" fill="#7c8593" font-size="10" text-anchor="middle">opens the file and sees only code</text>
+<rect x="30" y="140" width="180" height="62" rx="10" fill="rgba(91,157,249,0.12)" stroke="#5b9df9" stroke-width="1.6"/><text x="120" y="166" fill="#8fbaff" text-anchor="middle">Comment at declaration</text><text x="120" y="184" fill="#7c8593" font-size="10" text-anchor="middle">visible · updated in passing</text>
+<rect x="260" y="140" width="180" height="62" rx="10" fill="rgba(255,255,255,0.02)" stroke="#5a6069"/><text x="350" y="166" fill="#9aa3ae" text-anchor="middle">Commit log</text><text x="350" y="184" fill="#7c8593" font-size="10" text-anchor="middle">must go looking · hard to find</text>
+<rect x="490" y="140" width="180" height="62" rx="10" fill="rgba(255,255,255,0.02)" stroke="#5a6069"/><text x="580" y="166" fill="#9aa3ae" text-anchor="middle">Duplicate elsewhere</text><text x="580" y="184" fill="#7c8593" font-size="10" text-anchor="middle">fix one, forget the other</text>
+<line x1="300" y1="78" x2="150" y2="136" stroke="#5b9df9" stroke-width="2" marker-end="url(#a2)"/>
+<line x1="350" y1="78" x2="350" y2="136" stroke="#5a6069" stroke-dasharray="4 3" marker-end="url(#a2g)"/>
+<line x1="400" y1="78" x2="550" y2="136" stroke="#5a6069" stroke-dasharray="4 3" marker-end="url(#a2g)"/>
+<text x="196" y="104" fill="#8fbaff" font-size="10" text-anchor="middle">default path</text>
+<text x="380" y="112" fill="#7c8593" font-size="10">rarely taken</text>
+<text x="530" y="104" fill="#7c8593" font-size="10" text-anchor="middle">finds only one</text>
+<text x="350" y="224" fill="#7c8593" font-size="11" text-anchor="middle">Put information where readers naturally look, once; elsewhere write "see there"</text>
+</g>
+</svg>
+<figcaption>Figure 2 · Where information should live: readers look at the code by default, so what they need to understand it goes beside the declaration; the commit log is rarely consulted, and duplicated notes drift apart.</figcaption>
+</figure>
+<h3>5. Avoid duplication: document each design decision once</h3>
+<p>Copy the same explanation into three places and a future change will almost certainly miss one, leaving three versions that contradict each other. The author's rule: <strong>document each design decision exactly once</strong>, in the place a developer is most likely to look first; elsewhere, write a short "see the comment in X." If the information already lives in a document outside the program, such as a protocol spec, reference it from the code rather than copying it.</p>
+<h3>6. Check the diffs before committing</h3>
+<p>A cheap, effective habit: <strong>scan the whole diff before you commit</strong>, making sure each change is reflected in the documentation, and catching leftover debug code while you are at it. A few minutes keep comments and code from silently drifting apart.</p>
+<h3>7. Higher-level comments are easier to maintain</h3>
+<p>Comments more abstract than the code describe what and why, not line-by-line how, so small code changes usually don't invalidate them. Comments that paraphrase the code line by line go stale with every edit. This matches Chapter 13: comments should capture what the code cannot say.</p>
+<h2>Key trade-offs and choices</h2>
+<p class="tcap">Table 1 · A new requirement arrives: three ways to change the code</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Approach</th><th>What you do</th><th>Short term</th><th>Long term</th></tr></thead>
+<tbody>
+<tr><th>Tactical patch</th><td>Squeeze in the fewest lines; add a special case or a flag</td><td><strong>Fastest</strong>, smallest diff to review</td><td>Special cases pile up; the next change is costlier and more error-prone</td></tr>
+<tr><th>Best under constraints (the chapter's fallback)</th><td>Ask for the cleanest option given current limits, often a new abstraction plus light refactoring</td><td>A bit slower</td><td>Structure largely preserved; debt is recorded and can be repaid</td></tr>
+<tr><th>Strategic change (the chapter's ideal)</th><td>Reshape the structure as if known from the start, refactoring along the way</td><td>Slowest, larger diff, needs tests as a safety net</td><td><strong>The system gets clearer with each change</strong>; change cost does not climb</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 2 · Where a piece of information should live</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Location</th><th>Good for</th><th>When readers see it</th><th>Staleness risk</th></tr></thead>
+<tbody>
+<tr><th>Interface comment at the declaration</th><td>Abstraction, usage, preconditions, side effects</td><td>Every time someone reads or calls it</td><td><strong>Low</strong>, it is right there when you edit</td></tr>
+<tr><th>Implementation comment in a function</th><td>A block's intent, non-obvious reasons</td><td>When reading those lines</td><td>Medium; lower the closer and more abstract it is</td></tr>
+<tr><th>Commit log</th><td>What changed this time and why; may point to a comment</td><td>Only when tracing history</td><td>Never "stale," but rarely read</td></tr>
+<tr><th>External document</th><td>Cross-module specs, protocols, overall architecture</td><td>When someone goes looking</td><td><strong>High</strong>; reference it from code, don't copy it</td></tr>
+</tbody>
+</table></div>
+<p>Rule of thumb: <strong>the longer code will live and the more people will change it, the more it deserves strategic changes</strong>. For a throwaway script or a module about to be retired, a tactical patch can be rational. The real problem is never one patch; it is no longer asking the question.</p>
+<h2>Why it matters / in real systems</h2>
+<p>Code review, refactoring, and comment conventions in large engineering organizations all serve one goal: <strong>no single change should leave the whole worse off</strong>. This chapter pushes that goal down from team process to a question every engineer asks on every change.</p>
+<div class="ev">
+<p class="evh">Industry evidence · publicly verifiable</p>
+<ul>
+<li><strong>Google's code review guide</strong>: the reviewer's duty is to make sure each change (CL) is of such quality that <strong>the overall code health of the codebase is not decreasing over time</strong>, noting that codebases often degrade through small decreases in code health, especially when a team is under time pressure and feels it must take shortcuts. The guide calls "favor approving a CL once it definitely improves the overall code health of the system, even if it isn't perfect" the senior principle among all its review guidelines. <span class="src">Source: <a href="https://github.com/google/eng-practices/blob/master/review/reviewer/standard.md" target="_blank" rel="noopener">Google Engineering Practices · The Standard of Code Review</a></span></li>
+<li><strong>Ousterhout vs. Robert C. Martin, in writing</strong>: Ousterhout argues that TDD forces developers to work "too tactically," and that the Red-Green-Refactor loop gives almost no guidance on <strong>when and what to refactor</strong>, so refactoring tends to be put off. Martin replies that design comes from strategic thought, independent of the tactical behavior of either TDD or writing code before tests. <span class="src">Source: <a href="https://github.com/johnousterhout/aposd-vs-clean-code" target="_blank" rel="noopener">GitHub · johnousterhout/aposd-vs-clean-code</a></span></li>
+<li><strong>Linux kernel patch guidelines</strong>: a commit message must first describe the problem and its user-visible impact, then the technical change, and quantify performance trade-offs. That is the right use of a commit log: recording <strong>the history of a change</strong>. The chapter's point is that whatever is needed to understand the code itself still belongs in the code. <span class="src">Source: <a href="https://github.com/torvalds/linux/blob/master/Documentation/process/submitting-patches.rst" target="_blank" rel="noopener">Linux kernel · Submitting patches</a></span></li>
+</ul>
+</div>
+<p>Day to day: when a request comes in, spend a few minutes on "what would a from-scratch design look like" before choosing how to change the code; in review, ask not only whether the diff is correct but whether it leaves the surrounding structure better or worse; when an AI assistant edits code for you, ask it for the ideal structure rather than just a minimal patch, and check before committing that the comments kept up.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/super-individual/legacy-governance-day33.en.html" target="_blank" rel="noopener">Super Individual · Day 33 AI Governance for Large Legacy Codebases</a> — in an old codebase nobody dares touch, how to turn a pile of patches back into structure in verifiable batches</aside>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"Strategic change means a big rewrite every time."</strong> No. The goal is a sensible structure after the change, which often takes only a small refactoring; the fallback question openly accepts constraints.</li>
+<li><strong>"The smallest change is the safest."</strong> Perhaps for that one change, but the risk is deferred and compounded: the more special cases, the more likely every later change is to break something.</li>
+<li><strong>"Putting the reason in the commit message is enough."</strong> Readers don't browse history by default; what they need to understand the code belongs in the code, and the commit log can point to it.</li>
+<li><strong>"Comments go stale, so write fewer."</strong> The chapter's answer is to change practice: keep them close, write each once, check the diff, prefer higher-level comments.</li>
+<li><strong>It assumes you can refactor safely.</strong> The book does not dwell on old code with little test coverage; in legacy systems without tests, "refactoring along the way" is itself risky, and practitioners often pair it with approaches like Michael Feathers' <em>Working Effectively with Legacy Code</em>: add tests first, then change.</li>
+<li><strong>The evidence is experiential.</strong> As with the whole book, the conclusions come from the author's engineering and teaching experience, not controlled studies; how much extra investment is right is for each team to judge.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① Systems spend most of their lives being modified; complexity accumulates one small change at a time.</p>
+<p>② The pull toward the "smallest change" is tactical programming.</p>
+<p>③ Yardstick: after each change, the structure should look as if designed from the start with that requirement in mind.</p>
+<p>④ If you're not making the design better, you're probably making it worse; invest a little with every change.</p>
+<p>⑤ Short on time? Ask: is this the cleanest design I can manage under current constraints?</p>
+<p>⑥ Keep comments as close to the code as possible, with the narrowest scope.</p>
+<p>⑦ Information needed to understand the code belongs in the code, not the commit log.</p>
+<p>⑧ Document each design decision once and reference it elsewhere; reference external docs instead of copying them.</p>
+<p>⑨ Scan the diff before committing; higher-level comments are the least likely to go stale.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Reading this page ≈ getting the core of the chapter; for the full argument and extensions, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
