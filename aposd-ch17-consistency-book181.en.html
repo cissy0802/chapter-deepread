@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>A Philosophy of Software Design Ch 17 · Consistency — Book Deep-Read Book 181</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · A Philosophy of Software Design · Chapter 17</p>
+<h1>Consistency</h1>
+<p class="sub">A Philosophy of Software Design · Ch 17 · Consistency · Ousterhout · 2nd ed 2021</p>
+<p class="langbar"><a href="aposd-ch17-consistency-book181.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Simple</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You can find the checkout and the exit in almost any supermarket within seconds, because supermarkets are laid out in much the same way. Software works the same. In a program with hundreds of thousands of lines, if the same kind of thing is always done the same way, a newcomer who learns it once can read it in a hundred places. This chapter is about that: <strong>consistency</strong>, and why "I have a better idea" is usually not a good enough reason to break it.</p>
+<h2>An analogy</h2>
+<p>Think of a city's traffic lights: red means stop and green means go, everywhere, so drivers never have to think about it. Now one engineer decides blue is more visible and makes blue mean stop at their intersection. Blue may really be more visible, but every driver in town will make mistakes at that corner. <strong>A good idea that differs from everything around it becomes a trap.</strong></p>
+<h2>Why the old way is hard</h2>
+<p>Software is written by many people over many years. Everyone has habits, and each habit makes sense on its own. The result is three or four ways of doing the same thing. Readers must work out each spot from scratch. Worse, they guess based on what they learned elsewhere, guess wrong, and a bug slips in.</p>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>Similar things are done the same way.</strong> Names, layout, how errors are handled: one pattern, learned once.</li>
+<li><strong>Different things should look different.</strong> Forcing two genuinely different things into the same shape misleads the reader.</li>
+<li><strong>When in Rome.</strong> Before changing someone's code, look at how the code around it is written, and write it the same way.</li>
+<li><strong>Write the rules down, then let a machine watch.</strong> People forget; automatic checks don't. And when reviewers point out small slips, everyone learns fast.</li>
+<li><strong>If you change the way, change it everywhere.</strong> Changing only half just adds one more way.</li>
+</ul>
+<h2>What it buys you / how to choose</h2>
+<p>Code becomes faster to read, mistakes become rarer, and people spend their energy on real problems instead of arguing about style. One honest cost: sticking to the rules sometimes means living with an old approach that is not the best.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p><strong>Do similar things the same way; "I have a better idea" is not enough unless it is good enough to change every old place too.</strong></p>
+</div>
+<p class="switch-hint">Want the five places consistency shows up, the four ways to keep it, when consistency goes too far, and how Google, Python and Go wrote it into their own guides? <a data-mode="deep">→ Switch to Deep</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You might think consistency is just a tidiness preference; Ousterhout treats it as <strong>a powerful tool for reducing complexity</strong>: when similar things are done in similar ways and dissimilar things in different ways, readers get leverage — learn once, apply everywhere. The price is discipline: <strong>having a "better idea" is not a sufficient excuse to introduce inconsistencies.</strong></p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Convention</strong>: a team's shared default for how a kind of thing is written, such as a naming format or a way of handling errors.</li>
+<li><strong>Coding style</strong>: rules about indentation, brace placement, declaration order, naming and comment format, usually collected into a style guide.</li>
+<li><strong>Interface</strong>: what a module promises to its users; one interface can have several implementations.</li>
+<li><strong>Design pattern</strong>: a well-known solution to a common kind of problem, such as model-view-controller in user interfaces.</li>
+<li><strong>Invariant</strong>: a property of a variable or data structure that is always true, for example "every line of text ends with a newline."</li>
+<li><strong>Cognitive load</strong>: from Chapter 2, how much a developer needs to know to complete a task.</li>
+<li><strong>Code review</strong>: colleagues read and comment on code before it is merged.</li>
+<li><strong>Pre-commit check</strong>: a script that runs before code enters the repository and rejects the commit if it fails.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Chapter 17, in the book's later group on making code obvious. It builds on Chapter 14, "Choosing Names" (consistent names are a special case), and Chapter 16, "Modifying Existing Code" (keep existing conventions when you change things), and leads into Chapter 18, "Code Should be Obvious" — consistency is one of the main sources of obviousness.</p>
+<h2>What problem this chapter tackles</h2>
+<p>Chapter 2 named three symptoms of complexity: change amplification, cognitive load and unknown unknowns. <strong>Inconsistency worsens the last two at once.</strong> Picture a service maintained by a 20-person team with three ways of handling errors: some functions return error codes, some throw exceptions, some return null. For every function a reader must first figure out which camp it belongs to. Worse, they guess based on the camp they know best, miss a call that never throws but quietly returns null, and the error is swallowed.</p>
+<p>Such inconsistency rarely comes from laziness. It usually comes from <strong>good intentions</strong>: everyone believes their own way is better. The chapter answers three questions: <strong>what consistency buys; how to keep it in a codebase touched by many people over many years; and when and how it may be broken.</strong></p>
+<h2>The core ideas, in depth</h2>
+<h3>1. Consistency is leverage</h3>
+<p>The central claim: consistency creates <strong>cognitive leverage</strong>. Once you have learned how something is done in one place, you can immediately understand every other place that does it the same way. Without consistency, each place has to be learned separately.</p>
+<p>It also reduces mistakes. In a consistent system, developers can safely assume that something that looks like X really is X, and the assumption holds. In an inconsistent one, the same assumption walks people into traps. That is why the author files consistency among the tools that make code <strong>obvious</strong>: readers can guess correctly without studying the details.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"/></marker><marker id="a1g" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5a6069"/></marker></defs>
+<g font-size="12">
+<text fill="#8fbaff" font-weight="700" x="20" y="24">Consistent: learn once, use everywhere</text>
+<rect fill="rgba(91,157,249,0.14)" height="56" rx="10" stroke="#5b9df9" stroke-width="1.6" width="130" x="20" y="60"/><text fill="#8fbaff" text-anchor="middle" x="85" y="84">Learn it once</text><text fill="#7c8593" font-size="10" text-anchor="middle" x="85" y="102">one convention</text>
+<rect fill="rgba(91,157,249,0.1)" height="30" rx="6" stroke="#5b9df9" width="120" x="210" y="36"/><text fill="#8fbaff" text-anchor="middle" x="270" y="56">Module A ✓</text>
+<rect fill="rgba(91,157,249,0.1)" height="30" rx="6" stroke="#5b9df9" width="120" x="210" y="74"/><text fill="#8fbaff" text-anchor="middle" x="270" y="94">Module B ✓</text>
+<rect fill="rgba(91,157,249,0.1)" height="30" rx="6" stroke="#5b9df9" width="120" x="210" y="112"/><text fill="#8fbaff" text-anchor="middle" x="270" y="132">Module C ✓</text>
+<line marker-end="url(#a1)" stroke="#5b9df9" x1="152" x2="206" y1="80" y2="52"/><line marker-end="url(#a1)" stroke="#5b9df9" x1="152" x2="206" y1="88" y2="89"/><line marker-end="url(#a1)" stroke="#5b9df9" x1="152" x2="206" y1="96" y2="126"/>
+<text fill="#9aa3ae" font-weight="700" x="380" y="24">Inconsistent: relearn, and guess wrong</text>
+<rect fill="rgba(255,255,255,0.02)" height="56" rx="10" stroke="#5a6069" width="120" x="380" y="60"/><text fill="#9aa3ae" text-anchor="middle" x="440" y="84">Learn it once</text><text fill="#7c8593" font-size="10" text-anchor="middle" x="440" y="102">style one</text>
+<rect fill="rgba(255,255,255,0.02)" height="30" rx="6" stroke="#5a6069" width="140" x="545" y="36"/><text fill="#9aa3ae" text-anchor="middle" x="615" y="56">Module A ✓</text>
+<rect fill="rgba(255,255,255,0.02)" height="30" rx="6" stroke="#5a6069" width="140" x="545" y="74"/><text fill="#9aa3ae" text-anchor="middle" x="615" y="94">Module B: style two?</text>
+<rect fill="rgba(155,108,245,0.1)" height="30" rx="6" stroke="#9b6cf5" stroke-dasharray="4 3" width="140" x="545" y="112"/><text fill="#c9b5f7" text-anchor="middle" x="615" y="132">Module C: wrong ✗</text>
+<line marker-end="url(#a1g)" stroke="#5a6069" x1="502" x2="541" y1="80" y2="52"/><line marker-end="url(#a1g)" stroke="#5a6069" stroke-dasharray="4 3" x1="502" x2="541" y1="88" y2="89"/><line marker-end="url(#a1g)" stroke="#5a6069" stroke-dasharray="4 3" x1="502" x2="541" y1="96" y2="126"/>
+<line stroke="rgba(91,157,249,0.25)" stroke-dasharray="4 4" x1="20" x2="680" y1="170" y2="170"/>
+<text fill="#8fbaff" text-anchor="middle" x="175" y="200">Cognitive load: learn once</text>
+<text fill="#9aa3ae" text-anchor="middle" x="530" y="200">Cognitive load: relearn each place</text>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="175" y="222">"Looks like X, is X" holds</text>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="530" y="222">Familiar guesses become unknown unknowns</text>
+</g>
+</svg>
+<figcaption>Figure 1 · The leverage of consistency: one convention covers many modules, so readers learn it once; without it, every place must be relearned and habitual guesses go wrong.</figcaption>
+</figure>
+<h3>2. Five places consistency shows up</h3>
+<ul>
+<li><strong>Names</strong>: covered in Chapter 14 — the same name always means the same kind of thing, and the same kind of thing always gets the same name.</li>
+<li><strong>Coding style</strong>: indentation, braces, declaration order, naming and comment format, plus restrictions on dangerous language features. Style guides make code easier to read and can prevent some errors.</li>
+<li><strong>Interfaces</strong>: an interface with several implementations is itself consistency — once you understand one implementation, the others are easier, because you already know what they must provide.</li>
+<li><strong>Design patterns</strong>: using a well-known pattern lets readers recognize what the code is doing at a glance; inventing a fresh approach to the same problem throws that benefit away.</li>
+<li><strong>Invariants</strong>: a property that always holds cuts the special cases a reader must consider. If every line of text is guaranteed to end with a newline, text-handling code never has to ask whether the last line does.</li>
+</ul>
+<h3>3. Four ways to keep it</h3>
+<p>Consistency is hard to maintain, especially on projects with many people over many years: one group doesn't know another's conventions, newcomers don't know the rules, and they introduce new, conflicting conventions. The author's remedies:</p>
+<ul>
+<li><strong>Document</strong>: list the most important overall conventions in a document, such as a style guide, somewhere developers will find it, and encourage newcomers to read it. More local conventions go into comments in the relevant code.</li>
+<li><strong>Enforce</strong>: the author's preferred approach is a tool that checks for violations, set up so that code cannot be committed unless it passes. People forget; tools don't.</li>
+<li><strong>When in Rome…</strong>: look around before writing. Adding a method? Check how existing methods order their parameters, name things and handle errors, and follow suit.</li>
+<li><strong>Code reviews</strong>: another checkpoint for enforcing conventions and teaching them to newcomers. As the author puts it, <strong>the more nit-picky the reviewers, the faster the team learns the conventions and the cleaner the code.</strong></li>
+</ul>
+<aside class="xref"><a href="https://hub.cissychen.com/super-individual/agents-md-skill8.en.html" target="_blank" rel="noopener">Super Individual · S8 AGENTS.md and cross-harness portability</a> — when the code is written by an AI assistant, "write the conventions down" becomes a spec file the agent reads, and "when in Rome" depends on it</aside>
+<h3>4. Don't change existing conventions lightly</h3>
+<p>The sharpest rule in the chapter: <strong>don't change existing conventions.</strong> You may think the old approach is flawed and have a better one in mind. But, the author argues, <strong>the value of consistency over inconsistency is almost always greater than the value of one approach over another</strong>. Use the new approach only in your new code, and the system now has two ways; every reader must remember both.</p>
+<p>When is a change allowed? The bar is high: first ask whether the new approach is good enough to be <strong>worth the time to update all the old uses</strong>. If it is, update all of them. If you won't or can't update them all, don't introduce it. Afterwards, update the documentation and the checking tools as well, so the new convention is the only one.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"/></marker><marker id="a2g" markerheight="8" markerwidth="8" orient="auto" refx="6" refy="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5a6069"/></marker></defs>
+<g font-size="12">
+<rect fill="rgba(155,108,245,0.1)" height="44" rx="10" stroke="#9b6cf5" width="170" x="20" y="20"/><text fill="#c9b5f7" text-anchor="middle" x="105" y="47">"I have a better idea"</text>
+<rect fill="rgba(255,255,255,0.02)" height="56" rx="10" stroke="#5b9df9" width="190" x="250" y="14"/><text fill="#d9dee5" text-anchor="middle" x="345" y="38">Worth updating</text><text fill="#d9dee5" text-anchor="middle" x="345" y="56">every old use?</text>
+<rect fill="rgba(255,255,255,0.02)" height="56" rx="10" stroke="#5b9df9" width="190" x="250" y="130"/><text fill="#d9dee5" text-anchor="middle" x="345" y="154">Will you really</text><text fill="#d9dee5" text-anchor="middle" x="345" y="172">migrate all of it?</text>
+<rect fill="rgba(255,255,255,0.03)" height="44" rx="10" stroke="#5a6069" width="190" x="490" y="20"/><text fill="#9aa3ae" text-anchor="middle" x="585" y="47">Follow the old convention</text>
+<rect fill="rgba(91,157,249,0.14)" height="60" rx="10" stroke="#5b9df9" stroke-width="1.6" width="190" x="490" y="128"/><text fill="#8fbaff" text-anchor="middle" x="585" y="150">Replace it everywhere</text><text fill="#7c8593" font-size="10" text-anchor="middle" x="585" y="168">update docs and checkers</text>
+<line marker-end="url(#a2)" stroke="#5b9df9" x1="192" x2="246" y1="42" y2="42"/>
+<line marker-end="url(#a2g)" stroke="#5a6069" x1="442" x2="486" y1="42" y2="42"/><text fill="#7c8593" font-size="10" text-anchor="middle" x="464" y="34">no</text>
+<line marker-end="url(#a2)" stroke="#5b9df9" x1="345" x2="345" y1="72" y2="126"/><text fill="#8fbaff" font-size="10" x="352" y="104">yes</text>
+<line marker-end="url(#a2)" stroke="#5b9df9" stroke-width="1.6" x1="442" x2="486" y1="158" y2="158"/><text fill="#8fbaff" font-size="10" text-anchor="middle" x="464" y="150">yes</text>
+<path d="M440,150 Q520,100 585,68" fill="none" marker-end="url(#a2g)" stroke="#5a6069" stroke-dasharray="4 3"/><text fill="#7c8593" font-size="10" x="532" y="116">no (only half)</text>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="350" y="228">New style in new code only = one more way in the system, and readers must remember both</text>
+</g>
+</svg>
+<figcaption>Figure 2 · Deciding whether to change a convention: the new approach must be worth migrating everything, and you must actually migrate everything; a "no" at either step means follow the old convention.</figcaption>
+</figure>
+<h3>5. Don't take it too far</h3>
+<p>The flip side matters just as much: <strong>dissimilar things should not be forced to look alike.</strong> Reusing a variable name for things that behave differently, or squeezing a problem into a design pattern that doesn't fit, creates false consistency — readers believe the things are the same when they are not, which is worse than obvious inconsistency. Consistency is only valuable because developers can trust that if something looks like X, it really is X.</p>
+<h3>6. Consistency is an investment</h3>
+<p>The author closes by placing consistency within the <strong>investment mindset</strong> of strategic programming: keeping things consistent takes extra effort — learning the conventions, writing checkers, nit-picking in review, migrating old code — but it pays back on every later read and change, which become faster and less error-prone.</p>
+<h2>Key trade-offs and choices</h2>
+<p class="tcap">Table 1 · When you want to use a "better" approach</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Situation</th><th>What to do</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>No clear technical winner</th><td>Pick one and have everyone follow it</td><td>Someone gives up a preference; you save the recurring arguments</td></tr>
+<tr><th>New way slightly better</th><td><strong>Follow the existing convention</strong></td><td>Live with a suboptimal approach for now</td></tr>
+<tr><th>Clearly better, full migration feasible</th><td>Change every old use at once; update docs and checkers</td><td>Large migration; a big diff needs tests behind it</td></tr>
+<tr><th>Better, but can't migrate it all</th><td>The chapter's position: <strong>don't introduce it</strong></td><td>May forgo an improvement; a common industry compromise is gradual migration with old usages clearly marked</td></tr>
+<tr><th>The two things really differ</th><td>Make them <strong>look different</strong> too (different names, different structure)</td><td>One more concept to learn, but no misleading the reader</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 2 · Four ways to ensure consistency</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Means</th><th>Good at catching</th><th>Misses</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>Document</th><td>Newcomers who don't know the conventions</td><td>People who know but forget or don't look</td><td>Low, though the document needs upkeep too</td></tr>
+<tr><th>Enforce with tools</th><td>Conventions that can be <strong>checked mechanically</strong>: format, naming, banned constructs</td><td>Judgment calls such as interface style or choice of pattern</td><td>Write the rule once; nearly free afterwards</td></tr>
+<tr><th>When in Rome</th><td>Local conventions (a module's own habits)</td><td>Surrounding code that is already a mess</td><td>A few extra minutes of reading before writing</td></tr>
+<tr><th>Code review</th><td>Judgment-based conventions, while teaching newcomers</td><td>Conventions the reviewer doesn't know either</td><td>Review time; excessive nit-picking wears people down</td></tr>
+</tbody>
+</table></div>
+<p>Rule of thumb: <strong>hand every convention a tool can check to a tool</strong>, and spend review attention on the parts that need judgment. Local consistency matters more than global — two styles within one file or one set of related interfaces do the most direct damage.</p>
+<h2>Why it matters / in real systems</h2>
+<p>Almost every large engineering organization's style guide puts consistency above any specific rule, and formatters plus static checks have turned "enforce it with a tool" into everyday infrastructure.</p>
+<div class="ev">
+<p class="evh">Industry evidence · publicly verifiable</p>
+<ul>
+<li><strong>Google C++ Style Guide</strong> lists "be consistent with existing code" among its goals: one style across the codebase lets people focus on more important issues, and consistency is what lets automated tools work. It says many consistency rules boil down to <strong>"just pick one and stop worrying about it"</strong> — the value of flexibility is outweighed by the cost of people arguing. It also draws a boundary: consistency is a good tie breaker when there is no clear technical argument, applies more heavily locally (per file, or a tightly related set of interfaces), and <strong>should not be used to justify an old style without considering the benefits of the new one</strong>. <span class="src">Source: <a href="https://github.com/google/styleguide/blob/gh-pages/cppguide.html" target="_blank" rel="noopener">Google Style Guides · cppguide.html (Goals of the Style Guide)</a></span></li>
+<li><strong>Python PEP 8</strong>: "Consistency with this style guide is important. Consistency within a project is more important. <strong>Consistency within one module or function is the most important.</strong>" But also "know when to be inconsistent" — for instance when following the rule makes code less readable, or to match surrounding code that also breaks it — and above all, <strong>don't break backwards compatibility just to comply with PEP 8</strong>. <span class="src">Source: <a href="https://github.com/python/peps/blob/main/peps/pep-0008.rst" target="_blank" rel="noopener">PEP 8 · A Foolish Consistency is the Hobgoblin of Little Minds</a></span></li>
+<li><strong>Effective Go</strong>: formatting issues are "the most contentious but the least consequential," so Go <strong>lets the machine take care of most formatting</strong> — <code>gofmt</code> emits one standard style; if its answer doesn't seem right, rearrange the program or file a bug about <code>gofmt</code>, <strong>don't work around it</strong>. That is this chapter's "enforce" taken to its limit. <span class="src">Source: <a href="https://github.com/golang/website/blob/master/_content/doc/effective_go.html" target="_blank" rel="noopener">Effective Go · Formatting</a></span></li>
+</ul>
+</div>
+<p>In practice: spend half an hour learning an unfamiliar codebase's conventions before changing it; encode team conventions in formatters and lint rules wired into pre-commit and CI; in review, separate what tools can police from what needs a human; and when an AI assistant edits code, ask it to imitate the surrounding code rather than apply its own preferences.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/code-review-signal-detection-day50.en.html" target="_blank" rel="noopener">System Design · Day 50 Code review as a signal-detection system</a> — the other side of "the more nit-picky the better": when noisy comments pile up, developers start ignoring all of them</aside>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"Consistency means uniform formatting."</strong> Formatting is the shallowest layer; consistent interfaces, patterns and invariants help understanding far more and are harder to enforce with tools.</li>
+<li><strong>"New code uses the new way; old code will fade out."</strong> By this chapter's standard, that is exactly how inconsistency is born: without a real migration, two styles coexist for years.</li>
+<li><strong>"Consistency trumps everything."</strong> No. Forcing dissimilar things to look alike is false consistency, and Google's guide warns that consistency shouldn't be an excuse to reject a better new style.</li>
+<li><strong>Tension with PEP 8.</strong> The chapter leaves almost no room for local exceptions; PEP 8 explicitly allows deviations when a rule hurts readability or to match surrounding code. Both agree that local consistency comes first.</li>
+<li><strong>"More nit-picky reviews are better" has limits.</strong> The author favors picky reviewers, but a flood of small comments drains both sides; handing mechanical checks to tools and leaving judgment to people is the more common engineering practice.</li>
+<li><strong>Migration cost is understated.</strong> In a very large codebase, "update every old use at once" may be impractical; industry relies on automated refactoring tools or staged migrations, which the book doesn't cover.</li>
+<li><strong>The evidence is experiential.</strong> As with the whole book, the conclusions come from the author's engineering and teaching experience, not controlled studies.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① Consistency is a powerful tool against complexity: do similar things similarly and dissimilar things differently.</p>
+<p>② It creates cognitive leverage — learn once, understand everywhere — and makes "looks like X, is X" a safe assumption, so fewer mistakes.</p>
+<p>③ It shows up in five places: names, coding style, interfaces, design patterns, invariants.</p>
+<p>④ Keep it by documenting, enforcing with tools (no commit unless it passes), following local custom, and nit-picky code review.</p>
+<p>⑤ "I have a better idea" is not enough to introduce inconsistency: consistency is almost always worth more than one approach's edge over another.</p>
+<p>⑥ To change a convention, it must be worth updating every old use — and you must actually update them all.</p>
+<p>⑦ Don't overdo it: making different things look the same is false consistency that misleads readers.</p>
+<p>⑧ Local consistency matters most; give every mechanically checkable convention to a tool.</p>
+<p>⑨ Real-world echoes: Google's style guide, PEP 8, Go's gofmt; like strategic programming, consistency is an investment.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Reading this page ≈ getting the core of the chapter; for the full argument and extensions, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
