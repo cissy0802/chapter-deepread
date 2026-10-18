@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>A Philosophy of Software Design Ch 18 · Code Should be Obvious — Book Deep-Read Book 182</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · A Philosophy of Software Design · Chapter 18</p>
+<h1>Code Should be Obvious</h1>
+<p class="sub">A Philosophy of Software Design · Ch 18 · Code Should be Obvious · Ousterhout · 2nd ed 2021</p>
+<p class="langbar"><a href="aposd-ch18-code-should-be-obvious-book182.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Simple</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You know things that just work at first sight: you push a door handle down and the door opens; elevator buttons are labeled with floor numbers. You also know things that trip you up: a door with a big pull handle that only opens if you push. Code is the same. Some code you understand at a glance, and your guess about it is right; other code you stare at for ages and still guess wrong. This chapter is about writing the first kind: <strong>obvious code</strong>.</p>
+<h2>A strange fact first</h2>
+<p>Programmers almost never think their own code is hard to read. The reason is simple: they carry all the background in their heads and fill in the gaps without noticing. It's like giving a friend directions: "turn left at the usual place." It's perfectly clear to you, and your friend has no idea where "the usual place" is. <strong>Only the reader can say whether something is clear.</strong></p>
+<h2>Why the old world was hard</h2>
+<p>Code is written once but read by different people for years. Every shortcut the writer takes becomes a puzzle for the reader: a box holding "two things" without saying which is which; a program that says it has "finished" but keeps quietly running in the background. Readers guess from common sense, guess wrong, and a problem is planted.</p>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>Have someone else read it.</strong> If a colleague says "I didn't get this part," then it isn't clear, however clear it looks to you.</li>
+<li><strong>Good names, familiar habits.</strong> When names say what things are and the code looks like the code around it, readers guess right from experience.</li>
+<li><strong>Use white space.</strong> Like paragraphs in an essay, blank lines split a block of code into pieces, each with a short note at the top.</li>
+<li><strong>Don't make readers lose the trail.</strong> When code is set up as "whenever this happens, run that," readers can't find who triggers it or when. Say so right next to it.</li>
+<li><strong>Don't defy common sense; if you must, put up a sign.</strong> Like the door that only pushes: at least stick a "PUSH" label on it.</li>
+</ul>
+<h2>What it buys / how to choose</h2>
+<p>Readers save time, make fewer mistakes and change code with more confidence. The principle: <strong>code should be written for the reader's convenience, not the writer's.</strong> One honest cost: caring for the reader often means a bit more work for the writer, such as defining one more small data type or adding a few lines of explanation.</p>
+<h2>Remember it in one line</h2>
+<div class="tl">
+<p><strong>The reader decides whether code is clear; code is obvious when the reader's first guess is right.</strong></p>
+</div>
+<p class="switch-hint">Want the four coding habits that most often make code obscure, how "obvious" boils down to "does the reader have the information they need," and what Google's code review guide says? <a data-mode="deep">→ Switch to Deep</a></p>
+</div>
+<div class="mode mode-deep" hidden>
+<h2>In one sentence</h2>
+<p class="lead">You might think the author can judge whether code is clear; Ousterhout says the opposite: <strong>obviousness is in the mind of the reader</strong>. Obvious code is code a reader can understand quickly, without much thought, and where <strong>their first guesses are correct</strong>. The only reliable way to judge it is to have someone else read it; the unifying way to improve it is to <strong>make sure readers always have the information they need.</strong></p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Obscurity</strong>: one of the two causes of complexity from Chapter 2; important information is not obvious, so the reader can't see it.</li>
+<li><strong>Code review</strong>: colleagues read and comment on code before it is merged.</li>
+<li><strong>Event-driven programming</strong>: instead of running step by step, the program registers "call this function when that happens," and a framework calls it when the event arrives.</li>
+<li><strong>Handler</strong>: the registered function that only runs when its event happens.</li>
+<li><strong>Generic container</strong>: a general structure that holds data of any type, such as Java's <code>Pair</code> (a box for two values), lists and maps.</li>
+<li><strong>Declared type vs. allocated type</strong>: the type written where a variable is declared (e.g. <code>List</code>) versus the type of the object actually created (e.g. <code>ArrayList</code>); they can differ.</li>
+<li><strong>Thread</strong>: an independent line of execution inside a program; other threads can keep a program running after <code>main</code> returns.</li>
+<li><strong>Red flag</strong>: the book's term for a signal that a design has a problem.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Chapter 18 closes the book's "make code obvious" group: Chapters 12–15 cover comments, Chapter 14 names, Chapter 17 consistency; this chapter gathers them under one goal, obviousness, and adds the most common habits that make code obscure. It leads into Chapter 19, which measures software trends against complexity.</p>
+<h2>What problem this chapter solves</h2>
+<p>Chapter 2 named two roots of complexity: <strong>dependencies and obscurity</strong>. This chapter takes on the second. Obscurity doesn't cost anything on the day the code is written; it costs on every later read. Readers either spend a long time rebuilding the background or guess from intuition, and <strong>a wrong guess is a bug</strong>. Picture a service maintained for five years where an average line has been read a dozen times by different people: ten minutes saved by the author is multiplied by every one of those reads.</p>
+<p>The hard part: <strong>the author is the person least qualified to judge whether their code is clear</strong>. The author has the full context and fills in everything automatically; the reader has only the lines on screen. The chapter asks how to detect obscurity, which habits create it most often, and what single principle lies underneath.</p>
+<h2>The core, explained</h2>
+<h3>1. Obviousness is decided by the reader</h3>
+<p>The definition is concrete: code is obvious when a reader can read it <strong>quickly, without much thought</strong>, and their <strong>first guesses about its behavior are correct</strong>. Such code also needs fewer comments.</p>
+<p>That gives the chapter its method: <strong>it is much easier to notice that someone else's code is nonobvious than to see problems in your own</strong>, so the best way to judge obviousness is code review. If someone reading your code says it isn't obvious, then it isn't, no matter how clear it seems to you. Ousterhout's advice is to work out what made the code nonobvious; that is how you learn to write better code next time.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 250" font-family="-apple-system,sans-serif">
+<defs><marker id="b1" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<rect x="20" y="30" width="190" height="130" rx="10" fill="rgba(255,255,255,0.02)" stroke="#5a6069"/>
+<text x="115" y="54" text-anchor="middle" fill="#9aa3ae" font-weight="700">Author's head</text>
+<rect x="40" y="68" width="150" height="24" rx="5" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"/><text x="115" y="85" text-anchor="middle" fill="#8fbaff">Code on screen</text>
+<rect x="40" y="98" width="150" height="24" rx="5" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5"/><text x="115" y="115" text-anchor="middle" fill="#c9b5f7">Intent, background</text>
+<rect x="40" y="128" width="150" height="24" rx="5" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5"/><text x="115" y="145" text-anchor="middle" fill="#c9b5f7">Hidden constraints</text>
+<rect x="490" y="30" width="190" height="130" rx="10" fill="rgba(255,255,255,0.02)" stroke="#5b9df9" stroke-width="1.6"/>
+<text x="585" y="54" text-anchor="middle" fill="#8fbaff" font-weight="700">Reader's head</text>
+<rect x="510" y="68" width="150" height="24" rx="5" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"/><text x="585" y="85" text-anchor="middle" fill="#8fbaff">Code on screen</text>
+<rect x="510" y="98" width="150" height="24" rx="5" fill="none" stroke="#5a6069" stroke-dasharray="4 3"/><text x="585" y="115" text-anchor="middle" fill="#7c8593">? (missing)</text>
+<rect x="510" y="128" width="150" height="24" rx="5" fill="none" stroke="#5a6069" stroke-dasharray="4 3"/><text x="585" y="145" text-anchor="middle" fill="#7c8593">? (missing)</text>
+<line x1="214" y1="80" x2="486" y2="80" stroke="#5b9df9" marker-end="url(#b1)"/>
+<text x="350" y="72" text-anchor="middle" fill="#8fbaff" font-size="11">The code itself gets across</text>
+<text x="350" y="122" text-anchor="middle" fill="#9aa3ae" font-size="11">Background doesn't → reader guesses</text>
+<line x1="20" y1="185" x2="680" y2="185" stroke="rgba(91,157,249,0.25)" stroke-dasharray="4 4"/>
+<text x="350" y="212" text-anchor="middle" fill="#d9dee5">Author rereads own code: fills gaps → "perfectly clear"</text>
+<text x="350" y="234" text-anchor="middle" fill="#7c8593" font-size="11">Only feedback from readers (reviewers) can measure obviousness</text>
+</g>
+</svg>
+<figcaption>Figure 1 · Why authors can't detect obscurity: the author holds off-screen background, the reader has only the code; the missing information is the obscurity.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/code-review-signal-detection-day50.en.html" target="_blank" rel="noopener">System Design · Day 50 Code Review as Signal Detection</a> — "I can't follow this" is exactly the signal review should catch; with too much comment noise, that signal drowns too</aside>
+<h3>2. What makes code more obvious</h3>
+<p>Earlier chapters' tools meet here: <strong>good names</strong> (Chapter 14) tell readers what something is without reading its implementation; <strong>consistency</strong> (Chapter 17) lets readers guess right from what they learned elsewhere. The chapter adds two more:</p>
+<ul>
+<li><strong>Judicious use of white space</strong>: Ousterhout contrasts a method comment where parameter docs run together with one that separates each parameter by a blank line, so each is easy to find; inside a method body, blank lines split code into blocks, each opened by a one-line comment saying what it does. Formatting is information too.</li>
+<li><strong>Comments as compensation</strong>: sometimes nonobvious code is unavoidable, and comments supply the missing information. The key is to <strong>put yourself in the reader's position</strong>, anticipate what is most likely to confuse them, and write there.</li>
+</ul>
+<h3>3. Four habits that make code less obvious</h3>
+<p><strong>1. Event-driven programming.</strong> The program registers handlers and a framework calls them when events occur. The trouble is that control flow becomes hard to follow: reading the code, you can't tell when or by whom a handler is invoked, and the handler never appears in any caller's code. The remedy: <strong>in each handler's interface comment, state when it is invoked</strong>.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 240" font-family="-apple-system,sans-serif">
+<defs><marker id="b2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"/></marker><marker id="b2g" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#5a6069"/></marker></defs>
+<g font-size="12">
+<text x="20" y="24" fill="#8fbaff" font-weight="700">Direct calls: read top to bottom</text>
+<rect x="20" y="40" width="120" height="34" rx="7" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"/><text x="80" y="62" text-anchor="middle" fill="#8fbaff">main()</text>
+<rect x="20" y="100" width="120" height="34" rx="7" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"/><text x="80" y="122" text-anchor="middle" fill="#8fbaff">readRequest()</text>
+<rect x="20" y="160" width="120" height="34" rx="7" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"/><text x="80" y="182" text-anchor="middle" fill="#8fbaff">sendReply()</text>
+<line x1="80" y1="76" x2="80" y2="96" stroke="#5b9df9" marker-end="url(#b2)"/><line x1="80" y1="136" x2="80" y2="156" stroke="#5b9df9" marker-end="url(#b2)"/>
+<text x="300" y="24" fill="#9aa3ae" font-weight="700">Event-driven: caller hidden in framework</text>
+<rect x="300" y="40" width="130" height="34" rx="7" fill="rgba(255,255,255,0.02)" stroke="#5a6069"/><text x="365" y="62" text-anchor="middle" fill="#9aa3ae">register(onData)</text>
+<rect x="300" y="100" width="130" height="94" rx="9" fill="rgba(155,108,245,0.08)" stroke="#9b6cf5" stroke-dasharray="4 3"/><text x="365" y="132" text-anchor="middle" fill="#c9b5f7">Framework / loop</text><text x="365" y="152" text-anchor="middle" fill="#7c8593" font-size="10">invisible to reader</text><text x="365" y="168" text-anchor="middle" fill="#7c8593" font-size="10">when? who triggers?</text>
+<rect x="520" y="40" width="160" height="34" rx="7" fill="rgba(255,255,255,0.02)" stroke="#5a6069"/><text x="600" y="62" text-anchor="middle" fill="#9aa3ae">onData()</text>
+<rect x="520" y="100" width="160" height="60" rx="7" fill="rgba(91,157,249,0.12)" stroke="#5b9df9" stroke-width="1.6"/><text x="600" y="124" text-anchor="middle" fill="#8fbaff">Interface comment:</text><text x="600" y="144" text-anchor="middle" fill="#8fbaff" font-size="11">"runs when data arrives"</text>
+<line x1="365" y1="76" x2="365" y2="96" stroke="#5a6069" stroke-dasharray="4 3" marker-end="url(#b2g)"/>
+<path d="M432,140 Q480,90 518,62" fill="none" stroke="#5a6069" stroke-dasharray="4 3" marker-end="url(#b2g)"/>
+<line x1="600" y1="76" x2="600" y2="96" stroke="#5b9df9"/>
+<text x="600" y="190" text-anchor="middle" fill="#7c8593" font-size="11">Fix: write "when it's called" on the handler</text>
+</g>
+</svg>
+<figcaption>Figure 2 · Event-driven code removes control flow from the source: direct calls read top to bottom; a handler's timing hides in the framework and needs an interface comment to bring it back.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/goto-considered-harmful-paper37.en.html" target="_blank" rel="noopener">Paper Deep-Read · Go To Statement Considered Harmful</a> — Dijkstra's old argument: the wider the gap between static program text and the dynamic process, the harder the code is to understand; event callbacks widen that gap too</aside>
+<p><strong>2. Generic containers.</strong> To return two values from a function, it's tempting to pack them into a <code>Pair&lt;Integer, Boolean&gt;</code>; the caller then pulls them out with <code>result.getKey()</code> and <code>result.getValue()</code>. Easy to write, but the meaning is gone: is <code>getKey()</code> a term number or a line number? Does the boolean mean success, or "retry needed"? This leads to the chapter's most quoted principle: <strong>software should be designed for ease of reading, not ease of writing.</strong> Generic containers are expedient for the writer and obscure for the reader; better to define a small class with meaningful names.</p>
+<figure>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 200" font-family="'SF Mono',Menlo,monospace">
+<g font-size="12">
+<rect x="20" y="20" width="320" height="160" rx="10" fill="rgba(255,255,255,0.02)" stroke="#5a6069"/>
+<text x="36" y="44" fill="#9aa3ae" font-family="-apple-system,sans-serif" font-weight="700">Easy to write: generic container</text>
+<text x="36" y="76" fill="#9aa3ae">return new Pair&lt;&gt;(term, false);</text>
+<text x="36" y="108" fill="#9aa3ae">if (r.getValue()) ...</text>
+<text x="36" y="132" fill="#9aa3ae">use(r.getKey());</text>
+<text x="36" y="164" fill="#c9b5f7" font-family="-apple-system,sans-serif">Reader: what's the key? what's true?</text>
+<rect x="360" y="20" width="320" height="160" rx="10" fill="rgba(91,157,249,0.08)" stroke="#5b9df9" stroke-width="1.6"/>
+<text x="376" y="44" fill="#8fbaff" font-family="-apple-system,sans-serif" font-weight="700">Easy to read: a named class</text>
+<text x="376" y="76" fill="#8fbaff">return new VoteResult(term,</text>
+<text x="556" y="94" fill="#8fbaff">granted);</text>
+<text x="376" y="118" fill="#8fbaff">if (r.granted) ...</text>
+<text x="376" y="140" fill="#8fbaff">use(r.term);</text>
+<text x="376" y="166" fill="#8fbaff" font-family="-apple-system,sans-serif">The names are the documentation</text>
+</g>
+</svg>
+<figcaption>Figure 3 · Designing for reading: a generic container saves one class definition but erases "what these two values are" from the code (illustrative code).</figcaption>
+</figure>
+<p><strong>3. Different types for declaration and allocation.</strong> For example, a field declared as <code>List&lt;Message&gt;</code> but assigned <code>new ArrayList&lt;Message&gt;()</code>. A reader who sees the declaration may not realize it is actually an <code>ArrayList</code>, and different implementations can differ a lot in performance and thread safety. The advice: <strong>make the declared type match the allocated type</strong>.</p>
+<p><strong>4. Code that violates reader expectations.</strong> Ousterhout's example is a Java application's <code>main</code> method: readers assume the program ends when <code>main</code> returns, but this code starts background threads inside <code>main</code>, so the program keeps running after it returns. The behavior isn't necessarily wrong, but because it defies expectations it <strong>must be documented explicitly</strong>. Code should conform to readers' expectations; where it can't, make the surprise visible.</p>
+<h3>4. The unifying principle: obvious = the reader has the information</h3>
+<p>The chapter ends by recasting everything in terms of information: <strong>if code is nonobvious, that usually means there is important information about it that the reader does not have.</strong> Hence the red flag <em>Nonobvious Code</em>: the meaning and behavior of the code cannot be understood with a quick reading. There are three ways to make code obvious:</p>
+<ul>
+<li><strong>Reduce the information readers need</strong>: hide details behind good abstractions and eliminate special cases (Chapters 4–10).</li>
+<li><strong>Reuse information readers already have</strong>: follow conventions and conform to expectations, so what they learned elsewhere applies here (Chapter 17).</li>
+<li><strong>Present the important information</strong>: good names and strategic comments (Chapters 12–15).</li>
+</ul>
+<p>That is why this chapter works as a summary: most techniques in the book are one of these three paths.</p>
+<h2>Key trade-offs</h2>
+<p class="tcap">Table 1 · Four obscuring habits: who they help, who they hurt, how to fix</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Habit</th><th>Why it's popular (for the writer)</th><th>Reader's loss</th><th>The chapter's fix</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>Event-driven</th><td>Decoupling; fits I/O and GUIs</td><td>Can't see when or by whom it's called</td><td>Handler comment states when it fires</td><td>Comment must stay in sync with registration</td></tr>
+<tr><th>Generic containers</th><td>No new class to write</td><td>Meaning of values lost</td><td>Define a small named class</td><td>One more type, a few lines</td></tr>
+<tr><th>Declared ≠ allocated</th><td>"Program to an interface"</td><td>Unaware of real performance / thread safety</td><td>Match declaration and allocation</td><td>Clashes with common Java practice; see pitfalls</td></tr>
+<tr><th>Violated expectations</th><td>Most convenient to implement</td><td>Guesses wrong from common sense</td><td>Conform, or document explicitly</td><td>Author must first notice it's surprising</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 2 · Ways to detect obscurity</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Method</th><th>Finds</th><th>Limits</th></tr></thead>
+<tbody>
+<tr><th>Author self-check</th><td>Obvious typos and layout issues</td><td><strong>Barely detects obscurity</strong>: context fills the gaps</td></tr>
+<tr><th>Code review</th><td>Where readers get stuck — the chapter's choice</td><td>Reviewers who share the background miss it too</td></tr>
+<tr><th>Reread after a while</th><td>Some obscurity (you've forgotten the background)</td><td>Slow; no substitute for another person</td></tr>
+<tr><th>Newcomer feedback</th><td>The truest zero-context reader</td><td>Rare; must be actively collected</td></tr>
+</tbody>
+</table></div>
+<p>Rule of thumb: <strong>saving the writer a minute at the cost of a minute for each reader is almost always a loss</strong>, because code is read far more often than it is written. The only real trade-off is the cost of the fix — one more class, a comment, a review — which is usually far smaller than one bug caused by a wrong guess.</p>
+<h2>Why it matters / real systems</h2>
+<p>The chapter's two core claims — "the reader judges clarity" and "write for reading" — are already written into the public guidelines of large organizations and language communities.</p>
+<div class="ev">
+<p class="evh">Industry evidence · public sources</p>
+<ul>
+<li><strong>Google's code review guide</strong> defines complexity from the reader's side: <strong>"Too complex" usually means "can't be understood quickly by code readers."</strong> It also asks reviewers to understand every line: <strong>"If you can't understand the code, it's very likely that other developers won't either,"</strong> so the reviewer should ask for it to be clarified — the same stance as "if a reader says it isn't clear, it isn't." <span class="src">Source: <a href="https://github.com/google/eng-practices/blob/master/review/reviewer/looking-for.md" target="_blank" rel="noopener">Google Engineering Practices · What to look for in a code review</a></span></li>
+<li><strong>The Zen of Python (PEP 20)</strong>: "Readability counts," "Explicit is better than implicit," and <strong>"If the implementation is hard to explain, it's a bad idea"</strong> — in line with "document what defies expectations" and "write for reading." <span class="src">Source: <a href="https://github.com/python/peps/blob/main/peps/pep-0020.rst" target="_blank" rel="noopener">PEP 20 · The Zen of Python</a></span></li>
+<li><strong>Kotlin's standard-library <code>Pair</code></strong> says so in its own docs: <strong>"There is no meaning attached to values in this class, it can be used for any purpose."</strong> That is precisely why the chapter objects to passing business results in generic containers: the container carries no meaning, so readers must guess it. <span class="src">Source: <a href="https://github.com/JetBrains/kotlin/blob/master/libraries/stdlib/src/kotlin/util/Tuples.kt" target="_blank" rel="noopener">JetBrains/kotlin · stdlib Tuples.kt</a></span></li>
+</ul>
+</div>
+<p>In practice: treat "I don't understand this" as a legitimate review comment, not the reviewer's problem; when returning several values, define a small named type; document when callbacks, hooks and message handlers fire; wherever something "looks like A but is really B," add a one-line comment. The same holds for AI-generated code: whether it is clear only counts once someone who didn't watch it being generated has read it.</p>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"If it's clear to me, it's clear."</strong> The chapter's central rebuttal: the author is least qualified to judge. A review comment saying "I can't follow this" doesn't need a defense; it needs a code change.</li>
+<li><strong>"Obvious means no comments needed."</strong> No. Obvious code needs fewer comments, but the chapter explicitly treats comments as compensation; Chapter 13's "comments describe what isn't obvious from the code" still holds.</li>
+<li><strong>Clash with "program to an interface."</strong> Mainstream Java practice (e.g. <em>Effective Java</em>'s "refer to objects by their interfaces") declares <code>List</code> and allocates <code>ArrayList</code> so the implementation can change later. The chapter takes the opposite view, valuing the reader's knowledge of the real type. A reasonable middle ground: for fields and locals where readers need the implementation's properties, make them visible; for public parameters and return types, interface types still fit.</li>
+<li><strong>The context has shifted.</strong> Java records and Kotlin data classes make "define a small named class" a one-liner, shrinking the convenience edge of generic containers; <code>async/await</code> lets much event-driven code be read sequentially again. The principle hasn't changed, but the fixes got cheaper.</li>
+<li><strong>Reviewers have blind spots too.</strong> Reviewers on the same team often share the author's background and fill gaps just like the author; the truest test comes from newcomers or readers from other teams.</li>
+<li><strong>The evidence is experiential.</strong> As with the rest of the book, the conclusions come from the author's engineering and teaching experience, not controlled experiments.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① Obscurity is one of the two roots of complexity; this chapter targets it.</p>
+<p>② Obvious = the reader understands quickly, and their first guess is right.</p>
+<p>③ Obviousness lives in the reader's mind: authors can't measure it, code review can; if a reader says it's unclear, it is.</p>
+<p>④ To make code clearer: good names, consistency, judicious white space, comments written from the reader's seat.</p>
+<p>⑤ Four obscuring habits: event-driven code (document when handlers run), generic containers (define named classes), declared ≠ allocated (match them), violated expectations (fix or document).</p>
+<p>⑥ Core principle: design software for ease of reading, not ease of writing.</p>
+<p>⑦ Unifying idea: unclear = the reader lacks important information; three paths — need less, reuse what they know, present it.</p>
+<p>⑧ Debates: clashes with "program to an interface"; records and async/await have made the fixes cheaper.</p>
+<p>⑨ Real-world echo: Google's review guide defines "too complex" as not quickly understandable by readers; PEP 20 says hard-to-explain is a bad idea.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Reading this page ≈ getting the core of the chapter; for the full argument and extensions, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
