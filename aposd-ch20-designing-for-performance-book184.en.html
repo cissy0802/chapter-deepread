@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>A Philosophy of Software Design Ch 20 · Designing for Performance — Book Deep-Read Book 184</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · A Philosophy of Software Design · Chapter 20</p>
+<h1>Designing for Performance</h1>
+<p class="sub">A Philosophy of Software Design · Ch 20 · Designing for Performance · Ousterhout · 2nd ed 2021</p>
+<p class="langbar"><a href="aposd-ch20-designing-for-performance-book184.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Quick read</button>
+<button data-mode="deep">Deep read</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You tap an app and it spins for three seconds — somewhere, a piece of code is "too slow." Many programmers believe that to be fast, code has to be twisted and hard to read. This chapter's author says the opposite: <strong>most of the time, clean and simple code is already the faster code.</strong></p>
+<h2>A curious fact first</h2>
+<p>The author once tore down and rewrote a piece of his team's code that packs up messages, aiming to make it faster. The new version ran nearly twice as fast — and it was shorter. Here, fast and simple turned out to be the same thing.</p>
+<h2>Why it was hard before</h2>
+<p>Two common extremes both go wrong. Some people squeeze for speed from day one and turn the code into a tangle. Others ignore speed entirely, and when the system finally crawls they discover it is a little slow everywhere — with no single spot to fix.</p>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>Know what is "expensive."</strong> Inside a computer, using what is close at hand is like pulling keys from your pocket; asking another machine over the network is like a long-distance phone call; reading an old spinning disk is like mailing a letter and waiting for a reply. The gaps are thousands of times.</li>
+<li><strong>Simple is fast in itself.</strong> Fewer detours and fewer "just in case" checks mean less work for the machine; convoluted code is often doing the same work twice.</li>
+<li><strong>If two roads are equally clean, take the faster one.</strong> It costs nothing extra — it is just a habit.</li>
+<li><strong>Measure before you change anything.</strong> Gut feelings about "where it's slow" are often wrong, like a surgeon operating without a blood test.</li>
+<li><strong>Speed up only the road most people take.</strong> Like a supermarket's "five items or fewer" express lane: most shoppers zip through, and the odd complicated cases go to a regular counter instead of making everyone wait in one long line.</li>
+</ul>
+<h2>What it buys you / how to choose</h2>
+<p>Day to day, write simply and pick the faster option when it costs nothing. When you truly need speed, measure where it's slow first, then make the most-traveled road short and straight. One honest cost: redesigning that main road often means tearing up existing structure, which is real work — so do it only after measuring shows it's worth it.</p>
+<h2>Remember it in one line</h2>
+<div class="tl">
+<p><strong>Simple is usually fast; to go faster, measure first, then straighten the road most traveled.</strong></p>
+</div>
+<p class="switch-hint">Want the orders of magnitude between operations, the concrete critical-path redesign recipe, the RAMCloud rewrite, and why Google says "write it simply and optimize later" is often wrong? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think performance and clean code are enemies; this chapter's conclusion is that <strong>clean design and high performance are largely compatible, and complicated code tends to be slow</strong> — because it does extraneous or redundant work. The author's approach to performance compresses into three steps: <strong>develop a feel for what is expensive and pick the faster of equally clean options; measure before you modify; when you need a fundamental improvement, redesign around the critical path.</strong></p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Latency</strong>: how long one operation takes, measured in nanoseconds (ns), microseconds (µs), or milliseconds (ms); 1 ms = 1,000 µs = 1,000,000 ns.</li>
+<li><strong>Cache miss</strong>: the data the CPU needs isn't in its fast on-chip cache, so it must fetch it from slower main memory.</li>
+<li><strong>Dynamic memory allocation</strong>: asking the system for a block of memory while the program runs, e.g. <code>malloc</code> in C or <code>new</code> in C++.</li>
+<li><strong>Micro-benchmark</strong>: a small program that times one isolated operation.</li>
+<li><strong>Profiling</strong>: measuring how much time each part of a program takes, to find the "hot spots."</li>
+<li><strong>Critical path</strong>: the code that must run to complete a task in the most common case.</li>
+<li><strong>Special case</strong>: a situation that departs from the common case and needs an extra branch to handle.</li>
+<li><strong>Deep module</strong>: a Chapter 4 idea — a simple interface hiding a lot of functionality.</li>
+<li><strong>RPC (remote procedure call)</strong>: asking another machine to run an operation and return the result, as if calling a local function.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Chapter 20. Right after Chapter 19 tests software fashions against complexity, this chapter tests another common excuse — "we had to make it complicated for performance." It leads into Chapter 21, "Decide What Matters." In practice it maps onto every review that asks "should we add a cache or a new structure to make this faster?"</p>
+<h2>The problem this chapter tackles</h2>
+<p>The first nineteen chapters urge you to write simple code. A fair question is: <strong>won't simple be slow?</strong> If the answer is yes, the book's advice collapses for performance-sensitive systems.</p>
+<p>Real teams fail in two ways. One is <strong>optimizing everything</strong>: adding special branches, hand-rolled caches, and broken abstractions to save a few nanoseconds — the code becomes hard to read, and most of the savings land where they don't matter. The other is <strong>ignoring performance entirely</strong>: every module is "a bit slow," the system ends up several times slower, and there is no obvious hot spot to attack. The chapter offers a middle road: <strong>get most of the performance you need for the least complexity.</strong></p>
+<h2>Core ideas, in depth</h2>
+<h3>1. Performance thinking: an order-of-magnitude sense of what's expensive</h3>
+<p>The author does not recommend heavy performance work from day one, nor ignoring it. His approach: <strong>among several equally natural alternatives, pick the more efficient one</strong> — provided it is just as clean. To do that you need to know which operations are fundamentally expensive. The book names four:</p>
+<ul>
+<li><strong>Network communication</strong>: a round trip within a datacenter takes roughly 10–50 µs, tens of thousands of instruction times; a wide-area round trip takes 10–100 ms.</li>
+<li><strong>Secondary-storage I/O</strong>: a disk operation takes about 5–10 ms; flash, about 10–100 µs.</li>
+<li><strong>Dynamic memory allocation</strong>: <code>malloc</code> / <code>new</code> carry significant overhead for allocation, freeing, and garbage collection.</li>
+<li><strong>Cache misses</strong>: fetching from main memory costs a few hundred instruction times.</li>
+</ul>
+<p>Knowing this gives everyday choices a basis. The author's examples: for a large table looked up by key, a hash table is typically several times faster than an ordered map; in C/C++, allocating an array of structures as one block usually beats allocating each separately and storing pointers. These choices are <strong>no more complicated</strong> — you just have to know. When unsure, write a micro-benchmark.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 300" xmlns="http://www.w3.org/2000/svg">
+<g font-size="12">
+<text fill="#8fbaff" font-weight="700" x="20" y="24">Rough cost of one operation (log scale, each gridline ×100)</text>
+<g stroke="rgba(91,157,249,0.15)" stroke-dasharray="3 4">
+<line x1="245" x2="245" y1="40" y2="262"/><line x1="335" x2="335" y1="40" y2="262"/><line x1="425" x2="425" y1="40" y2="262"/><line x1="515" x2="515" y1="40" y2="262"/><line x1="605" x2="605" y1="40" y2="262"/>
+</g>
+<g fill="#9aa3ae" text-anchor="end">
+<text x="190" y="62">L1 cache read</text><text x="190" y="96">Main memory read</text><text x="190" y="130">SSD read 4KB</text><text x="190" y="164">Datacenter round trip</text><text x="190" y="198">Disk seek</text><text x="190" y="232">Transoceanic round trip</text>
+</g>
+<rect fill="rgba(91,157,249,0.35)" height="20" rx="4" width="31" x="200" y="48"/>
+<rect fill="rgba(91,157,249,0.45)" height="20" rx="4" width="121" x="200" y="82"/>
+<rect fill="rgba(110,140,247,0.55)" height="20" rx="4" width="239" x="200" y="116"/>
+<rect fill="rgba(125,130,246,0.6)" height="20" rx="4" width="256" x="200" y="150" stroke="#5b9df9" stroke-width="1.6"/>
+<rect fill="rgba(140,118,245,0.65)" height="20" rx="4" width="346" x="200" y="184"/>
+<rect fill="rgba(155,108,245,0.75)" height="20" rx="4" width="413" x="200" y="218"/>
+<g fill="#d9dee5" font-size="11">
+<text x="238" y="62">0.5 ns</text><text x="328" y="96">50 ns</text><text x="446" y="130">20 µs</text><text x="463" y="164">50 µs</text><text x="553" y="198">5 ms</text><text x="620" y="232">150 ms</text>
+</g>
+<g fill="#7c8593" font-size="10" text-anchor="middle">
+<text x="245" y="278">1 ns</text><text x="335" y="278">100 ns</text><text x="425" y="278">10 µs</text><text x="515" y="278">1 ms</text><text x="605" y="278">100 ms</text>
+</g>
+</g>
+</svg>
+<figcaption>Figure 1 · From an L1 cache hit to a transoceanic round trip spans about 300 million times. Numbers from the estimates table in Jeff Dean and Sanjay Ghemawat's "Performance Hints"; magnitudes match those the book lists.</figcaption>
+</figure>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/capacity-estimation-day26.en.html" target="_blank" rel="noopener">System Design · Day 26 Capacity Estimation</a> — putting this latency ladder to work: QPS, bandwidth, and storage worked out to the right order of magnitude on one sheet of paper</aside>
+<h3>2. Simple and fast usually point the same way</h3>
+<p>This is the chapter's most counterintuitive line: <strong>simpler code tends to run faster.</strong> Three reasons. First, if you have defined special cases and exceptions out of existence (Chapter 10), no code is needed to check for them. Second, <strong>deep classes are more efficient than shallow ones</strong>: each call does more work and crosses fewer layers, and every layer crossing adds overhead. Third, complicated code often does extraneous or redundant work.</p>
+<p>So what if the faster design really is more complex? The author weighs cost against payoff. If it adds only a little complexity and the gain is significant (say, adding a cache), it may be worth it. If it adds a lot of implementation complexity or complicates interfaces, <strong>start with the simpler approach and optimize later if performance becomes a problem</strong>. But if there is clear evidence that performance is the central goal, design for it from the start — the author's RAMCloud project aimed for the lowest possible remote-access latency, so it used networking that bypasses the operating-system kernel and talks to the network card directly, despite the extra complexity.</p>
+<h3>3. Measure before modifying</h3>
+<p>When a system really is too slow, "fixing it by intuition" is the most common mistake. Even experienced programmers' performance intuitions are unreliable, the author says; acting on them often spends effort where it doesn't matter while adding complexity. Measurement serves two purposes: <strong>finding the place where a change will have the biggest impact</strong> — knowing "what's slow" isn't enough; you want the point with the most leverage — and <strong>setting a baseline</strong> so you can re-measure afterward and confirm things actually improved. <strong>If a change makes no measurable difference, back it out</strong> — unless it also made the system simpler. Keeping it only keeps the complexity.</p>
+<h3>4. Design around the critical path</h3>
+<p>The best optimizations are often "fundamental": adding a cache, or switching algorithms (say, from a balanced tree to a hash table). When none is available, the author's method is <strong>to redesign around the critical path</strong>:</p>
+<ul>
+<li><strong>Ask what the ideal code looks like</strong>: in the most common case, what is the <strong>smallest</strong> amount of code that must run? Ignore the existing structure for now and imagine writing a new method that serves only the critical path. That ideal code is usually both simple and fast.</li>
+<li><strong>Evict special cases from the critical path</strong>: ideally, <strong>a single <code>if</code></strong> at the start detects every special case, and everything else moves to a separate slow path. Reshape data structures if needed — for example, combining several scattered conditions into one value that can be tested once.</li>
+<li><strong>Then restructure the rest around it</strong>: add back all the functionality without disturbing the ideal critical path.</li>
+</ul>
+<h3>5. The example: RAMCloud's Buffer</h3>
+<p>RAMCloud is the all-in-memory key-value store built by the author's group; its Buffer class holds variable-length RPC request and response messages. A Buffer is made of memory chunks, whose storage either belongs to the Buffer (about 1KB inside the object, with more allocated as needed) or comes from outside (such as network packets).</p>
+<p>In the old version, allocating new space — the most common operation — passed through several layers of method calls, each mostly forwarding arguments, with special-case checks along the way. The author rewrote it as a critical path: <strong>the common case needs just one test, "is there enough room at the end of the last chunk?"</strong> If so, carve the new region right there and return; every other situation — new chunks, insufficient space, external memory — goes to the slow path. The key operation got nearly twice as fast (the book measures about 8.8 ns down to 4.75 ns), and <strong>the new code was about 20% smaller</strong>. Performance and simplicity won together.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 270" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b1" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5b9df9"/></marker><marker id="b2" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#9b6cf5"/></marker><marker id="b3" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#5a6069"/></marker></defs>
+<g font-size="12">
+<text fill="#9aa3ae" font-weight="700" x="20" y="24">Old: layer after layer</text>
+<g fill="rgba(255,255,255,0.02)" stroke="#5a6069">
+<rect height="30" rx="6" width="200" x="20" y="40"/><rect height="30" rx="6" width="200" x="20" y="92"/><rect height="30" rx="6" width="200" x="20" y="144"/><rect height="30" rx="6" width="200" x="20" y="196"/>
+</g>
+<g fill="#9aa3ae" text-anchor="middle" font-size="11"><text x="120" y="60">Caller: allocate n bytes</text><text x="120" y="112">Layer 1: forward + check</text><text x="120" y="164">Layer 2: forward + check</text><text x="120" y="216">Layer 3: actual allocation</text></g>
+<line marker-end="url(#b3)" stroke="#5a6069" x1="120" x2="120" y1="71" y2="89"/><line marker-end="url(#b3)" stroke="#5a6069" x1="120" x2="120" y1="123" y2="141"/><line marker-end="url(#b3)" stroke="#5a6069" x1="120" x2="120" y1="175" y2="193"/>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="125" y="250">Full trip every call; checks scattered</text>
+<line stroke="rgba(91,157,249,0.25)" stroke-dasharray="4 4" x1="250" x2="250" y1="20" y2="250"/>
+<text fill="#8fbaff" font-weight="700" x="280" y="24">New: built around the critical path</text>
+<rect fill="rgba(255,255,255,0.02)" height="30" rx="6" stroke="#5a6069" width="180" x="280" y="40"/><text fill="#9aa3ae" font-size="11" text-anchor="middle" x="370" y="60">Caller: allocate n bytes</text>
+<line marker-end="url(#b1)" stroke="#5b9df9" x1="365" x2="365" y1="71" y2="91"/>
+<rect fill="rgba(91,157,249,0.12)" height="40" rx="8" stroke="#5b9df9" stroke-width="1.8" width="270" x="280" y="94"/>
+<text fill="#8fbaff" font-size="11" text-anchor="middle" x="415" y="112">Single test: room at end of last chunk ≥ n?</text><text fill="#7c8593" font-size="10" text-anchor="middle" x="415" y="127">one if guards every special case</text>
+<line marker-end="url(#b1)" stroke="#5b9df9" stroke-width="1.6" x1="340" x2="340" y1="135" y2="171"/><text fill="#8fbaff" font-size="11" x="295" y="157">yes</text>
+<rect fill="rgba(91,157,249,0.18)" height="40" rx="8" stroke="#5b9df9" stroke-width="1.6" width="180" x="270" y="174"/><text fill="#d9dee5" font-size="11" text-anchor="middle" x="360" y="192">Fast path: carve in place</text><text fill="#7c8593" font-size="10" text-anchor="middle" x="360" y="207">bump a pointer, return</text>
+<line marker-end="url(#b2)" stroke="#9b6cf5" stroke-dasharray="4 3" x1="490" x2="550" y1="135" y2="171"/><text fill="#c9b5f7" font-size="11" x="528" y="152">no</text>
+<rect fill="rgba(155,108,245,0.08)" height="40" rx="8" stroke="#9b6cf5" width="200" x="470" y="174"/><text fill="#c9b5f7" font-size="11" text-anchor="middle" x="570" y="192">Slow path: new chunk, etc.</text><text fill="#7c8593" font-size="10" text-anchor="middle" x="570" y="207">all special cases live here</text>
+<text fill="#d9dee5" font-size="11" text-anchor="middle" x="470" y="250">Key operation nearly 2x faster, ~20% less code</text>
+</g>
+</svg>
+<figcaption>Figure 2 · Critical-path redesign: the common case takes only "one test + in-place allocation"; everything else is gathered on the slow path. The number of old layers is illustrative.</figcaption>
+</figure>
+<h2>Key trade-offs and choices</h2>
+<p class="tcap">Table 1 · Is the faster option worth it? Graded by cost</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Situation</th><th>Example</th><th>Author's advice</th><th>Cost / risk</th></tr></thead>
+<tbody>
+<tr><th>Fast option equally clean</th><td>Hash table vs ordered map; one block for an array of structs</td><td><strong>Just pick the fast one</strong>, as a habit</td><td>Near zero; needs only a feel for costs</td></tr>
+<tr><th>Small complexity, big gain</th><td>Adding a cache</td><td><strong>Worth considering</strong></td><td>New state to maintain: invalidation, consistency</td></tr>
+<tr><th>Big complexity, unclear gain</th><td>Special branches everywhere for a few ns</td><td><strong>Write it simply</strong>; optimize when measured</td><td>If everything is slow, hot spots are hard to find later</td></tr>
+<tr><th>Performance is the core goal</th><td>RAMCloud's kernel-bypass networking</td><td><strong>Design for it from the start</strong></td><td>More complex to build and deploy</td></tr>
+<tr><th>System is already too slow</th><td>RAMCloud Buffer rewrite</td><td><strong>Measure first</strong>, then redesign the critical path</td><td>May mean tearing up structure; real work</td></tr>
+</tbody>
+</table></div>
+<p>Rule of thumb: a performance change must clear two bars — <strong>does it measurably help?</strong> If not, back it out; <strong>is the complexity worth it?</strong> Changes that make the critical path shorter and straighter often win on both.</p>
+<h2>Why it matters / in real systems</h2>
+<p>The chapter's value is dismantling the "performance vs. readability" opposition: most of the time, deep modules with few special cases are exactly the fast code; the places that truly require sacrificing clarity are rare, and measurement should decide them.</p>
+<div class="ev">
+<p class="evh">Industry evidence · publicly verifiable</p>
+<ul>
+<li><strong>Google · Jeff Dean and Sanjay Ghemawat, "Performance Hints" (first published 2023, updated 2025)</strong> note that Knuth's "premature optimization is the root of all evil" is often quoted out of context; the full sentence continues, <strong>"Yet we should not pass up our opportunities in that critical 3%."</strong> They also push back on "write it as simply as possible and deal with performance later when we can profile": disregard performance while building a large system and you end up with <strong>"a flat profile where there are no obvious hotspots because performance is lost all over the place."</strong> Their advice: <strong>choose the faster alternative if it does not impact readability/complexity significantly</strong> — almost the same sentence as this chapter's first rule. <span class="src">Source: <a href="https://github.com/abseil/abseil.github.io/blob/master/fast/hints.md" target="_blank" rel="noopener">abseil/abseil.github.io · fast/hints.md</a></span></li>
+<li><strong>RAMCloud (Stanford)</strong> turned "performance is the core goal" into numbers: its README says data stays in DRAM at all times, so objects can be read remotely <strong>in as little as 5 µs</strong>, and <strong>writes take less than 15 µs</strong>. In its Buffer source, <code>alloc()</code> opens with exactly this chapter's fast-path test, commented <strong>"There is extra space at the end of the current last chunk, so we can just allocate the new region there."</strong> <span class="src">Source: <a href="https://github.com/PlatformLab/RAMCloud" target="_blank" rel="noopener">PlatformLab/RAMCloud README</a> · <a href="https://github.com/PlatformLab/RAMCloud/blob/master/src/Buffer.cc" target="_blank" rel="noopener">src/Buffer.cc</a></span></li>
+</ul>
+</div>
+<p>In daily work: when a review shows a complex change "for performance," ask for the measurements and the baseline; when choosing data structures, count network round trips, disk I/O, and allocations as the "expensive things"; when you inherit slow code, first ask "what is the least the common case must do?", then see what the existing code does beyond that. In an interview asked "how would you optimize this?", leading with measurement and then the critical path sounds far more experienced than reciting tricks.</p>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"The author says don't care about performance."</strong> Wrong. He rejects both extremes and advocates a feel for costs plus picking the faster of equally clean options.</li>
+<li><strong>"Premature optimization is the root of all evil" is not a free pass.</strong> Knuth was talking about the ~97% of small efficiencies; Google's document warns that ignoring performance everywhere yields a flat profile. That agrees with the author's "pick the faster one day to day," but leans harder on early investment than his "if it's complex, start simple." The disagreement is over how much complexity is acceptable.</li>
+<li><strong>Critical-path redesign ≠ bolting on a fast path.</strong> Adding one more special branch to the old structure only adds complexity; the author first works out the ideal code, then reorganizes everything else around it.</li>
+<li><strong>Measurements can mislead.</strong> Micro-benchmarks time isolated operations and ignore cache state, concurrency, and more; re-measure changes under real load.</li>
+<li><strong>Numbers age.</strong> Specific costs shift with hardware (flash and networks keep getting faster), but the ladder of orders of magnitude is fairly stable — remember the ladder.</li>
+<li><strong>The examples lean toward systems software.</strong> RAMCloud is a microsecond-scale system; in business code where a request already takes tens of milliseconds, nanosecond-level critical-path gains may not justify a rewrite — measuring first still comes first.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① Clean design and high performance are largely compatible; complicated code is often slow because it does extraneous or redundant work.</p>
+<p>② Have an order-of-magnitude feel for what's expensive: network round trips, disk / flash I/O, dynamic memory allocation, cache misses.</p>
+<p>③ Among equally clean options, pick the faster one — it costs almost nothing.</p>
+<p>④ Small complexity for a big gain: do it. Big complexity: start simple. Performance as the core goal: design for it from day one.</p>
+<p>⑤ Measure before modifying: find the point of greatest impact, keep a baseline; back out changes with no measurable gain.</p>
+<p>⑥ Prefer fundamental fixes — a cache, a better algorithm; failing those, redesign around the critical path.</p>
+<p>⑦ Critical path: write the ideal code for just the common case, guard every special case with one if, move the rest to a slow path.</p>
+<p>⑧ Evidence: the RAMCloud Buffer rewrite ran nearly 2x faster with ~20% less code; Google's "Performance Hints" also says pick the faster option when readability doesn't suffer, and warns of the "flat profile."</p>
+</div>
+</div>
+<footer>Book Deep-Read · Finish this page ≈ hold the core of the chapter; for the full argument and extensions, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
