@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Software Engineering at Google Ch 11 · Testing Overview — Book Deep-Read 191</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · Software Engineering at Google · Chapter 11</p>
+<h1>Testing Overview</h1>
+<p class="sub">Software Engineering at Google · Ch 11 · Testing Overview · Adam Bender · 2020</p>
+<p class="langbar"><a href="swegoogle-ch11-testing-overview-book191.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Quick read</button>
+<button data-mode="deep">Deep read</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The software behind Google Search changes almost every day, yet you rarely see it suddenly break. This chapter is about one of the reasons: <strong>letting machines check the software over and over instead of people</strong> (automated testing), and how Google turned that into a company-wide habit.</p>
+<h2>A strange thing first</h2>
+<p>You'd think tests exist to catch bugs. This chapter says something <strong>just as important: they let people dare to change code</strong>. In 2005, the team running the web server behind Google Search was at one point shipping releases where more than eight in ten carried a user-visible bug and had to be pulled back. Everyone was nervous about making changes, and work slowed to a crawl. Then the team adopted one rule: every change must come with automatic checks. A year later, emergency fixes had dropped by half, in a year when they were changing more than ever.</p>
+<h2>Why the old world was hard</h2>
+<p>The old way was a room of testers clicking through everything by hand. But today's search has to find flights, movie times and images, multiplied by every language, country and device. Nobody can click through all that. Worse, even if every engineer is excellent and makes just one mistake a month, a team of a hundred still produces five new mistakes every working day. <strong>Clever people alone don't survive scale.</strong></p>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>Write once, benefit daily:</strong> a test is like a smoke alarm. Install it once, and whoever leaves the stove on, it goes off. Nobody needs to learn to smell smoke.</li>
+<li><strong>Size by how much room it takes:</strong> a small test experiments inside one room, a medium test may use the whole house, and only a large test may wander into other buildings. The smaller the room, the fewer surprises, and the faster and steadier the result.</li>
+<li><strong>Many small, few big:</strong> picture a pyramid: lots of quick, reliable small checks at the bottom, a few big checks at the top that walk through the whole thing like a real user. Flip it over and you get an ice cream cone: slow and prone to collapse.</li>
+<li><strong>The alarm must be trustworthy:</strong> if a smoke alarm keeps going off for nothing, people pull the battery out. A test that passes one minute and fails the next does more harm than no test.</li>
+<li><strong>Whatever you care about, put an alarm on it:</strong> Google calls this the "Beyoncé Rule". If someone changes shared plumbing and breaks your feature, and you had no check for it, that's on you.</li>
+</ul>
+<h2>What it brought / how to choose</h2>
+<p>Google never ordered anyone to write tests. Instead it used new-hire classes, a one-page testing tip posted in restroom stalls every week, and a leaderboard that ranked teams, until "testing is everyone's job" became the default culture. The honest cost: writing tests takes time, a big pile of tests needs looking after, and some things, like whether a search result is actually good, still need human judgment.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p><strong>Tests aren't only for catching mistakes. They let many people safely change the same code every day.</strong></p>
+</div>
+<p class="switch-hint">Want the two separate axes of size and scope, the 80/15/5 mix, the ice cream cone and hourglass anti-patterns, why a one-in-a-thousand flake rate hurts, and why coverage numbers mislead? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>One line</h2>
+<p class="lead">You think tests are for catching bugs; this chapter says they are first of all for <strong>supporting change</strong>. Code that keeps changing for decades in the hands of tens of thousands of engineers can only change safely with fast, deterministic, automated tests. Google's approach: classify tests by <strong>resources (size)</strong> rather than by name, prefer small and narrow tests, fight flakiness hard, and make testing everyone's job through culture rather than mandate.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Automated test</strong>: a small piece of code that feeds the system a known input and checks the output, run repeatedly by machines.</li>
+<li><strong>Test suite</strong>: the collection of all tests for a project.</li>
+<li><strong>Unit / integration / end-to-end test</strong>: checks one function or class, the interplay of a few components, or the whole system from entry to exit.</li>
+<li><strong>Process and thread</strong>: a process is one independently running program in the operating system; a thread is one line of execution inside it.</li>
+<li><strong>I/O and blocking calls</strong>: reading or writing disk, network and other devices; a blocking call makes the program stop and wait for the result.</li>
+<li><strong>Test double</strong>: a lightweight fake that stands in for a real dependency, such as an in-memory fake database (Ch13).</li>
+<li><strong>Continuous integration (CI)</strong>: a system that builds and runs tests on every submitted change (Ch23).</li>
+<li><strong>Monorepo</strong>: keeping nearly all of a company's code in one repository.</li>
+<li><strong>Rollback</strong>: reverting to the previous version after a new one turns out to be broken.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Fourth chapter of Part III "Processes", and the overview of the four testing chapters (Ch11–14). It follows Ch10 Documentation (a test is executable documentation) and leads into Ch12 Unit Testing, Ch13 Test Doubles and Ch14 Larger Testing. Real-world counterparts: the test pyramid, CI gates, Bazel's <code>size</code> attribute, and the endless coverage-metric debate.</p>
+<h2>What problem this chapter solves</h2>
+<p>The chapter opens with Google's own pain: the <strong>Google Web Server (GWS)</strong>, which serves Google Search queries and which the book likens to air traffic control for an airport. In 2005 the project had swollen; releases were getting slower and buggier, engineers lacked confidence in their changes, and they often learned something was wrong only when features broke in production. <strong>At one point more than 80% of production pushes contained user-affecting bugs that had to be rolled back.</strong></p>
+<p>The GWS tech lead then required that <strong>every new change include tests, and that those tests run continuously</strong>. Within a year, emergency pushes <strong>dropped by half</strong>, even as the project saw a record number of changes every quarter. Today GWS has tens of thousands of tests and releases almost daily.</p>
+<p>The key lesson the chapter draws: <strong>you can't rely on programmer ability alone to avoid defects</strong>. The book's arithmetic: a 100-person team where each engineer writes just one bug a month still produces five new bugs every workday, and in a complex system fixing one bug often causes another. Tests turn individual wisdom into a shared team asset: one person writes a test and everyone benefits, while debugging makes someone pay the full cost again every time a bug appears. Leave it unsolved, and once code size and release frequency climb, manual validation can't keep up: the team either slows down or ships bugs to users.</p>
+<h2>The core ideas, in depth</h2>
+<h3>1. Write, run, react: the value is in step three</h3>
+<p>Automated testing is three activities: <strong>writing tests, running tests, and reacting to failures</strong>. Expressed as code instead of manual steps, tests can run on every change, thousands of times a day, and switching browsers or UI languages is just a configuration change. But the chapter stresses that the third step decides whether tests are worth anything: <strong>letting failing tests pile up quickly defeats their whole value</strong>. Teams that fix a broken test within minutes keep confidence high and isolate failures fast.</p>
+<p>The benefits listed go beyond "less debugging": more confidence in changes, refactors that need no test edits; tests as <strong>executable documentation</strong> that turn red first when requirements change; simpler reviews, since the reviewer can check that each edge case has a passing test; <strong>code that is hard to test usually has a design problem</strong> (too many responsibilities, unwieldy dependencies); and finally fast, high-quality releases.</p>
+<h3>2. Two axes: size is not scope</h3>
+<p>Early on, Google noticed engineers favored large, system-scale tests that turned out slow, unreliable and hard to debug, so teams drifted toward smaller and smaller tests. That triggered a debate over what "small" actually means. The chapter's answer splits it into two independent dimensions:</p>
+<ul>
+<li><strong>Size</strong> is <strong>the resources needed to run the test</strong>: memory, processes, time, network access.</li>
+<li><strong>Scope</strong> is <strong>how much code the test validates</strong>. Validates, not executes: a unit test for one class will execute its dependencies but only verifies that class.</li>
+</ul>
+<p>Why not just say "unit" and "integration"? Because the two qualities Google wants most are <strong>speed and determinism</strong>, and those are driven by resources, not scope. Classifying by resources also lets infrastructure <strong>enforce</strong> it: the book notes that Google runs Java tests under a custom security manager, so a test tagged small fails outright if it tries to open a network connection.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 270" xmlns="http://www.w3.org/2000/svg">
+<g font-size="12">
+<rect x="20" y="30" width="400" height="220" rx="12" fill="rgba(155,108,245,0.05)" stroke="#9b6cf5" stroke-dasharray="5 4"/>
+<text x="34" y="52" fill="#c9b5f7" font-weight="700">Large · may span many machines</text>
+<rect x="250" y="70" width="150" height="160" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(124,133,147,0.6)"/>
+<text x="325" y="95" fill="#cdd3db" text-anchor="middle">Another machine</text>
+<text x="325" y="115" fill="#7c8593" font-size="10.5" text-anchor="middle">remote cluster / real service</text>
+<rect x="36" y="70" width="196" height="160" rx="10" fill="rgba(91,157,249,0.05)" stroke="#8fbaff"/>
+<text x="48" y="90" fill="#8fbaff" font-weight="700">Medium · one machine</text>
+<text x="48" y="108" fill="#7c8593" font-size="10.5">multi-process · localhost only</text>
+<rect x="52" y="122" width="164" height="92" rx="8" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="2"/>
+<text x="134" y="144" fill="#e7ebf1" font-weight="700" text-anchor="middle">Small · one process</text>
+<text x="134" y="164" fill="#cdd3db" font-size="10.5" text-anchor="middle">often single-threaded</text>
+<text x="134" y="182" fill="#cdd3db" font-size="10.5" text-anchor="middle">no sleep / disk / network</text>
+<text x="134" y="200" fill="#cdd3db" font-size="10.5" text-anchor="middle">deps via test doubles</text>
+<line x1="232" y1="150" x2="250" y2="150" stroke="#9b6cf5" stroke-dasharray="3 3"/>
+<text x="460" y="56" fill="#cdd3db" font-weight="700">Further out:</text>
+<text x="460" y="84" fill="#cdd3db" font-size="11">· more you can do (DB, browser)</text>
+<text x="460" y="108" fill="#cdd3db" font-size="11">· slower, more likely to flake</text>
+<text x="460" y="132" fill="#cdd3db" font-size="11">· harder to pinpoint failures</text>
+<text x="460" y="170" fill="#8fbaff" font-weight="700">Scope is a separate axis:</text>
+<text x="460" y="194" fill="#cdd3db" font-size="11">a test of a whole endpoint can</text>
+<text x="460" y="214" fill="#cdd3db" font-size="11">still be small if doubles replace I/O</text>
+</g>
+</svg>
+<figcaption>Figure 1 · Test size is defined by the resources a test may use: one process ⊂ one machine ⊂ many machines. Scope (how much code is validated) is an independent axis.</figcaption>
+</figure>
+<h3>3. Where each size draws the line</h3>
+<p><strong>Small tests</strong> must run in a single process (in many languages, a single thread), may not sleep, do I/O or make any blocking call, so no network and no disk (the exception: a hermetic in-memory filesystem). Need a database? Use a test double. These limits shut out the two biggest sources of slowness and nondeterminism, so <strong>the test runs as fast as the CPU allows</strong>.</p>
+<p><strong>Medium tests</strong> may span processes, use threads and make blocking calls; they can start a real database or drive a real browser through WebDriver. The one remaining rule: <strong>network calls only to localhost</strong>. The book calls cross-machine networking "far and away the biggest source of slowness and nondeterminism in most systems", so blocking it still gives some protection, but "the safety is off" and engineers must be more careful.</p>
+<p><strong>Large tests</strong> drop the localhost limit and may span machines. Google reserves them mostly for full-system end-to-end tests that validate configuration more than code, and for legacy components that can't use doubles, and often isolates them to <strong>run only during build and release</strong> so they don't slow daily work. (A footnote admits Google internally has a fourth size, enormous.)</p>
+<p>Requirements shared by every size: <strong>hermetic</strong>, carrying everything needed to set up, run and tear down its environment, with no reliance on test order or a shared database; and <strong>obvious upon inspection</strong>, because there are no tests for tests, only human review, which is why conditionals and loops in tests are strongly discouraged.</p>
+<h3>4. Flaky tests: one in a thousand is already expensive</h3>
+<p>A flaky test passes and fails with no code change. The chapter's arithmetic is blunt: <strong>if each test has just a 0.1% chance of failing when it shouldn't and you run 10,000 tests a day, you'll investigate 10 false failures a day</strong>. Automatic reruns help, effectively trading CPU cycles for engineer time, but only postpone the root-cause fix. The deeper damage is trust: in the book's experience, <strong>as flakiness approaches 1%, tests begin to lose value</strong>, engineers stop reacting to failures, and the suite becomes decoration. Google's own rate hovers around <strong>0.15%</strong>, which at its scale still means thousands of flakes a day, so it actively invests engineering time to fix them. The usual culprits are nondeterminism in the tests themselves: clock time, thread scheduling, network latency.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/code-review-signal-detection-day50.en.html" target="_blank" rel="noopener">System Design · Day 50 Code Review as Signal Detection</a> — the same logic as flaky tests: once the false-positive budget is blown, people stop reading the signal and the tool dies</aside>
+<h3>5. The mix: an 80 / 15 / 5 pyramid</h3>
+<p>Google also pushes for narrow scope. The rough target, by test count, is <strong>about 80% unit, 15% integration, 5% end-to-end</strong>: Google's take on Mike Cohn's test pyramid (every team's mix differs a little). Unit tests make a great base: fast, stable, and failures are nearly free to diagnose. Larger tests are <strong>sanity checks as the product takes shape, not the primary way to catch bugs</strong>.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+<g font-size="11.5">
+<text x="115" y="24" fill="#8fbaff" font-weight="700" text-anchor="middle">Target: pyramid</text>
+<polygon points="115,44 95,82 135,82" fill="rgba(155,108,245,0.25)" stroke="#9b6cf5"/>
+<polygon points="95,82 135,82 160,130 70,130" fill="rgba(143,186,255,0.18)" stroke="#8fbaff"/>
+<polygon points="70,130 160,130 210,220 20,220" fill="rgba(91,157,249,0.22)" stroke="#5b9df9" stroke-width="2"/>
+<text x="115" y="76" fill="#e7ebf1" text-anchor="middle" font-size="10">5%</text>
+<text x="115" y="111" fill="#e7ebf1" text-anchor="middle" font-size="10.5">15% integ.</text>
+<text x="115" y="182" fill="#e7ebf1" text-anchor="middle">80% unit</text>
+<text x="115" y="242" fill="#7c8593" font-size="10.5" text-anchor="middle">fast · stable · easy to debug</text>
+<text x="350" y="24" fill="#c9b5f7" font-weight="700" text-anchor="middle">Anti-pattern: ice cream cone</text>
+<polygon points="270,44 430,44 395,110 305,110" fill="rgba(155,108,245,0.25)" stroke="#9b6cf5"/>
+<polygon points="305,110 395,110 375,160 325,160" fill="rgba(143,186,255,0.18)" stroke="#8fbaff"/>
+<polygon points="325,160 375,160 350,220" fill="rgba(91,157,249,0.22)" stroke="#5b9df9"/>
+<text x="350" y="82" fill="#e7ebf1" text-anchor="middle">many end-to-end</text>
+<text x="350" y="140" fill="#e7ebf1" text-anchor="middle" font-size="10">few integ.</text>
+<text x="350" y="242" fill="#7c8593" font-size="10.5" text-anchor="middle">rushed prototype · slow, flaky</text>
+<text x="585" y="24" fill="#c9b5f7" font-weight="700" text-anchor="middle">Anti-pattern: hourglass</text>
+<polygon points="505,44 665,44 600,120 570,120" fill="rgba(155,108,245,0.25)" stroke="#9b6cf5"/>
+<polygon points="570,120 600,120 665,220 505,220" fill="rgba(91,157,249,0.22)" stroke="#5b9df9"/>
+<text x="585" y="78" fill="#e7ebf1" text-anchor="middle">many end-to-end</text>
+<text x="612" y="126" fill="#8fbaff" font-size="10">almost no integ.</text>
+<text x="585" y="190" fill="#e7ebf1" text-anchor="middle">many unit</text>
+<text x="585" y="242" fill="#7c8593" font-size="10.5" text-anchor="middle">tight coupling · deps won't split</text>
+</g>
+</svg>
+<figcaption>Figure 2 · Three suite shapes by test count: the pyramid is Google's target; the ice cream cone and the hourglass are the two anti-patterns the chapter names.</figcaption>
+</figure>
+<h3>6. The Beyoncé Rule and testing for failure</h3>
+<p>What should you test? <strong>Everything you don't want to break</strong>: performance, correctness, accessibility, security, and how the system handles failure. Google calls this the <strong>Beyoncé Rule</strong>: "If you liked it, then you shoulda put a test on it." Infrastructure teams that make changes across the whole codebase invoke it often: <strong>if an unrelated infrastructure change passes all your tests but still breaks your product, fixing it and adding the missing tests is on you</strong>. Testing for failure means simulating exceptions in unit tests, injecting RPC errors and latency in integration and end-to-end tests, and, one level up, Chaos Engineering.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/chaos-engineering-day44.en.html" target="_blank" rel="noopener">System Design · Day 44 Chaos Engineering</a> — testing for failure taken into production: steady-state hypotheses, blast radius and how to design fault-injection experiments</aside>
+<h3>7. Coverage: a metric becomes a ceiling</h3>
+<p>Code coverage only measures that a line <strong>was executed</strong>, not that its result was checked; a few tests can produce a big number. The chapter recommends <strong>measuring coverage from small tests only</strong>, to avoid inflation from large ones. The subtler trap: set an 80% bar and engineers <strong>treat the floor as a ceiling</strong>, with changes landing at exactly 80%. Better questions: are you confident everything customers expect will work? Will you catch breaking changes in your dependencies? Are your tests stable?</p>
+<h3>8. Culture without a mandate</h3>
+<p>Before 2005, testing at Google was "closer to a curiosity than a disciplined practice". After GWS, a band of volunteers, the Testing Grouplet, changed the culture with three moves: an hour on testing in <strong>new-hire orientation</strong>, so new hires carried it into their teams as normal practice; <strong>Test Certified</strong>, five levels each reachable within a quarter, with a dashboard showing every team's level, which had helped more than 1,500 projects by the time the automated Project Health (pH) replaced it in 2015; and <strong>Testing on the Toilet</strong>, one-page testing tips posted in restroom stalls since April 2006 and still distributed almost weekly. They considered asking leadership for a mandate but judged it counter to Google's culture, and chose to <strong>let success spread</strong>. Today every change is expected to include both feature code and tests, and blocking a change for missing tests is perfectly reasonable.</p>
+<h2>Key trade-offs and choices</h2>
+<p class="tcap">Table 1 · Three test sizes: what's allowed, what it costs</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Size</th><th>Allowed</th><th>Bazel default timeout</th><th>Honest cost</th><th>Good for</th></tr></thead>
+<tbody>
+<tr><th><strong>Small</strong></th><td>One process (often one thread); no sleep / I/O / blocking</td><td>60 s</td><td>Relies on doubles, which can drift from real deps</td><td>Business logic, edge cases; <strong>the default choice</strong></td></tr>
+<tr><th>Medium</th><td>Multi-process, blocking calls, localhost only</td><td>300 s</td><td>Depends on the OS and third-party processes; flakiness creeps in</td><td>Real DB, real browser, service-storage seams</td></tr>
+<tr><th>Large</th><td>Spans machines</td><td>900 s</td><td>Slow, flaky, hard to debug; often moved out of daily workflow</td><td>Full-system config checks, legacy parts that can't use doubles</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 2 · Suite shapes: how they happen, what they cost</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Shape</th><th>Typical cause</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th><strong>Pyramid</strong> (~80/15/5)</th><td>Narrow unit tests first, integration tests at the seams</td><td>Unit tests can't verify contracts between teams; the integration layer has to cover that</td></tr>
+<tr><th>Ice cream cone</th><td>A prototype rushed to production, testing debt never repaid</td><td>Slow, unreliable, painful; the worst shape</td></tr>
+<tr><th>Hourglass</th><td>Tight coupling; dependencies hard to instantiate alone</td><td>Problems a middle layer would catch fall to end-to-end tests: caught late, hard to trace</td></tr>
+</tbody>
+</table></div>
+<p>The rule of thumb: <strong>for any piece of functionality, write the smallest test that can validate it</strong>. The mix serves two goals, engineering productivity and product confidence. Lean on integration tests and suites run slower but catch more cross-component issues; lean on unit tests and they finish fast but can't see contracts between components. In the book's words, <strong>a good suite is a blend suited to local architectural and organizational realities</strong>; 80/15/5 is only a rough guide.</p>
+<h2>Why it matters / real systems</h2>
+<p>This classification has been open-sourced as tooling: Bazel (the open-source version of Google's internal Blaze) gives test rules a <code>size</code> attribute (small / medium / large / enormous), and with no explicit timeout it assigns 60 / 300 / 900 / 3600 seconds by size, turning "size is defined by resources" into a build-system constraint. Google's scale explains why these rules are needed: the book cites a monorepo of <strong>more than two billion lines of code</strong> and close to <strong>25 million lines of change a week</strong>, about half from automated systems, with almost no branching and builds always using the latest validated commit. Asked in an interview how you'd design a testing strategy, the strong answer isn't "hit 80% coverage" but "<strong>size tests by resources, favor small and narrow, watch the flake rate, and put a test on every behavior you care about</strong>".</p>
+<div class="ev">
+<p class="evh">Industry evidence · publicly verifiable</p>
+<ul>
+<li><strong>Google · the GWS turnaround</strong>: the book says that at one point "more than 80% of production pushes contained user-affecting bugs that had to be rolled back", and that after the tech lead required tests with every change, run continuously, "within a year of instituting this policy, the number of emergency pushes dropped by half", despite record change volume. <span class="src"><a href="https://raw.githubusercontent.com/abseil/abseil.github.io/master/resources/swe-book/html/ch11.html" target="_blank" rel="noopener">Software Engineering at Google · Ch11 (source of abseil's official open edition) ↗</a></span></li>
+<li><strong>Google · flake rate</strong>: the same chapter: "as you approach 1% flakiness, the tests begin to lose value. At Google, our flaky rate hovers around 0.15%, which implies thousands of flakes every day." <span class="src"><a href="https://raw.githubusercontent.com/abseil/abseil.github.io/master/resources/swe-book/html/ch11.html" target="_blank" rel="noopener">Software Engineering at Google · Ch11 ↗</a></span></li>
+<li><strong>Google · size baked into the build</strong>: Bazel's test encyclopedia: tests without an explicit timeout get one implied by <code>size</code>: small→60 s, medium→300 s, large→900 s, enormous→3600 s, and it advises setting timeouts as tight as you can without flakiness. <span class="src"><a href="https://raw.githubusercontent.com/bazelbuild/bazel/master/docs/reference/test-encyclopedia.mdx" target="_blank" rel="noopener">bazelbuild/bazel · Test encyclopedia ↗</a></span></li>
+<li><strong>Google · no mandate</strong>: the book says the Testing Grouplet considered asking senior leadership for a testing mandate but decided "any mandate on how to develop code would be seriously counter to Google culture", and focused on demonstrating success instead. <span class="src">Software Engineering at Google · Ch11 (text citation)</span></li>
+</ul>
+</div>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"Tests are for catching bugs": only half true.</strong> The chapter puts supporting change on equal footing; without tests, nobody dares to refactor or make large-scale changes.</li>
+<li><strong>"Small test = unit test": wrong.</strong> Size is about resources, scope about how much code is validated. An endpoint-level test with doubles around its dependencies can be small; validating a single date-picker path may need a whole browser and be medium.</li>
+<li><strong>"Unit tests should mock every dependency": Google disagrees.</strong> The book prefers keeping real dependencies when feasible; mock abuse got so bad that some engineers declared "no more mocks!"</li>
+<li><strong>"Just auto-rerun flaky tests": a stopgap.</strong> It postpones the root-cause fix; once flakiness nears 1%, trust collapses.</li>
+<li><strong>"Higher coverage is always better": metrics become targets.</strong> Executed isn't verified, and a fixed bar becomes a ceiling.</li>
+<li><strong>Debate: the pyramid isn't the only answer.</strong> Some in the industry argue for integration-heavy "trophy" or "honeycomb" shapes, especially for microservices where most logic lives in service interactions. The chapter leaves room for this: the mix should fit local architecture, and 80/15/5 is only Google's rough target.</li>
+<li><strong>Limit: automation isn't everything.</strong> Search result quality relies on human raters; audio and video quality and complex security flaws are better judged by people. Once exploratory testing finds an issue, add an automated test right away to prevent regressions.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① Tests exist first to support change; GWS went from 80%+ of pushes needing rollback to half the emergency pushes within a year.</p>
+<p>② Ability alone doesn't scale: 100 engineers at one bug a month each is five bugs a day; tests turn individual wisdom into a team asset.</p>
+<p>③ Write, run, react: letting failures pile up wipes out a suite's value.</p>
+<p>④ Size (resources) and scope (code validated) are independent axes; small = one process, medium = one machine, large = many machines, enforced by infrastructure.</p>
+<p>⑤ Write the smallest, narrowest test that works; aim roughly for 80% unit / 15% integration / 5% end-to-end; beware the ice cream cone and the hourglass.</p>
+<p>⑥ Flakes are costly: 0.1% × 10,000 runs = 10 false failures a day; near 1% trust collapses; Google sits around 0.15%.</p>
+<p>⑦ Tests should be hermetic and obvious on inspection, with no conditionals or loops.</p>
+<p>⑧ Beyoncé Rule: if you care about it, test it; if someone breaks it and you had no test, it's on you.</p>
+<p>⑨ Coverage only says "executed"; judge a suite by behaviors and confidence.</p>
+<p>⑩ Culture came from orientation, certification, restroom tips and visible success, not a mandate; judgment and creative testing still need humans.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Finish this page ≈ hold the core of the chapter; for the full argument and extensions, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
