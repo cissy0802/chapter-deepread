@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Software Engineering at Google 第 9 章 · 代码评审 — 专业书籍精读 Book 189</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">专业书籍精读 · Software Engineering at Google · 第 9 章</p>
+<h1>代码评审</h1>
+<p class="sub">Software Engineering at Google · Ch 9 · Code Review · Tom Manshreck &amp; Caitlin Sadowski · 2020</p>
+<p class="langbar"><a href="swegoogle-ch09-code-review-book189.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你在 Google 搜索、YouTube 背后用到的每一行代码，在上线前都被<strong>至少另一个工程师读过并点头</strong>。这条规矩叫「代码评审」：写完代码不能直接放进公司的大仓库，要先交给同事看。这一章讲 Google 怎么做这件事，以及它真正换来了什么。</p>
+<h2>打个比方</h2>
+<p>像报社的稿件。记者写完稿，先给编辑看：编辑挑错别字、查事实，但更重要的是确认<strong>「读者看得懂」</strong>。同时，这个版面的主编要点头「这篇适合放我们版」；还有一位老编辑负责看文风合不合报社规范。三个人可以是同一个人，但三个问题都得有人回答。</p>
+<h2>先说个怪事</h2>
+<p>大多数人以为评审主要是为了抓 bug。可 Google 自己的研究发现，评审最大的收益反而是那些「看不见」的：<strong>让代码被至少两个人懂、让全公司的写法保持一致、让新人在一次次评审里学会门道</strong>。抓 bug 只是其中一项。</p>
+<h2>旧世界为什么难</h2>
+<p>一段代码写一次，却要被很多人读、改上好多年。如果只有作者自己懂，作者一换组，这段代码就成了没人敢碰的「黑箱」。几万人各写各的，整个代码库会越来越像一锅大杂烩。</p>
+<h2>核心机制直觉</h2>
+<ul>
+<li><strong>改动要小：</strong>一次只交一小份，像交一页作业而不是一整本，同事半小时就能认真看完，而不是硬着头皮扫一遍。</li>
+<li><strong>回复要快：</strong>别让作者干等，最晚第二天早上就给答复；慢的评审比没有评审更伤人。</li>
+<li><strong>三把钥匙：</strong>同事确认「看得懂、写得对」，这块代码的主人确认「放这里合适」，懂语言规范的人确认「写法合规」。</li>
+<li><strong>对事不对人：</strong>代码不属于某个人，属于团队；评论针对代码，语气保持礼貌。</li>
+<li><strong>机器先过一遍：</strong>格式、常见错误交给自动检查，人只看机器看不出来的东西。</li>
+</ul>
+<h2>带来了什么 / 该怎么选</h2>
+<p>你的团队要不要评审？只要代码要活好几年、不止一两个人维护，就值得做，关键是保持改动小、回复快。诚实的代价是：评审要花每个工程师每周好几个小时，做慢了会让人等得心烦。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p><strong>评审不是在抓坏人，是在确保每一行代码，至少有两个人懂。</strong></p>
+</div>
+<p class="switch-hint">想看评审的完整流程、LGTM / 所有者 / 可读性三重批准、五大收益、五条最佳实践和四类评审的不同打法？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">你以为代码评审是「上线前抓 bug 的关卡」；本章说，它首先是<strong>让代码被另一个人理解的机制</strong>——正确性只是收益之一，更大的回报是可理解、一致、知识扩散和团队文化；而让它在几万人规模下跑得动的，是<strong>小改动、快回复、三重批准各司其职、能自动化的全自动化</strong>。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>改动 / 变更列表（change / CL）</strong>：一次要合入代码库的修改，Google 内部叫 CL（changelist），相当于 GitHub 的 pull request。</li>
+<li><strong>快照（snapshot）</strong>：作者上传给评审看的某一版代码；改了一轮就再传一版快照。</li>
+<li><strong>LGTM</strong>：「Looks Good To Me」，评审者表示「我看过了、没问题」的标准回复。</li>
+<li><strong>OWNERS 文件</strong>：目录里列出「谁对这块代码负责」的文本文件，所有者可以批准改动进入该目录。</li>
+<li><strong>可读性认证（readability）</strong>：Google 内部的语言级认证，持有者能为某语言的写法与风格把关（见第 8 章）。</li>
+<li><strong>单体仓（monorepo）</strong>：全公司代码放在同一个仓库，任何人都可能改到别人的代码。</li>
+<li><strong>静态分析（static analysis）</strong>：不运行程序、只读源码就能找出可疑写法的自动工具。</li>
+<li><strong>回滚（rollback）</strong>：把一次已合入的改动撤销，恢复到改之前的状态。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>Part III「流程」第二章。上承 Ch8 风格指南（规则由谁来人工执行——就是评审），下启 Ch10 文档与 Ch11 起的测试；Ch19 再讲承载这套流程的工具 Critique。现实对应：任何 GitHub / GitLab 上的 pull request 流程。</p>
+<h2>这章要解决什么</h2>
+<p>Google 单一代码库里有数万名工程师同时改代码，工程师频繁换组。本章开宗明义一个反直觉的立场：<strong>代码是负债（code is a liability）</strong>，不是资产。每多一行，就多一份未来要读、要改、要排错的成本；真正的资产是代码提供的功能。所以把一段代码放进库里，应该像做一笔长期投资一样慎重。</p>
+<p>不评审会怎样？代码只有作者一人懂，作者离开就成了没人敢动的黑箱；写法各自为政，库越来越难读；危险写法、缺测试的改动静静地流进主干。可评审也有代价——Google 的研究里，工程师每周平均花约 3 小时在评审上；如果流程慢、改动大、评论粗暴，它会变成全公司的速度瓶颈。<strong>本章要回答：评审该检查什么、谁来批准、怎么做才不拖慢几万人。</strong></p>
+<h2>核心内容，讲透</h2>
+<h3>一、流程：一个改动怎么走到主干</h3>
+<p>Google 的评审流程本身很朴素，跟 pull request 大同小异：</p>
+<ul>
+<li><strong>作者写改动</strong>，在自己的工作区里生成一份快照，上传到评审工具（Critique）。工具会先跑自动检查、给出评论，作者可以先自查一遍 diff。</li>
+<li><strong>发给评审者</strong>（原书叫 mail out），评审者在 diff 上逐行留言。评论分两种：必须改的，和「可选 / nit」的小建议。</li>
+<li><strong>作者修改</strong>，上传新快照、回复每条评论，循环直到大家满意。</li>
+<li><strong>拿到批准</strong>：评审者给出 LGTM，并且所需的三类批准都齐。</li>
+<li><strong>提交</strong>：所有评论都已解决（resolved）后，作者才能把改动提交进主干。</li>
+</ul>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b1" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<g font-size="12">
+<rect x="10" y="80" width="110" height="52" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(91,157,249,0.4)"/>
+<text x="65" y="102" text-anchor="middle" fill="#d9dee5">① 写改动</text><text x="65" y="120" text-anchor="middle" fill="#7c8593" font-size="10.5">快照 + 自动检查</text>
+<line x1="120" y1="106" x2="150" y2="106" stroke="#7c8593" marker-end="url(#b1)"/>
+<rect x="154" y="80" width="110" height="52" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(91,157,249,0.4)"/>
+<text x="209" y="102" text-anchor="middle" fill="#d9dee5">② 发给评审者</text><text x="209" y="120" text-anchor="middle" fill="#7c8593" font-size="10.5">通常 1 人</text>
+<line x1="264" y1="106" x2="294" y2="106" stroke="#7c8593" marker-end="url(#b1)"/>
+<rect x="298" y="80" width="110" height="52" rx="8" fill="rgba(91,157,249,0.12)" stroke="#5b9df9" stroke-width="2"/>
+<text x="353" y="102" text-anchor="middle" fill="#8fbaff" font-weight="700">③ 逐行评论</text><text x="353" y="120" text-anchor="middle" fill="#7c8593" font-size="10.5">必改 / 可选 nit</text>
+<path d="M353,132 C353,178 209,178 209,140" fill="none" stroke="#9b6cf5" stroke-dasharray="4 3" marker-end="url(#b1)"/>
+<text x="281" y="194" text-anchor="middle" fill="#c9b5f7" font-size="11">④ 作者修改 · 传新快照 · 回复（循环）</text>
+<line x1="408" y1="106" x2="438" y2="106" stroke="#7c8593" marker-end="url(#b1)"/>
+<rect x="440" y="68" width="138" height="76" rx="8" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5"/>
+<text x="507" y="90" text-anchor="middle" fill="#c9b5f7" font-weight="700">⑤ 三重批准</text>
+<text x="507" y="108" text-anchor="middle" fill="#cdd3db" font-size="10.5">LGTM（正确 / 可懂）</text>
+<text x="507" y="123" text-anchor="middle" fill="#cdd3db" font-size="10.5">所有者（放这合适）</text>
+<text x="507" y="138" text-anchor="middle" fill="#cdd3db" font-size="10.5">可读性（写法合规）</text>
+<line x1="578" y1="106" x2="602" y2="106" stroke="#7c8593" marker-end="url(#b1)"/>
+<rect x="606" y="80" width="84" height="52" rx="8" fill="rgba(91,157,249,0.12)" stroke="#5b9df9" stroke-width="2"/>
+<text x="648" y="102" text-anchor="middle" fill="#8fbaff" font-weight="700">⑥ 提交</text><text x="648" y="120" text-anchor="middle" fill="#7c8593" font-size="10.5">评论全解决</text>
+<text x="350" y="36" text-anchor="middle" fill="#cdd3db">目标：小改动 · 24 小时内回复 · 多数改动一个评审者就够</text>
+</g>
+</svg>
+<figcaption>图 1 · 一个改动的评审流程：评论—修改的循环可能走好几轮，提交前三类批准必须齐、评论必须全部解决。</figcaption>
+</figure>
+<h3>二、三重批准：把三个问题拆开问</h3>
+<p>本章最有辨识度的设计：一个改动要合入，需要回答<strong>三个不同的问题</strong>，每个问题对应一种批准：</p>
+<ul>
+<li><strong>LGTM——正确吗、看得懂吗？</strong>由另一位工程师给出，确认代码做了它声称的事，而且<strong>另一个人能读懂</strong>。这一位不必是专家，往往就是同组同事。</li>
+<li><strong>所有者批准——放在这里合适吗？</strong>由该目录 OWNERS 文件里的人给出。所有者对这块代码的长期健康负责，判断这个改动是否符合该模块的方向。</li>
+<li><strong>可读性批准——写法合规吗？</strong>由持有该语言可读性认证的人给出，确认符合 Ch8 的风格与最佳实践。</li>
+</ul>
+<p>为什么拆开？因为<strong>三个问题需要的专长不同</strong>：读懂代码人人能做，判断模块方向需要所有者，语言惯用法需要专门训练的人。拆开之后，每个人只为自己那一个问题负责。但实际上大多数改动并不需要三个人——<strong>一个人同时具备三种资格就能一次给齐</strong>，常见改动通常只有一位评审者。这既保证了把关的完整性，又不让流程成本随问题数翻倍。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+<g font-size="12">
+<circle cx="270" cy="105" r="78" fill="rgba(91,157,249,0.10)" stroke="#5b9df9" stroke-width="2"/>
+<circle cx="390" cy="105" r="78" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5" stroke-width="2"/>
+<circle cx="330" cy="160" r="62" fill="rgba(143,186,255,0.06)" stroke="#8fbaff" stroke-dasharray="5 3"/>
+<text x="232" y="88" text-anchor="middle" fill="#8fbaff" font-weight="700">LGTM</text>
+<text x="232" y="106" text-anchor="middle" fill="#cdd3db" font-size="10.5">正确 · 可懂</text>
+<text x="428" y="88" text-anchor="middle" fill="#c9b5f7" font-weight="700">所有者</text>
+<text x="428" y="106" text-anchor="middle" fill="#cdd3db" font-size="10.5">OWNERS · 方向</text>
+<text x="330" y="200" text-anchor="middle" fill="#8fbaff" font-weight="700">可读性</text>
+<text x="330" y="216" text-anchor="middle" fill="#cdd3db" font-size="10.5">语言惯用法</text>
+<text x="330" y="132" text-anchor="middle" fill="#e7ebf1" font-weight="700" font-size="11">一人兼三</text>
+<text x="40" y="40" fill="#cdd3db" font-size="11.5">三个问题、三种资格</text>
+<text x="40" y="58" fill="#7c8593" font-size="10.5">可由三个人分别回答</text>
+<text x="560" y="40" fill="#cdd3db" font-size="11.5">常见情形</text>
+<text x="560" y="58" fill="#7c8593" font-size="10.5">一位评审者兼具三种资格，</text>
+<text x="560" y="74" fill="#7c8593" font-size="10.5">一次给齐</text>
+</g>
+</svg>
+<figcaption>图 2 · 三重批准：三个问题必须都有人回答，但资格可以叠在同一个人身上，所以多数改动只需一位评审者。</figcaption>
+</figure>
+<h3>三、五大收益：抓 bug 只是其一</h3>
+<ul>
+<li><strong>正确性</strong>：在合入前截住缺陷——越早发现，修复越便宜。但本章提醒，大部分「正确性」工作应交给测试和自动检查，评审是补充。</li>
+<li><strong>可理解性</strong>：作者永远觉得自己的代码好懂；评审者是第一位「未来读者」，他读不懂，以后的人也读不懂。本章把这点看得比挑 bug 还重。</li>
+<li><strong>一致性</strong>：可读性批准让全库写法统一，让人员流动、工具改写都更容易（呼应 Ch8）。</li>
+<li><strong>心理与文化收益</strong>：评审传达「代码属于团队，不属于个人」；它也是一种认可——有人认真看过你的工作；还能温和地纠正「闭门造车」。</li>
+<li><strong>知识分享</strong>：评审是 Google 最主要的知识传播渠道之一——新人通过评论学到惯用法和系统细节，评审者也在读代码的过程中了解别处在发生什么。</li>
+</ul>
+<h3>四、五条最佳实践：让评审在几万人规模下不卡</h3>
+<ul>
+<li><strong>礼貌与专业</strong>：评论针对代码不针对人；评审者若对方案没有实质异议，<strong>应尊重作者的做法</strong>，而不是强推自己偏好的写法；作者则把评论当成改进而非攻击，每条都回应。</li>
+<li><strong>写小改动</strong>：这是最重要的一条。小改动容易读、容易回滚、评审者能认真看。Google 的工程实践指南给的量级是：约 <code>100 行</code>通常合适，<code>1000 行</code>通常太大。</li>
+<li><strong>写好改动描述</strong>：第一行一句话说清改了什么，正文说清<strong>为什么</strong>——它会成为版本历史里长期留存的记录。</li>
+<li><strong>评审者越少越好</strong>：多数改动一位评审者足矣；多拉一个人，收益递减，等待时间却叠加。</li>
+<li><strong>能自动化的全自动化</strong>：格式、静态分析、presubmit 测试在人看之前就跑完，人只看需要判断的部分。</li>
+</ul>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/code-review-signal-detection-day50.html" target="_blank" rel="noopener">System Design · Day 50 把 Code Review 当信号检测系统</a> — 自动检查塞进评审流以后，误报预算如何决定工程师是采纳还是无视它</aside>
+<h3>五、四类评审，打法不同</h3>
+<ul>
+<li><strong>全新代码（greenfield）</strong>：最需要严审。设计应在写代码前已评审过；代码评审确认 API 与设计一致、有测试、有合适的所有者——因为新代码一旦进库，就是一笔长期负债。</li>
+<li><strong>行为变更、改进与优化</strong>：大多数改动属于此类，关注它是否真的必要、是否有对应测试，性能优化要有基准数据说话。</li>
+<li><strong>修 bug 与回滚</strong>：修复要聚焦，别顺手夹带别的改动；应附上能复现 bug 的测试。回滚要快——它的目的就是止血。</li>
+<li><strong>重构与大规模变更（LSC）</strong>：往往由工具自动生成、横跨成百上千个目录。评审者只需确认「这个改动在我这块代码上是安全的」，不必重新审议整体方案（Ch22 展开）。</li>
+</ul>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 1 · 评审的几个旋钮：拧向哪边、代价是什么</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>旋钮</th><th>Google 的选择</th><th>另一端</th><th>诚实的代价</th></tr></thead>
+<tbody>
+<tr><th>改动大小</th><td><strong>小而频繁</strong>（约百行级）</td><td>大而少（一次交整个功能）</td><td>小改动要求把工作拆得细，有时需要多个互相依赖的改动排队</td></tr>
+<tr><th>评审者人数</th><td><strong>通常 1 人</strong>，三类资格可叠加</td><td>多人会签</td><td>单人看漏的风险；靠测试和自动检查兜底</td></tr>
+<tr><th>回复速度</th><td><strong>最晚一个工作日</strong></td><td>有空再看</td><td>评审者被频繁打断，要在专注与响应之间平衡</td></tr>
+<tr><th>评审时机</th><td><strong>合入前</strong>强制评审</td><td>合入后再审 / 不审</td><td>每个改动都要等；换来主干始终经过两个人的眼睛</td></tr>
+<tr><th>评审尺度</th><td>只要<strong>明确改善了代码健康</strong>就批准</td><td>追求完美才批准</td><td>会留下可接受但不完美的代码；换来的是不卡死作者</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">表 2 · 一个问题该谁来回答</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>问题</th><th>最合适的守门人</th><th>为什么不交给别人</th></tr></thead>
+<tbody>
+<tr><th>格式、导入顺序</th><td>格式化工具</td><td>人来盯既慢又易起争执</td></tr>
+<tr><th>已知危险写法</th><td>静态分析 / presubmit</td><td>可机械判定，机器更一致</td></tr>
+<tr><th>逻辑对不对、读得懂吗</th><td>LGTM 评审者</td><td>需要理解意图，工具做不到</td></tr>
+<tr><th>该不该放在这个模块</th><td>OWNERS 所有者</td><td>需要对模块长期方向负责的人</td></tr>
+<tr><th>语言惯用法</th><td>可读性认证者</td><td>需要专门训练过的判断</td></tr>
+</tbody>
+</table></div>
+<p>选型判据：<strong>先把能机器判定的拿走，再让最少的人回答剩下的问题；改动越小，评审就越便宜、越认真。</strong>一个十人团队不必照搬三重批准，一位同事 LGTM 加 CI 就够；人数上百、代码要活十年，才值得引入所有者和可读性这种分层把关。</p>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>今天几乎所有公司都在用 pull request 做评审，本章给的是「为什么这样做」和「怎么做才不变成瓶颈」。GitHub 的 CODEOWNERS 文件、受保护分支上的「必须至少一个批准」，本质就是 OWNERS 与 LGTM 的翻版；Chromium 等 Google 开源项目至今沿用 OWNERS 文件。面试或架构评审被问「怎么保证代码质量」，好答案不是「严格评审」，而是「<strong>小改动 + 快评审 + 自动化前置 + 所有权明确</strong>」。</p>
+<div class="ev">
+<p class="evh">大厂实证 · 公开可查</p>
+<ul>
+<li><strong>Google · 评审的最高原则</strong>：Google 公开的工程实践指南写道，只要一个改动「明确改善了所在系统的整体代码健康，即使不完美」，评审者就应倾向批准，并称这是「所有评审准则中最高的原则」；同文还说「不存在『完美』代码，只有更好的代码」。<span class="src"><a href="https://github.com/google/eng-practices/blob/master/review/reviewer/standard.md" target="_blank" rel="noopener">google/eng-practices · The Standard of Code Review ↗</a></span></li>
+<li><strong>Google · 一个工作日</strong>：同一指南规定「回应一个评审请求最多一个工作日」，并提出「LGTM with comments」——剩下的只是小问题时先批准，免得作者为一句 LGTM 再等一天。<span class="src"><a href="https://github.com/google/eng-practices/blob/master/review/reviewer/speed.md" target="_blank" rel="noopener">google/eng-practices · Speed of Code Reviews ↗</a></span></li>
+<li><strong>Google · 小改动的量级</strong>：指南给出「约 100 行通常是合理的 CL 大小，1000 行通常太大」，并强调涉及的文件数也算「大小」。<span class="src"><a href="https://github.com/google/eng-practices/blob/master/review/developer/small-cls.md" target="_blank" rel="noopener">google/eng-practices · Small CLs ↗</a></span></li>
+<li><strong>Google · 评审的真实动机</strong>：Sadowski 等人的《Modern Code Review: A Case Study at Google》（ICSE SEIP 2018）调研了 Google 内部评审，发现工程师把教育、维护规范、把关和防止意外列为动机，而不只是找缺陷；Google 的改动普遍很小、多数只有一位评审者、周转很快。<span class="src">论文：ICSE SEIP 2018（文字出处）</span></li>
+<li><strong>反方视角 · Microsoft</strong>：Bacchelli 与 Bird 的《Expectations, Outcomes, and Challenges of Modern Code Review》（ICSE 2013）发现，开发者<strong>期望</strong>评审主要用来找缺陷，但评审<strong>实际产出</strong>更多是知识传递、团队认知和替代方案——与本章「抓 bug 只是其一」的判断互相印证。<span class="src">论文：ICSE 2013（文字出处）</span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/super-individual/code-review-skills-skill3.html" target="_blank" rel="noopener">Super Individual · S3 代码审查类 Skills</a> — 把「机器先过一遍」推到 AI 评审工具：哪些能装、哪些值得信</aside>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>「评审主要是抓 bug」——误解。</strong>本章与 Google、Microsoft 的研究都指向同一结论：可理解性、一致性和知识扩散才是大头；指望评审代替测试，两头落空。</li>
+<li><strong>「评审越严越好」——错。</strong>追求完美会让改动卡上好几天；Google 的尺度是「明确更好就批」，小问题用可选评论或 LGTM with comments 处理。</li>
+<li><strong>「大改动一次评完更省事」——反了。</strong>大改动评审者只能扫读，问题反而更容易漏；也更难回滚。</li>
+<li><strong>评审者把偏好当标准。</strong>作者的方案只要合理、合规，评审者就该放行；把「我会这么写」当成拒绝理由，是最常见的摩擦源。</li>
+<li><strong>多拉人不等于更安全。</strong>多评审者会出现「别人会看的」心理，等待时间叠加，收益却递减。</li>
+<li><strong>语境局限。</strong>三重批准依赖 Google 的单体仓、OWNERS 体系和可读性认证；小团队照搬会变成纯流程负担。开源项目里评审者是志愿者，「一个工作日」也难保证。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 代码是负债而非资产，所以每一行入库前都要被另一个人读懂并认可。</p>
+<p>② 流程：快照 → 发出 → 评论 / 修改循环 → 批准 → 评论全解决 → 提交。</p>
+<p>③ 三重批准：LGTM（正确且可懂）、所有者（放这里合适）、可读性（写法合规），可由一人兼任。</p>
+<p>④ 五大收益：正确性、可理解性、一致性、心理与文化、知识分享——抓 bug 只是其一。</p>
+<p>⑤ 五条实践：礼貌专业、写小改动、写好描述、评审者越少越好、能自动化就自动化。</p>
+<p>⑥ 量级：约 100 行合适、1000 行太大；最晚一个工作日回复；多数改动一位评审者。</p>
+<p>⑦ 尺度：明确改善代码健康即批准，不追求完美；尊重作者的合理方案。</p>
+<p>⑧ 四类评审：新代码严审、行为变更看必要性和测试、修 bug 要聚焦带测试、大规模变更只确认局部安全。</p>
+<p>⑨ 易错：评审不能代替测试；越严越多人不等于越好；Google 的三重批准带着规模前提。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整论证与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>

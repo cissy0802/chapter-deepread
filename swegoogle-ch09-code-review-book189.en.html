@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Software Engineering at Google Ch 9 · Code Review — Book Deep-Read 189</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · Software Engineering at Google · Chapter 9</p>
+<h1>Code Review</h1>
+<p class="sub">Software Engineering at Google · Ch 9 · Code Review · Tom Manshreck &amp; Caitlin Sadowski · 2020</p>
+<p class="langbar"><a href="swegoogle-ch09-code-review-book189.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Quick read</button>
+<button data-mode="deep">Deep read</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>Every line of code behind Google Search or YouTube was <strong>read and approved by at least one other engineer</strong> before it went in. That rule is called code review: you can't drop your code straight into the company's giant shared repository; a colleague has to look at it first. This chapter is about how Google does it, and what it really buys.</p>
+<h2>An analogy</h2>
+<p>Think of a newspaper. A reporter files a story and an editor reads it: the editor catches typos and checks facts, but more importantly makes sure <strong>readers will understand it</strong>. The section chief has to agree the piece belongs in their section, and a veteran copy editor checks it matches the paper's house style. All three can be the same person, but all three questions must be answered.</p>
+<h2>A strange thing first</h2>
+<p>Most people assume review is mainly for catching bugs. Yet Google's own research found the biggest payoffs are the invisible ones: <strong>making sure at least two people understand the code, keeping the whole company writing it the same way, and letting newcomers learn the ropes one review at a time</strong>. Catching bugs is just one item on the list.</p>
+<h2>Why the old world was hard</h2>
+<p>Code is written once but read and changed by many people for years. If only the author understands it, the moment the author changes teams it becomes a black box nobody dares to touch. With tens of thousands of people each writing their own way, the codebase slowly turns into a jumble.</p>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>Keep changes small:</strong> hand in one page of homework, not the whole notebook, so a colleague can read it properly in half an hour instead of skimming.</li>
+<li><strong>Answer fast:</strong> don't leave the author waiting; reply by the next morning at the latest. A slow review hurts more than people think.</li>
+<li><strong>Three keys:</strong> a colleague confirms it is correct and understandable, the owner of that part of the code confirms it belongs there, and a language expert confirms it follows the house style.</li>
+<li><strong>About the code, not the person:</strong> code belongs to the team, not to one person; comments target the code and stay polite.</li>
+<li><strong>Let machines go first:</strong> formatting and common mistakes are checked automatically, so people only look at what machines can't judge.</li>
+</ul>
+<h2>What it buys you / how to choose</h2>
+<p>Should your team review code? If the code will live for years and more than one or two people maintain it, yes; the trick is to keep changes small and replies fast. The honest cost: review takes every engineer several hours a week, and when it's slow, people get frustrated waiting.</p>
+<h2>Remember it in one line</h2>
+<div class="tl">
+<p><strong>Review isn't about catching culprits; it's about making sure every line of code is understood by at least two people.</strong></p>
+</div>
+<p class="switch-hint">Want the full review flow, the three approvals (LGTM, owner, readability), the five benefits, the five best practices and how the four kinds of review differ? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think code review is the gate that catches bugs before launch; this chapter says it is first of all <strong>a mechanism for getting code understood by someone other than its author</strong>. Correctness is one benefit, but the bigger returns are comprehension, consistency, knowledge sharing and culture; and what keeps it workable for tens of thousands of engineers is <strong>small changes, fast replies, three distinct approvals and automating everything that can be automated</strong>.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Change / CL</strong>: one modification headed into the codebase; Google calls it a CL (changelist), roughly a GitHub pull request.</li>
+<li><strong>Snapshot</strong>: a version of the code the author uploads for review; each round of edits uploads a new snapshot.</li>
+<li><strong>LGTM</strong>: "Looks Good To Me", the standard reply meaning "I've read it and I'm fine with it".</li>
+<li><strong>OWNERS file</strong>: a text file in a directory listing who is responsible for that code; owners can approve changes into it.</li>
+<li><strong>Readability</strong>: Google's per-language certification; holders can vouch for style and idiom in that language (see Chapter 8).</li>
+<li><strong>Monorepo</strong>: the whole company's code in one repository, where anyone may end up changing anyone else's code.</li>
+<li><strong>Static analysis</strong>: automated tools that read source code without running it and flag suspicious patterns.</li>
+<li><strong>Rollback</strong>: undoing a change that was already submitted, restoring the code to its previous state.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Second chapter of Part III, "Processes". It follows Chapter 8 on style guides (who enforces the rules by hand? review does) and leads into Chapter 10 on documentation and the testing chapters from Chapter 11; Chapter 19 later covers Critique, the tool that carries this process. Real-world counterpart: the pull-request workflow on any GitHub or GitLab project.</p>
+<h2>What problem this chapter solves</h2>
+<p>Tens of thousands of engineers change code in Google's single repository at the same time, and people move between teams often. The chapter opens with a counterintuitive stance: <strong>code is a liability</strong>, not an asset. Every extra line is future cost to read, change and debug; the real asset is the functionality the code provides. So adding code to the repository should be treated with the care of a long-term commitment.</p>
+<p>What happens without review? Code only its author understands becomes an untouchable black box when the author leaves; styles diverge and the codebase gets harder to read; dangerous patterns and untested changes slip quietly into the mainline. But review has a price too: in Google's research engineers spend roughly 3 hours a week reviewing, and if the process is slow, changes are big and comments are harsh, it becomes a company-wide bottleneck. <strong>The chapter answers: what should review check, who approves, and how to do it without slowing tens of thousands of people down.</strong></p>
+<h2>Core ideas, in depth</h2>
+<h3>1. The flow: how a change reaches the mainline</h3>
+<p>Google's review flow is plain, much like a pull request:</p>
+<ul>
+<li><strong>The author writes a change</strong>, creates a snapshot in their workspace and uploads it to the review tool (Critique). Automated checks run first and leave comments; the author can self-review the diff.</li>
+<li><strong>The author mails it out to reviewers</strong>, who leave line-by-line comments. Comments come in two kinds: must-fix, and optional "nit" suggestions.</li>
+<li><strong>The author revises</strong>, uploads a new snapshot and replies to each comment, looping until everyone is satisfied.</li>
+<li><strong>Approval</strong>: a reviewer gives LGTM, and all three required approvals are in place.</li>
+<li><strong>Submit</strong>: only once every comment is resolved can the author commit the change to the mainline.</li>
+</ul>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b1" markerHeight="8" markerWidth="8" orient="auto" refX="6" refY="3"><path d="M0,0 L6,3 L0,6 Z" fill="#7c8593"/></marker></defs>
+<g font-size="12">
+<rect x="10" y="80" width="110" height="52" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(91,157,249,0.4)"/>
+<text x="65" y="102" text-anchor="middle" fill="#d9dee5">1 Write change</text><text x="65" y="120" text-anchor="middle" fill="#7c8593" font-size="10.5">snapshot + checks</text>
+<line x1="120" y1="106" x2="150" y2="106" stroke="#7c8593" marker-end="url(#b1)"/>
+<rect x="154" y="80" width="110" height="52" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(91,157,249,0.4)"/>
+<text x="209" y="102" text-anchor="middle" fill="#d9dee5">2 Mail out</text><text x="209" y="120" text-anchor="middle" fill="#7c8593" font-size="10.5">usually 1 reviewer</text>
+<line x1="264" y1="106" x2="294" y2="106" stroke="#7c8593" marker-end="url(#b1)"/>
+<rect x="298" y="80" width="110" height="52" rx="8" fill="rgba(91,157,249,0.12)" stroke="#5b9df9" stroke-width="2"/>
+<text x="353" y="102" text-anchor="middle" fill="#8fbaff" font-weight="700">3 Comments</text><text x="353" y="120" text-anchor="middle" fill="#7c8593" font-size="10.5">must-fix / nit</text>
+<path d="M353,132 C353,178 209,178 209,140" fill="none" stroke="#9b6cf5" stroke-dasharray="4 3" marker-end="url(#b1)"/>
+<text x="281" y="194" text-anchor="middle" fill="#c9b5f7" font-size="11">4 Author revises · new snapshot · replies (loop)</text>
+<line x1="408" y1="106" x2="438" y2="106" stroke="#7c8593" marker-end="url(#b1)"/>
+<rect x="440" y="68" width="138" height="76" rx="8" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5"/>
+<text x="509" y="90" text-anchor="middle" fill="#c9b5f7" font-weight="700">5 Three approvals</text>
+<text x="509" y="108" text-anchor="middle" fill="#cdd3db" font-size="10.5">LGTM: correct, clear</text>
+<text x="509" y="123" text-anchor="middle" fill="#cdd3db" font-size="10.5">Owner: belongs here</text>
+<text x="509" y="138" text-anchor="middle" fill="#cdd3db" font-size="10.5">Readability: idiom</text>
+<line x1="578" y1="106" x2="602" y2="106" stroke="#7c8593" marker-end="url(#b1)"/>
+<rect x="606" y="80" width="84" height="52" rx="8" fill="rgba(91,157,249,0.12)" stroke="#5b9df9" stroke-width="2"/>
+<text x="648" y="102" text-anchor="middle" fill="#8fbaff" font-weight="700">6 Submit</text><text x="648" y="120" text-anchor="middle" fill="#7c8593" font-size="10.5">all resolved</text>
+<text x="350" y="36" text-anchor="middle" fill="#cdd3db">Goal: small changes · reply within a day · one reviewer for most changes</text>
+</g>
+</svg>
+<figcaption>Figure 1 · The review flow for one change: the comment-and-revise loop may run several rounds; before submit, all three approvals must be in and every comment resolved.</figcaption>
+</figure>
+<h3>2. Three approvals: ask three questions separately</h3>
+<p>The chapter's most distinctive design: getting a change in requires answers to <strong>three different questions</strong>, each tied to a kind of approval:</p>
+<ul>
+<li><strong>LGTM: is it correct and understandable?</strong> Given by another engineer who confirms the code does what it claims and that <strong>someone else can read it</strong>. This person needn't be an expert; often it's a teammate.</li>
+<li><strong>Owner approval: does it belong here?</strong> Given by someone in the directory's OWNERS file. Owners are responsible for the long-term health of that code and judge whether the change fits the module's direction.</li>
+<li><strong>Readability approval: does it follow the language's idioms?</strong> Given by someone with readability in that language, confirming it matches the style and best practices of Chapter 8.</li>
+</ul>
+<p>Why split them? Because <strong>the three questions need different expertise</strong>: anyone can check understandability, module direction needs an owner, language idiom needs specially trained judgment. Split up, each person answers only for their question. In practice most changes don't need three people: <strong>one reviewer who holds all three qualifications can grant everything at once</strong>, and a typical change has a single reviewer. That keeps the gatekeeping complete without multiplying process cost by the number of questions.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+<g font-size="12">
+<circle cx="270" cy="105" r="78" fill="rgba(91,157,249,0.10)" stroke="#5b9df9" stroke-width="2"/>
+<circle cx="390" cy="105" r="78" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5" stroke-width="2"/>
+<circle cx="330" cy="160" r="62" fill="rgba(143,186,255,0.06)" stroke="#8fbaff" stroke-dasharray="5 3"/>
+<text x="232" y="88" text-anchor="middle" fill="#8fbaff" font-weight="700">LGTM</text>
+<text x="232" y="106" text-anchor="middle" fill="#cdd3db" font-size="10.5">correct · clear</text>
+<text x="428" y="88" text-anchor="middle" fill="#c9b5f7" font-weight="700">Owner</text>
+<text x="428" y="106" text-anchor="middle" fill="#cdd3db" font-size="10.5">OWNERS · fit</text>
+<text x="330" y="200" text-anchor="middle" fill="#8fbaff" font-weight="700">Readability</text>
+<text x="330" y="216" text-anchor="middle" fill="#cdd3db" font-size="10.5">idiom</text>
+<text x="330" y="132" text-anchor="middle" fill="#e7ebf1" font-weight="700" font-size="11">one person</text>
+<text x="30" y="40" fill="#cdd3db" font-size="11.5">Three questions,</text>
+<text x="30" y="58" fill="#cdd3db" font-size="11.5">three qualifications</text>
+<text x="30" y="76" fill="#7c8593" font-size="10.5">may be three people</text>
+<text x="490" y="40" fill="#cdd3db" font-size="11.5">Common case</text>
+<text x="490" y="58" fill="#7c8593" font-size="10.5">one reviewer holds all three</text>
+<text x="490" y="74" fill="#7c8593" font-size="10.5">and grants them at once</text>
+</g>
+</svg>
+<figcaption>Figure 2 · Three approvals: every question needs an answer, but the qualifications can stack in one person, so most changes need only one reviewer.</figcaption>
+</figure>
+<h3>3. Five benefits: catching bugs is only one</h3>
+<ul>
+<li><strong>Correctness</strong>: stop defects before they land; the earlier, the cheaper. But the chapter notes most correctness work belongs to tests and automated checks; review is a complement.</li>
+<li><strong>Comprehension</strong>: authors always think their own code is clear; the reviewer is the first "future reader". If they can't follow it, nobody later will. The chapter weighs this more than bug-finding.</li>
+<li><strong>Consistency</strong>: readability approval keeps the codebase uniform, which eases people moving around and tools rewriting code (echoing Chapter 8).</li>
+<li><strong>Psychological and cultural benefits</strong>: review signals that code belongs to the team, not the individual; it's also validation, since someone read your work carefully; and it gently corrects working in isolation.</li>
+<li><strong>Knowledge sharing</strong>: review is one of Google's main channels for spreading knowledge; newcomers learn idioms and system details from comments, and reviewers learn what's happening elsewhere by reading code.</li>
+</ul>
+<h3>4. Five best practices: keeping review fast at scale</h3>
+<ul>
+<li><strong>Be polite and professional</strong>: comment on the code, not the person; if a reviewer has no substantive objection, they <strong>should defer to the author's approach</strong> rather than push their own preference; authors treat comments as improvements, not attacks, and respond to every one.</li>
+<li><strong>Write small changes</strong>: the most important one. Small changes are easy to read, easy to roll back, and get a real review. Google's engineering practices guide gives the scale: about <code>100 lines</code> is usually reasonable, <code>1000 lines</code> is usually too large.</li>
+<li><strong>Write good change descriptions</strong>: the first line says what changed in one sentence; the body says <strong>why</strong>. It becomes a lasting record in version history.</li>
+<li><strong>Keep reviewers to a minimum</strong>: one reviewer suffices for most changes; each extra reviewer adds diminishing returns but stacks up waiting time.</li>
+<li><strong>Automate where possible</strong>: formatting, static analysis and presubmit tests run before a human looks, so people only review what needs judgment.</li>
+</ul>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/code-review-signal-detection-day50.en.html" target="_blank" rel="noopener">System Design · Day 50 Code Review as Signal Detection</a> — once automated checks sit inside review, the false-positive budget decides whether engineers adopt them or tune them out</aside>
+<h3>5. Four kinds of review, four approaches</h3>
+<ul>
+<li><strong>Greenfield code</strong>: deserves the most scrutiny. The design should have been reviewed before coding; the code review confirms the API matches the design, tests exist and an appropriate owner is set, because new code is a long-term liability once it lands.</li>
+<li><strong>Behavioral changes, improvements and optimizations</strong>: the bulk of changes. Ask whether it's really needed and tested; performance optimizations should come with benchmark data.</li>
+<li><strong>Bug fixes and rollbacks</strong>: keep a fix focused, without unrelated changes riding along, and add a test that reproduces the bug. Rollbacks should be quick; their job is to stop the bleeding.</li>
+<li><strong>Refactorings and large-scale changes (LSCs)</strong>: often tool-generated and spanning hundreds or thousands of directories. A reviewer only needs to confirm the change is safe for their part of the code, not re-litigate the overall plan (expanded in Chapter 22).</li>
+</ul>
+<h2>Key trade-offs and choices</h2>
+<p class="tcap">Table 1 · The knobs of code review: which way to turn them, and what it costs</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Knob</th><th>Google's choice</th><th>The other end</th><th>Honest cost</th></tr></thead>
+<tbody>
+<tr><th>Change size</th><td><strong>Small and frequent</strong> (around a hundred lines)</td><td>Large and rare (a whole feature at once)</td><td>Work must be sliced finely; sometimes several dependent changes queue up</td></tr>
+<tr><th>Reviewers</th><td><strong>Usually one</strong>; qualifications stack</td><td>Many sign-offs</td><td>Risk of one person missing something; tests and automation backstop it</td></tr>
+<tr><th>Response time</th><td><strong>One business day at most</strong></td><td>Whenever there's time</td><td>Reviewers get interrupted; they must balance focus and responsiveness</td></tr>
+<tr><th>Timing</th><td>Mandatory <strong>pre-submit</strong> review</td><td>Review after submit, or not at all</td><td>Every change waits; in return the mainline has always passed two pairs of eyes</td></tr>
+<tr><th>Bar</th><td>Approve once it <strong>clearly improves code health</strong></td><td>Approve only when perfect</td><td>Acceptable-but-imperfect code gets in; in return authors aren't blocked</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 2 · Who should answer which question</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Question</th><th>Best gatekeeper</th><th>Why not someone else</th></tr></thead>
+<tbody>
+<tr><th>Formatting, import order</th><td>Formatter</td><td>Humans are slow at it and it sparks arguments</td></tr>
+<tr><th>Known dangerous patterns</th><td>Static analysis / presubmit</td><td>Mechanically decidable; machines are more consistent</td></tr>
+<tr><th>Is the logic right and readable?</th><td>LGTM reviewer</td><td>Requires understanding intent, which tools can't do</td></tr>
+<tr><th>Does it belong in this module?</th><td>OWNERS owner</td><td>Needs someone accountable for the module's long-term direction</td></tr>
+<tr><th>Language idiom</th><td>Readability holder</td><td>Needs specially trained judgment</td></tr>
+</tbody>
+</table></div>
+<p>The rule of thumb: <strong>first take away everything a machine can decide, then let the fewest people answer what's left; the smaller the change, the cheaper and more careful the review.</strong> A ten-person team needn't copy the three approvals; one teammate's LGTM plus CI is enough. With hundreds of people and code that must live a decade, layered gatekeeping like owners and readability starts to pay off.</p>
+<h2>Why it matters / in real systems</h2>
+<p>Almost every company now reviews code through pull requests; this chapter supplies the "why", and how to keep review from becoming a bottleneck. GitHub's CODEOWNERS file and "require at least one approval" on protected branches are essentially OWNERS and LGTM by another name; Google open-source projects such as Chromium still use OWNERS files. Asked in an interview or design review "how do you ensure code quality?", the strong answer isn't "strict reviews" but "<strong>small changes + fast reviews + automation up front + clear ownership</strong>".</p>
+<div class="ev">
+<p class="evh">Industry evidence · publicly verifiable</p>
+<ul>
+<li><strong>Google · the senior principle</strong>: Google's public engineering practices guide says reviewers should favor approving a change once it "definitely improves the overall code health of the system being worked on, even if the CL isn't perfect", calling this "the senior principle among all of the code review guidelines"; it adds that there is no such thing as "perfect" code, only better code. <span class="src"><a href="https://github.com/google/eng-practices/blob/master/review/reviewer/standard.md" target="_blank" rel="noopener">google/eng-practices · The Standard of Code Review ↗</a></span></li>
+<li><strong>Google · one business day</strong>: the same guide states "One business day is the maximum time it should take to respond to a code review request", and proposes "LGTM with comments": approve when only minor issues remain, so the author doesn't wait another day for an LGTM. <span class="src"><a href="https://github.com/google/eng-practices/blob/master/review/reviewer/speed.md" target="_blank" rel="noopener">google/eng-practices · Speed of Code Reviews ↗</a></span></li>
+<li><strong>Google · the size of a small change</strong>: "100 lines is usually a reasonable size for a CL, and 1000 lines is usually too large", with the note that the number of files touched also counts toward size. <span class="src"><a href="https://github.com/google/eng-practices/blob/master/review/developer/small-cls.md" target="_blank" rel="noopener">google/eng-practices · Small CLs ↗</a></span></li>
+<li><strong>Google · why engineers really review</strong>: Sadowski et al., "Modern Code Review: A Case Study at Google" (ICSE SEIP 2018), surveyed review inside Google and found engineers cite education, maintaining norms, gatekeeping and accident prevention as motivations, not just finding defects; changes at Google are typically small, most have a single reviewer, and turnaround is fast. <span class="src">Paper: ICSE SEIP 2018 (text citation)</span></li>
+<li><strong>A view from Microsoft</strong>: Bacchelli and Bird, "Expectations, Outcomes, and Challenges of Modern Code Review" (ICSE 2013), found developers <strong>expect</strong> review to be mainly about finding defects, while what it <strong>actually yields</strong> is more knowledge transfer, team awareness and alternative solutions, corroborating the chapter's claim that catching bugs is only one benefit. <span class="src">Paper: ICSE 2013 (text citation)</span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/super-individual/code-review-skills-skill3.en.html" target="_blank" rel="noopener">Super Individual · S3 Code Review Skills</a> — pushing "let machines go first" to AI review tools: which ones you can install, and which deserve trust</aside>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"Review is mainly for catching bugs": a misconception.</strong> The chapter and both the Google and Microsoft studies point the same way: comprehension, consistency and knowledge spread are the bulk of the value. Expecting review to replace tests fails at both.</li>
+<li><strong>"The stricter, the better": wrong.</strong> Chasing perfection stalls changes for days; Google's bar is "approve once it's clearly better", handling small issues with optional comments or LGTM with comments.</li>
+<li><strong>"One big change is easier to review in one go": backwards.</strong> Reviewers can only skim a big change, so more slips through, and it's harder to roll back.</li>
+<li><strong>Reviewers treating preference as the standard.</strong> If the author's approach is reasonable and compliant, let it through; "I would have written it differently" as a reason to block is the most common source of friction.</li>
+<li><strong>More reviewers isn't safer.</strong> Multiple reviewers breed "someone else will check it", waiting time stacks up, and returns diminish.</li>
+<li><strong>Context limits.</strong> The three approvals rely on Google's monorepo, OWNERS system and readability program; copied into a small team they become pure process overhead. In open source, reviewers are volunteers, and "one business day" is hard to promise.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① Code is a liability, not an asset, so every line must be understood and accepted by someone else before it lands.</p>
+<p>② The flow: snapshot → mail out → comment / revise loop → approval → all comments resolved → submit.</p>
+<p>③ Three approvals: LGTM (correct and clear), owner (belongs here), readability (idiomatic); one person can hold all three.</p>
+<p>④ Five benefits: correctness, comprehension, consistency, psychological and cultural, knowledge sharing; bug-catching is only one.</p>
+<p>⑤ Five practices: be polite and professional, write small changes, write good descriptions, minimize reviewers, automate what you can.</p>
+<p>⑥ Scale: about 100 lines is fine, 1000 is too big; reply within one business day; most changes have one reviewer.</p>
+<p>⑦ The bar: approve once code health clearly improves, don't chase perfection; respect the author's reasonable approach.</p>
+<p>⑧ Four kinds of review: scrutinize greenfield code, check necessity and tests for behavior changes, keep bug fixes focused with a test, and for LSCs only confirm local safety.</p>
+<p>⑨ Pitfalls: review can't replace tests; stricter and more reviewers aren't better; Google's three approvals assume Google's scale.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Finish this page ≈ hold the core of the chapter; for the full argument and extensions, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
