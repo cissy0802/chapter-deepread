@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Software Engineering at Google Ch 13 · Test Doubles — Book Deep-Read 193</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · Software Engineering at Google · Chapter 13</p>
+<h1>Test Doubles</h1>
+<p class="sub">Software Engineering at Google · Ch 13 · Test Doubles · Andrew Trenk &amp; Dillon Bly · 2020</p>
+<p class="langbar"><a href="swegoogle-ch13-test-doubles-book193.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Quick read</button>
+<button data-mode="deep">Deep read</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You click "Pay" in an online store, and somewhere a piece of code asks the bank to charge your card. The engineers who need to check that code can't run a real card charge every time they check it. This chapter is about <strong>what to put in place of the things you can't easily bring into a check</strong> — and what goes wrong when you overdo it.</p>
+<h2>An analogy</h2>
+<p>Films use <strong>stunt doubles</strong>: the double does the dangerous jump so the star doesn't have to. Code is the same. Banks, remote servers and databases are slow, expensive and sometimes moody "stars", so during checks you bring in a stand-in. Stand-ins come in roughly three styles:</p>
+<ul>
+<li><strong>The realistic stand-in</strong>: like a flight simulator — it reacts like the real plane, it just can't crash.</li>
+<li><strong>The scripted stand-in</strong>: in rehearsal, the other actor only reads one pre-written line, whatever you say.</li>
+<li><strong>Watching the moves</strong>: instead of tasting whether the dish is cooked, you only check that the chef opened the oven in the right order.</li>
+</ul>
+<h2>Why was the old world hard?</h2>
+<p>Without stand-ins, checks talk to real servers: hundreds or thousands of them take hours to run, and fail at random whenever the network hiccups. But once stand-ins became too easy to make, people overused them. Google learned this the hard way: when tools arrived that built a stand-in in one line, everyone treated them as a hammer for every nail. Years later they realised those checks were <strong>quick to write, tiring to maintain, and rarely caught real problems</strong> — nudge the code's insides and whole rows of them went red.</p>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>Use the star whenever you can:</strong> if the real thing is fast and steady, skip the stand-in. Using the real thing keeps the check closest to what happens in production.</li>
+<li><strong>If not, use a realistic stand-in:</strong> it behaves so much like the star that the code being checked can't tell the difference. Ideally the star's own "management team" builds it, and regularly rehearses it against the star so it never drifts.</li>
+<li><strong>Go easy on scripted stand-ins:</strong> you write every line yourself, which means copying "how the star would answer" into the check. When the star changes its answer, the stand-in keeps reading the old line — the check still passes and production breaks.</li>
+<li><strong>Avoid only watching the moves:</strong> "the chef opened the oven" doesn't mean "dinner is ready". It's worth checking only when the move is the point — an email really must be sent, or you must make sure nobody makes extra trips to the warehouse.</li>
+</ul>
+<h2>What it buys you / how to choose</h2>
+<p>Pick in the order "real → realistic → scripted → watching moves" and your checks stay fast and steady, without going red every time the internals are rewritten. Google even labels some code "do not make a stand-in for this", pushing people to the real thing or an official realistic version. The honest cost: building a trustworthy realistic stand-in takes real effort, and it has to keep up with the star forever.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p><strong>Stand-ins are a fallback: use the real thing first, a realistic copy second, and only last a stand-in that reads lines or just records how it was called.</strong></p>
+</div>
+<p class="switch-hint">Want the exact difference between fakes, stubs and interaction testing, what a "seam" is, how fast is fast enough for a real implementation, how fakes stay faithful through contract tests, and the only two cases where interaction testing pays off? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>One line</h2>
+<p class="lead">You think mocks are standard equipment for unit tests; this chapter says <strong>test doubles are a fallback, not a default</strong>: prefer the real implementation, use a fake when you can't, stub sparingly, and avoid interaction testing where possible. Google took years and countless tests to learn that mocking frameworks make tests <strong>easy to write, costly to keep</strong> — and they rarely find bugs.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Dependency</strong>: another class or service the code under test calls, such as a database or a credit card service.</li>
+<li><strong>System under test (SUT)</strong>: the code the current test is checking.</li>
+<li><strong>Small test / unit test</strong>: a fast test that runs in one process without touching network or disk (see Ch11 and Ch12).</li>
+<li><strong>Interface</strong>: a type that lists methods but has no implementation; the real implementation and a double can both implement it.</li>
+<li><strong>API contract</strong>: the behavior an API promises its users, e.g. "this method never returns null".</li>
+<li><strong>Flaky</strong>: a test that sometimes passes and sometimes fails while the code stays the same.</li>
+<li><strong>Hermetic</strong>: everything a test needs is under the test's own control, with no dependence on the state of outside services.</li>
+<li><strong>Value object</strong>: a simple, data-holding object such as an amount of money, a date, an address or a list.</li>
+<li><strong>Side effect</strong>: a call that changes the outside world, e.g. writing to a database, sending an email, logging.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Part III, "Processes" — the third of four testing chapters. It follows Ch12 Unit Testing (which kept saying "mock less, verify state rather than interactions") and leads into Ch14 Larger Testing (this chapter repeatedly says the risks doubles can't cover must be caught by larger tests with real dependencies). Real-world counterpart: everyday use and misuse of Mockito, googlemock and Python's <code>unittest.mock</code>.</p>
+<h2>What problem this chapter solves</h2>
+<p>Picture a function that sends a request to an external server and stores the response in a database. A handful of tests like that is doable; <strong>hundreds or thousands</strong> and the suite runs for <strong>hours</strong>, turning flaky from random network failures and tests overwriting each other's data. Production code often spans processes and machines, so it naturally doesn't fit the constraints of a small test. A <strong>test double</strong> is the answer: an object or function that stands in for the real implementation in a test, like a stunt double for an actor.</p>
+<p>But doubles bring three complications: <strong>testability</strong> (the code needs a place to swap in a double, and retrofitting one is expensive), <strong>applicability</strong> (misused, they make tests brittle and complex, and the loss grows with the codebase) and <strong>fidelity</strong> (how close the double is to the real thing; a fake database that returns empty for everything is worthless, yet perfect fidelity is often impossible). What happens if you ignore this? Google is its own cautionary tale: mocking frameworks were first treated as a hammer for every nail, and only years later did it become clear that those tests <strong>needed constant maintenance while rarely finding bugs</strong>.</p>
+<h2>The core ideas, explained</h2>
+<h3>1. Three techniques: fakes, stubs, interaction testing</h3>
+<p>The book deliberately avoids "mocking" as the umbrella term, because the word means several different things. It names three techniques:</p>
+<ul>
+<li><strong>Faking</strong>: a lightweight, working implementation that behaves like the real one but isn't fit for production — the classic is an <strong>in-memory database</strong>. Add a user to a <code>FakeAuthorizationService</code> and later lookups really find it.</li>
+<li><strong>Stubbing</strong>: giving a function with no behavior of its own a <strong>hard-coded return value</strong>, e.g. <code>when(svc.lookupUser(ID)).thenReturn(null)</code> — "when asked about this user, say there's no such user".</li>
+<li><strong>Interaction testing</strong>: without running the function, verify <strong>how it was called</strong> — whether, how many times, with which arguments — e.g. <code>verify(svc).lookupUser(ID)</code>.</li>
+</ul>
+<p>A <strong>mocking framework</strong> (Mockito for Java, googlemock for C++, <code>unittest.mock</code> for Python) builds a double in one line, which is why "mock" ends up meaning several things at once. The order of preference is clear: <strong>real implementation &gt; fake &gt; stub &gt; interaction testing</strong>.</p>
+<figure>
+<svg viewBox="0 0 700 210" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a1" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker><marker id="a2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#9b6cf5"/></marker></defs>
+<g font-size="12">
+<rect x="20" y="40" width="150" height="70" rx="10" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="95" y="68" text-anchor="middle" fill="#e7ebf1" font-weight="700">1 Real impl</text>
+<text x="95" y="90" text-anchor="middle" fill="#cdd3db" font-size="11">the production one</text>
+<rect x="190" y="40" width="150" height="70" rx="10" fill="rgba(91,157,249,0.10)" stroke="#5b9df9"/>
+<text x="265" y="68" text-anchor="middle" fill="#e7ebf1" font-weight="700">2 Fake</text>
+<text x="265" y="90" text-anchor="middle" fill="#cdd3db" font-size="11">in-memory, same behavior</text>
+<rect x="360" y="40" width="150" height="70" rx="10" fill="rgba(155,108,245,0.08)" stroke="#9b6cf5"/>
+<text x="435" y="68" text-anchor="middle" fill="#e7ebf1" font-weight="700">3 Stub</text>
+<text x="435" y="90" text-anchor="middle" fill="#cdd3db" font-size="11">hard-coded returns</text>
+<rect x="530" y="40" width="150" height="70" rx="10" fill="rgba(155,108,245,0.05)" stroke="#9b6cf5" stroke-dasharray="4 3"/>
+<text x="605" y="68" text-anchor="middle" fill="#e7ebf1" font-weight="700">4 Interaction</text>
+<text x="605" y="90" text-anchor="middle" fill="#cdd3db" font-size="11">only "was it called"</text>
+<line x1="30" y1="140" x2="672" y2="140" stroke="#5b9df9" stroke-width="2" marker-end="url(#a1)"/>
+<text x="30" y="160" fill="#8fbaff" font-size="11">high fidelity, catches real bugs</text>
+<text x="672" y="160" text-anchor="end" fill="#8fbaff" font-size="11">more tied to internals, more brittle</text>
+<line x1="30" y1="185" x2="672" y2="185" stroke="#9b6cf5" stroke-width="2" marker-end="url(#a2)"/>
+<text x="672" y="204" text-anchor="end" fill="#c9b5f7" font-size="11">easier to write</text>
+</g>
+</svg>
+<figcaption>Figure 1 · The preference ladder: the further right, the easier to write — and the more brittle and less production-like. Start from the left.</figcaption>
+</figure>
+<h3>2. Seams: testability has to be designed in</h3>
+<p>To use a double, the code must let you swap parts. A <strong>seam</strong> is a way for the system under test to use different dependencies in a test than in production; the most common technique is <strong>dependency injection</strong> — a class receives its dependencies from outside instead of constructing them with <code>new</code>. <code>PaymentProcessor</code>'s constructor accepts a <code>CreditCardService</code>: production passes the real one that talks to an external server, the test passes a double. When hand-written constructors get tedious, Google's Java code commonly uses Guice or Dagger to build object graphs automatically. Dynamic languages like Python and JavaScript can replace individual functions at runtime, so dependency injection matters less there: you can use the real implementation and override just the one or two methods unsuitable for tests.</p>
+<figure>
+<svg viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="b1" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker><marker id="b2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#9b6cf5"/></marker></defs>
+<g font-size="12">
+<rect x="230" y="60" width="240" height="80" rx="12" fill="rgba(91,157,249,0.08)" stroke="#8fbaff"/>
+<text x="350" y="88" text-anchor="middle" fill="#e7ebf1" font-weight="700">PaymentProcessor</text>
+<rect x="260" y="102" width="180" height="26" rx="6" fill="rgba(91,157,249,0.18)" stroke="#5b9df9" stroke-width="2"/>
+<text x="350" y="120" text-anchor="middle" fill="#8fbaff" font-size="11">seam: constructor parameter</text>
+<rect x="20" y="20" width="170" height="44" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(124,133,147,0.7)"/>
+<text x="105" y="40" text-anchor="middle" fill="#cdd3db">Production code</text>
+<text x="105" y="56" text-anchor="middle" fill="#7c8593" font-size="10.5">passes the real impl</text>
+<line x1="190" y1="50" x2="258" y2="108" stroke="#5b9df9" marker-end="url(#b1)"/>
+<rect x="20" y="136" width="170" height="44" rx="8" fill="rgba(155,108,245,0.08)" stroke="#9b6cf5"/>
+<text x="105" y="156" text-anchor="middle" fill="#c9b5f7">Test code</text>
+<text x="105" y="172" text-anchor="middle" fill="#7c8593" font-size="10.5">passes a double</text>
+<line x1="190" y1="156" x2="258" y2="122" stroke="#9b6cf5" marker-end="url(#b2)"/>
+<rect x="520" y="20" width="160" height="44" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(124,133,147,0.7)"/>
+<text x="600" y="47" text-anchor="middle" fill="#cdd3db">External card server</text>
+<rect x="520" y="136" width="160" height="44" rx="8" fill="rgba(155,108,245,0.08)" stroke="#9b6cf5"/>
+<text x="600" y="163" text-anchor="middle" fill="#c9b5f7">In-memory double</text>
+<line x1="470" y1="85" x2="518" y2="48" stroke="#5b9df9" stroke-dasharray="4 3" marker-end="url(#b1)"/>
+<line x1="470" y1="120" x2="518" y2="152" stroke="#9b6cf5" stroke-dasharray="4 3" marker-end="url(#b2)"/>
+</g>
+</svg>
+<figcaption>Figure 2 · A seam created by dependency injection: the same PaymentProcessor talks to the real server in production and to a double in tests, without changing a line of business logic.</figcaption>
+</figure>
+<p>This is an <strong>up-front investment</strong>: code written without testing in mind usually has to be refactored or even rewritten before it can get decent tests.</p>
+<h3>3. Prefer real implementations: realism over isolation</h3>
+<p>With a real implementation, the test runs all the code in the dependency — <strong>closer to production, more confidence</strong>; lean too hard on doubles and you need integration tests or manual checks to get the same confidence, which get skipped when they're slow. Deeper still: replacing every dependency of a class with doubles <strong>arbitrarily</strong> draws the test boundary around whatever code the author happened to put in that class, whereas a good test depends only on the API under test, not on how the implementation is split up. If a bug in the real implementation fails your test — <strong>that's good</strong>: production would break too; when a cascade fails, CI finds the culprit change.</p>
+<p>Preferring real implementations is called <strong>classical testing</strong>; preferring mocking frameworks is <strong>mockist testing</strong>. Google found the latter <strong>hard to scale</strong>: it demands strict guidelines when designing the system under test, and most engineers' default style suits classical testing better.</p>
+<p><strong>Case study: @DoNotMock.</strong> Google ships a <code>@DoNotMock</code> annotation in the Error Prone static analysis tool, letting API owners declare "don't mock this type, better alternatives exist". Try to build one with a mocking framework and you get an error pointing you to a real implementation or a fake. It's used most for <strong>value objects simple enough to use as-is</strong> and <strong>APIs with well-engineered fakes</strong>. Why does the owner care? Every stub or interaction test <strong>duplicates</strong> the API's behavior; when the owner wants to change it, they may find it mocked <strong>thousands or tens of thousands of times</strong>, many of those violating the contract (returning null from a method that never returns null).</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/api-design-day9.en.html" target="_blank" rel="noopener">System Design · Day 9 API Design</a> — once a contract is public and "copied" by thousands of callers, who pays for changing it</aside>
+<p><strong>When a real implementation is good enough</strong>: fast, deterministic, simple dependencies — all three, and use the real thing. Value objects (money, dates, addresses, lists and maps) always stay real. For complex code, weigh three dimensions:</p>
+<ul>
+<li><strong>Execution time</strong>: 1 ms extra per test case bothers no one; 10 ms, 100 ms, 1 s? No exact answer — it depends on how many cases use it (1 extra second each is fine for 5 cases, not for 500). In borderline cases <strong>start with the real implementation and switch when it gets too slow</strong>. Parallel execution (trading CPU time for developer time) and Bazel's build caching buy headroom.</li>
+<li><strong>Determinism</strong>: real implementations are more complex and more likely to be nondeterministic (e.g. depending on thread order). A common root cause is <strong>non-hermetic</strong> code: read from an external HTTP server and the test fails when it's overloaded or the page changes — use a double, or a <strong>hermetic instance</strong> whose lifecycle the test controls (next chapter). The system clock is the same story: use a double with a fixed time. Occasional flakes are tolerable; frequent ones mean switch.</li>
+<li><strong>Dependency construction</strong>: a real implementation needs its whole dependency tree built. <code>new Foo(new A(new B(new C()), new D()), new E(), …, new Z())</code> is hard to write and breaks whenever a constructor changes, while <code>@Mock Foo mockFoo;</code> is one line and very tempting. The book's ideal: <strong>reuse production's object-construction code</strong> (factory methods or automated DI), provided it's flexible enough to accept doubles.</li>
+</ul>
+<h3>4. When the real thing won't do: prefer a fake</h3>
+<p>A fake behaves so much like the real implementation that <strong>the system under test can't tell which one it's talking to</strong>. The book's <code>FakeFileSystem</code> keeps an in-memory map from file name to contents — and since the real implementation throws <code>FileNotFoundException</code> for a missing file, the fake must too. In organisations where fakes are rare, engineers either suffer slow, flaky real implementations or fall back to stubs and interaction tests.</p>
+<p><strong>Who writes it, and where</strong>: a fake takes domain knowledge and must change whenever the real implementation does, so <strong>the team that owns the real implementation should write and maintain it</strong>. With a handful of users it may not pay off; with hundreds it clearly does. Build one only at the <strong>root</strong> of the code that can't be used in tests — fake the database API, not every class that calls it. For a service with client libraries in several languages, you can write <strong>a single fake service</strong> and point every client at it: crossing processes is heavier, but fine as long as tests stay fast.</p>
+<p><strong>Fidelity</strong> is the central concept. A fake needn't be faithful on disk storage, latency or resource use (to test performance you need the real thing), but it must be <strong>faithful to the API contract</strong>: same input, same output, same state change — if the real <code>database.save(itemId)</code> errors on a duplicate ID, so must the fake. As the book puts it: perfect fidelity to the real implementation, <strong>but only from the test's perspective</strong>. A fake hashing API needn't produce the same hash values as the real one, as long as the contract promises no specific values and each input maps to a unique result. Rare edge paths can be left unimplemented, but should <strong>fail fast</strong>, telling the engineer "the fake doesn't apply here".</p>
+<p><strong>A fake must have its own tests</strong>, or it will silently drift as the real implementation evolves. The approach is <strong>contract tests</strong>: one suite written against the API's public interface, run against both the real implementation and the fake. The run against the real one is slower, but only the fake's owners need to run it.</p>
+<figure>
+<svg viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="c1" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<text x="170" y="22" text-anchor="middle" fill="#c9b5f7" font-weight="700">Mocks everywhere: contract copied N times</text>
+<rect x="130" y="40" width="80" height="36" rx="8" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5"/>
+<text x="170" y="63" text-anchor="middle" fill="#e7ebf1">Real API</text>
+<rect x="20" y="130" width="60" height="28" rx="6" fill="rgba(155,108,245,0.05)" stroke="#9b6cf5" stroke-dasharray="4 3"/>
+<text x="50" y="148" text-anchor="middle" fill="#cdd3db" font-size="11">mock</text>
+<rect x="95" y="130" width="60" height="28" rx="6" fill="rgba(155,108,245,0.05)" stroke="#9b6cf5" stroke-dasharray="4 3"/>
+<text x="125" y="148" text-anchor="middle" fill="#cdd3db" font-size="11">mock</text>
+<rect x="185" y="130" width="60" height="28" rx="6" fill="rgba(155,108,245,0.05)" stroke="#9b6cf5" stroke-dasharray="4 3"/>
+<text x="215" y="148" text-anchor="middle" fill="#cdd3db" font-size="11">mock</text>
+<rect x="260" y="130" width="60" height="28" rx="6" fill="rgba(155,108,245,0.05)" stroke="#9b6cf5" stroke-dasharray="4 3"/>
+<text x="290" y="148" text-anchor="middle" fill="#cdd3db" font-size="11">mock</text>
+<text x="170" y="148" text-anchor="middle" fill="#7c8593">…</text>
+<line x1="150" y1="78" x2="55" y2="126" stroke="#9b6cf5" stroke-dasharray="3 3"/>
+<line x1="165" y1="78" x2="128" y2="126" stroke="#9b6cf5" stroke-dasharray="3 3"/>
+<line x1="178" y1="78" x2="212" y2="126" stroke="#9b6cf5" stroke-dasharray="3 3"/>
+<line x1="192" y1="78" x2="285" y2="126" stroke="#9b6cf5" stroke-dasharray="3 3"/>
+<text x="170" y="185" text-anchor="middle" fill="#7c8593" font-size="11">change the real API: none of them follow</text>
+<line x1="350" y1="20" x2="350" y2="210" stroke="rgba(91,157,249,0.2)"/>
+<text x="525" y="22" text-anchor="middle" fill="#8fbaff" font-weight="700">Owner keeps one fake + contract tests</text>
+<rect x="445" y="40" width="160" height="34" rx="8" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="525" y="62" text-anchor="middle" fill="#e7ebf1">One contract suite</text>
+<rect x="380" y="120" width="120" height="36" rx="8" fill="rgba(91,157,249,0.08)" stroke="#5b9df9"/>
+<text x="440" y="143" text-anchor="middle" fill="#e7ebf1">Real impl</text>
+<rect x="550" y="120" width="120" height="36" rx="8" fill="rgba(91,157,249,0.12)" stroke="#5b9df9"/>
+<text x="610" y="143" text-anchor="middle" fill="#e7ebf1">Fake</text>
+<line x1="500" y1="76" x2="452" y2="116" stroke="#5b9df9" marker-end="url(#c1)"/>
+<line x1="550" y1="76" x2="598" y2="116" stroke="#5b9df9" marker-end="url(#c1)"/>
+<text x="525" y="185" text-anchor="middle" fill="#7c8593" font-size="11">both pass ⇒ the fake hasn't drifted</text>
+</g>
+</svg>
+<figcaption>Figure 3 · Left: every test copies the API's behavior into its own mock, and all of them go stale when the contract changes. Right: the owner keeps one fake and runs the same contract suite against both the real implementation and the fake.</figcaption>
+</figure>
+<p><strong>If no fake exists</strong>: first ask the API owners to build one; failing that, <strong>wrap</strong> your calls to the API in a single class and write a fake of that class, covering only the subset you use (some Google teams contributed such fakes back to the owners). A fake can also be seen as an <strong>optimisation</strong>: if the speedup doesn't outweigh the cost, stay with the real implementation.</p>
+<h3>5. Stubbing: handy, but tests become unclear, brittle and less effective</h3>
+<p>Stubs are quick, so it's tempting to stub whenever the real implementation is awkward. The book lists three sins. <strong>Unclear</strong>: extra stubbing code dilutes the test's intent and is hard to follow without knowing the implementation; <strong>if you have to step through the system under test in your head to see why certain functions are stubbed, stubbing is the wrong tool</strong>. <strong>Brittle</strong>: stubs leak implementation details into the test, so implementation changes force test changes. <strong>Less effective</strong>: <code>when(calc.add(1, 2)).thenReturn(3)</code> hand-copies part of a contract into the test with no guarantee it's right; and stubs hold no state, so after <code>save(item)</code> you can't <code>get(item.id())</code>.</p>
+<p>The book's counter-example stubs five functions (server available, begin transaction, init, pay, end transaction) and can only end with <code>verify(server).pay(…)</code>, because there's no way to know whether money moved. With a fake credit card server, the test shrinks to "call → assert <code>getMostRecentCharge(card)</code> equals 500".</p>
+<p><strong>When stubbing fits</strong>: when you need a function to return a specific value to put the system under test into a certain state (e.g. return three transactions to test a counter), and to simulate <strong>errors</strong> that a real implementation or fake can hardly trigger. The rule: every stubbed function should <strong>relate directly to the test's assertions</strong>, so a test stubs only a few; needing many is a sign of overuse, or of a system under test that's too complex and should be refactored. Even then, real implementations or fakes are still better.</p>
+<h3>6. Interaction testing: avoid if possible, verify only side-effecting calls</h3>
+<p>The book contrasts two sorting tests. The state test calls <code>sortNumbers([3,1,2])</code> and asserts the result is <code>[1,2,3]</code> — quicksort or bubble sort, who cares. The interaction test only does <code>verify(mockQuicksort).sort(…)</code>, and <strong>can't possibly know whether the numbers got sorted</strong>, because the double can't sort. That's the core problem: interaction testing only checks that a function was called as expected and then <strong>assumes</strong> "if save was called, the item was saved"; state testing actually verifies that assumption. It also bakes "which function the system calls" into the test; some at Google jokingly call such tests <strong>change-detector tests</strong> — they fail on any production change, even when behavior stays the same.</p>
+<figure>
+<svg viewBox="0 0 700 190" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="d1" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker><marker id="d2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#9b6cf5"/></marker></defs>
+<g font-size="12">
+<rect x="250" y="70" width="200" height="50" rx="10" fill="rgba(91,157,249,0.08)" stroke="#8fbaff"/>
+<text x="350" y="92" text-anchor="middle" fill="#e7ebf1" font-weight="700">NumberSorter</text>
+<text x="350" y="110" text-anchor="middle" fill="#7c8593" font-size="10.5">picks quicksort or bubble sort</text>
+<rect x="20" y="20" width="200" height="56" rx="10" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="2"/>
+<text x="120" y="44" text-anchor="middle" fill="#e7ebf1" font-weight="700">State test</text>
+<text x="120" y="64" text-anchor="middle" fill="#8fbaff" font-size="11">assert result = [1,2,3]</text>
+<line x1="220" y1="52" x2="248" y2="80" stroke="#5b9df9" marker-end="url(#d1)"/>
+<rect x="20" y="115" width="200" height="56" rx="10" fill="rgba(155,108,245,0.08)" stroke="#9b6cf5"/>
+<text x="120" y="139" text-anchor="middle" fill="#c9b5f7" font-weight="700">Interaction test</text>
+<text x="120" y="159" text-anchor="middle" fill="#cdd3db" font-size="11">verify quicksort.sort() called</text>
+<line x1="220" y1="140" x2="248" y2="110" stroke="#9b6cf5" stroke-dasharray="4 3" marker-end="url(#d2)"/>
+<text x="470" y="44" fill="#cdd3db" font-size="11">swap algorithm → still passes</text>
+<text x="470" y="62" fill="#cdd3db" font-size="11">sorts wrong → fails ✓</text>
+<text x="470" y="139" fill="#c9b5f7" font-size="11">swap algorithm → fails (false alarm)</text>
+<text x="470" y="157" fill="#c9b5f7" font-size="11">sorted or not → can't tell</text>
+</g>
+</svg>
+<figcaption>Figure 4 · Same sorter: the state test asks only "is the result right?"; the interaction test asks only "was quicksort called?" — it goes red when you swap algorithms, yet may miss a wrong sort.</figcaption>
+</figure>
+<p><strong>Interaction testing is warranted in only two cases</strong>: first, <strong>you can't do state testing</strong> — the real implementation is too slow and no fake exists, so verifying calls gives at least basic confidence; second, <strong>the number or order of calls is itself the behavior</strong> — a cache should cut database calls, so assert <code>verify(db, atMostOnce()).selectRecords()</code>. State verification you can't do in a unit test belongs in an <strong>integration test</strong> against a real database.</p>
+<p>Two best practices. <strong>Verify only state-changing functions</strong>: <code>sendEmail()</code>, <code>saveRecord()</code>, <code>logAccess()</code> have side effects and are worth verifying; read-only calls like <code>getUser()</code> or <code>readFile()</code> return values the system uses for other work you can already assert, so verifying them is redundant and brittle. <strong>Avoid overspecification</strong>: to test "the greeting includes the user's name", check only the relevant argument with <code>setText(eq("Fake User"), any(), any())</code> rather than pinning greeting, version and icon, and split different behaviors into separate tests.</p>
+<h2>Key trade-offs and choices</h2>
+<p class="tcap">Table 1 · Four options and their honest costs</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Option</th><th>Fidelity</th><th>Catches real bugs</th><th>Maintenance cost</th><th>Use when</th></tr></thead>
+<tbody>
+<tr><th><strong>Real impl</strong></th><td>Highest</td><td>Strong, even bugs in dependencies</td><td>Building the dependency tree; may be slow or nondeterministic</td><td>Fast, deterministic, simple deps; always for value objects</td></tr>
+<tr><th><strong>Fake</strong></th><td>High at the contract level</td><td>Strong</td><td>Writing it, tracking the real one, contract tests — borne by the owner</td><td>Real impl slow or non-hermetic, and many users</td></tr>
+<tr><th>Stub</th><td>Only a few hand-copied returns</td><td>Weak; a wrong copy goes unnoticed</td><td>Leaks internals; hard to read with many stubs</td><td>Driving into a specific state, simulating rare errors</td></tr>
+<tr><th>Interaction test</th><td>Doesn't run the impl</td><td>Weakest; only "it was called"</td><td>Change detector — any change turns it red</td><td>State testing impossible, or call count / order is the behavior</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 2 · Real implementation or double: judging three dimensions</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Dimension</th><th>Leans real</th><th>Leans double</th><th>The book's advice</th></tr></thead>
+<tbody>
+<tr><th>Execution time</th><td>~1 ms extra per case; few cases</td><td>~1 s extra per case × hundreds of cases</td><td>Start real, switch when slow; parallelism and build caching buy time</td></tr>
+<tr><th>Determinism</th><td>Occasional flakes</td><td>Frequently flaky; depends on outside services or the clock</td><td>Use a double, or a hermetic instance the test controls</td></tr>
+<tr><th>Construction</th><td>Can reuse production factories / DI</td><td>Hand-building the whole tree</td><td>Don't grab the one-line <code>@Mock</code>; make construction reusable first</td></tr>
+</tbody>
+</table></div>
+<p>This isn't a "fewer doubles is always better" dogma: the book keeps saying there's no exact answer, and fakes cost something too. But <strong>the default sits at the real-implementation end, and departing from it needs a reason</strong>.</p>
+<h2>Why it matters / in real systems</h2>
+<p>At Google's scale, a type mocked tens of thousands of times becomes impossible for its owner to change, while one good fake can be shared by thousands of tests. <strong>Double strategy isn't personal testing style; it's part of an API's ability to evolve.</strong> Asked in an interview "how do you mock dependencies?", the best answer starts with whether you need to mock at all.</p>
+<div class="ev">
+<p class="evh">Industry evidence · public record</p>
+<ul>
+<li><strong>Google · the mocking-framework lesson</strong>: the book says mocking frameworks first "seemed like a hammer fit for every nail" at Google, and only after several years and countless tests did the cost become clear: those tests "required constant effort to maintain while rarely finding bugs"; the pendulum "has now begun swinging in the other direction". <span class="src"><a href="https://raw.githubusercontent.com/abseil/abseil.github.io/master/resources/swe-book/html/ch13.html" target="_blank" rel="noopener">Software Engineering at Google · Ch13 (official open edition source, abseil) ↗</a></span></li>
+<li><strong>Google · @DoNotMock</strong>: the Error Prone annotation's source describes it as a "type that should not be mocked" and says that when marking a type you "should always point to alternative testing solutions such as standard fakes or other testing utilities"; the default message is "Create a real instance instead". <span class="src"><a href="https://raw.githubusercontent.com/google/error-prone/master/annotations/src/main/java/com/google/errorprone/annotations/DoNotMock.java" target="_blank" rel="noopener">google/error-prone · DoNotMock.java ↗</a></span></li>
+<li><strong>Google · Android testing guide</strong>: Android Developers' "Use test doubles in Android" says fakes "are preferred" and simpler than stubs, while spies "are usually avoided for adding complexity". <span class="src"><a href="https://developer.android.com/training/testing/fundamentals/test-doubles" target="_blank" rel="noopener">developer.android.com · Use test doubles in Android ↗</a></span></li>
+<li><strong>The Mockito project itself</strong>: Mockito's official wiki page "How to write good tests" lists "Don't mock a type you don't own!", "Don't mock everything, it's an anti-pattern" and "Don't mock value objects" — even the mocking framework tells you to mock less. <span class="src"><a href="https://raw.githubusercontent.com/wiki/mockito/mockito/How-to-write-good-tests.md" target="_blank" rel="noopener">mockito/mockito wiki · How to write good tests ↗</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"Mock = test double" — the conflation is the root of the confusion.</strong> The chapter separates fakes, stubs and interaction testing; a mocking framework is just the tool for the latter two.</li>
+<li><strong>"Stubs and fakes are about the same" — the difference is behavior.</strong> A fake holds state, can store and retrieve, and honors the contract; a stub only recites the answers you gave it.</li>
+<li><strong>"Unit tests should isolate every dependency" — Google leans the other way.</strong> Cutting dependencies at class boundaries ties the test's scope arbitrarily to how the implementation happens to be split.</li>
+<li><strong>"A fake must match the real thing exactly" — only on the contract the tests care about.</strong> Latency, storage medium and specific hash values can differ; unsupported paths should fail fast.</li>
+<li><strong>Debate: classical vs mockist.</strong> The chapter sides clearly with the classical school but acknowledges that the creators of the first mocking frameworks were mockists; the Mockito wiki itself recommends <em>Growing Object-Oriented Software, Guided by Tests</em>, a mockist classic. Google's reason — "hard to scale" — is a judgment made at organisational scale, not a universal law.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① Doubles fix slow, costly, nondeterministic dependencies, but cost you testability, applicability and fidelity.</p>
+<p>② Three techniques: fakes (lightweight working implementations), stubs (hard-coded returns), interaction testing (verify calls only); don't lump them as "mocking".</p>
+<p>③ Seams come from dependency injection; testability is an up-front investment that gets pricier the later you make it.</p>
+<p>④ Prefer the real implementation: fast, deterministic, simple deps means real, and value objects are always real; a real bug turning your test red is a good thing.</p>
+<p>⑤ Three dimensions: execution time (start real, switch when slow), determinism (non-hermetic → double or hermetic instance), construction (reuse production factories / DI).</p>
+<p>⑥ If the real thing won't do, use a fake: written by the owner, built at the root, faithful to the contract from the test's view, failing fast when unsupported, kept honest by contract tests.</p>
+<p>⑦ Stubbing's three sins: unclear, brittle, less effective; use it to drive state or simulate errors, with every stub tied directly to an assertion.</p>
+<p>⑧ Avoid interaction testing: only when state testing is impossible or call count / order is the behavior; verify only side-effecting calls, never overspecify.</p>
+<p>⑨ The @DoNotMock lesson: an API mocked tens of thousands of times can't change; your double strategy decides how your API evolves.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Finish this page ≈ own the core of the chapter; go back to the book for the full argument.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
