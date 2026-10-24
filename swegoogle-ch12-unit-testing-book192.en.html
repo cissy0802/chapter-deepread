@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Software Engineering at Google Ch 12 · Unit Testing — Book Deep-Read 192</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · Software Engineering at Google · Chapter 12</p>
+<h1>Unit Testing</h1>
+<p class="sub">Software Engineering at Google · Ch 12 · Unit Testing · Erik Kuefler · 2020</p>
+<p class="langbar"><a href="swegoogle-ch12-unit-testing-book192.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Quick read</button>
+<button data-mode="deep">Deep read</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>The previous chapter said automated checks let many people safely change the same program every day. This one goes a level down: the kind of check Google engineers write most — <strong>the unit test, which checks one small piece of code</strong> — and how to write it so it helps instead of getting in the way.</p>
+<h2>A strange story first</h2>
+<p>You'd think more tests always means more safety. The chapter opens with a counterexample. An engineer, Mary, adds a couple dozen lines of code and gets a screen full of failures when she tries to check in. She spends the whole day going through them and finds <strong>not a single real problem</strong>: the tests had memorized what the program's internal parts looked like, she moved a few parts around, and everything went red. Tests meant to save her time ate days of it.</p>
+<h2>Why the old way hurts</h2>
+<p>Bad tests have two diseases. They are <strong>brittle</strong>: a harmless change unrelated to any real problem makes them fail. And they are <strong>unclear</strong>: when they fail, nobody can tell what they were checking or how to fix them. At Google one engineer may run thousands of tests in a day, and a single company-wide change can trigger hundreds of thousands. Even if only a small share cry wolf, the wasted time is enormous.</p>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>Come in through the front door:</strong> a car inspector presses the brake and turns the wheel; they don't take the engine apart to count bolts. If the mechanic swaps a part and the car still stops, the inspection should still pass.</li>
+<li><strong>Check the outcome, not the route:</strong> when you mail a letter, you care that it arrived, not which streets the carrier took. A check that insists on the route breaks when the route changes, and misses the letter that got lost.</li>
+<li><strong>One check, one question:</strong> instead of a grab-bag "test this feature", write single sentences like "when the balance is zero, a withdrawal is refused". The name reads like a line from the manual.</li>
+<li><strong>A check you can see is right:</strong> nobody tests the tests, so no clever calculations inside them; write the expected answer out in full.</li>
+<li><strong>Wordy but complete beats short but scattered:</strong> a recipe card that lists every ingredient beats one that says "see page 37". A few repeated lines in a test are fine if the reader never has to go hunting.</li>
+</ul>
+<h2>What it buys you</h2>
+<p>Written this way, a test rarely needs touching again: cleaning up the inside, adding features, or fixing bugs shouldn't change it. Only when the program's <strong>promised behavior</strong> really changes should the test change too. Google says tests that follow these rules are orders of magnitude more valuable than ones that don't. The honest cost: they take more thought up front — you have to ask how a real user would call the code — and you must tolerate some repetition.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p><strong>A good unit test only raises the alarm when something is truly broken — and when it does, you can see what broke.</strong></p>
+</div>
+<p class="switch-hint">Want to see which three of the four kinds of change should never touch a test, how state and interaction testing differ, how to lay out given/when/then, and why tests should be DAMP rather than DRY? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You'd think the more unit tests the better; this chapter says <strong>maintainability</strong> is what makes or breaks them — a good test, once written, should never need to change, and should fail only for real bugs, with an obvious cause. The practices fall into two groups: <strong>avoid brittleness</strong> (test via public APIs, verify state rather than interactions) and <strong>achieve clarity</strong> (test behaviors rather than methods, no logic in tests, readable failure messages, DAMP over DRY).</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Unit test</strong>: a test of narrow scope, usually validating one class or method; in size it is usually "small" (single process, no network or disk; see Chapter 11).</li>
+<li><strong>System under test (SUT)</strong>: the code a given test is checking.</li>
+<li><strong>Public API</strong>: the entry points a piece of code offers its outside users, as opposed to internal "implementation details".</li>
+<li><strong>Refactoring</strong>: a change to how code is written internally that does not change its outward behavior.</li>
+<li><strong>Test double / mock</strong>: a fake object standing in for a real dependency; mocking frameworks can record how it was called (Chapter 13).</li>
+<li><strong>Assertion</strong>: the line in a test that checks a result against the expected value and fails the test if they differ.</li>
+<li><strong>Setup method</strong>: preparation code a test framework runs before each test, such as JUnit's <code>@Before</code>.</li>
+<li><strong>DRY</strong>: Don't Repeat Yourself — define each concept in one place and minimize duplication.</li>
+<li><strong>Large-scale change (LSC)</strong>: one automated change spanning thousands of files across the repository (Chapter 22).</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Part III, "Processes", second of the four testing chapters. It builds on Ch11 Testing Overview (the size and scope axes) and leads into Ch13 Test Doubles (this chapter keeps saying "mock less"; the next one explains when not to) and Ch14 Larger Testing. Real-world counterpart: everyday unit testing in JUnit, Truth, and Go's <code>testing</code> package.</p>
+<h2>The problem this chapter solves</h2>
+<p>Unit tests are the tests Google writes most. The rule of thumb here is <strong>about 80% unit tests and 20% broader-scoped tests</strong> (Chapter 11 splits the latter into 15% integration and 5% end-to-end). An engineer runs <strong>thousands</strong> of unit tests directly or indirectly on an average workday, and a single large-scale change can trigger <strong>hundreds of thousands</strong> of tests. Unit tests pay off because they are small, fast, and deterministic, easy to write alongside the code, make high coverage cheap, are easy to diagnose, and double as usage examples.</p>
+<p>But volume magnifies their maintenance cost too. Mary's story makes the point: a few dozen lines of feature, a screen of failures, none of them a real bug — just tests whose assumptions about internal structure had been broken. She couldn't tell what they were trying to do, and the hacks she added made them harder to understand next time. <strong>The tests drained productivity without improving quality.</strong> The book names two causes: <strong>brittle</strong> tests, which break on harmless, unrelated changes, and <strong>unclear</strong> tests, which make it hard to tell what's wrong, how to fix it, and what they were for. Left alone? As the book puts it, if every change requires engineers to hand-tweak the tests, calling it an "automated test suite" is a bit of a stretch.</p>
+<h2>The core ideas, explained</h2>
+<h3>1. The goal: tests that never change</h3>
+<p>The book first asks: once a test is written, how often should we expect to change it? The answer depends on which of four kinds of change is being made to production code:</p>
+<ul>
+<li><strong>Pure refactoring</strong>: internals change, the interface doesn't. The test's job is to prove behavior is unchanged, so it <strong>should not change</strong>. If it must, either this isn't a pure refactoring or the test sits at the wrong level of abstraction.</li>
+<li><strong>New features</strong>: write new tests for the new behavior; <strong>existing tests should not change</strong>.</li>
+<li><strong>Bug fixes</strong>: the bug means a case was missing; add that case, and again <strong>existing tests should not change</strong>.</li>
+<li><strong>Behavior changes</strong>: the one case where we <strong>expect</strong> to update tests — and already the most expensive kind, because users rely on current behavior and must be coordinated with.</li>
+</ul>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker><marker id="a2" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#9b6cf5"/></marker></defs>
+<g font-size="12">
+<rect fill="rgba(255,255,255,0.03)" height="36" rx="8" stroke="rgba(124,133,147,0.6)" width="150" x="20" y="20"/>
+<text fill="#cdd3db" text-anchor="middle" x="95" y="43">Pure refactoring</text>
+<rect fill="rgba(255,255,255,0.03)" height="36" rx="8" stroke="rgba(124,133,147,0.6)" width="150" x="20" y="70"/>
+<text fill="#cdd3db" text-anchor="middle" x="95" y="93">New feature</text>
+<rect fill="rgba(255,255,255,0.03)" height="36" rx="8" stroke="rgba(124,133,147,0.6)" width="150" x="20" y="120"/>
+<text fill="#cdd3db" text-anchor="middle" x="95" y="143">Bug fix</text>
+<rect fill="rgba(155,108,245,0.10)" height="36" rx="8" stroke="#9b6cf5" width="150" x="20" y="174"/>
+<text fill="#e7ebf1" text-anchor="middle" x="95" y="197">Behavior change</text>
+<line marker-end="url(#a1)" stroke="#5b9df9" x1="170" x2="318" y1="38" y2="80"/>
+<line marker-end="url(#a1)" stroke="#5b9df9" x1="170" x2="318" y1="88" y2="88"/>
+<line marker-end="url(#a1)" stroke="#5b9df9" x1="170" x2="318" y1="138" y2="96"/>
+<line marker-end="url(#a2)" stroke="#9b6cf5" x1="170" x2="318" y1="192" y2="192"/>
+<rect fill="rgba(91,157,249,0.12)" height="76" rx="10" stroke="#5b9df9" stroke-width="2" width="350" x="322" y="50"/>
+<text fill="#e7ebf1" font-weight="700" x="338" y="76">No existing test changes</text>
+<text fill="#cdd3db" font-size="11" x="338" y="96">Only new tests for new behavior / missed cases</text>
+<text fill="#7c8593" font-size="10.5" x="338" y="114">Editing old tests = wrong level of abstraction</text>
+<rect fill="rgba(155,108,245,0.08)" height="56" rx="10" stroke="#9b6cf5" width="350" x="322" y="164"/>
+<text fill="#c9b5f7" font-weight="700" x="338" y="188">Editing tests = breaking an explicit contract</text>
+<text fill="#7c8593" font-size="10.5" x="338" y="207">Still far cheaper than updating every user</text>
+</g>
+</svg>
+<figcaption>Figure 1 · Of the four kinds of change, only a behavior change should turn existing tests red; needing to edit old tests for the other three is the signature of brittleness.</figcaption>
+</figure>
+<p>The book's framing is precise: changing a test for a behavior change means you are breaking an <strong>explicit contract</strong>; changing one in the other three cases means you broke an <strong>unintended contract</strong>. With this rule, growing a system means writing a few new tests, not touching every old one — which matters especially at Google, where many refactorings are done through large-scale changes.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/super-individual/refactor-eng-day20.en.html" rel="noopener" target="_blank">Super Individual · Day 20 Refactoring with AI</a> — when an AI does the big refactor, tests that never change are the safety net</aside>
+<h3>2. Test via public APIs: call it the way users do</h3>
+<p>The single most important defense against brittleness: <strong>invoke the system under test the way its users would</strong>, through its public API, not its implementation details. The book's example is a transaction processor: a public <code>processTransaction</code>, with a private <code>isValid</code> (amount below balance) and <code>saveToDatabase</code> (serializes the record as <code>"me,you,100"</code>). The tempting shortcut strips <code>private</code> and tests both methods directly, asserting on the stored string. Rename a method, move it into a helper class, change the serialization format — the tests break, and real users never notice.</p>
+<p>The better version uses only public methods: give "me" a balance of 150 and "you" 20, transfer 100, assert the balances are 50 and 120; add another test where an insufficient balance leaves both unchanged. Same coverage, but now the test is a contract: <strong>if it breaks, an existing user would break too</strong> (a footnote calls this the "use the front door first" principle).</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b1" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker><marker id="b2" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#9b6cf5"/></marker></defs>
+<g font-size="12">
+<rect fill="rgba(91,157,249,0.05)" height="170" rx="12" stroke="#8fbaff" width="300" x="250" y="25"/>
+<text fill="#8fbaff" font-weight="700" x="264" y="46">Transaction processor (SUT)</text>
+<rect fill="rgba(91,157,249,0.16)" height="34" rx="8" stroke="#5b9df9" stroke-width="2" width="250" x="275" y="60"/>
+<text fill="#e7ebf1" font-size="11" text-anchor="middle" x="400" y="82">Public API: processTransaction / getBalance</text>
+<rect fill="rgba(255,255,255,0.03)" height="30" rx="6" stroke="rgba(124,133,147,0.6)" stroke-dasharray="4 3" width="115" x="275" y="120"/>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="332" y="140">private isValid</text>
+<rect fill="rgba(255,255,255,0.03)" height="30" rx="6" stroke="rgba(124,133,147,0.6)" stroke-dasharray="4 3" width="125" x="400" y="120"/>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="462" y="140">private saveToDatabase</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="400" y="178">Free to rename, split, reformat</text>
+<rect fill="rgba(91,157,249,0.10)" height="34" rx="8" stroke="#5b9df9" width="150" x="40" y="60"/>
+<text fill="#e7ebf1" text-anchor="middle" x="115" y="82">Good: front door</text>
+<line marker-end="url(#b1)" stroke="#5b9df9" stroke-width="2" x1="190" x2="272" y1="77" y2="77"/>
+<rect fill="rgba(155,108,245,0.08)" height="34" rx="8" stroke="#9b6cf5" width="150" x="40" y="125"/>
+<text fill="#c9b5f7" text-anchor="middle" x="115" y="147">Brittle: window</text>
+<line marker-end="url(#b2)" stroke="#9b6cf5" stroke-dasharray="4 3" x1="190" x2="272" y1="138" y2="135"/>
+<text fill="#cdd3db" font-size="11" x="566" y="80">Fails ⇒ a user</text>
+<text fill="#cdd3db" font-size="11" x="566" y="96">would fail too</text>
+<text fill="#cdd3db" font-size="11" x="566" y="140">Fails ⇒ probably</text>
+<text fill="#cdd3db" font-size="11" x="566" y="156">just internals moved</text>
+</g>
+</svg>
+<figcaption>Figure 2 · A test that goes only through the public API stands where real users stand; one that reaches into private methods welds implementation details into a "contract".</figcaption>
+</figure>
+<p>The hard part is that "public" is not the language's <code>public</code>: here the public API means what the unit exposes to <strong>third parties outside the owning team</strong>. A Java class declared public for access across packages may not count; Python has no visibility, only an underscore convention; and Bazel can further restrict who may depend on what. The book's rules of thumb: a <strong>helper class</strong> serving only one or two classes is not its own unit — test it through them; a package or class <strong>anyone can use</strong> without consulting its owners is almost certainly a unit — test it directly; a <strong>support library</strong> usable only by its owners but offering general functionality is also a unit — test it directly too, accepting some redundant coverage that guards against a gap if one of its users is ever deleted.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/decomposing-systems-into-modules-paper43.en.html" rel="noopener" target="_blank">CS Papers Deep-Read · On Decomposing Systems into Modules (information hiding)</a> — the ancestor of "test via public APIs": which changeable decisions a module boundary should hide</aside>
+<h3>3. Test state, not interactions</h3>
+<p>The second way tests lean on implementation details is not in what they call but in how they verify. <strong>State testing</strong> observes the system itself after invoking it; <strong>interaction testing</strong> checks that the system made an expected sequence of calls on its collaborators. The latter is more brittle for the same reason testing a private method is: it checks <strong>how</strong> the system arrived at its result, when usually you only care <strong>what</strong> the result is.</p>
+<p>The book's counterexample: <code>createUser("foobar")</code> followed by <code>verify(database).put("foobar")</code>. It can go wrong both ways. If a bug deletes the record right after writing it, the test <strong>still passes</strong>. If a refactoring switches to a slightly different but equivalent write API, the test <strong>fails</strong>. Replace it with <code>assertThat(accounts.getUser("foobar")).isNotNull()</code>, which states what we actually care about. The most common source of bad interaction tests is <strong>over-reliance on mocking frameworks</strong>, so Google prefers real objects over mocks whenever the real ones are fast and deterministic.</p>
+<h3>4. Test behaviors, not methods</h3>
+<p>Failures are inevitable, and they are good — they are how a unit test delivers value. A test fails for one of two reasons: the system has a problem, or the test does. How fast an engineer can tell which depends on the test's <strong>clarity</strong>. Tests often outlive their authors; unclear production code can be decoded by seeing what calls it, but the <strong>worst case for an unclear test is that it gets deleted</strong> — which suggests it may have provided zero value for years.</p>
+<p>Engineers' first instinct is <strong>one test method per production method</strong>. The book's counterexample, <code>testDisplayTransactionResults</code>, asserts both "You bought a ..." and the low-balance warning — likely because someone piled the second assertion onto the old test when the message was added, violating "unchanging tests" and letting the test grow with the method. Better: <strong>one test per behavior</strong>. A behavior is a guarantee a system makes about how it will respond to a series of inputs while in a particular state, often expressible as given / when / then: "<em>Given</em> an empty account, <em>when</em> attempting to withdraw, <em>then</em> the transaction is rejected." Methods and behaviors are <strong>many-to-many</strong>: most nontrivial methods implement several behaviors, and some behaviors need several methods.</p>
+<p>Three writing rules follow. <strong>Structure</strong>: separate the given / when / then blocks with whitespace or comments (also known as arrange / act / assert), so a reader can read at three levels — name, then comments, then code. The usual violation is interleaving assertions between calls. Multistep flows may alternate when / then, but the vast majority of unit tests need one of each. <strong>Naming</strong>: the test name is often the first or only thing visible in a failure report, so state the action and the expected outcome, e.g. <code>divide_byZero_throwsException</code>. That's wordier than production code, but nobody calls these names; humans read them. If stuck, start with "should" and read it with the class name: "BankAccount should not allow withdrawals when balance is empty." <strong>If a name needs "and", you are probably testing two behaviors.</strong></p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="c1" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<rect fill="rgba(155,108,245,0.08)" height="140" rx="10" stroke="#9b6cf5" width="200" x="20" y="30"/>
+<text fill="#c9b5f7" font-weight="700" text-anchor="middle" x="120" y="54">By method: one big test</text>
+<text fill="#cdd3db" font-size="10.5" text-anchor="middle" x="120" y="84">testDisplayTransactionResults</text>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="120" y="110">assert "bought item"</text>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="120" y="130">+ assert "balance is low"</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="120" y="156">Grows messier with the method</text>
+<line marker-end="url(#c1)" stroke="#5b9df9" stroke-width="2" x1="226" x2="262" y1="100" y2="100"/>
+<rect fill="rgba(91,157,249,0.12)" height="64" rx="10" stroke="#5b9df9" stroke-width="2" width="410" x="270" y="30"/>
+<text fill="#e7ebf1" font-weight="700" x="286" y="54">…_showsItemName</text>
+<text fill="#8fbaff" font-size="11" x="286" y="78">given any user · when shown · then item name appears</text>
+<rect fill="rgba(91,157,249,0.12)" height="64" rx="10" stroke="#5b9df9" stroke-width="2" width="410" x="270" y="106"/>
+<text fill="#e7ebf1" font-weight="700" x="286" y="130">…_showsLowBalanceWarning</text>
+<text fill="#8fbaff" font-size="11" x="286" y="154">given low-balance user · when shown · then warning appears</text>
+</g>
+</svg>
+<figcaption>Figure 3 · One method split into two behavior tests: each has a single given / when / then, and its name is the sentence you'll see in the failure report.</figcaption>
+</figure>
+<h3>5. No logic in tests; failure messages in plain language</h3>
+<p>A clear test is <strong>trivially correct upon inspection</strong>. That's achievable because each test handles one specific set of inputs, while production code must generalize. Production code has tests guarding its complex logic; test code has nothing — <strong>if you feel you need a test for your test, something has gone wrong</strong>. Logic means operators, loops, conditionals. The book's example has just one string concatenation, <code>baseUrl + "/albums"</code>, where baseUrl already ends in a slash; spell out the expected value and the bug jumps out: <code>photos.google.com//albums</code> — and if production code made the same mistake, the original test would never catch it.</p>
+<p>Ideally a failure message lets you <strong>diagnose without opening the test</strong>: expected outcome, actual outcome, relevant parameters. "Test failed: account is closed" is bad (was it expected to be closed, or not?); "Expected an account in state CLOSED, but got account: {name: "my-account", state: "OPEN"}" is good. Libraries help: JUnit's <code>assertTrue(colors.contains("orange"))</code> only sees a boolean and can say only "expected true but was false"; Google's Truth, <code>assertThat(colors).contains("orange")</code>, can say "[red, green, blue] should have contained orange". Without such a library, write it by hand, as in Go's convention <code>Add(2, 3) = %v, want %v</code>.</p>
+<h3>6. Code sharing: DAMP, not DRY</h3>
+<p>Production code follows DRY: change one place, at the cost of readers following chains of references. The math differs in tests. Good tests are meant to be stable, and you <strong>want</strong> them to break when the system changes, so DRY's "easy to change" benefit shrinks; meanwhile complexity costs more, since tests have no tests of their own. So tests should aim for <strong>DAMP — Descriptive And Meaningful Phrases</strong>: some duplication is fine if it makes the test simpler and clearer. The book's counterexample hides user creation, registration, and validation inside helpers full of loops and ternaries — test bodies are concise but incomplete, and the helpers hide a bug. DAMP complements DRY rather than replacing it: factor things out to make tests <strong>more descriptive</strong>, not merely less repetitive.</p>
+<p>For the three common forms of sharing: <strong>shared constants</strong> like <code>ACCOUNT_1</code> hide why a value was chosen and tempt reuse where they don't quite fit — use <strong>construction helpers with sensible defaults</strong> so each test states only the fields it cares about (Java emulates named parameters with a Builder; a footnote suggests slightly randomizing defaults so nobody quietly depends on them). <strong>Shared setup</strong> is best for constructing the object under test and its collaborators; if a test depends on a specific value from setup (the hard-coded "Donald Knuth"), it should override that value in its own body. <strong>Shared validation</strong>: a big <code>validate()</code> at the end of every test is a bad habit — intent disappears, and one bug turns a swath of tests red; a good validation helper asserts <strong>a single conceptual fact</strong>, such as "this user has access to this account", hiding the loop it needs. <strong>Test infrastructure</strong> shared across suites is more like production code — many callers, hard to change — so treat it as its own product with its own tests.</p>
+<h2>Key trade-offs and choices</h2>
+<p class="tcap">Table 1 · Avoiding brittleness: two choices, two kinds of error</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Choice</th><th>On a behavior-preserving refactor</th><th>On a real bug</th><th>Honest cost</th></tr></thead>
+<tbody>
+<tr><th><strong>Via public API</strong></th><td>Stays green</td><td>Fails on user-visible bugs</td><td>Must think through unit boundaries; support libraries get redundant coverage</td></tr>
+<tr><th>Private / implementation</th><td><strong>Breaks</strong> (rename, split, reformat)</td><td>Catches only what it stares at</td><td>Cheapest to write, costliest to maintain</td></tr>
+<tr><th><strong>Verify state</strong></th><td>Stays green</td><td>Fails if the result is wrong</td><td>Needs a way to read state back; real deps must be fast and deterministic</td></tr>
+<tr><th>Verify interactions (mock verify)</th><td><strong>Breaks</strong> (equivalent API swap)</td><td><strong>May miss it</strong> (written then deleted)</td><td>Worth it only when the call itself is the behavior</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 2 · Sharing test code: when and how to extract</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Technique</th><th>Good use</th><th>Bad use</th><th>Litmus test</th></tr></thead>
+<tbody>
+<tr><th>Shared constants</th><td>Rarely; when the value doesn't matter</td><td><code>ACCOUNT_1</code> reused hundreds of lines away</td><td>Does the reader have to scroll up?</td></tr>
+<tr><th><strong>Construction helpers</strong></th><td>Defaults + override only what matters</td><td>Tests silently depend on defaults</td><td>Values that matter live in the test body</td></tr>
+<tr><th>Shared setup</th><td>Build the SUT and collaborators</td><td>Tests depend on setup's specific values</td><td>If you depend on it, override it explicitly</td></tr>
+<tr><th>Validation helpers</th><td>Assert one conceptual fact</td><td>A catch-all <code>validate()</code></td><td>Would one bug turn a swath red?</td></tr>
+<tr><th>Test infrastructure</th><td>Treated as a product, with its own tests</td><td>Ad-hoc per team, unowned</td><td>Standardize early on shared libraries</td></tr>
+</tbody>
+</table></div>
+<p>The overarching criterion is the book's own: <strong>a test's body should contain all the information needed to understand it, and nothing irrelevant or distracting</strong> (complete and concise). The two choices in Table 1 reinforce each other: tests that go through the public API and verify state are also the easiest to write as one test per behavior. Interaction verification isn't banned — Chapter 13 covers its legitimate uses — but it should be the exception, not a default that comes free with a mocking framework.</p>
+<h2>Why it matters in real systems</h2>
+<p>The scale context: thousands of unit tests per engineer per day, hundreds of thousands triggered by one large-scale change. At that volume even a small share of brittle tests taxes every repository-wide change — <strong>whether tests stay unchanged decides whether big refactorings are feasible at all</strong>. Asked in an interview how to write good unit tests, the strong answer isn't a coverage number; it's this chapter's TL;DR list.</p>
+<div class="ev">
+<p class="evh">Industry evidence · public record</p>
+<ul>
+<li><strong>Google · one mocking framework</strong>: the book says Google mandated Mockito, years ago, as the only mocking framework for new Java tests and banned others; it caused some grumbling, but "today, it's universally seen as a good move that made our tests easier to understand and work with." <span class="src"><a href="https://raw.githubusercontent.com/abseil/abseil.github.io/master/resources/swe-book/html/ch12.html" rel="noopener" target="_blank">Software Engineering at Google · Ch12 (official open edition source, abseil) ↗</a></span></li>
+<li><strong>Google · the Truth library</strong>: Truth's official README says it makes test assertions and failure messages more readable, is maintained by the Guava team, and "is used in the majority of the tests in Google's own codebase." <span class="src"><a href="https://raw.githubusercontent.com/google/truth/master/README.md" rel="noopener" target="_blank">google/truth · README ↗</a></span></li>
+<li><strong>Google · Go style</strong>: Google's Go Style Decisions say failure messages should identify the function and its input, as <code>YourFunc(%v) = %v, want %v</code> rather than just <code>got %v, want %v</code>, with the actual value printed before the expected one. <span class="src"><a href="https://raw.githubusercontent.com/google/styleguide/gh-pages/go/decisions.md" rel="noopener" target="_blank">google/styleguide · Go Style Decisions ↗</a></span></li>
+<li><strong>Google · self-assessment</strong>: the chapter concludes that unit tests at Google "are far from perfect," but tests following these practices are "orders of magnitude more valuable than those that don't." <span class="src">Software Engineering at Google · Ch12 (text citation)</span></li>
+</ul>
+</div>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"Brittle = flaky" — no.</strong> A footnote separates them: a brittle test fails deterministically on a harmless change; a flaky test passes and fails with no code change at all.</li>
+<li><strong>"The public keyword defines the public API" — wrong.</strong> Here "public" means usable by third parties outside the team, which may not match language visibility.</li>
+<li><strong>"Drop private to raise coverage" — an anti-pattern.</strong> The same coverage is reachable through the public API without locking in the implementation.</li>
+<li><strong>"A unit test must mock every dependency" — Google leans the other way.</strong> Use real objects when they are fast and deterministic; <code>verify</code>-style assertions both cry wolf and miss real bugs.</li>
+<li><strong>"Tests should be DRY too" — only half right.</strong> Hiding key details in helpers to cut repetition is exactly the smell this chapter names; extract for descriptiveness.</li>
+<li><strong>"One test per method" — intuitive, and it rots.</strong> Methods and behaviors are many-to-many; an "and" in the name means split it.</li>
+<li><strong>Debate: classicist vs mockist.</strong> The industry has long argued between state-first verification and interaction-first, double-everything styles. This chapter sides clearly with the classicists, but interaction checks still earn their keep when the call itself is the behavior (an email really must be sent); Chapter 13 draws the line.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① Maintainability is the crux: a good unit test never changes once written, and fails only for real bugs with an obvious cause.</p>
+<p>② Two diseases: brittle (breaks on harmless changes) and unclear (can't tell why it failed); both cost more at scale.</p>
+<p>③ Of four kinds of change, only behavior changes should edit old tests; editing them for refactors, features, or bug fixes signals brittleness.</p>
+<p>④ Test via public APIs: test fails ⇔ a user would fail; "public" means usable by third parties, not the <code>public</code> keyword.</p>
+<p>⑤ Test state, not interactions: <code>verify(db).put</code> can pass on a bug and fail on a harmless refactor; use real objects when you can.</p>
+<p>⑥ Test behaviors, not methods: given / when / then, one behavior per test; an "and" in the name means split it.</p>
+<p>⑦ No logic in tests: a single string concatenation can hide a double-slash bug.</p>
+<p>⑧ Failure messages state expected, actual, and inputs; Truth and Go's <code>want</code> convention are ready-made tools.</p>
+<p>⑨ DAMP, not DRY: construction helpers with defaults, setup that only builds objects, validation helpers that assert one fact, and test infrastructure with its own tests.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Finish this page ≈ own the core of the chapter; go back to the book for the full argument.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
