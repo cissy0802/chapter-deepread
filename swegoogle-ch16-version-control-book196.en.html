@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Software Engineering at Google Ch 16 · Version Control and Branch Management — Book Deep-Read 196</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · Software Engineering at Google · Chapter 16</p>
+<h1>Version Control and Branch Management</h1>
+<p class="sub">Software Engineering at Google · Ch 16 · Version Control and Branch Management · Titus Winters · 2020</p>
+<p class="langbar"><a href="swegoogle-ch16-version-control-book196.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Quick read</button>
+<button data-mode="deep">Deep read</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>When a few people edit the same document, sooner or later a folder fills up with "Proposal v5 final", "Proposal v5 final - edits", "Proposal v5 final - Josh's version". Which one is current? Programmers have the same problem, just with millions of times more files and tens of thousands of times more people. The tool that manages it is called <strong>version control</strong>. This chapter is about how Google's 50,000 engineers share one body of code without it turning into chaos.</p>
+<h2>An analogy</h2>
+<p>Picture an encyclopedia written by tens of thousands of people at once. Version control is a super-librarian who remembers <strong>what every page looked like on every day</strong> — who changed which sentence, and when — and can flip back to any of it. There is exactly <strong>one master copy</strong> on the central shelf. Everyone works from it, so nobody has to ask "is your copy the latest?"</p>
+<h2>Why the old way was hard</h2>
+<p>Many teams are afraid of damaging the master copy, so each one photocopies the book and writes on its copy for weeks or months, planning to copy everything back in one go. It sounds safe. But by the day they copy it back, other people have changed the master beyond recognition: hundreds of clashes to sort out one by one, and when something breaks, nobody can tell whose section caused it. Some companies even assign one person and a weekly meeting just to decide "whose copy goes back in first this week."</p>
+<h2>The core idea, intuitively</h2>
+<ul>
+<li><strong>Only one master copy counts:</strong> however many drafts people hold, "done" has one meaning — it's in the central book.</li>
+<li><strong>Write into the master a little at a time:</strong> change a small piece and put it back the same day. Small changes mean small clashes, and if something breaks you can see at a glance whose it was. An unfinished chapter can go in too, with a cloth over it so readers can't see it until it's ready.</li>
+<li><strong>Only one copy of each shared thing:</strong> if someone dislikes a flaw in a shared tool and quietly makes a private edited copy, others will end up using both copies at once and they'll fight. The rule: if it's broken, fix the one copy — don't start your own.</li>
+</ul>
+<h2>What it buys you / how to choose</h2>
+<p>The payoff is that the whole company works at one table: everyone can see what everyone else changed, one change can fix every use across the company, and a new hire simply gets the master copy. The honest cost: putting everyone's code into one book needs very powerful tooling — ordinary tools can't carry that weight — and when different projects have different secrecy rules, a single book gets harder to manage.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p><strong>Take the choice away: one master copy, one version of everything, small changes straight into the main line — the bigger the team, the more it saves.</strong></p>
+</div>
+<p class="switch-hint">Want the real difference between centralized and distributed version control, why long-lived dev branches bank risk, what the One-Version Rule prevents, and whether a monorepo is the only right answer? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>One sentence</h2>
+<p class="lead">You think branches are a safety net that isolates risk; this chapter says that's mostly an illusion. Version control is <strong>policy</strong> before it is tooling, and the policy that scales is <strong>removing choice</strong>: one source of truth to commit to, one version of every dependency, and development done in small steps on trunk. Long-lived dev branches just bank merge risk until it all goes off at once.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Version control system (VCS)</strong>: a system that records the history of every change to a set of files, lets you return to any old version, and coordinates many people editing at once.</li>
+<li><strong>Repository (repo)</strong>: the managed files plus their full history.</li>
+<li><strong>Commit</strong>: saving a group of changes into the repo as one unit; "atomic" means all of it takes effect or none of it does.</li>
+<li><strong>Branch and merge</strong>: a branch is a parallel line of changes split off at some point; a merge stitches two lines back together, and edits to the same spot conflict.</li>
+<li><strong>Trunk (head / main)</strong>: the repo's default main line.</li>
+<li><strong>Cherry-pick</strong>: copying one specific change, by itself, onto another branch.</li>
+<li><strong>Dependency</strong>: another library your code uses; a "transitive" dependency is a dependency of a dependency.</li>
+<li><strong>Continuous integration (CI)</strong>: automatically building and testing every commit so breakage is caught early.</li>
+<li><strong>Feature flag</strong>: code is already deployed, but configuration decides whether the feature is switched on — unfinished work ships switched off.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The first chapter of Part IV, "Tools." It follows Part III's testing, review and deprecation chapters — which are exactly why trunk can stay stable — and sets up Code Search (Ch17), Build Systems (Ch18), Dependency Management (Ch21) and Large-Scale Changes (Ch22), all of which assume "one repo, one version." Real-world counterparts: Git workflow debates, monorepo vs. many repos, trunk-based development vs. feature branches.</p>
+<h2>What problem this chapter solves</h2>
+<p>The book's thesis is that software engineering is "programming integrated over time," and version control is the engineer's primary tool for managing the interplay between <strong>source and time</strong>. A filesystem maps filename to contents; a VCS extends that to <code>VCS(filename, time, branch) → contents</code>. The time dimension lets you go back; the branch dimension lets work happen in parallel.</p>
+<p>Whether to use a VCS is settled: the author notes that most experienced engineers instinctively use one for any project lasting more than a day or two, even solo. The real question is one level up: <strong>how to use it</strong>. At Google's scale — roughly 50,000 engineers in one repository, 60,000 to 70,000 commits per working day — any policy on branching, on picking dependencies, or on what counts as "done" that leaves room for choice makes coordination cost grow faster than headcount. The chapter asks which choices should be taken away.</p>
+<h2>The core ideas, in depth</h2>
+<h3>1. Centralized vs. distributed: less different than you'd think</h3>
+<p>The author starts with cold water: as long as a system can <strong>atomically commit a batch of files</strong>, all modern VCSs are semantically equivalent, and the rest is user experience. Picking a VCS is like picking a filesystem format — what you put in it and how you use it matter far more. Early RCS used exclusive file locks to prevent simultaneous edits, which jammed once locks became contended. CVS let many people check out at once but lacked atomic commits, so changes could be corrupted or lost. Subversion added true atomicity. All were <strong>centralized</strong>: one central repository, and every commit goes to the server.</p>
+<p>From the mid-2000s, <strong>distributed VCS (DVCS)</strong> such as Git and Mercurial took over. The core difference is one question: <strong>which copies count as a repository — where can you commit?</strong> In a DVCS every clone is a full repository; you can commit offline and push to any other repo, and "central" is purely a matter of policy. The author's advice: when in doubt, use Git — there's value in doing what everyone else does.</p>
+<p>Google's main repository, though, runs on Piper, an in-house centralized system. The reason is scale. A DVCS by default pulls the whole codebase and its history locally, but the larger the organization, the smaller the fraction of files any one developer touches, so <strong>that transfer becomes almost entirely waste</strong>. Local files mostly matter for building, and distributed builds (Ch18) handle that better. Google did try to move toward Git and was stopped by the codebase's size and by Hyrum's Law — many scripts assume monotonically increasing commit numbers reflect time order, a hidden dependency that hash-based commit IDs break.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m1" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<text fill="#8fbaff" font-weight="700" text-anchor="middle" x="170" y="20">Centralized (Piper / SVN)</text>
+<rect fill="rgba(91,157,249,0.16)" height="44" rx="9" stroke="#5b9df9" stroke-width="2" width="190" x="75" y="34"/>
+<text fill="#e7ebf1" font-weight="700" text-anchor="middle" x="170" y="54">Central repo = truth</text>
+<text fill="#cdd3db" font-size="10.5" text-anchor="middle" x="170" y="70">fixed by the technology</text>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="8" stroke="#5b9df9" width="90" x="20" y="150"/>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="8" stroke="#5b9df9" width="90" x="125" y="150"/>
+<rect fill="rgba(255,255,255,0.03)" height="34" rx="8" stroke="#5b9df9" width="90" x="230" y="150"/>
+<text fill="#cdd3db" font-size="11" text-anchor="middle" x="65" y="171">workspace</text>
+<text fill="#cdd3db" font-size="11" text-anchor="middle" x="170" y="171">workspace</text>
+<text fill="#cdd3db" font-size="11" text-anchor="middle" x="275" y="171">workspace</text>
+<line marker-end="url(#m1)" stroke="#5b9df9" stroke-width="1.6" x1="65" x2="140" y1="148" y2="82"/>
+<line marker-end="url(#m1)" stroke="#5b9df9" stroke-width="1.6" x1="170" x2="170" y1="148" y2="82"/>
+<line marker-end="url(#m1)" stroke="#5b9df9" stroke-width="1.6" x1="275" x2="200" y1="148" y2="82"/>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="170" y="208">only files in use; commits go to the center</text>
+<line stroke="rgba(91,157,249,0.2)" x1="350" x2="350" y1="20" y2="215"/>
+<text fill="#c9b5f7" font-weight="700" text-anchor="middle" x="530" y="20">Distributed (Git / Mercurial)</text>
+<rect fill="rgba(155,108,245,0.16)" height="44" rx="9" stroke="#9b6cf5" stroke-dasharray="5 3" stroke-width="2" width="190" x="435" y="34"/>
+<text fill="#e7ebf1" font-weight="700" text-anchor="middle" x="530" y="54">"Main repo"</text>
+<text fill="#cdd3db" font-size="10.5" text-anchor="middle" x="530" y="70">by policy only (e.g. GitHub)</text>
+<rect fill="rgba(155,108,245,0.08)" height="34" rx="8" stroke="#9b6cf5" width="90" x="380" y="150"/>
+<rect fill="rgba(155,108,245,0.08)" height="34" rx="8" stroke="#9b6cf5" width="90" x="485" y="150"/>
+<rect fill="rgba(155,108,245,0.08)" height="34" rx="8" stroke="#9b6cf5" width="90" x="590" y="150"/>
+<text fill="#cdd3db" font-size="11" text-anchor="middle" x="425" y="171">full clone</text>
+<text fill="#cdd3db" font-size="11" text-anchor="middle" x="530" y="171">full clone</text>
+<text fill="#cdd3db" font-size="11" text-anchor="middle" x="635" y="171">full clone</text>
+<line marker-end="url(#m1)" stroke="#9b6cf5" stroke-width="1.6" x1="425" x2="500" y1="148" y2="82"/>
+<line marker-end="url(#m1)" stroke="#9b6cf5" stroke-width="1.6" x1="530" x2="530" y1="148" y2="82"/>
+<line marker-end="url(#m1)" stroke="#9b6cf5" stroke-width="1.6" x1="635" x2="560" y1="148" y2="82"/>
+<line stroke="#9b6cf5" stroke-dasharray="3 3" x1="470" x2="485" y1="167" y2="167"/>
+<line stroke="#9b6cf5" stroke-dasharray="3 3" x1="575" x2="590" y1="167" y2="167"/>
+<text fill="#7c8593" font-size="10.5" text-anchor="middle" x="530" y="208">peers push to each other; full history local</text>
+</g>
+</svg>
+<figcaption>Figure 1 · Both architectures end up back at one source of truth: centralized systems hard-code it, distributed ones have to add it by policy.</figcaption>
+</figure>
+<h3>2. Source of truth: even DVCS can't escape a center</h3>
+<p>Centralized systems bake the <strong>Source of Truth</strong> into the design: whatever was most recently committed at trunk is the current version, and your change is "done" once it's recommitted on top of it. A DVCS has no inherent center; in theory patches can flow around uncoordinated, sliding back into the world of "Presentation v5 - final - Josh's version v2." The author's challenge is pointed: without a center, how do you make sure a release includes every feature each developer finished over the past few weeks? Is there any approach, short of everyone signing off, whose human effort grows <strong>sublinearly</strong> with team size? No — eventually someone keeps a list of which features are ready, and that bookkeeping reinvents a central source of truth. Where does a new hire get a fresh, known-good copy of the code? Same problem.</p>
+<p>So well-run DVCS projects declare <strong>one branch in one repository</strong> to be the source of truth; the spread of GitHub and GitLab is exactly that pattern. Truth can be hierarchical: a Red Hat engineer commits to Red Hat's kernel source of truth, which is pushed upstream periodically, while Linus has his own. As long as there's no uncertainty about where a change should go, the DVCS chaos is avoided.</p>
+<h3>3. Long-lived dev branches: risk in the bank</h3>
+<p>A key insight of the chapter: <strong>every piece of work in progress is equivalent to a branch</strong>. Uncommitted local changes are conceptually no different from committed changes on a branch — just harder to find.</p>
+<p>Before unit testing was common, "we don't commit to trunk until it's been through a full round of testing on a feature dev branch" made sense; the instability it addressed was real. But the author calls a policy that leans on dev branches for stability "inherently misguided." The same commits <strong>must reach trunk eventually</strong>; small merges are easier than big ones; an author merging their own changes is easier than batching unrelated changes for later; and if tests fail after a merge, a single engineer's change is easy to pin down while a whole branch's worth is hard to isolate — and harder still to fix.</p>
+<p>How do organizations get addicted? They see "merging this long-lived branch reduced stability" and conclude "merges are risky," then slow down and coordinate the symptom. Branches multiply, branches get built on in-flight branches, and some unlucky engineer becomes the full-time Merge Coordinator, with weekly meetings to settle "this week's merge strategy" (a footnote cites an informal Twitter poll suggesting about 25% of engineers have sat through regularly scheduled merge-strategy meetings). All that merging and retesting is <strong>pure overhead</strong>. The alternative is <strong>trunk-based development</strong>: lean on tests and CI, keep the build green, disable incomplete features at runtime. Everyone syncs to trunk and commits; no merge meetings, no big merges, and no arguments about which version of a library to use — there can be only one.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m2" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<text fill="#8fbaff" font-weight="700" x="20" y="20">Long-lived dev branch</text>
+<line marker-end="url(#m2)" stroke="#5b9df9" stroke-width="2.5" x1="20" x2="680" y1="60" y2="60"/>
+<text fill="#7c8593" font-size="10.5" x="24" y="52">trunk</text>
+<path d="M60,60 C90,100 110,100 140,100 L520,100 C560,100 580,80 600,64" fill="none" stroke="#9b6cf5" stroke-width="2"/>
+<path d="M200,100 C230,130 250,130 280,130 L480,130 C520,130 560,110 598,66" fill="none" stroke="#9b6cf5" stroke-dasharray="5 3" stroke-width="1.6"/>
+<circle cx="600" cy="62" fill="rgba(155,108,245,0.5)" r="14" stroke="#9b6cf5" stroke-width="2"/>
+<text fill="#e7ebf1" font-size="11" font-weight="700" text-anchor="middle" x="600" y="66">!</text>
+<text fill="#c9b5f7" font-size="11" x="270" y="94">weeks to months unmerged; trunk keeps moving</text>
+<text fill="#c9b5f7" font-size="11" x="300" y="146">branches on branches</text>
+<text fill="#c9b5f7" font-size="11" text-anchor="end" x="680" y="38">one big merge: many conflicts, hard to blame</text>
+<text fill="#8fbaff" font-weight="700" x="20" y="176">Trunk-based development</text>
+<line marker-end="url(#m2)" stroke="#5b9df9" stroke-width="2.5" x1="20" x2="680" y1="196" y2="196"/>
+<g fill="#5b9df9">
+<circle cx="80" cy="196" r="5"/><circle cx="140" cy="196" r="5"/><circle cx="190" cy="196" r="5"/><circle cx="250" cy="196" r="5"/><circle cx="310" cy="196" r="5"/><circle cx="360" cy="196" r="5"/><circle cx="420" cy="196" r="5"/><circle cx="480" cy="196" r="5"/><circle cx="530" cy="196" r="5"/><circle cx="590" cy="196" r="5"/>
+</g>
+<rect fill="rgba(155,108,245,0.15)" height="16" rx="4" stroke="#9b6cf5" width="170" x="275" y="160"/>
+<text fill="#c9b5f7" font-size="10.5" text-anchor="middle" x="360" y="172">unfinished feature: flag off</text>
+<text fill="#7c8593" font-size="10.5" text-anchor="end" x="680" y="216">each dot is a small commit; tests + CI guard trunk</text>
+</g>
+</svg>
+<figcaption>Figure 2 · The same changes reach trunk either way: banked into one big merge, or split into daily small commits with a flag hiding what isn't done.</figcaption>
+</figure>
+<p><strong>Release branches</strong>, by contrast, are mostly benign: the problem isn't branch technology, it's usage. A dev branch is expected to merge back to trunk; a release branch is expected to be <strong>abandoned eventually</strong>, receiving only a few critical fixes cherry-picked from trunk. DORA found release branches practically nonexistent in the highest-performing organizations — if you can release from trunk many times a day, it's easier to fix and redeploy. But if you ship physical devices, knowing exactly which version is "in the field" still matters.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/deployment-release-day22.en.html" rel="noopener" target="_blank">System Design · Day 22 Deployment &amp; Release</a> — feature flags, canaries and automatic rollback: the release machinery behind "disable incomplete features at runtime" in trunk-based development</aside>
+<h3>4. The One-Version Rule: no choice in dependencies</h3>
+<p>Piper's raw scale isn't what makes Google's collaboration work; a policy does: <strong>One Version</strong>. It extends "single source of truth" from where you commit to what you depend on: <strong>for every dependency in the repository, there must be only one version to choose</strong>. Third-party packages have a single version checked in, in the steady state; internal packages may not be forked without renaming — a fork must be safe to link into the same project as the original.</p>
+<p>A counterexample shows why. A team finds a bug in common infrastructure like Abseil. Rather than fix it in place, they copy it, patch the bug <strong>without renaming the library or its symbols</strong>, and tell nearby teams "we've got an improved version here." A few teams start depending on the fork. Now, if any project depends on both the original and the fork, in the best case the build fails; in the worst case two mismatched copies of the same library get linked into one binary and produce baffling runtime bugs. The fork has <strong>colored</strong> the codebase: every target's transitive dependencies may contain only one of the two, so something as simple as adding a dependency might require running every test in the codebase to be sure no line was crossed.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m3" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker><marker id="m3v" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#9b6cf5"/></marker></defs>
+<g font-size="12">
+<rect fill="rgba(91,157,249,0.12)" height="40" rx="9" stroke="#5b9df9" stroke-width="2" width="170" x="40" y="160"/>
+<text fill="#e7ebf1" font-weight="700" text-anchor="middle" x="125" y="185">Base library · original</text>
+<rect fill="rgba(155,108,245,0.14)" height="40" rx="9" stroke="#9b6cf5" stroke-width="2" width="190" x="470" y="160"/>
+<text fill="#e7ebf1" font-weight="700" text-anchor="middle" x="565" y="185">Same-name fork</text>
+<rect fill="rgba(91,157,249,0.06)" height="34" rx="8" stroke="#5b9df9" width="120" x="40" y="90"/>
+<text fill="#cdd3db" text-anchor="middle" x="100" y="111">Library A</text>
+<rect fill="rgba(155,108,245,0.06)" height="34" rx="8" stroke="#9b6cf5" width="120" x="540" y="90"/>
+<text fill="#cdd3db" text-anchor="middle" x="600" y="111">Library B</text>
+<line marker-end="url(#m3)" stroke="#5b9df9" stroke-width="1.6" x1="100" x2="110" y1="124" y2="157"/>
+<line marker-end="url(#m3v)" stroke="#9b6cf5" stroke-width="1.6" x1="600" x2="585" y1="124" y2="157"/>
+<rect fill="rgba(155,108,245,0.25)" height="40" rx="9" stroke="#9b6cf5" stroke-width="2.5" width="220" x="240" y="20"/>
+<text fill="#e7ebf1" font-weight="700" text-anchor="middle" x="350" y="45">New project X needs A and B</text>
+<line marker-end="url(#m3)" stroke="#5b9df9" stroke-width="1.6" x1="300" x2="160" y1="60" y2="96"/>
+<line marker-end="url(#m3v)" stroke="#9b6cf5" stroke-width="1.6" x1="400" x2="538" y1="60" y2="96"/>
+<text fill="#c9b5f7" font-weight="700" text-anchor="middle" x="350" y="130">two same-name copies in one binary</text>
+<text fill="#7c8593" font-size="11" text-anchor="middle" x="350" y="150">best case: build fails · worst: strange runtime bugs</text>
+<text fill="#8fbaff" font-size="11" text-anchor="middle" x="350" y="214">One Version: fix the one copy; developers never pick a version</text>
+</g>
+</svg>
+<figcaption>Figure 3 · An unrenamed fork colors the codebase in two: any target whose transitive dependencies touch both colors is in trouble.</figcaption>
+</figure>
+<p>Java's <strong>shading</strong> (renaming a library's internal dependencies to hide them) works for functions, but for <strong>types</strong> passed between packages it fails in theory and in practice — every trick for letting multiple versions coexist in one binary hits that wall. The TL;DR is blunt: the effort spent on such workarounds is <strong>entirely lost labor</strong>, patching over technical debt. It all condenses into one rule: <strong>developers must never have a choice of "what version of this component should I depend upon?"</strong> It isn't absolute — upgrading a third-party library may briefly leave two versions checked in, while new users are blocked from the old one and usages migrate incrementally — but for an organization, removing that choice is critical to scaling efficiently.</p>
+<h3>5. (Nearly) no long-lived branches</h3>
+<p>The first corollary of One Version: dev branches should be minimal and short-lived. Long-lived branches let choice sneak back. An infrastructure team builds a better Widget on a parallel branch; new projects ask "can we depend on your new Widget?" — and because it lives only on another branch, a choice has appeared. The right move is to <strong>commit the new Widget to trunk, disabled at runtime, hidden by visibility where possible</strong>, or design old and new to coexist in the same binary. Large-scale changes (Ch22) also demand trunk-based development: changing everything on trunk is already a huge job, and an unbounded set of hidden branches to refactor at the same time would be a crushing tax — in a DVCS you might not even be able to find them all.</p>
+<p>Of the roughly 1,000 teams working in Google's monorepo, only a couple have such long-lived dev branches (the author's estimate: almost certainly fewer than 10), and the reasons nearly all reduce to <strong>compatibility over time</strong>: readers and writers of an on-disk data format that must agree across versions, or a promise that an older client still works with a newer server. The author warns that dependency across time is far more costly and complicated than time-invariant code; don't promise it lightly. One more guard is the "build horizon": every production job must be rebuilt and redeployed <strong>at least once every six months</strong>, capping version skew.</p>
+<h2>Key trade-offs and choices</h2>
+<p class="tcap">Table 1 · Three uses of branches: same technology, different endings</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Practice</th><th>Expected end state</th><th>Fits</th><th>Honest cost</th></tr></thead>
+<tbody>
+<tr><th><strong>Trunk-based</strong></th><td>small commits to trunk every day</td><td>the default; with tests + CI + feature flags</td><td>needs a testing culture and a green build; unfinished code lands switched off</td></tr>
+<tr><th>Release branch</th><td>abandoned; receives cherry-picks only</td><td>monthly releases, physical devices, knowing what's "in the field"</td><td>keep cherry-picks minimal, never plan to remerge; skippable with continuous deployment</td></tr>
+<tr><th>Long-lived dev branch</th><td>merged back to trunk eventually</td><td>rare: cross-time compatibility of data formats or APIs</td><td>big merges are hard to attribute; coordination grows with branch count; LSCs can't reach it</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 2 · Monorepo vs. many repos: the author wants the properties, not the shape</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Dimension</th><th>Monorepo</th><th>Many repos</th><th>Virtual monorepo (VMR)</th></tr></thead>
+<tbody>
+<tr><th>One Version</th><td><strong>harder to violate than to follow</strong></td><td>takes discipline; dependencies best unpinned, "at head"</td><td>synthesized via a shared trunk and commit order</td></tr>
+<tr><th>Visibility</th><td>everyone sees how others write code</td><td>first find which repos matter</td><td>depends on the stitching tools</td></tr>
+<tr><th>Scale</th><td>needs a VCS that scales (Git often struggles after a few million commits)</td><td>small repos, fast clones</td><td>small repos, consistent whole</td></tr>
+<tr><th>Permissions &amp; compliance</th><td>differing needs mean customization and ongoing upkeep</td><td><strong>naturally separate access</strong></td><td>can isolate secret projects while sharing common code</td></tr>
+<tr><th>When</th><td>all projects share secrecy / legal / privacy / security needs</td><td>projects truly independent</td><td>differing needs, but you want monorepo properties</td></tr>
+</tbody>
+</table></div>
+<p>The thread through both tables: <strong>choice leads to costs</strong>. Let developers choose where to commit or which version to depend on, and you grow merge-strategy meetings, diamond dependencies, lost work and wasted effort.</p>
+<h2>Why it matters / in real systems</h2>
+<p>When an architecture review debates "should we split the repo?" or "should we adopt GitFlow?", this chapter's test is: will it hand developers a version choice again, and will it let merges grow large? In an interview, explaining that "work in progress is a branch," "release branches get abandoned, dev branches get merged," and "forks must be renamed" beats reciting Git commands.</p>
+<div class="ev">
+<p class="evh">Industry evidence · publicly verifiable</p>
+<ul>
+<li><strong>Google · Piper's scale</strong>: the book states that the main repo is shared by roughly 50,000 engineers, stores more than 80 TB of content and metadata, and regularly handles 60,000 to 70,000 commits per working day; creating a client at trunk, adding a file and committing an unreviewed change takes perhaps 15 seconds in total. <span class="src"><a href="https://raw.githubusercontent.com/abseil/abseil.github.io/master/resources/swe-book/html/ch16.html" rel="noopener" target="_blank">Software Engineering at Google · Ch16 (official open edition source, abseil) ↗</a></span></li>
+<li><strong>Google · long-lived branches nearly extinct</strong>: the same chapter says only a couple of the roughly 1,000 teams have long-lived dev branches (a footnote estimates fewer than 10), and every production job must be rebuilt and redeployed within six months. <span class="src"><a href="https://raw.githubusercontent.com/abseil/abseil.github.io/master/resources/swe-book/html/ch16.html" rel="noopener" target="_blank">Same · Ch16 ↗</a></span></li>
+<li><strong>Meta · scale with files in use</strong>: the README of Meta's open-source Sapling states its scalability goal is for all source control operations to "scale with the number of files in use by a developer, and not with the size of the repository itself" — the same judgment as this chapter's "full downloads are mostly waste in a large organization." <span class="src"><a href="https://raw.githubusercontent.com/facebook/sapling/main/README.md" rel="noopener" target="_blank">facebook/sapling · README ↗</a></span></li>
+<li><strong>Microsoft · on-demand Git</strong>: the VFS for Git README says it virtualizes the filesystem beneath a Git repo and "only downloads objects as they are needed," and recommends Scalar for new deployments as "a clearer path forward for all large monorepos" — one instance of the author's prediction that Git would keep improving for large repositories. <span class="src"><a href="https://raw.githubusercontent.com/microsoft/VFSForGit/master/Readme.md" rel="noopener" target="_blank">microsoft/VFSForGit · README ↗</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"Google uses a monorepo, so monorepos are the answer" — the author explicitly says no.</strong> What to hold onto is One Version; a monorepo is just the shape that makes it easiest.</li>
+<li><strong>"Branches are bad" — usage is what's bad.</strong> Release branches are mostly benign; the productivity drain is long-lived dev branches that must merge back.</li>
+<li><strong>"I haven't pushed, so I haven't branched" — work in progress is a branch.</strong> The longer you sit on it, the bigger the merge.</li>
+<li><strong>"Shading solves version conflicts" — only for functions, never for types passed across packages.</strong> And the effort itself is pure loss.</li>
+<li><strong>"Centralized is obsolete" — in common usage the two models are largely interchangeable.</strong> DVCS still needs policy to name a source of truth.</li>
+<li><strong>Limits:</strong> the chapter assumes an organization with available compute, coordination and some central authority; the author grants that open source, which prioritizes freedom and minimal coordination, does fine with many repos. He also reflects that investing in a highly scaling VMR and its tooling might have been a better bet than Piper. The link between trunk-based development and high performance comes from DORA and is a predictive relationship, not proof of causation.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① A VCS extends a filesystem to <code>(filename, time, branch) → contents</code> — the main tool for managing source over time; technology is half of it, policy the other half.</p>
+<p>② Any VCS with atomic commits is semantically equivalent; the real centralized-vs-distributed difference is "which copies count as a repo."</p>
+<p>③ At scale, full downloads are waste: Google runs the in-house centralized Piper — ~50,000 engineers, 60–70k commits a day.</p>
+<p>④ You need a single source of truth (one branch of one repo), or coordination grows faster than headcount; DVCS has to add it by policy.</p>
+<p>⑤ Work in progress is a branch; long-lived dev branches bank merge risk. The fix is trunk-based development + tests + CI + runtime flags.</p>
+<p>⑥ Release branches are mostly benign: expected to be abandoned, few cherry-picks; continuous deployment can drop them.</p>
+<p>⑦ One Version: developers never choose which version to depend on; an unrenamed fork colors the codebase, and shading can't save types.</p>
+<p>⑧ Keep long-lived branches for rare cross-time compatibility needs; the build horizon caps production skew at six months.</p>
+<p>⑨ A monorepo isn't the only answer — you want its properties, and many repos or a virtual monorepo can deliver them. Choice leads to costs.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Read this page ≈ get the core of the chapter; for the full argument and extensions, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
