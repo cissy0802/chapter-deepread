@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Software Engineering at Google Ch 17 · Code Search — Book Deep-Read 197</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · Software Engineering at Google · Chapter 17</p>
+<h1>Code Search</h1>
+<p class="sub">Software Engineering at Google · Ch 17 · Code Search · Alexander Neubeck &amp; Ben St. John · 2020</p>
+<p class="langbar"><a href="swegoogle-ch17-code-search-book197.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Quick read</button>
+<button data-mode="deep">Deep read</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>When you look someone up in your phone's contacts, you type two letters and they pop up; you never scroll page by page. Now imagine a contact list with billions of entries that changes every minute. That is the daily reality for Google's engineers: all of the company's code lives in one place, and it is too big to fit on any single computer. This chapter is about Google's internal "Code Search" website: why it is the tool engineers open most, and how it answers in the blink of an eye.</p>
+<h2>A surprising fact first</h2>
+<p>You might think programmers spend their days writing code. In fact they spend a huge amount of time <strong>reading</strong> it: where does this feature live? How did other people use it? Why was this line written this way, and who added it? Google measured it: about a third of searches are looking for "how did someone else do this" examples. So a tool built purely for <strong>reading</strong> turns out to be worth more than a better editor, and many engineers keep several Code Search tabs open next to their editor.</p>
+<h2>Why the old way was hard</h2>
+<p>The usual approach is to download the code to your own machine and use your editor's search. Once the code no longer fits, that road is closed. Even when it fits, every person's computer has to build its own catalog from scratch, so starting up takes ages. Skip the catalog and search by brute force, and it is like flipping through every book in a library to find one sentence: slow enough that your mind wanders.</p>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>One catalog for the whole company:</strong> instead of tens of thousands of people each building their own, a central service builds it once. When someone changes a few files, only those few pages of the catalog get rewritten, and seconds later everyone can find the change.</li>
+<li><strong>A catalog of three-letter pieces:</strong> like indexing a book by chopping every passage into little three-letter chunks and noting which pages each chunk appears on. To find a phrase, first check which pages contain all its chunks, then check just those pages instead of the whole library.</li>
+<li><strong>Results ranked by reputation:</strong> just as web search puts the most-linked pages first, files that many people open and much code depends on go to the top; and if your words match the name of a function, that result moves up too.</li>
+<li><strong>Click anything, get an answer:</strong> nearly every word on the page is clickable. One click tells you where it is defined, who uses it, and who added it when, like an encyclopedia where everything is a hyperlink.</li>
+</ul>
+<h2>What it brings / how to choose</h2>
+<p>The payoff: a new hire can browse all of the company's code on day one with zero setup and find good examples to copy. Code locations mentioned in logs, error reports and docs all link straight here, so it becomes the company's "street address" for code. The honest cost: the "click anything" part requires analyzing the entire codebase, which is so expensive that it is refreshed only once a day and occasionally disagrees with code that was just changed.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p><strong>Code is mostly read: build one company-wide catalog that stays fresh as code changes; only if it is fast, well ranked and complete will people trust it and use it.</strong></p>
+</div>
+<p class="switch-hint">Want to see how a trigram index replaces a 300,000-core brute-force search, how the ranking signals are designed, why "find everything" is harder than "find it fast", and why one index updates in seconds while the other takes a day? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>The one-liner</h2>
+<p class="lead">You think code search is "a bigger grep"; this chapter says it is really <strong>a search engine built for reading code</strong>. Scale forced Google to centralize the index in the cloud, interactivity demands that every operation stay under 200 ms, and what decides success is not speed but <strong>trust</strong>: index all the code, be able to return all the results, and still put the one you want first.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Monorepo</strong>: all of a company's code in a single repository; Google's is called Piper (see the previous chapter).</li>
+<li><strong>Index</strong>: a precomputed "term → where it occurs" catalog, so a query does not have to scan all the content.</li>
+<li><strong>Inverted index</strong>: for each term, a list of the files it appears in (a posting list); the standard structure behind web search.</li>
+<li><strong>grep</strong>: the Unix command that scans files character by character for matching text; no index, pure brute force.</li>
+<li><strong>Regular expression (regex)</strong>: a small language for describing text patterns, such as "a word that starts with get and ends with Id".</li>
+<li><strong>IDE</strong>: integrated development environment; an editor plus compiling, debugging and jump-to-definition.</li>
+<li><strong>Cross-reference</strong>: the "where is this symbol defined, where is it used" relation; telling apart symbols with the same name requires compiler-level analysis.</li>
+<li><strong>Symbol</strong>: a named thing in code: a function, a class, a variable.</li>
+<li><strong>Latency</strong>: time from sending a request to getting the answer; the "median" is the value half of all requests beat.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The second chapter of Part IV, "Tools", right after Version Control (Ch16): because there is one repository and one version, whole-repo search is both possible and necessary. It leads into Build Systems (Ch18), the Critique review tool (Ch19) and Large-Scale Changes (Ch22), which rely on it to find every call site. Real-world counterparts: GitHub code search, Sourcegraph, an IDE's "find in project".</p>
+<h2>What problem this chapter solves</h2>
+<p>Engineers spend much of their time <strong>understanding code</strong>. The chapter cites a Google study (Sadowski et al., FSE 2015) that splits search intent into five kinds: about <strong>one third</strong> is "How", seeing how others use an API; roughly <strong>a quarter</strong> is "What", browsing to understand what some code does; about <strong>16%</strong> is "Where", locating a definition or a config; about <strong>16%</strong> is "Why", why something was added or behaves as it does, often while debugging production; and about <strong>8%</strong> is "Who / When", who introduced it and when.</p>
+<p>At Google's size these questions can't be answered with local tools: the whole repo doesn't fit on one machine; even if it did, every IDE start would rebuild an index, and without one, grep is slow enough to break concentration. With <strong>well over a million</strong> code searches a day, the question is not whether to build a service but how to make it <strong>fast, complete and well ranked</strong> over a terabyte-scale corpus.</p>
+<h2>The core ideas, in depth</h2>
+<h3>1. Why a separate web tool instead of a better IDE</h3>
+<p>The authors give four reasons. <strong>Scale</strong>: a central index is built once and shared. A footnote does the math nicely: if every developer indexes in their own IDE, the codebase grows linearly over time and so does the number of IDEs, so total cost is <strong>roughly quadratic</strong>; central, incremental indexing is linear. <strong>A zero-setup global view</strong>: to start quickly and keep autocomplete free of noise, an IDE pushes you to shrink your visible scope; a web tool needs no project setup or build environment, lets you browse the whole repo at any time, and when you change an API you won't miss a dependent. <strong>Specialization</strong>: precisely because it is not an IDE, there is no text cursor, so every click can mean something (jump to definition, list usages) rather than move a caret.</p>
+<p>The fourth is a <strong>platform effect</strong>. A Code Search link is the <strong>canonical "location"</strong> of a source file. The log viewer links "file:line" back to code; crash-report stack frames know which snapshot the binary was built from, so they link to <strong>that version</strong> and stay valid even after the code is refactored or deleted; docs can embed the latest snippet from head. In the other direction, repo-wide analyses (such as flagging uncalled "dead" code) surface their results right here, so tool authors don't need their own UI. An RPC API and plug-ins for vim, emacs and IntelliJ bring search and cross-references back into editors.</p>
+<h3>2. Two indices, two kinds of freshness</h3>
+<p>The authors draw on web search: breaking news changes fast, encyclopedia pages slowly, and each can be updated incrementally. The <strong>text search index</strong> is incremental: a commit reindexes only the files it touched, independently and in parallel, with a <strong>median commit-to-searchable latency under 10 seconds</strong>.</p>
+<p>The <strong>cross-reference index</strong> can't be. It comes from Kythe, which instruments the build to extract a partial semantic graph per build rule, then merges them into one global graph optimized for go-to-definition and find-usages. Any change can affect the whole codebase, and in practice often touches thousands of files, so nearly every binary must be built or analyzed; extraction and post-processing are each about as costly as a full build (a footnote cites about six hours for Chromium in a distributed setup). So it is <strong>built once a day</strong>, and only one version is kept. The gap between the two is a "rare but recurring" source of user confusion; during an incident, an index that doesn't match the running code can hide the real cause or add irrelevant distractions.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker><marker id="a1v" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#9b6cf5"/></marker></defs>
+<g font-size="12">
+<rect x="20" y="95" width="130" height="50" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="85" y="117" fill="#e7ebf1" font-weight="700" text-anchor="middle">Piper commit</text>
+<text x="85" y="134" fill="#cdd3db" font-size="10.5" text-anchor="middle">a few files changed</text>
+<line x1="150" y1="110" x2="248" y2="62" stroke="#5b9df9" stroke-width="1.8" marker-end="url(#a1)"/>
+<line x1="150" y1="130" x2="248" y2="178" stroke="#9b6cf5" stroke-width="1.8" marker-end="url(#a1v)"/>
+<rect x="250" y="30" width="200" height="60" rx="9" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"/>
+<text x="350" y="54" fill="#8fbaff" font-weight="700" text-anchor="middle">Incremental reindex</text>
+<text x="350" y="73" fill="#cdd3db" font-size="10.5" text-anchor="middle">only touched files, in parallel</text>
+<rect x="250" y="150" width="200" height="60" rx="9" fill="rgba(155,108,245,0.1)" stroke="#9b6cf5"/>
+<text x="350" y="174" fill="#c9b5f7" font-weight="700" text-anchor="middle">Kythe: build ~all binaries</text>
+<text x="350" y="193" fill="#cdd3db" font-size="10.5" text-anchor="middle">partial graphs → global graph</text>
+<line x1="450" y1="60" x2="528" y2="60" stroke="#5b9df9" stroke-width="1.8" marker-end="url(#a1)"/>
+<line x1="450" y1="180" x2="528" y2="180" stroke="#9b6cf5" stroke-width="1.8" marker-end="url(#a1v)"/>
+<rect x="530" y="30" width="150" height="60" rx="9" fill="rgba(91,157,249,0.18)" stroke="#5b9df9" stroke-width="2"/>
+<text x="605" y="54" fill="#e7ebf1" font-weight="700" text-anchor="middle">Search index</text>
+<text x="605" y="73" fill="#8fbaff" font-size="10.5" text-anchor="middle">median &lt;10 s visible</text>
+<rect x="530" y="150" width="150" height="60" rx="9" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="605" y="174" fill="#e7ebf1" font-weight="700" text-anchor="middle">Xref index</text>
+<text x="605" y="193" fill="#c9b5f7" font-size="10.5" text-anchor="middle">daily, one version kept</text>
+<text x="605" y="128" fill="#7c8593" font-size="10.5" text-anchor="middle">gap = occasional mismatch</text>
+<text x="350" y="238" fill="#7c8593" font-size="10.5" text-anchor="middle">Text matches are local, so incremental; semantics are global, one edit can ripple into thousands of files</text>
+</g>
+</svg>
+<figcaption>Figure 1 · One commit, two pipelines: the text index is searchable in seconds, the cross-reference index is rebuilt daily.</figcaption>
+</figure>
+<h3>3. Latency: do the math in human attention</h3>
+<p>Low latency isn't free, so the authors price it in engineer time: <strong>a million queries a day, each one second slower, is about 35 full-time engineers sitting idle every day</strong> (a million seconds ≈ 278 hours), while the search backend can be built and run by roughly a tenth of that. So at about 100,000 queries a day (fewer than 5,000 developers), the one-second argument alone is already close to break-even.</p>
+<p>And the loss isn't linear: a UI feels responsive below <code>200 ms</code>; after one second attention starts to drift; after ten more the developer has probably switched context entirely, which is costly. Hence the target: <strong>sub-200 ms end-to-end for every frequent operation</strong>. It also explains why, in a large repo, searching for a file often beats clicking through the tree: with the current file sent as <strong>context</strong>, the backend favors nearby directories, and a few keystrokes get you there.</p>
+<h3>4. The index: from trigrams to sparse n-grams</h3>
+<p>First, the brute-force bill (the book's estimate): the index was about <strong>1.5 TB</strong>, serving about <strong>200 QPS</strong> at a <strong>median server-side latency under 50 ms</strong>. The RE2 regex library processes about 100 MB/s in RAM, so scanning 1.5 TB within 50 ms needs about <strong>300,000 cores</strong>. A specialized substring search at about 1 GB/s cuts that tenfold, but 200 QPS means roughly 10 queries in flight in any 50 ms window, which takes you right back to 300,000 cores.</p>
+<p>The way out is an index. The first was a <strong>trigram index</strong>: cut every file into all its consecutive three-character pieces and keep, for each piece, a list of files it occurs in. A query for <code>Point</code> intersects the lists for <code>Poi</code>, <code>oin</code> and <code>int</code> to get candidate files, then runs the real match on the candidates to confirm. Regexes work the same way: rewrite the regex automaton into a set of substrings that must all occur, and pre-filter with the index. Russ Cox later open sourced a simplified version.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<rect x="20" y="95" width="110" height="44" rx="9" fill="rgba(91,157,249,0.18)" stroke="#5b9df9" stroke-width="2"/>
+<text x="75" y="115" fill="#e7ebf1" font-weight="700" text-anchor="middle">Query</text>
+<text x="75" y="131" fill="#8fbaff" font-family="SF Mono,Menlo,monospace" text-anchor="middle">Point</text>
+<line x1="130" y1="108" x2="188" y2="52" stroke="#5b9df9" stroke-width="1.5" marker-end="url(#a2)"/>
+<line x1="130" y1="117" x2="188" y2="117" stroke="#5b9df9" stroke-width="1.5" marker-end="url(#a2)"/>
+<line x1="130" y1="126" x2="188" y2="182" stroke="#5b9df9" stroke-width="1.5" marker-end="url(#a2)"/>
+<g font-family="SF Mono,Menlo,monospace" font-size="11.5">
+<rect x="190" y="32" width="240" height="38" rx="7" fill="rgba(255,255,255,0.03)" stroke="#5b9df9"/>
+<text x="204" y="56" fill="#8fbaff">Poi</text><text x="250" y="56" fill="#cdd3db">→ f2 f7 f9 f31</text>
+<rect x="190" y="98" width="240" height="38" rx="7" fill="rgba(255,255,255,0.03)" stroke="#5b9df9"/>
+<text x="204" y="122" fill="#8fbaff">oin</text><text x="250" y="122" fill="#cdd3db">→ f2 f5 f7 f9 f40</text>
+<rect x="190" y="164" width="240" height="38" rx="7" fill="rgba(255,255,255,0.03)" stroke="#5b9df9"/>
+<text x="204" y="188" fill="#8fbaff">int</text><text x="250" y="188" fill="#cdd3db">→ f1 f2 f7 f9 f12 …</text>
+</g>
+<line x1="430" y1="117" x2="478" y2="117" stroke="#5b9df9" stroke-width="1.8" marker-end="url(#a2)"/>
+<rect x="480" y="90" width="90" height="54" rx="9" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="525" y="113" fill="#c9b5f7" font-weight="700" text-anchor="middle">Intersect</text>
+<text x="525" y="131" fill="#cdd3db" font-family="SF Mono,Menlo,monospace" font-size="11" text-anchor="middle">f2 f7 f9</text>
+<line x1="570" y1="117" x2="598" y2="117" stroke="#5b9df9" stroke-width="1.8" marker-end="url(#a2)"/>
+<rect x="600" y="90" width="85" height="54" rx="9" fill="rgba(91,157,249,0.18)" stroke="#5b9df9" stroke-width="2"/>
+<text x="642" y="113" fill="#e7ebf1" font-weight="700" text-anchor="middle">Verify</text>
+<text x="642" y="131" fill="#8fbaff" font-size="10.5" text-anchor="middle">drop false hits</text>
+<text x="350" y="228" fill="#7c8593" font-size="10.5" text-anchor="middle">The index only shrinks 1.5 TB to a handful of candidates; shorter pieces mean longer lists and more to verify</text>
+</g>
+</svg>
+<figcaption>Figure 2 · A trigram index: intersect the posting lists to get candidates, then run the real match on them.</figcaption>
+</figure>
+<p>It then moved to a <strong>custom suffix array</strong> design and on to today's token-based <strong>sparse n-gram</strong> design, <strong>more than 500 times more efficient</strong> than brute force while still answering regexes at speed. The two reasons for switching are pure engineering. First, n-grams run on Google's <strong>primary search stack</strong> and its standard inverted indices, inheriting everything the core search team built for index construction, encoding, serving and instant indexing, whereas just building and distributing custom suffix-array indices was a challenge of its own. It trades some performance for simplicity, though retrieval and scoring stay heavily customized. Second, the index moved from RAM to <strong>flash</strong>, which is at least an order of magnitude cheaper but at least two orders of magnitude slower to access. Trigrams need many large posting lists from flash; n-grams buy fewer, smaller lists at the price of a bigger index. One more detail: indexing the full revision history with a custom compression scheme raised resource use by a factor of only <strong>2.5</strong>.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/search-system-day12.en.html" target="_blank" rel="noopener">System Design · Day 12 Search Systems</a> — inverted indices, sharding and the multi-stage retrieval → ranking funnel: the "standard search stack" this section leans on</aside>
+<h3>5. Ranking: design retrieval and scoring together</h3>
+<p>A small repo needs no ranking; at Google any short substring occurs thousands or millions of times, so without ranking you either read every hit or keep refining the query. A scoring function maps a file's features (<strong>signals</strong>) to a number, and there are two kinds. <strong>Query-independent signals</strong> are computed offline: how often a file is <strong>viewed</strong> (base-library utilities score high naturally), and how often it is <strong>referenced</strong>. Swap web links for include and import statements and you have PageRank, extendable up to build dependencies and down to functions and classes; together this is a file's "priority". The catch with views is a <strong>feedback loop</strong> (ranked high → viewed more → ranked higher) plus cold start for new files; the authors find mild over-showing harmless in practice. The catch with references is large migrations: when files move, indirection layers dilute their rank and view counts are lost, so the simplest fix is to <strong>boost them manually</strong> during the transition.</p>
+<p><strong>Query-dependent signals</strong> must be computed per query, so they may only use the query and data the index can hand over quickly: clean word-boundary matches get a boost and case is considered (searching <code>Point</code>, <code>Point *p</code> beats "appointed"), symbol and filename hits outrank plain content hits, and query terms found in the path (such as a project name) add more.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/anatomy-of-a-search-engine-paper41.en.html" target="_blank" rel="noopener">CS Papers · The Anatomy of a Search Engine</a> — the original PageRank design, global importance from link structure: the source of "rank files by how often they are referenced"</aside>
+<p>Before scoring comes <strong>retrieval</strong>: you cannot score every file, only the candidates you retrieved. The classic trap is searching for a class name: thousands of usages, <strong>one definition</strong>, and a fixed-size retrieval may stop before it ever reaches the definition. The fix is <strong>supplemental retrieval</strong>: rewrite the query into more specialized ones (only definitions and filenames), merge their hits into the candidate pool, and use partial scores so that only the most promising candidates get a full evaluation. Finally comes <strong>result diversity</strong>: if a function name exists in both Java and Python, don't fill the first page with one of them. The authors admit they do this less well than web search.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a3" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<rect x="20" y="40" width="130" height="44" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="85" y="60" fill="#e7ebf1" font-weight="700" text-anchor="middle">Original query</text>
+<text x="85" y="76" fill="#cdd3db" font-size="10.5" text-anchor="middle">a class name</text>
+<rect x="20" y="140" width="130" height="44" rx="9" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="85" y="160" fill="#e7ebf1" font-weight="700" text-anchor="middle">Supplemental</text>
+<text x="85" y="176" fill="#c9b5f7" font-size="10.5" text-anchor="middle">defs + filenames</text>
+<line x1="85" y1="84" x2="85" y2="137" stroke="#9b6cf5" stroke-dasharray="4 3" stroke-width="1.5" marker-end="url(#a3)"/>
+<text x="92" y="115" fill="#7c8593" font-size="10.5">rewrite</text>
+<line x1="150" y1="62" x2="228" y2="100" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a3)"/>
+<line x1="150" y1="162" x2="228" y2="126" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#a3)"/>
+<rect x="230" y="80" width="150" height="66" rx="9" fill="rgba(91,157,249,0.08)" stroke="#5b9df9"/>
+<text x="305" y="104" fill="#8fbaff" font-weight="700" text-anchor="middle">Candidate pool</text>
+<text x="305" y="122" fill="#cdd3db" font-size="10.5" text-anchor="middle">thousands of usages</text>
+<text x="305" y="137" fill="#c9b5f7" font-size="10.5" text-anchor="middle">+ the one definition</text>
+<line x1="380" y1="113" x2="430" y2="113" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a3)"/>
+<rect x="432" y="70" width="128" height="86" rx="9" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"/>
+<text x="496" y="94" fill="#8fbaff" font-weight="700" text-anchor="middle">Scoring</text>
+<text x="496" y="113" fill="#cdd3db" font-size="10.5" text-anchor="middle">offline: views</text>
+<text x="496" y="128" fill="#cdd3db" font-size="10.5" text-anchor="middle">references (priority)</text>
+<text x="496" y="143" fill="#cdd3db" font-size="10.5" text-anchor="middle">live: symbol, path</text>
+<line x1="560" y1="113" x2="588" y2="113" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a3)"/>
+<rect x="590" y="88" width="95" height="50" rx="9" fill="rgba(91,157,249,0.2)" stroke="#5b9df9" stroke-width="2"/>
+<text x="637" y="109" fill="#e7ebf1" font-weight="700" text-anchor="middle">Top N</text>
+<text x="637" y="126" fill="#8fbaff" font-size="10.5" text-anchor="middle">with diversity</text>
+<text x="350" y="212" fill="#7c8593" font-size="10.5" text-anchor="middle">Only retrieved documents get scored: what retrieval misses, no scoring can save</text>
+</g>
+</svg>
+<figcaption>Figure 3 · Retrieval plus scoring: the supplemental query pulls "the one definition among thousands of usages" into the pool.</figcaption>
+</figure>
+<h2>Key trade-offs and choices</h2>
+<p>Nearly every trade-off in this chapter revolves around completeness, and the authors' stance is clear: <strong>err on the side of indexing too much</strong>.</p>
+<p class="tcap">Table 1 · Query expressiveness: more power is more useful and harder to index</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Approach</th><th>Can find</th><th>Index cost</th><th>Honest cost</th></tr></thead>
+<tbody>
+<tr><th>Token (words)</th><td>Whole words</td><td>Stores a fraction of the source; supported by standard engines</td><td><strong>Imprecise for code</strong>: can't search <code>function(x)</code> or <code>=== myClass</code>; CamelCase / snake_case splitting is ill defined; case folding and stemming blur terms</td></tr>
+<tr><th>Substring (trigram etc.)</th><td>Any character sequence</td><td>Index still smaller than the source</td><td>Low recall precision, so false hits must be filtered and queries slow down; size, latency and resources must be tuned to repo size and QPS</td></tr>
+<tr><th><strong>Regex</strong></th><td>A class of patterns</td><td>Rewrite the automaton into substring searches on a substring index</td><td>No perfect regex index exists, so some queries degrade to brute force; but complex regexes are a small share</td></tr>
+<tr><th>Brute-force grep</th><td>Everything</td><td>None</td><td>Fine for a few MB; 1.5 TB needs about 300,000 cores</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 2 · Three kinds of completeness, and what each costs</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Dimension</th><th>The easy way</th><th>Google's choice</th><th>Price paid</th></tr></thead>
+<tbody>
+<tr><th>Which files</th><td>Drop huge files, generated JS</td><td>Drop only non-text content (keep the filename); limits set high, mainly against abuse</td><td>More resources; an unindexed file can't even trigger an "incomplete results" warning, and lost trust is hard to regain</td></tr>
+<tr><th>All vs most relevant</th><td>Like web search, only consider top-ranked items</td><td>Shards ordered by file priority; normally read only high-priority matches per shard, but return <strong>all</strong> on request (alphabetical if wanted)</td><td>A more complex implementation and API, not a slower one</td></tr>
+<tr><th>Which versions</th><td>Head only (as every IDE does)</td><td>Index the linear Piper <strong>history</strong> plus developer workspaces</td><td>About 2.5x resources; workspaces need brute-force search stitched onto the history index</td></tr>
+</tbody>
+</table></div>
+<p>Row two is the counterintuitive one: the usual framing is "complete or fast, pick one", and Google turned it into "complexity versus capability". Refactoring, global search-and-replace and analysis tools <strong>must</strong> get every result, which is the fundamental difference from web search; meanwhile about a third of queries return fewer than 20 results anyway.</p>
+<h2>Why it matters / in real systems</h2>
+<p>When a review asks "should we invest in internal developer tooling?", this chapter hands you a reusable formula: <strong>queries × seconds saved per query ÷ seconds in an engineer's day</strong>, compared against the people needed to build and run it. In an interview on designing code search or log search, being able to explain trigram indexing plus candidate verification, incremental versus full-rebuild freshness, how retrieval and scoring cooperate, and an "all results" mode puts you well beyond "just use Elasticsearch".</p>
+<div class="ev">
+<p class="evh">Industry evidence · publicly verifiable</p>
+<ul>
+<li><strong>Google · scale and metrics</strong>: the book states an index of about 1.5 TB, about 200 QPS, a median server-side latency under 50 ms, a median commit-to-index latency under 10 seconds, and well over a million queries a day; sparse n-grams are over 500 times more efficient than brute force. <span class="src"><a href="https://raw.githubusercontent.com/abseil/abseil.github.io/master/resources/swe-book/html/ch17.html" target="_blank" rel="noopener">Software Engineering at Google · Ch17 (abseil's official open edition source) ↗</a></span></li>
+<li><strong>Google · the open-source trigram version</strong>: Russ Cox's google/codesearch README describes it as a set of Go command-line programs "for indexing and then performing regular expression searches over large bodies of source code", the simplified release the chapter mentions. <span class="src"><a href="https://raw.githubusercontent.com/google/codesearch/master/README" target="_blank" rel="noopener">google/codesearch · README ↗</a></span></li>
+<li><strong>Sourcegraph · Zoekt</strong>: its design doc sets a goal of "sub-50ms results on large codebases, such as Android (~2G text)" on a single standard Linux machine with SSD; it uses positional trigrams, so each substring intersects just two posting lists, and "since we touch few posting lists per query, they can be stored on slower media, such as SSD", the same concern the chapter faced moving from RAM to flash. <span class="src"><a href="https://raw.githubusercontent.com/sourcegraph/zoekt/main/doc/design.md" target="_blank" rel="noopener">sourcegraph/zoekt · doc/design.md ↗</a></span></li>
+<li><strong>Google · Kythe, open sourced</strong>: the README lists indexers for C++, Go and Java and compilation extractors for javac, Maven, cmake, Go and Bazel, a reminder that cross-references come from hooking into the build, which is exactly why they are too costly to rebuild more than daily. <span class="src"><a href="https://raw.githubusercontent.com/kythe/kythe/master/README.adoc" target="_blank" rel="noopener">kythe/kythe · README ↗</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"Code search is just a bigger grep." No.</strong> At Google the driver was Kythe's cross-references, which shifted the focus from searching to browsing and understanding, guided by "answer the next question about code in a single click".</li>
+<li><strong>"Just plug in a full-text search engine." Word tokenization is imprecise for code.</strong> Symbols, whitespace, parentheses and case all carry meaning.</li>
+<li><strong>"Indexing a bit less to save resources is harmless." Once trust breaks, nobody uses the tool.</strong> A dropped file can't even produce an "incomplete results" notice.</li>
+<li><strong>"Good ranking is enough." What retrieval misses, scoring can't save.</strong> The single definition might never enter the candidate pool.</li>
+<li><strong>"Both indices are equally fresh." Text is seconds, cross-references are daily.</strong> A just-submitted symbol can be found but not jumped to; be wary of version skew during incidents.</li>
+<li><strong>Limitations:</strong> the authors admit result diversity trails web search and that new-file cold start is not yet corrected with recency signals; generated files aren't indexed; with so many machine-generated commits, naive "blame" is worth less. Figures like 1.5 TB and 200 QPS date from around 2020. They also note that if your project fits in an IDE this chapter won't help much, and that earlier, weaker versions were still useful and used as long as their limits were understood.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① Code is mostly read: about 1/3 of searches look for usage examples, 1/4 for understanding, 16% for location, 16% ask why, 8% ask who and when.</p>
+<p>② Four reasons for a separate web tool: scale (central indexing is linear, per-IDE indexing roughly quadratic), a zero-setup global view, a UX built for reading, and a platform that becomes the company's canonical address for code.</p>
+<p>③ Price latency in people: a million queries × 1 s ≈ 35 engineers a day; target sub-200 ms end-to-end for frequent operations.</p>
+<p>④ The text index is incremental (median &lt;10 s to visibility); cross-references need nearly every binary built, so they're rebuilt daily and the gap confuses users.</p>
+<p>⑤ Brute-forcing 1.5 TB needs about 300,000 cores; trigrams → suffix arrays → sparse n-grams, over 500x more efficient and still regex-capable.</p>
+<p>⑥ A standard search stack trades some performance for simplicity; moving to flash demands fewer, smaller posting lists: the medium shapes the index.</p>
+<p>⑦ Ranking = offline signals (views, references ≈ PageRank) + per-query signals (word boundaries, symbols, paths); retrieval needs supplemental queries.</p>
+<p>⑧ Three completeness questions: index too much rather than too little; priority-ordered shards serve both "most relevant" and "all"; index full history and workspaces.</p>
+<p>⑨ The test: only if it indexes all code, returns all results and ranks the wanted one first will a tool be trusted, and used.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Read this page ≈ get the core of the chapter; for the full argument and extensions, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
