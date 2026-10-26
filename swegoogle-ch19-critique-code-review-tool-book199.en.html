@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Software Engineering at Google Ch 19 · Critique: Google's Code Review Tool — Book Deep-Read 199</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · Software Engineering at Google · Chapter 19</p>
+<h1>Critique: Google's Code Review Tool</h1>
+<p class="sub">Software Engineering at Google · Ch 19 · Critique: Google's Code Review Tool · Caitlin Sadowski, Ilham Kurnia, Ben Rohlfs · 2020</p>
+<p class="langbar"><a href="swegoogle-ch19-critique-code-review-tool-book199.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Quick read</button>
+<button data-mode="deep">Deep read</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>When a programmer changes code, they can't just drop it into the company's main codebase — a colleague has to look at it and nod first. That step is called "code review." GitHub pull requests and the review tools inside most companies all do this job. This chapter is about the most popular one inside Google, Critique. It isn't about <em>how to review</em>; it's about <strong>what a review tool people actually love looks like</strong>.</p>
+<h2>A surprising fact first</h2>
+<p>Of all the features Critique ever added, the one users praised most wasn't high tech at all: it simply shows <strong>in bold</strong> the name of whoever needs to act next. Once it shipped, people couldn't remember how they had lived without it — before, they had to message each other to ask "who is this change stuck on?"</p>
+<h2>Why the old way was hard</h2>
+<p>Review is like several people passing around a contract: the author sends it out, each reviewer scribbles notes, the author revises and sends it back, round after round. The trouble: nobody can say whose move it is; you can't tell which notes are "must fix" and which are "just a thought"; tiny problems a machine could catch (a stray space, bad formatting) still need a human to point out; and there's no clear signal for "this is approved." With tens of thousands of people passing around thousands of contracts a day, those small frictions add up to a huge waste of time.</p>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>Let the machines go first:</strong> as soon as the author uploads a change, automatic checks run, and what they find is pinned right next to the code — often with a "fix it in one click" button. By the time a human looks, the trivia is gone.</li>
+<li><strong>Notes come in two colors:</strong> "must handle" and "for your information." Reviewers write a full round of notes and send them all at once, like mailing a complete letter instead of texting one sentence at a time.</li>
+<li><strong>Whoever has the ball is shown in bold:</strong> every change remembers who it's waiting on. Open your home page and the first section is the changes waiting for you; the rest you can safely ignore.</li>
+<li><strong>Only "yes," never a bare "no":</strong> a reviewer either approves or writes down exactly what needs fixing. You can't just throw out a "no" without saying why. Approved, the right gatekeepers have signed off, and every must-handle note is cleared — the page turns green and the change can go in.</li>
+</ul>
+<h2>What it brings / how to choose</h2>
+<p>What you get: most changes need agreement from just two people, so things move fast; and years later, anyone who wonders "why was this line written this way?" can dig up the original review and find out. The honest cost: it is so tightly wired into Google's own codebase, editor and checking tools that nobody outside can use it — when Google works on open-source projects, it uses a different tool.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p><strong>A good review tool doesn't do the talking for people. It does three things: lets machines catch the small stuff first, makes it obvious whose turn it is, and turns "can this go in?" into one clear green light — the rest is trust between colleagues.</strong></p>
+</div>
+<p class="switch-hint">Want to see what the tool adds at each of the six review stages, why analysis results come in just "red / not red," how the attention set updates itself, why LGTM and Approval are separate, why the "Needs More Work" score was cut, and how it differs from the open-source Gerrit? <a data-mode="deep">→ Switch to Deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>The one-liner</h2>
+<p class="lead">You'd think a review tool earns its keep with "more features, stricter process." This chapter says the opposite: Critique wins through <strong>restraint</strong>. The tool doesn't invent a communication protocol; it turns "whose move is it, what's still missing, what have the machines already found" into state you can read at a glance — and <strong>leaves trust and communication to people</strong>.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Code review</strong>: someone other than the author checks a change before it lands on the main branch.</li>
+<li><strong>Change (CL)</strong>: one pending code modification; inside Google it's called a changelist.</li>
+<li><strong>Diff</strong>: a view that compares two versions line by line and marks what was added or removed.</li>
+<li><strong>Snapshot</strong>: a version of the change the author uploaded at a point in time; every revision adds one.</li>
+<li><strong>Static analysis</strong>: automatic checks that find problems by reading code without running it; linters are one kind.</li>
+<li><strong>Presubmit</strong>: hooks that run automatically before a change is sent for review or committed, such as tests or format checks.</li>
+<li><strong>Monorepo</strong>: the whole company's code in a single repository; Google's is called Piper.</li>
+<li><strong>Code ownership</strong>: each directory has designated owners, and changing it needs their approval.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The fourth chapter of Part IV, "Tools" — the tooling companion to Ch9 "Code Review": Ch9 covers process and culture, this chapter covers the system that carries it. It follows Code Search (Ch17) and Build Systems (Ch18) and leads into Static Analysis (Ch20) and Large-Scale Changes (Ch22). Real-world counterparts: GitHub pull requests, GitLab merge requests, Gerrit, Phabricator.</p>
+<h2>What problem this chapter solves</h2>
+<p>Ch9 already set the process: every change is seen by at least one other person, approved by an owner, and meets readability standards. But <strong>a process on paper is not a process that runs smoothly</strong>. Tens of thousands of Google engineers produce a constant stream of changes — most under 100 lines, yet some are refactorings that touch hundreds or thousands of files. If the tool is slow or the state is murky, every change idles on "who are we waiting for" and "what's still missing."</p>
+<p>The chapter's conclusion puts it bluntly: <strong>time spent in code review is time not spent coding</strong>. The review tool sits on the critical path of every commit, so any friction is multiplied by the company's entire change volume. The job isn't "can we review at all" but: can authors catch problems before sending, can reviewers understand a change fast, does everyone always know the next step, and can "ready to submit" be judged at a glance?</p>
+<h2>The core ideas, in depth</h2>
+<h3>1. Four design principles — and simplicity wins</h3>
+<p>Critique was shaped by Google's review culture, distilled into four principles:</p>
+<ul>
+<li><strong>Simplicity</strong>: a fast-loading UI, few unnecessary choices, hotkeys, and clear visual markers for the overall review state.</li>
+<li><strong>Foundation of trust</strong>: review is not for slowing others down but for empowering them. For example, trust authors to fix minor comments without another review round; make changes openly viewable and reviewable across Google.</li>
+<li><strong>Generic communication</strong>: the authors state flatly that "communication problems are rarely solved through tooling," so Critique favors generic commenting and encourages people to spell out what they want — even suggest edits — rather than complicating the data model and process.</li>
+<li><strong>Workflow integration</strong>: one click to code search, the web-based editor, or test results.</li>
+</ul>
+<p><strong>Simplicity had the biggest impact</strong>: many interesting features were rejected because the team would not complicate the model for a small set of users. Simplicity also pulls against integration: the team considered a "Code Central" combining editing, reviewing and searching in one tool and decided against it — <strong>features are linked from Critique but implemented in their own subsystems</strong>, so review stays the sole focus.</p>
+<h3>2. Six stages, and what the tool adds at each</h3>
+<p>Critique reviews happen before commit (precommit). The typical flow: ① create the change and upload a snapshot, which triggers analyzers; ② when happy, the author mails it to reviewers; ③ reviewers comment; ④ the author revises and replies, with ③④ repeating; ⑤ reviewers give LGTM; ⑥ the author commits, and the change lands if presubmits pass. There are escape hatches: reviewers can reassign the change, authors can postpone it, and <strong>in emergencies an author can force-commit and have it reviewed afterwards</strong>.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b1" markerheight="8" markerwidth="8" orient="auto" refx="7" refy="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker><marker id="b1v" markerheight="8" markerwidth="8" orient="auto" refx="7" refy="4"><path d="M0,0 L8,4 L0,8 z" fill="#9b6cf5"/></marker></defs>
+<g font-size="12">
+<rect x="10" y="80" width="98" height="52" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="59" y="102" text-anchor="middle" fill="#e7ebf1" font-weight="700">① Create</text><text x="59" y="120" text-anchor="middle" fill="#cdd3db" font-size="10.5">upload snapshot</text>
+<rect x="125" y="80" width="98" height="52" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="174" y="102" text-anchor="middle" fill="#e7ebf1" font-weight="700">② Request</text><text x="174" y="120" text-anchor="middle" fill="#cdd3db" font-size="10.5">pick reviewers</text>
+<rect x="240" y="80" width="98" height="52" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="289" y="102" text-anchor="middle" fill="#e7ebf1" font-weight="700">③ Comment</text><text x="289" y="120" text-anchor="middle" fill="#cdd3db" font-size="10.5">publish a round</text>
+<rect x="355" y="80" width="98" height="52" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="404" y="102" text-anchor="middle" fill="#e7ebf1" font-weight="700">④ Revise</text><text x="404" y="120" text-anchor="middle" fill="#cdd3db" font-size="10.5">snapshot + reply</text>
+<rect x="470" y="80" width="98" height="52" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="519" y="102" text-anchor="middle" fill="#e7ebf1" font-weight="700">⑤ Approve</text><text x="519" y="120" text-anchor="middle" fill="#cdd3db" font-size="10.5">LGTM, goes green</text>
+<rect x="585" y="80" width="105" height="52" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="637" y="102" text-anchor="middle" fill="#e7ebf1" font-weight="700">⑥ Commit</text><text x="637" y="120" text-anchor="middle" fill="#cdd3db" font-size="10.5">one button</text>
+<line x1="108" y1="106" x2="122" y2="106" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#b1)"/>
+<line x1="223" y1="106" x2="237" y2="106" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#b1)"/>
+<line x1="338" y1="106" x2="352" y2="106" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#b1)"/>
+<line x1="453" y1="106" x2="467" y2="106" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#b1)"/>
+<line x1="568" y1="106" x2="582" y2="106" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#b1)"/>
+<path d="M404,80 C404,45 289,45 289,77" fill="none" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#b1v)"/>
+<text x="346" y="40" text-anchor="middle" fill="#c9b5f7" font-size="10.5">③④ repeat for rounds</text>
+<rect x="10" y="168" width="213" height="44" rx="9" fill="rgba(155,108,245,0.1)" stroke="#9b6cf5"/>
+<text x="116" y="187" text-anchor="middle" fill="#c9b5f7" font-size="10.5">every snapshot: Tricorder analysis</text><text x="116" y="203" text-anchor="middle" fill="#c9b5f7" font-size="10.5">on review request: presubmit tests</text>
+<rect x="585" y="168" width="105" height="44" rx="9" fill="rgba(155,108,245,0.1)" stroke="#9b6cf5"/>
+<text x="637" y="187" text-anchor="middle" fill="#c9b5f7" font-size="10.5">on commit:</text><text x="637" y="203" text-anchor="middle" fill="#c9b5f7" font-size="10.5">presubmit again</text>
+<line x1="116" y1="166" x2="116" y2="135" stroke="#9b6cf5" stroke-width="1.4" stroke-dasharray="4 3"/>
+<line x1="637" y1="166" x2="637" y2="135" stroke="#9b6cf5" stroke-width="1.4" stroke-dasharray="4 3"/>
+<text x="400" y="240" text-anchor="middle" fill="#7c8593" font-size="10.5">blue: the human flow · violet: where machines step in</text>
+</g>
+</svg>
+<figcaption>Fig 1 · Critique's precommit review flow: cheap checks run on every snapshot, expensive tests only at review request and commit.</figcaption>
+</figure>
+<p>As a change moves through the stages, Critique <strong>publishes event notifications</strong> that other tools subscribe to: a Chrome extension pops up when it's your turn; the email system sends notices and even turns email replies into comments. That's separation of concerns — <strong>Critique just emits events; other systems build on top</strong>. The authors are candid that some developers love the instant pop-ups while others skip the extension because it breaks their flow.</p>
+<h3>3. Before sending: let the author wear the reviewer's hat</h3>
+<p>Bigger changes are harder to understand, so <strong>optimizing the diff is a core requirement</strong>. Critique's diff starts from an optimized longest-common-subsequence algorithm and adds syntax highlighting, cross-references powered by Kythe, <strong>intraline character-level diffs</strong> that respect word boundaries, adjustable whitespace ignoring, and <strong>move detection</strong> — a block of code that moved is marked as moved, rather than "deleted here, added there" as a naive diff would show. To fit side-by-side diffs with Java's 100-character lines, the view dropped borders and padding. At file level you can drag to compare any two snapshots, and every snapshot is prefetched.</p>
+<p>The key move: <strong>the author sees exactly what reviewers will see</strong>, diff and analysis results included, and can make lightweight edits in the tool, add preliminary comments, and link a bug. Reviewing your own change first means a cleaner change goes out and fewer misunderstandings follow.</p>
+<h3>4. Analysis results: actionability is binary</h3>
+<p>Each uploaded snapshot triggers static analysis (Tricorder, Ch20). Results appear as <strong>status chips</strong> under the change description: analyzers can mark specific findings <strong>red</strong> for visibility, analyzers still running show <strong>yellow</strong>, and the rest are <strong>gray</strong>. For simplicity, <strong>there are no other ways to mark or highlight findings — actionability is binary</strong>. Findings show inside the diff like comments but styled differently, and many carry fix suggestions. The book's example: a linter flags trailing spaces; two clicks take the author to the offending code, one more previews the fix, one more applies it.</p>
+<p>Expensive checks go elsewhere: <strong>running tests is resource-intensive, so they belong to presubmits (at review request and at commit), not every snapshot like static analysis</strong>. A failed presubmit is highlighted, blocks sending or committing, and emails the author. Other common presubmits add mailing lists for awareness and enforce project-specific code style and change-description formats.</p>
+<h3>5. Finding reviewers: at scale, a problem in itself</h3>
+<p>Even in a small team you want to spread reviews evenly and account for vacations. Teams can set up an email alias for incoming reviews, and <strong>GwsQ</strong> (named after the Google Web Server team that first used it) picks a specific member based on its configuration. Across projects it gets harder, so Critique <strong>proposes sets of reviewers sufficient to approve the change</strong>, weighing four factors: who <strong>owns</strong> the code, who changed it recently (knows it best), who is available (not out of office, ideally same time zone), and the GwsQ setup. This matters most for large-scale changes that touch many files.</p>
+<h3>6. Comments: unresolved by default, published as a round</h3>
+<p>Commenting is <strong>the second most common action in Critique after viewing changes</strong>, and it's free for all — not just the author and assigned reviewers; anyone can leave a "drive-by review."</p>
+<ul>
+<li><strong>Two states</strong>: comments are <strong>unresolved</strong> by default, meaning the author must address them; reviewers can also write <strong>resolved</strong> comments that are optional or informational. The author clicks <strong>Done</strong> (fixed) or <strong>Ack</strong> (read), and either resolves the thread.</li>
+<li><strong>Atomic publishing</strong>: comments are drafted as you go and <strong>published all at once</strong> after reviewing the whole change, so a reviewer delivers one complete thought instead of a trickle.</li>
+<li><strong>Finding to comment in one click</strong>: a reviewer who sees a relevant analyzer finding clicks "Please fix" to create an unresolved comment, or edits the file inline to suggest a fix the author can apply.</li>
+<li><strong>Personal progress</strong>: reviewers tick files as reviewed; when the author modifies a file, everyone's tick on it is cleared.</li>
+</ul>
+<h3>7. The attention set: "whose turn" is the most valuable bit</h3>
+<p>A change often has several reviewers — an engineer, the UX person for the feature, the SRE carrying the pager. Critique keeps an <strong>attention set</strong> for every change: <strong>the people the change is currently blocked on</strong>. Those in the set are expected to respond promptly, and their names are shown <strong>in bold</strong>. Critique tries to update the set smartly when people publish comments, and users can also adjust it by hand.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b2" markerheight="8" markerwidth="8" orient="auto" refx="7" refy="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<text x="60" y="48" text-anchor="middle" fill="#cdd3db">Author</text>
+<text x="60" y="108" text-anchor="middle" fill="#cdd3db">Reviewer A</text>
+<text x="60" y="168" text-anchor="middle" fill="#cdd3db">Reviewer B</text>
+<line x1="110" y1="44" x2="680" y2="44" stroke="rgba(91,157,249,0.2)"/>
+<line x1="110" y1="104" x2="680" y2="104" stroke="rgba(91,157,249,0.2)"/>
+<line x1="110" y1="164" x2="680" y2="164" stroke="rgba(91,157,249,0.2)"/>
+<rect x="150" y="90" width="140" height="28" rx="7" fill="rgba(91,157,249,0.2)" stroke="#5b9df9" stroke-width="2"/>
+<rect x="150" y="150" width="140" height="28" rx="7" fill="rgba(91,157,249,0.2)" stroke="#5b9df9" stroke-width="2"/>
+<text x="220" y="109" text-anchor="middle" fill="#e7ebf1" font-weight="700">A's turn</text>
+<text x="220" y="169" text-anchor="middle" fill="#e7ebf1" font-weight="700">B's turn</text>
+<rect x="310" y="30" width="150" height="28" rx="7" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="385" y="49" text-anchor="middle" fill="#e7ebf1" font-weight="700">Author's turn</text>
+<rect x="480" y="90" width="120" height="28" rx="7" fill="rgba(91,157,249,0.2)" stroke="#5b9df9" stroke-width="2"/>
+<text x="540" y="109" text-anchor="middle" fill="#e7ebf1" font-weight="700">A's turn again</text>
+<line x1="290" y1="98" x2="318" y2="62" stroke="#5b9df9" stroke-width="1.5" marker-end="url(#b2)"/>
+<line x1="290" y1="158" x2="340" y2="62" stroke="#5b9df9" stroke-width="1.5" marker-end="url(#b2)"/>
+<line x1="460" y1="52" x2="490" y2="88" stroke="#5b9df9" stroke-width="1.5" marker-end="url(#b2)"/>
+<text x="625" y="190" text-anchor="middle" fill="#7c8593" font-size="10.5">B gave LGTM, done</text>
+<text x="118" y="78" fill="#7c8593" font-size="10.5">review sent</text>
+<text x="395" y="210" text-anchor="middle" fill="#7c8593" font-size="10.5">At any moment at least one person "should act," shown in bold; everyone else can safely look away</text>
+</g>
+</svg>
+<figcaption>Fig 2 · The attention set makes review turn-based: once comments are published, the ball passes to the next person.</figcaption>
+</figure>
+<p>After it shipped, users "had a difficult time imagining the previous state"; the prevailing reaction was <strong>"how did we get along without this?"</strong> Before, authors and reviewers had to chat to figure out who was handling a change. It also highlights the <strong>turn-based nature of review: it is always at least one person's turn to act</strong>. It pairs with the <strong>dashboard</strong> landing page, powered by Changelist Search, which indexes the latest state of every change at Google (pre- and post-submit) and supports regex queries; each section is a query, and by default the first one shows "needs your attention." The authors avoid customizability elsewhere, but allow it here — much as everyone organizes their email differently.</p>
+<h3>8. Scoring: LGTM, Approval, unresolved comments</h3>
+<p>Google splits "can this be committed" into three parts:</p>
+<ul>
+<li><strong>LGTM</strong> ("looks good to me"): "I have reviewed this change, believe it meets our standards, and think it is okay to commit after addressing unresolved comments."</li>
+<li><strong>Approval</strong>: "As a gatekeeper, I allow this change into the codebase." (This maps to Ch9's ownership approvals.)</li>
+<li><strong>The number of unresolved comments.</strong></li>
+</ul>
+<p>The rule: <strong>at least one LGTM + sufficient approvals + zero unresolved comments</strong> = ready to commit, and the page header turns green. Note that <strong>every change needs an LGTM regardless of approval status</strong>, guaranteeing at least two pairs of eyes. LGTM and Approval are <strong>hard requirements</strong> — only reviewers can grant them, and they can revoke them any time before commit; unresolved comments are <strong>soft requirements</strong> — the author can mark a comment resolved when replying.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 205" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b3" markerheight="8" markerwidth="8" orient="auto" refx="7" refy="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<rect x="20" y="20" width="200" height="44" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="120" y="40" text-anchor="middle" fill="#e7ebf1" font-weight="700">≥ 1 LGTM</text><text x="120" y="56" text-anchor="middle" fill="#8fbaff" font-size="10.5">hard · reviewers grant / revoke</text>
+<rect x="20" y="78" width="200" height="44" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="120" y="98" text-anchor="middle" fill="#e7ebf1" font-weight="700">Required approvals</text><text x="120" y="114" text-anchor="middle" fill="#8fbaff" font-size="10.5">hard · gatekeepers (owners…)</text>
+<rect x="20" y="136" width="200" height="44" rx="9" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="120" y="156" text-anchor="middle" fill="#e7ebf1" font-weight="700">Unresolved = 0</text><text x="120" y="172" text-anchor="middle" fill="#c9b5f7" font-size="10.5">soft · author resolves on reply</text>
+<line x1="220" y1="42" x2="330" y2="92" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#b3)"/>
+<line x1="220" y1="100" x2="330" y2="100" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#b3)"/>
+<line x1="220" y1="158" x2="330" y2="108" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#b3)"/>
+<circle cx="360" cy="100" r="26" fill="rgba(91,157,249,0.1)" stroke="#5b9df9" stroke-width="2"/>
+<text x="360" y="105" text-anchor="middle" fill="#e7ebf1" font-weight="700">AND</text>
+<line x1="386" y1="100" x2="458" y2="100" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#b3)"/>
+<rect x="460" y="72" width="220" height="56" rx="9" fill="rgba(91,157,249,0.22)" stroke="#5b9df9" stroke-width="2.4"/>
+<text x="570" y="96" text-anchor="middle" fill="#e7ebf1" font-weight="700">Green · ready to commit</text><text x="570" y="114" text-anchor="middle" fill="#8fbaff" font-size="10.5">lands once presubmits pass</text>
+<text x="350" y="194" text-anchor="middle" fill="#7c8593" font-size="10.5">No veto: negative feedback must be a specific unresolved comment</text>
+</g>
+</svg>
+<figcaption>Fig 3 · The scoring panel compresses "what's left" into three numbers: who gave LGTM, which approvals are missing, how many unresolved comments remain.</figcaption>
+</figure>
+<p>This scheme was <strong>deliberately simplified</strong>: early Critique had a "Needs More Work" rating and an "LGTM++"; it moved to <strong>LGTM / Approval always being positive</strong>. If a change needs a second look, reviewers leave comments without LGTM; once it's mostly good, reviewers trust the author with small edits — <strong>the tool doesn't demand repeated LGTMs, regardless of change size</strong>. It shaped culture too: reviewers <strong>can't just thumbs-down a change without useful feedback</strong>; all negative feedback must be tied to something specific to fix — even the phrase "unresolved comment" was chosen to sound relatively nice. The soft requirement embodies trust: a reviewer can give "LGTM plus a few unresolved comments" and never check each one afterwards — which saves a whole round trip when author and reviewer are many time zones apart.</p>
+<p>After commit, Critique doubles as a <strong>change archaeology</strong> tool: anyone at Google can browse the history, comments and evolution of changes to generally viewable files, to understand why something changed or how a bug crept in; changes can still be commented on and rolled back after commit.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/code-review-signal-detection-day50.en.html" target="_blank" rel="noopener">System Design · Day 50 Code Review as Signal Detection</a> — an extension of binary actionability: why the false-positive budget decides whether a review tool or analyzer lives or dies</aside>
+<h2>Key trade-offs and choices</h2>
+<p>The whole chapter is really a string of <strong>"what we gave up for simplicity"</strong> decisions. Each has a cost:</p>
+<p class="tcap">Table 1 · Critique's design trade-offs</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Decision</th><th>Rejected option</th><th>Gains</th><th>Honest cost</th></tr></thead>
+<tbody>
+<tr><th>Scores are always positive</th><td>Needs More Work, LGTM++, vetoes</td><td>Negative feedback must be specific and fixable; kinder review culture</td><td>No explicit "block" signal; reviewers object only by withholding LGTM</td></tr>
+<tr><th>Unresolved comments are soft</th><td>Reviewer re-checks each one</td><td>One fewer round trip, especially across time zones</td><td>Relies on author diligence; the tool can't stop abused trust</td></tr>
+<tr><th>Binary actionability</th><td>Severity levels, custom marks</td><td>Authors see at a glance what to fix</td><td>Analyzers must keep false positives low or red loses its meaning</td></tr>
+<tr><th>Tests in presubmit</th><td>Run tests on every snapshot</td><td>Saves compute</td><td>Test failures surface only at review request or commit</td></tr>
+<tr><th>Links, not embedding</th><td>An all-in-one "Code Central"</td><td>Review stays the focus; UI stays simple</td><td>Hopping between tools; test coverage is the one embedded exception</td></tr>
+<tr><th>Deep internal integration</th><td>A generic, shippable tool</td><td>One click to the editor, cross-references, inline coverage</td><td><strong>Can't be open-sourced</strong>; useless outside Piper and cloud workspaces</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 2 · Two review tools at the same company</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Dimension</th><th>Critique</th><th>Gerrit</th></tr></thead>
+<tbody>
+<tr><th>Used for</th><td>The vast majority of projects in Google's monorepo</td><td>Open-source projects (Chrome, Android) and internal projects outside the monorepo</td></tr>
+<tr><th>Version control</th><td>Piper; workspaces on a FUSE-based cloud filesystem</td><td>Tightly integrated with Git; web UI for browsing, merging branches, cherry-picks</td></tr>
+<tr><th>Unit of review</th><td colspan="2">Both review each commit separately; Gerrit can also review a stack of commits individually and submit the chain atomically</td></tr>
+<tr><th>Scoring</th><td>LGTM / Approval, positive only</td><td>More sophisticated and highly configurable; a reviewer can veto with <code>-2</code></td></tr>
+<tr><th>Extensibility &amp; permissions</th><td>Limited: custom analyzers, presubmits, team policies</td><td>Rich plug-in system; fine-grained permissions on repos and branches</td></tr>
+</tbody>
+</table></div>
+<p>The rule of thumb: a <strong>homogeneous large organization</strong> (one repo, one toolchain, one culture) suits Critique's "opinionated process + simple UI"; a <strong>heterogeneous environment</strong> (open source, many repos, team-specific rules) has to accept Gerrit-style configurability and complexity.</p>
+<h2>Why it matters / in real systems</h2>
+<p>Review tools are often treated as install-and-forget infrastructure; this chapter hands you evaluation criteria: can you see at a glance whose turn it is, can you see what's still missing, has the machine-checkable stuff been caught before a human looks, can the diff detect moves? When an architecture review debates "should we add a mandatory-approval rule to PRs," borrow the chapter's split: <strong>what is a hard requirement (who may let it through) and what is soft (trust the author)</strong>.</p>
+<div class="ev">
+<p class="evh">Industry evidence · publicly verifiable</p>
+<ul>
+<li><strong>Google · the book</strong>: after the attention set shipped, the prevailing reaction was "how did we get along without this?"; one of the chapter's TL;DRs is that "small workflow optimizations, like the addition of an explicit 'attention set,' can increase clarity and reduce friction substantially." <span class="src"><a href="https://raw.githubusercontent.com/abseil/abseil.github.io/master/resources/swe-book/html/ch19.html" target="_blank" rel="noopener">Software Engineering at Google · Ch19 (abseil's official open edition source) ↗</a></span></li>
+<li><strong>Gerrit docs · Attention Set</strong>: describes code review as "a turn-based workflow going back and forth between the change owner and reviewers," keeps an attention set per change shown as bolded user names, and advises that if you don't plan to respond within ~24h when it's your turn, you remove yourself or explain — Critique's idea, carried into open source. <span class="src"><a href="https://raw.githubusercontent.com/GerritCodeReview/gerrit/master/Documentation/user-attention-set.txt" target="_blank" rel="noopener">GerritCodeReview/gerrit · user-attention-set ↗</a></span></li>
+<li><strong>Google · public engineering practices</strong>: "One business day is the maximum time it should take to respond to a code review request" — the attention set and dashboard are what make such a deadline enforceable. <span class="src"><a href="https://raw.githubusercontent.com/google/eng-practices/master/review/reviewer/speed.md" target="_blank" rel="noopener">google/eng-practices · Speed of Code Reviews ↗</a></span></li>
+<li><strong>Gerrit docs · the opposite design</strong>: in the default Code-Review label, <code>-2</code> means "This shall not be submitted," and any <code>-2</code> blocks submit — the reverse of Critique's positive-only scoring, buying the explicit veto that heterogeneous environments need. <span class="src"><a href="https://raw.githubusercontent.com/GerritCodeReview/gerrit/master/Documentation/config-labels.txt" target="_blank" rel="noopener">GerritCodeReview/gerrit · config-labels ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/super-individual/code-review-skills-skill3.en.html" target="_blank" rel="noopener">Super Individual · Skills S3 Code Review Skills</a> — "let analyzers go first and inline the results into review," applied to today's AI review tools</aside>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"A good tool fixes communication problems in review" — the authors say it can't.</strong> A tool can enhance the experience but can't replace trust and communication; the users are humans, and communication goes wrong even with the best tool.</li>
+<li><strong>"No veto means you can't stop a bad change" — wrong.</strong> Withholding LGTM / Approval stops it; what changes is how: you must attach something specific to fix.</li>
+<li><strong>"LGTM and Approval are the same thing" — they aren't.</strong> LGTM says "quality is fine," Approval says "as gatekeeper, I let it in"; every change needs an LGTM, approvals are counted separately by required permissions.</li>
+<li><strong>Limits and context:</strong> Critique exists only inside Google, so the book's details can't be verified externally or copied directly — its one-click editing depends on cloud workspaces and the monorepo. Soft requirements rely on a high-trust culture; in low-trust or heavily regulated settings, teams often require each comment to be re-checked.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① A defined process isn't enough; the tool decides whether it runs smoothly. Review is on every commit's critical path, so friction multiplies by the company's change volume.</p>
+<p>② Of the four principles, simplicity mattered most: skip niche features; link out to other tools rather than build an all-in-one Code Central.</p>
+<p>③ Before sending, the author sees what reviewers will see: intraline character diffs, move detection, cross-references, plus analysis results.</p>
+<p>④ Analysis actionability is binary (red / not red), often with one-click fixes; expensive tests run in presubmit, not on every snapshot.</p>
+<p>⑤ Comments are unresolved by default and published as an atomic round; Done / Ack resolve in one click; anyone can drive-by review.</p>
+<p>⑥ The attention set makes review turn-based, showing "whose turn" in bold — the feature users can't imagine living without.</p>
+<p>⑦ Ready to commit = ≥1 LGTM + sufficient approvals + zero unresolved comments; the first two are hard, the last is soft, by design of trust.</p>
+<p>⑧ Scores are positive only: negative feedback must be a specific, fixable comment. Gerrit does the opposite, with a <code>-2</code> veto and heavy configurability, suiting open source and heterogeneous setups.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Read this page ≈ get the core of the chapter; for the full argument and extensions, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Software Engineering at Google 第 19 章 · Critique：Google 的代码评审工具 — 专业书籍精读 Book 199</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+</head>
+<body>
+<div class="container">
+<p class="top">专业书籍精读 · Software Engineering at Google · 第 19 章</p>
+<h1>Critique：Google 的代码评审工具</h1>
+<p class="sub">Software Engineering at Google · Ch 19 · Critique: Google's Code Review Tool · Caitlin Sadowski, Ilham Kurnia, Ben Rohlfs · 2020</p>
+<p class="langbar"><a href="swegoogle-ch19-critique-code-review-tool-book199.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>程序员改了代码，不能直接放进公司的总仓库，得先让一位同事看过、点头。这一步叫「代码评审」。你用过的 GitHub、公司里的各种「提交请求」，都是干这件事的工具。这一章讲 Google 内部最受欢迎的那一个——Critique：它没讲「怎么评审」，讲的是<strong>一个好用的评审工具长什么样</strong>。</p>
+<h2>先说个怪事</h2>
+<p>Critique 加过的功能里，被用户夸得最狠的，不是什么高科技，而是把「现在该谁动手」的名字<strong>加粗</strong>。上线后大家都想不起以前是怎么过的——以前要靠互相发消息问「这个改动卡在谁那儿」。</p>
+<h2>旧世界为什么难</h2>
+<p>评审像几个人传阅一份合同：作者寄出去，几位审阅人各自批注，作者改完再寄回来，来回好几轮。麻烦在于：谁也说不清现在球在谁脚下；批注里哪些是「必须改」、哪些是「随口一提」分不清；机器能查出的小毛病（多了个空格、格式不对）也要人来挑；最后到底算不算「通过」，也没个明确的信号。几万人每天传阅几万份合同，这些小摩擦加起来就是巨大的时间浪费。</p>
+<h2>核心机制直觉</h2>
+<ul>
+<li><strong>先让机器过一遍：</strong>作者一上传改动，各种自动检查就跑起来，挑出的毛病直接标在改动旁边，常常还附带「一键修好」。人来看时，琐碎问题已经清掉了。</li>
+<li><strong>批注分两种颜色：</strong>「必须处理」和「仅供参考」。审阅人先写完一整轮，再一次性发出去，像寄一封完整的信，而不是想到一句发一句。</li>
+<li><strong>球在谁脚下，名字就加粗：</strong>每个改动都记着「现在在等谁」。你打开首页，第一栏就是等你处理的那些，别的可以放心不看。</li>
+<li><strong>只有「同意」，没有「否决」：</strong>审阅人要么点头，要么写下具体哪里要改。不允许只扔一个「不行」却不说为什么。点头、该批的人都批了、必须处理的批注清零——页面就变绿，可以提交。</li>
+</ul>
+<h2>带来了什么 / 该怎么选</h2>
+<p>换来的是：大多数改动只要两个人达成一致就能进库，速度快；几年后有人想知道「这行代码当初为什么这么写」，翻出当年的评审记录就有答案。诚实的代价是：它和 Google 内部的代码仓库、编辑器、检查工具绑得太紧，外面根本用不了——Google 自己做开源项目时，用的是另一个工具。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p><strong>好的评审工具不替人沟通，它只做三件事：让机器先挑小毛病、让人一眼看出该谁动手、让「能不能提交」变成一个清清楚楚的绿灯——剩下的，交给同事之间的信任。</strong></p>
+</div>
+<p class="switch-hint">想看评审流程六个阶段工具各帮了什么、为什么分析结果只有「红 / 不红」两档、注意力集合怎么自动更新、LGTM 和 Approval 为什么要分开、为什么砍掉了「需要返工」这个评分，以及它和开源的 Gerrit 差在哪？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">你以为评审工具的价值在于「功能多、流程严」，本章说恰恰相反：Critique 赢在<strong>克制</strong>——工具不发明沟通协议，只把评审流程里「该谁动手、还差什么、机器已经查出什么」变成一眼可读的状态，<strong>信任和沟通仍由人负责</strong>。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>代码评审（code review）</strong>：代码合入主干前，由作者以外的人检查一遍改动。</li>
+<li><strong>改动 / 变更（change, CL）</strong>：一次待提交的代码修改，Google 内部叫 changelist。</li>
+<li><strong>diff（差异）</strong>：把改动前后两个版本逐行对比、标出增删的视图。</li>
+<li><strong>快照（snapshot）</strong>：作者某一时刻上传的改动版本；评审中每改一轮就多一个快照。</li>
+<li><strong>静态分析（static analysis）</strong>：不运行程序、只读代码就找出问题的自动检查，linter 是其中一类。</li>
+<li><strong>提交前检查（presubmit）</strong>：提交或送审前自动运行的钩子，比如跑测试、检查格式。</li>
+<li><strong>单体仓库（monorepo）</strong>：全公司代码放在同一个仓库里；Google 的叫 Piper。</li>
+<li><strong>代码所有权（ownership）</strong>：每个目录有指定的负责人，改它要经负责人批准。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>Part IV「工具」第四章，是 Ch9「代码评审」的工具篇：Ch9 讲流程与文化，本章讲承载它的系统。它上接代码搜索（Ch17）与构建（Ch18），下引静态分析（Ch20）和大规模变更（Ch22）。现实对应：GitHub Pull Request、GitLab Merge Request、Gerrit、Phabricator。</p>
+<h2>这章要解决什么</h2>
+<p>评审流程本身 Ch9 已立好：每个改动至少一人看过、所有者批准、可读性达标。但<strong>流程写在纸上不等于跑得顺</strong>。Google 几万名工程师每天产生大量改动，大多数小于 100 行，却也有涉及成百上千个文件的大规模重构。如果工具慢、状态不清，每个改动都会在「等谁」「还差什么」上空转。</p>
+<p>本章结论里有一句很直白：<strong>花在评审上的时间，就是没花在写代码上的时间</strong>。评审工具处在每一次提交的关键路径上，任何摩擦都要乘以全公司的改动数。所以工具要解决的不是「能不能评审」，而是：作者能否在送审前自己发现问题、审阅人能否快速看懂改动、双方能否随时知道下一步、「能提交」的条件能否被一眼判定。</p>
+<h2>核心内容，讲透</h2>
+<h3>一、四条设计原则：简单压倒一切</h3>
+<p>Critique 的设计受 Google 评审文化塑造，归成四条原则：</p>
+<ul>
+<li><strong>简单</strong>：界面加载快、少做选择、支持快捷键、整体评审状态有清晰的视觉标记。</li>
+<li><strong>信任为基础</strong>：评审不是为了拖慢别人，而是赋能别人。比如信任作者会改好小问题，不再设一轮复核；改动对全公司公开可看、可评。</li>
+<li><strong>通用沟通</strong>：作者直言「沟通问题很少能靠工具解决」，所以优先提供通用的评论方式，鼓励把要求写清楚、甚至直接给出修改建议，而不是把数据模型和流程搞复杂。</li>
+<li><strong>工作流集成</strong>：能一键跳到代码搜索、网页编辑器、测试结果。</li>
+</ul>
+<p>其中<strong>简单影响最大</strong>：很多有意思的功能被否决，理由是不愿为一小撮用户让模型变复杂。简单与集成之间也有张力：团队考虑过做一个集编辑、评审、搜索于一体的「Code Central」，最终放弃——<strong>功能从 Critique 链出去，在各自的子系统里实现</strong>，评审始终是唯一主角。</p>
+<h3>二、六个阶段，工具各补一刀</h3>
+<p>Critique 评审发生在提交之前（precommit）。典型流程：①创建改动、上传快照，自动触发分析器；②作者满意后发给审阅人；③审阅人评论；④作者修改、回复，③④反复多轮；⑤审阅人给出 LGTM；⑥作者提交，presubmit 全过则入库。流程也留了口子：审阅人可以把改动转给别人，作者可以搁置，<strong>紧急时还能先强制提交、事后补评审</strong>。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b1" markerheight="8" markerwidth="8" orient="auto" refx="7" refy="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker><marker id="b1v" markerheight="8" markerwidth="8" orient="auto" refx="7" refy="4"><path d="M0,0 L8,4 L0,8 z" fill="#9b6cf5"/></marker></defs>
+<g font-size="12">
+<rect x="10" y="80" width="98" height="52" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="59" y="102" text-anchor="middle" fill="#e7ebf1" font-weight="700">① 创建</text><text x="59" y="120" text-anchor="middle" fill="#cdd3db" font-size="10.5">上传快照</text>
+<rect x="125" y="80" width="98" height="52" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="174" y="102" text-anchor="middle" fill="#e7ebf1" font-weight="700">② 送审</text><text x="174" y="120" text-anchor="middle" fill="#cdd3db" font-size="10.5">选审阅人</text>
+<rect x="240" y="80" width="98" height="52" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="289" y="102" text-anchor="middle" fill="#e7ebf1" font-weight="700">③ 评论</text><text x="289" y="120" text-anchor="middle" fill="#cdd3db" font-size="10.5">整轮发布</text>
+<rect x="355" y="80" width="98" height="52" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="404" y="102" text-anchor="middle" fill="#e7ebf1" font-weight="700">④ 修改</text><text x="404" y="120" text-anchor="middle" fill="#cdd3db" font-size="10.5">新快照 + 回复</text>
+<rect x="470" y="80" width="98" height="52" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="519" y="102" text-anchor="middle" fill="#e7ebf1" font-weight="700">⑤ 批准</text><text x="519" y="120" text-anchor="middle" fill="#cdd3db" font-size="10.5">LGTM 变绿</text>
+<rect x="585" y="80" width="105" height="52" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="637" y="102" text-anchor="middle" fill="#e7ebf1" font-weight="700">⑥ 提交</text><text x="637" y="120" text-anchor="middle" fill="#cdd3db" font-size="10.5">一键入库</text>
+<line x1="108" y1="106" x2="122" y2="106" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#b1)"/>
+<line x1="223" y1="106" x2="237" y2="106" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#b1)"/>
+<line x1="338" y1="106" x2="352" y2="106" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#b1)"/>
+<line x1="453" y1="106" x2="467" y2="106" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#b1)"/>
+<line x1="568" y1="106" x2="582" y2="106" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#b1)"/>
+<path d="M404,80 C404,45 289,45 289,77" fill="none" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#b1v)"/>
+<text x="346" y="40" text-anchor="middle" fill="#c9b5f7" font-size="10.5">③④ 来回多轮</text>
+<rect x="10" y="168" width="213" height="44" rx="9" fill="rgba(155,108,245,0.1)" stroke="#9b6cf5"/>
+<text x="116" y="187" text-anchor="middle" fill="#c9b5f7" font-size="10.5">每个快照：Tricorder 静态分析</text><text x="116" y="203" text-anchor="middle" fill="#c9b5f7" font-size="10.5">送审时：presubmit 跑测试</text>
+<rect x="585" y="168" width="105" height="44" rx="9" fill="rgba(155,108,245,0.1)" stroke="#9b6cf5"/>
+<text x="637" y="187" text-anchor="middle" fill="#c9b5f7" font-size="10.5">提交时</text><text x="637" y="203" text-anchor="middle" fill="#c9b5f7" font-size="10.5">presubmit 再跑</text>
+<line x1="116" y1="166" x2="116" y2="135" stroke="#9b6cf5" stroke-width="1.4" stroke-dasharray="4 3"/>
+<line x1="637" y1="166" x2="637" y2="135" stroke="#9b6cf5" stroke-width="1.4" stroke-dasharray="4 3"/>
+<text x="400" y="240" text-anchor="middle" fill="#7c8593" font-size="10.5">蓝：人走的流程 · 紫：机器在哪一步插手</text>
+</g>
+</svg>
+<figcaption>图 1 · Critique 的提交前评审流程：便宜的检查每个快照都跑，贵的测试只在送审和提交时跑。</figcaption>
+</figure>
+<p>每推进一个阶段，Critique 都<strong>发布事件通知</strong>，别的工具订阅这些事件来做事：一个 Chrome 扩展在轮到你时弹窗；邮件系统发通知，还能把邮件回复转成评论。这是关注点分离——<strong>Critique 只负责发事件，其余系统自己在上面搭</strong>。作者也坦白：有人爱即时弹窗，也有人嫌打断心流而不装。</p>
+<h3>三、送审之前：让作者先戴上审阅人的帽子</h3>
+<p>改动越大越难懂，所以<strong>优化 diff 是评审工具的核心需求</strong>。Critique 的 diff 以优化过的最长公共子序列算法为底，再叠加：语法高亮、由 Kythe 提供的跨引用跳转、按词边界的<strong>行内字符级 diff</strong>、可调的忽略空白，以及<strong>移动检测</strong>——一段代码挪了位置会被标成「移动」，而不是朴素算法那样「这里删、那里加」。为让并排 diff 放得下 Java 每行 100 字符，界面去掉了边框和内边距。文件级还能拖拽选任意两个快照对比，所有快照都预取。</p>
+<p>关键一招是：<strong>作者看到的就是审阅人将看到的</strong>，包括 diff 和自动分析结果，还能在工具里做轻量修改、附上预先的说明、关联 bug。先自己当一回审阅人，送出去的改动更干净，也少误会。</p>
+<h3>四、分析结果：可操作性只有「是 / 否」两档</h3>
+<p>每上传一个快照，就触发静态分析（Ch20 的 Tricorder）。结果以<strong>状态小方块（chip）</strong>挂在改动描述下：分析器可把某条发现标<strong>红</strong>以示醒目，仍在运行的显示<strong>黄</strong>，其余是<strong>灰</strong>。为了简单，<strong>不提供任何其他标记或高亮方式——可操作性是二元的</strong>。发现像评论一样嵌在 diff 里，但样式不同；很多还附带修复建议。书里的例子：linter 发现行尾多余空格，作者两次点击就看到问题代码，再点一次预览修复，再点一次应用。</p>
+<p>贵的检查放在别处：<strong>跑测试耗资源，所以放进 presubmit（送审时、提交时各跑一次），而不是像静态分析那样每个快照都跑</strong>。presubmit 失败会被显著标出、阻止送审或提交，并邮件通知作者。常见的 presubmit 还包括自动抄送邮件组、强制项目的代码风格和改动描述格式。</p>
+<h3>五、找审阅人：规模大了这本身就是难题</h3>
+<p>小团队里找人看似简单，也要考虑负载均衡和谁在休假。团队可以给评审设一个邮件别名，由 <strong>GwsQ</strong>（得名于最早使用它的 Google Web Server 团队）按配置挑出具体的人。跨项目时更难，Critique 会<strong>推荐一组足以批准该改动的审阅人</strong>，考虑四个因素：谁<strong>拥有</strong>被改的代码、谁最近改过（最熟悉）、谁有空（没休假、最好同时区）、团队的 GwsQ 配置。这对动辄波及大量文件的大规模变更尤其重要。</p>
+<h3>六、评论：默认「未解决」，整轮发布</h3>
+<p>评论是用户在 Critique 里<strong>仅次于看改动的第二常见动作</strong>，而且谁都能评——不只作者和指定审阅人，路过的人也可以留下「顺路评审（drive-by review）」。</p>
+<ul>
+<li><strong>两种状态</strong>：评论默认是<strong>未解决（unresolved）</strong>，表示作者必须处理；审阅人也可以写<strong>已解决</strong>的评论，表示可选或仅供参考。作者处理时点 <strong>Done</strong>（改了）或 <strong>Ack</strong>（看到了），都会把线程置为已解决。</li>
+<li><strong>整轮原子发布</strong>：评论边看边起草，看完整个改动后<strong>一次性发布</strong>，让审阅人表达一个完整的想法，而不是想到一句发一句。</li>
+<li><strong>从发现到评论一键</strong>：审阅人看到相关分析发现，点「Please fix」就生成一条未解决评论；也能直接在线编辑文件给出修改建议，作者可一键应用。</li>
+<li><strong>个人进度</strong>：审阅人可逐文件勾「已看」；作者一旦改了某文件，所有人对它的勾都被清掉。</li>
+</ul>
+<h3>七、注意力集合：「该谁了」是最值钱的一个比特</h3>
+<p>一个改动常有多位审阅人——工程师、负责该功能的 UX、背着寻呼机的 SRE。Critique 为每个改动维护一个<strong>注意力集合（attention set）</strong>：<strong>改动当前卡在哪些人身上</strong>。在集合里的人要及时响应，名字在界面上<strong>加粗</strong>。用户发布评论时 Critique 会尽量聪明地更新它，用户也能手动调整。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b2" markerheight="8" markerwidth="8" orient="auto" refx="7" refy="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<text x="60" y="48" text-anchor="middle" fill="#cdd3db">作者</text>
+<text x="60" y="108" text-anchor="middle" fill="#cdd3db">审阅人 A</text>
+<text x="60" y="168" text-anchor="middle" fill="#cdd3db">审阅人 B</text>
+<line x1="110" y1="44" x2="680" y2="44" stroke="rgba(91,157,249,0.2)"/>
+<line x1="110" y1="104" x2="680" y2="104" stroke="rgba(91,157,249,0.2)"/>
+<line x1="110" y1="164" x2="680" y2="164" stroke="rgba(91,157,249,0.2)"/>
+<rect x="150" y="90" width="140" height="28" rx="7" fill="rgba(91,157,249,0.2)" stroke="#5b9df9" stroke-width="2"/>
+<rect x="150" y="150" width="140" height="28" rx="7" fill="rgba(91,157,249,0.2)" stroke="#5b9df9" stroke-width="2"/>
+<text x="220" y="109" text-anchor="middle" fill="#e7ebf1" font-weight="700">轮到 A</text>
+<text x="220" y="169" text-anchor="middle" fill="#e7ebf1" font-weight="700">轮到 B</text>
+<rect x="310" y="30" width="150" height="28" rx="7" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="385" y="49" text-anchor="middle" fill="#e7ebf1" font-weight="700">轮到作者</text>
+<rect x="480" y="90" width="120" height="28" rx="7" fill="rgba(91,157,249,0.2)" stroke="#5b9df9" stroke-width="2"/>
+<text x="540" y="109" text-anchor="middle" fill="#e7ebf1" font-weight="700">再轮到 A</text>
+<line x1="290" y1="98" x2="318" y2="62" stroke="#5b9df9" stroke-width="1.5" marker-end="url(#b2)"/>
+<line x1="290" y1="158" x2="340" y2="62" stroke="#5b9df9" stroke-width="1.5" marker-end="url(#b2)"/>
+<line x1="460" y1="52" x2="490" y2="88" stroke="#5b9df9" stroke-width="1.5" marker-end="url(#b2)"/>
+<text x="618" y="190" text-anchor="middle" fill="#7c8593" font-size="10.5">B 已 LGTM，退出</text>
+<text x="132" y="78" fill="#7c8593" font-size="10.5">送审</text>
+<text x="395" y="210" text-anchor="middle" fill="#7c8593" font-size="10.5">任何时刻至少有一个人「该动手」，加粗显示；不在集合里的人可以放心不看</text>
+</g>
+</svg>
+<figcaption>图 2 · 注意力集合把评审变成回合制：发布评论后，「球」自动传给下一位。</figcaption>
+</figure>
+<p>上线后用户「很难想象以前的样子」，普遍反应是：<strong>没有它我们以前怎么过的？</strong>此前只能靠作者和审阅人互相聊天确认谁在处理。它也凸显了评审的<strong>回合制本质：任何时刻总有至少一个人该行动</strong>。配套的是首页<strong>仪表盘</strong>：由 Changelist Search 驱动，它索引全公司所有改动（提交前与提交后）的最新状态，支持正则查询；每个分区就是一条查询，默认第一栏是「需要你处理的」。作者说别处尽量不给自定义，但仪表盘允许——就像每个人整理邮箱的方式都不同。</p>
+<h3>八、打分：LGTM、Approval、未解决评论数</h3>
+<p>Google 把「能否提交」拆成三部分：</p>
+<ul>
+<li><strong>LGTM</strong>（looks good to me）：「我看过，它符合我们的标准，处理完未解决评论后可以提交。」</li>
+<li><strong>Approval</strong>：「作为把关人，我允许它进入代码库。」（对应 Ch9 的所有权等批准。）</li>
+<li><strong>未解决评论数</strong>。</li>
+</ul>
+<p>规则：<strong>至少一个 LGTM + 足够的 Approval + 零未解决评论</strong> = 可以提交，页面顶部变绿。注意<strong>无论 Approval 如何，每个改动都需要一个 LGTM</strong>，保证至少两双眼睛看过。LGTM 和 Approval 是<strong>硬条件</strong>，只有审阅人能给、提交前随时可撤回；未解决评论是<strong>软条件</strong>，作者回复时自己就能标为已解决。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 205" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b3" markerheight="8" markerwidth="8" orient="auto" refx="7" refy="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<rect x="20" y="20" width="200" height="44" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="120" y="40" text-anchor="middle" fill="#e7ebf1" font-weight="700">≥ 1 个 LGTM</text><text x="120" y="56" text-anchor="middle" fill="#8fbaff" font-size="10.5">硬 · 仅审阅人可给 / 撤回</text>
+<rect x="20" y="78" width="200" height="44" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="120" y="98" text-anchor="middle" fill="#e7ebf1" font-weight="700">所需 Approval 齐</text><text x="120" y="114" text-anchor="middle" fill="#8fbaff" font-size="10.5">硬 · 把关人（所有者等）</text>
+<rect x="20" y="136" width="200" height="44" rx="9" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="120" y="156" text-anchor="middle" fill="#e7ebf1" font-weight="700">未解决评论 = 0</text><text x="120" y="172" text-anchor="middle" fill="#c9b5f7" font-size="10.5">软 · 作者回复即可标解决</text>
+<line x1="220" y1="42" x2="330" y2="92" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#b3)"/>
+<line x1="220" y1="100" x2="330" y2="100" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#b3)"/>
+<line x1="220" y1="158" x2="330" y2="108" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#b3)"/>
+<circle cx="360" cy="100" r="26" fill="rgba(91,157,249,0.1)" stroke="#5b9df9" stroke-width="2"/>
+<text x="360" y="105" text-anchor="middle" fill="#e7ebf1" font-weight="700">且</text>
+<line x1="386" y1="100" x2="458" y2="100" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#b3)"/>
+<rect x="460" y="72" width="220" height="56" rx="9" fill="rgba(91,157,249,0.22)" stroke="#5b9df9" stroke-width="2.4"/>
+<text x="570" y="96" text-anchor="middle" fill="#e7ebf1" font-weight="700">页面变绿 · 可提交</text><text x="570" y="114" text-anchor="middle" fill="#8fbaff" font-size="10.5">再过 presubmit 即入库</text>
+<text x="350" y="194" text-anchor="middle" fill="#7c8593" font-size="10.5">没有「否决」票：负面意见必须落成一条具体的未解决评论</text>
+</g>
+</svg>
+<figcaption>图 3 · 打分面板把「还差什么」压成三个数：谁 LGTM 了、还缺哪些 Approval、还剩几条未解决评论。</figcaption>
+</figure>
+<p>这套方案是<strong>刻意简化</strong>的结果：早期 Critique 有「Needs More Work（需要返工）」和「LGTM++」两档，后来改成 <strong>LGTM / Approval 永远是正面信号</strong>。要求第二轮评审就只留评论、不给 LGTM；改动基本没问题后，审阅人信任作者处理小修改，<strong>工具不要求反复 LGTM，无论改动多大</strong>。它还改变了文化：审阅人<strong>不能只投反对票而不给有用反馈</strong>，所有负面意见都得落到一个具体要修的东西上；连「未解决评论」这个说法都是特意挑的，听起来比较客气。软条件则体现信任：审阅人可以「LGTM + 几条未解决评论」，事后不再逐条核对——作者和审阅人时区差很大时，这能省下整整一个来回。</p>
+<p>提交之后，Critique 还是<strong>改动考古</strong>工具：全公司都能浏览一般可见文件的改动历史、评论与演化，用来理解「为什么这么改」「bug 怎么引入的」；提交后也能继续评论、回滚。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/code-review-signal-detection-day50.html" target="_blank" rel="noopener">System Design · Day 50 把 Code Review 当信号检测系统</a> — 本节「红 / 不红」二元可操作性的延伸：误报预算为什么决定一个评审工具或分析器的生死</aside>
+<h2>关键权衡与选型</h2>
+<p>全章其实是一串<strong>「为了简单，放弃了什么」</strong>的决定。每一条都有代价：</p>
+<p class="tcap">表 1 · Critique 的设计取舍</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>决定</th><th>放弃的选项</th><th>换来</th><th>诚实的代价</th></tr></thead>
+<tbody>
+<tr><th>评分永远正面</th><td>Needs More Work、LGTM++、否决票</td><td>负面意见必须具体可修；评审文化更友善</td><td>没有显式的「挡住」信号，审阅人只能靠不给 LGTM 表态</td></tr>
+<tr><th>未解决评论是软条件</th><td>审阅人逐条复核</td><td>少一个来回，跨时区尤其省时</td><td>依赖作者自觉，信任被滥用时工具挡不住</td></tr>
+<tr><th>可操作性二元</th><td>多级严重度、自定义标记</td><td>作者一眼知道该修什么</td><td>分析器必须自己把误报压低，否则红色就失去意义</td></tr>
+<tr><th>测试放 presubmit</th><td>每个快照都跑测试</td><td>省计算资源</td><td>测试失败要到送审或提交时才暴露</td></tr>
+<tr><th>链接而非嵌入</th><td>一体化「Code Central」</td><td>评审保持唯一主角、界面简单</td><td>要在多个工具间跳转；测试覆盖率是唯一嵌入的例外</td></tr>
+<tr><th>与内部系统深度集成</th><td>做成通用、可外发的工具</td><td>一键进编辑器、跨引用、覆盖率直接显示</td><td><strong>无法开源</strong>，离开 Piper 和云端工作区就不能用</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">表 2 · 同一家公司的两个评审工具</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>维度</th><th>Critique</th><th>Gerrit</th></tr></thead>
+<tbody>
+<tr><th>适用</th><td>Google 单体仓库内的绝大多数项目</td><td>开源项目（Chrome、Android）及不放进单体仓库的内部项目</td></tr>
+<tr><th>版本控制</th><td>Piper，工作区在基于 FUSE 的云端文件系统</td><td>与 Git 紧密集成，Web 界面覆盖浏览、合并分支、cherry-pick</td></tr>
+<tr><th>评审单位</th><td colspan="2">都是逐个提交单独评审；Gerrit 还支持把一串堆叠的提交逐个评审后原子提交</td></tr>
+<tr><th>打分</th><td>LGTM / Approval，只有正面</td><td>更复杂、高度可配置，审阅人可打 <code>-2</code> 否决</td></tr>
+<tr><th>扩展与权限</th><td>少量自定义：分析器、presubmit、团队策略</td><td>丰富的插件系统，细粒度权限可限制仓库和分支访问</td></tr>
+</tbody>
+</table></div>
+<p>选型判据：<strong>同质化的大组织</strong>（一个仓库、一套工具链、一种文化）适合 Critique 式的「有主见的流程 + 简单界面」；<strong>异质环境</strong>（开源、多仓库、各团队规矩不同）就得接受 Gerrit 式的可配置与复杂度。</p>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>评审工具常被当成「装了就行」的基础设施，本章给了一套评估判据：能不能一眼看出该谁动手、能不能一眼看出还差什么、机器能查的有没有在人看之前查掉、diff 能不能识别移动。架构评审里讨论「要不要给 PR 加一道必审规则」，也可以借本章的区分：<strong>哪些是硬条件（谁有权放行），哪些是软条件（信任作者）</strong>。</p>
+<div class="ev">
+<p class="evh">大厂实证 · 公开可查</p>
+<ul>
+<li><strong>Google · 原书</strong>：注意力集合上线后，用户普遍反应是「没有它我们以前怎么过的？」；本章 TL;DR 之一即「加一个显式的注意力集合这类小优化，能大幅提升清晰度、减少摩擦」。<span class="src"><a href="https://raw.githubusercontent.com/abseil/abseil.github.io/master/resources/swe-book/html/ch19.html" target="_blank" rel="noopener">Software Engineering at Google · Ch19（abseil 官方开放版源文件）↗</a></span></li>
+<li><strong>Gerrit 官方文档 · Attention Set</strong>：把评审定义为「在作者和审阅人之间来回的回合制工作流」，为每个改动维护注意力集合、用加粗用户名表示；并建议轮到你时若约 24 小时内不打算回复，就把自己移出集合或说明原因——Critique 的点子被搬进了开源工具。<span class="src"><a href="https://raw.githubusercontent.com/GerritCodeReview/gerrit/master/Documentation/user-attention-set.txt" target="_blank" rel="noopener">GerritCodeReview/gerrit · user-attention-set ↗</a></span></li>
+<li><strong>Google · 公开的工程实践指南</strong>：「响应一次代码评审最多不应超过一个工作日」——注意力集合和仪表盘正是让这条时限可执行的工具。<span class="src"><a href="https://raw.githubusercontent.com/google/eng-practices/master/review/reviewer/speed.md" target="_blank" rel="noopener">google/eng-practices · Speed of Code Reviews ↗</a></span></li>
+<li><strong>Gerrit 官方文档 · 反方设计</strong>：默认 Code-Review 标签里 <code>-2</code> 意为「This shall not be submitted」，任何一个 <code>-2</code> 都会挡住提交——与 Critique「只有正面评分」正好相反，代价换来的是异质环境需要的显式否决权。<span class="src"><a href="https://raw.githubusercontent.com/GerritCodeReview/gerrit/master/Documentation/config-labels.txt" target="_blank" rel="noopener">GerritCodeReview/gerrit · config-labels ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/super-individual/code-review-skills-skill3.html" target="_blank" rel="noopener">超级个体 · Skills 精选 S3 代码审查类 Skills</a> — 把「分析器先过一遍、结果内联进评审」落到今天的 AI 审查工具上</aside>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>「好工具能解决评审里的沟通问题」——作者明说不能。</strong>工具能增强体验，替代不了信任和沟通；用户是人，再好的工具也会沟通出岔子。</li>
+<li><strong>「没有否决票 = 没法挡住坏改动」——不对。</strong>不给 LGTM / Approval 就挡住了；变的只是挡的方式：必须附上具体要修的东西。</li>
+<li><strong>「LGTM 和 Approval 是一回事」——不是。</strong>LGTM 说「质量过关」，Approval 说「我作为把关人放行」；每个改动都需要 LGTM，Approval 按所需权限另算。</li>
+<li><strong>局限与时代背景：</strong>Critique 只在 Google 内部存在，书中细节无法外部验证，也不能直接照搬——它的「一键进编辑器」依赖云端工作区和单体仓库。软条件依赖高信任文化，在信任薄弱或合规要求严格的环境里，团队往往会要求逐条复核。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 流程定好了还不够，工具决定流程跑得顺不顺：评审在每次提交的关键路径上，摩擦乘以全公司改动数。</p>
+<p>② 四条原则里「简单」影响最大：宁可不做小众功能；功能链出去，不做一体化 Code Central。</p>
+<p>③ 送审前让作者看到审阅人将看到的：diff 带行内字符级对比、移动检测、跨引用，加上自动分析结果。</p>
+<p>④ 分析结果的可操作性是二元的（红 / 不红），常附一键修复；贵的测试放 presubmit，不每个快照跑。</p>
+<p>⑤ 评论默认「未解决」，整轮原子发布；Done / Ack 一键解决；谁都能顺路评审。</p>
+<p>⑥ 注意力集合把评审变成回合制，「该谁了」加粗显示，是用户口中「以前怎么过的」那个功能。</p>
+<p>⑦ 可提交 = ≥1 LGTM + 足够 Approval + 零未解决评论；前两者是硬条件，后者是软条件，体现信任。</p>
+<p>⑧ 评分只有正面：负面意见必须落成具体可修的评论。Gerrit 则相反，有 <code>-2</code> 否决、高度可配置，适合开源与异质环境。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整论证与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
