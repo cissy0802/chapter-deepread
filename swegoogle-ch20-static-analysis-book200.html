@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Software Engineering at Google 第 20 章 · 静态分析 — 专业书籍精读 Book 200</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">专业书籍精读 · Software Engineering at Google · 第 20 章</p>
+<h1>静态分析</h1>
+<p class="sub">Software Engineering at Google · Ch 20 · Static Analysis · Caitlin Sadowski · 2020</p>
+<p class="langbar"><a href="swegoogle-ch20-static-analysis-book200.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>写文章有「拼写检查」：你还没交稿，软件就在错别字下面画红线。写代码也有同样的东西，叫「静态分析」——<strong>程序还没跑，机器先把代码读一遍，挑出可能的毛病</strong>。这一章讲 Google 怎么让几万名工程师真的愿意看这些红线，而不是一律无视。</p>
+<h2>先说个怪事</h2>
+<p>你会以为，检查工具越聪明、抓到的问题越多越好。Google 的经验恰恰相反：一个工具只要<strong>十次里有一两次报错了</strong>，大家就会养成「看都不看直接关掉」的习惯，连那几次真报也一起被扔掉。决定检查工具生死的，不是它抓得多全，而是它<strong>少冤枉人</strong>。</p>
+<h2>旧世界为什么难</h2>
+<p>想象小区门口的烟雾报警器，每次炒菜都响。响到第三周，住户就把电池拔了——真着火那天，它一声不吭。早年的代码检查工具就是这样：报告一大堆，其中不少是误会，或者说得没人看得懂；而且往往是在一份几千条的清单里出现，不知道该谁去改、为什么要现在改。</p>
+<h2>核心机制直觉</h2>
+<ul>
+<li><strong>只在你改的地方提醒：</strong>不去翻旧账，只看你这一次动过的那几行。你刚写完，印象最深，改起来最顺手。</li>
+<li><strong>放在同事审稿的时候：</strong>Google 的代码进库前都要同事过目。检查结果就贴在审稿页上，像审稿人旁边多了一位不知疲倦的助理；你想无视它，还得说服审稿的同事。</li>
+<li><strong>能顺手改的，直接给出改好的版本：</strong>点一下就修好，不用你自己琢磨。</li>
+<li><strong>每条提醒旁边都有一个「没用」按钮：</strong>谁点得多，就去查那条规则；改不好，就把它下线。</li>
+<li><strong>绝对可靠的规则，升级成「交不了稿」：</strong>先由机器把全公司的老问题一次清干净，再规定以后谁写出这种错，程序就编不过去。</li>
+</ul>
+<h2>带来了什么 / 该怎么选</h2>
+<p>结果是这套检查每天要看五万多次改动，被认为「冤枉人」的比例不到二十分之一；作者每天约三千次一键采纳机器给的修改。诚实的代价是：为了不冤枉人，很多「可能有问题、但说不准」的情况它干脆不报——它故意放过一部分真问题，换来大家肯看。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p><strong>代码检查工具不是抓得越多越好，而是要在你刚改完、同事正在看的时候，只说几句准话、并顺手递上改法——被信任，才会被听见。</strong></p>
+</div>
+<p class="switch-hint">想看「有效误报」怎么定义、Tricorder 的四条准入标准和反馈闭环、为什么砍掉个人定制、编译器为什么只报错不报警告，以及 IDE、评审、提交前、编译器这几个插入点怎么选？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">你以为静态分析的难点是「分析技术够不够强」，本章说真正的瓶颈在<strong>人愿不愿意看</strong>：Google 把用户感知的误报压到 10% 以下、只报本次改动、结果塞进代码评审并附一键修复，静态分析才从「没人理的报告」变成每天被采纳几千次的工程基础设施。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>静态分析（static analysis）</strong>：不运行程序、只读源代码来找问题；对应的「动态分析」是观察运行中的程序。</li>
+<li><strong>误报（false positive）/ 漏报（false negative）</strong>：误报是把没问题的代码报成有问题；漏报是有问题却没报出来。</li>
+<li><strong>linter</strong>：最常见的轻量静态分析，主要查风格和简单的错误模式。</li>
+<li><strong>AST（抽象语法树）</strong>：编译器把代码解析成的树状结构，很多检查就是在树上匹配「坏形状」。</li>
+<li><strong>代码评审 / Critique</strong>：代码合入前由同事检查；Critique 是 Google 内部的评审工具（见第 19 章）。</li>
+<li><strong>提交前检查（presubmit）</strong>：送审或提交时自动运行、可以挡住提交的检查。</li>
+<li><strong>单体仓库（monorepo）</strong>：全公司代码放在一个仓库里，Google 的有几十亿行。</li>
+<li><strong>IDE</strong>：集成开发环境，工程师写代码用的编辑器。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>Part IV「工具」第五章，紧接 Ch19 Critique：上一章说评审工具把分析结果内联进 diff，本章讲那些结果从哪来。它也服务于 Ch15「废弃」和 Ch22「大规模变更」——防止迁移中有人又用回旧 API。现实对应：Error Prone、clang-tidy、ESLint、SonarQube、GitHub 代码扫描。</p>
+<h2>这章要解决什么</h2>
+<p>静态分析能在代码进库前抓到一类 bug：会溢出的常量表达式、永远不会被执行的测试、运行时才崩的非法日志格式串。在 Google，它的用途更广：<strong>把最佳实践固化成规则</strong>、推动代码跟上新 API、在废弃旧系统时防止回退。</p>
+<p>难点在于，学术界几十年都在研究「更强的分析」，把工具做得<strong>可扩展、可用</strong>却是较新的课题；Google 早期几次接入尝试都失败了。不解决的后果是：报告没人看，真报淹没在噪声里，工具被绕开。所以本章的问题是：<strong>在几十亿行的代码库上，什么样的静态分析才会被工程师真正接受？</strong></p>
+<h2>核心内容，讲透</h2>
+<h3>一、可扩展：只看这次改动，而不是整个代码库</h3>
+<p>代码库几十亿行，不可能每次全量分析。Tricorder 的分析是<strong>可分片、增量的</strong>：只分析受这次待提交改动影响的文件，通常<strong>只展示被编辑文件或行上的结果</strong>。分析器向全公司征集，结果<strong>直接给相关工程师看</strong>，不经中央团队转手。</p>
+<p>「只看新代码」也是可用性决定。给一段在生产里跑得好好的旧代码「修」警告，收益不明、风险真实：书里的例子是，为消除「死代码」警告给它加一个调用，结果一段从没测过的代码突然开始运行。所以<strong>只聚焦新引入的警告</strong>，存量问题除非特别重要（安全漏洞、严重 bug），否则不翻旧账。附带的好处是：看到警告的人，正是对这段代码上下文最熟的人。</p>
+<h3>二、有效误报：误报由用户说了算</h3>
+<p>学术研究传统上追求少漏报；实践中，<strong>低误报率才是工程师愿意用的前提</strong>——谁愿意在几百条假报里翻那几条真的？本章最核心的概念是<strong>有效误报（effective false positive）</strong>：开发者看到这条结果后，<strong>没有采取任何正向动作</strong>，它就算有效误报。</p>
+<ul>
+<li>技术上正确、但消息让人看不懂，用户没动作——算误报。</li>
+<li>技术上正确、但无关紧要——算误报。</li>
+<li>反过来，分析器其实判错了，但开发者觉得改了更清楚、乐意改——<strong>不算</strong>。书里的例子：Java 里对哈希表调用 <code>contains</code>，它等价于 <code>containsValue</code>，而开发者多半本意是 <code>containsKey</code>；即便本意真是查值，改成 <code>containsValue</code> 也更清楚。</li>
+</ul>
+<p>这个定义把指标从「规则在逻辑上对不对」挪到<strong>「用户有没有因此行动」</strong>，于是消息措辞、重要程度、时机都被纳入了衡量。书中脚注也留了口子：发现严重问题的<strong>安全类分析</strong>，评审者可能容忍高得多的误报率。</p>
+<h3>三、Tricorder：平台、准入门槛与规模</h3>
+<p>Tricorder 是 Google 的静态分析平台，它与之前失败尝试的关键区别是<strong>执着于只给用户有价值的结果</strong>。它采用微服务架构：Tricorder 把分析请求连同改动元数据发给分析服务器；服务器通过基于 FUSE 的文件系统读取改动中的源文件版本，并能访问缓存的构建输入输出；各分析器的结果写入存储层，每个类别最新的结果显示在 Critique 的 diff 里，呈<strong>灰色评论框</strong>。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerheight="8" markerwidth="8" orient="auto" refx="7" refy="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker><marker id="a1v" markerheight="8" markerwidth="8" orient="auto" refx="7" refy="4"><path d="M0,0 L8,4 L0,8 z" fill="#9b6cf5"/></marker></defs>
+<g font-size="12">
+<rect x="15" y="30" width="135" height="54" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="82" y="53" text-anchor="middle" fill="#e7ebf1" font-weight="700">待评审改动</text><text x="82" y="71" text-anchor="middle" fill="#cdd3db" font-size="10.5">每个快照</text>
+<rect x="190" y="30" width="135" height="54" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="257" y="53" text-anchor="middle" fill="#e7ebf1" font-weight="700">Tricorder</text><text x="257" y="71" text-anchor="middle" fill="#cdd3db" font-size="10.5">分发分析请求</text>
+<rect x="365" y="30" width="145" height="54" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="437" y="53" text-anchor="middle" fill="#e7ebf1" font-weight="700">分析服务器</text><text x="437" y="71" text-anchor="middle" fill="#cdd3db" font-size="10.5">FUSE 读源码 · 构建缓存</text>
+<rect x="550" y="30" width="135" height="54" rx="9" fill="rgba(91,157,249,0.24)" stroke="#5b9df9" stroke-width="2.6"/>
+<text x="617" y="53" text-anchor="middle" fill="#e7ebf1" font-weight="700">Critique diff</text><text x="617" y="71" text-anchor="middle" fill="#8fbaff" font-size="10.5">灰色框 + 修复建议</text>
+<line x1="150" y1="57" x2="187" y2="57" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a1)"/>
+<line x1="325" y1="57" x2="362" y2="57" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a1)"/>
+<line x1="510" y1="57" x2="547" y2="57" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a1)"/>
+<rect x="550" y="150" width="135" height="54" rx="9" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="617" y="173" text-anchor="middle" fill="#e7ebf1" font-weight="700">工程师</text><text x="617" y="191" text-anchor="middle" fill="#c9b5f7" font-size="10.5">Please fix / Not useful</text>
+<rect x="190" y="150" width="215" height="54" rx="9" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="297" y="173" text-anchor="middle" fill="#e7ebf1" font-weight="700">分析器作者 · Tricorder 团队</text><text x="297" y="191" text-anchor="middle" fill="#c9b5f7" font-size="10.5">改措辞 / 降误报 / 下线</text>
+<line x1="617" y1="84" x2="617" y2="147" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#a1v)"/>
+<line x1="550" y1="177" x2="408" y2="177" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#a1v)"/>
+<path d="M360,150 C380,120 420,110 437,87" fill="none" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#a1v)"/>
+<text x="350" y="228" text-anchor="middle" fill="#7c8593" font-size="10.5">蓝：结果流向 · 紫：反馈闭环（每天约 250 次 Not useful）</text>
+</g>
+</svg>
+<figcaption>图 1 · Tricorder 的结果流与反馈环：分析结果进评审，用户的点击回流到分析器作者。</figcaption>
+</figure>
+<p>任何工程师都能写分析器（analyzer）或往现有分析器里加检查（check）。新检查必须满足<strong>四条准入标准</strong>：</p>
+<ul>
+<li><strong>可理解</strong>：任何工程师都看得懂输出。</li>
+<li><strong>可操作、易修复</strong>：修复可能比编译错误更费心思，所以结果要附上怎么修的指引。</li>
+<li><strong>有效误报低于 10%</strong>：开发者至少 90% 的时候觉得它指出的是真问题。</li>
+<li><strong>对代码质量有显著影响</strong>：不一定关乎正确性，但开发者应当认真对待、主动选择去修。</li>
+</ul>
+<p>规模数字：每天分析<strong>五万多个</strong>代码评审改动，常常每秒跑好几次分析；覆盖<strong>三十多种语言</strong>、<strong>一百多个分析器</strong>，大多数由 Tricorder 团队之外的人贡献，其中七个本身是插件系统，又挂着几百个检查；<strong>整体有效误报率略低于 5%</strong>。</p>
+<p>接进来的工具五花八门。<strong>Error Prone</strong>（Java）和 <strong>clang-tidy</strong>（C++）扩展编译器、在 AST 上找反模式。书里的例子：对 <code>long</code> 字段的哈希写法 <code>(int)(f ^ (f &gt;&gt;&gt; 32))</code>，若 <code>f</code> 改成了 <code>int</code>，右移 32 位等于没移，<code>f</code> 和自己异或得零——照样能编译。把这条检查在 Error Prone 里开成编译错误时，修掉了代码库里 31 处。也有跨文件的：IfThisThenThat 要求两个文件的某段必须同步修改；Chrome 的 Finch 分析器检查 A/B 实验配置；二进制体积检查在产物显著变大时提醒。注意<strong>几乎所有分析器都是过程内（intraprocedural）的</strong>，只看单个函数内部——跨函数分析技术上可行，但需要额外的基础设施投入。</p>
+<h3>四、把反馈闭环做成产品功能</h3>
+<p>「不度量就无法修复。」每条结果旁有 <strong>Not useful</strong> 按钮，点击后可直接给分析器作者提 bug，结果信息自动预填；审阅人可点 <strong>Please fix</strong> 要求作者处理。Tricorder 团队盯着 Not useful 点击率<strong>相对</strong> Please fix 频率偏高的分析器，<strong>不改进就下线</strong>。没有这条通道之前，很多开发者直接忽略看不懂的结果。</p>
+<p>有时修复简单到只是<strong>改一句提示语</strong>。Error Prone 曾上线一条检查，抓 Guava 中只接受 <code>%s</code> 的类 printf 函数被传了过多参数；团队每周都收到 Not useful 报告，说「占位符和参数个数明明对得上」——其实是用户在用 <code>%s</code> 以外的占位符。提示语改成直说「这个函数只接受 <code>%s</code>」后，报告就停了。</p>
+<p><strong>修复建议</strong>同理：能自动修的就自动修，修复本身就是一份文档。可以在 Critique 里一键应用，也能用命令行对整个改动批量应用。风格问题交给格式化工具，人类审阅人不该花时间挑格式。数字：审阅人每天点<strong>几千次</strong> Please fix，作者每天约 <strong>3000 次</strong>应用自动修复，Not useful 每天约 <strong>250 次</strong>。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/code-review-signal-detection-day50.html" target="_blank" rel="noopener">System Design · Day 50 把 Code Review 当信号检测系统</a> — 把「有效误报 &lt; 10%」展开成误报预算、分诊门控与按分析器治理的完整设计</aside>
+<h3>五、定制：按项目，不按个人</h3>
+<p>先用高置信结果攒下信任，再开放<strong>可选分析器</strong>给特定项目。例如 Proto Best Practices 分析器标出可能破坏数据格式的 protocol buffer 改动——只有序列化数据被存下来（比如写进日志）时才算破坏，没有存储数据的项目不必开。有的可选分析器根据反馈改进、用户变多后，<strong>转正成默认开启</strong>。</p>
+<p>关键洞察：<strong>定制只能在项目级，不能在个人级</strong>。项目级保证全组看到一致的结果，避免一个人在修、另一个人在引入。早期 Critique 允许每个人选置信度、屏蔽某些分析；Tricorder 把这些个人设置全部删掉，立刻收到一堆「结果好烦」的抱怨。团队没有恢复设置，而是追问原因，挖出了被掩盖的 bug：C++ linter 也在 Objective-C 文件上跑、结果全错；HTML linter 误报极高、几乎没有信号，平时被大家屏蔽了——于是直接停用。结论：<strong>个人定制会藏住 bug、吞掉反馈</strong>。</p>
+<h3>六、插入点：越早越好，但越早越要准</h3>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerheight="8" markerwidth="8" orient="auto" refx="7" refy="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<rect x="15" y="60" width="150" height="62" rx="9" fill="rgba(91,157,249,0.12)" stroke="#5b9df9" stroke-width="1.6"/>
+<text x="90" y="84" text-anchor="middle" fill="#e7ebf1" font-weight="700">IDE · 编辑时</text><text x="90" y="104" text-anchor="middle" fill="#cdd3db" font-size="10.5">理想 &lt; 100 ms</text>
+<rect x="185" y="60" width="150" height="62" rx="9" fill="rgba(91,157,249,0.26)" stroke="#5b9df9" stroke-width="2.8"/>
+<text x="260" y="84" text-anchor="middle" fill="#e7ebf1" font-weight="700">代码评审 · 主战场</text><text x="260" y="104" text-anchor="middle" fill="#8fbaff" font-size="10.5">几分钟也行 · 可忽略</text>
+<rect x="355" y="60" width="150" height="62" rx="9" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="1.6"/>
+<text x="430" y="84" text-anchor="middle" fill="#e7ebf1" font-weight="700">presubmit</text><text x="430" y="104" text-anchor="middle" fill="#c9b5f7" font-size="10.5">挡住提交</text>
+<rect x="525" y="60" width="160" height="62" rx="9" fill="rgba(155,108,245,0.22)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="605" y="84" text-anchor="middle" fill="#e7ebf1" font-weight="700">编译器 · ERROR</text><text x="605" y="104" text-anchor="middle" fill="#c9b5f7" font-size="10.5">挡住构建 · 零有效误报</text>
+<line x1="165" y1="91" x2="182" y2="91" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a2)"/>
+<line x1="335" y1="91" x2="352" y2="91" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a2)"/>
+<line x1="505" y1="91" x2="522" y2="91" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a2)"/>
+<line x1="185" y1="30" x2="682" y2="30" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#a2)"/>
+<text x="430" y="22" text-anchor="middle" fill="#c9b5f7" font-size="10.5">越往右越硬：提醒 → 挡提交 → 挡构建；准入门槛同步变严</text>
+<rect x="15" y="150" width="320" height="44" rx="9" fill="rgba(255,255,255,0.03)" stroke="rgba(91,157,249,0.4)" stroke-dasharray="5 4"/>
+<text x="175" y="177" text-anchor="middle" fill="#cdd3db" font-size="11">另一个口：浏览代码时看全库视图（安全团队、规划清理）</text>
+<text x="350" y="220" text-anchor="middle" fill="#7c8593" font-size="10.5">同一条检查放在哪一格，取决于它够不够快、够不够准、关不关乎正确性</text>
+</g>
+</svg>
+<figcaption>图 2 · 静态分析的插入点：代码评审是主战场，越靠后越能挡，也越要求零误报。</figcaption>
+</figure>
+<p><strong>代码评审是甜蜜点</strong>：几乎所有代码进库前都要评审，作者正处于「改代码」的心态，顺手就改；送审后作者本就要等人，分析跑几分钟也不耽误；审阅人会施加同伴压力；分析器替审阅人挑掉常见问题，让评审本身能扩展。而且分析能看到<strong>整个改动的上下文</strong>——死代码分析在「先写函数、后加调用」的半成品上会误判。</p>
+<p><strong>presubmit</strong> 补上「警告可被无视」的缺口：它能挡住提交。内置检查很简单——提交说明里不能有 <code>DO NOT SUBMIT</code>、代码文件要带对应测试、格式正确；团队可以要求某类 Tricorder 问题清零，或写自定义 presubmit，让新项目执行比遗留项目更严的标准。代价是会妨碍大规模变更，所以部分团队检查对描述里带 <code>CLEANUP=</code> 的改动放行。</p>
+<p><strong>编译器</strong>是最硬的一格：构建失败是无法忽略的警告。进编译器的检查要更快，且满足三条：可操作易修复（尽量附机械可应用的修复）、<strong>零有效误报</strong>（绝不让正确代码编不过）、<strong>只管正确性</strong>，不管风格和最佳实践。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a3" markerheight="8" markerwidth="8" orient="auto" refx="7" refy="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<rect x="15" y="40" width="148" height="58" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="89" y="64" text-anchor="middle" fill="#e7ebf1" font-weight="700">① 写检查</text><text x="89" y="83" text-anchor="middle" fill="#cdd3db" font-size="10.5">必须带自动修复</text>
+<rect x="187" y="40" width="148" height="58" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="261" y="64" text-anchor="middle" fill="#e7ebf1" font-weight="700">② 全库编译</text><text x="261" y="83" text-anchor="middle" fill="#cdd3db" font-size="10.5">MapReduce 并行产修复</text>
+<rect x="359" y="40" width="148" height="58" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="433" y="64" text-anchor="middle" fill="#e7ebf1" font-weight="700">③ 一次提交</text><text x="433" y="83" text-anchor="middle" fill="#cdd3db" font-size="10.5">存量实例清零</text>
+<rect x="531" y="40" width="154" height="58" rx="9" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5" stroke-width="2.4"/>
+<text x="608" y="64" text-anchor="middle" fill="#e7ebf1" font-weight="700">④ 开成 ERROR</text><text x="608" y="83" text-anchor="middle" fill="#c9b5f7" font-size="10.5">新实例 = 构建失败</text>
+<line x1="163" y1="69" x2="184" y2="69" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a3)"/>
+<line x1="335" y1="69" x2="356" y2="69" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a3)"/>
+<line x1="507" y1="69" x2="528" y2="69" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a3)"/>
+<text x="350" y="140" text-anchor="middle" fill="#cdd3db" font-size="11">之后：presubmit 在提交前拦，CI 在提交后兜底</text>
+<text x="350" y="172" text-anchor="middle" fill="#7c8593" font-size="10.5">编译器只有两档：报错，或者不显示——没有「警告」</text>
+</g>
+</svg>
+<figcaption>图 3 · 新编译器检查的上线顺序：先清存量再开闸，否则编译器一升级就把现有项目全打红。</figcaption>
+</figure>
+<p>上线新检查必须<strong>先清掉代码库里的所有存量</strong>，否则编译器一演进就把现有项目打红。这意味着检查的价值必须高到值得修完所有旧实例。Google 能以 MapReduce 方式在集群上并行编译整个代码库，此时检查必须产出修复，才能把清理自动化。</p>
+<p>还有一条硬规矩：<strong>永远不发编译器警告</strong>。Google 反复发现开发者会忽略警告，所以一条检查要么开成错误，要么不在编译输出里出现；编译参数全库统一，这个决定是全局的。最常用的语言遵循这条，但并非每种语言都是。Go 走到极致：未使用的变量和 import 在别的语言里只是警告，在 Go 里是错误。</p>
+<p>最后是 <strong>IDE</strong>：分析通常要在 1 秒内、理想 100 毫秒内完成，还要在多个 IDE 里结果一致（Google 不强制统一 IDE），所以比接入评审更乱。另有一个例外：安全团队、规划清理的人需要<strong>浏览代码时看全库结果</strong>。</p>
+<h2>关键权衡与选型</h2>
+<p>判据只有一条：<strong>这条检查有多快、多准、多关乎正确性</strong>，决定它放在哪一格。</p>
+<p class="tcap">表 1 · 静态分析的插入点</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>插入点</th><th>延迟预算</th><th>能否被忽略</th><th>适合的检查</th><th>代价</th></tr></thead>
+<tbody>
+<tr><th>IDE</th><td>&lt; 1 s，理想 &lt; 100 ms</td><td>能</td><td>快、局部的检查</td><td>多 IDE 难一致；半成品代码上会误报</td></tr>
+<tr><th>代码评审</th><td>几分钟</td><td>能，但要说服审阅人</td><td>多数检查（有效误报 &lt; 10%）</td><td>可被无视；结果晚于编辑</td></tr>
+<tr><th>presubmit</th><td>送审、提交时各跑</td><td>不能（挡提交）</td><td>格式、测试、团队强制项</td><td>团队自定义项会拖累大规模变更</td></tr>
+<tr><th>编译器 ERROR</th><td>不能拖慢构建</td><td>不能（挡构建）</td><td>机械、零有效误报的正确性检查</td><td>上线前须清完全库存量</td></tr>
+<tr><th>浏览代码</th><td>离线</td><td>—</td><td>安全审计、清理规划</td><td>翻旧账，修存量有风险</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">表 2 · Google 做的取舍</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>决定</th><th>放弃</th><th>换来</th><th>诚实的代价</th></tr></thead>
+<tbody>
+<tr><th>压误报优先</th><td>追求低漏报</td><td>用户信任，结果被认真看</td><td><strong>故意放过</strong>一部分真问题</td></tr>
+<tr><th>只报新代码</th><td>全库存量清单</td><td>修的人正好有上下文；不碰稳定旧代码</td><td>存量问题长期留着，除非安全等特别重要</td></tr>
+<tr><th>按项目定制</th><td>个人开关与置信度</td><td>全组视图一致；问题暴露而非被屏蔽</td><td>个人没法关掉自己嫌烦的检查</td></tr>
+<tr><th>编译器无警告</th><td>温和的编译警告</td><td>要么挡住要么不吵</td><td>上线一条错误要先修完全库</td></tr>
+<tr><th>以过程内为主</th><td>跨函数分析</td><td>快、可分片、易维护</td><td>跨函数传播的 bug 抓不到</td></tr>
+</tbody>
+</table></div>
+<h2>为什么重要 / 落到真实系统</h2>
+<p>给仓库接 linter、SAST 或 AI 评审机器人，本章给了三把尺子：<strong>有效误报有没有被度量</strong>（有没有「没用」按钮、按分析器统计）、<strong>结果是不是出现在作者刚改完的那一刻</strong>、<strong>能不能一键修</strong>。评审里讨论「这条规则要不要开成阻断」时，可以直接套编译器三条：机械、零误报、关乎正确性——三条都满足才阻断，否则留在评审里当建议。</p>
+<div class="ev">
+<p class="evh">大厂实证 · 公开可查</p>
+<ul>
+<li><strong>Google · 原书</strong>：Tricorder 每天分析五万多个评审改动，整体有效误报率略低于 5%；作者每天约 3000 次应用自动修复。<span class="src"><a href="https://raw.githubusercontent.com/abseil/abseil.github.io/master/resources/swe-book/html/ch20.html" target="_blank" rel="noopener">Software Engineering at Google · Ch20（abseil 官方开放版源文件）↗</a></span></li>
+<li><strong>Google · Error Prone 开源项目</strong>：自我定位就是「在编译期捕获常见编程错误」的 Java 静态分析工具，示例输出直接是 <code>error:</code> 而不是 warning——正是本章「进编译器就报错」的那一格。<span class="src"><a href="https://raw.githubusercontent.com/google/error-prone/master/README.md" target="_blank" rel="noopener">google/error-prone · README ↗</a></span></li>
+<li><strong>Facebook · Infer 团队</strong>：在《Scaling Static Analyses at Facebook》（CACM，2019）中报告，同一个分析器以离线批量方式报告问题时修复率接近零，改成在 diff 评审时报告后修复率超过 70%——从另一家公司印证「时机和工作流比分析本身更决定成败」。<span class="src">Distefano 等 · Communications of the ACM · 2019</span></li>
+<li><strong>Google · 研究论文</strong>：本章的平台细节出自《Tricorder: Building a Program Analysis Ecosystem》（ICSE 2015），早期失败尝试的复盘见《Lessons from Building Static Analysis Tools at Google》（CACM 2018）。<span class="src">Sadowski 等 · ICSE 2015 / CACM 2018（原书脚注）</span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/super-individual/code-review-skills-skill3.html" target="_blank" rel="noopener">超级个体 · Skills 精选 S3 代码审查类 Skills</a> — 把本章的准入门槛与反馈闭环，用来挑选和调教今天的 AI 审查工具</aside>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>「误报率是分析器的技术属性」——不是。</strong>有效误报由用户行为定义：消息看不懂、问题不重要，技术上再对也算误报。改一句提示语就能降误报。</li>
+<li><strong>「检查越多越安全」——反了。</strong>噪声会让人整体忽略，连真报一起作废。Google 宁可下线 HTML linter，也不让它稀释信任。</li>
+<li><strong>「给每个人开关最友好」——书里试过，结果是藏 bug。</strong>个人屏蔽让坏分析器长期没人修。</li>
+<li><strong>「顺手把旧代码的警告也修了」——小心。</strong>修警告本身可能引入 bug，稳定旧代码收益不明。</li>
+<li><strong>局限：</strong>几乎全是过程内分析，跨函数的空指针、资源泄漏这类问题抓得少；Facebook Infer 走的正是组合式跨过程分析的路线。「误报 &lt; 10%」是面向通用检查的经验线，安全类分析可以容忍更高。「全局无警告」依赖单体仓库与统一编译参数，多仓库组织难照搬。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 静态分析的瓶颈不在分析技术，而在<strong>工程师愿不愿意看</strong>；Google 早期几次接入都失败了。</p>
+<p>② 可扩展：只分析受本次改动影响的文件、只报被编辑的行；分析器向全公司征集，结果直达相关工程师。</p>
+<p>③ <strong>有效误报</strong>＝看完没有正向动作；看不懂、不重要都算。指标从「规则对不对」挪到「人有没有行动」。</p>
+<p>④ Tricorder 准入四条：可理解、可操作易修复、有效误报 &lt; 10%、影响显著；整体略低于 5%。</p>
+<p>⑤ 反馈闭环是产品功能：Not useful 直通作者，相对 Please fix 偏高就整改或下线；改提示语也能消灭「误报」。</p>
+<p>⑥ 能自动修就自动修：每天约 3000 次一键应用；风格问题交给格式化工具，不占审阅人时间。</p>
+<p>⑦ 定制只做项目级：个人开关会藏住 bug、吞掉反馈。</p>
+<p>⑧ 插入点分层：评审是主战场；presubmit 挡提交；编译器只收机械、零误报、关乎正确性的检查，先清存量再开、永不发警告。</p>
+<p>⑨ 局限：以过程内为主，跨函数 bug 漏得多；做法深度依赖单体仓库与统一工具链。</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整论证与延伸，再去翻原书。</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>

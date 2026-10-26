@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Software Engineering at Google Ch 20 · Static Analysis — Book Deep-Read 200</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · Software Engineering at Google · Chapter 20</p>
+<h1>Static Analysis</h1>
+<p class="sub">Software Engineering at Google · Ch 20 · Static Analysis · Caitlin Sadowski · 2020</p>
+<p class="langbar"><a href="swegoogle-ch20-static-analysis-book200.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Quick read</button>
+<button data-mode="deep">Deep read</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>Word processors have spell-check: before you hand in the essay, a red squiggle already sits under the typo. Code has the same thing, called "static analysis" — <strong>before the program ever runs, a machine reads the code and points out likely mistakes</strong>. This chapter is about how Google got tens of thousands of engineers to actually read those squiggles instead of ignoring all of them.</p>
+<h2>A strange thing first</h2>
+<p>You'd assume the smarter the checker and the more it catches, the better. Google found the opposite: once a tool is <strong>wrong one or two times out of ten</strong>, people learn to dismiss it without looking — and the few real warnings get thrown out with the rest. What decides whether a checker lives or dies is not how much it catches, but <strong>how rarely it cries wolf</strong>.</p>
+<h2>Why the old world was hard</h2>
+<p>Picture a smoke alarm that goes off every time someone cooks. By week three, the residents pull the battery — and on the day of a real fire, it stays silent. Early code checkers were like that: piles of reports, many of them mistaken or written so nobody understood them, usually delivered as a list of thousands with no clue who should fix what, or why now.</p>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>Only flag what you just touched:</strong> no digging through old history — just the lines you changed this time, while they're fresh in your head.</li>
+<li><strong>Show up during peer review:</strong> at Google, every change is read by a colleague before it goes in. The checker's notes sit right on that review page, like a tireless assistant next to the reviewer; to ignore them, you'd have to convince your colleague too.</li>
+<li><strong>If it can be fixed mechanically, hand over the fix:</strong> one click and it's done.</li>
+<li><strong>Every note has a "not useful" button:</strong> rules that get clicked a lot are investigated; if they can't be improved, they're switched off.</li>
+<li><strong>Rules that are never wrong get promoted to "you can't hand this in":</strong> first a machine cleans up every old instance across the company, then any new one simply stops the code from building.</li>
+</ul>
+<h2>What it bought / how to choose</h2>
+<p>The result: the system looks at more than fifty thousand changes a day, fewer than one in twenty of its notes are seen as "crying wolf", and authors accept a machine-made fix about three thousand times a day. The honest cost: to avoid crying wolf, it simply stays quiet about many "maybe, can't be sure" cases — it knowingly lets some real problems through in exchange for being listened to.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p><strong>A code checker isn't better because it catches more. It should say a few accurate things, right after you've made a change and while a colleague is looking, and hand you the fix — only a trusted tool gets heard.</strong></p>
+</div>
+<p class="switch-hint">Want the definition of an "effective false positive", Tricorder's four admission criteria and feedback loop, why personal customization was removed, why the compiler never warns, and how to choose between the IDE, code review, presubmit and the compiler? <a data-mode="deep">→ Switch to Deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You'd think the hard part of static analysis is "is the analysis powerful enough?" This chapter says the real bottleneck is <strong>whether people are willing to look</strong>: by pushing user-perceived false positives below 10%, reporting only on the current change, putting results inside code review, and attaching one-click fixes, Google turned static analysis from "reports nobody reads" into infrastructure whose suggestions are accepted thousands of times a day.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Static analysis</strong>: finding problems by reading source code without running it; "dynamic analysis" instead observes a running program.</li>
+<li><strong>False positive / false negative</strong>: a false positive flags code that is actually fine; a false negative misses a real problem.</li>
+<li><strong>Linter</strong>: the most common lightweight static analysis, mostly checking style and simple error patterns.</li>
+<li><strong>AST (abstract syntax tree)</strong>: the tree a compiler parses code into; many checks work by matching "bad shapes" in that tree.</li>
+<li><strong>Code review / Critique</strong>: a colleague checks a change before it is merged; Critique is Google's internal review tool (see Chapter 19).</li>
+<li><strong>Presubmit</strong>: checks that run automatically when a change is sent for review or committed, and can block the commit.</li>
+<li><strong>Monorepo</strong>: all of a company's code in one repository; Google's holds billions of lines.</li>
+<li><strong>IDE</strong>: integrated development environment, the editor engineers write code in.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The fifth chapter of Part IV, "Tools", right after Ch19 Critique: that chapter showed the review tool inlining analysis results into the diff; this one explains where those results come from. It also serves Ch15 "Deprecation" and Ch22 "Large-Scale Changes" by stopping people from sliding back to an old API mid-migration. Real-world counterparts: Error Prone, clang-tidy, ESLint, SonarQube, GitHub code scanning.</p>
+<h2>What problem this chapter solves</h2>
+<p>Static analysis can catch a class of bugs before code is checked in: constant expressions that overflow, tests that never run, invalid logging format strings that would crash at runtime. At Google it does more: it <strong>codifies best practices as rules</strong>, keeps code current with newer APIs, and prevents backsliding while old systems are deprecated.</p>
+<p>The difficulty: research spent decades on "stronger analyses", while making tools <strong>scalable and usable</strong> is a relatively recent focus — and Google's early attempts to integrate static analysis into the workflow failed. Left unsolved, reports go unread, real findings drown in noise, and engineers route around the tool. So the chapter's question is: <strong>on a codebase of billions of lines, what kind of static analysis do engineers actually accept?</strong></p>
+<h2>The core ideas, explained</h2>
+<h3>1. Scale: look at this change, not the whole codebase</h3>
+<p>With billions of lines, full-codebase analysis on every change is out of the question. Tricorder's analyses are <strong>shardable and incremental</strong>: they analyze only the files affected by the pending change and usually <strong>show results only for edited files or lines</strong>. Analyzers are solicited from across the company, and results go <strong>straight to the relevant engineers</strong> instead of through a central team.</p>
+<p>"New code only" is also a usability decision. "Fixing" a warning in old code that runs fine in production has unclear benefit and real risk: the book's example is silencing a dead-code warning by adding a call to it, so that never-tested code suddenly starts running. So the focus is <strong>newly introduced warnings</strong>; existing issues are worth raising only if they are especially important (security issues, significant bugs). A bonus: the person seeing the warning is the one with the most context on that code.</p>
+<h3>2. Effective false positives: the user decides what's wrong</h3>
+<p>Research traditionally chased fewer false negatives; in practice, <strong>a low false-positive rate is what makes engineers willing to use a tool</strong> — who wants to wade through hundreds of bogus reports to find a few real ones? The chapter's central concept is the <strong>effective false positive</strong>: if a developer sees a result and <strong>takes no positive action</strong>, it counts as one.</p>
+<ul>
+<li>Technically correct, but the message is confusing and the user does nothing — a false positive.</li>
+<li>Technically correct, but unimportant — a false positive.</li>
+<li>Conversely, the analyzer is actually wrong, but the developer happily makes the change because it reads better — <strong>not</strong> a false positive. The book's example: calling <code>contains</code> on a Java hash table, which is equivalent to <code>containsValue</code>, when the developer most likely meant <code>containsKey</code>; even if they really meant the value, <code>containsValue</code> is clearer.</li>
+</ul>
+<p>This moves the metric from "is the rule logically right?" to <strong>"did a human act on it?"</strong>, which pulls message wording, importance and timing into the measurement. A footnote leaves one exception: for <strong>security analyses</strong> that find critical problems, reviewers may tolerate a much higher false-positive rate.</p>
+<h3>3. Tricorder: platform, admission bar, and scale</h3>
+<p>Tricorder is Google's static analysis platform; what set it apart from the earlier failed attempts was a <strong>relentless focus on delivering only valuable results</strong>. It uses a microservices architecture: Tricorder sends analyze requests with change metadata to analysis servers; the servers read the change's file versions through a FUSE-based filesystem and can use cached build inputs and outputs; each analyzer's output goes to a storage layer, and the latest results per category appear in Critique's diff as <strong>gray comment boxes</strong>.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerheight="8" markerwidth="8" orient="auto" refx="7" refy="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker><marker id="a1v" markerheight="8" markerwidth="8" orient="auto" refx="7" refy="4"><path d="M0,0 L8,4 L0,8 z" fill="#9b6cf5"/></marker></defs>
+<g font-size="12">
+<rect x="15" y="30" width="135" height="54" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="82" y="53" text-anchor="middle" fill="#e7ebf1" font-weight="700">Pending change</text><text x="82" y="71" text-anchor="middle" fill="#cdd3db" font-size="10.5">every snapshot</text>
+<rect x="190" y="30" width="135" height="54" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="257" y="53" text-anchor="middle" fill="#e7ebf1" font-weight="700">Tricorder</text><text x="257" y="71" text-anchor="middle" fill="#cdd3db" font-size="10.5">dispatches requests</text>
+<rect x="365" y="30" width="145" height="54" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="437" y="53" text-anchor="middle" fill="#e7ebf1" font-weight="700">Analysis servers</text><text x="437" y="71" text-anchor="middle" fill="#cdd3db" font-size="10.5">FUSE reads · build cache</text>
+<rect x="550" y="30" width="135" height="54" rx="9" fill="rgba(91,157,249,0.24)" stroke="#5b9df9" stroke-width="2.6"/>
+<text x="617" y="53" text-anchor="middle" fill="#e7ebf1" font-weight="700">Critique diff</text><text x="617" y="71" text-anchor="middle" fill="#8fbaff" font-size="10.5">gray box + fix</text>
+<line x1="150" y1="57" x2="187" y2="57" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a1)"/>
+<line x1="325" y1="57" x2="362" y2="57" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a1)"/>
+<line x1="510" y1="57" x2="547" y2="57" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a1)"/>
+<rect x="550" y="150" width="135" height="54" rx="9" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="617" y="173" text-anchor="middle" fill="#e7ebf1" font-weight="700">Engineers</text><text x="617" y="191" text-anchor="middle" fill="#c9b5f7" font-size="10.5">Please fix / Not useful</text>
+<rect x="190" y="150" width="215" height="54" rx="9" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="297" y="173" text-anchor="middle" fill="#e7ebf1" font-weight="700">Analyzer authors · Tricorder team</text><text x="297" y="191" text-anchor="middle" fill="#c9b5f7" font-size="10.5">reword / cut FPs / disable</text>
+<line x1="617" y1="84" x2="617" y2="147" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#a1v)"/>
+<line x1="550" y1="177" x2="408" y2="177" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#a1v)"/>
+<path d="M360,150 C380,120 420,110 437,87" fill="none" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#a1v)"/>
+<text x="350" y="228" text-anchor="middle" fill="#7c8593" font-size="10.5">blue: results flow · violet: feedback loop (about 250 "Not useful" clicks a day)</text>
+</g>
+</svg>
+<figcaption>Figure 1 · Tricorder's result flow and feedback loop: results land in review, and users' clicks flow back to analyzer authors.</figcaption>
+</figure>
+<p>Any engineer can write an analyzer or contribute a check to an existing one. New checks must meet <strong>four criteria</strong>:</p>
+<ul>
+<li><strong>Understandable</strong>: any engineer can make sense of the output.</li>
+<li><strong>Actionable and easy to fix</strong>: the fix may take more thought than a compiler error, so the result should include guidance on how to fix it.</li>
+<li><strong>Under 10% effective false positives</strong>: developers should feel the check points at a real issue at least 90% of the time.</li>
+<li><strong>Significant impact on code quality</strong>: not necessarily correctness, but developers should take it seriously and deliberately choose to fix it.</li>
+</ul>
+<p>The numbers: <strong>more than 50,000</strong> code review changes analyzed per day, often several analyses per second; <strong>30+ languages</strong>; <strong>100+ analyzers</strong>, most contributed from outside the Tricorder team, seven of which are themselves plug-in systems with hundreds of further checks; <strong>overall effective false-positive rate just below 5%</strong>.</p>
+<p>The integrated tools vary widely. <strong>Error Prone</strong> (Java) and <strong>clang-tidy</strong> (C++) extend the compiler to find AST antipatterns. The book's example: a hash of a <code>long</code> field written <code>(int)(f ^ (f &gt;&gt;&gt; 32))</code> — if <code>f</code> becomes an <code>int</code>, shifting by 32 is a no-op, <code>f</code> is XORed with itself to zero, and it still compiles. Turning that check into an Error Prone compiler error fixed 31 occurrences in the codebase. Others span files: IfThisThenThat requires two files' marked regions to change together; Chrome's Finch analyzer checks A/B experiment configs; a binary-size checker warns when a change grows the binary significantly. Note that <strong>almost all analyzers are intraprocedural</strong>, looking only inside one function — interprocedural analysis is feasible but needs extra infrastructure investment.</p>
+<h3>4. Make the feedback loop a product feature</h3>
+<p>"If you don't measure this, you can't fix problems." Every result has a <strong>Not useful</strong> button that lets the user file a bug straight to the analyzer author, prefilled with the result's details; reviewers can click <strong>Please fix</strong> to ask the author to address it. The Tricorder team watches analyzers whose Not useful rate is high <strong>relative to</strong> Please fix clicks, and <strong>disables them if they don't improve</strong>. Before these channels existed, many developers simply ignored results they didn't understand.</p>
+<p>Sometimes the fix is just <strong>rewording a message</strong>. Error Prone once shipped a check flagging too many arguments passed to a printf-like Guava function that accepts only <code>%s</code>. The team got weekly Not useful reports saying "the placeholders and arguments match" — because users were passing specifiers other than <code>%s</code>. Once the message said outright that the function accepts only <code>%s</code>, the reports stopped.</p>
+<p><strong>Suggested fixes</strong> follow the same logic: anything that can be fixed automatically should be, and a fix doubles as documentation. Fixes apply with one click in Critique or across a whole change from the command line. Style issues belong to formatters; human reviewers shouldn't spend time on formatting. The numbers: reviewers click Please fix <strong>thousands of times</strong> a day, authors apply automated fixes about <strong>3,000 times</strong> a day, and Not useful gets about <strong>250 clicks</strong> a day.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/code-review-signal-detection-day50.en.html" target="_blank" rel="noopener">System Design · Day 50 Code Review as Signal Detection</a> — expands "effective false positives under 10%" into a false-positive budget, triage gating, and per-analyzer governance</aside>
+<h3>5. Customize per project, never per person</h3>
+<p>Only after building trust with high-confidence results did Google add <strong>optional analyzers</strong> for specific projects. The Proto Best Practices analyzer, for instance, flags protocol buffer changes that could break the data format — which matters only if serialized data is stored somewhere (say, in logs), so projects without stored data needn't enable it. Some optional analyzers improved through feedback, gained a big user base, and <strong>graduated to on-by-default</strong>.</p>
+<p>The key insight: <strong>customization at the project level, not the user level</strong>. Project-level settings give the whole team a consistent view and prevent one developer from fixing an issue while another introduces it. Early Critique let each user pick a confidence level and suppress specific analyses; the team removed all of that and immediately got complaints about annoying results. Instead of restoring the settings, they asked why — and found hidden bugs: the C++ linter was also running on Objective-C files and producing useless results; the HTML linter had an extremely high false-positive rate with little signal and was usually suppressed anyway, so it was disabled. Conclusion: <strong>user customization hides bugs and suppresses feedback</strong>.</p>
+<h3>6. Integration points: earlier is better, but earlier must be more precise</h3>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerheight="8" markerwidth="8" orient="auto" refx="7" refy="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<rect x="15" y="60" width="150" height="62" rx="9" fill="rgba(91,157,249,0.12)" stroke="#5b9df9" stroke-width="1.6"/>
+<text x="90" y="84" text-anchor="middle" fill="#e7ebf1" font-weight="700">IDE · editing</text><text x="90" y="104" text-anchor="middle" fill="#cdd3db" font-size="10.5">ideally &lt; 100 ms</text>
+<rect x="185" y="60" width="150" height="62" rx="9" fill="rgba(91,157,249,0.26)" stroke="#5b9df9" stroke-width="2.8"/>
+<text x="260" y="84" text-anchor="middle" fill="#e7ebf1" font-weight="700">Code review · main</text><text x="260" y="104" text-anchor="middle" fill="#8fbaff" font-size="10.5">minutes OK · ignorable</text>
+<rect x="355" y="60" width="150" height="62" rx="9" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="1.6"/>
+<text x="430" y="84" text-anchor="middle" fill="#e7ebf1" font-weight="700">Presubmit</text><text x="430" y="104" text-anchor="middle" fill="#c9b5f7" font-size="10.5">blocks the commit</text>
+<rect x="525" y="60" width="160" height="62" rx="9" fill="rgba(155,108,245,0.22)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="605" y="84" text-anchor="middle" fill="#e7ebf1" font-weight="700">Compiler · ERROR</text><text x="605" y="104" text-anchor="middle" fill="#c9b5f7" font-size="10.5">blocks build · zero FPs</text>
+<line x1="165" y1="91" x2="182" y2="91" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a2)"/>
+<line x1="335" y1="91" x2="352" y2="91" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a2)"/>
+<line x1="505" y1="91" x2="522" y2="91" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a2)"/>
+<line x1="185" y1="30" x2="682" y2="30" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#a2)"/>
+<text x="430" y="22" text-anchor="middle" fill="#c9b5f7" font-size="10.5">harder to the right: nudge → block commit → block build; the bar rises too</text>
+<rect x="15" y="150" width="320" height="44" rx="9" fill="rgba(255,255,255,0.03)" stroke="rgba(91,157,249,0.4)" stroke-dasharray="5 4"/>
+<text x="175" y="177" text-anchor="middle" fill="#cdd3db" font-size="11">Also: whole-codebase view while browsing code</text>
+<text x="350" y="220" text-anchor="middle" fill="#7c8593" font-size="10.5">Which slot a check goes in depends on how fast, how precise, and how correctness-critical it is</text>
+</g>
+</svg>
+<figcaption>Figure 2 · Where static analysis plugs in: code review is the main venue; later slots block harder and demand zero false positives.</figcaption>
+</figure>
+<p><strong>Code review is the sweet spot</strong>: nearly all code is reviewed before commit, authors are already in a "change" mindset and can fix things without much disruption; after mailing a change they're waiting on reviewers anyway, so analyses can take minutes; reviewers add peer pressure; and analyzers catch common issues so reviewers don't have to, which helps review itself scale. Analyses also see <strong>the whole change in context</strong> — a dead-code analysis would misfire on half-written code where a function exists before its call sites.</p>
+<p><strong>Presubmits</strong> close the "warnings can be ignored" gap by blocking the commit. Built-in checks are simple — the description must not say <code>DO NOT SUBMIT</code>, code files must come with their tests, formatting must be right; teams can require zero Tricorder issues in a category or write custom presubmits so new projects hold a higher bar than legacy ones. The cost: they can get in the way of large-scale changes, so some team presubmits are skipped for changes with <code>CLEANUP=</code> in the description.</p>
+<p><strong>The compiler</strong> is the hardest slot: a broken build is a warning nobody can ignore. Compiler checks must be fast and meet three criteria: actionable and easy to fix (ideally with a mechanically applicable fix), <strong>zero effective false positives</strong> (never stop the build for correct code), and <strong>correctness only</strong>, not style or best practices.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 200" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a3" markerheight="8" markerwidth="8" orient="auto" refx="7" refy="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<rect x="15" y="40" width="148" height="58" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="89" y="64" text-anchor="middle" fill="#e7ebf1" font-weight="700">1 Write the check</text><text x="89" y="83" text-anchor="middle" fill="#cdd3db" font-size="10.5">must emit a fix</text>
+<rect x="187" y="40" width="148" height="58" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="261" y="64" text-anchor="middle" fill="#e7ebf1" font-weight="700">2 Compile it all</text><text x="261" y="83" text-anchor="middle" fill="#cdd3db" font-size="10.5">MapReduce, collect fixes</text>
+<rect x="359" y="40" width="148" height="58" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="433" y="64" text-anchor="middle" fill="#e7ebf1" font-weight="700">3 One commit</text><text x="433" y="83" text-anchor="middle" fill="#cdd3db" font-size="10.5">existing cases gone</text>
+<rect x="531" y="40" width="154" height="58" rx="9" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5" stroke-width="2.4"/>
+<text x="608" y="64" text-anchor="middle" fill="#e7ebf1" font-weight="700">4 Enable as ERROR</text><text x="608" y="83" text-anchor="middle" fill="#c9b5f7" font-size="10.5">new case = broken build</text>
+<line x1="163" y1="69" x2="184" y2="69" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a3)"/>
+<line x1="335" y1="69" x2="356" y2="69" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a3)"/>
+<line x1="507" y1="69" x2="528" y2="69" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a3)"/>
+<text x="350" y="140" text-anchor="middle" fill="#cdd3db" font-size="11">After that: presubmit catches it before commit, CI after</text>
+<text x="350" y="172" text-anchor="middle" fill="#7c8593" font-size="10.5">The compiler has two settings: error, or silent — never "warning"</text>
+</g>
+</svg>
+<figcaption>Figure 3 · Rolling out a new compiler check: clean up first, then flip the switch, or every existing project breaks when the compiler evolves.</figcaption>
+</figure>
+<p>A new check requires <strong>cleaning up every existing instance in the codebase first</strong>, so the compiler's evolution doesn't break existing projects. That means the check's value must justify fixing every old instance. Google can run compilers over the whole codebase in parallel on a cluster as a MapReduce; the check must then produce fixes so the cleanup can be automated.</p>
+<p>One more hard rule: <strong>never issue compiler warnings</strong>. Google has found repeatedly that developers ignore them, so a check is either an error or absent from compiler output; since compiler flags are shared across the codebase, the decision is global. The most-used languages follow this, though not every language does. Go takes it to the extreme: unused variables and imports, mere warnings elsewhere, are errors in Go.</p>
+<p>Finally, <strong>the IDE</strong>: analyses typically must finish within 1 second, ideally 100 ms, and behave identically across multiple IDEs (Google doesn't mandate one), so it's messier than plugging into review. And one exception: security teams and people planning cleanups want <strong>whole-codebase results while browsing code</strong>.</p>
+<h2>Key trade-offs and choices</h2>
+<p>One criterion decides the slot: <strong>how fast, how precise, and how correctness-critical the check is</strong>.</p>
+<p class="tcap">Table 1 · Integration points for static analysis</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Slot</th><th>Latency budget</th><th>Can be ignored?</th><th>Fits</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>IDE</th><td>&lt; 1 s, ideally &lt; 100 ms</td><td>Yes</td><td>Fast, local checks</td><td>Hard to keep consistent across IDEs; misfires on half-written code</td></tr>
+<tr><th>Code review</th><td>Minutes</td><td>Yes, but you must convince the reviewer</td><td>Most checks (effective FPs &lt; 10%)</td><td>Can be ignored; arrives after editing</td></tr>
+<tr><th>Presubmit</th><td>At mail-out and at commit</td><td>No (blocks commit)</td><td>Formatting, tests, team mandates</td><td>Custom team checks can hamper large-scale changes</td></tr>
+<tr><th>Compiler ERROR</th><td>Must not slow the build</td><td>No (blocks build)</td><td>Mechanical, zero-FP correctness checks</td><td>Whole codebase must be cleaned first</td></tr>
+<tr><th>Code browsing</th><td>Offline</td><td>—</td><td>Security audits, cleanup planning</td><td>Digs up old code; fixing it is risky</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 2 · Google's trade-offs</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Decision</th><th>Gave up</th><th>Gained</th><th>Honest cost</th></tr></thead>
+<tbody>
+<tr><th>Precision first</th><td>Chasing low false negatives</td><td>User trust; results get read</td><td><strong>Knowingly misses</strong> some real issues</td></tr>
+<tr><th>New code only</th><td>Whole-codebase backlog lists</td><td>The fixer has context; stable old code untouched</td><td>Old issues linger unless security-grade</td></tr>
+<tr><th>Per-project customization</th><td>Personal toggles and confidence levels</td><td>Consistent team view; problems surface instead of being muted</td><td>Individuals can't silence a check they dislike</td></tr>
+<tr><th>No compiler warnings</th><td>Gentle warnings</td><td>Either it blocks or it stays quiet</td><td>A new error means fixing the whole codebase first</td></tr>
+<tr><th>Mostly intraprocedural</th><td>Cross-function analysis</td><td>Fast, shardable, maintainable</td><td>Misses bugs that propagate across functions</td></tr>
+</tbody>
+</table></div>
+<h2>Why it matters / real systems</h2>
+<p>When you add a linter, SAST tool or AI review bot to a repo, this chapter gives three yardsticks: <strong>are effective false positives measured</strong> (a "not useful" button, per-analyzer stats)? <strong>does the result appear right after the author made the change</strong>? <strong>can it be fixed in one click</strong>? When a review asks "should this rule block merges?", apply the compiler's three criteria — mechanical, zero false positives, correctness-related. Block only if all three hold; otherwise keep it as a review suggestion.</p>
+<div class="ev">
+<p class="evh">Industry evidence · publicly verifiable</p>
+<ul>
+<li><strong>Google · the book</strong>: Tricorder analyzes more than 50,000 review changes a day with an overall effective false-positive rate just below 5%; authors apply automated fixes about 3,000 times a day. <span class="src"><a href="https://raw.githubusercontent.com/abseil/abseil.github.io/master/resources/swe-book/html/ch20.html" target="_blank" rel="noopener">Software Engineering at Google · Ch20 (abseil's official open-access source) ↗</a></span></li>
+<li><strong>Google · the Error Prone open-source project</strong>: describes itself as a Java static analysis tool that "catches common programming mistakes at compile-time", and its sample output is an <code>error:</code>, not a warning — exactly the chapter's "in the compiler means an error" slot. <span class="src"><a href="https://raw.githubusercontent.com/google/error-prone/master/README.md" target="_blank" rel="noopener">google/error-prone · README ↗</a></span></li>
+<li><strong>Facebook · the Infer team</strong>: in "Scaling Static Analyses at Facebook" (CACM, 2019) they report that the same analyzer's fix rate was close to zero when issues were reported in offline batches, and rose above 70% once reports appeared at diff review time — a second company confirming that timing and workflow decide success more than the analysis itself. <span class="src">Distefano et al. · Communications of the ACM · 2019</span></li>
+<li><strong>Google · research papers</strong>: the platform details come from "Tricorder: Building a Program Analysis Ecosystem" (ICSE 2015); the post-mortem of the earlier failed attempts is "Lessons from Building Static Analysis Tools at Google" (CACM 2018). <span class="src">Sadowski et al. · ICSE 2015 / CACM 2018 (cited in the book)</span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/super-individual/code-review-skills-skill3.en.html" target="_blank" rel="noopener">Super Individual · Skills S3 Code Review Skills</a> — apply this chapter's admission bar and feedback loop when choosing and tuning today's AI review tools</aside>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"False-positive rate is a technical property of the analyzer" — no.</strong> Effective false positives are defined by user behavior: a confusing message or an unimportant issue counts, however correct technically. Rewording a message can cut false positives.</li>
+<li><strong>"More checks means more safety" — backwards.</strong> Noise trains people to ignore everything, real findings included. Google disabled the HTML linter rather than let it dilute trust.</li>
+<li><strong>"Per-user toggles are friendliest" — the book tried it; they hid bugs.</strong> Personal suppression let broken analyzers go unfixed.</li>
+<li><strong>"Might as well fix warnings in old code too" — careful.</strong> Fixing a warning can itself introduce a bug; the benefit for stable code is unclear.</li>
+<li><strong>Limits:</strong> almost everything is intraprocedural, so cross-function null dereferences and resource leaks are under-caught; Facebook's Infer took the compositional interprocedural route instead. "Under 10% false positives" is a rule of thumb for general checks; security analyses can tolerate more. "No warnings, globally" relies on a monorepo with shared compiler flags, which multi-repo organizations can't easily copy.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① The bottleneck isn't analysis technique but <strong>whether engineers will look</strong>; Google's early integration attempts failed.</p>
+<p>② Scale: analyze only files affected by the change, report only on edited lines; solicit analyzers company-wide and route results directly to the relevant engineers.</p>
+<p>③ <strong>Effective false positive</strong> = no positive action after seeing it; confusing or unimportant both count. The metric moves from "is the rule right?" to "did a human act?"</p>
+<p>④ Tricorder's four criteria: understandable, actionable and easy to fix, under 10% effective false positives, significant impact; overall rate just below 5%.</p>
+<p>⑤ The feedback loop is a product feature: Not useful goes straight to authors; a high rate relative to Please fix means fix it or disable it; rewording a message can erase "false positives".</p>
+<p>⑥ Automate every fix you can: about 3,000 one-click fixes a day; style belongs to formatters, not reviewers.</p>
+<p>⑦ Customize per project only: personal toggles hide bugs and suppress feedback.</p>
+<p>⑧ Layer the integration points: review is the main venue; presubmit blocks commits; the compiler accepts only mechanical, zero-false-positive correctness checks, cleaned up first, and never warns.</p>
+<p>⑨ Limits: mostly intraprocedural, so cross-function bugs slip through; the approach leans heavily on a monorepo and a unified toolchain.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Reading this page ≈ getting the core of the chapter; for the full argument and context, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
