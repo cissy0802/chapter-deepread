@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Software Engineering at Google Ch 18 · Build Systems and Build Philosophy — Book Deep-Read 198</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · Software Engineering at Google · Chapter 18</p>
+<h1>Build Systems and Build Philosophy</h1>
+<p class="sub">Software Engineering at Google · Ch 18 · Build Systems and Build Philosophy · Erik Kuefler · 2020</p>
+<p class="langbar"><a href="swegoogle-ch18-build-systems-book198.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Quick read</button>
+<button data-mode="deep">Deep read</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>Programmers write text that people can read; computers run a different kind of file that only machines understand. The "translate and assemble" step in between is called the build. Every app on your phone, every update, has gone through it. This chapter is about how Google made that step both fast and dependable — fast enough that a one-line change comes back in seconds, dependable enough that whichever of tens of thousands of engineers runs it, the result is identical.</p>
+<h2>A surprising fact first</h2>
+<p>Ask Google engineers what they like best about the company, free food aside, and many will say: <strong>the build system</strong>. In an internal survey it ranked fourth out of 19 tools. Stranger still, it works so well precisely because it does <strong>not</strong> let engineers do whatever they want — it takes some of their freedom away.</p>
+<h2>Why the old way was hard</h2>
+<p>The old way was like a handwritten recipe where each step could say anything at all. The head chef could not tell what any step really did, so they never dared let two cooks work at once, in case both grabbed the same pan; nor dared skip a step, in case it quietly used stale ingredients. So every meal was cooked from scratch, slower and slower. Worse, the recipe often only worked in the kitchen of whoever wrote it — on another computer, a missing tool or the wrong version and the dish failed.</p>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>Say what you want, not how to make it:</strong> engineers stop writing steps and just write "I want this dish; it uses these ingredients and those prepared parts." How, and in what order, is up to the system.</li>
+<li><strong>Same ingredients, same dish, every time:</strong> each step may only use the ingredients it named, as if cooking in a little booth holding nothing else. So if the ingredients haven't changed, last time's dish is reused; unrelated dishes can safely be cooked at once.</li>
+<li><strong>One shared pantry for the whole company:</strong> since the same ingredients always make the same dish, if someone already made it you just take it off the shelf. Whatever isn't there gets handed out to thousands of machines in the data center to make together.</li>
+<li><strong>Bought ingredients are checked and come in one version:</strong> each purchased ingredient has its "fingerprint" written down, and a delivery that doesn't match is refused; the whole company uses one version of each, so two dishes never demand two versions that can't share a plate.</li>
+</ul>
+<h2>What it brings / how to choose</h2>
+<p>What you get: change a little and only that little is redone; you almost never need to "wipe and start over"; a new hire can build any code on day one, and automated testing and releases can safely sit on top. The honest cost: you can no longer toss off a script that does anything you like — you play by its rules — and moving a big project already built the old way is not cheap.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p><strong>Turn the build from "run a list of steps" into "declare the products you want": give up a little freedom, and the system can run in parallel, reuse results and spread work over thousands of machines — while guaranteeing the same result everywhere.</strong></p>
+</div>
+<p class="switch-hint">Want to see why task-based builds can't safely parallelize or go incremental, how Bazel's sandboxes and toolchains pin the environment down, how remote caching and remote execution fit together, and why strict transitive dependencies and the One-Version Rule were worth years of rollout? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>The one-liner</h2>
+<p class="lead">You'd think a good build system gives engineers maximum flexibility; this chapter argues the opposite: <strong>take power away from engineers and give it to the system</strong>. Once a build means "producing artifacts" rather than "running tasks", the system knows what every step does, so it can parallelize, reuse and distribute — and fast versus correct stops being a choice.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Build</strong>: the process of compiling, linking and packaging source code into something runnable.</li>
+<li><strong>Compiler</strong>: a program that translates source in one language into a machine-executable form, such as javac or gcc.</li>
+<li><strong>Binary / artifact</strong>: a file the build produces — an executable, a library, a JAR.</li>
+<li><strong>Dependency</strong>: "I need that before I can have this"; another piece of code, a third-party library, or a tool.</li>
+<li><strong>Transitive dependency</strong>: a dependency of a dependency; if A depends on B and B on C, C is a transitive dependency of A.</li>
+<li><strong>DAG (directed acyclic graph)</strong>: nodes joined by one-way arrows with no way back to where you started; dependencies naturally form one.</li>
+<li><strong>Incremental build</strong>: rebuilding only what a change affects and reusing everything else.</li>
+<li><strong>Hash</strong>: a function that squeezes any content into a short fixed-length "fingerprint"; change one byte and the fingerprint changes completely.</li>
+<li><strong>Semantic versioning (semver)</strong>: version numbers like <code>1.1.4</code>, where a new major number signals a possibly incompatible change.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The third chapter of Part IV, "Tools", following version control (Ch16, monorepo plus trunk-based development) and code search (Ch17). It is the foundation for pre-submit testing in review (Ch19), continuous integration (Ch23) and large-scale changes (Ch22); versioning is taken further in Ch21. Real-world counterparts: Bazel, Buck2, Pants, and task-based tools like Maven and Gradle.</p>
+<h2>What problem this chapter solves</h2>
+<p>A build system has exactly two goals: be <strong>fast</strong> (one command, often a result in seconds) and <strong>correct</strong> (anyone, on any machine, with the same inputs, gets the same output). Older tools often trade correctness for speed — shortcuts for incrementality that yield builds which sometimes work and sometimes don't.</p>
+<p>The chapter tells the scaling story through a growing project: at first <code>javac *.java</code> is enough; with several languages and third-party JARs you are ordering steps by hand and stuffing downloads into a lib folder; move to shell scripts and, to avoid stale outputs, you rebuild everything every time; a disk dies and the downloaded libraries and environment variables are gone; every new hire and every nightly cron build means another round of "works on my machine". For one person writing a few hundred lines over a week or two, a compiler is all you need; <strong>once many people and many machines are involved, even a perfect script can't absorb the small differences between machines</strong>.</p>
+<p>At Google this is pushed to the extreme: more than <strong>two billion lines</strong> of code, and even simple binaries often depend on <strong>tens of thousands</strong> of build targets. Most builds are triggered by machines, not people — changes are tested automatically in review, again before merging, and low-level library changes are verified across millions of tests. None of that works without a build you can trust.</p>
+<h2>The core ideas, in depth</h2>
+<h3>1. Task-based builds: too much power to people, too little to the system</h3>
+<p>Ant, Maven, Gradle, Grunt and Rake are <strong>task-based</strong>: the unit of work is a task, a script that can do anything, which declares the other tasks it depends on; together they form a DAG. <code>ant dist</code> walks dist → compile → init and then runs them in reverse — strip the syntax and it's not far from a shell script.</p>
+<p>The root problem: <strong>the system has no idea what the scripts do</strong>, so it must be extremely conservative.</p>
+<ul>
+<li><strong>Hard to parallelize</strong>: A depends on B and C, which don't depend on each other — can they run at once? Maybe both write the same status file. The system can't know, so it either takes the risk (rare, very hard-to-debug failures) or runs everything single-threaded — wasting a multicore machine and ruling out distribution entirely.</li>
+<li><strong>Hard to make incremental</strong>: a task might download a file that changed or write a fresh timestamp, so the system can't confirm it's "already done" and reruns it. Letting people hand-write "when to rerun" is hard to get right — with C++ includes you can't know which files to watch without parsing the sources. After a few bad shortcuts, everyone runs <code>clean</code> before every build and incrementality is dead.</li>
+<li><strong>Hard to maintain</strong>: build scripts are code that rarely gets reviewed. Classic bugs: B changes its output path and A only fails when it runs; B drops its dependency on C and A, which relied on C's output, mysteriously breaks; a task silently assumes a tool path or environment variable; B and C write the same file and A's result depends on which finished first.</li>
+</ul>
+<p>The conclusion is blunt: <strong>as long as arbitrary code can run during the build, the system can never have enough information to be both fast and correct</strong>.</p>
+<h3>2. Artifact-based builds: declare what, leave how to the system</h3>
+<p>Blaze and its descendants (Bazel, Pants, Buck) are <strong>artifact-based</strong>: a BUILD file is no longer a Turing-complete list of commands but a <strong>declarative manifest</strong> — which targets to produce, their sources (srcs), their dependencies (deps), plus a few constrained options. <code>java_library</code> produces a library, <code>java_binary</code> an executable, and <code>deps</code> can point within the package (<code>:mylib</code>), to another package in the repo (<code>//java/com/example/common</code>) or to a third party (<code>@…guava//jar</code>).</p>
+<p>The author's analogy is <strong>functional programming</strong>: you state what to compute and leave when and how to the compiler. A build as a whole is a function from source files and tools to binaries. So:</p>
+<ul>
+<li><strong>Parallel</strong>: Bazel knows a step just runs the Java compiler, not an arbitrary script, so it can compile independent targets at once — up to <strong>an order of magnitude</strong> faster on a multicore machine.</li>
+<li><strong>Reusable</strong>: a compiler's output depends only on its inputs, so unchanged inputs mean reuse. Run the build again with no changes and it reports "up to date" in <strong>under a second</strong>; change <code>common</code> and only common → mylib → MyBinary rebuild while <code>otherlib</code> is reused — with a guarantee of no stale output.</li>
+</ul>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 270" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker><marker id="a1v" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#9b6cf5"/></marker></defs>
+<g font-size="12">
+<text x="160" y="22" fill="#8fbaff" font-weight="700" text-anchor="middle">Task-based: black-box scripts</text>
+<rect x="85" y="40" width="150" height="40" rx="9" fill="rgba(255,255,255,0.03)" stroke="#7c8593"/>
+<text x="160" y="65" fill="#cdd3db" text-anchor="middle">dist · package script</text>
+<rect x="85" y="110" width="150" height="40" rx="9" fill="rgba(255,255,255,0.03)" stroke="#7c8593"/>
+<text x="160" y="135" fill="#cdd3db" text-anchor="middle">compile · javac script</text>
+<rect x="85" y="180" width="150" height="40" rx="9" fill="rgba(255,255,255,0.03)" stroke="#7c8593"/>
+<text x="160" y="205" fill="#cdd3db" text-anchor="middle">init · mkdir script</text>
+<line x1="160" y1="80" x2="160" y2="107" stroke="#7c8593" stroke-width="1.6" marker-end="url(#a1)"/>
+<line x1="160" y1="150" x2="160" y2="177" stroke="#7c8593" stroke-width="1.6" marker-end="url(#a1)"/>
+<text x="160" y="250" fill="#7c8593" font-size="10.5" text-anchor="middle">Opaque scripts → run serially, rerun every time</text>
+<line x1="330" y1="35" x2="330" y2="240" stroke="rgba(91,157,249,0.2)" stroke-dasharray="4 4"/>
+<text x="520" y="22" fill="#c9b5f7" font-weight="700" text-anchor="middle">Artifact-based: a target graph</text>
+<rect x="455" y="40" width="130" height="40" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="520" y="65" fill="#e7ebf1" font-weight="700" text-anchor="middle">MyBinary</text>
+<rect x="455" y="110" width="130" height="40" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="520" y="135" fill="#e7ebf1" font-weight="700" text-anchor="middle">mylib</text>
+<rect x="360" y="180" width="100" height="40" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="410" y="205" fill="#e7ebf1" text-anchor="middle">common ✎</text>
+<rect x="470" y="180" width="100" height="40" rx="9" fill="rgba(155,108,245,0.1)" stroke="#9b6cf5"/>
+<text x="520" y="205" fill="#c9b5f7" text-anchor="middle">otherlib</text>
+<rect x="580" y="180" width="110" height="40" rx="9" fill="rgba(155,108,245,0.1)" stroke="#9b6cf5"/>
+<text x="635" y="205" fill="#c9b5f7" text-anchor="middle">guava (external)</text>
+<line x1="520" y1="80" x2="520" y2="107" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a1)"/>
+<line x1="500" y1="150" x2="425" y2="177" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a1)"/>
+<line x1="520" y1="150" x2="520" y2="177" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#a1v)"/>
+<line x1="540" y1="150" x2="615" y2="177" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#a1v)"/>
+<text x="520" y="250" fill="#7c8593" font-size="10.5" text-anchor="middle">Edit common: three blue rebuild, two violet reuse</text>
+</g>
+</svg>
+<figcaption>Figure 1 · Both are DAGs, but task-based nodes are opaque scripts while artifact-based nodes are targets with declared inputs and outputs.</figcaption>
+</figure>
+<h3>3. Turn the environment into declared dependencies too</h3>
+<p>Parallelism and reuse aren't enough; each "works on my machine" hole has to be plugged:</p>
+<ul>
+<li><strong>Tools as dependencies</strong>: every <code>java_library</code> implicitly depends on a Java compiler, downloaded if missing; change the compiler and dependents rebuild. Cross-platform builds use <strong>toolchains</strong>: the concrete set of tools is picked by host and target platform.</li>
+<li><strong>Extensible, but fenced</strong>: custom rules generate <strong>actions</strong> — the lowest-level composable unit, free to do anything as long as they use only their declared inputs and outputs, while Bazel handles scheduling and caching.</li>
+<li><strong>Sandboxing</strong>: each action sees only its declared inputs and its own outputs; the book says this is enforced on Linux with LXC, the same kind of technology behind Docker. Undeclared files can't be read, undeclared outputs are thrown away, and network access can be blocked. Two actions clobbering the same file becomes <strong>impossible</strong>.</li>
+<li><strong>Deterministic external dependencies</strong>: a workspace-wide manifest records a <strong>cryptographic hash</strong> for each external dependency. A mismatch fails the build, and updating means changing the manifest and getting it reviewed — so every upgrade is on record, and checking out last week's commit gives you last week's dependencies. To guard against the supplier going down, the author recommends any nontrivial project <strong>mirror</strong> its dependencies on servers it controls.</li>
+</ul>
+<h3>4. Distributed builds: remote caching, then remote execution</h3>
+<p>Tens of thousands of targets won't fit on one machine; cut the work small enough and spread it over any number of machines and a build gets "as fast as you're willing to pay for" — the holy grail the artifact-based design was aiming at.</p>
+<p><strong>Remote caching</strong> is the simple form: workstations and CI share one cache service; before building an artifact you check the cache, download it if present, otherwise build it and upload it. The precondition is <strong>fully reproducible builds</strong>, with the cache keyed on the target plus <strong>a hash of its inputs</strong>, so several people editing the same target at once don't collide. The other precondition is that downloading beats building — measure your network latency first.</p>
+<p><strong>Remote execution</strong> is the real distributed build: when a low-level change forces a full rebuild, a cache alone still leaves the work on your machine. A master splits requests into actions and schedules them on a scalable worker pool; workers exchange intermediate outputs through the cache. It requires a fully self-describing environment, fully self-contained steps and fully deterministic outputs — <strong>nearly impossible for a task-based system</strong>.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 260" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker><marker id="a2v" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#9b6cf5"/></marker></defs>
+<g font-size="12">
+<rect x="20" y="95" width="130" height="62" rx="9" fill="rgba(91,157,249,0.18)" stroke="#5b9df9" stroke-width="2"/>
+<text x="85" y="118" fill="#e7ebf1" font-weight="700" text-anchor="middle">Workstation / CI</text>
+<text x="85" y="136" fill="#cdd3db" font-size="10.5" text-anchor="middle">Blaze + Distributor</text>
+<text x="85" y="150" fill="#cdd3db" font-size="10.5" text-anchor="middle">objfsd (FUSE)</text>
+<line x1="150" y1="110" x2="228" y2="68" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a2)"/>
+<text x="150" y="78" fill="#7c8593" font-size="10.5">actions</text>
+<rect x="230" y="30" width="170" height="62" rx="9" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"/>
+<text x="315" y="54" fill="#8fbaff" font-weight="700" text-anchor="middle">Scheduler</text>
+<text x="315" y="73" fill="#cdd3db" font-size="10.5" text-anchor="middle">action cache: hit → return</text>
+<line x1="400" y1="61" x2="468" y2="61" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a2)"/>
+<text x="434" y="80" fill="#7c8593" font-size="10.5" text-anchor="middle">miss → queue</text>
+<rect x="470" y="30" width="210" height="62" rx="9" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="575" y="54" fill="#c9b5f7" font-weight="700" text-anchor="middle">Executor pool (thousands)</text>
+<text x="575" y="73" fill="#cdd3db" font-size="10.5" text-anchor="middle">runs actions in sandboxes</text>
+<line x1="575" y1="92" x2="575" y2="168" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#a2v)"/>
+<text x="568" y="135" fill="#7c8593" font-size="10.5" text-anchor="end">write outputs / read inputs</text>
+<rect x="230" y="170" width="450" height="56" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="455" y="193" fill="#e7ebf1" font-weight="700" text-anchor="middle">ObjFS · build outputs stored in Bigtable</text>
+<text x="455" y="212" fill="#8fbaff" font-size="10.5" text-anchor="middle">key = target + input hash · shared company-wide</text>
+<line x1="228" y1="198" x2="152" y2="145" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a2)"/>
+<text x="85" y="185" fill="#7c8593" font-size="10.5" text-anchor="middle">on-demand download</text>
+<text x="350" y="250" fill="#7c8593" font-size="10.5" text-anchor="middle">Only if same inputs always give same outputs is a download as good as building it yourself</text>
+</g>
+</svg>
+<figcaption>Figure 2 · Google's distributed build since 2008: Forge does remote execution, ObjFS does remote caching.</figcaption>
+</figure>
+<p>Google's implementation: the remote cache <strong>ObjFS</strong> stores outputs in Bigtable, and a FUSE daemon on each workstation, objfsd, makes them look like local files, downloading content only when opened — <strong>twice as fast</strong> as keeping all outputs on local disk. Remote execution is <strong>Forge</strong>: the Distributor sends actions to the Scheduler, which returns immediately on an action-cache hit and otherwise queues the action for a large pool of Executors, which write results into ObjFS. The scale: <strong>millions of builds, millions of test cases and petabytes of output every day</strong>.</p>
+<h3>5. Modules and dependencies: fine grain, visibility, strict transitive deps</h3>
+<p><strong>Granularity</strong> is a trade-off between "one target for the whole project" and "one target per file" (see Table 2). Google favors targets <strong>much smaller than is typical in task-based systems</strong>: a typical production binary depends on tens of thousands of targets, and a moderate team owns several hundred. In Java, a directory usually holds one package, one target and one BUILD file — what Pants calls the <strong>1:1:1 rule</strong>. Small targets mean faster distributed builds, fewer rebuilds, and running only the handful of tests a change could affect; the maintenance burden is offset by tools that manage BUILD files automatically.</p>
+<p><strong>Visibility</strong> is the mirror image of a dependency: for A to depend on B, B must be visible to A. Keep it narrow: only libraries meant for everyone are public, internal implementations are visible only to the team's own directories, and most BUILD files have only one non-private target.</p>
+<p><strong>Strict transitive dependencies</strong>: A depends on B, B depends on C — may A use C's classes directly? The linker doesn't mind, and Blaze allowed it for years. But once B is refactored and drops C, every target that "used C through B" breaks — <strong>dependencies became part of the public contract and could never be removed</strong>, so they piled up and builds slowed. Google introduced a strict mode: referencing a symbol without depending on it directly is an error, with a shell command that adds the dependency automatically. Making <strong>millions</strong> of targets declare their dependencies explicitly took <strong>years</strong>, and the author says it was well worth it: adding a dependency is a one-time cost, while implicit transitive ones keep costing for as long as the target exists. Bazel enables this mode for Java by default.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a3" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker><marker id="a3v" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#9b6cf5"/></marker></defs>
+<g font-size="12">
+<rect x="285" y="25" width="130" height="42" rx="9" fill="rgba(91,157,249,0.18)" stroke="#5b9df9" stroke-width="2"/>
+<text x="350" y="51" fill="#e7ebf1" font-weight="700" text-anchor="middle">Target A</text>
+<rect x="130" y="100" width="130" height="42" rx="9" fill="rgba(91,157,249,0.1)" stroke="#5b9df9"/>
+<text x="195" y="126" fill="#cdd3db" text-anchor="middle">Target B</text>
+<rect x="40" y="170" width="230" height="42" rx="9" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="155" y="196" fill="#c9b5f7" font-weight="700" text-anchor="middle">External lib v2 (new in B)</text>
+<rect x="430" y="170" width="230" height="42" rx="9" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="545" y="196" fill="#c9b5f7" font-weight="700" text-anchor="middle">External lib v1 (A's own)</text>
+<line x1="320" y1="67" x2="230" y2="98" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a3)"/>
+<line x1="380" y1="67" x2="520" y2="167" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a3)"/>
+<line x1="185" y1="142" x2="170" y2="167" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#a3v)"/>
+<text x="350" y="150" fill="#8fbaff" font-weight="700" text-anchor="middle">✕ diamond conflict</text>
+<text x="350" y="166" fill="#7c8593" font-size="10.5" text-anchor="middle">A now depends on two versions</text>
+<text x="350" y="226" fill="#7c8593" font-size="10.5" text-anchor="middle">One-Version Rule: only v1 or v2 may exist in the repo, so the conflict can't arise</text>
+</g>
+</svg>
+<figcaption>Figure 3 · The diamond: when multiple versions are allowed, adding any third-party dependency to a target can break its dependents.</figcaption>
+</figure>
+<h3>6. External dependencies: pin by hand, one version, no automatic transitive downloads</h3>
+<p>Internal dependencies are built from source at the same commit as their users, so <strong>they have no notion of "version"</strong>; external ones have versions that evolve independently of your code, and that's where the trouble lives. Three positions:</p>
+<ul>
+<li><strong>Pin versions manually</strong>: Gradle lets you write <code>1.+</code> (latest with major version 1); on a multi-person project that's "a recipe for disaster" — even suppliers that claim semantic versioning can ship breaking updates, so a build that worked today breaks tomorrow with no easy rollback. With manual pins every change lives in version control and can be found and rolled back. Bazel requires all versions to be specified manually.</li>
+<li><strong>One-Version Rule</strong>: in theory different versions could coexist under different names, but that produces the diamond above. Google enforces one version for every third-party dependency, so a newly added dependency is always already on the same version as existing ones and they coexist happily.</li>
+<li><strong>No automatic transitive downloads</strong>: Maven and Gradle download recursively by default, so one dependency can pull in dozens of artifacts — necessarily violating the One-Version Rule. Bazel instead requires a global file listing every external dependency and its single version, which tools can generate initially from Maven artifacts. The author admits <strong>there's no silver bullet</strong>: it's convenience versus scalability.</li>
+</ul>
+<p>Two further judgments: prebuilding your own code into artifacts to speed things up leaves parts of the system built from different points in the repo and hard to debug — <strong>remote caching is the better fix</strong>. Supplier risk can be handled by mirroring plus hashes, or by <strong>vendoring</strong>: Google checks every third-party library into a <code>third_party</code> directory at the root, but that relies on version control custom-built for an enormous monorepo.</p>
+<h2>Key trade-offs and choices</h2>
+<p>The chapter's soul in one line: <strong>trade flexibility for scale</strong>. At each level you give up some freedom and the system gives you one more guarantee.</p>
+<p class="tcap">Table 1 · Three ways to build: how much freedom you give up, how much guarantee you get back</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Approach</th><th>Fits</th><th>You get</th><th>Honest cost</th></tr></thead>
+<tbody>
+<tr><th>Raw compiler / shell scripts</th><td>Single-file, few-hundred-line, two-week projects; languages with a built-in build like Go</td><td>Zero setup</td><td>Not reproducible across people and machines; full rebuilds to avoid staleness</td></tr>
+<tr><th>Task-based (Ant / Maven / Gradle)</th><td>Most small and medium projects</td><td>Automated complex builds, easier cross-machine reproduction, managed external deps</td><td>Buildfiles to write; the system can't see into tasks — <strong>hard to parallelize, unreliable incrementality, scripts hard to debug</strong></td></tr>
+<tr><th><strong>Artifact-based (Blaze / Bazel / Pants / Buck)</strong></th><td>Small to huge; inside Google everything from tiny experiments to Search uses Blaze</td><td>Safe parallelism, reliable incrementality, remote cache and execution, almost never <code>clean</code></td><td>No arbitrary tasks in a real programming language; <strong>migrating an existing project is expensive</strong> and may not pay off if speed and correctness aren't yet a problem</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 2 · Module granularity</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Granularity</th><th>Maintenance</th><th>Build behavior</th><th>Google's choice</th></tr></thead>
+<tbody>
+<tr><th>One target per project</th><td>BUILD file barely touched</td><td>Always built whole; no parallelism, distribution or partial caching</td><td rowspan="3"><strong>Lean fine</strong>: the 1:1:1 rule, production binaries depending on tens of thousands of targets; tools maintain BUILD files to offset the burden</td></tr>
+<tr><th>One per directory (1:1:1)</th><td>Moderate</td><td>Most changes touch only a few targets</td></tr>
+<tr><th>One per file</th><td>Highest: every cross-file reference listed</td><td>Most flexible scheduling, caching and test selection</td></tr>
+</tbody>
+</table></div>
+<p class="tcap">Table 3 · Forks in the road for external dependencies</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Question</th><th>Easy option</th><th>The chapter's position</th><th>Price paid</th></tr></thead>
+<tbody>
+<tr><th>How to pick versions</th><td>Latest in a range (<code>1.+</code>)</td><td>Manual, explicit, in version control</td><td>Every upgrade is a commit and a review</td></tr>
+<tr><th>Multiple versions</th><td>Each target picks its own</td><td>One-Version Rule</td><td>Upgrading a library means upgrading the whole repo (see Ch21)</td></tr>
+<tr><th>Transitive deps</th><td>Download recursively</td><td>Global file listing each one with one version</td><td>A long file that needs tooling to generate and maintain</td></tr>
+<tr><th>Supplier availability / security</th><td>Pull straight from Maven Central</td><td>Hash checks + mirrors, or vendor into the repo</td><td>Mirrors take people to run; vendoring needs version control that can cope</td></tr>
+</tbody>
+</table></div>
+<h2>Why it matters / in real systems</h2>
+<p>Developers build dozens or hundreds of times a day, and the build is often the rate-limiting step of their productivity. When a review asks "should we move to Bazel?", the chapter's rule is: <strong>the bigger the project, the more expensive it is to change build systems</strong>, so new projects get the best deal by starting artifact-based; for an existing large task-based project, first check whether it already has speed or correctness problems. In an interview on CI speed-ups or supply-chain security, being able to explain "cache key = target + input hash" and "reproducibility is the precondition for remote caching" goes a level deeper than "add machines, add a cache".</p>
+<div class="ev">
+<p class="evh">Industry evidence · publicly verifiable</p>
+<ul>
+<li><strong>Google · data from the book</strong>: in an internal survey 83% of engineers were satisfied with the build system, fourth of 19 tools (average 69%); remote caching plus remote execution since 2008, millions of builds a day. <span class="src"><a href="https://raw.githubusercontent.com/abseil/abseil.github.io/master/resources/swe-book/html/ch18.html" rel="noopener" target="_blank">Software Engineering at Google · Ch18 (official open edition source on abseil) ↗</a></span></li>
+<li><strong>Google · Bazel</strong>: the README's tagline is "{Fast, Correct} - Choose two", and it says Bazel "rebuilds only what is necessary", relying on local and distributed caching, dependency analysis and parallel execution. <span class="src"><a href="https://github.com/bazelbuild/bazel" rel="noopener" target="_blank">bazelbuild/bazel · README ↗</a></span></li>
+<li><strong>Bazel community · Remote Execution API</strong>: the README describes letting build systems distribute build and test actions across a worker pool and provide a central cache of build results, with data stored in a <strong>content-addressable</strong> format — the Forge / ObjFS idea turned into an open protocol. <span class="src"><a href="https://github.com/bazelbuild/remote-apis" rel="noopener" target="_blank">bazelbuild/remote-apis · README ↗</a></span></li>
+<li><strong>Meta · Buck2</strong>: the README says Buck2 is up to 2x faster than Buck1 in practice inside Meta, and is <strong>hermetic</strong> with remote execution — if a rule fails to declare an input (say a .h a .c file needs) the build fails; it also admits it doesn't yet sandbox local-only build steps. <span class="src"><a href="https://github.com/facebook/buck2" rel="noopener" target="_blank">facebook/buck2 · README ↗</a></span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/deployment-release-day22.en.html" target="_blank" rel="noopener">System Design · Day 22 Deployment &amp; Release</a> — what happens after the artifact: hundreds of deploys a day, canaries and automatic rollback, all resting on a build you can trust</aside>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"The more flexible the build tool, the better" — the chapter concludes the opposite.</strong> Limiting engineers' power raised their productivity, because incremental builds "just work".</li>
+<li><strong>"A remote cache always makes things faster" — not necessarily.</strong> A distant cache can be slower than building; without reproducibility, it may hand you the wrong result.</li>
+<li><strong>"Sandboxes make it foolproof" — the author says it isn't.</strong> An action can still contain a nondeterministic step; the risk is just pushed down to the action level. Buck2 likewise only guarantees hermeticity under remote execution.</li>
+<li><strong>Dated details:</strong> the book is from 2020. Later Bazel versions are replacing the WORKSPACE file with Bzlmod (<code>MODULE.bazel</code>), which resolves transitive dependencies between modules automatically using minimal version selection — no longer quite the book's "no automatic transitive dependencies"; the sandbox implementation has also evolved. A counterpoint: Bazel's learning curve is steep and tools outside its ecosystem need hand-written rules — and the author grants that task-based systems are enough for most projects.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>① Be fast and correct at once; once many people and machines are involved, no script can absorb the differences between machines.</p>
+<p>② The root flaw of task-based builds is that the system can't see into arbitrary scripts: hard to parallelize, unreliable incrementality, hard-to-maintain scripts.</p>
+<p>③ Artifact-based builds declare only targets, sources and deps and leave "how" to the system; like functional code, unchanged inputs are reused, multicore parallelism gives up to 10x, and a no-op build takes under a second.</p>
+<p>④ Make the environment declarative too: tools as dependencies, toolchains, sandboxes, hashed external dependencies.</p>
+<p>⑤ Remote caching requires reproducibility, keyed on target + input hash; Google's Forge + ObjFS have carried millions of builds a day since 2008.</p>
+<p>⑥ Favor fine-grained modules (1:1:1) and narrow visibility; strict transitive deps took years to roll out because implicit dependencies are an ongoing cost.</p>
+<p>⑦ External dependencies: pin manually, enforce one version against diamond conflicts, don't pull transitive deps automatically.</p>
+<p>⑧ The bigger it gets, the harder it is to switch: start new projects artifact-based.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Read this page ≈ get the core of the chapter; for the full argument and extensions, go to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
