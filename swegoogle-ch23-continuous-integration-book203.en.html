@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Software Engineering at Google Ch 23 · Continuous Integration — Book Deep-Read 203</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · Software Engineering at Google · Chapter 23</p>
+<h1>Continuous Integration</h1>
+<p class="sub">Software Engineering at Google · Ch 23 · Continuous Integration · Rachel Tannenbaum · 2020</p>
+<p class="langbar"><a href="swegoogle-ch23-continuous-integration-book203.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Quick read</button>
+<button data-mode="deep">Deep read</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>Tens of thousands of engineers push changes into the same software every day. Any one of those changes can break somebody else's work. This chapter is about how Google <strong>lets machines stand guard instead of people</strong>: every incoming change is automatically assembled and checked, and <strong>the earlier a bad change is caught, the better</strong>. That practice is called "continuous integration."</p>
+<h2>A strange thing first</h2>
+<p>You'd think the safest approach is "before any change goes in, run every single check, and only let it in if everything passes." Google deliberately doesn't. Before a change goes in, it runs only a small handful of fast, dependable checks and <strong>lets it in first</strong>; the big checks run afterwards. If something turns out wrong, the change is undone with a click. The result is both faster and steadier.</p>
+<h2>Why the old world was hard</h2>
+<p>Picture a restaurant kitchen. If every dish had to pass a full inspection before leaving the stove, cooks would spend most of their time waiting, the food would go cold, and the guests would leave. If nothing were checked, problems would surface only when a guest phoned in a complaint — by which point it's hard to tell which cook, at which step, went wrong. <strong>The later a problem is found, the harder and costlier it is to trace.</strong> Worse, some checks are themselves "sometimes right, sometimes wrong," blaming innocent cooks — and soon nobody trusts them.</p>
+<h2>The core mechanism, intuitively</h2>
+<ul>
+<li><strong>Layers of checks:</strong> taste a spoonful before plating (a check that takes minutes), do a bigger inspection before serving, and keep someone walking the dining room while guests eat. Each layer is cheaper and faster than the next.</li>
+<li><strong>Let it through, take it back if wrong:</strong> when a big check finds a problem, the person on duty drops everything — and the usual fix is simply to pull that change back out, restoring a known-good state first.</li>
+<li><strong>Rehearse on a sealed stage:</strong> checks don't talk to real outside systems; they run on a little self-contained stage with all props brought along. Run the same play twice and you get the same result — nobody gets blamed because a neighbor's power went out.</li>
+<li><strong>Tag the broken checks:</strong> a check that can't be fixed right away gets a note saying who is responsible for fixing it. It stops blocking everyone, but it can't be forgotten.</li>
+</ul>
+<h2>What it buys you / how to choose</h2>
+<p>Every day more than fifty thousand changes and over four billion checks pass through this system at Google, and engineers wait only about ten minutes on average to hand a change in. A small company needn't copy all of it, but it should ask how much it already pays for problems that only show up after launch. The honest cost: the checking machinery itself takes lots of machines and people to maintain, and <strong>it will never be perfectly error-free</strong>.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p><strong>Continuous integration isn't "check everything, then let it in"; it's deciding "what to check, when": fast and reliable checks first, slow and difficult ones later, and undo on error.</strong></p>
+</div>
+<p class="switch-hint">Want to see why presubmit isn't enough, how "CI is alerting" rewrites green-build policies, the hermetic-testing and record/replay trade-offs, how TAP finds culprits among 50,000 changes a day, and Takeout's four CI makeovers? <a data-mode="deep">→ Switch to deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one line</h2>
+<p class="lead">You think CI means "run all the tests on every commit"; this chapter says <strong>CI is fundamentally a scheduling decision: which tests run when, against what kind of system under test</strong>. Fast, reliable tests go in presubmit; slow, nondeterministic ones go in post-submit and on release candidates; production gets probed with the same suite; and bad changes are handled by rollback, not by blocking. It works more like <strong>alerting shifted left</strong> than a gate that must always be green.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Head / trunk</strong>: the latest version of the code in the repository; integrating directly there is trunk-based development.</li>
+<li><strong>Presubmit / post-submit</strong>: automated checks run before a change is committed / after it has landed.</li>
+<li><strong>System under test (SUT)</strong>: the set of programs and environment actually brought up and exercised by a test.</li>
+<li><strong>Unit test / end-to-end test</strong>: a test of one small function or class / a test of a whole path from entry to exit.</li>
+<li><strong>Flaky test</strong>: a test that sometimes passes and sometimes fails with no change to the code.</li>
+<li><strong>Rollback</strong>: undoing a commit entirely, returning to the state before it.</li>
+<li><strong>Release candidate (RC)</strong>: a deployable bundle of code, configuration and dependencies produced by an automated process.</li>
+<li><strong>Staging</strong>: a shared pre-production test environment that mimics production.</li>
+<li><strong>Canary</strong>: sending a new version to a small slice of production traffic first, then rolling out fully if all looks well.</li>
+<li><strong>Microservice / RPC</strong>: an application split into many independently deployed services that talk via remote calls.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Part IV, "Tools," chapter eight. It follows Ch22 Large-Scale Changes (the LSC "train" runs on this chapter's TAP) and the testing chapters Ch11–14, and leads into Ch24 Continuous Delivery. Real-world counterpart: any team's CI pipeline, merge queue and pre-release test tiers.</p>
+<h2>What problem this chapter solves</h2>
+<p>The classic definition is Martin Fowler's: team members integrate their work frequently, each integration verified by an automated build (including tests) to detect integration errors as quickly as possible. The chapter argues that this is no longer enough: the change that breaks your application increasingly comes from <strong>an upstream microservice on the other side of a network call</strong>, from ingested data and models, from evolving operating systems and cloud platforms — released by other teams on their own schedules. Hence a second definition: <strong>CI is the continuous assembling and testing of our entire complex and rapidly evolving ecosystem</strong>.</p>
+<p>What happens without it? Quality rests on hoping every contributor is careful. Google's scale pushes this to the extreme: one monorepo, <strong>more than 50,000</strong> unique changes and <strong>more than four billion</strong> individual test case runs a day — on average <strong>more than one change per second</strong>. Any bad change is immediately visible to the whole company.</p>
+<h2>The core, explained</h2>
+<h3>1. Feedback loops: the further right, the costlier</h3>
+<p>The later a bug is caught, the more it costs — almost exponentially. The person triaging it is less likely to know the code, the author has to dig to remember why they changed it, and the blast radius spreads from one engineer to the team and finally to users. CI's first principle is therefore <strong>fast feedback loops</strong> (also called shifting left on testing): catch each change as far left as possible.</p>
+<figure>
+<svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="a1" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker></defs>
+<g font-size="11.5">
+<rect x="8" y="30" width="104" height="54" rx="9" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="1.6"/>
+<text x="60" y="53" text-anchor="middle" fill="#e7ebf1" font-weight="700">Local dev</text><text x="60" y="71" text-anchor="middle" fill="#cdd3db" font-size="10">edit-compile-debug</text>
+<rect x="122" y="30" width="104" height="54" rx="9" fill="rgba(91,157,249,0.26)" stroke="#5b9df9" stroke-width="2.4"/>
+<text x="174" y="53" text-anchor="middle" fill="#e7ebf1" font-weight="700">Presubmit</text><text x="174" y="71" text-anchor="middle" fill="#8fbaff" font-size="10">fast, reliable tests</text>
+<rect x="236" y="30" width="104" height="54" rx="9" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="1.6"/>
+<text x="288" y="53" text-anchor="middle" fill="#e7ebf1" font-weight="700">Post-submit</text><text x="288" y="71" text-anchor="middle" fill="#cdd3db" font-size="10">all affected tests</text>
+<rect x="350" y="30" width="104" height="54" rx="9" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="1.6"/>
+<text x="402" y="53" text-anchor="middle" fill="#e7ebf1" font-weight="700">Release cand.</text><text x="402" y="71" text-anchor="middle" fill="#c9b5f7" font-size="10">larger tests per env</text>
+<rect x="464" y="30" width="104" height="54" rx="9" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="1.6"/>
+<text x="516" y="53" text-anchor="middle" fill="#e7ebf1" font-weight="700">Dogfood</text><text x="516" y="71" text-anchor="middle" fill="#c9b5f7" font-size="10">internal users</text>
+<rect x="578" y="30" width="114" height="54" rx="9" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="1.6"/>
+<text x="635" y="53" text-anchor="middle" fill="#e7ebf1" font-weight="700">Production</text><text x="635" y="71" text-anchor="middle" fill="#c9b5f7" font-size="10">probers / users / press</text>
+<line x1="8" y1="104" x2="340" y2="104" stroke="#5b9df9" stroke-width="1.4"/><text x="174" y="120" text-anchor="middle" fill="#8fbaff" font-size="10.5">Continuous Build: green head</text>
+<line x1="350" y1="104" x2="692" y2="104" stroke="#9b6cf5" stroke-width="1.4"/><text x="521" y="120" text-anchor="middle" fill="#c9b5f7" font-size="10.5">Continuous Delivery: RC promotion</text>
+<g fill="rgba(255,143,143,0.22)" stroke="#ff8f8f" stroke-width="1">
+<rect x="45" y="206" width="30" height="8"/><rect x="159" y="198" width="30" height="16"/><rect x="273" y="186" width="30" height="28"/><rect x="387" y="170" width="30" height="44"/><rect x="501" y="152" width="30" height="62"/><rect x="620" y="134" width="30" height="80"/>
+</g>
+<line x1="20" y1="226" x2="680" y2="226" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#a1)"/>
+<text x="350" y="244" text-anchor="middle" fill="#cdd3db" font-size="11">Life of a change → where it's caught sets the cost of fixing it (red bars)</text>
+</g>
+</svg>
+<figcaption>Figure 1 · Life of a code change: CI decides what to test at each step so problems stop on the cheap left side.</figcaption>
+</figure>
+<p>Feedback must also be <strong>accessible and actionable</strong>. Google has a unified test-reporting system where anyone can look up any build or test run with full logs (minus user PII), plus a Google-wide statistical flake classifier — so you don't have to work out alone whether your change broke someone else's test or the test was just flaky.</p>
+<h3>2. Two heads, release candidates and production probers</h3>
+<p>The <strong>Continuous Build (CB)</strong> integrates the latest changes at head and builds and tests them, which yields two heads: <strong>true head</strong> (the latest commit) and <strong>green head</strong> (the latest change the CB has verified). Engineers often sync to green head for stability while coding, then to true head before submitting.</p>
+<p>The first step of <strong>Continuous Delivery (CD)</strong> is release automation: continuously cutting <strong>release candidates</strong> from head (most Google teams cut at green head), then promoting each one through a series of environments with progressively larger tests. Two details matter most. First, <strong>static configuration should be promoted with the RC</strong> and tested alongside the code that uses it — the book notes that a large share of production bugs come from "silly" configuration problems. Second, RC artifacts <strong>should not be rebuilt</strong> between environments; containers and orchestration (Docker, Kubernetes, at Google usually Borg) enforce that consistency.</p>
+<p>Why rerun on the RC the tests CB just ran? Four reasons: a <strong>sanity check</strong> that nothing odd happened when the code was cut and recompiled; <strong>auditability</strong>, since results hang off the RC; <strong>cherry-picks</strong>, which make the RC diverge from what CB tested; and <strong>emergency pushes</strong>, cut from true head with only the minimal test set. Finally, the same suite runs against production as <strong>probers</strong>: verifying production against the tests, and the tests' relevance against production. Defense in depth, not a bet on one layer.</p>
+<h3>3. Why presubmit isn't enough — and shouldn't be greedy</h3>
+<p>If earlier is cheaper, why not run everything in presubmit? Three reasons. <strong>Cost</strong>: making engineers wait hours to submit is far more expensive than machines, and since tests pass far more often than they fail, dropping exhaustiveness lets you pick tests by scope or by a model predicting which will catch failures. <strong>False blame</strong>: being blocked by flakiness unrelated to your change. <strong>Mid-air collisions</strong>: while presubmit runs, the repository moves; two changes touching completely different files can together break a test. Each one is rare, but at Google's scale <strong>it happens most days</strong>. Small repositories can serialize submits to avoid it; Google cannot.</p>
+<p>Hence the rule of thumb: <strong>presubmit gets only fast, reliable tests</strong>, typically the small tests of the project being changed. Accept some loss of coverage, catch the rest in post-submit, and accept some number of rollbacks. Whether larger tests belong in presubmit varies by team: either make them hermetic (below), or let them be unreliable in presubmit but disable them aggressively when they start failing.</p>
+<h3>4. CI is alerting</h3>
+<p>In a sidebar, Titus Winters compares CI to production monitoring: both exist to <strong>identify problems automatically, as soon as possible</strong>; CI is simply alerting shifted left. That lets CI borrow SRE's hard-won policies:</p>
+<ul>
+<li>A test should fail only when <strong>an important invariant is actually violated</strong>. A test that flakes every few runs is just like a spurious alert paging the on-call every few minutes. If it isn't actionable, it shouldn't alert.</li>
+<li>A <strong>100% green rate</strong> on CI is as awfully expensive as 100% uptime for a service — which SRE already gave up in favor of error budgets.</li>
+<li>Policies of the form "nobody can commit if the latest CI results aren't green" are <strong>probably misguided</strong>: failures must be investigated first, but if the root cause is understood and clearly won't affect production, blocking commits is unreasonable. We should also be more liberal in accepting changes that disable a failed test.</li>
+</ul>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/low-base-rate-alerting-day51.en.html" target="_blank" rel="noopener">System Design · Day 51 Alerting at a Low Base Rate</a> — how false alarms drown real ones when true failures are rare: run this section's "flaky test = false page" through a signal-detection lens</aside>
+<h3>5. Hermetic testing: trading fidelity for determinism</h3>
+<p>A <strong>hermetic test</strong> runs against an entirely self-contained environment with no external dependencies such as production backends. It has two properties: <strong>determinism</strong> — run the same app and test code twice and get the same result, so a failure points at your code or test (system time, randomness and races can still interfere); and <strong>isolation</strong> — production problems can't affect it, and it can't affect production.</p>
+<p>There are three tiers: <strong>fakes</strong> (cheap, but they need upkeep and have limited fidelity); <strong>a fully sandboxed stack</strong> (DisplayAds has one that starts about <strong>400 servers</strong> from scratch on every presubmit); and, more popular for large systems, <strong>record/replay</strong> — record live backend responses, cache them, replay them hermetically. The difficulty with record/replay is the cache-hit balance: hit the cache too much and you get <strong>false positives</strong> (tests pass when they shouldn't); too little and you get <strong>false negatives</strong> (constant re-recording, often blocking submission).</p>
+<p>Google Assistant is the success story: after making presubmit fully hermetic, runtime dropped by a factor of <strong>14</strong> with virtually no flakiness; before, on some days <strong>more than 50</strong> changes bypassed and ignored test results. The price: nonhermetic tests moved to post-submit, where failures now accumulate — and some teams just disable them.</p>
+<figure>
+<svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="h1" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker></defs>
+<g font-size="11.5">
+<text x="350" y="20" text-anchor="middle" fill="#8fbaff" font-weight="700">One head build per service; all other dependencies are shared prod versions</text>
+<rect x="70" y="40" width="140" height="48" rx="9" fill="rgba(91,157,249,0.26)" stroke="#5b9df9" stroke-width="2.4"/>
+<text x="140" y="61" text-anchor="middle" fill="#e7ebf1" font-weight="700">Service A @head</text><text x="140" y="78" text-anchor="middle" fill="#8fbaff" font-size="10">environment 1</text>
+<rect x="280" y="40" width="140" height="48" rx="9" fill="rgba(91,157,249,0.26)" stroke="#5b9df9" stroke-width="2.4"/>
+<text x="350" y="61" text-anchor="middle" fill="#e7ebf1" font-weight="700">Service B @head</text><text x="350" y="78" text-anchor="middle" fill="#8fbaff" font-size="10">environment 2</text>
+<rect x="490" y="40" width="140" height="48" rx="9" fill="rgba(91,157,249,0.26)" stroke="#5b9df9" stroke-width="2.4"/>
+<text x="560" y="61" text-anchor="middle" fill="#e7ebf1" font-weight="700">Service C @head</text><text x="560" y="78" text-anchor="middle" fill="#8fbaff" font-size="10">environment 3</text>
+<rect x="70" y="160" width="140" height="44" rx="9" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="1.6"/>
+<text x="140" y="187" text-anchor="middle" fill="#e7ebf1">A (prod)</text>
+<rect x="280" y="160" width="140" height="44" rx="9" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="1.6"/>
+<text x="350" y="187" text-anchor="middle" fill="#e7ebf1">B (prod)</text>
+<rect x="490" y="160" width="140" height="44" rx="9" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="1.6"/>
+<text x="560" y="187" text-anchor="middle" fill="#e7ebf1">C (prod)</text>
+<g stroke="#5b9df9" stroke-width="1.3" fill="none" marker-end="url(#h1)">
+<line x1="160" y1="88" x2="330" y2="158"/><line x1="185" y1="88" x2="530" y2="158"/>
+<line x1="320" y1="88" x2="170" y2="158"/><line x1="380" y1="88" x2="540" y2="158"/>
+<line x1="515" y1="88" x2="190" y2="158"/><line x1="540" y1="88" x2="370" y2="158"/>
+</g>
+<text x="350" y="230" text-anchor="middle" fill="#cdd3db" font-size="11">Requests carry a "hotswap" instruction to swap backend addresses: N new servers, not N×N</text>
+</g>
+</svg>
+<figcaption>Figure 2 · Assistant's post-submit failure isolation: each environment has exactly one new service, so a failure pins to it.</figcaption>
+</figure>
+<p>Assistant also exploits its move to microservices for post-submit <strong>failure isolation</strong>: for each of N microservices, an environment runs that service built at head alongside production (or near-production) versions of the other N−1, so a failure isolates to the newly built server. Naively that costs <code>O(N²)</code> servers (N environments × N services each); with <strong>hotswapping</strong> — a request can tell a server to call a different backend address — only N head-built servers are needed, all reusing the same production backends, cutting cost to <code>O(N)</code>.</p>
+<h3>6. TAP: optimistic integration + Build Cop + rollback</h3>
+<p>TAP (Test Automation Platform) is Google's global continuous build, the gateway for almost every change. Its core bet is <strong>optimistic integration</strong>: each team defines only a fast subset of tests (usually unit tests) as presubmit; empirically, a change that passes presubmit has a <strong>95%+</strong> chance of passing everything else, so it's let in for others to use, while larger, slower tests run asynchronously after submission. The average wait to submit is around <strong>11 minutes</strong>, often in the background.</p>
+<figure>
+<svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="t1" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker><marker id="t2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#9b6cf5"/></marker></defs>
+<g font-size="11.5">
+<rect x="10" y="30" width="130" height="56" rx="9" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="1.6"/>
+<text x="75" y="54" text-anchor="middle" fill="#e7ebf1" font-weight="700">Presubmit</text><text x="75" y="72" text-anchor="middle" fill="#cdd3db" font-size="10">fast tests · ~11 min</text>
+<rect x="175" y="30" width="130" height="56" rx="9" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="1.6"/>
+<text x="240" y="54" text-anchor="middle" fill="#e7ebf1" font-weight="700">Land it</text><text x="240" y="72" text-anchor="middle" fill="#cdd3db" font-size="10">true head advances</text>
+<rect x="340" y="30" width="160" height="56" rx="9" fill="rgba(91,157,249,0.26)" stroke="#5b9df9" stroke-width="2.4"/>
+<text x="420" y="54" text-anchor="middle" fill="#e7ebf1" font-weight="700">Batched post-submit</text><text x="420" y="72" text-anchor="middle" fill="#8fbaff" font-size="10">dep graph picks tests</text>
+<rect x="535" y="30" width="155" height="56" rx="9" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="1.6"/>
+<text x="612" y="54" text-anchor="middle" fill="#e7ebf1" font-weight="700">All green</text><text x="612" y="72" text-anchor="middle" fill="#cdd3db" font-size="10">green head advances</text>
+<line x1="140" y1="58" x2="172" y2="58" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#t1)"/>
+<line x1="305" y1="58" x2="337" y2="58" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#t1)"/>
+<line x1="500" y1="58" x2="532" y2="58" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#t1)"/>
+<line x1="420" y1="86" x2="420" y2="128" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#t2)"/>
+<text x="432" y="112" fill="#ff8f8f" font-size="10.5">red</text>
+<rect x="330" y="132" width="180" height="56" rx="9" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="1.6"/>
+<text x="420" y="156" text-anchor="middle" fill="#e7ebf1" font-weight="700">Culprit finding</text><text x="420" y="174" text-anchor="middle" fill="#c9b5f7" font-size="10">split batch · bisect</text>
+<rect x="80" y="132" width="200" height="56" rx="9" fill="rgba(155,108,245,0.24)" stroke="#9b6cf5" stroke-width="2.4"/>
+<text x="180" y="156" text-anchor="middle" fill="#e7ebf1" font-weight="700">Build Cop rolls back</text><text x="180" y="174" text-anchor="middle" fill="#c9b5f7" font-size="10">TAP auto-reverts if confident</text>
+<line x1="330" y1="160" x2="283" y2="160" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#t2)"/>
+<path d="M180,188 C180,232 600,232 612,90" fill="none" stroke="#9b6cf5" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#t2)"/>
+<text x="400" y="242" text-anchor="middle" fill="#cdd3db" font-size="10.5">back to a known-good state; fix forward later</text>
+</g>
+</svg>
+<figcaption>Figure 3 · TAP's workflow: presubmit is only a quick screen; the big tests run in batches after landing; on red, find the culprit, then roll back.</figcaption>
+</figure>
+<p>The price of letting changes in is that bad ones land, so two things come with it. <strong>Culturally</strong>, committing new work on top of known-failing tests is strongly discouraged. <strong>Organizationally</strong>, each team has a <strong>Build Cop</strong> responsible for keeping the project's tests passing no matter who broke them: when notified, they drop everything, find the offending change, and <strong>prefer rollback</strong> — fixing forward is riskier. Any change can be rolled back with two clicks, and TAP now auto-reverts when it's highly confident about a culprit. The book puts it neatly: <strong>tests give us confidence to change; rollbacks give us confidence to undo</strong> — neither works without the other.</p>
+<p><strong>Culprit finding</strong> is hard: there are too many changes a day for TAP to run every test on every change, so it batches related changes, which obscures which one broke a test. TAP automatically splits a failing batch and reruns each change in isolation, and developers have tools to <strong>binary-search</strong> a batch. On <strong>resources</strong>, most tests run on the distributed build-and-test system Forge; Forge and Blaze maintain a near-real-time global dependency graph, from which TAP runs only the minimal set of downstream tests. A neat incentive: changes that trigger fewer tests get scheduled sooner — on a busy day, 100 versus 1,000 triggered tests can mean <strong>tens of minutes</strong> of difference — nudging engineers toward small, focused changes.</p>
+<h3>7. Takeout: four CI makeovers</h3>
+<p>Google Takeout began in 2011 as a data export product and became a platform: APIs for at least 10 other products, and 90+ product plug-ins. Each scenario leaves one reusable practice:</p>
+<ul>
+<li><strong>Config kept breaking dev deploys</strong>: on presubmit, spin up a temporary sandbox per customized instance and check that servers start healthy — this prevented <strong>95%</strong> of broken servers from bad configuration and halved nightly deploy failures. End-to-end tests couldn't go into presubmit, so they moved to post-submit <strong>every two hours</strong> against an RC cut from green head, cutting the culprit set by <strong>12×</strong>.</li>
+<li><strong>Indecipherable logs</strong>: refactor into a parameterized suite with per-item red/green and put a link that searches the logs right in each failure message — the Takeout team's involvement in debugging plug-in failures fell by <strong>35%</strong>.</li>
+<li><strong>Testing "all of Google"</strong>: most failures came from other products' backends; running the same suite continuously against production too lets you separate your new build's problems from upstream releases.</li>
+<li><strong>Never green</strong>: disable failing tests that can't be fixed now <strong>by tagging them with a bug</strong> filed to the owning team; when the bug closes and the test keeps passing, prompt cleanup of the tag. The book names the metric <strong>MTTCU</strong> (mean time to clean up).</li>
+</ul>
+<h2>Key trade-offs and choices</h2>
+<p>One criterion: <strong>how fast, how stable and how high-fidelity a test is decides which slot in a change's life it belongs in</strong>.</p>
+<p class="tcap">Table 1 · Five key CI choices</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Decision</th><th>Option A</th><th>Option B</th><th>The chapter's pick and its cost</th></tr></thead>
+<tbody>
+<tr><th>When to block</th><td>Run every test in presubmit; land only if all pass</td><td>Only fast tests in presubmit; the rest after landing</td><td><strong>B</strong>: 95%+ of changes that pass the fast tests pass everything. Cost: bad changes land, so you need Build Cops and fast rollback</td></tr>
+<tr><th>Submit order</th><td>Serialize submits; no mid-air collisions</td><td>Concurrent submits; accept collisions</td><td>Small repos pick A; at Google's scale only <strong>B</strong>, backstopped by post-submit</td></tr>
+<tr><th>Test backends</th><td>Live backends: highest fidelity</td><td>Hermetic: fakes / sandboxed stack / record-replay</td><td><strong>Hermetic</strong> in presubmit (Assistant 14× faster), live kept for post-submit. Cost: resources and upkeep; record/replay struggles to balance false passes and false failures</td></tr>
+<tr><th>When it's red</th><td>Freeze all commits until green</td><td>Find the root cause; roll back or disable with a bug</td><td><strong>B</strong>, "CI is alerting." Cost: discipline needed so disabled tests don't pile up</td></tr>
+<tr><th>Flaky tests</th><td>Allow multiple attempts</td><td>Pull from presubmit temporarily, track the fix</td><td>Google uses both, with platform-level flake statistics. Cost: retries mask real bugs; removal loses coverage (see Kubernetes in §6)</td></tr>
+</tbody>
+</table></div>
+<p>"We can't afford CI"? The book's answer: count what you already pay for problems that surface only in production. CI isn't a new cost; it's the same cost <strong>shifted left</strong> to a cheaper stage.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/deployment-release-day22.en.html" target="_blank" rel="noopener">System Design · Day 22 Deployment &amp; Release</a> — what comes after CI: canaries, progressive rollout and five-minute automatic rollback, extending "tests to change, rollback to undo" into production</aside>
+<h2>Why it matters / real systems</h2>
+<p>The chapter redefines CI from "a tool" into <strong>a scheduling problem</strong>. Asked in an interview how to design CI for a large team, the answer isn't "run everything every time" but tiers: fast and reliable presubmit; post-submit with dependency-graph test selection, batching and automatic culprit finding; RC promotion through environments; production probers as the last line — plus a Build Cop and one-click rollback.</p>
+<div class="ev">
+<p class="evh">Industry evidence · publicly verifiable</p>
+<ul>
+<li><strong>Google · the book (2020)</strong>: TAP handles <strong>more than 50,000</strong> unique changes and runs <strong>more than four billion</strong> test cases a day; changes that pass presubmit empirically pass the rest <strong>95%+</strong> of the time, with an average submit wait of about 11 minutes; Assistant's hermetic presubmit is <strong>14×</strong> faster. <span class="src"><a href="https://raw.githubusercontent.com/abseil/abseil.github.io/master/resources/swe-book/html/ch23.html" target="_blank" rel="noopener">Software Engineering at Google · Ch23 (abseil's official open edition source) ↗</a></span></li>
+<li><strong>Chromium (Google) · Web Test Expectations docs</strong>: for a failure that can't be rebaselined, between "reverting the patch that caused the failure" and "adding a line to TestExpectations and fixing the bug later," <strong>reverting is strongly preferred</strong>; a test confirmed flaky can be suppressed in TestExpectations with a <code>crbug.com/NNNN</code> bug on the line — the same idea as Takeout's "tag with a bug, then disable." <span class="src"><a href="https://raw.githubusercontent.com/chromium/chromium/main/docs/testing/web_test_expectations.md" target="_blank" rel="noopener">chromium/chromium · docs/testing/web_test_expectations.md ↗</a></span></li>
+<li><strong>Kubernetes project · SIG Testing</strong> (the counterpoint): since merges proceed only when all tests are green, even a small percentage of flakes "results in a lot of pain" for people waiting to merge, so the project has a <strong>"zero-flake" policy</strong>: test jobs must not automatically retry on failure — e2e <code>flakeAttempts=2</code> was dropped as of 2019-12-13 and confirmed as policy in 2023 — and quarantining a flaky test requires an issue labeled <code>priority/critical-urgent</code>. <span class="src"><a href="https://raw.githubusercontent.com/kubernetes/community/master/contributors/devel/sig-testing/flaky-tests.md" target="_blank" rel="noopener">kubernetes/community · sig-testing/flaky-tests.md ↗</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"CI = run every test on every commit" — at scale, the opposite.</strong> Google's presubmit is deliberately incomplete, trading post-submit, rollback and Build Cops for an 11-minute submit wait.</li>
+<li><strong>"When CI is red, stop the line for everyone" — this chapter is in tension with the classic view.</strong> Humble and Farley's <em>Continuous Delivery</em> says fix a broken build before anything else; this chapter calls blanket commit freezes "probably misguided" when the root cause is understood and production is unaffected. They agree on handling it immediately; they differ on whether to freeze everyone.</li>
+<li><strong>Retries are painkillers, not a cure.</strong> The chapter lists "allow multiple attempts" as a common tactic; Kubernetes went the other way and banned automatic retries because they hide real bugs. Which path fits depends on whether you have platform-level flake statistics.</li>
+<li><strong>Disabled tests become debt</strong>: Takeout's lesson is that disabling must carry a bug, be trackable and prompt automatic cleanup — or the suite becomes a growing pile of commented-out old tests.</li>
+<li><strong>Limits:</strong> TAP's optimistic integration rests on a monorepo, a near-real-time global dependency graph and enormous compute. The book admits that a hermetic stack for a large microservice system is very costly, and that isolating failures across upstream services (like Takeout's upstream-staging environment) remains hard.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① CI's modern definition: the <strong>continuous assembling and testing</strong> of a whole fast-moving ecosystem; at its core, deciding which tests run when, against what system under test.</p>
+<p>② Bugs cost more the later they're caught, so build fast feedback loops whose results are accessible and actionable.</p>
+<p>③ Presubmit can't be greedy: cost, false blame from flakes, mid-air collisions. Rule of thumb: only fast, reliable tests.</p>
+<p>④ The repo has a true head and a green head; RCs are usually cut at green, static config is tested with the RC, and artifacts aren't rebuilt across environments.</p>
+<p>⑤ Rerun tests on the RC for sanity, audit, cherry-picks and emergency pushes; run them again on production as probers.</p>
+<p>⑥ CI is alerting shifted left: a flaky test is a false page; chasing 100% green is as costly as chasing 100% uptime.</p>
+<p>⑦ Hermetic tests buy determinism and isolation (Assistant: 14× faster); record/replay is a balancing act between false passes and false failures.</p>
+<p>⑧ TAP: 50,000+ changes and 4B+ test cases a day; optimistic landing + Build Cop + rollback first + batch splitting and bisection + dependency-graph test selection.</p>
+<p>⑨ Disable failing tests only with a bug attached, tracked and auto-cleaned — the suite stays green without forgetting known issues.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Reading this page ≈ getting the core of the chapter; for the full argument and context, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
