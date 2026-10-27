@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Software Engineering at Google Ch 21 · Dependency Management — Book Deep-Read 201</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · Software Engineering at Google · Chapter 21</p>
+<h1>Dependency Management</h1>
+<p class="sub">Software Engineering at Google · Ch 21 · Dependency Management · Titus Winters · 2020</p>
+<p class="langbar"><a href="swegoogle-ch21-dependency-management-book201.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Quick read</button>
+<button data-mode="deep">Deep read</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>No app on your phone was written from scratch. It uses parts other people built, and those parts use more parts, layer upon layer. Those borrowed parts are called "dependencies." This chapter asks: <strong>the owners of those parts can change them at any time, and you have no say — how do you keep the whole machine from falling apart over the years?</strong></p>
+<h2>A strange thing first</h2>
+<p>You'd think a part's version number tells you whether an upgrade is safe: a big version jump means be careful, a small one means go ahead. Google's experience is that <strong>a version number is just the author's guess</strong>. They think "I only fixed a tiny bug," yet some user was quietly relying on that bug. They think "this is a big change," yet you never used the part that changed — and you're still blocked from upgrading.</p>
+<h2>Why the old world is hard</h2>
+<p>Picture a renovation: you hire a carpenter and an electrician, and both use screws from the same factory. The factory releases a new screw with a different thread. The carpenter switches; the electrician sticks with the old one — and your house can only take one kind. <strong>Neither tradesperson did anything wrong, yet your house won't go together.</strong> Worse, you're the one who finds out, and you're neither a carpenter nor an electrician. The bigger the web of parts, the more often "both sides are right, together it fails" happens.</p>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>If you can manage it yourself, don't treat it as an outsider:</strong> Google keeps almost all its code in one giant repository. For parts made inside the company, you can see who uses them and run everyone's checks before changing anything — far easier than negotiating version numbers with strangers.</li>
+<li><strong>Bringing in an outside part is adopting it, not borrowing it:</strong> grab it today for convenience, and years later when a security hole appears, someone has to understand it and be able to upgrade it.</li>
+<li><strong>Run the experiment instead of trusting the guess:</strong> before a part's author changes something, run the checks of everyone who uses it. If they all pass, it's safe — no arguing over whether it "counts" as a big or small change.</li>
+<li><strong>Upgrade in the smallest steps:</strong> don't jump straight to the newest; move only to the version that's just enough, because that's the one the author most likely tried by hand.</li>
+</ul>
+<h2>What it buys you / how to choose</h2>
+<p>For a small project with a few well-maintained parts, version numbers are good enough. When the web reaches thousands of parts and the project must live for decades, put the burden on the part's author: <strong>if you want to change it, first prove you didn't break anyone</strong>. The honest cost: this needs automated checks everywhere and huge amounts of computing to run them — today, only a company at Google's scale manages it, and only inside its own walls.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p><strong>A dependency isn't a one-time loan but a long-term contract; a version number is only the other side's guess, and the reliable answer comes from running the checks of everyone who uses it.</strong></p>
+</div>
+<p class="switch-hint">Want to see why diamond dependencies are nearly hopeless in C++, how SemVer both overconstrains and overpromises, the logic of Minimum Version Selection, how to choose among four dependency models, and the gflags and AppEngine cautionary tales? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>The one-liner</h2>
+<p class="lead">You think dependency management is about picking the right version number; this chapter says a version number is only the provider's <strong>lossy estimate</strong> of compatibility, and at scale SemVer plus a solver both overconstrains and underprotects. Google's answer: <strong>turn dependency-management problems into source-control problems whenever you can</strong>, and in the long run make providers bring evidence from downstream tests — Live at Head.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Dependency</strong>: someone else's library or package your code uses; the libraries it uses in turn are <strong>transitive dependencies</strong>.</li>
+<li><strong>Dependency network / graph</strong>: all dependencies and their requirements, drawn as a graph — nodes are libraries, edges are "who needs which versions of whom."</li>
+<li><strong>API / ABI</strong>: the API is the source-level interface contract; the ABI is the contract between compiled binaries — ABI compatibility means old binaries work with a new library without recompiling.</li>
+<li><strong>Source control / trunk-based development</strong>: everyone commits to one main line instead of maintaining long-lived branches (see Ch 16).</li>
+<li><strong>Monorepo</strong>: the whole company's code in a single repository.</li>
+<li><strong>CI (continuous integration)</strong>: every change is automatically built and tested (see Ch 23).</li>
+<li><strong>Hyrum's Law</strong>: with enough users, every observable behavior of a system will be depended on by somebody (see Ch 1).</li>
+<li><strong>Pinning</strong>: fixing a dependency at one exact version so it doesn't follow upstream.</li>
+<li><strong>CVE</strong>: a publicly registered identifier for a security vulnerability.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>Sixth chapter of Part IV, "Tools," following Ch 16 on version control: Ch 16 handles code you control, this chapter handles <strong>code you don't</strong>; it also sets up Ch 22, "Large-Scale Changes." Real-world counterparts: npm, pip, Maven, Cargo, Go modules.</p>
+<h2>What problem this chapter solves</h2>
+<p>Dependency management governs a network of libraries and packages <strong>we don't control</strong>: how to update between versions, how to describe versions, what changes dependencies may make, and when it's wise to depend on another organization's code. Its boundary with source control is a single question: <strong>does our organization control the development and updates of this subproject?</strong></p>
+<p>In source control, you change a line, run the tests, and see who uses it. In dependency management, upstream changes happen out of your sight and are more likely to break your build. At scale you depend on a whole network, and at some point two dependencies <strong>can't both be satisfied</strong>. The author admits Google has <strong>no firsthand evidence of a solution that works well across organizations at scale</strong>; much of the chapter summarizes what doesn't work.</p>
+<h2>Core ideas, explained</h2>
+<h3>1. Diamond dependencies: the archetype of every conflict</h3>
+<p>The central difficulty is <strong>conflicting requirements</strong>: two nodes in the network demand mutually exclusive things, and you depend on both. The canonical form is the <strong>diamond dependency</strong>, which needs at least three layers:</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 270" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="d1" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker><marker id="d1v" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#9b6cf5"/></marker></defs>
+<g font-size="12">
+<rect x="275" y="15" width="150" height="48" rx="9" fill="rgba(91,157,249,0.24)" stroke="#5b9df9" stroke-width="2.6"/>
+<text x="350" y="36" text-anchor="middle" fill="#e7ebf1" font-weight="700">libuser</text><text x="350" y="53" text-anchor="middle" fill="#8fbaff" font-size="10.5">your code</text>
+<rect x="105" y="105" width="150" height="48" rx="9" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="1.8"/>
+<text x="180" y="126" text-anchor="middle" fill="#e7ebf1" font-weight="700">liba</text><text x="180" y="143" text-anchor="middle" fill="#cdd3db" font-size="10.5">still on v1</text>
+<rect x="445" y="105" width="150" height="48" rx="9" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="1.8"/>
+<text x="520" y="126" text-anchor="middle" fill="#e7ebf1" font-weight="700">libb</text><text x="520" y="143" text-anchor="middle" fill="#cdd3db" font-size="10.5">moved to v2</text>
+<rect x="105" y="195" width="150" height="48" rx="9" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="1.8"/>
+<text x="180" y="216" text-anchor="middle" fill="#e7ebf1" font-weight="700">libbase v1</text><text x="180" y="233" text-anchor="middle" fill="#c9b5f7" font-size="10.5">old interface</text>
+<rect x="445" y="195" width="150" height="48" rx="9" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="1.8"/>
+<text x="520" y="216" text-anchor="middle" fill="#e7ebf1" font-weight="700">libbase v2</text><text x="520" y="233" text-anchor="middle" fill="#c9b5f7" font-size="10.5">incompatible change</text>
+<line x1="315" y1="63" x2="215" y2="102" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#d1)"/>
+<line x1="385" y1="63" x2="485" y2="102" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#d1)"/>
+<line x1="180" y1="153" x2="180" y2="192" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#d1v)"/>
+<line x1="520" y1="153" x2="520" y2="192" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#d1v)"/>
+<text x="350" y="216" text-anchor="middle" fill="#ff8f8f" font-size="12" font-weight="700">✕ one build, one version</text>
+<text x="350" y="234" text-anchor="middle" fill="#7c8593" font-size="10.5">C++: violates the ODR → UB</text>
+</g>
+</svg>
+<figcaption>Figure 1 · Diamond dependency: liba and libb are each fine on their own; only you, depending on both, hit two incompatible versions of libbase.</figcaption>
+</figure>
+<p>libbase makes an incompatible change; liba and libb belong to different organizations and don't upgrade together — one needs v1, the other v2, and libuser has <strong>no general way</strong> to put them together. A diamond can form at any depth. It's more common than it looks: requirements on the OS, language version, or compiler version are all <strong>isomorphic to a hidden node in the graph</strong>.</p>
+<p>Java can cushion this with <strong>shading</strong> (renaming a dependency's symbols so each user carries its own copy); C++ has nearly zero tolerance — two definitions violate the <strong>One Definition Rule</strong> and trigger undefined behavior. But renaming is only half a fix: once <strong>types</strong> cross dependency boundaries — a map from v1 handed to a v2 API — there's no semantically consistent answer.</p>
+<p>When you hit one, you can only <strong>skip forward or backward in versions</strong> to find a compatible set, or patch locally — and <strong>the person who discovers the problem is usually the one who understands it least</strong>: only you, pulling in both, run into it. If a security fix forced the upgrade, downgrading is off the table too. The author boils the whole field down to one question: <strong>how do we avoid conflicting requirements while still allowing change among noncoordinating groups?</strong></p>
+<h3>2. Importing: "it works" vs. "it works in a supported way"</h3>
+<p>Reuse beats rewriting — no one should write their own JSON parser. But once <strong>time</strong> enters, importing isn't free: even if you never intend to upgrade, security bugs, platform changes, and the evolving network can force you to. How expensive will that day be? It depends on the provider's <strong>compatibility promise</strong>. The book compares four:</p>
+<ul>
+<li><strong>C++ standard library</strong>: nearly indefinite backward compatibility, even at the ABI level; with gcc on Linux, most code works over roughly a decade.</li>
+<li><strong>Go</strong>: source compatibility across most releases, no binary compatibility.</li>
+<li><strong>Abseil</strong> (Google's open-source C++ base library): no ABI promise; a limited API promise — <strong>no breaking API change without an automated refactoring tool</strong>. About <strong>250 million lines</strong> of C++ inside Google depend on it; the worst upgrade cost should be "run this tool."</li>
+<li><strong>Boost</strong>: no compatibility promise between versions; it's a proving ground — not about skill, purely about what it promises.</li>
+</ul>
+<p>The key distinction is <strong>programming task vs. software engineering task</strong>: if it only needs to work today and never upgrade, grab as many dependencies as you like and break any rule; once the project must live long, dependencies get expensive. Google encourages asking first: are there tests that pass, who provides it, what compatibility does it aim for, how long will we depend on it, how often does it break, and who will upgrade it and how hard will that be. The author admits: <strong>there's no formula for import vs. reimplement, and Google gets it wrong more often than not.</strong></p>
+<p>How does Google do it? "We could do better." The overwhelming majority of dependencies are internal, so internal dependency management <strong>is really just source control</strong> — by design. External code goes into the monorepo's <code>third_party</code> directory with a low bar: it builds, no duplicate version exists, at least two OWNERS. In the book, Alice imports a package for a pre-vacation demo and gets teammate Bob to sign on; later Charlie depends on it from deep inside Search infrastructure, and it quietly becomes critical. One day a security vulnerability lands: Bob has moved into management, Alice has changed teams, <strong>thousands of projects</strong> depend on it indirectly, nobody understands it, and the upgrade must leap every release accumulated since import. Lesson: raise the ownership bar, make regular upgrades easier, and make "orphaned yet important" harder to happen.</p>
+<h3>3. Four dependency models: who picks the version?</h3>
+<p>A good solution avoids conflicting requirements in a dynamic ecosystem where any node can gain new dependencies at any time; if it does so without assuming version stability, cross-organization visibility and coordination, or vast compute, it's a <strong>great solution</strong>. The author lists the four known options:</p>
+<ul>
+<li><strong>Nothing changes (the static dependency model)</strong>: no API or behavior changes. Every organization starts here, and it suits new ones; but given enough time it is false, and <strong>nobody knows how long you can pretend</strong>.</li>
+<li><strong>Semantic versioning (SemVer)</strong>: a <code>major.minor.patch</code> triple — a major bump may break existing usage, minor only adds features, patch only touches implementation details. Requirements read "libbase ≥ 1.5," and a solver in the package manager finds a version set satisfying every constraint. When none exists, that's <strong>dependency hell</strong>.</li>
+<li><strong>Bundled distribution</strong>: like a Linux distro, <strong>distributors</strong> pick a mutually compatible set, patch, test, and release it as one unit. Users go from "I depend on these 72 libraries at these versions" to "I depend on Red Hat version N."</li>
+<li><strong>Live at Head</strong>: trunk-based development extended to dependencies — unpin, drop SemVer, <strong>always depend on the current version of everything</strong>; before committing, providers use downstream tests and CI to experimentally verify a change is safe.</li>
+</ul>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/complexity-of-theorem-proving-paper52.en.html" target="_blank" rel="noopener">CS Papers Deep-Read · NP-Completeness (Cook 1971)</a> — a footnote notes SemVer constraint solving is proven NP-complete; this explains what "NP-complete" actually means</aside>
+<h3>4. The limits of SemVer: a lossy compression</h3>
+<p>The chapter's sharpest argument: a version number is the provider's <strong>estimate</strong> of how compatible a change is for existing users, yet solvers treat it like a true/false value in a SAT problem — <strong>an absolute</strong>. We've built all our version-satisfaction logic on a shaky foundation, and it fails in two directions:</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg">
+<g font-size="12">
+<text x="250" y="22" text-anchor="middle" fill="#8fbaff" font-weight="700">Reality: broke no one</text>
+<text x="525" y="22" text-anchor="middle" fill="#8fbaff" font-weight="700">Reality: broke someone</text>
+<text x="60" y="88" text-anchor="middle" fill="#cdd3db" font-weight="700">Version</text><text x="60" y="106" text-anchor="middle" fill="#cdd3db" font-weight="700">says "breaking"</text>
+<text x="60" y="183" text-anchor="middle" fill="#cdd3db" font-weight="700">Version</text><text x="60" y="201" text-anchor="middle" fill="#cdd3db" font-weight="700">says "safe"</text>
+<rect x="115" y="40" width="270" height="88" rx="9" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5" stroke-width="2.2"/>
+<text x="250" y="66" text-anchor="middle" fill="#e7ebf1" font-weight="700">Overconstrains</text>
+<text x="250" y="88" text-anchor="middle" fill="#c9b5f7" font-size="10.5">only unused Bar changed → 2.0</text>
+<text x="250" y="106" text-anchor="middle" fill="#c9b5f7" font-size="10.5">solver refuses → needless dependency hell</text>
+<rect x="400" y="40" width="250" height="88" rx="9" fill="rgba(91,157,249,0.08)" stroke="rgba(91,157,249,0.4)" stroke-width="1.4"/>
+<text x="525" y="80" text-anchor="middle" fill="#cdd3db">Accurate</text><text x="525" y="99" text-anchor="middle" fill="#7c8593" font-size="10.5">the case SemVer assumes</text>
+<rect x="115" y="140" width="270" height="88" rx="9" fill="rgba(91,157,249,0.08)" stroke="rgba(91,157,249,0.4)" stroke-width="1.4"/>
+<text x="250" y="180" text-anchor="middle" fill="#cdd3db">Accurate</text><text x="250" y="199" text-anchor="middle" fill="#7c8593" font-size="10.5">the case SemVer assumes</text>
+<rect x="400" y="140" width="250" height="88" rx="9" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5" stroke-width="2.2"/>
+<text x="525" y="166" text-anchor="middle" fill="#e7ebf1" font-weight="700">Overpromises</text>
+<text x="525" y="188" text-anchor="middle" fill="#c9b5f7" font-size="10.5">patch changes log format / result order</text>
+<text x="525" y="206" text-anchor="middle" fill="#c9b5f7" font-size="10.5">solver allows → build break or prod bug</text>
+</g>
+</svg>
+<figcaption>Figure 2 · SemVer's two distortions: "breaking" can only be judged against specific usage, yet a version number is one figure detached from usage.</figcaption>
+</figure>
+<p><strong>Overconstraining</strong>: libraries almost always contain independent interfaces. Suppose libbase has just two functions, Foo and Bar, and liba and libb use only Foo. The maintainer breaks Bar and must bump the major version; the solver only accepts 1.x and rejects 2.0 — though everything would work together perfectly. "I broke something, so bump major" is <strong>only accurate at the granularity of a single API</strong>.</p>
+<p><strong>Overpromising</strong>: SemVer assumes changes fall into three buckets — breaking, purely additive, non-API-impacting. So which bucket holds adding 1 millisecond of latency to a time-sensitive API? Changing log format, dependency import order, or the order of an "unordered" stream? Per <strong>Hyrum's Law</strong>, at scale each of these breaks somebody. The term "breaking change" itself misleads: removing an unused API is theoretically breaking but safe in practice; Hyrum-style changes are theoretically safe but break in practice. <strong>A change in isolation is neither breaking nor nonbreaking — it can only be judged in the context of how it's used</strong>, which is exactly the information SemVer's formulation lacks.</p>
+<p>There's also <strong>incentive</strong>: maintainers bear only a tiny fraction of the cost of a major bump. The author likes Go and Clojure: a major bump should be a <strong>whole new package</strong>. Add <strong>human error</strong> — semantic changes can't be detected by tools, so which digit to bump always comes down to someone's judgment.</p>
+<h3>5. Minimum Version Selection: take the smallest step</h3>
+<p>In 2018, while designing package management for Go, Google's Russ Cox proposed <strong>Minimum Version Selection</strong> (MVS). Most solvers pick the <strong>newest</strong> versions when downstream upgrades are needed; MVS does the opposite: if liba requires libbase ≥ 1.7, use 1.7 even when 1.8 exists. The reasoning: whoever wrote "≥ 1.7" <strong>almost certainly had 1.7 installed</strong>, so if they did even basic testing before publishing, that pair has been tried together. Just as committing an hour of work is safer than dumping a year's at once, <strong>dependencies should move only as far as needed</strong>. The author's verdict is measured: a manifest improvement on how SemVer is used, but whether it makes SemVer "good enough" lacks empirical evidence.</p>
+<h3>6. The infinite-resources thought experiment: evidence over estimates</h3>
+<p>The industry uses SemVer because it needs only local information and assumes no tests or compute. But dependency networks only grow <strong>inside a single organization</strong> or <strong>in the open-source ecosystem, where source is visible</strong> — information about how downstream uses you is already out there. If compute were free, the truth of "is this change safe?" would come from <strong>running the affected downstream tests</strong>: if they pass, the change is good — no classifying, no estimating. With limited resources, prioritize heavily used, high-signal dependents and relax the goal to "risk mitigation."</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 220" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="d3" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker><marker id="d3v" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#9b6cf5"/></marker></defs>
+<g font-size="12">
+<rect x="15" y="70" width="140" height="56" rx="9" fill="rgba(91,157,249,0.16)" stroke="#5b9df9" stroke-width="2"/>
+<text x="85" y="94" text-anchor="middle" fill="#e7ebf1" font-weight="700">Provider change</text><text x="85" y="112" text-anchor="middle" fill="#cdd3db" font-size="10.5">libbase · uncommitted</text>
+<rect x="195" y="70" width="160" height="56" rx="9" fill="rgba(91,157,249,0.24)" stroke="#5b9df9" stroke-width="2.6"/>
+<text x="275" y="94" text-anchor="middle" fill="#e7ebf1" font-weight="700">Run downstream tests</text><text x="275" y="112" text-anchor="middle" fill="#8fbaff" font-size="10.5">CI of liba · libb · …</text>
+<rect x="400" y="20" width="285" height="56" rx="9" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="1.8"/>
+<text x="542" y="44" text-anchor="middle" fill="#e7ebf1" font-weight="700">All pass → commit</text><text x="542" y="62" text-anchor="middle" fill="#cdd3db" font-size="10.5">whether it "counts" as patch or major</text>
+<rect x="400" y="120" width="285" height="56" rx="9" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5" stroke-width="2"/>
+<text x="542" y="144" text-anchor="middle" fill="#e7ebf1" font-weight="700">Hundreds fail → fix downstream</text><text x="542" y="162" text-anchor="middle" fill="#c9b5f7" font-size="10.5">or ship a refactoring tool, then commit</text>
+<line x1="155" y1="98" x2="192" y2="98" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#d3)"/>
+<line x1="355" y1="88" x2="397" y2="52" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#d3)"/>
+<line x1="355" y1="108" x2="397" y2="144" stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#d3v)"/>
+<text x="350" y="208" text-anchor="middle" fill="#7c8593" font-size="10.5">cost moves from "every dependent upgrades on its own" to "whoever makes the change"</text>
+</g>
+</svg>
+<figcaption>Figure 3 · Live at Head: compatibility comes not from a declared version but from downstream test results; the provider owns migration for breaking changes.</figcaption>
+</figure>
+<p>Open source is far from this: not every dependency has unit tests; most package managers can't show <strong>who depends on a package</strong> (reverse edges); most developers lack test clusters; and dependencies are commonly pinned, so you can't run a change through downstream tests. Then ask: "against which version of each dependency do we test?" Testing every historical combination would burn staggering compute even by Google's standards; the obvious simplification is <strong>test the current stable version</strong> — so the infinite-resources optimum <strong>is effectively Live at Head</strong>. What remains open is whether it works with practical resources and whether providers will accept the testing responsibility.</p>
+<h3>7. Exporting: open-sourcing a library isn't free charity</h3>
+<p>Flip it around: when your code becomes someone's dependency, poor maintenance hurts your reputation, and out-of-sync internal and external versions mean every fork gets expensive. Two cases:</p>
+<ul>
+<li><strong>gflags</strong>: around 2006 Google open-sourced its C++ command-line flags library. It couldn't yet do large-scale refactorings, so internal code couldn't move to the open version, and outside patches had legal issues and couldn't flow back; once the original authors left, it rotted and was forked externally. From about 2008 to 2017 a few projects relied on the common subset of the two versions; when internal implementation details that were observable but undocumented changed, they broke wholesale, and an optimization worth <strong>some thousands of aggregate CPUs</strong> across the fleet was significantly delayed.</li>
+<li><strong>AppEngine</strong>: in 2014 a Python runtime upgrade was tied to a C++ compiler upgrade, but paying customers couldn't or wouldn't migrate (some couldn't afford the resource changes of moving from 32-bit to 64-bit). So all C++ code AppEngine depended on had to stay compatible with both old and new compilers — <strong>for almost three years</strong>.</li>
+</ul>
+<p>Takeaway: <strong>external users of an API cost far more to maintain than internal ones</strong>. That's not "don't release," but "don't release without a plan, and a mandate, to support it long term."</p>
+<h2>Key trade-offs and choices</h2>
+<p>Criteria: <strong>can you see and test downstream, how big is the network, how long must it live</strong>.</p>
+<p class="tcap">Table 1 · Four dependency models</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Model</th><th>Who picks versions</th><th>Fits</th><th>Cost / failure mode</th></tr></thead>
+<tbody>
+<tr><th>Nothing changes</th><td>No choice needed</td><td>New projects and organizations, first few years</td><td>Eventually false, and you don't know when; one security fix can force the whole network to update</td></tr>
+<tr><th>SemVer + solver</th><td>Algorithm solves the constraints</td><td>Few deps, responsible maintainers, fine-grained, expected usage</td><td>Overconstrains (dependency hell) and overpromises (silent breakage) at once; worse with scale</td></tr>
+<tr><th>SemVer + MVS</th><td>Lowest version meeting constraints</td><td>Same, plus more reproducible builds</td><td>Still relies on human compatibility estimates; benefit unproven</td></tr>
+<tr><th>Bundled distribution</th><td>Dedicated distributors</td><td>Outside users relying on one distribution</td><td>Distributors must keep integrating, testing, patching; lower layers tend to lag</td></tr>
+<tr><th>Live at Head</th><td>Always latest; safety proven by downstream tests</td><td>Monorepos / orgs that can see all dependents</td><td>Needs ubiquitous tests and CI, lots of compute; providers own migration; unproven across orgs at scale</td></tr>
+</tbody>
+</table></div>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/api-design-day9.en.html" target="_blank" rel="noopener">System Design · Day 9 API Design</a> — the provider's side of "a dependency is a contract": versioning, compatible evolution, and why every caller pays for a breaking change</aside>
+<h2>Why it matters / in real systems</h2>
+<p>The author argues dependency management may be becoming <strong>the most important problem in software engineering policy</strong>. When an architecture review debates "should we import this package" or "should we split into many repos," the chapter's verdict is: <strong>all else equal, prefer source-control problems over dependency-management problems</strong> — drawing the "organization" boundary wider is often a good trade. If an interviewer asks whether SemVer is enough, recite the three preconditions: responsible, accurate providers; fine-grained dependencies; all usage within expected usage. All three can hold at small scale; at large scale they rarely all stay true over time.</p>
+<div class="ev">
+<p class="evh">Industry evidence · public sources</p>
+<ul>
+<li><strong>Google · Abseil's "Why Adopt Abseil?"</strong>: explicitly recommends users live at head, promises "if we need to refactor an API that you depend on, we will provide a tool," and says diamond dependency issues can only be avoided by never changing or by ensuring there aren't multiple versions — "We prefer the latter"; users who don't live at head get supported branches marked roughly every 6 months and supported for 2 years. <span class="src"><a href="https://raw.githubusercontent.com/abseil/abseil.github.io/master/about/philosophy.md" target="_blank" rel="noopener">abseil/abseil.github.io · about/philosophy.md ↗</a></span></li>
+<li><strong>Google · Abseil Compatibility Guidelines</strong>: states that "at scale, every change is potentially a breaking change for some user"; no ABI promise, and users must not touch anything marked <code>internal</code> — "providers should be clear about what they promise," in practice. <span class="src"><a href="https://raw.githubusercontent.com/abseil/abseil.github.io/master/about/compatibility.md" target="_blank" rel="noopener">abseil/abseil.github.io · about/compatibility.md ↗</a></span></li>
+<li><strong>The SemVer spec itself</strong>: motivated by escaping "dependency hell," and all three rules are bounded by "the API" — exactly why it can't see Hyrum-style behavioral dependence. <span class="src"><a href="https://raw.githubusercontent.com/semver/semver/master/semver.md" target="_blank" rel="noopener">semver/semver · semver.md ↗</a></span></li>
+<li><strong>Google · the book and Russ Cox</strong>: the gflags and AppEngine cases come from this chapter; MVS comes from Russ Cox's "Minimal Version Selection" (February 2018), later the version-selection algorithm of Go modules. <span class="src"><a href="https://raw.githubusercontent.com/abseil/abseil.github.io/master/resources/swe-book/html/ch21.html" target="_blank" rel="noopener">Software Engineering at Google · Ch21 (official open edition source on abseil) ↗</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"Patch versions are safe" — no.</strong> Under Hyrum's Law, reordering, log-format changes, or added latency all break someone.</li>
+<li><strong>"A major bump always breaks something" — also no.</strong> If only an interface you don't use changed, SemVer needlessly locks you in dependency hell.</li>
+<li><strong>"Shading / side-by-side versions solve diamonds" — only half.</strong> No fix once types cross dependencies; in C++ it's undefined behavior.</li>
+<li><strong>"Two OWNERS means someone maintains it," "open-sourcing is pure charity" — Alice and gflags say otherwise.</strong></li>
+<li><strong>Debates and limits:</strong> the author admits Live at Head is theoretically sound but unproven at scale; it leans heavily on a monorepo, ubiquitous tests, and compute, so it's hard to transplant to an ordinary company or open source; MVS is unproven too. But the core claim — "a version number is an estimate, tests are evidence" — hasn't aged.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① Dependency management = managing how a network of code <strong>we don't control</strong> changes over time; the line from source control is "does our organization control this subproject?"</p>
+<p>② All else equal, <strong>prefer source-control problems</strong>: most of Google's internal dependencies are, by design, just source control.</p>
+<p>③ The diamond dependency is the archetype of conflicting requirements; shading is half a fix, and C++ has nearly zero tolerance.</p>
+<p>④ Importing is nearly free for a programming task, not for a software engineering task: weigh the compatibility promise and who will upgrade.</p>
+<p>⑤ Four models — nothing changes, SemVer, bundled distribution, Live at Head — differ in <strong>who picks the version</strong>.</p>
+<p>⑥ SemVer is a <strong>lossy estimate</strong> of human-judged risk that solvers treat as absolute: it overconstrains (dependency hell) and overpromises (silent breakage).</p>
+<p>⑦ MVS moves only as far as needed, closest to what the author actually tested; an improvement, but unproven.</p>
+<p>⑧ With infinite resources, "is it safe?" comes from downstream tests — the optimum is effectively Live at Head, with the cost on providers.</p>
+<p>⑨ Exporting is expensive too: gflags rotted and forked, AppEngine was locked in for almost three years.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Reading this page ≈ getting the core of the chapter; for the full argument and context, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
