@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Software Engineering at Google Ch 22 · Large-Scale Changes — Book Deep-Read 202</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · Software Engineering at Google · Chapter 22</p>
+<h1>Large-Scale Changes</h1>
+<p class="sub">Software Engineering at Google · Ch 22 · Large-Scale Changes · Hyrum Wright · 2020</p>
+<p class="langbar"><a href="swegoogle-ch22-large-scale-changes-book202.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Quick read</button>
+<button data-mode="deep">Deep read</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>A big company's software is a huge pile of files written by tens of thousands of engineers together. Suppose one "old part" that everybody uses has to be swapped for a new one — and it's used in hundreds of thousands of places. How do you swap it? That's this chapter: <strong>how to safely pull off a "replace it everywhere" job in an enormous codebase that someone is always editing.</strong></p>
+<h2>A strange thing first</h2>
+<p>You'd think that the bigger the company and the better its tools, the more you can change in one go. Google found the opposite: <strong>the bigger the codebase and the more people in it, the smaller the change you can actually make and hand in all at once</strong>. So they gave up on "do it all at once" and switched to "split it into thousands of small changes and feed them in gradually."</p>
+<h2>Why the old way is hard</h2>
+<p>Picture replacing the water pipes in a tower block with thousands of flats. <strong>Option one:</strong> post a notice telling every flat to replace their own pipes — nobody wants to pay for it, some will drag their feet forever, and every flat has to learn from scratch how it's done. <strong>Option two:</strong> pick a weekend, shut off the water for the whole building and swap everything at once — but there is never a moment when nobody is using water, and if something leaks halfway through, good luck finding which of thousands of joints wasn't tightened.</p>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>Whoever built the pipes replaces them:</strong> the team that understands the part does the job centrally, instead of handing it out to every household.</li>
+<li><strong>Fit an adapter first:</strong> make the old and new fittings work side by side, swap flats over one by one, then remove the adapter. The building never loses water.</li>
+<li><strong>Let machines do the heavy lifting:</strong> a program writes the changes in bulk, then automatically splits them into small packages by "floor." Each package is checked, signed for and delivered on its own; if one has a problem, only that one is sent back.</li>
+<li><strong>Carpool the checks:</strong> small changes rarely interfere with each other, so a batch rides through checking together, and is only pulled apart when something fails.</li>
+<li><strong>Install a gate against backsliding:</strong> once the job is done, anyone who tries to install an old pipe gets stopped at inspection.</li>
+</ul>
+<h2>What it buys you / how to choose</h2>
+<p>With this ability, many decisions that used to be "set in stone forever" — what a function is called, where a part lives — become ones you can take back. For a few dozen edits, just do them by hand; for hundreds or thousands, learn to use tools that do it in bulk. The honest cost: all of this rests on <strong>thorough automatic checks and a uniform tooling environment</strong> — old code without good tests is code nobody dares touch.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p><strong>Don't expect to make a huge change in one shot: split it into many small changes that can each be checked, delivered and undone on their own, let machines do the heavy work, and let the people who know the system own it.</strong></p>
+</div>
+<p class="switch-hint">Want to see why atomic commits lose to scale, how Rosie shards and mails changes, how the TAP "train" saves test runs, the real numbers behind the scoped_ptr migration, and the trade-offs of global approvers and "cattle vs. pets"? <a data-mode="deep">→ Switch to the deep read</a></p>
+</div>
+<div class="mode mode-deep" hidden>
+<h2>One line</h2>
+<p class="lead">You'd think the safest way to change a whole codebase is one atomic commit. This chapter says that <strong>as the codebase and its engineers grow, the largest feasible atomic change actually shrinks</strong>. Google's answer is to break one logical large-scale change (LSC) into thousands of pieces that can each be <strong>tested, reviewed, committed and rolled back independently</strong>, driven centrally with tooling by the infrastructure teams who understand the change — which turns many "can never change this" technical decisions into reversible ones.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Commit / atomic commit</strong>: one operation that saves a set of edits into the repository; "atomic" means all of it takes effect or none of it does.</li>
+<li><strong>Monorepo</strong>: the whole company's code lives in one repository, visible to almost everyone (see Ch16).</li>
+<li><strong>Refactoring</strong>: changing how code is written or structured without changing what the program does.</li>
+<li><strong>Merge conflict</strong>: a file you edited was changed by someone else before you committed, so the edits must be reconciled.</li>
+<li><strong>Presubmit</strong>: tests and rule checks that run automatically before a change is committed.</li>
+<li><strong>CI / TAP</strong>: continuous integration builds and tests every change automatically; TAP is Google's CI platform (see Ch23).</li>
+<li><strong>Transitive closure</strong>: every target that depends on a file directly or indirectly — all the tests a change to it could affect.</li>
+<li><strong>AST (abstract syntax tree)</strong>: the tree the compiler parses code into; editing code by structure rather than by text relies on it.</li>
+<li><strong>Flaky test</strong>: an unstable test that sometimes passes and sometimes fails on the same code.</li>
+<li><strong>Type alias</strong>: a second name for the same type, so old and new names can be mixed freely.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The seventh chapter of Part IV, "Tools." It follows Ch21 on dependency management — Live at Head presumes that providers can fix downstream code themselves, and this chapter is about exactly that capability; it is also how Ch15's deprecations get carried out, and it leads into Ch23 on continuous integration. Real-world counterparts: company codemods, cross-repository bulk upgrades and major-version migrations.</p>
+<h2>The problem this chapter tackles</h2>
+<p>The definition: an LSC is <strong>a set of changes that are logically related but cannot practically be submitted as a single atomic unit</strong>. That may be because there are too many files for the tooling to commit at once, because the change is so large it would always hit merge conflicts, or simply because of repository topology — across many federated repos, atomic commits may not even be possible. Motivations fall into four buckets: cleaning up common antipatterns with codebase-wide analysis, replacing uses of deprecated library features, enabling low-level infrastructure work such as compiler upgrades, and moving users from an old system to a new one.</p>
+<p>Scale: infrastructure teams routinely need to change <strong>hundreds of thousands</strong> of references; the largest cases have touched <strong>millions</strong>. Today <strong>10%–20%</strong> of the changes in a project come from LSCs, written by people who don't work on that project. The largest series of LSCs ever run removed <strong>more than one billion lines</strong> of code from the repository in three days. Without this capability, the codebase would atrophy under its own weight.</p>
+<p>Why not just "ship a new class and tell everyone to migrate"? First, <strong>the expertise sits with the infrastructure team</strong>: making every team relearn it is globally wasteful, while a central team sees errors fall into a few categories and can keep a playbook. Second, <strong>nobody likes unfunded mandates</strong>: the new system's benefits are diffused across the organization, so no single team is motivated to move, and organic migrations almost never finish — new code keeps copying the old idiom. Having the team that wants the old system gone pay for the migration <strong>internalizes</strong> that externality, with economies of scale on top.</p>
+<h2>The core ideas, in depth</h2>
+<h3>1. Why atomic commits lose to scale</h3>
+<p>Ideally every logical change is one atomic commit that can be tested, reviewed and submitted. As the repo and its headcount grow, that ideal stops being feasible. The book lists six barriers:</p>
+<figure>
+<svg viewBox="0 0 700 270" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<g font-size="12">
+<text x="170" y="22" fill="#8fbaff" font-weight="700" text-anchor="middle">Atomic: one commit, 10,000 files</text>
+<text x="530" y="22" fill="#8fbaff" font-weight="700" text-anchor="middle">LSC: independently committable shards</text>
+<rect x="90" y="95" width="160" height="80" rx="10" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5" stroke-width="2.4"/>
+<text x="170" y="130" fill="#e7ebf1" font-weight="700" text-anchor="middle">One giant commit</text>
+<text x="170" y="150" fill="#c9b5f7" font-size="10.5" text-anchor="middle">all or nothing</text>
+<text x="15" y="62" fill="#ff8f8f" font-size="11">✕ VCS can't handle it</text>
+<text x="190" y="62" fill="#ff8f8f" font-size="11">✕ merge conflicts</text>
+<text x="15" y="215" fill="#ff8f8f" font-size="11">✕ 1 failure in 10k files</text>
+<text x="180" y="215" fill="#ff8f8f" font-size="11">✕ dozens of approvers</text>
+<text x="170" y="250" fill="#7c8593" font-size="10.5" text-anchor="middle">one error → roll back everything</text>
+<line x1="350" y1="40" x2="350" y2="255" stroke="rgba(91,157,249,0.25)" stroke-dasharray="4 4"/>
+<g fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="1.5">
+<rect x="395" y="50" width="60" height="38" rx="7"/><rect x="465" y="50" width="60" height="38" rx="7"/><rect x="535" y="50" width="60" height="38" rx="7"/><rect x="605" y="50" width="60" height="38" rx="7"/>
+<rect x="395" y="100" width="60" height="38" rx="7"/><rect x="465" y="100" width="60" height="38" rx="7"/><rect x="605" y="100" width="60" height="38" rx="7"/>
+<rect x="395" y="150" width="60" height="38" rx="7"/><rect x="465" y="150" width="60" height="38" rx="7"/><rect x="535" y="150" width="60" height="38" rx="7"/><rect x="605" y="150" width="60" height="38" rx="7"/>
+</g>
+<rect x="535" y="100" width="60" height="38" rx="7" fill="rgba(155,108,245,0.2)" stroke="#9b6cf5" stroke-width="2.2"/>
+<g fill="#8fbaff" font-size="11" text-anchor="middle">
+<text x="425" y="74">shard ✓</text><text x="495" y="74">shard ✓</text><text x="565" y="74">shard ✓</text><text x="635" y="74">shard ✓</text>
+<text x="425" y="124">shard ✓</text><text x="495" y="124">shard ✓</text><text x="635" y="124">shard ✓</text>
+<text x="425" y="174">shard ✓</text><text x="495" y="174">shard ✓</text><text x="565" y="174">shard ✓</text><text x="635" y="174">shard ✓</text>
+</g>
+<text x="565" y="124" fill="#ff8f8f" font-size="11" font-weight="700" text-anchor="middle">shard ✕</text>
+<text x="530" y="215" fill="#cdd3db" font-size="11" text-anchor="middle">each shard: own tests · own reviewer · own submit</text>
+<text x="530" y="250" fill="#7c8593" font-size="10.5" text-anchor="middle">one error → back out that shard, regenerate it</text>
+</g>
+</svg>
+<figcaption>Figure 1 · Two ways to deliver the same logical change: the blast radius of a failure shrinks from the whole change to a single shard.</figcaption>
+</figure>
+<ul>
+<li><strong>Technical limits</strong>: most version control operations scale linearly with change size; thousands of files may exhaust memory, and in centralized systems a big commit blocks other users.</li>
+<li><strong>Merge conflicts</strong>: the more files and the more engineers, the likelier a conflict before you submit. A small company can sneak a whole-repo change in on a weekend; at a global company, somebody is always committing.</li>
+<li><strong>Haunted graveyards</strong> (borrowed from a Google SRE mantra): ancient, obtuse code that nobody dares touch yet sits on a revenue-critical path — it stalls entire migrations and compiler upgrades. The cure is good old-fashioned testing: with thorough tests, even the oldest code can be changed with confidence.</li>
+<li><strong>Heterogeneity</strong>: LSCs work only if computers do most of the work, and computers need consistent environments; when every project has its own VCS, CI, formatting rules and special checks, bulk changes grind to a halt.</li>
+<li><strong>Testing</strong>: finding why a 25-file change failed is easy; finding one failure in a 10,000-file change is a needle in a haystack. The cost is that small changes rerun the same tests many times — Google's call is that <strong>engineer time spent chasing failures is far more expensive than compute</strong>, though the authors note that trade-off may not hold for every organization.</li>
+<li><strong>Code review</strong>: every change needs review, LSCs included; splitting into shards is what keeps that humanly possible.</li>
+</ul>
+<p>Conversely, once the capability exists, <strong>even filling potholes pays off</strong>: two early Google headers, <code>stl_util.h</code> and <code>map-util.h</code>, used different separators, and engineers kept guessing wrong and waiting through a failed compile; with LSC tooling, fixing that single character took only a couple of weeks of background effort.</p>
+<h3>2. Four pieces of infrastructure: insight, sharding, testing, language</h3>
+<p><strong>Codebase insight</strong>: you need both textual search and semantic analysis. The Kythe semantic index answers "who calls this function?" and "which classes derive from this one?"; ClangMR, JavacFlume and Refaster use compiler-based indices to run highly parallel transformations over the AST; small jobs can get by with sed, regexes or a shell script. The hard requirement: <strong>human effort must scale sublinearly with the codebase</strong> — generating all the changes should take roughly the same human time regardless of repo size. Rule of thumb: <strong>beyond about 500 edits</strong>, learning the generation tools usually beats editing by hand; for seasoned "code janitors" the threshold is lower.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/super-individual/refactor-eng-day20.en.html" target="_blank" rel="noopener">Super Individual · Day 20 Refactoring with AI</a> — deterministic mechanical rewrites go to codemods, judgment calls go to LLMs: this section's "tool-generated changes" revisited for the AI era</aside>
+<p><strong>Change management (Rosie)</strong>: arguably the single most important piece — it splits the master change <strong>along project boundaries and ownership rules</strong> into shards that can be committed atomically, and runs each through its own test–mail–submit pipeline. Because Rosie is a heavy user of shared infrastructure, it <strong>caps the number of outstanding shards per LSC, runs at lower priority</strong>, and negotiates with the test platform how much load it may generate.</p>
+<p><strong>Testing</strong>: since a shard can contain arbitrary files, project presubmits aren't used; instead each shard runs every test in its <strong>transitive closure</strong>.</p>
+<p><strong>Language support</strong>: features like type aliases and forwarding functions let old and new systems coexist so users can be migrated <strong>non-atomically</strong>; languages without them are hard to migrate incrementally. Statically typed languages are far easier to change automatically than dynamic ones like Python, Ruby and JavaScript — the compiler rejects invalid transformations before tests even run. Finally, <strong>automatic formatters</strong> (clang-format, google-java-format) run as a separate pass so machine-made changes look human-written — the authors say large-scale automated changes would never have become accepted at Google without them.</p>
+<h3>3. The process: authorize → create → shard and submit → clean up</h3>
+<figure>
+<svg viewBox="0 0 700 250" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="p1" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker><marker id="p1v" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#9b6cf5"/></marker></defs>
+<g font-size="12">
+<rect x="10" y="20" width="150" height="56" rx="9" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="1.8"/>
+<text x="85" y="44" fill="#e7ebf1" font-weight="700" text-anchor="middle">① Authorize</text><text x="85" y="62" fill="#cdd3db" font-size="10.5" text-anchor="middle">short doc + ~12-person list</text>
+<rect x="185" y="20" width="150" height="56" rx="9" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="1.8"/>
+<text x="260" y="44" fill="#e7ebf1" font-weight="700" text-anchor="middle">② Create</text><text x="260" y="62" fill="#cdd3db" font-size="10.5" text-anchor="middle">tools emit global change</text>
+<rect x="360" y="20" width="150" height="56" rx="9" fill="rgba(91,157,249,0.26)" stroke="#5b9df9" stroke-width="2.6"/>
+<text x="435" y="44" fill="#e7ebf1" font-weight="700" text-anchor="middle">③ Rosie shards</text><text x="435" y="62" fill="#8fbaff" font-size="10.5" text-anchor="middle">by project &amp; ownership</text>
+<rect x="535" y="20" width="150" height="56" rx="9" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="1.8"/>
+<text x="610" y="44" fill="#e7ebf1" font-weight="700" text-anchor="middle">④ Clean up</text><text x="610" y="62" fill="#c9b5f7" font-size="10.5" text-anchor="middle">checks block backsliding</text>
+<line x1="160" y1="48" x2="182" y2="48" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#p1)"/>
+<line x1="335" y1="48" x2="357" y2="48" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#p1)"/>
+<line x1="510" y1="48" x2="532" y2="48" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#p1)"/>
+<line x1="435" y1="76" x2="435" y2="104" stroke="#5b9df9" stroke-width="1.4" stroke-dasharray="4 3"/>
+<text x="350" y="100" fill="#7c8593" font-size="10.5" text-anchor="middle">every shard runs through:</text>
+<rect x="60" y="112" width="170" height="56" rx="9" fill="rgba(91,157,249,0.1)" stroke="#5b9df9" stroke-width="1.5"/>
+<text x="145" y="136" fill="#e7ebf1" font-weight="700" text-anchor="middle">Test</text><text x="145" y="154" fill="#cdd3db" font-size="10.5" text-anchor="middle">TAP, transitive closure</text>
+<rect x="265" y="112" width="170" height="56" rx="9" fill="rgba(91,157,249,0.1)" stroke="#5b9df9" stroke-width="1.5"/>
+<text x="350" y="136" fill="#e7ebf1" font-weight="700" text-anchor="middle">Mail for review</text><text x="350" y="154" fill="#cdd3db" font-size="10.5" text-anchor="middle">OWNERS or global approver</text>
+<rect x="470" y="112" width="170" height="56" rx="9" fill="rgba(91,157,249,0.1)" stroke="#5b9df9" stroke-width="1.5"/>
+<text x="555" y="136" fill="#e7ebf1" font-weight="700" text-anchor="middle">Submit</text><text x="555" y="154" fill="#cdd3db" font-size="10.5" text-anchor="middle">project checks once more</text>
+<line x1="230" y1="140" x2="262" y2="140" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#p1)"/>
+<line x1="435" y1="140" x2="467" y2="140" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#p1)"/>
+<path d="M145,168 C145,218 260,222 260,80" fill="none" stroke="#9b6cf5" stroke-width="1.5" stroke-dasharray="5 4" marker-end="url(#p1v)"/>
+<text x="250" y="232" fill="#c9b5f7" font-size="10.5" text-anchor="middle">failure or conflict: fix the tool, regenerate — losing a shard is cheap</text>
+</g>
+</svg>
+<figcaption>Figure 2 · The four phases of an LSC: the real pipeline is step ③, where each shard independently goes test → review → submit, and failed shards go back to be regenerated.</figcaption>
+</figure>
+<p><strong>Authorization</strong>: the author writes a brief document covering the reason, how many shards the change is expected to produce, and an FAQ for engineers unfamiliar with it, and gets "domain review" from the owners of the API being refactored. The proposal goes to an email list of <strong>about a dozen</strong> people who oversee the process. The committee's most common edit is to route all reviews to a single <strong>global approver</strong>. It approves liberally; the only changes it has rejected outright were dangerous (converting every <code>NULL</code> to <code>nullptr</code>) or extremely low-value (British to American spelling).</p>
+<p><strong>Creation</strong>: as automated as possible, so the parent change can be regenerated whenever users backslide into the old idiom or textual conflicts appear. When tools can't do it, generation can even be sharded across humans — see RoseHub in §6.</p>
+<p><strong>Sharding and submitting</strong>: after Rosie shards the change, each shard is tested; once it passes, Rosie picks the OWNERS member most likely to understand that shard and adds more reviewers automatically if someone is unresponsive. Project-specific checks such as change-description formatting are selectively disabled, and <strong>presubmit failures that predate the change are ignored</strong> — keeping a project free of preexisting failures is the local owners' side of the social contract with infrastructure teams.</p>
+<p><strong>Cleanup</strong>: "done" varies by LSC, from deleting the old system outright to migrating only high-value references. But almost every LSC needs <strong>protection against backsliding</strong>: Google uses Tricorder to flag new uses of deprecated objects at review time.</p>
+<h3>4. Testing: the TAP "train" and an attitude toward flakiness</h3>
+<p>The core insight: LSCs <strong>rarely interact with one another</strong>, and most affected tests pass for most LSCs — so many changes can be tested together. That rests on two facts: LSCs are mostly narrow, semantics-preserving refactorings; and individual changes are simple and heavily scrutinized, so they are usually correct.</p>
+<figure>
+<svg viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg" font-family="-apple-system,sans-serif">
+<defs><marker id="t1" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker></defs>
+<g font-size="12">
+<text x="350" y="18" fill="#8fbaff" font-weight="700" text-anchor="middle">A new train departs every 3 hours</text>
+<g fill="rgba(91,157,249,0.12)" stroke="#5b9df9" stroke-width="1.4">
+<rect x="10" y="34" width="80" height="30" rx="6"/><rect x="10" y="72" width="80" height="30" rx="6"/><rect x="10" y="110" width="80" height="30" rx="6"/><rect x="10" y="148" width="80" height="30" rx="6"/>
+</g>
+<g fill="#e7ebf1" font-size="11" text-anchor="middle"><text x="50" y="54">Change A</text><text x="50" y="92">Change B</text><text x="50" y="130">Change C</text><text x="50" y="168">Change D</text></g>
+<rect x="120" y="60" width="130" height="94" rx="9" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="1.8"/>
+<text x="185" y="96" fill="#e7ebf1" font-weight="700" text-anchor="middle">① 1,000 random</text><text x="185" y="114" fill="#e7ebf1" font-weight="700" text-anchor="middle">tests each</text>
+<text x="185" y="198" fill="#ff8f8f" font-size="10.5" text-anchor="middle">D fails → not boarded</text>
+<rect x="280" y="60" width="130" height="94" rx="9" fill="rgba(91,157,249,0.26)" stroke="#5b9df9" stroke-width="2.6"/>
+<text x="345" y="90" fill="#e7ebf1" font-weight="700" text-anchor="middle">② Form the train</text><text x="345" y="110" fill="#8fbaff" font-size="10.5" text-anchor="middle">A+B+C merged into</text><text x="345" y="126" fill="#8fbaff" font-size="10.5" text-anchor="middle">one "uber-change"</text>
+<rect x="440" y="60" width="120" height="94" rx="9" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="1.8"/>
+<text x="500" y="90" fill="#e7ebf1" font-weight="700" text-anchor="middle">③ Union of all</text><text x="500" y="108" fill="#e7ebf1" font-weight="700" text-anchor="middle">affected tests</text><text x="500" y="128" fill="#cdd3db" font-size="10.5" text-anchor="middle">can take &gt; 6 hours</text>
+<rect x="590" y="60" width="100" height="94" rx="9" fill="rgba(155,108,245,0.16)" stroke="#9b6cf5" stroke-width="1.8"/>
+<text x="640" y="90" fill="#e7ebf1" font-weight="700" text-anchor="middle">④ Rerun</text><text x="640" y="108" fill="#e7ebf1" font-weight="700" text-anchor="middle">failures</text><text x="640" y="128" fill="#c9b5f7" font-size="10.5" text-anchor="middle">per change</text>
+<line x1="90" y1="49" x2="117" y2="80" stroke="#5b9df9" stroke-width="1.2" marker-end="url(#t1)"/>
+<line x1="90" y1="87" x2="117" y2="100" stroke="#5b9df9" stroke-width="1.2" marker-end="url(#t1)"/>
+<line x1="90" y1="125" x2="117" y2="118" stroke="#5b9df9" stroke-width="1.2" marker-end="url(#t1)"/>
+<line x1="90" y1="163" x2="117" y2="138" stroke="#5b9df9" stroke-width="1.2" marker-end="url(#t1)"/>
+<line x1="250" y1="107" x2="277" y2="107" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#t1)"/>
+<line x1="410" y1="107" x2="437" y2="107" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#t1)"/>
+<line x1="560" y1="107" x2="587" y2="107" stroke="#5b9df9" stroke-width="1.6" marker-end="url(#t1)"/>
+<text x="500" y="198" fill="#cdd3db" font-size="11" text-anchor="middle">⑤ every boarded change gets a report,</text>
+<text x="500" y="216" fill="#cdd3db" font-size="11" text-anchor="middle">used as evidence it is safe to submit</text>
+</g>
+</svg>
+<figcaption>Figure 3 · The TAP train: a small sample weeds out obviously bad changes, a batch then rides one big test run together, and it is split apart only to assign blame for failures.</figcaption>
+</figure>
+<p>Shard submission uses the same idea: most shards affect <strong>fewer than a thousand tests</strong> out of millions; bigger ones are grouped — run the union first, then rerun for each shard only the tests that failed the first time. The union is often close to the entire repo already, so adding more shards is nearly free.</p>
+<p>At scale, low-probability events become certainties: <strong>flaky tests</strong> seriously drag down LSC throughput. Google's conclusion is bold: for semantics-preserving, machine-generated changes, they are <strong>more confident in the change than in any test with recent flakiness</strong> — so recently flaky tests are ignored when submitting through automated tooling. In theory this can miss a regression that turns a flaky test into a failing one; in practice it is rare enough to handle through human communication.</p>
+<h3>5. Migration technique: scoped_ptr → std::unique_ptr</h3>
+<p>Google's early C++ had a self-destructing smart pointer, <code>scoped_ptr</code>; C++11 introduced the strictly better <code>std::unique_ptr</code>, yet the codebase had <strong>more than 500,000</strong> references to <code>scoped_ptr</code> spread across millions of source files — the largest LSC Google had attempted at that point. Several engineers worked in parallel for months; at the peak they were <strong>generating, testing and committing more than 700 independent changes, touching more than 15,000 files per day</strong>. The authors say they now sometimes manage 10 times that throughput.</p>
+<p>The hard part: <code>scoped_ptr</code> was a parameter type in some widely used APIs, which made small independent changes difficult. They considered a call-graph analysis that would change an API and all its callers transitively in one commit, but worried that change would itself be too big to commit atomically. The final approach had three steps: <strong>make <code>scoped_ptr</code> a type alias of <code>std::unique_ptr</code> → textually substitute the old alias with the new name → finally delete the alias</strong>. It also had the typical LSC long tail: Hyrum's Law behavior dependencies, races with other engineers, and generated code the tools couldn't see, all handled by hand as testing surfaced them.</p>
+<h3>6. The social side: cattle vs. pets, and global approvers</h3>
+<p>Ordinary changes are <strong>pets</strong>: an engineer spends days or weeks crafting one, and rejection stings. LSC changes must be treated as <strong>cattle</strong>: nameless, faceless commits that may be rolled back or rejected at any time — over a merge conflict or a problem tests didn't catch — at little cost unless the whole herd is affected, because the tool can be fixed and the change regenerated almost for free.</p>
+<p>A counterintuitive finding on review: local owners <strong>trust</strong> LSC authors <strong>too much</strong> and often give only a cursory look. So Google sends shards to local owners only when their context is needed; everything else goes to a global approver — someone with approval rights across the whole repo who knows the language and library involved. They use pattern-based tooling to auto-approve changes that match expectations and inspect by hand only the small subset made anomalous by merge conflicts or tool malfunctions. Culturally, local owners can ask questions and authors answer as usual, but owners <strong>hold no veto over the LSC as a whole</strong>; a good FAQ and a long track record are what earned company-wide acceptance.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/super-individual/legacy-governance-day33.en.html" target="_blank" rel="noopener">Super Individual · Day 33 AI Governance for Large Legacy Codebases</a> — ratchets against backsliding, risk-tiered and sampled review: how this section's global approval and anti-backsliding play out when the author of bulk changes is an AI</aside>
+<h2>Key trade-offs and choices</h2>
+<p>The criteria: <strong>how many places the change touches, whether the repo and environment are uniform, whether the tests can be trusted, and who understands the change best</strong>.</p>
+<p class="tcap">Table 1 · Five key decisions in an LSC</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Decision</th><th>Option A</th><th>Option B</th><th>The chapter's choice and its cost</th></tr></thead>
+<tbody>
+<tr><th>How to commit</th><td>One atomic commit: conceptually simple, no transition period</td><td>Independent shards: each tested, reviewed, rolled back alone</td><td><strong>Shards</strong>. Cost: you must design a transition where old and new coexist (aliases, forwarding functions), and the same tests rerun many times</td></tr>
+<tr><th>Who migrates</th><td>Announce it; each team migrates itself</td><td>The team that owns the old system migrates centrally</td><td><strong>Central</strong>. Cost: dedicated staff and budget — but that just internalizes an unfunded mandate's externality</td></tr>
+<tr><th>How to create</th><td>Edit by hand</td><td>Generate with tools (AST transforms, regexes)</td><td>Tools beyond about <strong>500 edits</strong>; human effort should scale sublinearly. Cost: upfront learning and tooling</td></tr>
+<tr><th>Who reviews</th><td>Each project's local owners</td><td>One global approver + pattern-based auto-approval</td><td>Mechanical changes go to a <strong>global approver</strong>; only context-dependent shards go local. Cost: local teams lose their veto and must rely on trust and an FAQ</td></tr>
+<tr><th>How to test</th><td>Run each change alone</td><td>Carpool: sample filter + union run + split on failure</td><td><strong>The train</strong>, ignoring recently flaky tests. Cost: may miss rare regressions in theory; results take hours</td></tr>
+</tbody>
+</table></div>
+<p>Small teams benefit too: an organization with several repos can't commit atomically across them however small it is, and the same tools scale down to a few dozen files. But an organization with many CI setups, dynamic languages and thin test coverage should first invest in <strong>a uniform environment and more tests</strong>.</p>
+<h2>Why it matters / in real systems</h2>
+<p>The chapter's deepest payoff is at design time: <strong>if you can change the whole codebase cheaply, many decisions no longer have to be final</strong> — symbol names, class locations, even language versions can be revisited. That is why Google designs successor systems with a migration path from the old one in mind. Asked in an interview "how would you replace an interface called from thousands of places?", the answer is the three-step pattern: <strong>introduce an interchangeable new interface → migrate callers gradually → delete the old one</strong>, plus tests, sharding and a gate against backsliding.</p>
+<div class="ev">
+<p class="evh">Industry evidence · public sources</p>
+<ul>
+<li><strong>Google · Russ Cox, "Codebase Refactoring (with help from Go)" (GothamGo 2016)</strong>: calls committing an API change together with all its repairs "atomic code repair," notes that the one big commit is hard to prepare, hard to review, and "fundamentally racing against other work in the tree"; the approach that scales better is gradual code repair in three stages — introduce an interchangeable new API, convert uses, remove the old API. It also reports repair multipliers (repairs relative to the API change itself) "well over 1000X" inside Google. <span class="src"><a href="https://raw.githubusercontent.com/golang/website/master/_content/talks/2016/refactor.article" target="_blank" rel="noopener">golang/website · talks/2016/refactor.article ↗</a></span></li>
+<li><strong>Go team · Go 1.9 release notes (2017)</strong>: added type aliases, <code>type T1 = T2</code>, explicitly "to support gradual code repair while moving a type between packages" — the chapter's language-support requirement written into a language. <span class="src"><a href="https://raw.githubusercontent.com/golang/website/master/_content/doc/go1.9.md" target="_blank" rel="noopener">golang/website · doc/go1.9.md ↗</a></span></li>
+<li><strong>Google · the book's own cases</strong>: the scoped_ptr numbers, the five-step TAP train, and Operation RoseHub — in early 2017 the Apache Commons "Mad Gadget" vulnerability let any Java application with a vulnerable version on its transitive classpath be exploited for remote execution; Googlers used BigQuery to find affected GitHub projects, and <strong>more than 50 people</strong> sent <strong>over 2,600</strong> upgrade patches by hand: when tools fall short, change generation can be sharded across humans. <span class="src"><a href="https://raw.githubusercontent.com/abseil/abseil.github.io/master/resources/swe-book/html/ch22.html" target="_blank" rel="noopener">Software Engineering at Google · Ch22 (abseil's official open edition source) ↗</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"Big changes should be atomic so nothing is half-migrated" — at scale it's the opposite.</strong> The half-old, half-new transition period is something to design, not avoid; avoiding it costs you a giant change that can never be submitted.</li>
+<li><strong>"Just announce it and let teams migrate" — unfunded mandates almost never finish</strong>, and new code keeps copying the old idiom.</li>
+<li><strong>Ignoring flaky tests is a deliberate bet</strong> that only holds for semantics-preserving, machine-generated changes; it does not carry over to hand-written feature changes.</li>
+<li><strong>Limits:</strong> the whole approach leans on a monorepo, a uniform toolchain, pervasive tests and plenty of compute; the authors themselves say dynamic languages are "extra difficult for maintainers," and multi-repo organizations with thin tests cannot copy it directly.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① An LSC is a set of logically related changes that cannot be submitted as one atomic unit; the more code and people, the <strong>smaller</strong> the largest feasible atomic change.</p>
+<p>② Six barriers: VCS limits, merge conflicts, haunted graveyards, heterogeneous environments, test diagnosis, and review load.</p>
+<p>③ The infrastructure team that owns the old system <strong>migrates centrally</strong>, internalizing the cost of an unfunded mandate.</p>
+<p>④ Generate with tools: beyond about 500 edits, don't hand-edit; human effort should scale sublinearly, and auto-formatting makes machine changes look human.</p>
+<p>⑤ Rosie shards by project and ownership; each shard is tested, reviewed and submitted alone, and a failure backs out only one shard — changes are cattle, not pets.</p>
+<p>⑥ The TAP train: sample filter, carpool through a union run, split only on failure; recently flaky tests are ignored.</p>
+<p>⑦ The three-step migration: introduce an interchangeable new interface (a type alias) → migrate → delete the old one; that is how 500,000 scoped_ptr references were replaced.</p>
+<p>⑧ Mechanical changes go to a global approver, local owners hold no veto, and static analysis blocks backsliding afterward.</p>
+<p>⑨ The biggest return comes at design time: technical decisions no longer have to be final.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Reading this page ≈ getting the core of the chapter; for the full argument and context, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
