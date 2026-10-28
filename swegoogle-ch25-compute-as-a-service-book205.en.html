@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>Software Engineering at Google Ch 25 · Compute as a Service — Book Deep-Read 205</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+</style>
+</head>
+<body>
+<div class="container">
+<p class="top">Book Deep-Read · Software Engineering at Google · Chapter 25</p>
+<h1>Compute as a Service</h1>
+<p class="sub">Software Engineering at Google · Ch 25 · Compute as a Service · Onufry Wojtaszczyk · 2020</p>
+<p class="langbar"><a href="swegoogle-ch25-compute-as-a-service-book205.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Simple</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>Once the code is written, some computer has to run it. This chapter is about that deceptively simple wish — <strong>"just give me some machines to run my stuff"</strong> — and what it grows into at a company with tens of thousands of engineers and millions of machines. Google's internal system for this is called Borg; the Kubernetes you hear about everywhere is its open-source descendant.</p>
+<h2>A strange fact first</h2>
+<p>Google engineers <strong>usually don't know, and don't care,</strong> which machine their program runs on. The system may stop it at any moment and restart it somewhere else — and that is considered normal, not an incident.</p>
+<h2>Why the old world was hard</h2>
+<p>The early way was a craft workshop: copy the program onto machines one by one, log in to each to start it, and watch each one. In 2002 Jeff Dean called running one data job a "logistical nightmare": find 50+ machines, start and babysit each; if one died, nobody picked up its work automatically; and people fought over machines using a hand-edited "sign-up" file. More machines meant more tired people.</p>
+<h2>How it works, intuitively</h2>
+<ul>
+<li><strong>Cattle, not pets:</strong> when a pet gets sick you sit with it and nurse it back. Cattle just have numbers — if one falls, another replaces it automatically. Programs should be like that: a fresh copy can always step in, no human rescue needed.</li>
+<li><strong>One central scheduler:</strong> like a hotel front desk that knows which rooms are free, assigns guests automatically, and moves them if a room breaks.</li>
+<li><strong>Shared flat, separate rooms:</strong> one big machine hosts several programs, like flatmates — each room has a door and its own meter, so a noisy neighbour can't disturb you. That is a "container".</li>
+<li><strong>Empty seats go to the night shift:</strong> websites keep lots of spare seats for sudden rush hours, and most sit empty. Unhurried computing jobs fill those seats and give them up the moment a rush arrives — so that work runs almost "for free".</li>
+</ul>
+<h2>What it brings / how to choose</h2>
+<p>The win: however big you grow, the people managing machines don't have to double. But programs must be written differently — they can't keep their only copy of data on the local machine, because they may be moved at any time. As for which platform — your own machines, rented virtual machines, a container platform, or "serverless" where you don't even see servers — there is no single answer: <strong>the less you manage, the less you can tweak</strong>, and once chosen, it is hard to switch.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p><strong>Treat machines as replaceable cattle: hand them to one shared scheduler, and write programs that don't mind being moved — the bigger you get, the better the deal.</strong></p>
+</div>
+<p class="switch-hint">Want to see how Borg grew out of a hand-edited sign-up file, why batch jobs ride "for free" on serving slack, how five-digit PIDs caused an eight-year cleanup, and when serverless is the right call? <a data-mode="deep">→ Switch to Deep</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think "compute as a service" just means "renting a machine"; the chapter argues what it really changes is <strong>how you write software</strong>: treat machines and processes as <strong>cattle, not pets</strong>, hand them to one shared pool that bin-packs, self-heals and moves them, and write software that treats local state as something that can vanish. And once you pick a compute platform, Hyrum's Law will lock you into it for years.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Compute as a Service (CaaS)</strong>: engineers describe only what to run and how many resources it needs; the platform decides which machine.</li>
+<li><strong>Scheduler</strong>: the central service that knows which machines are free and assigns programs to them.</li>
+<li><strong>Replica</strong>: one of several running copies of the same program, any of which can do the same work.</li>
+<li><strong>Virtual machine (VM)</strong>: a whole simulated computer with its own operating system on top of a physical one — strong isolation, but slow to start and heavy.</li>
+<li><strong>Container</strong>: a lightweight unit that shares the host OS kernel and only isolates a process's resources and view of the filesystem.</li>
+<li><strong>cgroups / namespaces</strong>: Linux kernel features; the first caps how much CPU and memory a group of processes may use, the second gives processes their own private view of process IDs, network and so on.</li>
+<li><strong>Bin-packing</strong>: fitting tasks of different sizes as tightly as possible onto a limited set of machines.</li>
+<li><strong>Batch vs serving</strong>: batch jobs run to completion and care about throughput; serving jobs run indefinitely, answer requests, and care about per-request latency.</li>
+<li><strong>Idempotency</strong>: sending the same request twice has the same effect as sending it once.</li>
+<li><strong>Hyrum's Law</strong>: with enough users, every observable behaviour of a system will be depended on by somebody — promised or not.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The last chapter of Part IV "Tools" and the end of the book's main body. It follows Ch24 Continuous Delivery (releases have to run somewhere) and leads into the Ch26 Afterword. Real-world counterparts: choosing Kubernetes or a cloud platform, cluster scheduling, and writing cloud-native applications.</p>
+<h2>The problem this chapter tackles</h2>
+<p>The starting point is a humble wish: I wrote code, give me hardware to run it. On one machine, SFTP, SSH and a manual start are enough; the trouble is that this approach consumes people <strong>linearly or even superlinearly</strong> with scale. Jeff Dean's 2002 design doc for the "Global WorkQueue" lists every symptom: get a list of <strong>50+</strong> machines, start and monitor a process on each; no automatic migration if a machine dies; processes interfere, so a <strong>human-maintained "sign-up" file</strong> throttles machine use, giving poor scheduling and contention.</p>
+<p>As an organization grows, three axes grow at once: <strong>the number of different applications, the number of copies of each, and the size of the largest one</strong>. Without automation, the organization collapses under operational load.</p>
+<h2>The core ideas, explained</h2>
+<h3>1. From manual to Borg: eliminating toil step by step</h3>
+<p>The path is clear, and each step hands a class of human work to machines:</p>
+<ul>
+<li><strong>Simple automation</strong>: parallel deploy scripts; export metrics like "am I alive" to dashboards; an on-machine agent kills and restarts a process that hasn't reported alive for 5 minutes (in the cloud: an <strong>autohealing</strong> policy).</li>
+<li><strong>Automated scheduling</strong>: the first real "service" appears — a central scheduler that knows the full machine list and picks free machines on demand; the hand-kept sign-up file disappears. Combined with broken-machine detection (e.g. scanning logs for mass disk read errors), bad machines get no new work, and work on a dead machine is <strong>restarted on a new one</strong>, the old one abandoned.</li>
+<li><strong>Containers and multitenancy</strong>: one program per machine is wasteful — there are far more job types than machine types; buying machines takes months, so you buy big for future growth; and old and new machines mix. The fix: each program declares its CPU, RAM and disk needs, and the scheduler <strong>bin-packs</strong> replicas onto a pool.</li>
+</ul>
+<p>Sharing brings its own problem, under a memorable heading: <strong>"My neighbor's dog barks in my RAM."</strong> A replica promises 1 CPU and 200 MB of RAM, then — through a bug or organic growth — uses more; neighbouring serving jobs see latency blips or get OOM-killed (Google long ago decided swap latency is so horrible that <strong>an OOM kill and migration is always preferable</strong>). Add dependency-version clashes, fights over <code>/tmp</code>, and sensitive data. VMs isolate well but are slow to boot and heavy, poor for short-lived batch work. So when Borg was designed in 2003, Google chose <strong>containers</strong>: cgroups (contributed by Google engineers to the Linux kernel in 2007) plus chroot jails, bind mounts and overlay filesystems.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 240" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker></defs>
+<g font-size="11">
+<rect x="15" y="40" width="150" height="150" rx="10" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5" stroke-width="1.6"/>
+<text x="90" y="62" fill="#c9b5f7" font-weight="700" text-anchor="middle">Manual era</text>
+<text x="90" y="90" fill="#e7ebf1" text-anchor="middle">SFTP the code</text>
+<text x="90" y="112" fill="#e7ebf1" text-anchor="middle">SSH, start each</text>
+<text x="90" y="134" fill="#e7ebf1" text-anchor="middle">sign-up file</text>
+<text x="90" y="156" fill="#e7ebf1" text-anchor="middle">humans fix it</text>
+<text x="90" y="180" fill="#9b6cf5" font-size="10.5" text-anchor="middle">pets</text>
+<rect x="190" y="40" width="150" height="150" rx="10" fill="rgba(91,157,249,0.10)" stroke="#5b9df9" stroke-width="1.6"/>
+<text x="265" y="62" fill="#8fbaff" font-weight="700" text-anchor="middle">Simple automation</text>
+<text x="265" y="90" fill="#e7ebf1" text-anchor="middle">parallel deploy</text>
+<text x="265" y="112" fill="#e7ebf1" text-anchor="middle">metric dashboards</text>
+<text x="265" y="134" fill="#e7ebf1" text-anchor="middle">restart if silent</text>
+<text x="265" y="156" fill="#7c8593" text-anchor="middle">still hand-assigned</text>
+<rect x="365" y="40" width="150" height="150" rx="10" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="1.6"/>
+<text x="440" y="62" fill="#8fbaff" font-weight="700" text-anchor="middle">Auto scheduling</text>
+<text x="440" y="90" fill="#e7ebf1" text-anchor="middle">central machine list</text>
+<text x="440" y="112" fill="#e7ebf1" text-anchor="middle">auto placement</text>
+<text x="440" y="134" fill="#e7ebf1" text-anchor="middle">bad-machine quarantine</text>
+<text x="440" y="156" fill="#e7ebf1" text-anchor="middle">restart elsewhere</text>
+<rect x="540" y="40" width="150" height="150" rx="10" fill="rgba(91,157,249,0.26)" stroke="#5b9df9" stroke-width="2.4"/>
+<text x="615" y="62" fill="#8fbaff" font-weight="700" text-anchor="middle">Containers</text>
+<text x="615" y="90" fill="#e7ebf1" text-anchor="middle">declare resources</text>
+<text x="615" y="112" fill="#e7ebf1" text-anchor="middle">bin-pack the pool</text>
+<text x="615" y="134" fill="#e7ebf1" text-anchor="middle">cgroups isolation</text>
+<text x="615" y="156" fill="#e7ebf1" text-anchor="middle">rightsizing</text>
+<text x="615" y="180" fill="#5b9df9" font-size="10.5" text-anchor="middle">cattle</text>
+<g stroke="#5b9df9" stroke-width="1.5" marker-end="url(#a1)"><line x1="166" y1="115" x2="187" y2="115"/><line x1="341" y1="115" x2="362" y2="115"/><line x1="516" y1="115" x2="537" y2="115"/></g>
+<text x="350" y="222" fill="#cdd3db" font-size="11" text-anchor="middle">Each step hands a class of human work to machines: ops effort stops scaling with fleet size</text>
+</g>
+</svg>
+<figcaption>Figure 1 · From Jeff Dean's "logistical nightmare" to Borg: four steps of taming the compute environment.</figcaption>
+</figure>
+<p>The last piece is <strong>rightsizing</strong>. Asking humans for resource numbers is flawed: the program grows, the config doesn't, slack erodes release by release until a spike finds it insufficient — an outage. Automating it is surprisingly hard: only recently did <strong>more than half of resource usage</strong> across Google's fleet come to be set by rightsizing automation; but it covers a larger share of configurations, so most engineers no longer worry — "easy things should be easy, complex things should be possible."</p>
+<h3>2. Architecting for failure: cattle must be stamp-out-able</h3>
+<p>The scheduler may <strong>unilaterally</strong> kill your task and move it (kernel upgrade, bad disk, repacking), and as the software author, <strong>I should neither know nor care why</strong>. So every instance must be re-creatable with no human involved: a broken pet gets a panicked human nursing it; cattle are named replica001 to replica100, and when one falls another is stamped out.</p>
+<p>But being cattle isn't the same as handling failure gracefully. The book's arithmetic: validating <strong>one million documents</strong> at one second each takes one machine about <strong>12 days</strong>; sharded over 200 machines, about <strong>100 minutes</strong>. With static assignment, each killed worker adds about <strong>50 minutes</strong>, and with 200 machines a kill — likely more than one — is nearly certain. Instead, split the set into <strong>1,000 chunks of 1,000</strong>; a worker reports each finished chunk and takes the next, so a failure loses at most one chunk.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 230" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b1" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4"><path d="M0,0 L8,4 L0,8 z" fill="#5b9df9"/></marker></defs>
+<g font-size="11.5">
+<text x="170" y="22" fill="#c9b5f7" font-weight="700" text-anchor="middle">Static: 5,000 docs per worker</text>
+<text x="530" y="22" fill="#8fbaff" font-weight="700" text-anchor="middle">Dynamic: 1,000 chunks, pull next</text>
+<rect x="30" y="40" width="280" height="26" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"/><text x="40" y="58" fill="#e7ebf1">worker 1</text>
+<rect x="30" y="76" width="140" height="26" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"/><text x="40" y="94" fill="#e7ebf1">worker 2</text>
+<text x="178" y="94" fill="#ff8f8f" font-weight="700">✕ killed by scheduler</text>
+<rect x="30" y="112" width="280" height="26" rx="6" fill="rgba(155,108,245,0.18)" stroke="#9b6cf5"/><text x="40" y="130" fill="#e7ebf1">worker 3</text>
+<rect x="150" y="148" width="160" height="26" rx="6" fill="rgba(255,143,143,0.12)" stroke="#ff8f8f" stroke-dasharray="4 3"/><text x="160" y="166" fill="#ffb4b4">redo whole share: long tail</text>
+<g>
+<rect x="400" y="40" width="40" height="26" rx="5" fill="rgba(91,157,249,0.26)" stroke="#5b9df9"/><rect x="444" y="40" width="40" height="26" rx="5" fill="rgba(91,157,249,0.26)" stroke="#5b9df9"/><rect x="488" y="40" width="40" height="26" rx="5" fill="rgba(91,157,249,0.26)" stroke="#5b9df9"/><rect x="532" y="40" width="40" height="26" rx="5" fill="rgba(91,157,249,0.26)" stroke="#5b9df9"/><rect x="576" y="40" width="40" height="26" rx="5" fill="rgba(91,157,249,0.26)" stroke="#5b9df9"/><rect x="620" y="40" width="40" height="26" rx="5" fill="rgba(91,157,249,0.26)" stroke="#5b9df9"/>
+<text x="530" y="86" fill="#cdd3db" font-size="10.5" text-anchor="middle">work queue (1,000 docs per chunk)</text>
+</g>
+<rect x="400" y="112" width="80" height="30" rx="7" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"/><text x="440" y="132" fill="#e7ebf1" text-anchor="middle">worker A</text>
+<rect x="490" y="112" width="80" height="30" rx="7" fill="rgba(255,143,143,0.10)" stroke="#ff8f8f" stroke-dasharray="4 3"/><text x="530" y="132" fill="#ffb4b4" text-anchor="middle">B ✕</text>
+<rect x="580" y="112" width="80" height="30" rx="7" fill="rgba(91,157,249,0.14)" stroke="#5b9df9"/><text x="620" y="132" fill="#e7ebf1" text-anchor="middle">worker C</text>
+<g stroke="#5b9df9" stroke-width="1.4" marker-end="url(#b1)"><line x1="440" y1="94" x2="440" y2="108"/><line x1="620" y1="94" x2="620" y2="108"/></g>
+<text x="530" y="170" fill="#cdd3db" font-size="10.5" text-anchor="middle">B dies, only its current chunk is lost; A and C keep pulling</text>
+<text x="350" y="212" fill="#cdd3db" font-size="11" text-anchor="middle">Cattle guarantees automatic recovery; dynamic chunking keeps it smooth under failure</text>
+</g>
+</svg>
+<figcaption>Figure 2 · Same million documents: static shares let one failure stretch the job; dynamic chunks cap the loss at one chunk.</figcaption>
+</figure>
+<p>Serving jobs fit more naturally: requests are already small chunks, dynamically spread by load balancing. When Borg plans to move a container, it <strong>gives notice</strong>; the container refuses new requests and finishes in-flight ones, and the load balancer must understand "I'm not accepting". Watch for three misfits: stateful "leaders", <strong>static sharding</strong> (100 servers each holding 1% — lose one and a slice of data is temporarily unservable), and services <strong>found by hostname</strong>.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/map-reduce-paper18.en.html" target="_blank" rel="noopener">CS Papers · MapReduce</a> — the batch framework this chapter names: split work into small chunks, hand them out dynamically, redo only the chunk that failed</aside>
+<h3>3. Writing software for managed compute</h3>
+<p><strong>State</strong> is the main obstacle to cattle: replace an instance and in-process state and local disk are gone. So anything that must outlive one request goes to external durable storage; that storage is itself cattle, via <strong>replication (usually 3 to 5 copies)</strong>, which is hard to get right (writes need consensus) — hence GFS, Bigtable and Spanner. Locally keep only re-creatable data: caches, warm-up, batched writes, and <strong>periodic checkpoints</strong> for long computations. A hard-won cache lesson: <strong>provision the cache for your latency goals, the core application for total load</strong> — if the cache layer is lost, the uncached path is slower but survives; the cost is paying for that redundancy.</p>
+<p><strong>Connecting to a service</strong>: a hardcoded hostname (even as a startup flag) means you're not cattle. Add a layer of indirection: others refer to you by an identifier that survives restarts, which the scheduler writes into a resolution system as it places you — <strong>service discovery</strong>, usually with load balancing. The consequence is <strong>retries</strong>: the server may be taken away before it answers. Mutating requests must be <strong>idempotent</strong>, and a great tool is <strong>client-assigned IDs</strong> (if that order ID exists, report success). One more oddity: the scheduler loses touch with a machine, restarts its work elsewhere, then the machine comes back — <strong>two instances both believing they are replica072</strong>, one more reason for idempotency.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/reliability-day23.en.html" target="_blank" rel="noopener">System Design · Day 23 Reliability</a> — retries, backoff, jitter and cascading failure: the chapter's footnote says retries must be done right; that piece shows how</aside>
+<p><strong>One-off code</strong>: scanning 1 TB of logs takes a day on one machine and minutes on a few hundred cores. A thousand core-hours costs nowhere near a day of engineering time, so approval gates to save compute are a false economy; but it's easy to <strong>take too much by accident</strong> (a new hire debugging didn't notice their workstation had spawned <strong>8,000 full-machine workers</strong>). Google's answer: low-priority batch is effectively free anyway, so engineers get <strong>nearly unlimited low-priority quota</strong>.</p>
+<h3>4. One pool for everything: batch rides free on serving slack</h3>
+<p>In the WorkQueue era, batch jobs shared one pool and each serving job had its own dedicated machines. Borg, started in 2003, merged them into <strong>a single pool per datacenter</strong>, with two gains. First, serving machines became cattle too (the Borg design doc: machines are anonymous; programs don't care which machine they run on), instead of n teams each running their own pool with drifting practices. Second, subtler: serving jobs must be <strong>overprovisioned</strong> for spikes and outages, so their requests can fill a machine while real utilization is only <strong>30%</strong>. Overcommitting serving jobs would defeat the slack, but the spare 70% can host batch — when serving needs resources back, batch is <strong>frozen (CPU) or killed (RAM)</strong>. Batch cares about aggregate throughput and is cattle anyway, so it happily soaks up the slack. The book's conclusion: most of the time Google <strong>runs batch effectively for free</strong>.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 700 252" xmlns="http://www.w3.org/2000/svg">
+<g font-size="11.5">
+<text x="190" y="22" fill="#c9b5f7" font-weight="700" text-anchor="middle">Split pools: dedicated serving machine</text>
+<text x="520" y="22" fill="#8fbaff" font-weight="700" text-anchor="middle">One pool: Borg lends slack to batch</text>
+<rect x="110" y="40" width="160" height="150" rx="8" fill="rgba(155,108,245,0.08)" stroke="#9b6cf5" stroke-width="1.6" stroke-dasharray="5 4"/>
+<rect x="110" y="145" width="160" height="45" fill="rgba(155,108,245,0.34)"/>
+<text x="190" y="172" fill="#e7ebf1" text-anchor="middle">actual use ~30%</text>
+<text x="190" y="95" fill="#c9b5f7" text-anchor="middle">reserved, mostly idle</text>
+<text x="190" y="113" fill="#c9b5f7" text-anchor="middle">(for spikes and outages)</text>
+<rect x="440" y="40" width="160" height="150" rx="8" fill="none" stroke="#5b9df9" stroke-width="2.4"/>
+<rect x="442" y="42" width="156" height="102" fill="rgba(91,157,249,0.22)"/>
+<rect x="440" y="145" width="160" height="45" fill="rgba(155,108,245,0.34)"/>
+<text x="520" y="172" fill="#e7ebf1" text-anchor="middle">serving ~30%</text>
+<text x="520" y="88" fill="#e7ebf1" font-weight="700" text-anchor="middle">batch soaks up slack</text>
+<text x="520" y="108" fill="#8fbaff" font-size="10.5" text-anchor="middle">spike: freeze CPU, kill RAM</text>
+<text x="190" y="212" fill="#7c8593" font-size="10.5" text-anchor="middle">a machine fully requested, mostly idle</text>
+<text x="520" y="212" fill="#8fbaff" font-size="10.5" text-anchor="middle">same machine: slack still there, just borrowed</text>
+<text x="350" y="244" fill="#cdd3db" font-size="11" text-anchor="middle">Batch cares about total throughput and is cattle: reclaiming only slows it down</text>
+</g>
+</svg>
+<figcaption>Figure 3 · Serving's safety slack and batch's "run whenever there's room" are complementary — the biggest efficiency gain of a shared pool.</figcaption>
+</figure>
+<p>Serving jobs in a shared pool need extras: service discovery; <strong>throttled rescheduling</strong> (restarting half a batch job's replicas is a throughput blip; half of a serving job leaves too few to carry traffic); and <strong>several seconds of warning</strong> before a kill.</p>
+<h3>5. Containers are an abstraction — so Hyrum's Law applies</h3>
+<p>Containers began as isolation, but their bigger role became <strong>an abstraction boundary between software and machine</strong>: as machines change, only the container layer (one team) adapts, and every team's application stays put. A filesystem abstraction lets outside software bring its own layout and dependencies; ports should belong to the container too — Google initially left them out, so binaries hunted for free ports themselves, and <code>PickUnusedPortOrDie</code> has <strong>over 20,000 call sites</strong> in Google's C++ codebase. Docker used namespaces to give containers a virtual NIC; Kubernetes went further, giving every pod its own IP.</p>
+<p>The cautionary tale is PID exhaustion in 2011. Linux's default <code>PID_MAX</code> is about 32,000 and can be raised with a config change — but by Hyrum's Law, "PIDs fit in five digits" had become an implicit API: log storage put PIDs in record names, which broke past the length limit with six digits. The fix became a long project: cap PIDs per container, then split thread and process PID spaces (few depended on thread PIDs); step three, PID namespaces, revealed many systems assuming <code>{hostname, timestamp, pid}</code> uniquely identifies a process — <strong>still being cleaned up eight years later</strong>. The lesson isn't "use PID namespaces" but: some machine resource is always under-isolated, so <strong>prefer a container system used by a broad community</strong>, where others already hit and fixed those issues.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/container-orchestration-day49.en.html" target="_blank" rel="noopener">System Design · Day 49 Containers &amp; Orchestration</a> — namespaces slice the view, cgroups slice the resources, and Kubernetes' declarative reconcile loop takes up Borg's legacy</aside>
+<p>Configuration belongs in code too: a <strong>standard configuration language</strong> expressing "update to the new binary, never taking down more than 5% of capacity at a time" beats CLI flags kept in someone's head; shared standard snippets are what make swapping the memcache implementation or pushing a security fix company-wide feasible.</p>
+<h2>Key trade-offs and choices</h2>
+<p>The chapter's rule: <strong>first decide cattle or pets, then pick the level of abstraction</strong>. One pet machine per team per datacenter makes cost grow superlinearly — teams × datacenters.</p>
+<p class="tcap">Table 1 · Choosing a level of abstraction</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Level</th><th>You manage</th><th>You gain</th><th>Cost</th></tr></thead>
+<tbody>
+<tr><th>Bare metal /<br/>VMs as pets</th><td>Almost everything: setup, patches, repair</td><td>Full control; fine to start</td><td>Ops grow superlinearly; per Hyrum, teams tweak their own images</td></tr>
+<tr><th>VMs as cattle</th><td>Images and scaling policy</td><td><strong>Bring your own OS</strong>; reuse existing VM know-how</td><td>More overhead and slower start than containers</td></tr>
+<tr><th>Persistent containers<br/>(Borg / Kubernetes)</th><td>Container images and config</td><td>Light, dense packing; can "punch a hole" for special hardware; runs stateful and slow-start services</td><td>Can't scale to zero (Google assumes at least 3 replicas per datacenter); a cluster only amortizes if <strong>shared by many teams</strong></td></tr>
+<tr><th>Serverless<br/>(Lambda / Cloud Run)</th><td>Just handler functions</td><td>Pay per traffic, <strong>scales to zero</strong>; faster, finer scaling; simplest for a small team</td><td>Must be <strong>truly stateless</strong>, no local state at all; loss of control; often paired with a managed database</td></tr>
+</tbody>
+</table></div>
+<p>Google itself chose <strong>not to invest heavily in serverless</strong>: Borg already gives most of the benefits except scale-to-zero, and most of its footprint is high-traffic services; GCE and Spanner aren't "truly stateless" anyway. But the book says this isn't right for everyone — for a small team whose organization won't adopt a shared container platform, serverless is attractive; just pick options with an <strong>escape hatch</strong> (e.g. Knative → Kubernetes).</p>
+<p class="tcap">Table 2 · Centralize or customize, private or public</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Choice</th><th>Benefit</th><th>Cost / case from the book</th></tr></thead>
+<tbody>
+<tr><th>One platform<br/>for everything</th><td>Best management and resource efficiency; shared tooling</td><td>Needs diverge: GCE's VMs aren't cattle, so Borg had to support live migration and avoid at-will eviction</td></tr>
+<tr><th>Custom options<br/>for big users</th><td>Keeps special workloads on board</td><td>Search's long-tail index disk-failure exception; stacked customizations made the API unpredictable, curbed by whitelisting</td></tr>
+<tr><th>Public cloud</th><td>Outsource ops; scaling is a config change</td><td>Lock-in risk: Zimki shut down in 2007 with three months' notice</td></tr>
+<tr><th>Open-source layer<br/>on cloud / multicloud</th><td>Keeps a migration path</td><td>Hyrum's Law still leaks provider specifics; multicloud needs connected networks and common APIs</td></tr>
+<tr><th>Hybrid cloud</th><td>Private for steady load, public for overflow</td><td>Both sides must run the same open-source compute stack</td></tr>
+</tbody>
+</table></div>
+<h2>Why it matters / in real systems</h2>
+<p>Asked in an interview "why is Kubernetes designed this way?", this chapter gives the roots you can retell: <strong>per-pod IPs, label-based grouping, declarative config, stateless replicas with external storage</strong> — nearly each maps to a pitfall Borg hit. In a platform review it warns: lock-in is extreme — code uses every feature, and a whole ring of logging, monitoring and config tools grows around it.</p>
+<div class="ev">
+<p class="evh">Industry evidence · publicly verifiable</p>
+<ul>
+<li><strong>Google · Borg paper (EuroSys 2015)</strong>: Borg runs hundreds of thousands of jobs from many thousands of applications, on clusters of up to tens of thousands of machines; 98% of machines in shared Borg cells run both prod and non-prod tasks; segregating them would need 20–30% more machines in the median cell, because prod jobs reserve resources for rare spikes that mostly sit unused; about 20% of the workload in a median cell runs in reclaimed resources.<span class="src"> <a href="https://storage.googleapis.com/gweb-research2023-media/pubtools/pdf/43438.pdf" target="_blank" rel="noopener">Verma et al. · Large-scale cluster management at Google with Borg (PDF) ↗</a></span></li>
+<li><strong>Same paper · "Lessons learned: the bad"</strong>: one IP per machine forced ports to be scheduled as a resource, so Kubernetes gives every pod and service its own IP; jobs as the only grouping were too rigid, users encoded topology into job names, so Kubernetes uses arbitrary key/value labels — matching this chapter's complaints about ports and labels.<span class="src"> <a href="https://storage.googleapis.com/gweb-research2023-media/pubtools/pdf/43438.pdf" target="_blank" rel="noopener">Borg paper §8 Lessons ↗</a></span></li>
+<li><strong>Google Cloud Blog (2016) · Kubernetes origin</strong>: a co-founder recalls the aim: take what Google learned about container management from Borg and its successor Omega, add a simple, easy-to-use UI, and open-source it.<span class="src"> <a href="https://cloud.google.com/blog/products/containers-kubernetes/from-google-to-the-world-the-kubernetes-origin-story" target="_blank" rel="noopener">How Kubernetes came to be: A co-founder shares the story ↗</a></span></li>
+<li><strong>Google · the book (2020)</strong>: when Borg swapped its Bash wrapper for the leaner ash, teams that had replaced Bash themselves saw memory go up, triggering alerts and a rollback.<span class="src"> <a href="https://raw.githubusercontent.com/abseil/abseil.github.io/master/resources/swe-book/html/ch25.html" target="_blank" rel="noopener">Software Engineering at Google · Ch25 (abseil's official open edition source) ↗</a></span></li>
+</ul>
+</div>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"Containers make you cattle" is a myth:</strong> re-creation is only recovery; smoothness needs dynamic chunking, graceful shutdown and idempotent retries.</li>
+<li><strong>Serverless is compared to the wrong baseline.</strong> Most discussions compare it with "VMs as pets", so it looks revolutionary; the chapter says compare it with persistent containers, where the gap shrinks to scale-to-zero and control.</li>
+<li><strong>"Free batch" has preconditions:</strong> serving must hold lots of reserved slack and batch must tolerate kills; other workload shapes may not qualify.</li>
+<li><strong>Don't mistake <code>while true; do ./binary; done</code> for self-healing.</strong> The book calls it actively harmful under Borg: it hides failure, so the platform's failure handling never kicks in.</li>
+<li><strong>Customization is a chronic disease.</strong> Every "just one flag for this one user" widens the explicit or implicit API; Kubernetes started cleaner, but the book admits it now faces the same issues with broad adoption.</li>
+<li><strong>Dated:</strong> written in 2020, GPU / TPU scheduling gets only a mention; AI-era accelerator scheduling is not covered.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① Scale needs a common compute infrastructure: application count, replica count and largest-app size grow together, and manual SFTP + SSH makes ops grow superlinearly.</p>
+<p>② The path: simple automation → central scheduling + bad-machine quarantine → bin-packed multitenant containers → rightsizing; automation sets just over half of Google's resource usage but most configurations.</p>
+<p>③ Cattle, not pets: instances are re-created without humans; the scheduler may kill tasks unilaterally, and the author shouldn't care why.</p>
+<p>④ Cattle only guarantees recovery; smoothness needs dynamic chunking (a million docs into 1,000 chunks), graceful shutdown, and no static sharding or hardcoded hostnames.</p>
+<p>⑤ Put state in replicated external storage; keep only re-creatable data locally; size the cache for latency and the core for total load; retries must be idempotent — client-assigned IDs help.</p>
+<p>⑥ One pool for everything: batch soaks up serving's reserved slack; the Borg paper measured 20–30% more machines if split.</p>
+<p>⑦ Containers are an abstraction boundary and prime Hyrum's Law territory: five-digit PIDs, self-picked ports and the ash-for-Bash swap all bit; prefer widely used community systems.</p>
+<p>⑧ Choosing a platform is choosing lock-in: persistent containers vs serverless hinges on state and scale; centralize vs customize and public / multi / hybrid cloud each have costs — keep an escape hatch.</p>
+</div>
+</div>
+<footer>Book Deep-Read · Read this page ≈ get the core of the chapter; for the full argument, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+</body>
+</html>
