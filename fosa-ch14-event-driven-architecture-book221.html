@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+
+<html lang="zh-CN"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>FoSA 第 14 章 · 事件驱动架构：中介还是代理，异步换来的速度与失控 — 专业书籍精读 Book 221</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"姊妹站延伸";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+ol{margin:8px 0 8px 1.4em}
+ol li{margin:7px 0}
+</style></head><body>
+<div class="container">
+<p class="top">专业书籍精读 · Fundamentals of Software Architecture · 第 14 章</p>
+<h1>事件驱动架构：中介还是代理，异步换来的速度与失控</h1>
+<p class="sub">Fundamentals of Software Architecture · Ch 14 · Mark Richards &amp; Neal Ford · 2020</p>
+<p class="langbar"><a href="fosa-ch14-event-driven-architecture-book221.en.html">EN →</a></p>
+<div class="modebar">
+<button data-mode="pop">科普版</button>
+<button data-mode="deep">精读版</button>
+</div>
+<div class="mode mode-pop">
+<h2>这一章讲什么？</h2>
+<p>你在网上下单，页面一秒就弹出「下单成功」。可这时候扣款、减库存、发确认邮件、通知仓库打包，其实都还没做完——它们在后台各干各的。这种「先应一声、事情后台慢慢办」的软件结构，书里叫<strong>事件驱动架构</strong>。</p>
+<h2>先说个怪事：没人在指挥，事情却办成了</h2>
+<p>想象一个办公室，墙上有块公告板。前台接单后只在板上贴一张「来了新订单」，就去接下一个客人。财务看到了去收钱，收完贴一张「钱收到了」；仓库看到这张才去打包，打完贴「已打包」；快递员看到再去发货。<strong>没有一个人在安排全流程</strong>，每个人只盯自己关心的纸条。</p>
+<h2>旧世界为什么难</h2>
+<p>传统做法像柜台排队：前台必须亲自跑去财务、再跑去仓库，全部办完才能回来告诉你「好了」。任何一个窗口慢，你就得一直等；任何一个窗口关门，整件事卡住。来的人一多，队伍就排到门外。</p>
+<h2>核心机制：两种办公室</h2>
+<p>书里讲了两种做法。第一种就是上面的<strong>公告板式</strong>：大家贴纸条、看纸条，谁也不管谁。好处是快、好加人——新来个「发优惠券」的同事，只要也去看「新订单」的纸条就行，别人一行都不用改。坏处是<strong>没人知道整件事办到哪一步</strong>：财务那天请假，订单就悄悄卡在半路，也没人发现。</p>
+<p>第二种是<strong>调度员式</strong>：专门有个调度员拿着流程清单，一步步派活——「你去收钱」「收完了？好，你去打包」。谁出错，调度员马上知道，可以重试、可以停下、可以让人来处理。代价是调度员成了大家都得等的那个人，也是最怕他倒下的那个人。</p>
+<p>不管哪种，有件事都绕不开：前台已经对你说了「成功」，后面收钱却失败了，<strong>得有办法回头告诉你</strong>，还得保证纸条不会在半路弄丢。</p>
+<h2>带来了什么 / 该怎么选</h2>
+<p>事件驱动换来的是<strong>回应快、扛得住人多、加新功能不动旧代码</strong>，所以电商、交易、物联网这些高并发场景都爱用。流程简单、追求快，就用公告板式；流程长、出错必须能追、能重来，就用调度员式。诚实的代价是：它是书里最难测试、最难排查的风格之一——事情在后台各自发生，出了问题很难复盘是哪一步。</p>
+<h2>一句话记住</h2>
+<div class="tl">
+<p>事件驱动 = <strong>先应答、后台各自响应事件</strong>：公告板式快而失控，调度员式可控而变慢，选哪种看你要速度还是要掌控。</p>
+</div>
+<p class="switch-hint">想看代理与中介拓扑的组件和完整下单流程、中介的三级委托、异步出错怎么修、消息丢失的三个位置与对策、请求-应答怎么做，以及书中的星级评分？ <a data-mode="deep">→ 切到精读版</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>一句话</h2>
+<p class="lead">你以为事件驱动的选择题是「用不用消息队列」，其实真正的选择是<strong>工作流由谁掌控</strong>：代理拓扑（broker）把流程拆散在一串互相广播的处理器里，换来极致的解耦、伸缩与响应；中介拓扑（mediator）用一个中心调度者攥住流程，换回错误处理、可恢复与可重启。FoSA 第 14 章的核心就是这一对权衡，以及<strong>异步带来的三个硬问题</strong>：出错怎么回报、消息怎么不丢、需要答复时怎么办。</p>
+<h2>Glossary · 术语表</h2>
+<div class="glossary">
+<ul>
+<li><strong>事件（event）</strong>：「已经发生了某件事」的通知，比如「订单已创建」；发出者不关心谁来处理。</li>
+<li><strong>命令（command）</strong>：「需要去做某件事」的指令，比如「去扣款」；有明确的接收者。</li>
+<li><strong>同步 / 异步（synchronous / asynchronous）</strong>：同步是发出请求后原地等结果；异步是发出去就继续干别的，结果以后再说。</li>
+<li><strong>消息代理（message broker）</strong>：在程序之间转递消息的中间件，如 RabbitMQ、ActiveMQ、Kafka。</li>
+<li><strong>队列（queue）与主题（topic）</strong>：队列是点对点，一条消息只给一个消费者；主题是发布-订阅，一条消息广播给所有订阅者。</li>
+<li><strong>事件处理器（event processor）</strong>：订阅某类事件、处理它的独立部署组件，是本风格的基本部署单元。</li>
+<li><strong>最终一致（eventual consistency）</strong>：多个组件的数据短时间内对不上，过一阵后才会趋于一致。</li>
+<li><strong>响应性 vs 性能（responsiveness vs performance）</strong>：响应性是用户多快拿到回应；性能是整件事多快真正做完——两者不是一回事。</li>
+<li><strong>架构量子（architecture quantum）</strong>：能独立部署、带完整功能的最小单元（第 7 章）。</li>
+</ul>
+</div>
+<h2>坐标</h2>
+<p>Part II「架构风格」第 5 种、继基于服务的架构（第 13 章）之后的第二个分布式风格；它既能独立使用，也常嵌在微服务、空间架构（第 15、17 章）里。现实对应：电商下单、交易撮合、在线拍卖、物联网数据接入这类高并发、需要即时反应的系统。</p>
+<h2>这章要解决什么</h2>
+<p>前面几种风格默认的是<strong>请求模型</strong>：一个请求编排者（通常是 UI 或 API 层）按确定的路径把请求派给处理者，比如「查这位客户过去 6 个月的订单」——数据驱动、路径确定、结果可预期。</p>
+<p>但很多业务不是「请求」，而是「对发生了的事做反应」。书的例子是<strong>在线拍卖</strong>：报价一公布，你出了个价——这不是向系统发请求，而是一个<strong>事件</strong>，系统要把它和同一时刻涌来的其他出价比较，判定谁是当前最高价。如果每个出价都同步走完全流程再返回，几千人同时出价时，队伍会直接堵死。</p>
+<p>不解决会怎样？响应时间被<strong>最慢的那一步</strong>绑架，峰值时排队放大，加任何新环节都得改调用链。本章给的答案是：由解耦的事件处理器<strong>异步地接收和处理事件</strong>——但这会立刻带出新的麻烦，本章用一半篇幅在处理它们。</p>
+<h2>核心内容，讲透</h2>
+<h3>① 代理拓扑：没有指挥，靠广播接力</h3>
+<p>代理拓扑没有中心调度者，消息流以<strong>链式广播</strong>的方式分散在各处理器之间，中间只有一个轻量的消息代理。四个组件：<strong>发起事件</strong>（触发整个流程的那个事件）、<strong>事件代理</strong>（装着事件通道，通常是主题）、<strong>事件处理器</strong>、<strong>处理事件</strong>（处理器干完活后广播出去的「我做了什么」）。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 300" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a1" markerHeight="7" markerWidth="7" orient="auto" refX="9" refY="5" viewBox="0 0 10 10"><path d="M0,0L10,5L0,10z" fill="#9b6cf5"/></marker></defs>
+<rect x="20" y="20" width="110" height="36" rx="8" fill="rgba(91,157,249,0.10)" stroke="#5b9df9" stroke-width="2"/>
+<text x="75" y="43" fill="#e7ebf1" font-size="12" font-weight="700" text-anchor="middle">下单（发起）</text>
+<g fill="rgba(155,108,245,0.08)" stroke="#9b6cf5" stroke-width="1.4">
+<rect x="180" y="20" width="110" height="36" rx="8"/><rect x="350" y="90" width="110" height="36" rx="8"/><rect x="350" y="20" width="110" height="36" rx="8"/><rect x="350" y="160" width="110" height="36" rx="8"/><rect x="510" y="160" width="110" height="36" rx="8"/><rect x="510" y="240" width="110" height="36" rx="8"/></g>
+<g fill="#e7ebf1" font-size="11.5" text-anchor="middle"><text x="235" y="43">订单处理器</text><text x="405" y="43">通知处理器</text><text x="405" y="113">库存处理器</text><text x="405" y="183">支付处理器</text><text x="565" y="183">履约处理器</text><text x="565" y="263">发货处理器</text></g>
+<g stroke="#9b6cf5" stroke-width="1.4" marker-end="url(#a1)" fill="none">
+<line x1="130" y1="38" x2="178" y2="38"/><line x1="290" y1="38" x2="348" y2="38"/><path d="M290,48 L320,108 L348,108"/><path d="M290,52 L310,178 L348,178"/><line x1="460" y1="178" x2="508" y2="178"/><line x1="565" y1="198" x2="565" y2="238"/></g>
+<g fill="#8fbaff" font-size="9.5" font-family="SF Mono,Menlo,monospace" text-anchor="middle"><text x="318" y="13">order-created</text><text x="484" y="152">payment-applied</text><text x="558" y="222" text-anchor="end">order-fulfilled</text></g>
+<g fill="#7c8593" font-size="9.5" font-family="SF Mono,Menlo,monospace"><text x="470" y="40">→ email-sent（暂无人听）</text><text x="470" y="112">→ inventory-updated</text></g>
+<text x="20" y="250" fill="#7c8593" font-size="10.5">每条箭头都经过代理里的一个主题；</text>
+<text x="20" y="268" fill="#7c8593" font-size="10.5">没有任何组件知道整笔订单是否已完成。</text>
+</svg>
+<figcaption>图 1 · 代理拓扑下的下单：每个处理器做完自己那一步就广播一个处理事件，下游自行订阅接力；流程藏在订阅关系里，没有中心。</figcaption>
+</figure>
+<p>书里的下单流程：订单处理器收到发起事件，写库、把订单号返回给顾客，然后广播 <code>order-created</code>。通知、支付、库存三个处理器各自订阅它，<strong>并行</strong>开工：支付扣款后广播 <code>payment-applied</code>，履约处理器听到后拣货打包，广播 <code>order-fulfilled</code>，发货处理器再接力……</p>
+<p>有个细节最见设计功力：通知处理器发完邮件也会广播 <code>email-sent</code>，<strong>哪怕眼下没有任何人订阅</strong>。书称这是好习惯——<strong>架构可扩展性</strong>：日后要做「邮件发送分析」，新处理器订阅这个主题即可，现有组件一行不改。</p>
+<p>代价也很直接：<strong>没有人掌控整个工作流</strong>。谁也不知道这笔订单何时算办完；支付处理器崩溃时，没人知道流程卡住了；也无法「从头重跑」这笔业务，因为前面一些步骤已经异步执行、写进了别处。</p>
+<h3>② 中介拓扑：一个调度者攥住流程</h3>
+<p>中介拓扑正是为了补上这些短板。组件变成：发起事件、<strong>发起事件队列</strong>、<strong>事件中介</strong>、<strong>事件通道</strong>、事件处理器。中介收到发起事件后，按流程定义生成处理事件，发到各处理器专属的通道——<strong>通常是点对点队列</strong>；处理器干完<strong>回报中介</strong>，而不是向全系统广播。</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a2" markerHeight="7" markerWidth="7" orient="auto" refX="9" refY="5" viewBox="0 0 10 10"><path d="M0,0L10,5L0,10z" fill="#9b6cf5"/></marker></defs>
+<rect x="20" y="100" width="100" height="40" rx="8" fill="rgba(91,157,249,0.10)" stroke="#5b9df9" stroke-width="1.6"/>
+<text x="70" y="124" fill="#e7ebf1" font-size="11.5" text-anchor="middle">发起事件队列</text>
+<rect x="170" y="80" width="150" height="80" rx="10" fill="rgba(91,157,249,0.14)" stroke="#5b9df9" stroke-width="2.2"/>
+<text x="245" y="108" fill="#e7ebf1" font-size="13" font-weight="700" text-anchor="middle">订单中介</text>
+<text x="245" y="128" fill="#8fbaff" font-size="9.5" font-family="SF Mono,Menlo,monospace" text-anchor="middle">1 建单 → 2 并行三步</text>
+<text x="245" y="144" fill="#8fbaff" font-size="9.5" font-family="SF Mono,Menlo,monospace" text-anchor="middle">→ 3 履约 → 4 发货</text>
+<g fill="rgba(155,108,245,0.08)" stroke="#9b6cf5" stroke-width="1.4"><rect x="440" y="14" width="160" height="32" rx="7"/><rect x="440" y="64" width="160" height="32" rx="7"/><rect x="440" y="114" width="160" height="32" rx="7"/><rect x="440" y="164" width="160" height="32" rx="7"/><rect x="440" y="208" width="160" height="32" rx="7"/></g>
+<g fill="#e7ebf1" font-size="10.5" font-family="SF Mono,Menlo,monospace" text-anchor="middle"><text x="520" y="35">create-order</text><text x="520" y="85">apply-payment</text><text x="520" y="135">adjust-inventory</text><text x="520" y="185">fulfill-order</text><text x="520" y="229">ship-order</text></g>
+<line x1="120" y1="120" x2="168" y2="120" stroke="#9b6cf5" stroke-width="1.4" marker-end="url(#a2)"/>
+<g stroke="#9b6cf5" stroke-width="1.3" marker-end="url(#a2)"><line x1="320" y1="96" x2="438" y2="32"/><line x1="320" y1="108" x2="438" y2="80"/><line x1="320" y1="124" x2="438" y2="130"/><line x1="320" y1="140" x2="438" y2="180"/><line x1="320" y1="152" x2="438" y2="222"/></g>
+<text x="370" y="244" fill="#7c8593" font-size="10" text-anchor="middle">处理器做完回报中介</text>
+</svg>
+<figcaption>图 2 · 中介拓扑：中介手里有流程步骤，向每个处理器的专属队列下发「命令」，并收集回报——它知道流程走到哪、哪一步失败。</figcaption>
+</figure>
+<p>注意两种拓扑里消息的语义不同：代理拓扑传的是<strong>事件</strong>（已发生：<code>order-created</code>），中介拓扑传的是<strong>命令</strong>（要去做：<code>apply-payment</code>）。中介还持有流程状态，所以支付失败时它能停下流程、记录状态、修好后<strong>从断点重启</strong>。</p>
+<p>实践中通常有<strong>多个中介</strong>，各管一个领域或一组事件（如客户中介、订单中介），以减少单点故障、提升吞吐。中介怎么实现，书按复杂度给了分层建议：简单的编排与错误处理用 <strong>Apache Camel、Mule ESB、Spring Integration</strong>；带条件分支、并行的复杂流程用 <strong>BPEL</strong> 引擎（如 Apache ODE）；需要人工介入的长流程用 <strong>BPM</strong> 引擎（如 jBPM）。书推荐把事件分成<strong>简单 / 困难 / 复杂</strong>三类，一律先进一个简单中介，由它判断类别，难的再<strong>委托</strong>给 BPEL 或 BPM 中介。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/workflow-engine-day39.html" target="_blank" rel="noopener">System Design · Day 39 工作流引擎</a> — 中介拓扑走到极致就是持久化的工作流引擎：状态落盘、崩溃后从断点续跑</aside>
+<h3>③ 异步的第一笔账：响应快 ≠ 做得快</h3>
+<p>这种风格完全依赖异步通信，既有「发了就不管」，也有请求-应答。最大的收益是<strong>响应性</strong>：书里用发评论举例，同步要等评论走完全部检查才返回（以秒计），异步只需几十毫秒就能回一句「已收到」。但书特意强调：这提升的是<strong>响应性</strong>，不是<strong>性能</strong>——整件事做完的时间没变短。</p>
+<p>随之而来的硬问题是<strong>出错怎么办</strong>：用户已经看到「发表成功」，后台却因含违禁词被拒，怎么让他知道？</p>
+<h3>④ 出错处理：工作流事件模式</h3>
+<p>书引入反应式架构的<strong>工作流事件模式</strong>，三个关键词：<strong>委托、隔离、修复</strong>。消费者遇到坏消息时，<strong>不卡在原地重试</strong>，而是立刻把它委托给一个<strong>工作流处理器</strong>，自己接着处理下一条；工作流处理器尝试用程序自动修复，修好后<strong>重新投回原队列</strong>；修不好就送到一个仪表盘，交给人工处理。</p>
+<p>书点出一个连带坑：修好重投的消息<strong>排到了后面</strong>，同一账户的后续消息可能先被处理，顺序被打乱。书中交易系统的例子里，对策是让消费者把<strong>同一账户</strong>出错之后的消息先按到达顺序暂存，等修复完成再一起处理。</p>
+<h3>⑤ 不丢消息：三个丢失点</h3>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 170" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="a3" markerHeight="7" markerWidth="7" orient="auto" refX="9" refY="5" viewBox="0 0 10 10"><path d="M0,0L10,5L0,10z" fill="#9b6cf5"/></marker></defs>
+<g fill="rgba(155,108,245,0.08)" stroke="#9b6cf5" stroke-width="1.4"><rect x="20" y="40" width="110" height="40" rx="8"/><rect x="380" y="40" width="110" height="40" rx="8"/></g>
+<rect x="200" y="40" width="110" height="40" rx="8" fill="rgba(91,157,249,0.10)" stroke="#5b9df9" stroke-width="2"/>
+<rect x="540" y="40" width="80" height="40" rx="8" fill="rgba(91,157,249,0.10)" stroke="#5b9df9" stroke-width="1.6"/>
+<g fill="#e7ebf1" font-size="11.5" text-anchor="middle"><text x="75" y="65">处理器 A</text><text x="255" y="65">队列</text><text x="435" y="65">处理器 B</text><text x="580" y="65">数据库</text></g>
+<g stroke="#9b6cf5" stroke-width="1.4" marker-end="url(#a3)"><line x1="130" y1="60" x2="198" y2="60"/><line x1="310" y1="60" x2="378" y2="60"/><line x1="490" y1="60" x2="538" y2="60"/></g>
+<g fill="#cbb5ff" font-size="13" font-weight="700" text-anchor="middle"><text x="165" y="30">①</text><text x="345" y="30">②</text><text x="515" y="30">③</text></g>
+<g fill="#7c8593" font-size="10" text-anchor="middle"><text x="165" y="108">持久化队列</text><text x="165" y="124">+ 同步发送</text><text x="345" y="108">客户端确认</text><text x="345" y="124">处理完才出队</text><text x="515" y="108">ACID 提交</text><text x="515" y="124">+ 最后参与者支持</text></g>
+</svg>
+<figcaption>图 3 · 异步链路的三个丢消息点与书中对策：发送端、取出后崩溃、写库失败。</figcaption>
+</figure>
+<p>① 消息根本没进队列，或代理在 B 取走前宕机：用<strong>持久化队列 + 同步发送</strong>，代理把消息同时存内存和磁盘，确认落盘才算发成功。② B 取出消息后、处理前崩溃：用<strong>客户端确认模式</strong>，消息在 B 明确确认前不会从队列删除。③ B 写库失败：用数据库的 <strong>ACID 提交</strong>，配合<strong>最后参与者支持</strong>（last participant support）——写库成功后才确认，消息才从持久队列中移除。</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/message-queue-day8.html" target="_blank" rel="noopener">System Design · Day 8 消息队列</a> — 至少一次 / 至多一次、确认与重投、幂等消费：三个丢失点背后的投递语义</aside>
+<h3>⑥ 广播与请求-应答</h3>
+<p><strong>广播</strong>是这种风格解耦的极致：发出者根本不知道谁在收、收了做什么，适合推行情、做复杂事件处理、维持最终一致。而当确实需要答复（比如下单后要拿到订单号），就用<strong>请求-应答</strong>：一个请求队列 + 一个应答队列，发出者阻塞等待。两种实现：消息头带<strong>关联 ID</strong>（correlation ID），发出者在应答队列里只取 ID 匹配的那条——书推荐这种；或每个请求临时建一个<strong>专属应答队列</strong>，更简单，但量大时代理要不停建删队列，会被拖慢。</p>
+<h3>⑦ 书中的特征评分</h3>
+<p>事件驱动是<strong>技术分区</strong>的风格（一个领域的逻辑散落在多个处理器、中介、队列里），量子从 1 到多个不等。星级：<strong>性能、伸缩性、容错、可演进性 5 星</strong>；模块化 4 星；可部署性、弹性、可靠性、成本 3 星；<strong>可测试性 2 星、简单性 1 星</strong>。高分来自异步与解耦：处理器可以多实例并行消费、互不连坐，加新处理器不碰旧代码；低分来自<strong>不确定性</strong>：事件路径是动态的，很难枚举所有组合去测、出了错也很难复盘。</p>
+<h2>关键权衡与选型</h2>
+<p class="tcap">表 1 · 代理 vs 中介（优缺点取自书中两张对比表）</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>维度</th><th>代理拓扑（broker）</th><th>中介拓扑（mediator）</th></tr></thead>
+<tbody>
+<tr><th>流程在哪</th><td>散在订阅关系里</td><td><strong>集中在中介</strong></td></tr>
+<tr><th>消息语义</th><td>事件（已发生）· 主题广播</td><td>命令（要去做）· 点对点队列</td></tr>
+<tr><th>强项</th><td><strong>解耦、伸缩、响应、性能、容错</strong></td><td><strong>流程控制、错误处理、可恢复、可重启</strong>、数据更一致</td></tr>
+<tr><th>代价</th><td>没人知道流程是否完成；难恢复、难重启、数据易不一致</td><td>处理器与中介耦合；中介成瓶颈，伸缩、性能、容错下降；复杂动态流程难建模</td></tr>
+<tr><th>适合</th><td>流程简单、追求吞吐与扩展</td><td>流程长、要追踪与补救</td></tr>
+</tbody></table></div>
+<p class="tcap">表 2 · 请求模型 vs 事件模型（书中的选型判据）</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>模型</th><th>该用在</th><th>换来什么</th><th>代价</th></tr></thead>
+<tbody>
+<tr><th>请求模型</th><td>结构清晰、数据驱动、需要确定结果（查客户资料）</td><td>确定性、可控、易测</td><td>响应受最慢一步拖累，伸缩差</td></tr>
+<tr><th>事件模型</th><td>动作驱动、需要即时反应与高伸缩（拍卖出价、交易）</td><td>响应与性能、伸缩与弹性、易扩展、实时决策</td><td><strong>只能最终一致</strong>；流程不可控、结果不确定、难测难调</td></tr>
+</tbody></table></div>
+<p>一句话判据：<strong>你要的是速度和扩展，还是确定性和掌控？</strong>两者不是二选一的整体决定——书也说明大多数系统是<strong>混合</strong>的：同一个应用里，查询走请求模型，下单后的连锁反应走事件模型；事件驱动也常作为其他风格（微服务、空间架构）的集成手段。</p>
+<h2>为什么重要 / 落到真实系统</h2>
+<div class="ev">
+<div class="evh">大厂实证 · 以下为公开资料中的做法与主张（转述）</div>
+<ul>
+<li><strong>Netflix（2016）</strong>：在介绍其编排引擎 Conductor 的技术博客中回顾，他们早先用发布-订阅做服务间的「点对点协作」，只适合最简单的流程；流程逻辑被嵌在多个应用的代码里，很难回答「流程 X 进行到哪了」。于是改用中心编排器。这正是本章代理拓扑「无人掌控工作流」的代价与中介拓扑的解法。<span class="src">Netflix Technology Blog，《Netflix Conductor: A Microservices Orchestrator》，2016（转述）</span></li>
+<li><strong>LinkedIn（2011）</strong>：Kafka 论文描述，LinkedIn 用一个分布式日志式消息系统统一承载活动事件与运维指标，供多个下游系统各自订阅消费——这是代理拓扑「一次发布、多方订阅、随时加消费者」的大规模形态。<span class="src">Kreps 等，《Kafka: a Distributed Messaging System for Log Processing》，NetDB 2011（转述）</span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/kafka-paper58.html" target="_blank" rel="noopener">CS Papers · Kafka</a> — 代理拓扑的工业级底座：分区日志、消费者自管偏移量、为什么能一份数据喂多个下游</aside>
+<p>落到架构评审，可以问四件事：这条流程失败时<strong>谁会发现</strong>？用户被告知「成功」后失败了，<strong>怎么回报</strong>？消息在哪三个点可能丢、各用什么挡？中介会不会成为瓶颈，是否按领域拆了多个？落到面试，被问「为什么下单要异步」，可以答：「下单只同步写订单、返回订单号，支付、库存、通知走事件；流程要追踪就加编排者，要极致吞吐就用主题广播，并配持久化队列和客户端确认防丢。」</p>
+<h2>易错点与争议</h2>
+<ul>
+<li><strong>异步 ≠ 更快完成</strong>：它改善的是响应性；整体处理时间往往还因多了网络跳和排队而变长。</li>
+<li><strong>代理拓扑不是「零耦合」</strong>：耦合从调用链转移到了事件格式与订阅关系上；没人能一眼看清全流程，书说的「没人掌控工作流」在出事时才显形。</li>
+<li><strong>中介 ≠ 万能</strong>：书提醒中介很难声明式地建模复杂、动态的事件流，常常最后只把一部分流程放进中介；中介本身也要扩容、要防单点。</li>
+<li><strong>别把错误处理留到最后</strong>：前台已承诺「成功」，失败回报和顺序修复必须在设计期就定好；修复重投会打乱顺序。</li>
+<li><strong>数据一致性</strong>：事件模型只能保证最终一致；需要强一致的步骤（如扣款与建单）最好留在同一个事务里，别拆成两个事件。</li>
+<li><strong>时代局限</strong>：书写于 2020 年，中介实现举的是 Camel、BPEL、jBPM 一类；如今常见的是 Temporal、Netflix Conductor、AWS Step Functions 等持久化工作流引擎，事件流平台则以 Kafka 为主，但代理 / 中介的权衡本身没变。</li>
+</ul>
+<h2>要点</h2>
+<div class="tl">
+<p>① 事件驱动 = 解耦的事件处理器异步接收、处理事件；适合对「已发生的事」做即时反应（如拍卖出价），而非确定性的数据请求。</p>
+<p>② 两种拓扑：代理（无中心、主题广播、链式接力）与中介（中心调度、点对点队列、处理器回报）。</p>
+<p>③ 代理传「事件」、中介传「命令」；代理里即使没人订阅也广播处理事件，换来可扩展性。</p>
+<p>④ 代理强在解耦、伸缩、响应、性能、容错；弱在流程控制、错误处理、恢复与重启。中介正好相反。</p>
+<p>⑤ 中介按领域拆多个；实现按复杂度分级：Camel / Mule → BPEL → BPM，先进简单中介再委托。</p>
+<p>⑥ 异步提升的是响应性而非性能；最硬的问题是用户已看到「成功」后的失败回报。</p>
+<p>⑦ 工作流事件模式：委托、隔离、修复；修复重投会乱序，需按账户暂存。</p>
+<p>⑧ 三个丢消息点：持久化队列 + 同步发送、客户端确认、ACID 提交 + 最后参与者支持。</p>
+<p>⑨ 评分：性能、伸缩、容错、演进 5 星；可测试 2 星、简单性 1 星；技术分区，量子 1 到多个。</p>
+<p>⑩ 面试复述：「同步只做必须马上答复的那一步，其余走事件；要掌控用中介，要吞吐用代理，防丢靠持久化与确认。」</p>
+</div>
+</div>
+<footer>专业书籍精读 · 读完这页 ≈ 拿到这一章的核心；想要完整案例与延伸，再去翻原书。</footer>
+</div>
+
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+<script src="https://hub.cissychen.com/comments.js" defer></script>
+<script src="https://hub.cissychen.com/search.js" defer></script>
+<script src="https://hub.cissychen.com/index-button.js" defer></script>
+<script src="https://hub.cissychen.com/i18n-tts.js" defer></script>
+</body></html>
