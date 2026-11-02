@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>FoSA Chapter 13 · Service-Based Architecture: A Few Coarse-Grained Services and a Shared Database — Book Deep Read 220</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+ol{margin:8px 0 8px 1.4em}
+ol li{margin:7px 0}
+</style></head><body>
+<div class="container">
+<p class="top">Book Deep Read · Fundamentals of Software Architecture · Chapter 13</p>
+<h1>Service-Based Architecture: A Few Coarse-Grained Services and a Shared Database, the Pragmatic Middle Ground</h1>
+<p class="sub">Fundamentals of Software Architecture · Ch 13 · Mark Richards &amp; Neal Ford · 2020</p>
+<p class="langbar"><a href="fosa-ch13-service-based-architecture-book220.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>Picture a mid-sized company: orders, inventory, shipping and accounting all live in one piece of software. It keeps growing, and now changing one line of accounting code means stopping the whole system and releasing it again. Everyone has heard that "microservices" are the fashion: split it into hundreds of little programs. But the team is twenty or thirty people, and they could never keep hundreds of programs running. This chapter is about the road in between: <strong>split it into just a few big pieces</strong>. The book calls it service-based architecture.</p>
+<h2>An analogy: turning one big restaurant kitchen into a few stations</h2>
+<p>Before, one big kitchen cooked everything, and if one stove broke the whole restaurant stopped. Now there are four or five <strong>stations: cold dishes, hot dishes, noodles, desserts</strong>. Each has its own cooks and opens and closes on its own; if the noodle station is being renovated, hot dishes still go out. But they all <strong>still share one big walk-in fridge</strong>. The ingredients sit in one place, so no station needs its own fridge or someone running back and forth moving food around.</p>
+<h2>Why the old world was hard</h2>
+<p>With one big kitchen, every change touched everything. But go to the other extreme, one tiny kitchen and one fridge per dish, and just keeping track of "who has this piece of meat right now" wears everyone out. A customer orders a full table, a dozen kitchens have to check with each other, one of them slips, and the bill no longer adds up.</p>
+<h2>The core mechanism: big stations and a shared store room</h2>
+<p>It comes down to three things. <strong>A few big stations</strong>: split by line of business, usually four to a dozen, each able to open and be upgraded on its own. <strong>One front counter</strong>: customers only talk to the counter, which passes each order to the right station. <strong>One shared fridge</strong>: every station takes from the same place, so a single order can be <strong>handled start to finish inside one station</strong>. Either all of it happens or all of it is undone, never the half-done "money taken, food never served".</p>
+<p>The fridge gets divided too: the shelves everyone uses are off-limits for casual changes, and each station looks after its own shelves.</p>
+<h2>What it buys you / how to choose</h2>
+<p>You get most of what microservices promise (change one piece, release one piece; one piece breaks, the rest carry on) while dodging the most expensive part. Plenty of companies stop here and are happy. The price: because each station is big, <strong>changing one thing means checking the whole station</strong>, and rearranging the shared fridge forces several stations to adjust.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p>Service-based architecture = <strong>a few big services cut by business area + one shared database</strong>: you get independent releases and failure isolation, and keep "one job, done in one go" simple.</p>
+</div>
+<p class="switch-hint">Want the topology and its variants, how each service is layered inside, federated entity libraries for the shared database, the book's full electronics-recycling example, and the star ratings against microservices? <a data-mode="deep">→ Switch to Deep</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You might think that leaving a monolith means splitting all the way down to microservices. In fact most teams need the stop in between: <strong>4 to 12 coarse-grained domain services</strong>, each deployed on its own, with one user interface in front and <strong>one shared database</strong> behind. FoSA Chapter 13 calls it <strong>one of the most pragmatic architecture styles</strong>. You get the deployability and fault isolation of a distributed system, and because the services are coarse enough you keep <strong>ACID transactions inside each service</strong> instead of wrestling with distributed transactions from day one.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Granularity</strong>: how much of the business one service owns; coarse-grained = a whole domain, fine-grained = one small job.</li>
+<li><strong>Domain</strong>: a fairly self-contained area of business responsibility, such as "ordering", "shipping" or "accounting".</li>
+<li><strong>ACID transaction</strong>: the database guarantees a group of operations either all succeed or all roll back; a failure halfway leaves no half-written data.</li>
+<li><strong>Saga / eventual consistency</strong>: across several services there is no single transaction, so you go step by step and "compensate" (undo) earlier steps on failure; data is briefly inconsistent.</li>
+<li><strong>Shared library</strong>: a code package referenced by several services, for example the entity classes that map database tables.</li>
+<li><strong>API gateway / reverse proxy</strong>: a layer in front of the services that handles routing, authentication and rate limiting in one place and exposes the interface.</li>
+<li><strong>REST / RPC / messaging</strong>: three ways to call across processes: send an HTTP request, call a remote function as if it were local, or drop a message on a queue to be processed asynchronously.</li>
+<li><strong>Architecture quantum</strong>: the smallest independently deployable unit with full functionality (Chapter 7); a shared database ties several services into one quantum.</li>
+<li><strong>Star ratings</strong>: the book scores each style from 1 to 5 stars on each architecture characteristic, so styles can be compared side by side.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>In Part II, "Architecture Styles", right after the three monolithic styles (layered, pipeline, microkernel). It is the book's <strong>first distributed style</strong> and the reference point for event-driven, space-based, SOA and microservices (Chapters 14 to 17). Real-world match: line-of-business systems at mid-sized companies, and the first step out of a monolith.</p>
+<h2>What problem this chapter solves</h2>
+<p>Chapters 10 to 12 covered the monolith's pain: <strong>one deployment unit</strong>, so any change means a full test run and a full release, one memory leak takes down everything, and scaling means copying the whole thing. Chapter 9 listed the price of going distributed: the eight fallacies, network latency, distributed transactions.</p>
+<p>Microservices push that trade-off to the extreme: dozens or hundreds of fine-grained services, each owning its data. For a 20-person team building a business system without extreme traffic, that means standing up service discovery, distributed tracing, container orchestration and saga compensation before writing any business logic. <strong>The infrastructure complexity arrives before the business value does.</strong></p>
+<p>The chapter's question: <strong>is there a distributed shape where you only pay for the distribution you actually need?</strong> The book's answer is to cut the application into a small number of large, domain-aligned, separately deployed services, and leave the database in one piece for now.</p>
+<h2>The core ideas, in depth</h2>
+<h3>① Basic topology: separate UI + coarse-grained services + one database</h3>
+<p>The book describes the basic form as a <strong>distributed macro-layered structure</strong>: a separately deployed user interface, a set of <strong>remote coarse-grained services</strong>, and a <strong>monolithic database</strong>. There are usually <strong>4 to 12 services, about 7 on average</strong>. Each is an independently deployed part of the application, and the book calls them <strong>domain services</strong>.</p>
+<p>The UI calls the services remotely over REST, messaging, RPC or SOAP. Typically each service runs as a <strong>single instance</strong>. If one needs to scale or be more fault tolerant you can run several instances, but then you need load balancing between the UI and the service.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 290" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m1" markerHeight="7" markerWidth="7" orient="auto" refX="9" refY="5" viewBox="0 0 10 10"><path d="M0,0L10,5L0,10z" fill="#9b6cf5"/></marker></defs>
+<rect x="190" y="14" width="260" height="40" rx="10" fill="rgba(91,157,249,0.10)" stroke="#5b9df9" stroke-width="2"/>
+<text x="320" y="39" fill="#e7ebf1" font-size="13" font-weight="700" text-anchor="middle">User interface (deployed separately)</text>
+<rect x="170" y="74" width="300" height="26" rx="6" fill="none" stroke="#7c8593" stroke-dasharray="4 3"/>
+<text x="320" y="91" fill="#7c8593" font-size="10.5" text-anchor="middle">Optional: API layer / reverse proxy / load balancer</text>
+<g fill="rgba(155,108,245,0.08)" stroke="#9b6cf5" stroke-width="1.5">
+<rect x="30" y="124" width="130" height="86" rx="9"/><rect x="180" y="124" width="130" height="86" rx="9"/><rect x="330" y="124" width="130" height="86" rx="9"/><rect x="480" y="124" width="130" height="86" rx="9"/></g>
+<g fill="#e7ebf1" font-size="11.5" font-weight="700" text-anchor="middle"><text x="95" y="143">Order service</text><text x="245" y="143">Inventory service</text><text x="395" y="143">Shipping service</text><text x="545" y="143">Accounting service</text></g>
+<g fill="#7c8593" font-size="9.5" text-anchor="middle">
+<text x="95" y="164">API facade</text><text x="95" y="181">Business logic</text><text x="95" y="198">Persistence</text>
+<text x="245" y="164">API facade</text><text x="245" y="181">Business logic</text><text x="245" y="198">Persistence</text>
+<text x="395" y="164">API facade</text><text x="395" y="181">Business logic</text><text x="395" y="198">Persistence</text>
+<text x="545" y="164">API facade</text><text x="545" y="181">Business logic</text><text x="545" y="198">Persistence</text></g>
+<g stroke="#9b6cf5" stroke-width="1.5" marker-end="url(#m1)">
+<line x1="300" y1="101" x2="110" y2="122"/><line x1="310" y1="101" x2="250" y2="122"/><line x1="330" y1="101" x2="390" y2="122"/><line x1="340" y1="101" x2="530" y2="122"/>
+<line x1="95" y1="212" x2="250" y2="238"/><line x1="245" y1="212" x2="290" y2="238"/><line x1="395" y1="212" x2="350" y2="238"/><line x1="545" y1="212" x2="390" y2="238"/></g>
+<rect x="200" y="240" width="240" height="38" rx="10" fill="rgba(91,157,249,0.10)" stroke="#5b9df9" stroke-width="2"/>
+<text x="320" y="264" fill="#e7ebf1" font-size="12.5" font-weight="700" text-anchor="middle">Shared monolithic database</text>
+</svg>
+<figcaption>Figure 1 · Basic topology: one UI calls 4–12 separately deployed coarse-grained domain services that share one database; each service is often layered inside.</figcaption>
+</figure>
+<p>The book draws three common variants: <strong>split the UI</strong> (several interfaces by domain, such as a customer-facing one and an internal back office), <strong>split the database</strong> (into several by domain, when the services' data is independent enough), and <strong>add an API layer</strong> (a reverse proxy or gateway between UI and services, useful when exposing services to external systems or handling cross-cutting concerns such as security and metrics in one place).</p>
+<h3>② Service design: coarse-grained, layered or domain-partitioned inside</h3>
+<p>Because each service owns a whole domain, it is a small application in its own right. The book gives two ways to organise it: <strong>technically layered</strong> (an API facade layer, a business layer, a persistence layer) or <strong>domain-partitioned</strong> (internal components by subdomain, such as order placement, payment and inventory update inside the order service).</p>
+<p>The API facade layer <strong>orchestrates</strong> the business request coming from the UI: the UI sends one "place order", and the facade calls placement, payment and inventory update inside the service. Compare microservices, where the same request often needs the UI or some coordinator to orchestrate <strong>three separately deployed services</strong>.</p>
+<p>That gives the chapter's most important benefit: <strong>ACID transactions still work inside a service</strong>. If payment fails while placing an order, one database transaction rolls back. In microservices you write compensation logic; as the book puts it, highly distributed styles must rely on BASE (basic availability, soft state, eventual consistency). The cost runs the other way: <strong>the coarser the service, the larger the test scope for any change</strong>, and the higher the deployment risk. Touch the payment logic and the whole order service needs regression testing and a fresh release.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/distributed-transactions-day7.en.html" target="_blank" rel="noopener">System Design · Day 7 Distributed Transactions</a> — what makes 2PC, sagas and compensation expensive, which is exactly what coarse-grained services let you skip</aside>
+<h3>③ The database: shared-library granularity sets the blast radius of a schema change</h3>
+<p>The biggest headache of a shared database is <strong>changing tables</strong>. In the book, services reach the database through <strong>entity objects</strong> in a shared library. With one big shared library, any table change forces <strong>every service</strong> to update code, retest and redeploy, even though most of them never touch that table.</p>
+<p>The book's fix is to <strong>logically partition the database by domain</strong> and pair it with a set of <strong>federated shared libraries</strong>: a common entity library (named <code>common_entities_lib</code> in the book) for tables every service uses, plus one entity library per domain (customer, invoicing, order and so on). A change to a domain table only affects services that use that library. <strong>Changes to the common tables are locked down</strong> and go through the database team, because they ripple into every service. The book's advice: make the logical partitions <strong>as fine-grained as possible while keeping the data domains well defined</strong>.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 230" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m2" markerHeight="7" markerWidth="7" orient="auto" refX="9" refY="5" viewBox="0 0 10 10"><path d="M0,0L10,5L0,10z" fill="#9b6cf5"/></marker></defs>
+<g fill="rgba(155,108,245,0.08)" stroke="#9b6cf5" stroke-width="1.4"><rect x="40" y="14" width="150" height="34" rx="8"/><rect x="245" y="14" width="150" height="34" rx="8"/><rect x="450" y="14" width="150" height="34" rx="8"/></g>
+<g fill="#e7ebf1" font-size="11" text-anchor="middle"><text x="115" y="36">Customer service</text><text x="320" y="36">Order service</text><text x="525" y="36">Accounting service</text></g>
+<g fill="rgba(91,157,249,0.06)" stroke="#5b9df9" stroke-width="1.3"><rect x="40" y="88" width="150" height="34" rx="7"/><rect x="245" y="88" width="150" height="34" rx="7"/><rect x="450" y="88" width="150" height="34" rx="7"/></g>
+<g fill="#cdd3db" font-size="10" font-family="SF Mono,Menlo,monospace" text-anchor="middle"><text x="115" y="109">customer_lib</text><text x="320" y="109">order_lib</text><text x="525" y="109">invoice_lib</text></g>
+<rect x="160" y="140" width="320" height="30" rx="7" fill="rgba(155,108,245,0.14)" stroke="#9b6cf5" stroke-width="1.6"/>
+<text x="320" y="160" fill="#cbb5ff" font-size="10.5" text-anchor="middle" font-family="SF Mono,Menlo,monospace">common_entities_lib (changes need approval)</text>
+<g stroke="#9b6cf5" stroke-width="1.4" marker-end="url(#m2)"><line x1="115" y1="50" x2="115" y2="86"/><line x1="320" y1="50" x2="320" y2="86"/><line x1="525" y1="50" x2="525" y2="86"/><line x1="140" y1="50" x2="240" y2="138"/><line x1="500" y1="50" x2="400" y2="138"/></g>
+<rect x="40" y="188" width="560" height="32" rx="9" fill="rgba(91,157,249,0.10)" stroke="#5b9df9" stroke-width="1.8"/>
+<line x1="227" y1="188" x2="227" y2="220" stroke="#5b9df9" stroke-dasharray="3 3"/><line x1="413" y1="188" x2="413" y2="220" stroke="#5b9df9" stroke-dasharray="3 3"/>
+<g fill="#b9c0ca" font-size="10.5" text-anchor="middle"><text x="133" y="208">Customer + common tables</text><text x="320" y="208">Order partition</text><text x="507" y="208">Invoice partition</text></g>
+</svg>
+<figcaption>Figure 2 · Federated shared libraries: the database is logically partitioned by domain, each domain has its own entity library, and common tables sit in a locked-down library, so a table change only reaches services that use it.</figcaption>
+</figure>
+<h3>④ The book's example: electronics recycling</h3>
+<p>The book reuses the electronics-recycling business from Chapter 12. Customer-facing services are <strong>Quoting</strong> (customers ask for a price) and <strong>Item Status</strong> (track progress); internal services include <strong>Receiving</strong>, <strong>Assessment</strong>, <strong>Recycling</strong>, <strong>Accounting</strong> and <strong>Reporting</strong>. The two groups get <strong>two UIs and two physically separate databases</strong>, with the internal side in its own network zone.</p>
+<p>Each service makes its own trade-offs: the customer-facing ones must handle traffic and scale; assessment rules change often, so as a separate service they can change without redeploying anything else; if an internal service goes down, customers can still get quotes. That is the chapter's point in practice: <strong>you can split services and split databases independently, each according to the characteristics you need</strong>.</p>
+<h3>⑤ The book's characteristic ratings</h3>
+<p>Service-based architecture is <strong>domain-partitioned</strong>. It usually has one architecture quantum (the shared UI and database bind the services together), and can have more than one when the UI and database are also split by domain. Ratings: <strong>deployability, testability, reliability, fault tolerance and modularity 4 stars</strong>; <strong>overall cost 4 stars</strong>; <strong>simplicity, scalability, evolvability and performance 3 stars</strong>; <strong>elasticity 2 stars</strong>. Why:</p>
+<ul>
+<li><strong>Reliability and fault tolerance 4 stars</strong>: services deploy independently, so one failing does not drag the others down; with few services calling each other rarely, there are fewer network round trips and distributed transactions.</li>
+<li><strong>Deployability and testability 4 stars</strong>: a change lands in one domain service, though because services are coarse the test scope is still larger than with microservices.</li>
+<li><strong>Elasticity only 2 stars, scalability 3</strong>: services are coarse, so a traffic spike means copying a whole big service, which is slow and wasteful.</li>
+</ul>
+<h2>Key trade-offs and choices</h2>
+<p class="tcap">Table 1 · Three stops from monolith to microservices (stars are the book's ratings; the microservices column is from Chapter 17)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Dimension</th><th>Layered monolith (Ch 10)</th><th>Service-based (this chapter)</th><th>Microservices (Ch 17)</th></tr></thead>
+<tbody>
+<tr><th>Services · granularity</th><td>1 deployment unit</td><td><strong>4–12</strong>, domain-sized</td><td>Dozens to hundreds, fine-grained</td></tr>
+<tr><th>Data</th><td>One database</td><td>Usually one shared database, can split by domain</td><td>Each service owns its data</td></tr>
+<tr><th>Transactions</th><td>ACID</td><td><strong>ACID within a service</strong></td><td>Sagas / eventual consistency across services</td></tr>
+<tr><th>Cost · simplicity</th><td>5 · 5</td><td><strong>4 · 3</strong></td><td>1 · 1</td></tr>
+<tr><th>Deployability · fault tolerance</th><td>1 · 1</td><td><strong>4 · 4</strong></td><td>4 · 4</td></tr>
+<tr><th>Scalability · elasticity</th><td>1 · 1</td><td>3 · 2</td><td><strong>5 · 5</strong></td></tr>
+<tr><th>Price</th><td>Any change ships everything</td><td>A change tests a whole service; shared-table changes need coordination</td><td>All the complexity of operations and distributed data</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · Three ways to manage the shared database (from the book + this page's summary)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Approach</th><th>What you get</th><th>What it costs</th></tr></thead>
+<tbody>
+<tr><th>One big shared entity library</th><td>Simplest</td><td>Any table change means <strong>redeploying every service</strong></td></tr>
+<tr><th>Logical partitions + federated libraries</th><td>A table change only reaches services that use it</td><td>Partition boundaries to maintain; common-table changes need approval</td></tr>
+<tr><th>Physically separate databases by domain</th><td>Real data isolation; more than one quantum</td><td>Cross-domain queries and consistency get harder, heading toward microservice complexity</td></tr>
+</tbody></table></div>
+<p>The test in one sentence: <strong>do you need independent deployment and fault isolation, but not extreme elasticity, and can you not afford the cost of distributed data?</strong> Then stop here. The book also notes it fits <strong>domain-driven design (DDD)</strong> naturally: one domain service per business domain, without agonising over fine-grained boundaries. Conversely, if one domain really does face second-by-second traffic bursts, split just that one finer; there is no need to turn everything into microservices.</p>
+<h2>Why it matters / in real systems</h2>
+<div class="ev">
+<div class="evh">Industry evidence · practices and claims from public sources (paraphrased)</div>
+<ul>
+<li><strong>Segment (2018)</strong>: the engineering post "Goodbye Microservices" recounts building one service per data destination. Once there were well over a hundred, drifting shared-library versions, one-by-one deployments and operational load overwhelmed a small team, and they merged those services back into one. A textbook case of splitting too fine, and evidence for this chapter's argument. <span class="src">Segment Engineering Blog, Alexandra Noonan, 2018 (paraphrased)</span></li>
+<li><strong>Amazon Prime Video (2023)</strong>: the tech blog described an audio/video quality monitoring tool originally built from distributed components, where passing data and orchestration between them was costly; moving it into a single process cut infrastructure cost by over 90%. Granularity should follow communication and data flow, not "the finer the better". <span class="src">Prime Video Tech Blog, 2023 (paraphrased)</span></li>
+</ul>
+</div>
+<p>Neither case is literally a service-based architecture, but both make the same point: <strong>every extra service boundary adds a network call and something more to operate</strong>, and that bill should be counted first. In an architecture review, ask three things: how many services does a typical request cross? How many services must redeploy when one shared table changes? Which service truly needs to scale elastically on its own? In an interview, asked "why not go straight to microservices?", answer: "Cut 4–12 domain services over a shared database and keep ACID within each; when one domain really needs its own scaling or team independence, split just that one finer."</p>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>Not "smaller microservices"</strong>: the real difference is <strong>data</strong>. Service-based shares a database by default; microservices demand data isolation. Counting services alone gets it wrong.</li>
+<li><strong>The shared database cuts both ways</strong>: it buys ACID and simplicity, and it couples services at the data layer. One big shared entity library makes "independent deployment" an empty phrase.</li>
+<li><strong>Keep service-to-service calls rare</strong>: domain services calling each other synchronously all the time rebuild a distributed monolith, with network overhead and no independence gained.</li>
+<li><strong>The test cost of coarse services</strong>: a small change still needs a regression run over the whole service. That is the direct price of simple transactions; do not pretend it is not there.</li>
+<li><strong>Not necessarily a transition</strong>: it is often called "a stepping stone to microservices", but the book treats it as a style you can stay in for good. Many systems never need to go further.</li>
+<li><strong>Time-bound view</strong>: the book dates from 2020. Since then talk of "modular monoliths" and "macroservices" has grown, and cases like Prime Video have made "don't split too fine" a more mainstream view.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① Service-based = separate UI + 4–12 (about 7 on average) coarse-grained domain services + a usually shared monolithic database; the book's first distributed style.</p>
+<p>② Three variants: split the UI by domain, split the database by domain, add an API layer / reverse proxy between UI and services.</p>
+<p>③ Inside, services are technically layered (API facade / business / persistence) or partitioned by subdomain; the facade orchestrates requests.</p>
+<p>④ Biggest benefit: coarse services <strong>keep ACID within a service</strong>, with no saga compensation from day one.</p>
+<p>⑤ Biggest cost: one change tests the whole service; shared-table changes ripple across services.</p>
+<p>⑥ Logically partition the database by domain with federated shared libraries; the common entity library is locked down; make partitions as fine as data domains allow.</p>
+<p>⑦ Ratings: deployability, testability, reliability, fault tolerance, modularity, cost 4 stars; scalability, performance, simplicity, evolvability 3; elasticity 2.</p>
+<p>⑧ A natural fit for DDD; usually one quantum, more when UI and database are split by domain.</p>
+<p>⑨ Evidence: Segment merged over a hundred fine-grained services back into one; Prime Video cut cost by over 90% by moving into one process.</p>
+<p>⑩ Interview line: "Cut a few big domain services over a shared database to keep ACID; split finer only where elasticity is truly needed."</p>
+</div>
+</div>
+<footer>Book Deep Read · Read this page ≈ get the core of the chapter; for full examples and extensions, go back to the book.</footer>
+</div>
+
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+<script src="https://hub.cissychen.com/comments.js" defer></script>
+<script src="https://hub.cissychen.com/search.js" defer></script>
+<script src="https://hub.cissychen.com/index-button.js" defer></script>
+<script src="https://hub.cissychen.com/i18n-tts.js" defer></script>
+</body></html>
