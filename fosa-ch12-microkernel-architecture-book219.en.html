@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>FoSA Chapter 12 · Microkernel Architecture: A Small Core Guards the Main Flow, Change Lives in Plug-ins — Book Deep Read 219</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+ol{margin:8px 0 8px 1.4em}
+ol li{margin:7px 0}
+</style></head><body>
+<div class="container">
+<p class="top">Book Deep Read · Fundamentals of Software Architecture · Chapter 12</p>
+<h1>Microkernel Architecture: A Small Core Guards the Main Flow, Change Lives in Plug-ins</h1>
+<p class="sub">Fundamentals of Software Architecture · Ch 12 · Mark Richards &amp; Neal Ford · 2020</p>
+<p class="langbar"><a href="fosa-ch12-microkernel-architecture-book219.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>You have probably installed browser extensions: an ad blocker, a translator, a password manager. The browser itself never changes; each extension adds one new trick, and removing it doesn't stop you from browsing. Code editors work the same way: install a plug-in and it suddenly speaks a new language. This chapter is about that shape of software: <strong>a small, stable core plus a ring of plug-ins you can add and remove</strong>. The book calls it the microkernel architecture, also known as the plug-in architecture.</p>
+<h2>An analogy: a stand mixer with a socket</h2>
+<p>A kitchen stand mixer does one thing: <strong>it spins</strong>. Want to knead dough? Attach the dough hook. Whisk eggs? The whisk. Grind meat? The grinder attachment. The attachments don't know each other; each just has to fit the <strong>one standard socket</strong> on the machine. When the maker releases a new attachment, you keep your old mixer.</p>
+<h2>Why the old way hurts</h2>
+<p>Without this, every special case lives in the main program: "if it's this phone model, price it this way; if it's that one, price it that way." A year later there are hundreds of ifs. Touching one might break another, and adding a new phone model means retesting and redeploying the whole program.</p>
+<h2>The mechanism: machine, attachments, catalog, socket</h2>
+<p>There are only four things. <strong>The machine</strong> does only the main routine that every job goes through. <strong>Attachments</strong>: one per special case, each minding its own business, never talking to the others. <strong>A catalog</strong>: the machine keeps a list of which attachments exist and where to find them. <strong>A standard socket</strong>: every attachment plugs in the same way, so the machine never needs to know how one works inside.</p>
+<p>Some attachments can only be swapped with the power off; others can be swapped while it runs. The second kind is handier but needs a fancier machine.</p>
+<h2>What it buys you / when to choose it</h2>
+<p>It fits software where <strong>the core is fixed but the variations keep changing</strong>: browsers, editors, tax software, insurance claims whose rules differ by region. It is cheap, easy to understand, and new variations don't touch old code. The cost: it is usually still <strong>one single machine</strong>, so you can't add capacity to just the busiest attachment, and if the core goes down everything stops.</p>
+<h2>One line to remember</h2>
+<div class="tl">
+<p>Microkernel is <strong>a small core + plug-ins + a catalog + a standard socket</strong>: lock what changes inside plug-ins, and the core can stay still for years.</p>
+</div>
+<p class="switch-hint">Want the two definitions of the core, the three ways to connect plug-ins, registries and contracts, the book's device-recycling and insurance examples, and the star ratings? <a data-mode="deep">→ Switch to Deep</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think microkernel is something only operating-system kernels talk about; in fact it is the most common shape of <strong>product-based software</strong>. The core system keeps only minimal functionality or the "happy path"; every customization, special case and new feature goes into <strong>independent plug-ins</strong>, found through a <strong>registry</strong> and spoken to through a <strong>contract</strong>. FoSA Chapter 12 shows it is the only style that can be <strong>both technically and domain partitioned</strong>; cost gets 5 stars and simplicity 4, but as a monolith it still gets 1 star for scalability, elasticity and fault tolerance.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Monolith</strong>: all code ships as one deployment unit; a microkernel is usually a monolith.</li>
+<li><strong>Plug-in</strong>: a small, separate module that hooks into the main program by agreement to add a feature or handle a special case.</li>
+<li><strong>Cyclomatic complexity</strong>: how many branch paths the code has; more if/else means higher complexity and harder testing.</li>
+<li><strong>Interface / contract</strong>: the agreed inputs, outputs and behavior between two parties; honor it and the internals are your business.</li>
+<li><strong>JAR / DLL</strong>: packaged code libraries in Java and on Windows that a host program can load and call.</li>
+<li><strong>REST / message queue</strong>: two ways to talk across processes: send an HTTP request and wait, or drop a message on a queue for the other side to pick up later.</li>
+<li><strong>OSGi</strong>: a modular runtime for Java that lets a running program install and uninstall modules.</li>
+<li><strong>ZooKeeper / Consul</strong>: distributed coordination and service-discovery tools, often used to record "where service X lives."</li>
+<li><strong>Technical vs domain partitioning / architecture quantum</strong>: splitting components by technical role or by business domain (Chapter 8); the smallest independently deployable unit (Chapter 7).</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The third chapter of Part II, "Architecture Styles," after layered (Chapter 10) and pipeline (Chapter 11); it closes out the three monolithic styles, and service-based architecture (Chapter 13) starts the move to distributed. Real-world match: IDEs, browsers, CI servers, and business systems whose rules vary by customer or region.</p>
+<h2>What problem this chapter solves</h2>
+<p>The book names the natural home right away: <strong>product-based applications</strong>, software that is packaged, downloaded, deployed as a single monolith and run at the customer's site. They share one hard problem: <strong>the core features are stable, but the extensions different users need vary wildly and keep changing</strong>.</p>
+<p>What happens if you ignore it? The book's example is electronic device recycling: every used phone that comes in needs a different assessment depending on its model. Put it all in the core and you get one enormous conditional; <strong>every new model means changing the core, retesting everything and redeploying</strong>, and editing one model's rules can break another's. Business apps are no different: insurance claim rules differ by jurisdiction, and the book notes that some states allow a free windshield replacement after rock damage while others do not. Pile thousands of such rules into one rules engine and, in the book's words, you get a big ball of mud of rules.</p>
+<h2>The core ideas, explained</h2>
+<h3>① Topology: core system + plug-ins</h3>
+<p>The style has just two kinds of components. The book gives two definitions of the <strong>core system</strong>. First, <strong>the minimal functionality needed to run the system</strong>: Eclipse's core is a basic text editor, and plug-ins turn it into a customizable IDE. Second, <strong>the happy path</strong>: the general processing flow with little or no custom processing. Moving cyclomatic complexity out of the core and into plug-ins improves the core's <strong>extensibility, maintainability and testability</strong>.</p>
+<p>Internally the core can be organized as a layered architecture or a modular monolith; the presentation layer can be embedded in the core, split out on its own, or even be a microkernel itself.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 250" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m1" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewBox="0 0 10 10"><path d="M0,0L10,5L0,10z" fill="#9b6cf5"></path></marker></defs>
+<rect x="220" y="80" width="200" height="90" rx="12" fill="rgba(91,157,249,0.10)" stroke="#5b9df9" stroke-width="2"></rect>
+<text x="320" y="110" fill="#e7ebf1" font-size="14" font-weight="700" text-anchor="middle">Core system</text>
+<text x="320" y="130" fill="#b9c0ca" font-size="10.5" text-anchor="middle">minimal function / happy path</text>
+<rect x="245" y="140" width="150" height="22" rx="5" fill="rgba(155,108,245,0.12)" stroke="#9b6cf5" stroke-width="1.2"></rect>
+<text x="320" y="155" fill="#cbb5ff" font-size="10" text-anchor="middle">Registry: name → location</text>
+<g fill="rgba(155,108,245,0.08)" stroke="#9b6cf5" stroke-width="1.5"><rect x="20" y="20" width="130" height="44" rx="9"></rect><rect x="20" y="180" width="130" height="44" rx="9"></rect><rect x="490" y="20" width="130" height="44" rx="9"></rect><rect x="490" y="180" width="130" height="44" rx="9"></rect></g>
+<g fill="#e7ebf1" font-size="11" text-anchor="middle"><text x="85" y="40">Plug-in A</text><text x="85" y="200">Plug-in B</text><text x="555" y="40">Plug-in C (remote)</text><text x="555" y="200">Plug-in D</text></g>
+<g fill="#7c8593" font-size="9.5" text-anchor="middle"><text x="85" y="55">JAR / in-process call</text><text x="85" y="215">hot-swapped at runtime</text><text x="555" y="55">REST / messaging</text><text x="555" y="215">private data store</text></g>
+<g stroke="#9b6cf5" stroke-width="1.6" marker-end="url(#m1)"><line x1="218" y1="100" x2="152" y2="54"></line><line x1="218" y1="150" x2="152" y2="196"></line><line x1="422" y1="100" x2="488" y2="54"></line><line x1="422" y1="150" x2="488" y2="196"></line></g>
+<text x="320" y="40" fill="#8fbaff" font-size="11" text-anchor="middle">Every plug-in honors the same contract</text>
+<text x="320" y="240" fill="#7c8593" font-size="10" text-anchor="middle">Plug-ins never depend on or call each other</text>
+</svg>
+<figcaption>Figure 1 · Microkernel topology: the core holds a registry and calls independent plug-ins through one contract; plug-ins do not know each other.</figcaption>
+</figure>
+<h3>② Plug-ins: independent, no cross-dependencies, three ways to connect</h3>
+<p>Plug-ins are <strong>standalone, independent components</strong> holding specialized processing, additional features and custom code that enhance or extend the core. The book stresses that <strong>plug-ins should ideally have no dependencies on each other</strong>; otherwise a change in one ripples into another and the whole point of plugging is lost.</p>
+<p>There are three ways to connect them. <strong>Compile-based</strong> plug-ins are the simplest, but adding, changing or removing any one requires redeploying the whole monolith. <strong>Runtime-based</strong> plug-ins can be added or removed without redeploying the core; the book names OSGi, Penrose and Jigsaw for Java and Prism for .NET as frameworks to manage them. Both are <strong>point-to-point</strong>: the core calls a method on the plug-in's entry class, and plug-ins live as shared libraries (JAR, DLL, Gem) or namespaces such as <code>app.plugin.&lt;domain&gt;.&lt;context&gt;</code>. The third is <strong>remote</strong> plug-ins: each one is its own service, called by the core over REST or messaging.</p>
+<p>Going remote buys better decoupling, scalability and throughput, runtime changes without OSGi, and asynchronous calls to plug-ins. The book is blunt about the cost: <strong>the whole architecture becomes distributed rather than a monolith</strong>, so deployment is harder, more complex and more expensive; and with synchronous REST, <strong>if a plug-in stops responding, the request cannot complete</strong>. Its conclusion: pick point-to-point or remote from actual requirements, not fashion.</p>
+<p>On data: plug-ins <strong>should not connect directly to a central shared database</strong>; the core hands each plug-in the data it needs. A plug-in may keep <strong>its own data store that only it can access</strong>, such as an assessment plug-in with its own rule base.</p>
+<h3>③ Registry: how the core knows what exists</h3>
+<p>The core has to know which plug-ins are available and how to reach them; that is the <strong>registry</strong>. Each entry holds the plug-in's name, its data contract and remote-access protocol details (for remote plug-ins). The simplest registry is an in-memory map inside the core; the book's example maps model names to a plug-in class name, a message queue name or a REST URL. A complex one can use discovery tools such as Apache ZooKeeper or Consul.</p>
+<h3>④ Contracts: the deal between core and plug-ins</h3>
+<p>Contracts are usually <strong>standard across a whole family of plug-ins</strong> and cover behavior, input data and output data, expressed in XML, JSON or objects. In the device-recycling example the contract is an assessment interface: <code>assess()</code> runs the assessment, <code>register()</code> / <code>deregister()</code> add and remove it; the output carries an assessment report, whether the device can be resold, its value and resale price.</p>
+<p>When a plug-in comes from a third party and you don't control its contract, the book's advice is to <strong>put an adapter in between</strong> that translates the third-party contract into the standard one, <strong>so the core never needs special code for any single plug-in</strong>. This is the style's lifeline: once the core starts knowing one plug-in's private details, that plug-in is no longer pluggable.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/api-design-day9.en.html" target="_blank" rel="noopener">System Design · Day 9 API Design</a> — a plug-in contract is a public API: once published, every plug-in author pays for breaking it</aside>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 220" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="m2" markerheight="7" markerwidth="7" orient="auto" refx="9" refy="5" viewBox="0 0 10 10"><path d="M0,0L10,5L0,10z" fill="#9b6cf5"></path></marker></defs>
+<text x="150" y="22" fill="#8fbaff" font-size="12" font-weight="700" text-anchor="middle">Before: special cases in the core</text>
+<text x="490" y="22" fill="#8fbaff" font-size="12" font-weight="700" text-anchor="middle">After: special cases in plug-ins</text>
+<rect x="30" y="36" width="240" height="170" rx="10" fill="rgba(91,157,249,0.06)" stroke="#5b9df9" stroke-width="1.5"></rect>
+<g fill="#b9c0ca" font-size="10.5" font-family="SF Mono,Menlo,monospace"><text x="48" y="64">if model == A: rules A…</text><text x="48" y="88">elif model == B: rules B…</text><text x="48" y="112">elif model == C: rules C…</text><text x="48" y="136">elif … (hundreds more)</text></g>
+<text x="150" y="172" fill="#9b6cf5" font-size="10.5" text-anchor="middle">New model = edit core + retest all</text>
+<text x="150" y="192" fill="#7c8593" font-size="10" text-anchor="middle">All complexity sits in the core</text>
+<rect x="355" y="90" width="130" height="60" rx="10" fill="rgba(91,157,249,0.10)" stroke="#5b9df9" stroke-width="2"></rect>
+<g fill="#e7ebf1" font-size="10.5" text-anchor="middle"><text x="420" y="115">Core: receive</text><text x="420" y="132">→ assess → price</text></g>
+<g fill="rgba(155,108,245,0.08)" stroke="#9b6cf5" stroke-width="1.4"><rect x="520" y="40" width="108" height="34" rx="8"></rect><rect x="520" y="103" width="108" height="34" rx="8"></rect><rect x="520" y="166" width="108" height="34" rx="8"></rect></g>
+<g fill="#e7ebf1" font-size="10" text-anchor="middle"><text x="574" y="61">Model A plug-in</text><text x="574" y="124">Model B plug-in</text><text x="574" y="187">New model plug-in</text></g>
+<g stroke="#9b6cf5" stroke-width="1.5" marker-end="url(#m2)"><line x1="487" y1="105" x2="518" y2="62"></line><line x1="487" y1="120" x2="518" y2="120"></line><line x1="487" y1="135" x2="518" y2="180"></line></g>
+<text x="420" y="196" fill="#9b6cf5" font-size="10" text-anchor="middle">Add a plug-in, core untouched</text>
+</svg>
+<figcaption>Figure 2 · The book's device-recycling example: per-model assessment rules move out of the core into plug-ins, leaving only the happy path.</figcaption>
+</figure>
+<h3>⑤ The book's characteristic ratings</h3>
+<p>Microkernel is the <strong>only style in the book that can be both technically and domain partitioned</strong>: plug-ins split by domain (one per device model, one per jurisdiction) lean domain-partitioned, while the core is often layered by technical role inside. It usually deploys as a monolith, so the <strong>number of quanta is 1</strong>. Ratings: <strong>overall cost 5 stars</strong>; <strong>simplicity 4</strong>; <strong>deployability, testability, reliability, modularity, evolvability and performance 3</strong>; <strong>scalability, elasticity and fault tolerance 1</strong>. Why:</p>
+<ul>
+<li><strong>Testability, deployability, reliability a bit above average</strong>: functionality is isolated in independent plug-ins, shrinking test scope and deployment risk, especially with runtime plug-ins.</li>
+<li><strong>Performance 3, above layered and pipeline at 2</strong>: microkernel apps tend to stay small and suffer less from the layered sinkhole anti-pattern; you can also <strong>unplug features you don't need</strong> to slim the app down.</li>
+<li><strong>Scalability, elasticity, fault tolerance 1</strong>: the root cause is still the monolithic deployment.</li>
+</ul>
+<h2>Key trade-offs and choices</h2>
+<p class="tcap">Table 1 · The three monolithic styles side by side (stars are the book's ratings)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Dimension</th><th>Layered (Ch 10)</th><th>Pipeline (Ch 11)</th><th>Microkernel (this ch)</th></tr></thead>
+<tbody>
+<tr><th>Partitioning</th><td>Technical</td><td>Technical</td><td><strong>Technical + domain</strong></td></tr>
+<tr><th>Cost · simplicity</th><td>5 · 5</td><td>5 · 5</td><td>5 · <strong>4</strong></td></tr>
+<tr><th>Modularity</th><td>1</td><td>3</td><td>3</td></tr>
+<tr><th>Deploy / test</th><td>1 / 2</td><td>2 / 3</td><td>3 / 3</td></tr>
+<tr><th>Performance</th><td>2</td><td>2</td><td><strong>3</strong></td></tr>
+<tr><th>Scale · elastic · fault tol.</th><td>1</td><td>1</td><td>1</td></tr>
+<tr><th>Natural fit</th><td>Request–response business apps</td><td>One-way data processing</td><td>Products and rule systems with a stable core and shifting extensions</td></tr>
+</tbody></table></div>
+<p class="tcap">Table 2 · Three ways to connect plug-ins (book's description + this page's summary)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Style</th><th>What you gain</th><th>Cost</th><th>Good for</th></tr></thead>
+<tbody>
+<tr><th>Compile-based</th><td>Simplest, no extra framework</td><td>Any plug-in change means <strong>redeploying everything</strong></td><td>Internal systems with few, slow-changing plug-ins</td></tr>
+<tr><th>Runtime (OSGi etc.)</th><td>Add or remove plug-ins without stopping the core</td><td>You must adopt and master a plug-in framework</td><td>IDEs, products extended in the field</td></tr>
+<tr><th>Remote (REST / messaging)</th><td>Decoupling, independent scaling, async</td><td><strong>Becomes distributed</strong>; with sync calls a dead plug-in fails the request</td><td>A few heavy plug-ins that need their own capacity</td></tr>
+</tbody></table></div>
+<p>The test in one line: <strong>can your system be split into "the main path every request takes" and "special cases that vary by customer or place"?</strong> If yes, and the special cases keep growing, microkernel is about the cheapest answer there is. If instead the "special cases" must call each other or share state, or the main path itself is changing violently, forcing plug-ins just produces a pile of tangled modules.</p>
+<h2>Why it matters / in real systems</h2>
+<div class="ev">
+<div class="evh">Industry evidence · practices and claims from public sources (paraphrased)</div>
+<ul>
+<li><strong>Eclipse (2004)</strong>: Eclipse 3.0 rebuilt its runtime on OSGi (as Equinox); apart from a very small kernel, nearly everything is a plug-in, which is why the book uses it as the textbook case of "core = minimal functionality." <span class="src">Eclipse 3.0 release notes / Equinox project docs (paraphrased)</span></li>
+<li><strong>Microsoft · VS Code</strong>: the official docs explain that extensions run in a separate "extension host" process so they cannot slow down editor startup or UI responsiveness. It bolts a layer of <strong>fault isolation</strong> onto a monolithic microkernel. <span class="src">VS Code Extension API docs · Extension Host (paraphrased)</span></li>
+<li><strong>Mozilla · Firefox 57 (2017)</strong>: Mozilla announced that from Firefox 57 only WebExtensions would be supported and legacy extensions dropped. Legacy extensions could reach directly into browser internals, which blocked core rework such as multi-process. A cautionary tale of an <strong>overly wide contract</strong>: once plug-ins know the core too deeply, the core can no longer move. <span class="src">Mozilla Add-ons Blog, "The Road to Firefox 57", 2017 (paraphrased)</span></li>
+</ul>
+</div>
+<aside class="xref"><a href="https://hub.cissychen.com/cs-papers-deepread/decomposing-systems-into-modules-paper43.en.html" target="_blank" rel="noopener">CS Papers · On Decomposing Systems into Modules</a> — Parnas's information hiding: split modules by what is likely to change, exactly the line between core and plug-ins</aside>
+<p>In an architecture review, ask three things: how many if/else branches distinguishing special cases are still in the core? Are plug-ins quietly calling each other? Does the contract expose the core's internal structure? In an interview, asked for the pros and cons of microkernel, you can say: "A small core guards the main path and special cases go into independent plug-ins, discovered via a registry and spoken to via a contract; cheap, extensible, the best performer among the monoliths, but still a monolith with one-star scaling and fault tolerance."</p>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>Not an OS microkernel</strong>: the name is borrowed from operating systems, but this chapter is about an application-level style, not the process isolation of Mach or seL4.</li>
+<li><strong>Plug-ins depending on each other is pitfall number one</strong>: once plug-in A calls plug-in B you're back to coupling; the book explicitly wants plug-ins independent.</li>
+<li><strong>The core quietly gains weight</strong>: adding "one special case" for a big customer inside the core is tempting; a few rounds later the core is a big ball of mud again.</li>
+<li><strong>Remote plug-ins are not a free upgrade</strong>: switch to REST and you take on Chapter 9's eight fallacies of distributed computing; the whole ratings table changes.</li>
+<li><strong>Third-party plug-ins are a trust boundary</strong>: in a monolith, plug-ins share the core's process, so one that crashes or misbehaves takes everything down; the book says little here, which is why real products (browsers, IDEs) add sandboxes and process isolation (this page's addition).</li>
+<li><strong>Limits of its time</strong>: the book rates it as a monolith; today many SaaS platforms push "plug-ins" to the tenant side or the cloud via webhooks and low-code extensions, and the trade-offs need recomputing.</li>
+</ul>
+<h2>Key takeaways</h2>
+<div class="tl">
+<p>① Microkernel = core system + plug-ins, a.k.a. plug-in architecture; a natural fit for product software and for business systems whose rules vary by customer or region.</p>
+<p>② Two definitions of the core: minimal functionality to run (Eclipse), or the happy path; move cyclomatic complexity into plug-ins.</p>
+<p>③ Plug-ins are independent with no cross-dependencies; no direct access to the central database, but they may own private data stores.</p>
+<p>④ Three ways to connect: compile-based (simple, full redeploy), runtime (OSGi etc.), remote (REST / messaging, now distributed).</p>
+<p>⑤ The registry records name, contract and access details: a simple map, or ZooKeeper / Consul.</p>
+<p>⑥ The contract fixes behavior, input and output; third-party plug-ins come in through adapters so the core holds no special-case code.</p>
+<p>⑦ The only style that can be both technically and domain partitioned; one quantum.</p>
+<p>⑧ Cost 5, simplicity 4, performance 3 (best among the monoliths); scalability, elasticity, fault tolerance 1.</p>
+<p>⑨ Evidence: Eclipse is built on OSGi; VS Code isolates extensions in their own process; Firefox replaced its whole extension model because the legacy contract was too wide.</p>
+<p>⑩ Interview line: "Small core for the main path, special cases in plug-ins, registry for discovery, contract for talk; cheap and extensible, but still a monolith."</p>
+</div>
+</div>
+<footer>Book Deep Read · Read this page ≈ get the core of the chapter; for full examples and extensions, go back to the book.</footer>
+</div>
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+<script src="https://hub.cissychen.com/comments.js" defer></script>
+<script src="https://hub.cissychen.com/search.js" defer></script>
+<script src="https://hub.cissychen.com/index-button.js" defer></script>
+<script src="https://hub.cissychen.com/i18n-tts.js" defer></script>
+</body></html>
