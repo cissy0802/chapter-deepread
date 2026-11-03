@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><title>FoSA Chapter 15 · Space-Based Architecture: Take the Database off the Hot Path — Book Deep Read 222</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,"SF Pro Display","Noto Sans SC",sans-serif;background:#0f1216;color:#b9c0ca;line-height:1.8}
+.container{max-width:740px;margin:0 auto;padding:30px 22px 80px}
+.top{font-size:0.8rem;color:#5b9df9;letter-spacing:1px;margin-bottom:8px;font-family:"SF Mono",Menlo,monospace}
+h1{font-size:1.7rem;font-weight:800;line-height:1.35;margin-bottom:8px;background:linear-gradient(135deg,#5b9df9 0%,#9b6cf5 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sub{color:#7c8593;font-size:0.9rem;margin-bottom:6px;font-family:"SF Mono",Menlo,monospace}
+.langbar{margin:14px 0 0;font-size:0.85rem}
+.langbar a{color:#5b9df9;text-decoration:none;border:1px solid rgba(91,157,249,0.4);border-radius:14px;padding:3px 12px}
+h2{font-size:1.2rem;color:#5b9df9;margin:38px 0 6px;padding-bottom:6px;border-bottom:1px solid rgba(91,157,249,0.16)}
+h3{font-size:1.03rem;color:#d9dee5;margin:22px 0 4px}
+p{margin:11px 0}
+strong{color:#e7ebf1;font-weight:700}
+.lead{color:#ccd2da;font-size:1.05rem}
+em{color:#8fbaff;font-style:normal}
+code{background:#171b21;color:#8fbaff;padding:1px 6px;border-radius:4px;font-size:0.9em;font-family:"SF Mono",Menlo,Consolas,monospace}
+ul{margin:8px 0 8px 1.2em}
+li{margin:7px 0}
+figure{margin:22px 0;padding:16px 16px 10px;background:rgba(255,255,255,0.02);border:1px solid rgba(91,157,249,0.14);border-radius:10px}
+figure svg{width:100%;height:auto;display:block}
+figcaption{margin-top:10px;font-size:0.82rem;color:#7c8593;text-align:center;font-family:"SF Mono",Menlo,monospace;line-height:1.5}
+.glossary{background:rgba(255,255,255,0.02);border:1px dashed rgba(91,157,249,0.32);border-radius:10px;padding:14px 18px;margin:18px 0}
+.glossary ul{margin:6px 0 0 1.1em}
+.glossary li{margin:5px 0;font-size:0.96rem}
+.modebar{display:inline-flex;margin:16px 0 4px;border:1px solid rgba(91,157,249,0.4);border-radius:20px;padding:3px;font-family:"SF Mono",Menlo,monospace}
+.modebar button{background:transparent;border:none;cursor:pointer;color:#b9c0ca;font-size:0.85rem;font-weight:700;padding:5px 16px;border-radius:16px;transition:all .15s}
+.modebar button.active{background:linear-gradient(135deg,#5b9df9,#9b6cf5);color:#0f1216}
+.mode[hidden]{display:none}
+.switch-hint{margin-top:26px;color:#7c8593;font-size:0.95rem}
+.switch-hint a{color:#5b9df9;text-decoration:none;border-bottom:1px dashed rgba(91,157,249,0.5);cursor:pointer}
+.tl{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:6px;padding:14px 18px;margin-top:10px}
+.tcap{font-size:0.82rem;color:#7c8593;font-family:"SF Mono",Menlo,monospace;margin:22px 0 6px;line-height:1.5}
+.tblwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:6px}
+table.cmp{width:100%;min-width:520px;border-collapse:collapse;font-size:0.88rem}
+table.cmp th,table.cmp td{border:1px solid rgba(91,157,249,0.16);padding:8px 11px;text-align:left;vertical-align:top;line-height:1.55}
+table.cmp thead th{background:rgba(91,157,249,0.12);color:#8fbaff;font-weight:700;font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;text-align:center}
+table.cmp tbody th{background:rgba(255,255,255,0.025);color:#cdd3db;font-weight:600;font-size:0.84rem;white-space:nowrap}
+table.cmp td strong{color:#e7ebf1}
+.ev{background:rgba(155,108,245,0.06);border:1px solid rgba(155,108,245,0.28);border-radius:10px;padding:14px 18px;margin:18px 0}
+.ev .evh{font-family:"SF Mono",Menlo,monospace;font-size:0.8rem;color:#9b6cf5;letter-spacing:0.5px;margin-bottom:8px;font-weight:700}
+.ev ul{margin:0 0 0 1.1em}
+.ev li{margin:8px 0;font-size:0.95rem}
+.ev .src{color:#7c8593;font-size:0.85em;font-family:"SF Mono",Menlo,monospace}
+.ev .src a{color:#8fbaff;text-decoration:none;border-bottom:1px dotted rgba(143,186,255,0.45)}
+.ev .src a:hover{border-bottom-style:solid}
+footer{margin-top:50px;padding-top:16px;border-top:1px solid rgba(91,157,249,0.16);font-size:0.82rem;color:#5a6069}
+.xref{background:rgba(91,157,249,0.06);border-left:3px solid #5b9df9;border-radius:8px;padding:11px 15px;margin:16px 0;font-size:0.93rem;color:#b9c2cf;display:block}
+.xref::before{content:"Sister site";display:block;font-family:"SF Mono",Menlo,monospace;font-size:0.78rem;color:#5b9df9;letter-spacing:0.5px;font-weight:700;margin-bottom:5px}
+.xref a{color:#8fbaff;font-weight:600;text-decoration:none;border-bottom:1px solid rgba(143,186,255,0.35)}
+.xref a:hover{border-bottom-color:#8fbaff}
+ol{margin:8px 0 8px 1.4em}
+ol li{margin:7px 0}
+</style>
+</head><body>
+<div class="container">
+<p class="top">Book Deep Read · Fundamentals of Software Architecture · Chapter 15</p>
+<h1>Space-Based Architecture: Take the Database off the Hot Path and Ride the Spike in Memory</h1>
+<p class="sub">Fundamentals of Software Architecture · Ch 15 · Mark Richards &amp; Neal Ford · 2020</p>
+<p class="langbar"><a href="fosa-ch15-space-based-architecture-book222.html">中文 →</a></p>
+<div class="modebar">
+<button data-mode="pop">Plain</button>
+<button data-mode="deep">Deep</button>
+</div>
+<div class="mode mode-pop">
+<h2>What is this chapter about?</h2>
+<p>Tickets for a superstar's concert go on sale at 10 a.m. A ticketing site that is quiet most of the day suddenly gets hundreds of thousands of visitors in a single second. Most websites spin, throw errors, or simply fall over. The <strong>space-based architecture</strong> in this chapter is a way of building software for exactly this situation: "usually idle, suddenly packed."</p>
+<h2>A strange thing first: more machines don't help</h2>
+<p>When a site is slow, the first instinct is to add servers. But past a certain point, adding more does nothing. The front servers can be multiplied freely, yet <strong>they all end up asking the same database</strong>. It is like a store opening a hundred checkout lanes while a single stockroom clerk answers every "is this in stock?" question. More lanes just make the line at the clerk's door longer.</p>
+<h2>Why the old world was hard</h2>
+<p>The database is the hardest part of a system to copy into several pieces: it has to keep every account balanced, and extra copies must constantly check with each other, which makes things slower, not faster. So however much you grow the front, the bottleneck sits at that one point, and a surge takes the whole thing down.</p>
+<h2>The core trick: every counter keeps its own ledger</h2>
+<p>Space-based architecture makes a bold move: <strong>while doing the work, don't talk to the database at all</strong>. The system is split into many identical "processing units." Each one is like an independent ticket counter with a <strong>complete copy of the ledger</strong> on the desk, kept in memory so it can be flipped through instantly. When it sells a ticket, it writes it in its own ledger first, then calls out so the other counters update theirs too.</p>
+<p>And the database? It moves to the back office and becomes the archive. After a counter records a sale, it drops a slip on a conveyor belt, and back-office clerks copy the slips into the archive in order. <strong>The archive can lag a little, but the counters never wait in line for it.</strong></p>
+<p>When the crowd grows, a "shift manager" opens new counters on the spot; when it thins out, some are closed to save money. A new counter just copies the ledger from the counter next door and starts selling.</p>
+<h2>What it buys you / when to choose it</h2>
+<p>It gives perhaps the strongest <strong>surge-handling</strong> of any style in the book, ideal for ticket sales and auctions where crowds swing wildly and answers must be instant. The honest cost: when two counters change the same line at the same moment, one change can occasionally overwrite the other, and the whole setup is hard to build, hard to test and not cheap. If your ledger is huge and changes heavily all day, this is not your tool.</p>
+<h2>Remember it in one line</h2>
+<div class="tl">
+<p>Space-based = <strong>every processing unit carries an in-memory ledger and keeps it in sync with the others, while the database catches up in the background</strong>: you trade consistency and simplicity for the elasticity to survive sudden spikes.</p>
+</div>
+<p class="switch-hint">Want the processing unit and the four middleware roles, how data pumps and readers/writers turn the database into a back office, how to estimate the collision rate, replicated vs distributed caching, and the book's star ratings? <a data-mode="deep">→ Switch to Deep</a></p>
+</div>
+<div class="mode mode-deep" hidden="">
+<h2>In one sentence</h2>
+<p class="lead">You think handling high concurrency means "add more servers," but in the end the bottleneck is always the <strong>database</strong> every request must reach synchronously. Space-based architecture does not make the database faster; it <strong>takes it out of the request path</strong>. Data lives in an in-memory grid inside each processing unit, replicated asynchronously between them, and the database is written behind the scenes. FoSA Chapter 15 covers the parts of this structure, why it achieves near-unlimited elasticity, and what it pays for that: <strong>data collisions, eventual consistency and complexity</strong>.</p>
+<h2>Glossary</h2>
+<div class="glossary">
+<ul>
+<li><strong>Memory vs disk</strong>: memory reads and writes take nanoseconds to microseconds; a disk or remote database call is often milliseconds. Data in memory is fast but vanishes on power loss.</li>
+<li><strong>Cache</strong>: a copy of frequently used data kept somewhere faster, so you don't go back to the slow source every time.</li>
+<li><strong>Replica / replication</strong>: the same data stored in several places, with changes propagated between them.</li>
+<li><strong>Eventual consistency</strong>: copies may differ briefly and converge after a while.</li>
+<li><strong>Elasticity vs scalability</strong>: scalability is handling more users; elasticity is expanding and shrinking <strong>instantly</strong> with bursts of traffic.</li>
+<li><strong>Load balancing</strong>: spreading incoming requests across several machines.</li>
+<li><strong>Message queue</strong>: a relay for messages between programs, so the sender doesn't wait for the receiver.</li>
+<li><strong>FIFO (first in, first out)</strong>: messages leave the queue in the order they entered.</li>
+</ul>
+</div>
+<h2>Where it sits</h2>
+<p>The sixth style in Part II, "Architecture Styles," right after event-driven architecture (Ch 14) and before orchestration-driven SOA and microservices (Ch 16 and 17). Real-world match: ticket sales, online auctions, flash sales and trade matching, where <strong>user volume is unpredictable and the peak can be a hundred times normal</strong>.</p>
+<h2>The problem this chapter solves</h2>
+<p>A typical web system has three tiers: web servers → application servers → database. As users grow, the bottleneck shows up tier by tier. The web tier is easiest to scale, the application tier harder, <strong>the database hardest</strong>, because it must protect transactions and consistency and splitting it horizontally is very costly. The book draws this as an inverted triangle: narrower toward the bottom, with all traffic finally squeezed into one point.</p>
+<p>For a ticketing system at 1,000 concurrent users on a normal day and 100,000 the instant sales open, that triangle is fatal. Adding 100 application servers just exhausts the database's connection pool sooner: the result is system-wide timeouts, not speed. Buy a database sized for the peak? You use it a few hours a year, it is expensive, and it still has a ceiling.</p>
+<p>The name comes from <strong>tuple space</strong>, a technique in which multiple parallel processors communicate through shared memory. The goal: <strong>stop the scalable parts from being throttled by the one part that cannot scale</strong>.</p>
+<h2>The core ideas, explained</h2>
+<h3>1. The topology: five kinds of parts</h3>
+<p>The book breaks the style into five components: <strong>processing units</strong> (holding the application code), <strong>virtualized middleware</strong> (managing and coordinating the units), <strong>data pumps</strong> (sending updated data to the database asynchronously), <strong>data writers</strong> (performing the database writes) and <strong>data readers</strong> (reading data from the database and delivering it to the units). The central idea fits in one line: <strong>a processing unit never touches the database while handling a request</strong>.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 350" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b1" markerHeight="7" markerWidth="7" orient="auto" refX="9" refY="5" viewBox="0 0 10 10"><path d="M0,0L10,5L0,10z" fill="#9b6cf5"/></marker></defs>
+<rect x="30" y="10" width="140" height="32" rx="8" fill="rgba(255,255,255,0.03)" stroke="#7c8593" stroke-width="1.2"/>
+<text x="100" y="31" fill="#cdd3db" font-size="12" text-anchor="middle">User requests</text>
+<rect x="430" y="10" width="190" height="32" rx="8" fill="rgba(155,108,245,0.08)" stroke="#9b6cf5" stroke-width="1.3"/>
+<text x="525" y="31" fill="#cdd3db" font-size="11" text-anchor="middle">Deployment manager (add/remove)</text>
+<rect x="30" y="62" width="590" height="32" rx="8" fill="rgba(91,157,249,0.08)" stroke="#5b9df9" stroke-width="1.4"/>
+<text x="325" y="83" fill="#e7ebf1" font-size="12" text-anchor="middle">Messaging grid: intake · load balancing · sessions</text>
+<line x1="100" y1="42" x2="100" y2="60" stroke="#9b6cf5" stroke-width="1.4" marker-end="url(#b1)"/>
+<g fill="rgba(91,157,249,0.12)" stroke="#5b9df9" stroke-width="2"><rect x="30" y="118" width="160" height="78" rx="10"/><rect x="245" y="118" width="160" height="78" rx="10"/><rect x="460" y="118" width="160" height="78" rx="10"/></g>
+<g text-anchor="middle"><text x="110" y="140" fill="#e7ebf1" font-size="12" font-weight="700">Processing unit 1</text><text x="325" y="140" fill="#e7ebf1" font-size="12" font-weight="700">Processing unit 2</text><text x="540" y="140" fill="#e7ebf1" font-size="12" font-weight="700">Processing unit 3</text>
+<g fill="#b9c0ca" font-size="10.5"><text x="110" y="160">business logic</text><text x="325" y="160">business logic</text><text x="540" y="160">business logic</text></g>
+<g fill="#8fbaff" font-size="9.5" font-family="SF Mono,Menlo,monospace"><text x="110" y="182">in-memory grid (full)</text><text x="325" y="182">in-memory grid (full)</text><text x="540" y="182">in-memory grid (full)</text></g></g>
+<g stroke="#9b6cf5" stroke-width="1.2" stroke-dasharray="4 3"><line x1="190" y1="157" x2="245" y2="157"/><line x1="405" y1="157" x2="460" y2="157"/></g>
+<text x="325" y="112" fill="#9b6cf5" font-size="9.5" text-anchor="middle">← async replication between units →</text>
+<g stroke="#9b6cf5" stroke-width="1.3" marker-end="url(#b1)"><line x1="110" y1="196" x2="200" y2="228"/><line x1="325" y1="196" x2="325" y2="226"/><line x1="540" y1="196" x2="450" y2="228"/></g>
+<rect x="160" y="228" width="330" height="30" rx="7" fill="rgba(155,108,245,0.10)" stroke="#9b6cf5" stroke-width="1.4"/>
+<text x="325" y="248" fill="#e7ebf1" font-size="11.5" text-anchor="middle">Data pump: message queue · async · ordered</text>
+<rect x="160" y="290" width="140" height="34" rx="7" fill="rgba(155,108,245,0.08)" stroke="#9b6cf5" stroke-width="1.3"/>
+<text x="230" y="312" fill="#e7ebf1" font-size="11.5" text-anchor="middle">Data writer</text>
+<rect x="330" y="290" width="140" height="34" rx="7" fill="rgba(155,108,245,0.08)" stroke="#9b6cf5" stroke-width="1.3"/>
+<text x="400" y="312" fill="#e7ebf1" font-size="11.5" text-anchor="middle">Data reader</text>
+<rect x="510" y="284" width="110" height="46" rx="8" fill="rgba(255,255,255,0.03)" stroke="#7c8593" stroke-width="1.4"/>
+<text x="565" y="311" fill="#cdd3db" font-size="12" text-anchor="middle">Database</text>
+<line x1="230" y1="258" x2="230" y2="288" stroke="#9b6cf5" stroke-width="1.3" marker-end="url(#b1)"/>
+<path d="M230,324 L230,340 L565,340 L565,333" stroke="#9b6cf5" stroke-width="1.3" fill="none" marker-end="url(#b1)"/>
+<line x1="508" y1="314" x2="472" y2="314" stroke="#9b6cf5" stroke-width="1.3" marker-end="url(#b1)"/>
+<path d="M450,290 L450,272 L600,272 L600,200" stroke="#9b6cf5" stroke-width="1.3" stroke-dasharray="4 3" fill="none" marker-end="url(#b1)"/>
+<text x="594" y="266" fill="#7c8593" font-size="9.5" text-anchor="end">refill memory (3 cases only)</text>
+</svg>
+<figcaption>Figure 1 · Space-based topology: requests complete inside the units' memory; updates travel through the data pump to be written asynchronously, and readers refill memory only on cold start and a few other occasions.</figcaption>
+</figure>
+<h3>2. The processing unit: code + in-memory grid + replication engine</h3>
+<p>A <strong>processing unit</strong> holds the business logic. It may contain the whole application (for small systems) or be split by function into several kinds (an order unit, a payment unit, somewhat like microservices). The key is that it also embeds an <strong>in-memory data grid</strong> and a <strong>replication engine</strong>; the book's examples are Hazelcast, Apache Ignite and Oracle Coherence.</p>
+<p>The book demonstrates with Hazelcast: instances of the same unit declare the same <strong>named cache</strong>, discover each other at startup and form a cluster. When any instance changes data, the replication engine pushes the change <strong>asynchronously</strong> to the other members of that named cache. Each instance therefore holds an (almost) complete copy, so whichever instance a request lands on can read and write right there in memory.</p>
+<h3>3. Virtualized middleware: four caretakers</h3>
+<ul>
+<li><strong>Messaging grid</strong>: receives requests, manages session state, and decides which live unit gets each one; usually a web server with load balancing, such as HAProxy or Nginx.</li>
+<li><strong>Data grid</strong>: <strong>the most important component</strong> of the style. In most modern implementations it lives entirely inside the units as a replicated cache; only when an external controller is needed does part of it sit in the middleware.</li>
+<li><strong>Processing grid</strong>: optional. When one request needs several kinds of units to cooperate (an order unit plus a payment unit), it orchestrates them.</li>
+<li><strong>Deployment manager</strong>: watches response times and user load, starting new instances as load rises and shutting them down as it falls. <strong>Elasticity rests entirely on it.</strong></li>
+</ul>
+<h3>4. Pumps, writers and readers: turning the database into a back office</h3>
+<p>When a unit changes data in memory, that change must eventually reach the database. The unit doesn't write directly; it drops the update into a <strong>data pump</strong>, typically a message queue. The book stresses that data pumps are <strong>always asynchronous</strong>, so cache and database can only be <strong>eventually consistent</strong>. Messages need <strong>guaranteed delivery</strong> and <strong>FIFO ordering</strong>, and the pump decouples units from writers. Pumps are usually set up per domain or subdomain (one for "customer," say).</p>
+<p><strong>Data writers</strong> take messages off the pump and perform the database writes, either one per domain or one dedicated to each kind of unit. <strong>Data readers</strong> go the other way, sending database data back to the units through a "reverse data pump," and the book says they are <strong>invoked in only three situations</strong>: every instance of a named cache has crashed; every instance of a named cache is being redeployed; or archive data not held in the replicated cache is needed. Normally a new instance syncs its cache from its peers, not from the database.</p>
+<p>Together, readers and writers form a <strong>data abstraction layer</strong>: units don't know the table schema, so the database can evolve step by step without touching business code.</p>
+<h3>5. Data collisions: the inevitable price of async replication</h3>
+<p>When many instances can write the same data and replication is asynchronous, you get <strong>data collisions</strong>: before one instance's update has replicated, another instance changes the same row based on the old value, and the later replication overwrites the earlier change.</p>
+<figure>
+<svg font-family="-apple-system,sans-serif" viewBox="0 0 640 210" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="b2" markerHeight="7" markerWidth="7" orient="auto" refX="9" refY="5" viewBox="0 0 10 10"><path d="M0,0L10,5L0,10z" fill="#9b6cf5"/></marker></defs>
+<rect x="190" y="30" width="130" height="140" fill="rgba(155,108,245,0.10)"/>
+<text x="255" y="22" fill="#9b6cf5" font-size="10" text-anchor="middle">replication-latency window</text>
+<text x="20" y="64" fill="#e7ebf1" font-size="12" font-weight="700">Unit A</text>
+<text x="20" y="144" fill="#e7ebf1" font-size="12" font-weight="700">Unit B</text>
+<g stroke="#5b9df9" stroke-width="1.6"><line x1="80" y1="60" x2="620" y2="60"/><line x1="80" y1="140" x2="620" y2="140"/></g>
+<circle cx="200" cy="60" r="6" fill="#5b9df9"/><circle cx="215" cy="140" r="6" fill="#5b9df9"/>
+<text x="200" y="48" fill="#8fbaff" font-size="10" text-anchor="middle" font-family="SF Mono,Menlo,monospace">stock 10→9</text>
+<text x="215" y="162" fill="#8fbaff" font-size="10" text-anchor="middle" font-family="SF Mono,Menlo,monospace">stock 10→9</text>
+<g stroke="#9b6cf5" stroke-width="1.3" marker-end="url(#b2)"><line x1="204" y1="66" x2="315" y2="134"/><line x1="219" y1="134" x2="330" y2="66"/></g>
+<text x="480" y="48" fill="#cbb5ff" font-size="10.5" text-anchor="middle">gets B's 9 → still 9</text>
+<text x="480" y="162" fill="#cbb5ff" font-size="10.5" text-anchor="middle">gets A's 9 → still 9</text>
+<text x="480" y="104" fill="#e7ebf1" font-size="11.5" text-anchor="middle">2 tickets sold, stock down by 1</text>
+<text x="80" y="196" fill="#7c8593" font-size="9.5">time →</text>
+</svg>
+<figcaption>Figure 2 · A data collision: two instances each update from the same old value inside the replication window; after replicating to each other, one update is lost.</figcaption>
+</figure>
+<p>The book gives a formula to estimate the collision rate: <code>collision rate = N × UR² / S × RL</code>. In plain words: <strong>more instances (N), more frequent updates (UR) and slower replication (RL) mean more collisions; more cache rows (S) mean less chance of hitting the same row</strong>. Update rate is squared, so it matters most. The book's example: 5 instances, 20 updates per second, a 50,000-row cache and 100 ms replication latency give about <strong>14.4 collisions per hour out of 72,000 updates (about 0.02%)</strong>. By the same formula, dropping to 2 instances or cutting latency to 1 ms lowers collisions sharply; shrink the cache to 5,000 rows and they rise to about 144 per hour.</p>
+<p>The formula's value is that it turns "will it collide?" from a guess into a number you can argue about: if the rate is acceptable, use a replicated cache; if not, reduce instances, shorten replication latency, or switch to a distributed cache.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/consistency-day6.en.html" target="_blank" rel="noopener">System Design · Day 6 Consistency</a> — eventual consistency, read-your-writes and conflict resolution: where async replication sits on the consistency spectrum</aside>
+<h2>Key trade-offs and choices</h2>
+<h3>Replicated cache vs distributed cache</h3>
+<p>The book spends a full section on this choice. A <strong>replicated cache</strong> keeps a full copy in each unit's memory; reads and writes are local, very fast and fault tolerant, since any surviving instance holds everything. A <strong>distributed cache</strong> keeps data in an external, central cache cluster that every unit accesses remotely; there is only one copy, so it is consistent, but each access costs a network round trip, and a problem in the cache servers hits everyone.</p>
+<p class="tcap">Table 1 · Replicated vs distributed cache (organized along the book's decision criteria)</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Criterion</th><th>Replicated cache</th><th>Distributed cache</th></tr></thead>
+<tbody>
+<tr><th>Optimizes for</th><td><strong>Performance</strong> (local memory)</td><td><strong>Consistency</strong> (a single copy)</td></tr>
+<tr><th>Cache size</th><td>Small (around a hundred MB or less): every instance must hold it all</td><td>Large (GB and beyond)</td></tr>
+<tr><th>Kind of data</th><td>Relatively static</td><td>Highly dynamic</td></tr>
+<tr><th>Update rate</th><td>Low: frequent updates collide and swamp replication</td><td>High</td></tr>
+<tr><th>Fault tolerance</th><td>High: every instance has everything</td><td>Low: the central cache is a shared dependency</td></tr>
+<tr><th>Cost</th><td>Collisions; memory × number of instances</td><td>Remote latency; the central cache needs its own HA</td></tr>
+</tbody></table></div>
+<p>The book's advice is pragmatic: <strong>mix both in one system</strong>. Small, rarely updated data (a product catalog) goes in a replicated cache; volatile data that must be consistent (inventory) goes in a distributed cache. The book also <strong>explicitly advises against a near-cache</strong> (a small local front cache per instance backed by a full cache): each instance's front cache evicts by recent use, so contents differ between instances, and the same request routed to different instances sees different response times and data.</p>
+<aside class="xref"><a href="https://hub.cissychen.com/system-design/caching-day2.en.html" target="_blank" rel="noopener">System Design · Day 2 Caching</a> — multi-layer caches, invalidation and consistency: where replicated and distributed caches fit in the caching landscape</aside>
+<h3>Should you choose space-based at all?</h3>
+<p class="tcap">Table 2 · Scenario check</p>
+<div class="tblwrap"><table class="cmp">
+<thead><tr><th>Scenario</th><th>Verdict</th><th>Why / cost</th></tr></thead>
+<tbody>
+<tr><th>Ticket sales, flash sales</th><td><strong>Good fit</strong></td><td>Low normally, explosive at sale time; the deployment manager adds and removes instances, so cost follows traffic</td></tr>
+<tr><th>Online auctions</th><td><strong>Good fit</strong></td><td>Unpredictable bid volume, instant answers; bids are ordered in memory and history is written asynchronously via pumps</td></tr>
+<tr><th>Traditional apps with huge data</th><td>Poor fit</td><td>The full data set won't fit in each instance's memory, so replicated caching breaks down</td></tr>
+<tr><th>Strongly consistent accounting</th><td>Use with care</td><td>Cache and database are only eventually consistent; collisions need extra handling</td></tr>
+<tr><th>Ordinary systems with steady load</th><td>Not worth it</td><td>Complexity and cost far exceed the gain; layered or service-based is enough</td></tr>
+</tbody></table></div>
+<p>The book also mentions a deployment variant: processing units and middleware run in the cloud while the database stays on premises, connected by data pumps. You get cloud elasticity and still meet rules that require data to stay on site.</p>
+<h2>Why it matters / in real systems</h2>
+<p>In the star ratings, space-based scores <strong>5 stars for elasticity, scalability and performance</strong>, the top marks among the book's styles, while <strong>simplicity and testability get only 1 star</strong> and cost is high. The testing difficulty is concrete: proving it survives requires simulating production-scale peak concurrency, which test environments often cannot produce, so much load testing ends up happening in production.</p>
+<div class="ev">
+<div class="evh">Industry evidence · practices and claims from public sources (paraphrased, text citations only)</div>
+<ul>
+<li><strong>LMAX (2011)</strong>: this financial exchange keeps all business state in memory and processes orders on a single-threaded "Business Logic Processor"; input events are journaled first, and the database is not on the matching path. Martin Fowler's write-up says it can handle 6 million orders per second on a single thread. Same playbook as this chapter (take the database off the hot path, win performance with memory plus async persistence), except LMAX chose one instance rather than many replicated ones, which sidesteps data collisions entirely. <span class="src">Martin Fowler, "The LMAX Architecture," 2011 (paraphrased)</span></li>
+<li><strong>Where the name comes from</strong>: tuple spaces come from Gelernter's Linda parallel-programming model, in which processes cooperate by putting data into and taking it out of a shared "space" rather than calling each other directly. <span class="src">D. Gelernter, "Generative Communication in Linda," ACM TOPLAS, 1985 (paraphrased)</span></li>
+</ul>
+</div>
+<p>In an architecture review, ask four things: how many times normal is the peak, and how fast does it arrive? Does the full data set fit in each instance's memory? What does the formula say about collision rate, and can the business live with it? If every cache dies, how long does refilling from the database take? In an interview, asked "how do you survive a flash sale?", you can say: "Hot data lives in an in-memory grid replicated asynchronously across instances, so requests never touch the database; updates go through an ordered queue and are written asynchronously; I choose replicated vs distributed caching by the collision rate, and handle high-churn, must-be-consistent fields like inventory separately."</p>
+<h2>Pitfalls and debates</h2>
+<ul>
+<li><strong>"Not touching the database" ≠ "no database"</strong>: it is still the system of record, just moved off the request path. If the data pump loses a message, that data is really gone.</li>
+<li><strong>Elasticity isn't free</strong>: every instance holds the full cache, so memory cost grows linearly with instances, and a new instance must sync its cache first, so cold start is not instant.</li>
+<li><strong>Compute the collision rate before choosing</strong>: update rate is squared, so heavy writes to the same hot data (inventory for a popular show) will break a replicated cache; speed alone is not the criterion.</li>
+<li><strong>A near-cache looks like the best of both, but the book explicitly rejects it</strong>: differing local caches produce inconsistent responses.</li>
+<li><strong>Era</strong>: written in 2020, the book names Hazelcast, Ignite and Coherence. Many teams today use managed Redis clusters as a distributed cache and Kafka as the data pump, but the structural call (memory first, database second, async writes) is unchanged.</li>
+<li><strong>The counterargument</strong>: many flash-sale systems skip full space-based architecture and instead flatten the surge with queuing, rate limiting and pre-reserved stock, then use a normal database. That "shaves the peak" instead of "absorbing it": simpler, but some users lose instant responses.</li>
+</ul>
+<h2>Takeaways</h2>
+<div class="tl">
+<p>1. Scale a traditional three-tier system far enough and the bottleneck is always the synchronously accessed database; space-based takes it off the request path.</p>
+<p>2. Five parts: processing units, virtualized middleware, data pumps, data writers, data readers.</p>
+<p>3. Processing unit = business logic + in-memory data grid + replication engine; instances of a named cache replicate asynchronously, and requests complete in local memory.</p>
+<p>4. Four middleware roles: messaging grid (intake / balancing / sessions), data grid (most important), processing grid (optional orchestration), deployment manager (elasticity).</p>
+<p>5. Data pumps are always async, guaranteed and ordered, so cache and database are only eventually consistent; readers appear only after total crash, total redeploy, or for archive data.</p>
+<p>6. Collision rate rises with instance count, the square of update rate and replication latency, and falls with cache rows; the book's example is about 0.02%.</p>
+<p>7. Replicated caches favor performance and fault tolerance for small, static data; distributed caches favor consistency for large, volatile data; mix them, and avoid near-caches.</p>
+<p>8. Ratings: elasticity, scalability, performance 5 stars; simplicity, testability 1 star; high cost. Great for tickets and auctions, poor for ordinary data-heavy apps.</p>
+<p>9. Interview line: "Hot data in an in-memory grid with async replication, database written behind via a queue; compute the collision rate, then choose replicated or distributed caching."</p>
+</div>
+</div>
+<footer>Book Deep Read · Read this page ≈ get the core of the chapter; for full examples and extensions, go back to the book.</footer>
+</div>
+
+<script>
+(function(){var KEY='bookread-mode';var bar=document.querySelector('.modebar');if(!bar)return;var pop=document.querySelector('.mode-pop'),deep=document.querySelector('.mode-deep');function set(m){var d=m==='deep';pop.hidden=d;deep.hidden=!d;bar.querySelectorAll('button').forEach(function(b){b.classList.toggle('active',(b.dataset.mode==='deep')===d);});try{localStorage.setItem(KEY,d?'deep':'pop');}catch(e){}window.scrollTo(0,0);}document.addEventListener('click',function(e){var t=e.target.closest('[data-mode]');if(t){e.preventDefault();set(t.dataset.mode);}});var s;try{s=localStorage.getItem(KEY);}catch(e){}set(s==='deep'?'deep':'pop');})();
+</script>
+<script src="https://hub.cissychen.com/comments.js" defer></script>
+<script src="https://hub.cissychen.com/search.js" defer></script>
+<script src="https://hub.cissychen.com/index-button.js" defer></script>
+<script src="https://hub.cissychen.com/i18n-tts.js" defer></script>
+</body></html>
